@@ -1,0 +1,451 @@
+package org.onekash.kashcal.sync.worker
+
+import android.content.Context
+import android.util.Log
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.WorkerParameters
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedInject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.sync.debug.SyncDebugLog
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.engine.CalDavSyncEngine
+import org.onekash.kashcal.sync.engine.SyncResult
+import org.onekash.kashcal.sync.notification.SyncNotificationManager
+import org.onekash.kashcal.sync.provider.ProviderRegistry
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.widget.WidgetUpdateManager
+
+/**
+ * WorkManager worker for CalDAV synchronization.
+ *
+ * Handles both periodic background sync and user-initiated one-shot sync.
+ * Uses Hilt for dependency injection.
+ *
+ * Features:
+ * - Periodic background sync (configurable interval, minimum 15 min)
+ * - One-shot sync for user-initiated or push notification triggered sync
+ * - Expedited work for immediate sync needs with foreground service
+ * - Calendar-specific sync via input data
+ * - Progress reporting via WorkInfo
+ * - Foreground notification for long-running sync
+ *
+ * Per Android WorkManager best practices:
+ * - Uses CoroutineWorker for suspend function support
+ * - Returns appropriate Result for retry/backoff handling
+ * - Respects constraints (network, battery)
+ * - Uses setForeground() for expedited/long-running work
+ */
+@HiltWorker
+class CalDavSyncWorker @AssistedInject constructor(
+    @Assisted context: Context,
+    @Assisted params: WorkerParameters,
+    private val syncEngine: CalDavSyncEngine,
+    private val accountsDao: AccountsDao,
+    private val calendarsDao: CalendarsDao,
+    private val notificationManager: SyncNotificationManager,
+    private val providerRegistry: ProviderRegistry,
+    private val calDavClient: CalDavClient,
+    private val syncScheduler: SyncScheduler,
+    private val widgetUpdateManager: WidgetUpdateManager
+) : CoroutineWorker(context, params) {
+
+    companion object {
+        private const val TAG = "CalDavSyncWorker"
+
+        // Input data keys
+        const val KEY_CALENDAR_ID = "calendar_id"
+        const val KEY_ACCOUNT_ID = "account_id"
+        const val KEY_FORCE_FULL_SYNC = "force_full_sync"
+        const val KEY_SYNC_TYPE = "sync_type"
+        const val KEY_SHOW_NOTIFICATION = "show_notification"
+
+        // Output data keys
+        const val KEY_CALENDARS_SYNCED = "calendars_synced"
+        const val KEY_EVENTS_PUSHED = "events_pushed"
+        const val KEY_EVENTS_PULLED = "events_pulled"
+        const val KEY_CONFLICTS_RESOLVED = "conflicts_resolved"
+        const val KEY_ERROR_MESSAGE = "error_message"
+        const val KEY_DURATION_MS = "duration_ms"
+
+        // Sync types
+        const val SYNC_TYPE_FULL = "full"
+        const val SYNC_TYPE_CALENDAR = "calendar"
+        const val SYNC_TYPE_ACCOUNT = "account"
+
+        /**
+         * Create input data for full sync (all accounts).
+         */
+        fun createFullSyncInput(forceFullSync: Boolean = false, showNotification: Boolean = false): Data {
+            return Data.Builder()
+                .putString(KEY_SYNC_TYPE, SYNC_TYPE_FULL)
+                .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
+                .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .build()
+        }
+
+        /**
+         * Create input data for calendar-specific sync.
+         */
+        fun createCalendarSyncInput(
+            calendarId: Long,
+            forceFullSync: Boolean = false,
+            showNotification: Boolean = false
+        ): Data {
+            return Data.Builder()
+                .putString(KEY_SYNC_TYPE, SYNC_TYPE_CALENDAR)
+                .putLong(KEY_CALENDAR_ID, calendarId)
+                .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
+                .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .build()
+        }
+
+        /**
+         * Create input data for account-specific sync.
+         */
+        fun createAccountSyncInput(
+            accountId: Long,
+            forceFullSync: Boolean = false,
+            showNotification: Boolean = false
+        ): Data {
+            return Data.Builder()
+                .putString(KEY_SYNC_TYPE, SYNC_TYPE_ACCOUNT)
+                .putLong(KEY_ACCOUNT_ID, accountId)
+                .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
+                .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .build()
+        }
+    }
+
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val syncType = inputData.getString(KEY_SYNC_TYPE) ?: SYNC_TYPE_FULL
+        val forceFullSync = inputData.getBoolean(KEY_FORCE_FULL_SYNC, false)
+        val showNotification = inputData.getBoolean(KEY_SHOW_NOTIFICATION, false)
+
+        Log.i(TAG, "Starting sync: type=$syncType, force=$forceFullSync, attempt=${runAttemptCount + 1}")
+
+        // Set foreground for expedited work (shows progress notification)
+        try {
+            val foregroundInfo = notificationManager.createForegroundInfo(
+                progress = "Syncing calendars...",
+                cancelIntent = createCancelPendingIntent()
+            )
+            setForeground(foregroundInfo)
+        } catch (e: Exception) {
+            // setForeground may fail if work is not expedited, that's OK
+            Log.d(TAG, "Could not set foreground (non-expedited work): ${e.message}")
+        }
+
+        try {
+            val syncResult = when (syncType) {
+                SYNC_TYPE_CALENDAR -> {
+                    val calendarId = inputData.getLong(KEY_CALENDAR_ID, -1)
+                    if (calendarId == -1L) {
+                        Log.e(TAG, "Calendar sync requested but no calendar_id provided")
+                        return@withContext Result.failure(
+                            createErrorOutput("No calendar_id provided")
+                        )
+                    }
+                    syncCalendar(calendarId, forceFullSync)
+                }
+                SYNC_TYPE_ACCOUNT -> {
+                    val accountId = inputData.getLong(KEY_ACCOUNT_ID, -1)
+                    if (accountId == -1L) {
+                        Log.e(TAG, "Account sync requested but no account_id provided")
+                        return@withContext Result.failure(
+                            createErrorOutput("No account_id provided")
+                        )
+                    }
+                    syncAccount(accountId, forceFullSync)
+                }
+                else -> {
+                    syncAll(forceFullSync)
+                }
+            }
+
+            // Show completion notification if requested
+            if (showNotification) {
+                notificationManager.showCompletionNotification(syncResult, showOnlyOnChanges = false)
+            }
+
+            // Cancel progress notification
+            notificationManager.cancelProgressNotification()
+
+            // Update home screen widgets if sync had changes
+            if (syncResult.hasChanges()) {
+                Log.d(TAG, "Updating widgets after sync with changes")
+                widgetUpdateManager.updateAllWidgets()
+            }
+
+            handleSyncResult(syncResult)
+        } catch (e: Exception) {
+            Log.e(TAG, "Sync failed with exception", e)
+            notificationManager.cancelProgressNotification()
+
+            if (showNotification) {
+                notificationManager.showErrorNotification("Sync Failed", e.message ?: "Unknown error")
+            }
+
+            Result.retry()
+        }
+    }
+
+    /**
+     * Create a cancel pending intent for the foreground notification.
+     */
+    private fun createCancelPendingIntent(): android.app.PendingIntent? {
+        return try {
+            val cancelIntent = androidx.work.WorkManager.getInstance(applicationContext)
+                .createCancelPendingIntent(id)
+            cancelIntent
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not create cancel intent: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Sync a specific calendar.
+     */
+    private suspend fun syncCalendar(calendarId: Long, forceFullSync: Boolean): SyncResult {
+        val calendar = calendarsDao.getById(calendarId)
+        if (calendar == null) {
+            Log.w(TAG, "Calendar $calendarId not found")
+            return SyncResult.Error(-1, "Calendar not found", false)
+        }
+
+        Log.d(TAG, "Syncing calendar: ${calendar.displayName}")
+        return syncEngine.syncCalendar(calendar, forceFullSync)
+    }
+
+    /**
+     * Sync all calendars for an account.
+     */
+    private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean): SyncResult {
+        val account = accountsDao.getById(accountId)
+        if (account == null) {
+            Log.w(TAG, "Account $accountId not found")
+            return SyncResult.Error(-1, "Account not found", false)
+        }
+
+        Log.d(TAG, "Syncing account: ${account.email}")
+        return syncEngine.syncAccount(account, forceFullSync)
+    }
+
+    /**
+     * Sync all enabled accounts using provider registry.
+     *
+     * For each account:
+     * 1. Get provider from registry
+     * 2. Skip local providers (don't need network sync)
+     * 3. Load credentials from provider's credential provider
+     * 4. Sync using provider-specific quirks
+     */
+    private suspend fun syncAll(forceFullSync: Boolean): SyncResult {
+        val accounts = accountsDao.getEnabledAccounts()
+        SyncDebugLog.i(TAG, "syncAll() found ${accounts.size} enabled accounts")
+        for (account in accounts) {
+            SyncDebugLog.i(TAG, "Account: id=${account.id}, ${account.provider}, ${account.email}")
+        }
+        if (accounts.isEmpty()) {
+            Log.d(TAG, "No enabled accounts to sync")
+            SyncDebugLog.w(TAG, "NO ACCOUNTS - sync skipped!")
+            return SyncResult.Success(
+                calendarsSynced = 0,
+                durationMs = 0
+            )
+        }
+
+        // Filter to accounts with network providers
+        val networkAccounts = accounts.filter { account ->
+            val provider = providerRegistry.getProviderForAccount(account)
+            provider?.requiresNetwork == true
+        }
+
+        if (networkAccounts.isEmpty()) {
+            Log.d(TAG, "No network accounts to sync")
+            return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
+        }
+
+        Log.d(TAG, "Syncing ${networkAccounts.size} network accounts")
+        val startTime = System.currentTimeMillis()
+
+        // Aggregate results from all accounts
+        var totalCalendars = 0
+        var totalPushCreated = 0
+        var totalPushUpdated = 0
+        var totalPushDeleted = 0
+        var totalPullAdded = 0
+        var totalPullUpdated = 0
+        var totalPullDeleted = 0
+        var totalConflicts = 0
+        val allErrors = mutableListOf<org.onekash.kashcal.sync.engine.SyncError>()
+        val allChanges = mutableListOf<org.onekash.kashcal.sync.model.SyncChange>()
+
+        for (account in networkAccounts) {
+            val provider = providerRegistry.getProviderForAccount(account) ?: continue
+            val credProvider = provider.getCredentialProvider() ?: continue
+
+            // Load credentials for this account
+            val credentials = credProvider.getCredentials(account.id)
+            if (credentials == null) {
+                Log.w(TAG, "No credentials for account ${account.email}, skipping")
+                continue
+            }
+
+            // Set credentials on CalDAV client
+            calDavClient.setCredentials(credentials.username, credentials.password)
+            Log.d(TAG, "Credentials loaded for: ${credentials.username}")
+
+            // Sync this account with its provider's quirks
+            val result = syncEngine.syncAccountWithProvider(account, provider, forceFullSync)
+
+            when (result) {
+                is SyncResult.Success -> {
+                    totalCalendars += result.calendarsSynced
+                    totalPushCreated += result.eventsPushedCreated
+                    totalPushUpdated += result.eventsPushedUpdated
+                    totalPushDeleted += result.eventsPushedDeleted
+                    totalPullAdded += result.eventsPulledAdded
+                    totalPullUpdated += result.eventsPulledUpdated
+                    totalPullDeleted += result.eventsPulledDeleted
+                    totalConflicts += result.conflictsResolved
+                    allChanges.addAll(result.changes)
+                }
+                is SyncResult.PartialSuccess -> {
+                    totalCalendars += result.calendarsSynced
+                    totalPushCreated += result.eventsPushedCreated
+                    totalPushUpdated += result.eventsPushedUpdated
+                    totalPushDeleted += result.eventsPushedDeleted
+                    totalPullAdded += result.eventsPulledAdded
+                    totalPullUpdated += result.eventsPulledUpdated
+                    totalPullDeleted += result.eventsPulledDeleted
+                    totalConflicts += result.conflictsResolved
+                    allErrors.addAll(result.errors)
+                    allChanges.addAll(result.changes)
+                }
+                is SyncResult.AuthError -> {
+                    Log.e(TAG, "Auth error for account ${account.email}: ${result.message}")
+                    allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
+                        phase = org.onekash.kashcal.sync.engine.SyncPhase.AUTH,
+                        code = 401,
+                        message = result.message
+                    ))
+                }
+                is SyncResult.Error -> {
+                    Log.e(TAG, "Sync error for account ${account.email}: ${result.message}")
+                    allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
+                        phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,
+                        code = result.code,
+                        message = result.message
+                    ))
+                }
+            }
+        }
+
+        val duration = System.currentTimeMillis() - startTime
+        Log.i(TAG, "syncAll complete in ${duration}ms: $totalCalendars calendars")
+
+        return if (allErrors.isEmpty()) {
+            SyncResult.Success(
+                calendarsSynced = totalCalendars,
+                eventsPushedCreated = totalPushCreated,
+                eventsPushedUpdated = totalPushUpdated,
+                eventsPushedDeleted = totalPushDeleted,
+                eventsPulledAdded = totalPullAdded,
+                eventsPulledUpdated = totalPullUpdated,
+                eventsPulledDeleted = totalPullDeleted,
+                conflictsResolved = totalConflicts,
+                durationMs = duration,
+                changes = allChanges
+            )
+        } else {
+            SyncResult.PartialSuccess(
+                calendarsSynced = totalCalendars,
+                eventsPushedCreated = totalPushCreated,
+                eventsPushedUpdated = totalPushUpdated,
+                eventsPushedDeleted = totalPushDeleted,
+                eventsPulledAdded = totalPullAdded,
+                eventsPulledUpdated = totalPullUpdated,
+                eventsPulledDeleted = totalPullDeleted,
+                conflictsResolved = totalConflicts,
+                errors = allErrors,
+                durationMs = duration,
+                changes = allChanges
+            )
+        }
+    }
+
+    /**
+     * Convert SyncResult to WorkManager Result with output data.
+     */
+    private fun handleSyncResult(syncResult: SyncResult): Result {
+        return when (syncResult) {
+            is SyncResult.Success -> {
+                Log.i(TAG, "Sync SUCCESS: ${syncResult.totalChanges} changes in ${syncResult.durationMs}ms")
+                // Set sync changes for UI notification (snackbar, bottom sheet)
+                if (syncResult.changes.isNotEmpty()) {
+                    syncScheduler.setSyncChanges(syncResult.changes)
+                }
+                Result.success(createSuccessOutput(syncResult))
+            }
+            is SyncResult.PartialSuccess -> {
+                Log.w(TAG, "Sync PARTIAL: ${syncResult.totalChanges} changes, ${syncResult.errors.size} errors")
+                // Partial success is still considered success for WorkManager
+                // The UI can check the error count in output data
+                // Set sync changes for UI notification
+                if (syncResult.changes.isNotEmpty()) {
+                    syncScheduler.setSyncChanges(syncResult.changes)
+                }
+                Result.success(createPartialOutput(syncResult))
+            }
+            is SyncResult.AuthError -> {
+                Log.e(TAG, "Sync AUTH ERROR: ${syncResult.message}")
+                // Auth errors are not retryable - user needs to re-authenticate
+                Result.failure(createErrorOutput(syncResult.message))
+            }
+            is SyncResult.Error -> {
+                Log.e(TAG, "Sync ERROR: ${syncResult.message} (retryable=${syncResult.isRetryable})")
+                if (syncResult.isRetryable && runAttemptCount < MAX_RETRY_ATTEMPTS) {
+                    Result.retry()
+                } else {
+                    Result.failure(createErrorOutput(syncResult.message))
+                }
+            }
+        }
+    }
+
+    private fun createSuccessOutput(result: SyncResult.Success): Data {
+        return Data.Builder()
+            .putInt(KEY_CALENDARS_SYNCED, result.calendarsSynced)
+            .putInt(KEY_EVENTS_PUSHED, result.eventsPushedCreated + result.eventsPushedUpdated + result.eventsPushedDeleted)
+            .putInt(KEY_EVENTS_PULLED, result.eventsPulledAdded + result.eventsPulledUpdated + result.eventsPulledDeleted)
+            .putInt(KEY_CONFLICTS_RESOLVED, result.conflictsResolved)
+            .putLong(KEY_DURATION_MS, result.durationMs)
+            .build()
+    }
+
+    private fun createPartialOutput(result: SyncResult.PartialSuccess): Data {
+        return Data.Builder()
+            .putInt(KEY_CALENDARS_SYNCED, result.calendarsSynced)
+            .putInt(KEY_EVENTS_PUSHED, result.eventsPushedCreated + result.eventsPushedUpdated + result.eventsPushedDeleted)
+            .putInt(KEY_EVENTS_PULLED, result.eventsPulledAdded + result.eventsPulledUpdated + result.eventsPulledDeleted)
+            .putInt(KEY_CONFLICTS_RESOLVED, result.conflictsResolved)
+            .putLong(KEY_DURATION_MS, result.durationMs)
+            .putString(KEY_ERROR_MESSAGE, "Partial sync: ${result.errors.size} errors")
+            .build()
+    }
+
+    private fun createErrorOutput(message: String): Data {
+        return Data.Builder()
+            .putString(KEY_ERROR_MESSAGE, message)
+            .build()
+    }
+}
+
+private const val MAX_RETRY_ATTEMPTS = 3

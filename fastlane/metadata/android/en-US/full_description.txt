@@ -1,0 +1,44 @@
+Your calendar. Your device. Your rules.
+
+A privacy-first calendar that works offline and looks beautiful. Connect to iCloud — or don't. Your schedule, your choice.
+
+FEATURES
+
+• Privacy-First — Zero analytics, zero tracking. Your schedule stays private.
+• Offline-First — Works without internet. Sync when you want, not when the app wants.
+• iCloud Sync — Native CalDAV support for Apple Calendar on Android.
+• Material You — Beautiful, modern design with dynamic theming.
+• Home Widget — Today's agenda at a glance.
+• Recurring Events — Full RFC 5545 RRULE support with exceptions.
+• Progressive Sync — Events appear in 2-5 seconds, not 30.
+• Search — Full-text search across all your events.
+• Timezone Support — Per-event timezone with smart display.
+
+SECURITY & PRIVACY
+
+Your Data Stays Yours:
+• No Analytics — Zero tracking, telemetry, or data collection
+• No Accounts — No KashCal account required
+• Local-First — Calendar data stored on your device
+• Open Source — Fully auditable codebase
+
+Secure by Design:
+• Encrypted Credentials — AES-256-GCM via Android Keystore
+• HTTPS Only — Cleartext traffic blocked
+• No WebViews — Native UI only, no embedded browsers
+• Minimal Permissions — Only what's necessary
+
+HOW IT WORKS
+
+All operations save locally first. Sync happens in the background — your calendar works even without internet or any external calendar service.
+
+WHY KASHCAL?
+
+Unlike other calendar apps:
+• No analytics or tracking
+• No account required
+• Full offline functionality
+• Open source and auditable
+• iCloud on Android (rare!)
+
+Source code: https://github.com/KashCal/KashCal

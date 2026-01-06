@@ -1,0 +1,19 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//KashCal//Test//EN
+BEGIN:VEVENT
+UID:folded-001@kashcal.test
+DTSTAMP:20241215T120000Z
+DTSTART:20241220T140000Z
+DTEND:20241220T150000Z
+SUMMARY:Event with Very Long Description
+DESCRIPTION:This is a very long description that needs to be folded across
+  multiple lines according to RFC 5545 which specifies that lines longer th
+ an 75 octets should be folded by inserting a CRLF followed by a single whi
+ tespace character. This ensures compatibility with older systems.
+LOCATION:Conference Room with a Very Long Name That Also Needs Folding Bec
+ ause It Exceeds the 75 Character Limit
+STATUS:CONFIRMED
+SEQUENCE:0
+END:VEVENT
+END:VCALENDAR

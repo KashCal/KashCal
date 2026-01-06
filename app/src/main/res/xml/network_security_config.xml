@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network Security Configuration for KashCal.
+
+    Security:
+    - Cleartext (HTTP) traffic is disabled by default
+    - Only HTTPS connections are allowed
+    - This is required for CalDAV sync with iCloud and other providers
+
+    Android 7.0+ (API 24+): This config is respected
+    Earlier versions: Cleartext was allowed by default anyway
+-->
+<network-security-config>
+    <!-- Block all cleartext (HTTP) traffic by default -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+    <!--
+        Debug builds: Allow self-signed certificates for local testing
+        This does NOT apply to release builds.
+    -->
+    <debug-overrides>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </debug-overrides>
+</network-security-config>

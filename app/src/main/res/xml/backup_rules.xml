@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Backup rules for Android 11 (API 30) and below.
+    Controls what data is backed up to Google Drive.
+
+    Included: Database, DataStore preferences
+    Excluded: Encrypted credentials (device-specific master key)
+-->
+<full-backup-content>
+    <!-- Include Room database -->
+    <include domain="database" path="." />
+
+    <!-- Include DataStore preferences -->
+    <include domain="file" path="datastore/" />
+
+    <!-- Include regular SharedPreferences -->
+    <include domain="sharedpref" path="." />
+
+    <!--
+        EXCLUDE: EncryptedSharedPreferences
+        Reason: Uses Android Keystore master key which is device-specific.
+        Restoring to a new device will fail decryption.
+        File: icloud_credentials.xml
+    -->
+    <exclude domain="sharedpref" path="icloud_credentials.xml" />
+
+    <!-- Note: cache/ is automatically excluded by Android backup system -->
+</full-backup-content>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="new_event"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_add"
+        android:shortcutShortLabel="@string/shortcut_new_event"
+        android:shortcutLongLabel="@string/shortcut_new_event_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="org.onekash.kashcal"
+            android:targetClass="org.onekash.kashcal.MainActivity">
+            <extra android:name="widget_action" android:value="create_event"/>
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="today"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_today"
+        android:shortcutShortLabel="@string/shortcut_today"
+        android:shortcutLongLabel="@string/shortcut_today_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="org.onekash.kashcal"
+            android:targetClass="org.onekash.kashcal.MainActivity">
+            <extra android:name="widget_action" android:value="go_to_today"/>
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="search"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_search"
+        android:shortcutShortLabel="@string/shortcut_search"
+        android:shortcutLongLabel="@string/shortcut_search_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="org.onekash.kashcal"
+            android:targetClass="org.onekash.kashcal.MainActivity">
+            <extra android:name="widget_action" android:value="open_search"/>
+        </intent>
+    </shortcut>
+</shortcuts>

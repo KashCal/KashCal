@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Today\'s Agenda</string>
+    <string name="widget_description">Shows today\'s calendar events</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_new_event">New Event</string>
+    <string name="shortcut_new_event_long">Create new event</string>
+    <string name="shortcut_today">Today</string>
+    <string name="shortcut_today_long">Go to today</string>
+    <string name="shortcut_search">Search</string>
+    <string name="shortcut_search_long">Search events</string>
+
+    <!-- ==================== Error Messages ==================== -->
+
+    <!-- Auth Errors -->
+    <string name="error_auth_title">Sign In Failed</string>
+    <string name="error_auth_invalid_credentials">Invalid Apple ID or app-specific password. Please check your credentials and try again.</string>
+    <string name="error_auth_app_specific_password_required">iCloud requires an app-specific password. Your regular Apple ID password won\'t work here.</string>
+    <string name="error_auth_session_expired_title">Session Expired</string>
+    <string name="error_auth_session_expired">Your iCloud session has expired. Please sign in again to continue syncing.</string>
+    <string name="error_auth_account_locked">Your Apple ID is locked. Please visit appleid.apple.com to unlock it.</string>
+
+    <!-- Network Errors -->
+    <string name="error_network_offline">You\'re offline. Changes will sync when you\'re back online.</string>
+    <string name="error_network_timeout">Connection timed out. Please check your internet and try again.</string>
+    <string name="error_network_ssl">Secure connection failed. Please check your network settings.</string>
+    <string name="error_network_unknown_host">Couldn\'t reach iCloud. Please check your internet connection.</string>
+    <string name="error_network_connection_failed">Connection failed. Please try again.</string>
+
+    <!-- Server Errors -->
+    <string name="error_server_unavailable">iCloud is temporarily unavailable. Please try again later.</string>
+    <string name="error_server_rate_limited">Too many requests. Please wait a moment and try again.</string>
+    <string name="error_server_forbidden">Access denied. You may not have permission for this calendar.</string>
+    <string name="error_server_not_found">The requested item was not found on the server.</string>
+    <string name="error_conflict_title">Sync Conflict</string>
+    <string name="error_conflict_generic">This event was modified on another device. Force sync to get the latest version.</string>
+    <string name="error_conflict_with_event">\"%1$s\" was modified on another device. Force sync to get the latest version.</string>
+    <string name="error_sync_token_expired">Sync data expired. Performing full sync…</string>
+
+    <!-- Event Errors -->
+    <string name="error_event_not_found">Event not found.</string>
+    <string name="error_calendar_not_found">Calendar not found.</string>
+    <string name="error_calendar_read_only">Cannot modify events in \"%1$s\" (read-only calendar).</string>
+    <string name="error_event_invalid_data">Invalid event data. Please check start and end times.</string>
+    <string name="error_event_invalid_recurrence">Invalid repeat pattern.</string>
+
+    <!-- Import/Export Errors -->
+    <string name="error_import_file_not_found">File not found or cannot be read.</string>
+    <string name="error_import_invalid_format">Invalid calendar file format.</string>
+    <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
+    <string name="error_export_failed">Failed to export events.</string>
+    <string name="error_export_no_events">No events to export.</string>
+
+    <!-- Storage Errors -->
+    <string name="error_storage_full_title">Storage Full</string>
+    <string name="error_storage_full">Not enough storage space. Please free up some space and try again.</string>
+    <string name="error_database_corruption_title">Data Error</string>
+    <string name="error_database_corruption">Your calendar data may be corrupted. Please contact support.</string>
+    <string name="error_migration_title">Update Error</string>
+    <string name="error_migration_failed">Failed to update app data. Please reinstall the app.</string>
+
+    <!-- Permission Errors -->
+    <string name="error_permission_notification_title">Enable Notifications?</string>
+    <string name="error_permission_notification">KashCal needs notification permission to remind you about upcoming events.</string>
+    <string name="error_permission_alarm_title">Enable Exact Alarms?</string>
+    <string name="error_permission_alarm">KashCal needs exact alarm permission for precise reminders.</string>
+    <string name="error_permission_storage">Storage permission required for import/export.</string>
+
+    <!-- Sync Errors -->
+    <string name="error_sync_no_accounts">No iCloud account configured. Set up iCloud to sync your calendars.</string>
+    <string name="error_sync_partial">Synced %1$d calendars, %2$d failed.</string>
+
+    <!-- Generic -->
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+
+    <!-- ==================== Action Labels ==================== -->
+    <string name="action_retry">Retry</string>
+    <string name="action_try_again">Try Again</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Not Now</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="action_learn_more">Learn More</string>
+    <string name="action_open_apple_id">Open Apple ID</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_force_sync">Force Sync</string>
+    <string name="action_sync_now">Sync Now</string>
+    <string name="action_details">Details</string>
+    <string name="action_set_up">Set Up</string>
+    <string name="action_contact_support">Contact Support</string>
+    <string name="action_view">View</string>
+    <string name="action_enable">Enable</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Sync complete</string>
+    <string name="success_event_saved">Event saved</string>
+    <string name="success_event_deleted">Event deleted</string>
+    <string name="success_import_complete">Imported %1$d events</string>
+    <string name="success_export_complete">Calendar exported</string>
+    <string name="success_changes_saved_offline">Changes saved. Will sync when online.</string>
+</resources>

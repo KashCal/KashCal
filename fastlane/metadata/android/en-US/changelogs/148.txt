@@ -1,0 +1,5 @@
+Version 15.1.0:
+- Updated copyright and documentation
+- Bug fixes for exception event handling
+- Time validation with visual error feedback
+- Improved iCloud VALARM compatibility

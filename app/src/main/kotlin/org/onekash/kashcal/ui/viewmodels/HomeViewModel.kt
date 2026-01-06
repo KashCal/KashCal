@@ -1,0 +1,1793 @@
+package org.onekash.kashcal.ui.viewmodels
+
+import android.util.Log
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.toPersistentMap
+import kotlinx.collections.immutable.toPersistentSet
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.di.IoDispatcher
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.error.CalendarError
+import org.onekash.kashcal.error.ErrorActionCallback
+import org.onekash.kashcal.error.ErrorMapper
+import org.onekash.kashcal.error.ErrorPresentation
+import org.onekash.kashcal.network.NetworkMonitor
+import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.sync.debug.SyncDebugLog
+import org.onekash.kashcal.ui.components.generateSnackbarMessage
+import org.onekash.kashcal.util.DateTimeUtils
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Calendar
+import java.util.Locale
+import javax.inject.Inject
+
+private const val TAG = "HomeViewModel"
+
+/**
+ * ViewModel for the HomeScreen (main calendar view).
+ *
+ * Architecture:
+ * - Offline-first: All operations work locally first
+ * - EventCoordinator: Single entry point for event operations
+ * - EventReader: Efficient queries via occurrences table
+ * - Flow-based: Reactive state with StateFlow
+ *
+ * Features:
+ * - Month view with event dots
+ * - Day selection with event list
+ * - Calendar visibility filtering
+ * - Search functionality
+ * - Network-aware sync
+ */
+@HiltViewModel
+class HomeViewModel @Inject constructor(
+    private val eventCoordinator: EventCoordinator,
+    private val eventReader: EventReader,
+    private val dataStore: KashCalDataStore,
+    private val authManager: ICloudAuthManager,
+    private val syncScheduler: SyncScheduler,
+    private val networkMonitor: NetworkMonitor,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(HomeUiState())
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    /** Network connectivity state for UI */
+    val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
+
+    /** Default reminder for timed events (minutes before) */
+    val defaultReminderTimed: StateFlow<Int> = dataStore.defaultReminderMinutes
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 15)
+
+    /** Default reminder for all-day events (minutes before) */
+    val defaultReminderAllDay: StateFlow<Int> = dataStore.defaultAllDayReminder
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1440) // 1 day
+
+    // Track if startup sync has been triggered
+    private var hasTriggeredStartupSync = false
+
+    // Track previous network state for transitions
+    private var wasOnline = true
+
+    // Job for search debouncing (cancel previous search when new query arrives)
+    private var searchJob: Job? = null
+
+    // Job for on-demand dots loading (cancel previous on fast swipe)
+    private var loadDotsJob: Job? = null
+
+    // Job for day events observation (cancel previous when date changes)
+    // Uses Flow for progressive updates during sync
+    private var dayEventsJob: Job? = null
+
+    // Job for agenda events observation (cancel previous when reopened)
+    // Uses Flow for progressive updates during sync
+    private var agendaEventsJob: Job? = null
+
+    // Job for occurrence extension (cancel previous on rapid swipe)
+    private var extensionJob: Job? = null
+
+    // Suppress sync indicator for silent syncs (cold start, resume, force full sync with banner)
+    // Only pull-to-refresh shows the spinning icon since it's user-initiated
+    private var suppressSyncIndicator = false
+
+    init {
+        Log.d(TAG, "ViewModel init")
+
+        // Set initial viewing state to today
+        val today = Calendar.getInstance()
+        _uiState.value = _uiState.value.copy(
+            viewingMonth = today.get(Calendar.MONTH),
+            viewingYear = today.get(Calendar.YEAR)
+        )
+
+        // Initialize asynchronously
+        viewModelScope.launch {
+            initializeAsync()
+        }
+
+        // Monitor network transitions
+        viewModelScope.launch {
+            networkMonitor.isOnline.collect { online ->
+                _uiState.value = _uiState.value.copy(isOnline = online)
+
+                if (wasOnline && !online) {
+                    Log.d(TAG, "Network: Went offline")
+                } else if (!wasOnline && online) {
+                    Log.d(TAG, "Network: Back online, triggering sync (silent)")
+                    showSnackbar("Back online, syncing...")
+                    syncScheduler.setShowBannerForSync(false)  // Snackbar is sufficient feedback
+                    syncScheduler.requestImmediateSync()
+                }
+                wasOnline = online
+            }
+        }
+
+        // Observe sync status for inline banner
+        observeSyncStatus()
+
+        // Observe sync changes for snackbar notification
+        observeSyncChanges()
+    }
+
+    /**
+     * Async initialization - Android recommended pattern.
+     * Avoids blocking main thread during startup.
+     */
+    private suspend fun initializeAsync() {
+        try {
+            Log.d(TAG, "initializeAsync - START")
+
+            // Start observing calendars (reactive Flow - auto-updates when calendars change)
+            // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
+            observeCalendars()
+
+            // Check if iCloud is configured
+            checkICloudStatus()
+
+            // Show onboarding sheet if: not configured AND not dismissed before
+            if (!_uiState.value.isConfigured) {
+                val dismissed = dataStore.onboardingDismissed.first()
+                if (!dismissed) {
+                    Log.d(TAG, "Showing onboarding sheet (first launch, iCloud not configured)")
+                    _uiState.value = _uiState.value.copy(showOnboardingSheet = true)
+                }
+            }
+
+            // Build event dots for current month ±6 months
+            val today = Calendar.getInstance()
+            buildEventDots(today.get(Calendar.YEAR), today.get(Calendar.MONTH))
+
+            // Auto-select today
+            goToToday()
+
+            Log.d(TAG, "initializeAsync - COMPLETE")
+        } catch (e: Exception) {
+            Log.e(TAG, "initializeAsync FAILED", e)
+            _uiState.value = _uiState.value.copy(
+                syncMessage = "Initialization failed: ${e.message}"
+            )
+        }
+    }
+
+    // ==================== iCloud Status ====================
+
+    /**
+     * Check if iCloud is configured and update state.
+     */
+    private suspend fun checkICloudStatus() {
+        val account = withContext(ioDispatcher) {
+            authManager.loadAccount()
+        }
+
+        if (account != null && account.hasCredentials()) {
+            _uiState.value = _uiState.value.copy(
+                isConfigured = true,
+                isICloudConnected = account.isEnabled
+            )
+            Log.d(TAG, "iCloud configured: ${account.appleId}")
+        } else {
+            _uiState.value = _uiState.value.copy(
+                isConfigured = false,
+                isICloudConnected = false,
+                syncMessage = "Tap to set up iCloud"
+            )
+            Log.d(TAG, "iCloud not configured")
+        }
+    }
+
+    /**
+     * Refresh iCloud status (called when returning from settings).
+     * Also reloads calendars to pick up any newly discovered calendars from iCloud.
+     */
+    fun refreshICloudStatus() {
+        viewModelScope.launch {
+            checkICloudStatus()
+
+            // Reload calendars to pick up newly discovered calendars from iCloud
+            // (observeCalendars Flow should auto-update, but force refresh for safety)
+            loadCalendars()
+
+            if (_uiState.value.isConfigured && !hasTriggeredStartupSync) {
+                // First sync after iCloud setup - show banner for user feedback
+                hasTriggeredStartupSync = true
+                suppressSyncIndicator = true  // Has banner - no spinning icon needed
+                syncScheduler.setShowBannerForSync(true)  // Initial setup - user expects confirmation
+                Log.d(TAG, "refreshICloudStatus: First sync after iCloud setup (with banner, no icon)")
+                performSync()
+            }
+
+            // Rebuild event dots with new calendars
+            reloadCurrentView()
+        }
+    }
+
+    // ==================== Startup Sync ====================
+
+    /**
+     * Trigger startup sync after UI is ready.
+     * Called from Activity's LaunchedEffect to ensure lifecycle is STARTED.
+     */
+    fun triggerStartupSync() {
+        if (!_uiState.value.isConfigured) {
+            Log.d(TAG, "triggerStartupSync: Not configured, skipping")
+            return
+        }
+        if (hasTriggeredStartupSync) {
+            Log.d(TAG, "triggerStartupSync: Already triggered, skipping")
+            return
+        }
+        hasTriggeredStartupSync = true
+        suppressSyncIndicator = true  // Silent cold start - no spinning icon
+        syncScheduler.setShowBannerForSync(false)
+        Log.d(TAG, "triggerStartupSync: Starting sync (silent, no icon)")
+        performSync()
+    }
+
+    // ==================== Sync Status Observation ====================
+
+    /**
+     * Observe sync status from WorkManager and update banner state.
+     *
+     * Banner visibility is context-aware (controlled by syncScheduler.showBannerForSync):
+     * - Silent syncs (startup, pull-to-refresh): no banner shown
+     * - Verbose syncs (force full sync, iCloud setup): full banner shown
+     * - Errors: always shown regardless of flag
+     */
+    private fun observeSyncStatus() {
+        viewModelScope.launch {
+            syncScheduler.observeImmediateSyncStatus().collect { status ->
+                val showBanner = syncScheduler.showBannerForSync.value
+                Log.d(TAG, "Sync status changed: $status (showBanner=$showBanner)")
+                when (status) {
+                    is SyncStatus.Running, is SyncStatus.Enqueued -> {
+                        // Only show icon if not suppressed (only pull-to-refresh shows icon)
+                        // Only show banner if flag is set (force sync, iCloud setup)
+                        _uiState.value = _uiState.value.copy(
+                            isSyncing = !suppressSyncIndicator,
+                            showSyncBanner = showBanner,
+                            syncBannerMessage = if (status is SyncStatus.Running)
+                                "Syncing calendars..." else "Preparing to sync..."
+                        )
+                    }
+                    is SyncStatus.Succeeded -> {
+                        suppressSyncIndicator = false  // Reset flag for next sync
+                        _uiState.value = _uiState.value.copy(
+                            isSyncing = false,
+                            showSyncBanner = showBanner,
+                            syncBannerMessage = "Sync complete"
+                        )
+                        // Reload events after successful sync
+                        reloadCurrentView()
+                        // Auto-dismiss after 2 seconds (only if banner was shown)
+                        if (showBanner) {
+                            delay(2000)
+                            _uiState.value = _uiState.value.copy(showSyncBanner = false)
+                            syncScheduler.resetBannerFlag()
+                        }
+                    }
+                    is SyncStatus.Failed -> {
+                        suppressSyncIndicator = false  // Reset flag for next sync
+                        // Always show errors regardless of flag
+                        _uiState.value = _uiState.value.copy(
+                            isSyncing = false,
+                            showSyncBanner = true,
+                            syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}"
+                        )
+                        // Auto-dismiss after 3 seconds
+                        delay(3000)
+                        _uiState.value = _uiState.value.copy(showSyncBanner = false)
+                        syncScheduler.resetBannerFlag()
+                    }
+                    is SyncStatus.Idle, is SyncStatus.Cancelled, is SyncStatus.Blocked -> {
+                        suppressSyncIndicator = false  // Reset flag for next sync
+                        _uiState.value = _uiState.value.copy(
+                            showSyncBanner = false,
+                            isSyncing = false
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Observe sync changes from SyncScheduler and show snackbar notification.
+     *
+     * Shows snackbar for ALL syncs (startup, pull-to-refresh, background) when changes are found.
+     * The snackbar includes a "View" action to open the bottom sheet with change details.
+     */
+    private fun observeSyncChanges() {
+        viewModelScope.launch {
+            syncScheduler.lastSyncChanges.collect { changes ->
+                if (changes.isNotEmpty()) {
+                    val message = generateSnackbarMessage(changes)
+                    if (message != null) {
+                        Log.d(TAG, "Sync changes notification: $message (${changes.size} changes)")
+                        // Store changes for bottom sheet
+                        _uiState.value = _uiState.value.copy(
+                            syncChanges = changes.toPersistentList()
+                        )
+                        // Show snackbar with "View" action
+                        showSnackbar(message) {
+                            // Open bottom sheet on "View" tap
+                            _uiState.value = _uiState.value.copy(showSyncChangesSheet = true)
+                        }
+                    }
+                    // Clear after consumed
+                    syncScheduler.clearSyncChanges()
+                }
+            }
+        }
+    }
+
+    // ==================== Sync Operations ====================
+
+    /**
+     * Pull-to-refresh sync.
+     */
+    fun refreshSync() {
+        if (_uiState.value.isSyncing) {
+            Log.d(TAG, "Sync already in progress, ignoring refresh")
+            return
+        }
+        suppressSyncIndicator = false  // User-initiated - show spinning icon
+        syncScheduler.setShowBannerForSync(false)
+        Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
+        performSync()
+    }
+
+    /**
+     * Force full sync (clears sync tokens).
+     */
+    fun forceFullSync() {
+        if (_uiState.value.isSyncing) {
+            Log.d(TAG, "Sync already in progress, ignoring force sync")
+            return
+        }
+        suppressSyncIndicator = true  // Has banner - no spinning icon needed
+        syncScheduler.setShowBannerForSync(true)
+        Log.d(TAG, "Force full sync requested (with banner, no icon)")
+        syncScheduler.requestImmediateSync(forceFullSync = true)
+    }
+
+    /**
+     * Sync on app resume if not already syncing.
+     * Called from Activity.onResume() for background-to-foreground transitions.
+     *
+     * No cooldown - syncs every time app resumes because:
+     * - Casual users have long gaps (hours) between app opens anyway
+     * - The ctag check is lightweight (~50ms) if nothing changed
+     * - Shared calendar users need fresh data when returning to app
+     */
+    fun syncOnResumeIfNeeded() {
+        if (!_uiState.value.isConfigured) {
+            Log.d(TAG, "syncOnResumeIfNeeded: Not configured, skipping")
+            return
+        }
+        if (_uiState.value.isSyncing) {
+            Log.d(TAG, "syncOnResumeIfNeeded: Already syncing, skipping")
+            return
+        }
+        SyncDebugLog.i(TAG, "syncOnResumeIfNeeded: Triggering sync on app resume")
+        suppressSyncIndicator = true  // Silent sync - no spinning icon
+        syncScheduler.setShowBannerForSync(false)
+        performSync()
+    }
+
+    /**
+     * Perform sync operation.
+     *
+     * Sets isSyncing=true immediately for duplicate sync guard, then enqueues WorkManager work.
+     * All other state updates (isSyncing=false, reloadCurrentView) happen via observeSyncStatus()
+     * when WorkManager emits SyncStatus.Succeeded/Failed/etc.
+     */
+    private fun performSync() {
+        if (!_uiState.value.isConfigured) {
+            Log.d(TAG, "performSync: Not configured, skipping")
+            return
+        }
+
+        // Set isSyncing immediately to prevent duplicate sync requests (only if not suppressed)
+        // suppressSyncIndicator is true for silent syncs (cold start, resume, force full sync with banner)
+        // Only pull-to-refresh shows the icon since it's user-initiated
+        if (!suppressSyncIndicator) {
+            _uiState.value = _uiState.value.copy(isSyncing = true)
+        }
+
+        // Request sync - observeSyncStatus() handles all other state updates
+        // including calling reloadCurrentView() when sync succeeds
+        Log.d(TAG, "performSync: Requesting immediate sync (showIcon=${!suppressSyncIndicator})")
+        syncScheduler.requestImmediateSync()
+    }
+
+    // ==================== Calendar Loading ====================
+
+    /**
+     * Start observing calendars from database (reactive via Flow).
+     * Uses EventCoordinator for proper architecture pattern.
+     *
+     * Default calendar priority:
+     * 1. User preference from DataStore (set in Settings)
+     * 2. Database is_default column (server-side default)
+     * 3. First calendar in list
+     */
+    private fun observeCalendars() {
+        viewModelScope.launch {
+            try {
+                // Combine calendars with user's default calendar preference
+                combine(
+                    eventCoordinator.getAllCalendars(),
+                    dataStore.defaultCalendarId
+                ) { calendars, userPrefId ->
+                    // User preference takes priority, but validate it exists
+                    val defaultCalId = userPrefId?.takeIf { id -> calendars.any { it.id == id } }
+                        ?: calendars.find { it.isDefault }?.id  // Fallback to DB is_default
+                        ?: calendars.firstOrNull()?.id          // Fallback to first calendar
+                    calendars to defaultCalId
+                }.collect { (calendars, defaultCalId) ->
+                    _uiState.value = _uiState.value.copy(
+                        calendars = calendars.toPersistentList(),
+                        defaultCalendarId = defaultCalId
+                    )
+                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, default=$defaultCalId")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error observing calendars", e)
+            }
+        }
+    }
+
+    /**
+     * Load all calendars from database (one-shot for manual refresh).
+     * Uses same default calendar priority as observeCalendars().
+     */
+    private fun loadCalendars() {
+        viewModelScope.launch {
+            try {
+                val (calendars, defaultCalId) = withContext(ioDispatcher) {
+                    val cals = eventCoordinator.getAllCalendars().first()
+                    // User preference > DB is_default > first calendar
+                    val userPrefId = dataStore.getDefaultCalendarId()
+                    val defaultId = userPrefId?.takeIf { id -> cals.any { it.id == id } }
+                        ?: cals.find { it.isDefault }?.id
+                        ?: cals.firstOrNull()?.id
+                    cals to defaultId
+                }
+                _uiState.value = _uiState.value.copy(
+                    calendars = calendars.toPersistentList(),
+                    defaultCalendarId = defaultCalId
+                )
+                Log.d(TAG, "Loaded ${calendars.size} calendars, default=$defaultCalId")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading calendars", e)
+            }
+        }
+    }
+
+    /**
+     * Refresh calendars list.
+     */
+    fun refreshCalendars() {
+        loadCalendars()
+    }
+
+    // ==================== Calendar Visibility ====================
+
+    /**
+     * Toggle calendar visibility.
+     * Uses DB Calendar.isVisible as source of truth.
+     */
+    fun toggleCalendarVisibility(calendarId: Long) {
+        viewModelScope.launch {
+            // Get current visibility from calendar entity
+            val calendar = _uiState.value.calendars.find { it.id == calendarId }
+            val newVisible = !(calendar?.isVisible ?: true)
+
+            // Update DB (source of truth) - UI updates automatically via calendars Flow observation
+            eventCoordinator.setCalendarVisibility(calendarId, newVisible)
+
+            // Rebuild dots with new visibility
+            reloadCurrentView()
+        }
+    }
+
+    /**
+     * Show all calendars.
+     * Uses DB Calendar.isVisible as source of truth.
+     */
+    fun showAllCalendars() {
+        viewModelScope.launch {
+            // Update DB for each calendar (source of truth)
+            _uiState.value.calendars.forEach { calendar ->
+                eventCoordinator.setCalendarVisibility(calendar.id, true)
+            }
+            reloadCurrentView()
+        }
+    }
+
+    /**
+     * Toggle calendar visibility sheet.
+     */
+    fun toggleCalendarVisibilitySheet() {
+        _uiState.value = _uiState.value.copy(
+            showCalendarVisibility = !_uiState.value.showCalendarVisibility
+        )
+    }
+
+    // ==================== Event Dots ====================
+
+    /**
+     * Encode year and month into a single integer for range comparison.
+     * Format: year * 12 + month (handles year boundaries correctly)
+     */
+    private fun encodeMonth(year: Int, month: Int): Int = year * 12 + month
+
+    /**
+     * Decode encoded month back to year and month.
+     */
+    private fun decodeMonth(encoded: Int): Pair<Int, Int> = (encoded / 12) to (encoded % 12)
+
+    /**
+     * Check if a month has actually loaded dots (not just requested).
+     * Uses Set-based tracking to avoid false cache hits from cancelled loads.
+     */
+    private fun isMonthCached(year: Int, month: Int): Boolean {
+        val encoded = encodeMonth(year, month)
+        return encoded in _uiState.value.loadedMonths
+    }
+
+    /**
+     * Ensure dots are loaded for the given month.
+     * Loads on-demand if not cached.
+     */
+    private fun ensureDotsForMonth(year: Int, month: Int) {
+        if (!isMonthCached(year, month)) {
+            loadDotsForMonth(year, month)
+        }
+    }
+
+    /**
+     * Load dots for a single month (on-demand loading for months beyond initial cache).
+     * Cancels previous load if still running (handles fast swipe).
+     */
+    private fun loadDotsForMonth(year: Int, month: Int) {
+        // Cancel previous load if still running (fast swipe scenario)
+        loadDotsJob?.cancel()
+
+        loadDotsJob = viewModelScope.launch {
+            try {
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val startTs = calendar.timeInMillis
+                calendar.add(Calendar.MONTH, 1)
+                val endTs = calendar.timeInMillis
+
+                val occurrences = withContext(ioDispatcher) {
+                    eventReader.getVisibleOccurrencesInRange(startTs, endTs).first()
+                }
+
+                val calendarColors = _uiState.value.calendars.associate { it.id to it.color }
+                val monthKey = String.format("%04d-%02d", year, month + 1)
+                val monthDots = mutableMapOf<Int, MutableList<Int>>()
+
+                for (occurrence in occurrences) {
+                    val color = calendarColors[occurrence.calendarId] ?: 0xFF6200EE.toInt()
+                    var currentDayCode = occurrence.startDay
+                    while (currentDayCode <= occurrence.endDay) {
+                        val (occYear, occMonth, day) = parseDayFormat(currentDayCode)
+                        // Only add dots for target month
+                        if (occYear == year && occMonth == month) {
+                            val dayColors = monthDots.getOrPut(day) { mutableListOf() }
+                            if (!dayColors.contains(color)) {
+                                dayColors.add(color)
+                            }
+                        }
+                        currentDayCode = Occurrence.incrementDayCode(currentDayCode)
+                    }
+                }
+
+                // Merge into existing cache
+                val currentDots = _uiState.value.eventDots.toMutableMap()
+                currentDots[monthKey] = monthDots.mapValues { it.value.toPersistentList() }.toPersistentMap()
+
+                // Mark month as actually loaded (not just requested)
+                // This ensures cancelled loads don't falsely mark months as cached
+                val loadedMonthEncoded = encodeMonth(year, month)
+                _uiState.value = _uiState.value.copy(
+                    eventDots = currentDots.toPersistentMap(),
+                    loadedMonths = _uiState.value.loadedMonths.add(loadedMonthEncoded)
+                )
+
+                Log.d(TAG, "Loaded dots for $year-${month + 1}, total cached months: ${_uiState.value.loadedMonths.size}")
+            } catch (e: CancellationException) {
+                throw e  // Don't catch cancellation
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading dots for month $year-${month + 1}", e)
+            }
+        }
+    }
+
+    /**
+     * Build event dots for ±6 months around the given month.
+     */
+    private fun buildEventDots(year: Int, month: Int) {
+        viewModelScope.launch {
+            try {
+                val dots = mutableMapOf<String, MutableMap<Int, MutableList<Int>>>()
+
+                // Calculate cache range bounds BEFORE modifying calendar
+                val centerEncoded = encodeMonth(year, month)
+                val startEncoded = centerEncoded - 6
+                val endEncoded = centerEncoded + 6
+
+                // Get range: 6 months before to 6 months after
+                val calendar = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+
+                // Go back 6 months
+                calendar.add(Calendar.MONTH, -6)
+                val startTs = calendar.timeInMillis
+
+                // Go forward 13 months (to include all of +6 month)
+                // 13 = -6 + 13 = +7, so endTs is first moment of month +7
+                // This ensures all events in month +6 are included (start_ts <= endTs)
+                calendar.add(Calendar.MONTH, 13)
+                val endTs = calendar.timeInMillis
+
+                // Query occurrences in range (uses visible calendars from DataStore)
+                val occurrences = withContext(ioDispatcher) {
+                    eventReader.getVisibleOccurrencesInRange(startTs, endTs).first()
+                }
+
+                // Get calendar colors map
+                val calendarColors = _uiState.value.calendars.associate { it.id to it.color }
+
+                // Group by month and day - iterate through ALL days of multi-day events
+                for (occurrence in occurrences) {
+                    val color = calendarColors[occurrence.calendarId] ?: 0xFF6200EE.toInt()
+
+                    // Iterate through each day this occurrence spans
+                    var currentDayCode = occurrence.startDay
+                    while (currentDayCode <= occurrence.endDay) {
+                        val (occYear, occMonth, day) = parseDayFormat(currentDayCode)
+                        val key = String.format("%04d-%02d", occYear, occMonth + 1)
+
+                        val monthMap = dots.getOrPut(key) { mutableMapOf() }
+                        val dayColors = monthMap.getOrPut(day) { mutableListOf() }
+                        if (!dayColors.contains(color)) {
+                            dayColors.add(color)
+                        }
+
+                        currentDayCode = Occurrence.incrementDayCode(currentDayCode)
+                    }
+                }
+
+                // Convert to persistent immutable collections
+                val immutableDots = dots.mapValues { (_, monthMap) ->
+                    monthMap.mapValues { (_, dayColors) -> dayColors.toPersistentList() }.toPersistentMap()
+                }.toPersistentMap()
+
+                // Build set of loaded months (all months in the ±6 range)
+                val loadedMonthsSet = (startEncoded..endEncoded)
+                    .toSet()
+                    .toPersistentSet()
+
+                // Update state with dots and loaded months set
+                _uiState.value = _uiState.value.copy(
+                    eventDots = immutableDots,
+                    loadedMonths = loadedMonthsSet
+                )
+
+                val (startYear, startMonth) = decodeMonth(startEncoded)
+                val (endYear, endMonth) = decodeMonth(endEncoded)
+                Log.d(TAG, "Built event dots for ${dots.size} months, loaded ${loadedMonthsSet.size} months: $startYear-${startMonth + 1} to $endYear-${endMonth + 1}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Error building event dots", e)
+            }
+        }
+    }
+
+    // ==================== Navigation ====================
+
+    /**
+     * Navigate to today and select it.
+     */
+    fun goToToday() {
+        val today = Calendar.getInstance()
+        val year = today.get(Calendar.YEAR)
+        val month = today.get(Calendar.MONTH)
+
+        _uiState.value = _uiState.value.copy(
+            viewingYear = year,
+            viewingMonth = month,
+            pendingNavigateToToday = true
+        )
+
+        selectDate(today.timeInMillis)
+    }
+
+    /**
+     * Clear the navigate to today flag (consumed by UI).
+     */
+    fun clearNavigateToToday() {
+        _uiState.value = _uiState.value.copy(pendingNavigateToToday = false)
+    }
+
+    /**
+     * Navigate to a specific month.
+     */
+    fun navigateToMonth(year: Int, month: Int) {
+        _uiState.value = _uiState.value.copy(
+            viewingYear = year,
+            viewingMonth = month,
+            pendingNavigateToMonth = year to month,
+            showYearOverlay = false  // Auto-dismiss year overlay on month selection
+        )
+
+        // Only load if outside cached range (not full rebuild!)
+        ensureDotsForMonth(year, month)
+    }
+
+    /**
+     * Clear the navigate to month flag (consumed by UI).
+     */
+    fun clearNavigateToMonth() {
+        _uiState.value = _uiState.value.copy(pendingNavigateToMonth = null)
+    }
+
+    /**
+     * Set the viewing month/year (called on swipe).
+     */
+    fun setViewingMonth(year: Int, month: Int) {
+        _uiState.value = _uiState.value.copy(
+            viewingYear = year,
+            viewingMonth = month
+        )
+
+        // Load dots if outside cached range (on-demand loading)
+        ensureDotsForMonth(year, month)
+
+        // Trigger occurrence extension if navigating far into future (debounced)
+        triggerOccurrenceExtension(year, month)
+    }
+
+    /**
+     * Trigger on-demand occurrence extension with debouncing.
+     * When user navigates far into the future, extends occurrences for recurring events
+     * that don't have occurrences generated that far ahead.
+     *
+     * Debouncing prevents extension spam when user swipes rapidly through months.
+     */
+    private fun triggerOccurrenceExtension(year: Int, month: Int) {
+        extensionJob?.cancel()
+        extensionJob = viewModelScope.launch {
+            delay(500L)  // Debounce rapid swipes
+
+            try {
+                val targetMs = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, 1)
+                }.timeInMillis
+
+                val extended = withContext(ioDispatcher) {
+                    eventCoordinator.extendOccurrencesIfNeeded(targetMs)
+                }
+
+                // Reload dots if we actually extended anything
+                if (extended > 0) {
+                    Log.d(TAG, "Extended occurrences for $extended events (navigated to $year-${month + 1})")
+                    loadDotsForMonth(year, month)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to extend occurrences: ${e.message}")
+            }
+        }
+    }
+
+    // ==================== Day Selection ====================
+
+    /**
+     * Select a date and load its events.
+     */
+    fun selectDate(dateMillis: Long) {
+        _uiState.value = _uiState.value.copy(
+            selectedDate = dateMillis,
+            selectedDayLabel = formatDateLabel(dateMillis),
+            isLoadingDayEvents = true
+        )
+
+        loadEventsForSelectedDay(dateMillis)
+    }
+
+    /**
+     * Observe events for the selected day using reactive Flow.
+     *
+     * Uses dayCode-based query (YYYYMMDD) instead of timestamp-based query
+     * to avoid timezone boundary issues with all-day events.
+     *
+     * All-day events are stored as UTC midnight timestamps. A timestamp-based
+     * query using local timezone boundaries can incorrectly match events on
+     * adjacent days due to UTC offset. The dayCode query uses pre-calculated
+     * start_day/end_day columns that are timezone-aware.
+     *
+     * PROGRESSIVE LOADING: Events appear as they sync because this uses Flow
+     * collection instead of one-shot query. Room Flow emits updates when
+     * occurrences table changes.
+     */
+    private fun loadEventsForSelectedDay(dateMillis: Long) {
+        // Cancel any previous day events observation
+        dayEventsJob?.cancel()
+
+        // Convert to dayCode using java.time (Android recommended API)
+        // This gives us the LOCAL date the user selected in the UI
+        val localDate = Instant.ofEpochMilli(dateMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+        val dayCode = localDate.year * 10000 + localDate.monthValue * 100 + localDate.dayOfMonth
+
+        // Start observing events for this day (reactive - updates as sync progresses)
+        dayEventsJob = viewModelScope.launch {
+            try {
+                eventReader.getVisibleOccurrencesForDay(dayCode)
+                    .distinctUntilChanged()
+                    .map { occurrences ->
+                        // Load the actual events for these occurrences
+                        // CRITICAL: Use exceptionEventId if present, otherwise eventId
+                        // This ensures exception events are loaded (not master) so:
+                        // 1. UI shows exception's modified data (title, time, etc.)
+                        // 2. occurrenceMap lookup works in HomeScreen
+                        // 3. Edit operations get the correct event/occurrence context
+                        // Pattern matches EventReader.getEventsForDay() and HomeScreen.occurrenceMap
+                        val eventIds = occurrences.map { occ ->
+                            occ.exceptionEventId ?: occ.eventId
+                        }.distinct()
+                        val events = withContext(ioDispatcher) {
+                            eventIds.mapNotNull { eventReader.getEventById(it) }
+                        }
+                        occurrences to events
+                    }
+                    .collect { (occurrences, events) ->
+                        _uiState.value = _uiState.value.copy(
+                            selectedDayOccurrences = occurrences.toPersistentList(),
+                            selectedDayEvents = events.toPersistentList(),
+                            isLoadingDayEvents = false
+                        )
+                        Log.d(TAG, "Day events updated: ${events.size} events (dayCode=$dayCode)")
+                    }
+            } catch (e: CancellationException) {
+                // Normal cancellation when day changes - don't log as error
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error observing events for day", e)
+                _uiState.value = _uiState.value.copy(isLoadingDayEvents = false)
+            }
+        }
+    }
+
+    /**
+     * Format date for display (e.g., "December 17, 2024").
+     */
+    private fun formatDateLabel(dateMillis: Long): String {
+        val format = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        return format.format(dateMillis)
+    }
+
+    // ==================== Search ====================
+
+    /**
+     * Activate search mode.
+     */
+    fun activateSearch() {
+        _uiState.value = _uiState.value.copy(
+            isSearchActive = true,
+            searchQuery = "",
+            searchResults = persistentListOf(),
+            searchDateFilter = DateFilter.AnyTime,
+            showSearchDatePicker = false,
+            searchDateRangeStart = null
+        )
+    }
+
+    /**
+     * Deactivate search mode.
+     * Resets all search state including date filter.
+     */
+    fun deactivateSearch() {
+        _uiState.value = _uiState.value.copy(
+            isSearchActive = false,
+            searchQuery = "",
+            searchResults = persistentListOf(),
+            searchDateFilter = DateFilter.AnyTime,
+            showSearchDatePicker = false,
+            searchDateRangeStart = null
+        )
+    }
+
+    /**
+     * Update search query with debouncing.
+     * Cancels any pending search and waits 300ms before executing.
+     */
+    fun updateSearchQuery(query: String) {
+        _uiState.value = _uiState.value.copy(searchQuery = query)
+
+        // Cancel any pending search
+        searchJob?.cancel()
+
+        if (query.length >= 2) {
+            searchJob = viewModelScope.launch {
+                delay(300)  // 300ms debounce
+                performSearch(query)
+            }
+        } else {
+            _uiState.value = _uiState.value.copy(searchResults = persistentListOf())
+        }
+    }
+
+    /**
+     * Toggle include past events in search.
+     */
+    fun toggleSearchIncludePast() {
+        val newValue = !_uiState.value.searchIncludePast
+        _uiState.value = _uiState.value.copy(searchIncludePast = newValue)
+
+        // Re-run search with new setting
+        if (_uiState.value.searchQuery.length >= 2) {
+            performSearch(_uiState.value.searchQuery)
+        }
+    }
+
+    // ==================== Search Date Filter ====================
+
+    /**
+     * Set the search date filter and re-run search.
+     * Called when user taps a filter chip or selects a date from picker.
+     */
+    fun setSearchDateFilter(filter: DateFilter) {
+        _uiState.value = _uiState.value.copy(
+            searchDateFilter = filter,
+            showSearchDatePicker = false,  // Auto-dismiss picker on selection
+            searchDateRangeStart = null    // Reset range selection
+        )
+
+        // Re-run search with new filter
+        if (_uiState.value.searchQuery.length >= 2) {
+            performSearch(_uiState.value.searchQuery)
+        }
+    }
+
+    /**
+     * Show the search date picker bottom sheet.
+     */
+    fun showSearchDatePicker() {
+        _uiState.value = _uiState.value.copy(
+            showSearchDatePicker = true,
+            searchDateRangeStart = null  // Reset range selection when opening
+        )
+    }
+
+    /**
+     * Hide the search date picker bottom sheet.
+     */
+    fun hideSearchDatePicker() {
+        _uiState.value = _uiState.value.copy(
+            showSearchDatePicker = false,
+            searchDateRangeStart = null  // Reset range selection
+        )
+    }
+
+    /**
+     * Handle date selection in the search date picker.
+     *
+     * Implements single-tap / double-tap behavior for date selection:
+     * - First tap: Stores date as range start
+     * - Second tap on same date: Creates SingleDay filter
+     * - Second tap on different date: Creates CustomRange filter
+     *
+     * @param dateMs Selected date in epoch milliseconds
+     */
+    fun onSearchDateSelected(dateMs: Long) {
+        val rangeStart = _uiState.value.searchDateRangeStart
+
+        if (rangeStart == null) {
+            // First tap - store as range start
+            _uiState.value = _uiState.value.copy(searchDateRangeStart = dateMs)
+        } else {
+            // Second tap - determine if single day or range
+            val normalizedStart = normalizeToMidnight(rangeStart)
+            val normalizedEnd = normalizeToMidnight(dateMs)
+
+            val filter = if (normalizedStart == normalizedEnd) {
+                // Same day - single day filter
+                DateFilter.SingleDay(dateMs)
+            } else {
+                // Different days - create range (ensure start <= end)
+                val (start, end) = if (normalizedStart <= normalizedEnd) {
+                    normalizedStart to normalizedEnd
+                } else {
+                    normalizedEnd to normalizedStart
+                }
+                DateFilter.CustomRange(start, end)
+            }
+
+            setSearchDateFilter(filter)
+        }
+    }
+
+    /**
+     * Normalize timestamp to midnight (start of day) in system timezone.
+     */
+    private fun normalizeToMidnight(epochMs: Long): Long {
+        val instant = Instant.ofEpochMilli(epochMs)
+        val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
+        return localDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    }
+
+    /**
+     * Perform search query.
+     *
+     * Uses occurrences table for time filtering (Android's recommended approach).
+     * An event is included if it has ANY occurrence that hasn't ended yet.
+     * This correctly handles multi-day events in progress and recurring events.
+     *
+     * When a date filter is active, uses searchEventsInRange() to combine FTS
+     * text matching with occurrence date range filtering.
+     */
+    private fun performSearch(query: String) {
+        viewModelScope.launch {
+            try {
+                val dateFilter = _uiState.value.searchDateFilter
+                val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault())
+
+                // Use new search methods that return EventWithNextOccurrence
+                val results = withContext(ioDispatcher) {
+                    when {
+                        // Date filter active - use combined FTS + date range query
+                        timeRange != null -> {
+                            eventReader.searchEventsInRangeWithNextOccurrence(query, timeRange.first, timeRange.second)
+                        }
+                        // No date filter, include past - use basic FTS
+                        _uiState.value.searchIncludePast -> {
+                            eventReader.searchEventsWithNextOccurrence(query)
+                        }
+                        // No date filter, exclude past - use future-only FTS
+                        else -> {
+                            eventReader.searchEventsExcludingPastWithNextOccurrence(query)
+                        }
+                    }
+                }
+
+                // Filter by visible calendars (using Calendar.isVisible as source of truth)
+                val visibleCalendarIds = _uiState.value.calendars
+                    .filter { it.isVisible }
+                    .map { it.id }
+                    .toSet()
+                val filteredResults = results.filter { it.event.calendarId in visibleCalendarIds }
+
+                _uiState.value = _uiState.value.copy(searchResults = filteredResults.toPersistentList())
+
+                Log.d(TAG, "Search '$query' returned ${filteredResults.size} results (filter=${dateFilter::class.simpleName})")
+            } catch (e: Exception) {
+                Log.e(TAG, "Search error", e)
+            }
+        }
+    }
+
+    // ==================== Agenda ====================
+
+    /**
+     * Observe agenda events - upcoming 30 days of occurrences using reactive Flow.
+     * Each recurring event instance is shown separately.
+     * Respects calendar visibility settings.
+     *
+     * PROGRESSIVE LOADING: Events appear as they sync because this uses Flow
+     * collection instead of one-shot query. Room Flow emits updates when
+     * occurrences table changes.
+     */
+    private fun loadAgendaEvents() {
+        // Cancel any previous agenda observation
+        agendaEventsJob?.cancel()
+
+        _uiState.value = _uiState.value.copy(isLoadingAgenda = true)
+
+        val now = System.currentTimeMillis()
+        val oneMonthLater = now + (30L * 24 * 60 * 60 * 1000) // 30 days
+
+        // Start observing agenda events (reactive - updates as sync progresses)
+        agendaEventsJob = viewModelScope.launch {
+            try {
+                eventReader.getOccurrencesWithEventsInRangeFlow(now, oneMonthLater)
+                    .distinctUntilChanged()
+                    .map { occurrencesWithEvents ->
+                        // Filter by visible calendars (using Calendar.isVisible as source of truth)
+                        val visibleCalendarIds = _uiState.value.calendars
+                            .filter { it.isVisible }
+                            .map { it.id }
+                            .toSet()
+                        occurrencesWithEvents
+                            .filter { it.occurrence.calendarId in visibleCalendarIds }
+                            .sortedBy { it.occurrence.startTs }
+                    }
+                    .collect { filteredOccurrences ->
+                        _uiState.value = _uiState.value.copy(
+                            agendaOccurrences = filteredOccurrences.toPersistentList(),
+                            isLoadingAgenda = false
+                        )
+                        Log.d(TAG, "Agenda updated: ${filteredOccurrences.size} occurrences")
+                    }
+            } catch (e: CancellationException) {
+                // Normal cancellation when panel closes - don't log as error
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error observing agenda", e)
+                _uiState.value = _uiState.value.copy(isLoadingAgenda = false)
+            }
+        }
+    }
+
+    // ==================== UI Sheets/Dialogs ====================
+
+    fun toggleAppInfoSheet() {
+        _uiState.value = _uiState.value.copy(
+            showAppInfoSheet = !_uiState.value.showAppInfoSheet
+        )
+    }
+
+    fun toggleOnboardingSheet() {
+        _uiState.value = _uiState.value.copy(
+            showOnboardingSheet = !_uiState.value.showOnboardingSheet
+        )
+    }
+
+    fun dismissOnboardingSheet() {
+        _uiState.value = _uiState.value.copy(showOnboardingSheet = false)
+        viewModelScope.launch {
+            dataStore.setOnboardingDismissed(true)
+        }
+    }
+
+    fun toggleSyncChangesSheet() {
+        _uiState.value = _uiState.value.copy(
+            showSyncChangesSheet = !_uiState.value.showSyncChangesSheet
+        )
+    }
+
+    /**
+     * Dismiss sync changes bottom sheet and clear sync changes.
+     */
+    fun dismissSyncChangesSheet() {
+        _uiState.value = _uiState.value.copy(
+            showSyncChangesSheet = false,
+            syncChanges = persistentListOf()
+        )
+    }
+
+    fun toggleAgendaPanel() {
+        val newShowAgenda = !_uiState.value.showAgendaPanel
+        _uiState.value = _uiState.value.copy(showAgendaPanel = newShowAgenda)
+
+        if (newShowAgenda) {
+            loadAgendaEvents()  // Load when opening
+        }
+    }
+
+    fun toggleYearOverlay() {
+        _uiState.value = _uiState.value.copy(
+            showYearOverlay = !_uiState.value.showYearOverlay
+        )
+    }
+
+    // ==================== Snackbar ====================
+
+    /**
+     * Show a snackbar message.
+     * Internal visibility for testing.
+     */
+    internal fun showSnackbar(message: String, action: (() -> Unit)? = null) {
+        _uiState.value = _uiState.value.copy(
+            pendingSnackbarMessage = message,
+            pendingSnackbarAction = action
+        )
+    }
+
+    /**
+     * Clear the snackbar (consumed by UI).
+     */
+    fun clearSnackbar() {
+        _uiState.value = _uiState.value.copy(
+            pendingSnackbarMessage = null,
+            pendingSnackbarAction = null
+        )
+    }
+
+    // ==================== Pending Actions (from intents) ====================
+
+    /**
+     * Set a pending action to be processed by the UI.
+     * Called from Activity's handleIncomingIntent() when notification/widget/shortcut tapped.
+     *
+     * This follows Android's recommended pattern for UI events:
+     * - Convert events to state (not Channels)
+     * - ViewModel owns state, UI observes via LaunchedEffect
+     * - Clear after consumption (one-shot behavior)
+     *
+     * @param action The pending action to set
+     * @see <a href="https://developer.android.com/topic/architecture/ui-layer/events">UI events</a>
+     */
+    fun setPendingAction(action: PendingAction) {
+        Log.d(TAG, "setPendingAction: $action")
+        _uiState.value = _uiState.value.copy(pendingAction = action)
+    }
+
+    /**
+     * Clear the pending action after it's been processed by the UI.
+     * Called by UI (LaunchedEffect) after handling the action.
+     */
+    fun clearPendingAction() {
+        Log.d(TAG, "clearPendingAction")
+        _uiState.value = _uiState.value.copy(pendingAction = null)
+    }
+
+    // ==================== Refresh ====================
+
+    /**
+     * Reload the current view (dots and selected day).
+     *
+     * Note: loadEventsForSelectedDay now uses Flow, so calling it restarts
+     * the observation which will emit current data and continue auto-updating.
+     * This is intentionally kept for explicit refresh scenarios like:
+     * - Calendar visibility toggle
+     * - Event CRUD operations
+     * - Sync completion
+     */
+    private fun reloadCurrentView() {
+        buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+        if (_uiState.value.selectedDate > 0) {
+            loadEventsForSelectedDay(_uiState.value.selectedDate)
+        }
+    }
+
+    // ==================== Event CRUD Operations ====================
+
+    /**
+     * Get event by ID for editing.
+     */
+    suspend fun getEventForEdit(eventId: Long): org.onekash.kashcal.data.db.entity.Event? {
+        return withContext(ioDispatcher) {
+            eventCoordinator.getEventById(eventId)
+        }
+    }
+
+    /**
+     * Save event from form state.
+     * Creates new event or updates existing one.
+     *
+     * @param formState The form state with event data
+     * @return Result containing the created/updated event or error
+     */
+    suspend fun saveEvent(formState: EventFormState): Result<org.onekash.kashcal.data.db.entity.Event> {
+        return withContext(ioDispatcher) {
+            try {
+                // Calculate timestamps from form state
+                // CRITICAL: All-day events must be stored as UTC midnight for consistency
+                // with iCal/CalDAV parsing. The UI date picker returns local time, so we
+                // convert to UTC for all-day events.
+                val (startTs, endTs) = if (formState.isAllDay) {
+                    // All-day: Convert local date to UTC midnight
+                    val startUtc = DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
+                    val endUtc = DateTimeUtils.localDateToUtcMidnight(formState.endDateMillis)
+                    // For all-day events, endTs should be end of the last day (23:59:59.999 UTC)
+                    startUtc to DateTimeUtils.utcMidnightToEndOfDay(endUtc)
+                } else {
+                    // Timed: Use selected timezone (or device default)
+                    // CRITICAL: The time picker shows hours/minutes in the SELECTED timezone,
+                    // so we must interpret them in that timezone when calculating the UTC timestamp.
+                    val selectedTz = formState.timezone?.let {
+                        java.util.TimeZone.getTimeZone(it)
+                    } ?: java.util.TimeZone.getDefault()
+
+                    val startCalendar = Calendar.getInstance(selectedTz).apply {
+                        timeInMillis = formState.dateMillis
+                        set(Calendar.HOUR_OF_DAY, formState.startHour)
+                        set(Calendar.MINUTE, formState.startMinute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    val endCalendar = Calendar.getInstance(selectedTz).apply {
+                        timeInMillis = formState.endDateMillis
+                        set(Calendar.HOUR_OF_DAY, formState.endHour)
+                        set(Calendar.MINUTE, formState.endMinute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    startCalendar.timeInMillis to endCalendar.timeInMillis
+                }
+
+                // Build reminders list
+                val reminders = buildRemindersList(formState.reminder1Minutes, formState.reminder2Minutes)
+
+                // Get calendar ID (use local if not specified)
+                val calendarId = formState.selectedCalendarId
+                    ?: eventCoordinator.getLocalCalendarId()
+
+                // Create or update event
+                val savedEvent = if (formState.editingOccurrenceTs != null && formState.editingEventId != null) {
+                    // Editing a single occurrence of a recurring event - create exception
+                    // DEFENSIVE CHECK: If caller passed exception ID, resolve to master ID
+                    // This handles edge cases where MainActivity fix wasn't applied
+                    val editingEvent = eventCoordinator.getEventById(formState.editingEventId)
+                    val masterEventId = editingEvent?.originalEventId ?: formState.editingEventId
+                    eventCoordinator.editSingleOccurrence(
+                        masterEventId = masterEventId,
+                        occurrenceTimeMs = formState.editingOccurrenceTs,
+                        changes = { masterEvent ->
+                            masterEvent.copy(
+                                title = formState.title.ifBlank { "Untitled" },
+                                startTs = startTs,
+                                endTs = endTs,
+                                isAllDay = formState.isAllDay,
+                                location = formState.location.ifBlank { null },
+                                description = formState.description.ifBlank { null },
+                                rrule = null, // Exception events don't have RRULE
+                                reminders = reminders,
+                                calendarId = calendarId,
+                                // Preserve these fields from master for round-trip fidelity:
+                                timezone = masterEvent.timezone,
+                                status = masterEvent.status,
+                                transp = masterEvent.transp,
+                                classification = masterEvent.classification,
+                                extraProperties = masterEvent.extraProperties,
+                                updatedAt = System.currentTimeMillis()
+                            )
+                        }
+                    )
+                } else if (formState.isEditMode && formState.editingEventId != null) {
+                    // Update entire event (or all occurrences for recurring)
+                    val existingEvent = eventCoordinator.getEventById(formState.editingEventId)
+                        ?: return@withContext Result.failure(IllegalStateException("Event not found"))
+
+                    // Check if calendar is changing
+                    val calendarChanged = existingEvent.calendarId != calendarId
+
+                    // Note: SEQUENCE increment is handled by EventWriter (domain layer),
+                    // following Android architecture best practices where business logic
+                    // belongs in Data/Domain layer, not ViewModel (UI layer).
+
+                    if (calendarChanged) {
+                        // Calendar move requires DELETE + CREATE for CalDAV
+                        // moveEventToCalendar handles this properly
+                        eventCoordinator.moveEventToCalendar(formState.editingEventId, calendarId)
+
+                        // After move, get the updated event and apply other field changes
+                        val movedEvent = eventCoordinator.getEventById(formState.editingEventId)
+                            ?: return@withContext Result.failure(IllegalStateException("Event not found after move"))
+
+                        val finalEvent = movedEvent.copy(
+                            title = formState.title.ifBlank { "Untitled" },
+                            startTs = startTs,
+                            endTs = endTs,
+                            isAllDay = formState.isAllDay,
+                            timezone = if (formState.isAllDay) null else (formState.timezone ?: movedEvent.timezone),
+                            location = formState.location.ifBlank { null },
+                            description = formState.description.ifBlank { null },
+                            rrule = formState.rrule,
+                            reminders = reminders,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        eventCoordinator.updateEvent(finalEvent)
+                    } else {
+                        // Same calendar - just update the event
+                        val updatedEvent = existingEvent.copy(
+                            title = formState.title.ifBlank { "Untitled" },
+                            startTs = startTs,
+                            endTs = endTs,
+                            isAllDay = formState.isAllDay,
+                            timezone = if (formState.isAllDay) null else (formState.timezone ?: existingEvent.timezone),
+                            location = formState.location.ifBlank { null },
+                            description = formState.description.ifBlank { null },
+                            rrule = formState.rrule,
+                            reminders = reminders,
+                            calendarId = calendarId,
+                            updatedAt = System.currentTimeMillis()
+                        )
+                        eventCoordinator.updateEvent(updatedEvent)
+                    }
+                } else {
+                    // Create new event
+                    val now = System.currentTimeMillis()
+                    val newEvent = org.onekash.kashcal.data.db.entity.Event(
+                        uid = java.util.UUID.randomUUID().toString(),
+                        calendarId = calendarId,
+                        title = formState.title.ifBlank { "Untitled" },
+                        startTs = startTs,
+                        endTs = endTs,
+                        // All-day events use null timezone (stored as UTC midnight)
+                        // Timed events use user-selected timezone (or device default if null)
+                        timezone = if (formState.isAllDay) null else (formState.timezone ?: java.util.TimeZone.getDefault().id),
+                        isAllDay = formState.isAllDay,
+                        location = formState.location.ifBlank { null },
+                        description = formState.description.ifBlank { null },
+                        rrule = formState.rrule,
+                        reminders = reminders,
+                        dtstamp = now,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+
+                    eventCoordinator.createEvent(newEvent, calendarId)
+                }
+
+                // Refresh the UI after save
+                reloadCurrentView()
+
+                Log.d(TAG, "Event saved: ${savedEvent.title} (id=${savedEvent.id})")
+                Result.success(savedEvent)
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving event", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Delete an event.
+     *
+     * @param eventId The event ID to delete
+     * @return Result indicating success or failure
+     */
+    suspend fun deleteEvent(eventId: Long): Result<Unit> {
+        return withContext(ioDispatcher) {
+            try {
+                eventCoordinator.deleteEvent(eventId)
+                Log.d(TAG, "Event deleted: $eventId")
+
+                // Refresh the UI after delete
+                withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    reloadCurrentView()
+                }
+
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error deleting event", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Delete event (fire-and-forget for optimistic UI).
+     * Use this for QuickViewSheet where immediate dismissal is desired.
+     * Note: Keep existing suspend deleteEvent() for EventFormSheet compatibility.
+     *
+     * @param eventId The event ID to delete
+     */
+    fun deleteEventOptimistic(eventId: Long) {
+        viewModelScope.launch {
+            try {
+                withContext(ioDispatcher) {
+                    eventCoordinator.deleteEvent(eventId)
+                }
+                Log.d(TAG, "Event deleted (optimistic): $eventId")
+                reloadCurrentView()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error deleting event", e)
+                showSnackbar("Failed to delete: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Delete a single occurrence of a recurring event (fire-and-forget for optimistic UI).
+     * Adds EXDATE to master event.
+     *
+     * @param masterEventId The master recurring event ID
+     * @param occurrenceTimeMs The occurrence timestamp to delete
+     */
+    fun deleteSingleOccurrence(masterEventId: Long, occurrenceTimeMs: Long) {
+        viewModelScope.launch {
+            try {
+                withContext(ioDispatcher) {
+                    eventCoordinator.deleteSingleOccurrence(masterEventId, occurrenceTimeMs)
+                }
+                Log.d(TAG, "Occurrence deleted: event=$masterEventId, ts=$occurrenceTimeMs")
+                reloadCurrentView()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error deleting occurrence", e)
+                showSnackbar("Failed to delete: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Delete this and all future occurrences (fire-and-forget for optimistic UI).
+     * Truncates series with UNTIL.
+     *
+     * @param masterEventId The master recurring event ID
+     * @param fromTimeMs Delete occurrences from this time onwards
+     */
+    fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long) {
+        viewModelScope.launch {
+            try {
+                withContext(ioDispatcher) {
+                    eventCoordinator.deleteThisAndFuture(masterEventId, fromTimeMs)
+                }
+                Log.d(TAG, "Future occurrences deleted: event=$masterEventId, from=$fromTimeMs")
+                reloadCurrentView()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error deleting future occurrences", e)
+                showSnackbar("Failed to delete: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Build reminders list from form values.
+     * Converts minutes to ISO 8601 duration format (e.g., -PT15M for 15 minutes before).
+     */
+    private fun buildRemindersList(reminder1: Int, reminder2: Int): List<String>? {
+        val reminders = mutableListOf<String>()
+
+        if (reminder1 >= 0) {
+            reminders.add(minutesToIsoDuration(reminder1))
+        }
+        if (reminder2 >= 0) {
+            reminders.add(minutesToIsoDuration(reminder2))
+        }
+
+        return reminders.ifEmpty { null }
+    }
+
+    /**
+     * Convert minutes to ISO 8601 duration format.
+     * e.g., 15 minutes -> "-PT15M", 60 minutes -> "-PT1H"
+     */
+    private fun minutesToIsoDuration(minutes: Int): String {
+        return when {
+            minutes == 0 -> "-PT0M"
+            minutes >= 1440 && minutes % 1440 == 0 -> "-P${minutes / 1440}D"
+            minutes >= 60 && minutes % 60 == 0 -> "-PT${minutes / 60}H"
+            else -> "-PT${minutes}M"
+        }
+    }
+
+    /**
+     * Get default calendar ID for new events.
+     */
+    suspend fun getDefaultCalendarId(): Long? {
+        return withContext(ioDispatcher) {
+            eventCoordinator.getDefaultCalendar()?.id
+        }
+    }
+
+    /**
+     * Get local calendar ID for fallback.
+     */
+    suspend fun getLocalCalendarId(): Long {
+        return withContext(ioDispatcher) {
+            eventCoordinator.getLocalCalendarId()
+        }
+    }
+
+    // ==================== Error Handling ====================
+
+    /**
+     * Show an error to the user.
+     *
+     * Converts CalendarError to ErrorPresentation and displays appropriately:
+     * - Snackbar: Sets currentError, consumed by ErrorSnackbarHost
+     * - Dialog: Sets currentError + showErrorDialog
+     * - Banner: Sets currentError + showErrorBanner
+     * - Silent: Logs only, no UI change
+     *
+     * Usage:
+     * ```
+     * try {
+     *     syncEngine.sync()
+     * } catch (e: Exception) {
+     *     showError(ErrorMapper.fromException(e))
+     * }
+     * ```
+     */
+    fun showError(error: CalendarError) {
+        val presentation = ErrorMapper.toPresentation(error)
+
+        when (presentation) {
+            is ErrorPresentation.Snackbar -> {
+                _uiState.value = _uiState.value.copy(
+                    currentError = presentation,
+                    showErrorDialog = false,
+                    showErrorBanner = false
+                )
+            }
+            is ErrorPresentation.Dialog -> {
+                _uiState.value = _uiState.value.copy(
+                    currentError = presentation,
+                    showErrorDialog = true,
+                    showErrorBanner = false
+                )
+            }
+            is ErrorPresentation.Banner -> {
+                _uiState.value = _uiState.value.copy(
+                    currentError = presentation,
+                    showErrorDialog = false,
+                    showErrorBanner = true
+                )
+            }
+            is ErrorPresentation.Silent -> {
+                // Log only, no UI change
+                Log.d(TAG, "Silent error: ${presentation.logMessage}")
+            }
+        }
+    }
+
+    /**
+     * Handle error action callback from UI.
+     *
+     * Called when user taps action button on error Snackbar/Dialog/Banner.
+     * Dispatches to appropriate handler based on callback type.
+     */
+    fun handleErrorAction(callback: ErrorActionCallback) {
+        when (callback) {
+            is ErrorActionCallback.Retry -> {
+                Log.d(TAG, "Error action: Retry")
+                clearError()
+                performSync()
+            }
+            is ErrorActionCallback.OpenSettings -> {
+                Log.d(TAG, "Error action: OpenSettings")
+                clearError()
+                // Navigation handled by Activity (observes this state)
+                _uiState.value = _uiState.value.copy(
+                    pendingSnackbarMessage = null // Clear any snackbar
+                )
+            }
+            is ErrorActionCallback.OpenAppSettings -> {
+                Log.d(TAG, "Error action: OpenAppSettings")
+                clearError()
+                // Open Android app settings - handled by Activity
+            }
+            is ErrorActionCallback.OpenAppleIdWebsite -> {
+                Log.d(TAG, "Error action: OpenAppleIdWebsite")
+                clearError()
+                // Open Apple ID website - handled by Activity
+            }
+            is ErrorActionCallback.ReAuthenticate -> {
+                Log.d(TAG, "Error action: ReAuthenticate")
+                clearError()
+                // Trigger re-authentication flow - handled by Activity
+            }
+            is ErrorActionCallback.ForceFullSync -> {
+                Log.d(TAG, "Error action: ForceFullSync")
+                clearError()
+                forceFullSync()
+            }
+            is ErrorActionCallback.ViewSyncDetails -> {
+                Log.d(TAG, "Error action: ViewSyncDetails")
+                clearError()
+                _uiState.value = _uiState.value.copy(showSyncChangesSheet = true)
+            }
+            is ErrorActionCallback.Dismiss -> {
+                Log.d(TAG, "Error action: Dismiss")
+                clearError()
+            }
+            is ErrorActionCallback.Custom -> {
+                Log.d(TAG, "Error action: Custom")
+                callback.action()
+                clearError()
+            }
+        }
+    }
+
+    /**
+     * Clear current error state.
+     * Called after error is dismissed or action is taken.
+     */
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(
+            currentError = null,
+            showErrorDialog = false,
+            showErrorBanner = false
+        )
+    }
+
+    /**
+     * Show error from HTTP code.
+     * Convenience method for sync layer integration.
+     */
+    fun showHttpError(code: Int, message: String? = null) {
+        showError(ErrorMapper.fromHttpCode(code, message))
+    }
+
+    /**
+     * Show error from exception.
+     * Convenience method for exception handling.
+     */
+    fun showExceptionError(e: Throwable) {
+        showError(ErrorMapper.fromException(e))
+    }
+
+    // ==================== Helper Functions ====================
+
+    /**
+     * Parse YYYYMMDD day format into (year, month, day) triple.
+     * Month is 0-indexed (January = 0) for Calendar compatibility.
+     */
+    private fun parseDayFormat(dayFormat: Int): Triple<Int, Int, Int> {
+        val year = dayFormat / 10000
+        val month = (dayFormat % 10000) / 100 - 1  // 0-indexed for Calendar
+        val day = dayFormat % 100
+        return Triple(year, month, day)
+    }
+}

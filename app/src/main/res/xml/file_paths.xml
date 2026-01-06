@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    FileProvider paths configuration.
+    Defines which directories can be shared via content:// URIs.
+
+    Security: Only expose necessary directories with minimal scope.
+-->
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        Cache directory for temporary ICS exports.
+        Files here are auto-cleaned by system when storage is low.
+        Path: /data/data/org.onekash.kashcal/cache/shared/
+    -->
+    <cache-path name="shared_ics" path="shared/" />
+
+    <!--
+        Internal files directory for persistent exports.
+        Path: /data/data/org.onekash.kashcal/files/exports/
+    -->
+    <files-path name="exports" path="exports/" />
+</paths>

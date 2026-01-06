@@ -1,0 +1,20 @@
+# Copy this file to local.properties (which is gitignored)
+# Fill in your values
+
+# Android SDK path (required)
+sdk.dir=/path/to/android/sdk
+
+# Release signing configuration (optional)
+# Only needed for signed release builds
+# If not provided, release builds will use debug signing
+#
+# KEYSTORE_FILE=path/to/your.keystore
+# KEYSTORE_PASSWORD=your_store_password
+# KEY_ALIAS=your_key_alias
+# KEY_PASSWORD=your_key_password
+
+# iCloud test credentials (optional)
+# Only needed for running integration tests against real iCloud
+#
+# ICLOUD_USERNAME=your_apple_id@icloud.com
+# ICLOUD_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
