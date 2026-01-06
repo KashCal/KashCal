@@ -8,6 +8,24 @@
 
 A privacy-first calendar that works offline and looks beautiful. Connect to iCloud — or don't. Your schedule, your choice.
 
+---
+
+<table align="center">
+  <tr>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/HomePage-with-AboutMe.png" width="180"><br><sub>Home & Agenda</sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/NewEvent.png" width="180"><br><sub>Create Event</sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/NewEvent-Date-Time-Picker.png" width="180"><br><sub>Date & Time Picker</sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Settings.png" width="180"><br><sub>Settings</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Apple-Calendar-Connect.png" width="180"><br><sub>iCloud Connect</sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Sync-with-iCloud.png" width="180"><br><sub>iCloud Sync</sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/ICS-Subscription.png" width="180"><br><sub>ICS Subscriptions</sub></td>
+    <td></td>
+  </tr>
+</table>
+
+---
 
 ## Why KashCal?
 
