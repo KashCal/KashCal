@@ -133,12 +133,29 @@ object Migrations {
     }
 
     /**
+     * Migration from version 5 to 6.
+     *
+     * Adds MOVE operation phase tracking to pending_operations:
+     * - move_phase: Phase of MOVE operation (0 = DELETE, 1 = CREATE)
+     *
+     * Each phase gets independent 5-retry budget to prevent event loss when
+     * DELETE succeeds but CREATE fails repeatedly.
+     */
+    val MIGRATION_5_6 = object : Migration(5, 6) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add move_phase column for MOVE operation phase tracking
+            db.execSQL("ALTER TABLE pending_operations ADD COLUMN move_phase INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
         MIGRATION_2_3,
-        MIGRATION_4_5
+        MIGRATION_4_5,
+        MIGRATION_5_6
     )
 }

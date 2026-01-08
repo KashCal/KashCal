@@ -71,4 +71,13 @@ sealed class SinglePushResult {
         val message: String,
         val isRetryable: Boolean = true
     ) : SinglePushResult()
+
+    /**
+     * MOVE operation advanced to next phase (DELETE → CREATE).
+     *
+     * The operation has been updated in the database (movePhase=1, retryCount=0)
+     * but should NOT be deleted from the queue. It will be processed again
+     * in the next sync cycle for the CREATE phase.
+     */
+    data object PhaseAdvanced : SinglePushResult()
 }

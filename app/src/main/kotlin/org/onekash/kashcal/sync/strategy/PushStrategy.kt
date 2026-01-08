@@ -86,6 +86,13 @@ class PushStrategy @Inject constructor(
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
                 }
+                is SinglePushResult.PhaseAdvanced -> {
+                    // MOVE operation advanced from DELETE to CREATE phase
+                    // Operation stays in queue with movePhase=1, retry_count=0
+                    // Count DELETE as done; CREATE will happen in next sync cycle
+                    deleted++
+                    Log.d(TAG, "MOVE operation ${operation.id} advanced to CREATE phase")
+                }
                 is SinglePushResult.Conflict -> {
                     // Conflict - needs resolution
                     // For now, reschedule and let ConflictResolver handle it
@@ -155,6 +162,10 @@ class PushStrategy @Inject constructor(
                         PendingOperation.OPERATION_DELETE -> deleted++
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
+                }
+                is SinglePushResult.PhaseAdvanced -> {
+                    // MOVE operation advanced from DELETE to CREATE phase
+                    deleted++
                 }
                 is SinglePushResult.Conflict -> {
                     scheduleRetry(operation, "Conflict: server has newer version")
@@ -419,7 +430,12 @@ class PushStrategy @Inject constructor(
      * 1. DELETE from old calendar using operation.targetUrl (stored at queue time)
      * 2. CREATE in new calendar using operation.targetCalendarId
      *
-     * Fixes the bug where caldavUrl was cleared before DELETE could process.
+     * Phase-aware retry (C3 fix):
+     * - Phase 0 (DELETE): Execute DELETE, then advance to Phase 1 with fresh retry budget
+     * - Phase 1 (CREATE): Execute CREATE with independent 5-retry budget
+     *
+     * This prevents event loss when DELETE succeeds but CREATE fails repeatedly.
+     * Each phase gets its own 5 retries instead of sharing a single budget.
      */
     private suspend fun processMove(
         operation: PendingOperation,
@@ -437,28 +453,36 @@ class PushStrategy @Inject constructor(
             ?: calendarsDao.getById(targetCalendarId)
             ?: return SinglePushResult.Error(-1, "Target calendar not found for MOVE", false)
 
-        // Step 1: DELETE from old calendar (using stored targetUrl)
-        if (operation.targetUrl != null) {
-            Log.d(TAG, "MOVE: Deleting from old calendar: ${operation.targetUrl}")
-            val deleteResult = client.deleteEvent(operation.targetUrl, "")
+        // Phase 0: DELETE from old calendar
+        if (operation.movePhase == PendingOperation.MOVE_PHASE_DELETE) {
+            if (operation.targetUrl != null) {
+                Log.d(TAG, "MOVE Phase 0: Deleting from old calendar: ${operation.targetUrl}")
+                val deleteResult = client.deleteEvent(operation.targetUrl, "")
 
-            // Ignore 404 (already deleted), but fail on other errors
-            if (!deleteResult.isSuccess() && !deleteResult.isNotFound()) {
-                val error = deleteResult as? CalDavResult.Error
-                Log.w(TAG, "MOVE: Failed to delete from old calendar: ${error?.message}")
-                return SinglePushResult.Error(
-                    error?.code ?: -1,
-                    "Failed to delete from old calendar: ${error?.message}",
-                    error?.isRetryable ?: true
-                )
+                // Ignore 404 (already deleted), but fail on other errors
+                if (!deleteResult.isSuccess() && !deleteResult.isNotFound()) {
+                    val error = deleteResult as? CalDavResult.Error
+                    Log.w(TAG, "MOVE Phase 0: Failed to delete from old calendar: ${error?.message}")
+                    return SinglePushResult.Error(
+                        error?.code ?: -1,
+                        "Failed to delete from old calendar: ${error?.message}",
+                        error?.isRetryable ?: true
+                    )
+                }
+                Log.d(TAG, "MOVE Phase 0: Deleted from old calendar (or already gone)")
             }
-            Log.d(TAG, "MOVE: Deleted from old calendar (or already gone)")
+
+            // DELETE succeeded - advance to CREATE phase with fresh retry budget
+            Log.d(TAG, "MOVE: Advancing to Phase 1 (CREATE) with fresh retry budget")
+            pendingOperationsDao.advanceToCreatePhase(operation.id, System.currentTimeMillis())
+            return SinglePushResult.PhaseAdvanced
         }
 
-        // Step 2: CREATE in new calendar
+        // Phase 1: CREATE in new calendar (has fresh 5-retry budget)
+        Log.d(TAG, "MOVE Phase 1: Creating in new calendar: ${calendar.displayName}")
+
         // Note: Calendar change is disabled for recurring events in UI, so no exceptions to handle
         val (icalData, _) = serializeEventWithExceptions(event)
-        Log.d(TAG, "MOVE: Creating in new calendar: ${calendar.displayName}")
 
         val result = client.createEvent(calendar.caldavUrl, event.uid, icalData)
 
@@ -468,16 +492,16 @@ class PushStrategy @Inject constructor(
                     ?: return SinglePushResult.Error(-1, "Null result from create", false)
 
                 eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
-                Log.d(TAG, "MOVE: Event moved successfully to $url")
+                Log.d(TAG, "MOVE Phase 1: Event moved successfully to $url")
                 SinglePushResult.Success(newEtag = etag, newUrl = url)
             }
             result.isConflict() -> {
-                Log.w(TAG, "MOVE: Conflict creating in new calendar (UID exists)")
+                Log.w(TAG, "MOVE Phase 1: Conflict creating in new calendar (UID exists)")
                 SinglePushResult.Conflict()
             }
             else -> {
                 val error = result as? CalDavResult.Error
-                Log.e(TAG, "MOVE: Failed to create in new calendar: ${error?.message}")
+                Log.e(TAG, "MOVE Phase 1: Failed to create in new calendar: ${error?.message}")
                 SinglePushResult.Error(
                     error?.code ?: -1,
                     error?.message ?: "Unknown error",

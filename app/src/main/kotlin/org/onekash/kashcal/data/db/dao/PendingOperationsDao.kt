@@ -178,6 +178,28 @@ interface PendingOperationsDao {
     """)
     suspend fun resetAllFailed(now: Long)
 
+    /**
+     * Advance MOVE operation to CREATE phase with fresh retry budget.
+     *
+     * Called after DELETE phase succeeds. Resets retry_count to 0 so CREATE
+     * phase gets its own independent 5-retry budget.
+     *
+     * This prevents event loss when DELETE succeeds but CREATE fails:
+     * - Before: DELETE succeeds at retry 4, CREATE fails, total retries = 5 → FAILED (event lost!)
+     * - After: DELETE succeeds, CREATE starts at retry 0, has 5 more attempts
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET move_phase = 1,
+            retry_count = 0,
+            next_retry_at = 0,
+            last_error = NULL,
+            status = 'PENDING',
+            updated_at = :now
+        WHERE id = :id
+    """)
+    suspend fun advanceToCreatePhase(id: Long, now: Long)
+
     // ========== Deduplication ==========
 
     /**
