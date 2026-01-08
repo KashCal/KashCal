@@ -111,7 +111,7 @@ class MigrationTest {
     fun `all migrations array contains expected migrations`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        assertEquals(3, migrations.size)
+        assertEquals(4, migrations.size)
     }
 
     @Test
@@ -126,6 +126,9 @@ class MigrationTest {
 
         assertEquals(4, migrations[2].startVersion)
         assertEquals(5, migrations[2].endVersion)
+
+        assertEquals(5, migrations[3].startVersion)
+        assertEquals(6, migrations[3].endVersion)
     }
 
     @Test
@@ -133,23 +136,24 @@ class MigrationTest {
         // Version 3 to 4 is handled by AutoMigration
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        // Manual migrations: 1->2, 2->3, 4->5
+        // Manual migrations: 1->2, 2->3, 4->5, 5->6
         // AutoMigration: 3->4
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         // Gap at 3->4 (AutoMigration)
         assertTrue(migrations[2].startVersion == 4)
+        assertTrue(migrations[2].endVersion == migrations[3].startVersion) // 5
     }
 
     // ==================== Schema Validation Tests ====================
 
     @Test
-    fun `database version is 5`() {
-        // Current database version should be 5
+    fun `database version is 6`() {
+        // Current database version should be 6
         // This test ensures we track the expected version
-        val expectedVersion = 5
+        val expectedVersion = 6
 
-        // The database class uses version = 5
-        assertEquals(expectedVersion, 5)
+        // The database class uses version = 6
+        assertEquals(expectedVersion, 6)
     }
 
     @Test
@@ -160,7 +164,8 @@ class MigrationTest {
         // - 1 to 2 (ics_subscriptions)
         // - 2 to 3 (scheduled_reminders)
         // - 4 to 5 (pending_operations columns)
-        assertEquals(3, migrations.size)
+        // - 5 to 6 (move_phase column)
+        assertEquals(4, migrations.size)
     }
 
     // ==================== Column Type Tests ====================

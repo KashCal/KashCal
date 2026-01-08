@@ -27,10 +27,40 @@ import javax.net.ssl.SSLHandshakeException
  *
  * Handles all HTTP communication with CalDAV servers, using the
  * CalDavQuirks interface to handle provider-specific response parsing.
+ *
+ * Two usage modes:
+ * 1. Legacy singleton (Hilt-injected): Uses setCredentials() for mutable credentials
+ * 2. Factory-created: Receives pre-authenticated OkHttpClient with immutable credentials
+ *
+ * Factory mode is preferred for multi-account sync to avoid credential race conditions.
+ * @see CalDavClientFactory
  */
-class OkHttpCalDavClient @Inject constructor(
+class OkHttpCalDavClient : CalDavClient {
+
     private val quirks: CalDavQuirks
-) : CalDavClient {
+    private val preAuthenticatedClient: OkHttpClient?
+
+    /**
+     * Primary constructor for Hilt injection (legacy singleton mode).
+     * Uses setCredentials() for mutable credentials.
+     */
+    @Inject
+    constructor(quirks: CalDavQuirks) {
+        this.quirks = quirks
+        this.preAuthenticatedClient = null
+    }
+
+    /**
+     * Factory constructor with pre-authenticated OkHttpClient.
+     * Credentials are immutable and baked into the client.
+     *
+     * @param quirks Provider-specific CalDAV quirks
+     * @param preAuthenticatedClient OkHttpClient with credentials baked in
+     */
+    constructor(quirks: CalDavQuirks, preAuthenticatedClient: OkHttpClient) {
+        this.quirks = quirks
+        this.preAuthenticatedClient = preAuthenticatedClient
+    }
 
     companion object {
         private const val TAG = "OkHttpCalDavClient"
@@ -83,8 +113,23 @@ class OkHttpCalDavClient @Inject constructor(
         }
     }
 
+    /**
+     * HTTP client for requests.
+     *
+     * Factory mode: Uses pre-authenticated client with immutable credentials
+     * Legacy mode: Uses lazy-initialized client with mutable credentials via setCredentials()
+     */
     private val httpClient: OkHttpClient by lazy {
-        OkHttpClient.Builder()
+        // Factory mode: use pre-authenticated client (credentials immutable)
+        preAuthenticatedClient ?: createLegacyClient()
+    }
+
+    /**
+     * Create legacy client with mutable credentials.
+     * Used when OkHttpCalDavClient is injected as singleton (backward compatibility).
+     */
+    private fun createLegacyClient(): OkHttpClient {
+        return OkHttpClient.Builder()
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -117,23 +162,43 @@ class OkHttpCalDavClient @Inject constructor(
     /**
      * Set credentials for authentication.
      * Must be called before making any requests.
+     *
+     * @throws UnsupportedOperationException if client was created by factory (credentials immutable)
      */
     override fun setCredentials(username: String, password: String) {
+        if (preAuthenticatedClient != null) {
+            throw UnsupportedOperationException(
+                "Cannot set credentials on factory-created client. Credentials are immutable."
+            )
+        }
         this.username = username
         this.password = password
     }
 
     /**
      * Check if credentials have been set.
+     *
+     * For factory-created clients, always returns true (credentials baked in).
      */
     override fun hasCredentials(): Boolean {
+        // Factory-created clients always have credentials baked in
+        if (preAuthenticatedClient != null) {
+            return true
+        }
         return username.isNotEmpty() && password.isNotEmpty()
     }
 
     /**
      * Clear stored credentials.
+     *
+     * @throws UnsupportedOperationException if client was created by factory (credentials immutable)
      */
     override fun clearCredentials() {
+        if (preAuthenticatedClient != null) {
+            throw UnsupportedOperationException(
+                "Cannot clear credentials on factory-created client. Credentials are immutable."
+            )
+        }
         this.username = ""
         this.password = ""
     }

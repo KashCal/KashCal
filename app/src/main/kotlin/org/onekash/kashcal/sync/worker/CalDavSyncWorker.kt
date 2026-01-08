@@ -18,6 +18,7 @@ import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.notification.SyncNotificationManager
@@ -54,7 +55,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val calendarsDao: CalendarsDao,
     private val notificationManager: SyncNotificationManager,
     private val providerRegistry: ProviderRegistry,
-    private val calDavClient: CalDavClient,
+    @Suppress("DEPRECATION") private val calDavClient: CalDavClient,
+    private val calDavClientFactory: CalDavClientFactory,
     private val syncScheduler: SyncScheduler,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val reminderScheduler: ReminderScheduler,
@@ -314,12 +316,17 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Set credentials on CalDAV client
-            calDavClient.setCredentials(credentials.username, credentials.password)
-            Log.d(TAG, "Credentials loaded for: ${credentials.username}")
+            // Create isolated client for this account (prevents credential race condition)
+            val quirks = provider.getQuirks()
+            if (quirks == null) {
+                Log.w(TAG, "No quirks for account ${account.email}, skipping")
+                continue
+            }
+            val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
+            Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
-            // Sync this account with its provider's quirks
-            val result = syncEngine.syncAccountWithProvider(account, provider, forceFullSync)
+            // Sync this account with its provider's quirks and isolated client
+            val result = syncEngine.syncAccountWithProvider(account, provider, forceFullSync, clientOverride = isolatedClient)
 
             when (result) {
                 is SyncResult.Success -> {

@@ -41,9 +41,12 @@ class PushStrategy @Inject constructor(
     /**
      * Push all pending operations to the server.
      *
+     * @param clientOverride Optional CalDavClient to use instead of the injected one.
+     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
      * @return PushResult with statistics and any errors
      */
-    suspend fun pushAll(): PushResult {
+    suspend fun pushAll(clientOverride: CalDavClient? = null): PushResult {
+        val effectiveClient = clientOverride ?: client
         val now = System.currentTimeMillis()
         val readyOperations = pendingOperationsDao.getReadyOperations(now)
 
@@ -72,7 +75,7 @@ class PushStrategy @Inject constructor(
             // Mark as in progress
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
-            val result = processOperation(operation, eventsCache, calendarsCache)
+            val result = processOperation(operation, eventsCache, calendarsCache, effectiveClient)
 
             when (result) {
                 is SinglePushResult.Success -> {
@@ -128,8 +131,16 @@ class PushStrategy @Inject constructor(
 
     /**
      * Push operations for a specific calendar.
+     *
+     * @param calendar The calendar to push operations for
+     * @param clientOverride Optional CalDavClient to use instead of the injected one.
+     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
      */
-    suspend fun pushForCalendar(calendar: Calendar): PushResult {
+    suspend fun pushForCalendar(
+        calendar: Calendar,
+        clientOverride: CalDavClient? = null
+    ): PushResult {
+        val effectiveClient = clientOverride ?: client
         val now = System.currentTimeMillis()
         val allReady = pendingOperationsDao.getReadyOperations(now)
 
@@ -151,7 +162,7 @@ class PushStrategy @Inject constructor(
         for (operation in calendarOperations) {
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
-            val result = processOperation(operation)
+            val result = processOperation(operation, clientToUse = effectiveClient)
 
             when (result) {
                 is SinglePushResult.Success -> {
@@ -201,17 +212,19 @@ class PushStrategy @Inject constructor(
      * @param operation The operation to process
      * @param eventsCache Pre-loaded events for batch efficiency (empty map triggers DB lookup)
      * @param calendarsCache Pre-loaded calendars for batch efficiency (empty map triggers DB lookup)
+     * @param clientToUse CalDavClient to use for HTTP operations
      */
     private suspend fun processOperation(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
-        calendarsCache: Map<Long, Calendar> = emptyMap()
+        calendarsCache: Map<Long, Calendar> = emptyMap(),
+        clientToUse: CalDavClient = client
     ): SinglePushResult {
         return when (operation.operation) {
-            PendingOperation.OPERATION_CREATE -> processCreate(operation, eventsCache, calendarsCache)
-            PendingOperation.OPERATION_UPDATE -> processUpdate(operation, eventsCache)
-            PendingOperation.OPERATION_DELETE -> processDelete(operation, eventsCache)
-            PendingOperation.OPERATION_MOVE -> processMove(operation, eventsCache, calendarsCache)
+            PendingOperation.OPERATION_CREATE -> processCreate(operation, eventsCache, calendarsCache, clientToUse)
+            PendingOperation.OPERATION_UPDATE -> processUpdate(operation, eventsCache, clientToUse)
+            PendingOperation.OPERATION_DELETE -> processDelete(operation, eventsCache, clientToUse)
+            PendingOperation.OPERATION_MOVE -> processMove(operation, eventsCache, calendarsCache, clientToUse)
             else -> SinglePushResult.Error(-1, "Unknown operation: ${operation.operation}", false)
         }
     }
@@ -222,7 +235,8 @@ class PushStrategy @Inject constructor(
     private suspend fun processCreate(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
-        calendarsCache: Map<Long, Calendar> = emptyMap()
+        calendarsCache: Map<Long, Calendar> = emptyMap(),
+        clientToUse: CalDavClient = client
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -245,7 +259,7 @@ class PushStrategy @Inject constructor(
         Log.d(TAG, "Creating event on server: ${event.title} (${event.uid})")
 
         // Create on server
-        val result = client.createEvent(calendar.caldavUrl, event.uid, icalData)
+        val result = clientToUse.createEvent(calendar.caldavUrl, event.uid, icalData)
 
         return when {
             result.isSuccess() -> {
@@ -290,7 +304,8 @@ class PushStrategy @Inject constructor(
      */
     private suspend fun processUpdate(
         operation: PendingOperation,
-        eventsCache: Map<Long, Event> = emptyMap()
+        eventsCache: Map<Long, Event> = emptyMap(),
+        clientToUse: CalDavClient = client
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -326,7 +341,7 @@ class PushStrategy @Inject constructor(
             ?: return SinglePushResult.Error(-1, "Event has no ETag", false)
 
         // Update on server with If-Match
-        val result = client.updateEvent(caldavUrl, icalData, etag)
+        val result = clientToUse.updateEvent(caldavUrl, icalData, etag)
 
         return when {
             result.isSuccess() -> {
@@ -369,7 +384,8 @@ class PushStrategy @Inject constructor(
      */
     private suspend fun processDelete(
         operation: PendingOperation,
-        eventsCache: Map<Long, Event> = emptyMap()
+        eventsCache: Map<Long, Event> = emptyMap(),
+        clientToUse: CalDavClient = client
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -395,7 +411,7 @@ class PushStrategy @Inject constructor(
 
         // Delete from server
         val etag = event?.etag ?: ""
-        val result = client.deleteEvent(caldavUrl, etag)
+        val result = clientToUse.deleteEvent(caldavUrl, etag)
 
         return when {
             result.isSuccess() -> {
@@ -440,7 +456,8 @@ class PushStrategy @Inject constructor(
     private suspend fun processMove(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
-        calendarsCache: Map<Long, Calendar> = emptyMap()
+        calendarsCache: Map<Long, Calendar> = emptyMap(),
+        clientToUse: CalDavClient = client
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -457,7 +474,7 @@ class PushStrategy @Inject constructor(
         if (operation.movePhase == PendingOperation.MOVE_PHASE_DELETE) {
             if (operation.targetUrl != null) {
                 Log.d(TAG, "MOVE Phase 0: Deleting from old calendar: ${operation.targetUrl}")
-                val deleteResult = client.deleteEvent(operation.targetUrl, "")
+                val deleteResult = clientToUse.deleteEvent(operation.targetUrl, "")
 
                 // Ignore 404 (already deleted), but fail on other errors
                 if (!deleteResult.isSuccess() && !deleteResult.isNotFound()) {
@@ -484,7 +501,7 @@ class PushStrategy @Inject constructor(
         // Note: Calendar change is disabled for recurring events in UI, so no exceptions to handle
         val (icalData, _) = serializeEventWithExceptions(event)
 
-        val result = client.createEvent(calendar.caldavUrl, event.uid, icalData)
+        val result = clientToUse.createEvent(calendar.caldavUrl, event.uid, icalData)
 
         return when {
             result.isSuccess() -> {
