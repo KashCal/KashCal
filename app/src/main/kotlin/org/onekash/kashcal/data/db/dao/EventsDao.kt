@@ -40,6 +40,13 @@ interface EventsDao {
     suspend fun getById(id: Long): Event?
 
     /**
+     * Get multiple events by IDs.
+     * Used by PushStrategy to batch load events for pending operations.
+     */
+    @Query("SELECT * FROM events WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<Event>
+
+    /**
      * Get event by local ID as Flow.
      */
     @Query("SELECT * FROM events WHERE id = :id")

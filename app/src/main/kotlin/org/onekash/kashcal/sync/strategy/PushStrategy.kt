@@ -54,6 +54,15 @@ class PushStrategy @Inject constructor(
 
         Log.d(TAG, "Processing ${readyOperations.size} pending operations")
 
+        // Batch load all events and calendars upfront (fixes N+1 query pattern)
+        val eventIds = readyOperations.map { it.eventId }.distinct()
+        val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
+
+        val calendarIds = eventsCache.values.map { it.calendarId }.distinct()
+        val calendarsCache = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+
+        Log.d(TAG, "Batch loaded ${eventsCache.size} events, ${calendarsCache.size} calendars")
+
         var created = 0
         var updated = 0
         var deleted = 0
@@ -63,7 +72,7 @@ class PushStrategy @Inject constructor(
             // Mark as in progress
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
-            val result = processOperation(operation)
+            val result = processOperation(operation, eventsCache, calendarsCache)
 
             when (result) {
                 is SinglePushResult.Success -> {
@@ -177,13 +186,21 @@ class PushStrategy @Inject constructor(
 
     /**
      * Process a single pending operation.
+     *
+     * @param operation The operation to process
+     * @param eventsCache Pre-loaded events for batch efficiency (empty map triggers DB lookup)
+     * @param calendarsCache Pre-loaded calendars for batch efficiency (empty map triggers DB lookup)
      */
-    private suspend fun processOperation(operation: PendingOperation): SinglePushResult {
+    private suspend fun processOperation(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event> = emptyMap(),
+        calendarsCache: Map<Long, Calendar> = emptyMap()
+    ): SinglePushResult {
         return when (operation.operation) {
-            PendingOperation.OPERATION_CREATE -> processCreate(operation)
-            PendingOperation.OPERATION_UPDATE -> processUpdate(operation)
-            PendingOperation.OPERATION_DELETE -> processDelete(operation)
-            PendingOperation.OPERATION_MOVE -> processMove(operation)
+            PendingOperation.OPERATION_CREATE -> processCreate(operation, eventsCache, calendarsCache)
+            PendingOperation.OPERATION_UPDATE -> processUpdate(operation, eventsCache)
+            PendingOperation.OPERATION_DELETE -> processDelete(operation, eventsCache)
+            PendingOperation.OPERATION_MOVE -> processMove(operation, eventsCache, calendarsCache)
             else -> SinglePushResult.Error(-1, "Unknown operation: ${operation.operation}", false)
         }
     }
@@ -191,8 +208,13 @@ class PushStrategy @Inject constructor(
     /**
      * Process CREATE operation - push new event to server.
      */
-    private suspend fun processCreate(operation: PendingOperation): SinglePushResult {
-        val event = eventsDao.getById(operation.eventId)
+    private suspend fun processCreate(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event> = emptyMap(),
+        calendarsCache: Map<Long, Calendar> = emptyMap()
+    ): SinglePushResult {
+        val event = eventsCache[operation.eventId]
+            ?: eventsDao.getById(operation.eventId)
             ?: return SinglePushResult.Error(-1, "Event not found", false)
 
         // Skip exception events - they're bundled with their master via serializeWithExceptions()
@@ -202,7 +224,8 @@ class PushStrategy @Inject constructor(
             return SinglePushResult.Success() // No-op, master push includes this exception
         }
 
-        val calendar = calendarsDao.getById(event.calendarId)
+        val calendar = calendarsCache[event.calendarId]
+            ?: calendarsDao.getById(event.calendarId)
             ?: return SinglePushResult.Error(-1, "Calendar not found", false)
 
         // Serialize event to iCal (captures exceptions at this point in time)
@@ -254,8 +277,12 @@ class PushStrategy @Inject constructor(
     /**
      * Process UPDATE operation - update existing event on server.
      */
-    private suspend fun processUpdate(operation: PendingOperation): SinglePushResult {
-        val event = eventsDao.getById(operation.eventId)
+    private suspend fun processUpdate(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event> = emptyMap()
+    ): SinglePushResult {
+        val event = eventsCache[operation.eventId]
+            ?: eventsDao.getById(operation.eventId)
             ?: return SinglePushResult.Error(-1, "Event not found", false)
 
         // Skip exception events - they're bundled with their master via serializeWithExceptions()
@@ -329,8 +356,12 @@ class PushStrategy @Inject constructor(
      * Uses operation.targetUrl if available (for calendar moves where
      * event.caldavUrl was already cleared), otherwise falls back to event.caldavUrl.
      */
-    private suspend fun processDelete(operation: PendingOperation): SinglePushResult {
-        val event = eventsDao.getById(operation.eventId)
+    private suspend fun processDelete(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event> = emptyMap()
+    ): SinglePushResult {
+        val event = eventsCache[operation.eventId]
+            ?: eventsDao.getById(operation.eventId)
 
         // Use targetUrl from operation if available (for MOVE operations),
         // otherwise fall back to event's caldavUrl
@@ -390,14 +421,20 @@ class PushStrategy @Inject constructor(
      *
      * Fixes the bug where caldavUrl was cleared before DELETE could process.
      */
-    private suspend fun processMove(operation: PendingOperation): SinglePushResult {
-        val event = eventsDao.getById(operation.eventId)
+    private suspend fun processMove(
+        operation: PendingOperation,
+        eventsCache: Map<Long, Event> = emptyMap(),
+        calendarsCache: Map<Long, Calendar> = emptyMap()
+    ): SinglePushResult {
+        val event = eventsCache[operation.eventId]
+            ?: eventsDao.getById(operation.eventId)
             ?: return SinglePushResult.Error(-1, "Event not found for MOVE", false)
 
         val targetCalendarId = operation.targetCalendarId
             ?: return SinglePushResult.Error(-1, "No target calendar for MOVE", false)
 
-        val calendar = calendarsDao.getById(targetCalendarId)
+        val calendar = calendarsCache[targetCalendarId]
+            ?: calendarsDao.getById(targetCalendarId)
             ?: return SinglePushResult.Error(-1, "Target calendar not found for MOVE", false)
 
         // Step 1: DELETE from old calendar (using stored targetUrl)

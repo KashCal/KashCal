@@ -38,6 +38,13 @@ interface CalendarsDao {
     suspend fun getById(id: Long): Calendar?
 
     /**
+     * Get multiple calendars by IDs.
+     * Used by PushStrategy to batch load calendars.
+     */
+    @Query("SELECT * FROM calendars WHERE id IN (:ids)")
+    suspend fun getByIds(ids: List<Long>): List<Calendar>
+
+    /**
      * Get calendar by CalDAV URL (unique).
      */
     @Query("SELECT * FROM calendars WHERE caldav_url = :caldavUrl")
