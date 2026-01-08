@@ -6,8 +6,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
@@ -25,6 +27,7 @@ class ConflictResolverTest {
 
     private lateinit var client: CalDavClient
     private lateinit var parser: ICalParser
+    private lateinit var calendarsDao: CalendarsDao
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
@@ -104,10 +107,19 @@ class ConflictResolverTest {
         END:VCALENDAR
     """.trimIndent()
 
+    private val testCalendar = Calendar(
+        id = 1L,
+        accountId = 1L,
+        caldavUrl = "https://caldav.icloud.com/123/calendar/",
+        displayName = "Test Calendar",
+        color = -1
+    )
+
     @Before
     fun setup() {
         client = mockk()
         parser = mockk()
+        calendarsDao = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
         occurrenceGenerator = mockk()
@@ -117,9 +129,13 @@ class ConflictResolverTest {
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
 
+        // Default mock: calendar exists (tests can override)
+        coEvery { calendarsDao.getById(any()) } returns testCalendar
+
         conflictResolver = ConflictResolver(
             client = client,
             parser = parser,
+            calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -216,6 +232,33 @@ class ConflictResolverTest {
 
         assert(result is ConflictResult.ServerVersionKept)
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
+    }
+
+    @Test
+    fun `SERVER_WINS deletes event when calendar no longer exists`() = runTest {
+        val serverEvent = CalDavEvent(
+            href = "/calendar/test-event.ics",
+            url = testEvent.caldavUrl!!,
+            etag = "new-etag",
+            icalData = testServerIcal
+        )
+
+        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { client.fetchEvent(testEvent.caldavUrl!!) } returns CalDavResult.success(serverEvent)
+        coEvery { parser.parse(testServerIcal) } returns ParseResult(
+            events = listOf(testParsedEvent),
+            errors = emptyList()
+        )
+        // Calendar deleted during sync!
+        coEvery { calendarsDao.getById(testEvent.calendarId) } returns null
+        coEvery { eventsDao.deleteById(testEvent.id) } just Runs
+        coEvery { pendingOperationsDao.deleteById(testOperation.id) } just Runs
+
+        val result = conflictResolver.resolve(testOperation, ConflictStrategy.SERVER_WINS)
+
+        assert(result is ConflictResult.LocalDeleted)
+        coVerify { eventsDao.deleteById(testEvent.id) }
+        coVerify { pendingOperationsDao.deleteById(testOperation.id) }
     }
 
     // ========== NEWEST_WINS Tests ==========

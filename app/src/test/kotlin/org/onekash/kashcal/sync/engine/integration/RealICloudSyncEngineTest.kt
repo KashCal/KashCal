@@ -168,6 +168,7 @@ class RealICloudSyncEngineTest {
         conflictResolver = ConflictResolver(
             client = client,
             parser = parser,
+            calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
