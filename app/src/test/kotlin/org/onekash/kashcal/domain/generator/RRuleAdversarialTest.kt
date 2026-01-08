@@ -49,7 +49,7 @@ class RRuleAdversarialTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
 
         // Setup test calendar
         val accountId = database.accountsDao().insert(

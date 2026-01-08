@@ -7,8 +7,10 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
@@ -127,6 +129,7 @@ internal fun parseIsoDuration(duration: String): Long? {
 class ReminderScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val scheduledRemindersDao: ScheduledRemindersDao,
+    private val eventReader: EventReader,
     private val channels: ReminderNotificationChannels
 ) {
     companion object {
@@ -142,7 +145,8 @@ class ReminderScheduler @Inject constructor(
         private const val REQUEST_CODE_BASE = 4000
 
         // Scheduling window: how far ahead to schedule reminders
-        const val SCHEDULE_WINDOW_DAYS = 7
+        // Extended to 30 days (v16.5.6) - catches more far-future events
+        const val SCHEDULE_WINDOW_DAYS = 30
 
         // Minimum trigger time in the future (avoid immediate triggers)
         private const val MIN_TRIGGER_FUTURE_MS = 5_000L
@@ -188,6 +192,82 @@ class ReminderScheduler @Inject constructor(
                 )
             }
         }
+    }
+
+    /**
+     * Scan upcoming events and schedule any missing reminders.
+     * Called by ReminderRefreshWorker to catch events that entered the window.
+     *
+     * @param windowDays How many days ahead to scan (default: 30, matches SCHEDULE_WINDOW_DAYS)
+     * @return Number of new reminders scheduled
+     */
+    suspend fun scheduleUpcomingReminders(windowDays: Int = SCHEDULE_WINDOW_DAYS): Int {
+        val now = System.currentTimeMillis()
+        val windowEnd = now + (windowDays * 24 * 60 * 60 * 1000L)
+
+        // Get all events with reminders that have occurrences in window
+        val eventsWithReminders = eventReader.getEventsWithRemindersInRange(now, windowEnd)
+
+        var scheduled = 0
+        for (eventData in eventsWithReminders) {
+            for (reminderOffset in eventData.event.reminders.orEmpty()) {
+                val wasScheduled = scheduleReminderForOccurrenceIfMissing(
+                    event = eventData.event,
+                    occurrenceStartTs = eventData.occurrenceStartTs,
+                    reminderOffset = reminderOffset,
+                    calendarColor = eventData.calendarColor
+                )
+                if (wasScheduled) scheduled++
+            }
+        }
+
+        Log.i(TAG, "Scheduled $scheduled missing reminders in ${windowDays}-day window")
+        return scheduled
+    }
+
+    /**
+     * Schedule reminder only if it doesn't already exist.
+     * @return true if new reminder was scheduled, false if already exists
+     */
+    private suspend fun scheduleReminderForOccurrenceIfMissing(
+        event: Event,
+        occurrenceStartTs: Long,
+        reminderOffset: String,
+        calendarColor: Int
+    ): Boolean {
+        val offsetMs = parseReminderOffset(reminderOffset) ?: return false
+        val triggerTime = occurrenceStartTs + offsetMs
+        val now = System.currentTimeMillis()
+
+        // Skip past/immediate triggers
+        if (triggerTime < now + MIN_TRIGGER_FUTURE_MS) return false
+
+        // Check if already scheduled
+        val existing = scheduledRemindersDao.findExisting(
+            eventId = event.id,
+            occurrenceTime = occurrenceStartTs,
+            reminderOffset = reminderOffset
+        )
+        if (existing != null) return false
+
+        // Schedule new reminder
+        val scheduledReminder = ScheduledReminder(
+            eventId = event.id,
+            occurrenceTime = occurrenceStartTs,
+            triggerTime = triggerTime,
+            reminderOffset = reminderOffset,
+            status = ReminderStatus.PENDING,
+            eventTitle = event.title,
+            eventLocation = event.location,
+            isAllDay = event.isAllDay,
+            calendarColor = calendarColor
+        )
+
+        val reminderId = scheduledRemindersDao.insert(scheduledReminder)
+        scheduleAlarm(reminderId, triggerTime)
+
+        Log.d(TAG, "Scheduled missing reminder $reminderId for event ${event.id}")
+        return true
     }
 
     /**

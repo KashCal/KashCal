@@ -23,6 +23,18 @@ data class EventWithNextOccurrence(
 )
 
 /**
+ * Result from getEventsWithRemindersInRange query.
+ * Contains embedded Event with occurrence timing and calendar color.
+ * Used by ReminderScheduler to find events that may need reminders scheduled.
+ */
+data class EventWithOccurrenceAndColor(
+    @Embedded val event: Event,
+    @ColumnInfo(name = "occurrence_start_ts") val occurrenceStartTs: Long,
+    @ColumnInfo(name = "occurrence_end_ts") val occurrenceEndTs: Long,
+    @ColumnInfo(name = "calendar_color") val calendarColor: Int
+)
+
+/**
  * Data Access Object for Event operations.
  *
  * Provides comprehensive CRUD and sync operations for calendar events.
@@ -562,6 +574,41 @@ interface EventsDao {
         rangeStart: Long,
         rangeEnd: Long
     ): List<EventWithNextOccurrence>
+
+    // ========== Reminder Queries ==========
+
+    /**
+     * Get events with reminders that have occurrences in the given time window.
+     * Used by ReminderRefreshWorker to scan for missing reminders.
+     *
+     * Returns events where:
+     * - Event has non-empty reminders list
+     * - Event has occurrences in [fromTime, toTime] range
+     * - Calendar is visible (user hasn't hidden it)
+     * - Occurrence is not cancelled
+     *
+     * @param fromTime Start of window (epoch ms)
+     * @param toTime End of window (epoch ms)
+     * @return List of events with their occurrence times and calendar colors
+     */
+    @Query("""
+        SELECT e.*, o.start_ts as occurrence_start_ts, o.end_ts as occurrence_end_ts,
+               c.color as calendar_color
+        FROM events e
+        JOIN occurrences o ON e.id = o.event_id
+        JOIN calendars c ON e.calendar_id = c.id
+        WHERE e.reminders IS NOT NULL
+          AND e.reminders != '[]'
+          AND o.start_ts >= :fromTime
+          AND o.start_ts <= :toTime
+          AND o.is_cancelled = 0
+          AND c.is_visible = 1
+        ORDER BY o.start_ts ASC
+    """)
+    suspend fun getEventsWithRemindersInRange(
+        fromTime: Long,
+        toTime: Long
+    ): List<EventWithOccurrenceAndColor>
 
     // ========== Deduplication ==========
 

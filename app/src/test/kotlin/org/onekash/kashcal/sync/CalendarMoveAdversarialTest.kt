@@ -50,7 +50,7 @@ class CalendarMoveAdversarialTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
 
         // Setup test account and calendars
         testAccountId = database.accountsDao().insert(

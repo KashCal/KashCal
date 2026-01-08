@@ -63,7 +63,7 @@ class LocalFirstSyncIntegrationTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         client = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
 

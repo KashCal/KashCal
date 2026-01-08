@@ -54,7 +54,7 @@ class RruleEdgeCasesTest {
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
 
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
 
