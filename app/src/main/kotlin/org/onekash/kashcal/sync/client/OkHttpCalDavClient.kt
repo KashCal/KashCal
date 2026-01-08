@@ -12,6 +12,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
+import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.sync.client.model.*
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import java.io.IOException
@@ -72,9 +73,13 @@ class OkHttpCalDavClient @Inject constructor(
             }
             Log.d(TAG, truncated)
         }.apply {
-            // Use HEADERS level for debugging sync issues
-            // Change to NONE for release builds to avoid log spam
-            level = HttpLoggingInterceptor.Level.HEADERS
+            // Use HEADERS level for debugging sync issues in debug builds
+            // Disable logging in release builds for security and performance
+            level = if (BuildConfig.DEBUG) {
+                HttpLoggingInterceptor.Level.HEADERS
+            } else {
+                HttpLoggingInterceptor.Level.NONE
+            }
         }
     }
 
