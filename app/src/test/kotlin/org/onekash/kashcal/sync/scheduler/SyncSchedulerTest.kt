@@ -91,7 +91,7 @@ class SyncSchedulerTest {
     @Test
     fun `schedulePeriodicSync with forceFullSync sets input data`() {
         // When
-        scheduler.schedulePeriodicSync(forceFullSync = true)
+        scheduler.schedulePeriodicSync(intervalMinutes = 30, forceFullSync = true)
 
         // Then
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
@@ -103,7 +103,7 @@ class SyncSchedulerTest {
     @Test
     fun `cancelPeriodicSync removes periodic work`() {
         // Given
-        scheduler.schedulePeriodicSync()
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
         var workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertTrue(workInfos.isNotEmpty())
 
@@ -266,7 +266,7 @@ class SyncSchedulerTest {
     @Test
     fun `cancelAllSync cancels all sync work`() {
         // Given
-        scheduler.schedulePeriodicSync()
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
         scheduler.requestImmediateSync()
         scheduler.syncCalendar(1L)
         scheduler.syncAccount(1L)
@@ -318,7 +318,7 @@ class SyncSchedulerTest {
     @Test
     fun `isPeriodicSyncEnabled returns true when scheduled`() {
         // Given
-        scheduler.schedulePeriodicSync()
+        scheduler.schedulePeriodicSync(intervalMinutes = 30)
 
         // When
         val enabled = scheduler.isPeriodicSyncEnabled()

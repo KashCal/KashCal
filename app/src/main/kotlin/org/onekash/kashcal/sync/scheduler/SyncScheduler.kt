@@ -99,7 +99,6 @@ class SyncScheduler @Inject constructor(
         const val EXPEDITED_SYNC_WORK = "expedited_sync"
 
         // Intervals
-        const val DEFAULT_SYNC_INTERVAL_MINUTES = 30L
         const val MIN_SYNC_INTERVAL_MINUTES = 15L  // Android minimum
 
         // Tags for work identification
@@ -135,7 +134,7 @@ class SyncScheduler @Inject constructor(
      * @param forceFullSync If true, ignores ctag/sync-token and fetches all events
      */
     fun schedulePeriodicSync(
-        intervalMinutes: Long = DEFAULT_SYNC_INTERVAL_MINUTES,
+        intervalMinutes: Long,
         forceFullSync: Boolean = false
     ) {
         val actualInterval = maxOf(intervalMinutes, MIN_SYNC_INTERVAL_MINUTES)

@@ -227,10 +227,18 @@ class KashCalDataStoreTest {
         dataStore.syncIntervalMinutes.test {
             assertEquals(KashCalDataStore.DEFAULT_SYNC_INTERVAL_MINUTES, awaitItem())
 
-            dataStore.setSyncIntervalMinutes(60)
-            assertEquals(60, awaitItem())
+            dataStore.setSyncIntervalMinutes(30)
+            assertEquals(30, awaitItem())
 
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `default sync interval is 1 hour`() {
+        // Verify default sync interval is 1 hour (60 minutes) for efficient battery usage
+        // with lightweight ctag-based incremental sync
+        assertEquals(60, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MINUTES)
+        assertEquals(1L * 60 * 60 * 1000, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
     }
 }

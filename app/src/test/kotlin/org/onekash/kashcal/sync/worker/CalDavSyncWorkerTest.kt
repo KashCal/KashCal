@@ -25,8 +25,14 @@ import org.onekash.kashcal.sync.provider.ProviderRegistry
 import org.onekash.kashcal.sync.engine.SyncError
 import org.onekash.kashcal.sync.engine.SyncPhase
 import org.onekash.kashcal.sync.engine.SyncResult
+import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.Occurrence
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -56,6 +62,8 @@ class CalDavSyncWorkerTest {
     private lateinit var calDavClient: CalDavClient
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
+    private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var eventReader: EventReader
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -79,6 +87,8 @@ class CalDavSyncWorkerTest {
         calDavClient = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        reminderScheduler = mockk(relaxed = true)
+        eventReader = mockk(relaxed = true)
 
         // Default: return empty input data
         every { workerParams.inputData } returns Data.EMPTY
@@ -118,7 +128,9 @@ class CalDavSyncWorkerTest {
             providerRegistry = providerRegistry,
             calDavClient = calDavClient,
             syncScheduler = syncScheduler,
-            widgetUpdateManager = widgetUpdateManager
+            widgetUpdateManager = widgetUpdateManager,
+            reminderScheduler = reminderScheduler,
+            eventReader = eventReader
         )
     }
 
@@ -573,6 +585,181 @@ class CalDavSyncWorkerTest {
         verify { calDavClient.setCredentials("user@example.com", "pwd123") }
     }
 
+    // ==================== Reminder Scheduling Tests ====================
+
+    @Test
+    fun `sync schedules reminders for NEW events with reminders`() = runTest {
+        // Given
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val calendarId = 1L
+        val now = System.currentTimeMillis()
+
+        val syncChange = createTestSyncChange(ChangeType.NEW, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledAdded = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        val testEvent = createTestEvent(eventId, calendarId, reminders = listOf("-PT15M"))
+        val testCalendar = createTestCalendar(calendarId)
+        val testOccurrence = createTestOccurrence(eventId, calendarId)
+
+        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false) } returns syncResult
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+        coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
+
+        // When
+        worker.doWork()
+
+        // Then
+        coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+    }
+
+    @Test
+    fun `sync cancels and reschedules reminders for MODIFIED events`() = runTest {
+        // Given
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val calendarId = 1L
+
+        val syncChange = createTestSyncChange(ChangeType.MODIFIED, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledUpdated = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        val testEvent = createTestEvent(eventId, calendarId, reminders = listOf("-PT15M"))
+        val testCalendar = createTestCalendar(calendarId)
+        val testOccurrence = createTestOccurrence(eventId, calendarId)
+
+        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false) } returns syncResult
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+        coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
+
+        // When
+        worker.doWork()
+
+        // Then - For MODIFIED events, cancel first, then schedule
+        coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
+        coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
+    }
+
+    @Test
+    fun `sync skips reminder scheduling for DELETED events`() = runTest {
+        // Given
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+
+        val syncChange = createTestSyncChange(ChangeType.DELETED, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledDeleted = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false) } returns syncResult
+
+        // When
+        worker.doWork()
+
+        // Then - No reminder scheduling for deleted events
+        coVerify(exactly = 0) { eventReader.getEventById(any()) }
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `sync skips reminder scheduling for events without reminders`() = runTest {
+        // Given
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val calendarId = 1L
+
+        val syncChange = createTestSyncChange(ChangeType.NEW, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledAdded = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        // Event with no reminders
+        val testEvent = createTestEvent(eventId, calendarId, reminders = null)
+
+        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false) } returns syncResult
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+
+        // When
+        worker.doWork()
+
+        // Then - No reminder scheduling for events without reminders
+        coVerify(exactly = 0) { eventReader.getCalendarById(any()) }
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `sync handles exception events correctly for reminders`() = runTest {
+        // Given
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val masterEventId = 50L
+        val calendarId = 1L
+
+        val syncChange = createTestSyncChange(ChangeType.NEW, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledAdded = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        // Exception event (has originalEventId)
+        val testEvent = createTestEvent(
+            eventId,
+            calendarId,
+            reminders = listOf("-PT15M"),
+            originalEventId = masterEventId
+        )
+        val testCalendar = createTestCalendar(calendarId)
+        val testOccurrence = createTestOccurrence(eventId, calendarId)
+
+        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false) } returns syncResult
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+        coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
+        coEvery { eventReader.getOccurrenceByExceptionEventId(eventId) } returns testOccurrence
+
+        // When
+        worker.doWork()
+
+        // Then - Uses getOccurrenceByExceptionEventId for exception events
+        coVerify { eventReader.getOccurrenceByExceptionEventId(eventId) }
+        coVerify(exactly = 0) { eventReader.getOccurrencesForEventInScheduleWindow(any()) }
+        coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createTestAccount(id: Long = 1L): Account {
@@ -603,6 +790,62 @@ class CalDavSyncWorkerTest {
             isDefault = false,
             isReadOnly = false,
             sortOrder = 0
+        )
+    }
+
+    private fun createTestEvent(
+        id: Long,
+        calendarId: Long,
+        reminders: List<String>? = null,
+        originalEventId: Long? = null
+    ): Event {
+        val now = System.currentTimeMillis()
+        return Event(
+            id = id,
+            calendarId = calendarId,
+            uid = "test-event-$id",
+            title = "Test Event",
+            description = null,
+            location = null,
+            startTs = now + 3600_000, // 1 hour from now
+            endTs = now + 7200_000,   // 2 hours from now
+            isAllDay = false,
+            rrule = null,
+            rdate = null,
+            exdate = null,
+            reminders = reminders,
+            originalEventId = originalEventId,
+            originalInstanceTime = if (originalEventId != null) now + 3600_000 else null,
+            syncStatus = org.onekash.kashcal.data.db.entity.SyncStatus.SYNCED,
+            dtstamp = now
+        )
+    }
+
+    private fun createTestOccurrence(eventId: Long, calendarId: Long): Occurrence {
+        val now = System.currentTimeMillis()
+        return Occurrence(
+            id = 1L,
+            eventId = eventId,
+            calendarId = calendarId,
+            startTs = now + 3600_000,
+            endTs = now + 7200_000,
+            startDay = 20250108,  // Today's date in YYYYMMDD format
+            endDay = 20250108,
+            isCancelled = false
+        )
+    }
+
+    private fun createTestSyncChange(type: ChangeType, eventId: Long): SyncChange {
+        val now = System.currentTimeMillis()
+        return SyncChange(
+            type = type,
+            eventId = eventId,
+            eventTitle = "Test Event",
+            eventStartTs = now + 3600_000,
+            isAllDay = false,
+            isRecurring = false,
+            calendarName = "Home",
+            calendarColor = 0xFF0000
         )
     }
 }

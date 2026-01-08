@@ -21,6 +21,8 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
  * Unit tests for IcsSubscriptionRepository.
@@ -44,6 +46,8 @@ class IcsSubscriptionRepositoryTest {
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var icsFetcher: IcsFetcher
+    private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var eventReader: EventReader
 
     // System under test
     private lateinit var repository: IcsSubscriptionRepository
@@ -90,6 +94,8 @@ class IcsSubscriptionRepositoryTest {
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
         icsFetcher = mockk(relaxed = true)
+        reminderScheduler = mockk(relaxed = true)
+        eventReader = mockk(relaxed = true)
 
         repository = IcsSubscriptionRepository(
             icsSubscriptionsDao = icsSubscriptionsDao,
@@ -97,7 +103,9 @@ class IcsSubscriptionRepositoryTest {
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
-            icsFetcher = icsFetcher
+            icsFetcher = icsFetcher,
+            reminderScheduler = reminderScheduler,
+            eventReader = eventReader
         )
 
         // Default: ICS account exists
