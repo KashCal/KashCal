@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.sync.provider.icloud.ICloudAccount
@@ -199,9 +200,9 @@ class AccountSettingsViewModel @Inject constructor(
                 val currentState = _uiState.value
                 val iCloudState = currentState.iCloudState
                 if (iCloudState is ICloudConnectionState.Connected) {
-                    _uiState.value = currentState.copy(
-                        iCloudState = iCloudState.copy(calendarCount = count)
-                    )
+                    _uiState.update {
+                        it.copy(iCloudState = iCloudState.copy(calendarCount = count))
+                    }
                 }
             }
         }
@@ -301,14 +302,14 @@ class AccountSettingsViewModel @Inject constructor(
      * Show the iCloud sign-in sheet.
      */
     fun showICloudSignInSheet() {
-        _uiState.value = _uiState.value.copy(showICloudSignInSheet = true)
+        _uiState.update { it.copy(showICloudSignInSheet = true) }
     }
 
     /**
      * Hide the iCloud sign-in sheet.
      */
     fun hideICloudSignInSheet() {
-        _uiState.value = _uiState.value.copy(showICloudSignInSheet = false)
+        _uiState.update { it.copy(showICloudSignInSheet = false) }
     }
 
     /**
@@ -339,14 +340,16 @@ class AccountSettingsViewModel @Inject constructor(
         val currentState = _uiState.value
         val iCloudState = currentState.iCloudState
         if (iCloudState is ICloudConnectionState.NotConnected) {
-            _uiState.value = currentState.copy(
-                iCloudState = iCloudState.copy(
-                    appleId = appleIdInput,
-                    password = passwordInput,
-                    showHelp = showHelpState,
-                    error = errorMessage
+            _uiState.update {
+                it.copy(
+                    iCloudState = iCloudState.copy(
+                        appleId = appleIdInput,
+                        password = passwordInput,
+                        showHelp = showHelpState,
+                        error = errorMessage
+                    )
                 )
-            )
+            }
         }
     }
 
@@ -358,19 +361,21 @@ class AccountSettingsViewModel @Inject constructor(
     fun onSignIn() {
         viewModelScope.launch {
             errorMessage = null
-            _uiState.value = _uiState.value.copy(iCloudState = ICloudConnectionState.Connecting)
+            _uiState.update { it.copy(iCloudState = ICloudConnectionState.Connecting) }
 
             // Validate inputs
             if (appleIdInput.isBlank() || passwordInput.isBlank()) {
                 errorMessage = "Apple ID and password are required"
-                _uiState.value = _uiState.value.copy(
-                    iCloudState = ICloudConnectionState.NotConnected(
-                        appleId = appleIdInput,
-                        password = passwordInput,
-                        showHelp = showHelpState,
-                        error = errorMessage
+                _uiState.update {
+                    it.copy(
+                        iCloudState = ICloudConnectionState.NotConnected(
+                            appleId = appleIdInput,
+                            password = passwordInput,
+                            showHelp = showHelpState,
+                            error = errorMessage
+                        )
                     )
-                )
+                }
                 return@launch
             }
 
@@ -390,14 +395,16 @@ class AccountSettingsViewModel @Inject constructor(
                     // Timeout occurred - network too slow or server unreachable
                     Log.e(TAG, "Discovery timed out after ${DISCOVERY_TIMEOUT_MS}ms")
                     errorMessage = "Connection timed out. Check your internet and try again."
-                    _uiState.value = _uiState.value.copy(
-                        iCloudState = ICloudConnectionState.NotConnected(
-                            appleId = appleIdInput,
-                            password = passwordInput,
-                            showHelp = showHelpState,
-                            error = errorMessage
+                    _uiState.update {
+                        it.copy(
+                            iCloudState = ICloudConnectionState.NotConnected(
+                                appleId = appleIdInput,
+                                password = passwordInput,
+                                showHelp = showHelpState,
+                                error = errorMessage
+                            )
                         )
-                    )
+                    }
                 }
 
                 result is DiscoveryResult.Success -> {
@@ -418,15 +425,17 @@ class AccountSettingsViewModel @Inject constructor(
                     passwordInput = ""
 
                     // Update state to connected
-                    _uiState.value = _uiState.value.copy(
-                        iCloudState = ICloudConnectionState.Connected(
-                            appleId = result.account.email,
-                            lastSyncTime = null,
-                            calendarCount = result.calendars.size
-                        ),
-                        showICloudSignInSheet = false, // Close sheet on success
-                        pendingFinishActivity = isInitialSetup // Auto-navigate on initial setup
-                    )
+                    _uiState.update {
+                        it.copy(
+                            iCloudState = ICloudConnectionState.Connected(
+                                appleId = result.account.email,
+                                lastSyncTime = null,
+                                calendarCount = result.calendars.size
+                            ),
+                            showICloudSignInSheet = false, // Close sheet on success
+                            pendingFinishActivity = isInitialSetup // Auto-navigate on initial setup
+                        )
+                    }
 
                     // Trigger initial event sync for discovered calendars
                     syncScheduler.requestImmediateSync(forceFullSync = true)
@@ -445,27 +454,31 @@ class AccountSettingsViewModel @Inject constructor(
                 result is DiscoveryResult.AuthError -> {
                     Log.e(TAG, "Authentication failed: ${result.message}")
                     errorMessage = result.message
-                    _uiState.value = _uiState.value.copy(
-                        iCloudState = ICloudConnectionState.NotConnected(
-                            appleId = appleIdInput,
-                            password = passwordInput,
-                            showHelp = showHelpState,
-                            error = errorMessage
+                    _uiState.update {
+                        it.copy(
+                            iCloudState = ICloudConnectionState.NotConnected(
+                                appleId = appleIdInput,
+                                password = passwordInput,
+                                showHelp = showHelpState,
+                                error = errorMessage
+                            )
                         )
-                    )
+                    }
                 }
 
                 result is DiscoveryResult.Error -> {
                     Log.e(TAG, "Discovery failed: ${result.message}")
                     errorMessage = result.message
-                    _uiState.value = _uiState.value.copy(
-                        iCloudState = ICloudConnectionState.NotConnected(
-                            appleId = appleIdInput,
-                            password = passwordInput,
-                            showHelp = showHelpState,
-                            error = errorMessage
+                    _uiState.update {
+                        it.copy(
+                            iCloudState = ICloudConnectionState.NotConnected(
+                                appleId = appleIdInput,
+                                password = passwordInput,
+                                showHelp = showHelpState,
+                                error = errorMessage
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
@@ -554,20 +567,24 @@ class AccountSettingsViewModel @Inject constructor(
      * Used when handling webcal:// deep links.
      */
     fun openAddSubscriptionWithUrl(url: String) {
-        _uiState.value = _uiState.value.copy(
-            showAddSubscriptionDialog = true,
-            prefillSubscriptionUrl = url
-        )
+        _uiState.update {
+            it.copy(
+                showAddSubscriptionDialog = true,
+                prefillSubscriptionUrl = url
+            )
+        }
     }
 
     /**
      * Hide the add subscription dialog and clear any pre-filled URL.
      */
     fun hideAddSubscriptionDialog() {
-        _uiState.value = _uiState.value.copy(
-            showAddSubscriptionDialog = false,
-            prefillSubscriptionUrl = null
-        )
+        _uiState.update {
+            it.copy(
+                showAddSubscriptionDialog = false,
+                prefillSubscriptionUrl = null
+            )
+        }
     }
 
     /**
@@ -792,13 +809,13 @@ class AccountSettingsViewModel @Inject constructor(
      * Show a snackbar message to the user.
      */
     fun showSnackbar(message: String) {
-        _uiState.value = _uiState.value.copy(pendingSnackbarMessage = message)
+        _uiState.update { it.copy(pendingSnackbarMessage = message) }
     }
 
     /**
      * Clear the pending snackbar message after it's shown.
      */
     fun clearSnackbar() {
-        _uiState.value = _uiState.value.copy(pendingSnackbarMessage = null)
+        _uiState.update { it.copy(pendingSnackbarMessage = null) }
     }
 }

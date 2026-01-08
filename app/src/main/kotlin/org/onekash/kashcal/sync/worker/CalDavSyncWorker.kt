@@ -24,6 +24,7 @@ import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.provider.ProviderRegistry
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.util.maskEmail
 import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
@@ -251,7 +252,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.Error(-1, "Account not found", false)
         }
 
-        Log.d(TAG, "Syncing account: ${account.email}")
+        Log.d(TAG, "Syncing account: ${account.email.maskEmail()}")
         return syncEngine.syncAccount(account, forceFullSync)
     }
 
@@ -268,7 +269,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         val accounts = accountsDao.getEnabledAccounts()
         SyncDebugLog.i(TAG, "syncAll() found ${accounts.size} enabled accounts")
         for (account in accounts) {
-            SyncDebugLog.i(TAG, "Account: id=${account.id}, ${account.provider}, ${account.email}")
+            SyncDebugLog.i(TAG, "Account: id=${account.id}, ${account.provider}, ${account.email.maskEmail()}")
         }
         if (accounts.isEmpty()) {
             Log.d(TAG, "No enabled accounts to sync")
@@ -312,14 +313,14 @@ class CalDavSyncWorker @AssistedInject constructor(
             // Load credentials for this account
             val credentials = credProvider.getCredentials(account.id)
             if (credentials == null) {
-                Log.w(TAG, "No credentials for account ${account.email}, skipping")
+                Log.w(TAG, "No credentials for account ${account.email.maskEmail()}, skipping")
                 continue
             }
 
             // Create isolated client for this account (prevents credential race condition)
             val quirks = provider.getQuirks()
             if (quirks == null) {
-                Log.w(TAG, "No quirks for account ${account.email}, skipping")
+                Log.w(TAG, "No quirks for account ${account.email.maskEmail()}, skipping")
                 continue
             }
             val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
@@ -353,7 +354,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                     allChanges.addAll(result.changes)
                 }
                 is SyncResult.AuthError -> {
-                    Log.e(TAG, "Auth error for account ${account.email}: ${result.message}")
+                    Log.e(TAG, "Auth error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.AUTH,
                         code = 401,
@@ -361,7 +362,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                     ))
                 }
                 is SyncResult.Error -> {
-                    Log.e(TAG, "Sync error for account ${account.email}: ${result.message}")
+                    Log.e(TAG, "Sync error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,
                         code = result.code,
