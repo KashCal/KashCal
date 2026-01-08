@@ -24,8 +24,11 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
+import org.onekash.kashcal.data.contacts.ContactBirthdayManager
+import org.onekash.kashcal.data.contacts.ContactBirthdayWorker
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.debug.SyncDebugLog
@@ -34,6 +37,7 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
+import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
 import javax.inject.Inject
 import org.onekash.kashcal.data.db.entity.IcsSubscription as IcsSubscriptionEntity
 
@@ -62,7 +66,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val syncScheduler: SyncScheduler,
     private val discoveryService: AccountDiscoveryService,
     private val eventCoordinator: EventCoordinator,
-    private val syncLogReader: SyncLogReader
+    private val syncLogReader: SyncLogReader,
+    private val contactBirthdayManager: ContactBirthdayManager,
+    private val dataStore: KashCalDataStore
 ) : AndroidViewModel(application) {
 
     // Account connection state
@@ -116,13 +122,28 @@ class AccountSettingsViewModel @Inject constructor(
     private val _iCloudCalendarCount = MutableStateFlow(0)
     val iCloudCalendarCount: StateFlow<Int> = _iCloudCalendarCount.asStateFlow()
 
+    // Contact Birthdays
+    private val _contactBirthdaysEnabled = MutableStateFlow(false)
+    val contactBirthdaysEnabled: StateFlow<Boolean> = _contactBirthdaysEnabled.asStateFlow()
+
+    private val _contactBirthdaysColor = MutableStateFlow(SubscriptionColors.Purple)
+    val contactBirthdaysColor: StateFlow<Int> = _contactBirthdaysColor.asStateFlow()
+
+    private val _contactBirthdaysLastSync = MutableStateFlow(0L)
+    val contactBirthdaysLastSync: StateFlow<Long> = _contactBirthdaysLastSync.asStateFlow()
+
+    private val _hasContactsPermission = MutableStateFlow(false)
+    val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
+
     init {
         loadInitialState()
         observeCalendars()
         observeICloudCalendarCount()
         observeIcsSubscriptions()
+        observeContactBirthdays()
         observeUserPreferences()
         checkNotificationPermission()
+        checkContactsPermission()
     }
 
     private fun loadInitialState() {
@@ -207,6 +228,28 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
+    private fun observeContactBirthdays() {
+        viewModelScope.launch {
+            // Observe enabled state
+            dataStore.contactBirthdaysEnabled.collect { enabled ->
+                _contactBirthdaysEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
+            // Observe last sync time
+            dataStore.contactBirthdaysLastSync.collect { lastSync ->
+                _contactBirthdaysLastSync.value = lastSync
+            }
+        }
+        viewModelScope.launch {
+            // Load initial color from calendar (if exists)
+            val color = eventCoordinator.getContactBirthdaysColor()
+            if (color != null) {
+                _contactBirthdaysColor.value = color
+            }
+        }
+    }
+
     private fun observeUserPreferences() {
         viewModelScope.launch {
             combine(
@@ -242,6 +285,14 @@ class AccountSettingsViewModel @Inject constructor(
         } else {
             true
         }
+    }
+
+    private fun checkContactsPermission() {
+        val context = getApplication<Application>()
+        _hasContactsPermission.value = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CONTACTS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     // ==================== Account Actions ====================
@@ -606,6 +657,45 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
+    // ==================== Contact Birthdays ====================
+
+    /**
+     * Toggle contact birthdays feature.
+     *
+     * Note: Permission should be checked by the caller before enabling.
+     * If permission is denied, this method should not be called with enabled=true.
+     */
+    fun onToggleContactBirthdays(enabled: Boolean) {
+        viewModelScope.launch {
+            Log.i(TAG, "Toggle contact birthdays: enabled=$enabled")
+
+            if (enabled) {
+                // Enable: create calendar + start sync
+                val color = _contactBirthdaysColor.value
+                eventCoordinator.enableContactBirthdays(color)
+                dataStore.setContactBirthdaysEnabled(true)
+                contactBirthdayManager.onEnabled()
+            } else {
+                // Disable: delete calendar + stop observer
+                dataStore.setContactBirthdaysEnabled(false)
+                dataStore.setContactBirthdaysLastSync(0L)
+                contactBirthdayManager.onDisabled()
+                eventCoordinator.disableContactBirthdays()
+            }
+        }
+    }
+
+    /**
+     * Update contact birthdays calendar color.
+     */
+    fun onContactBirthdaysColorChange(color: Int) {
+        viewModelScope.launch {
+            Log.i(TAG, "Contact birthdays color change: $color")
+            _contactBirthdaysColor.value = color
+            eventCoordinator.updateContactBirthdaysColor(color)
+        }
+    }
+
     // ==================== Sync Settings ====================
 
     fun onSyncIntervalChange(intervalMs: Long) {
@@ -661,6 +751,13 @@ class AccountSettingsViewModel @Inject constructor(
      */
     fun refreshNotificationPermission() {
         checkNotificationPermission()
+    }
+
+    /**
+     * Refresh contacts permission state (call from Activity onResume).
+     */
+    fun refreshContactsPermission() {
+        checkContactsPermission()
     }
 
     // ==================== Sync Logs ====================

@@ -1,16 +1,20 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -34,35 +38,49 @@ import androidx.compose.ui.unit.dp
 /**
  * Subscriptions detail screen.
  *
- * Dedicated screen for managing ICS calendar subscriptions.
+ * Dedicated screen for managing ICS calendar subscriptions and contact birthdays.
  * Features:
- * - LazyColumn with swipeable items
+ * - Contact birthdays section with enable toggle
+ * - LazyColumn with swipeable ICS subscription items
  * - Swipe left to delete
  * - Tap to edit
  * - FAB to add new subscription
  *
- * @param subscriptions List of current subscriptions
+ * @param subscriptions List of current ICS subscriptions
+ * @param contactBirthdaysEnabled Whether contact birthdays is enabled
+ * @param contactBirthdaysColor Calendar color for birthdays
+ * @param contactBirthdaysLastSync Last sync timestamp
+ * @param hasContactsPermission Whether READ_CONTACTS permission is granted
  * @param onNavigateBack Callback to navigate back
- * @param onAddSubscription Callback when adding new subscription
- * @param onToggleSubscription Callback when subscription enabled/disabled
- * @param onDeleteSubscription Callback when subscription deleted
- * @param onRefreshSubscription Callback when subscription refreshed
- * @param onUpdateSubscription Callback when subscription updated
+ * @param onAddSubscription Callback when adding new ICS subscription
+ * @param onToggleSubscription Callback when ICS subscription enabled/disabled
+ * @param onDeleteSubscription Callback when ICS subscription deleted
+ * @param onRefreshSubscription Callback when ICS subscription refreshed
+ * @param onUpdateSubscription Callback when ICS subscription updated
+ * @param onToggleContactBirthdays Callback when contact birthdays toggled
+ * @param onContactBirthdaysColorChange Callback when birthday calendar color changed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubscriptionsScreen(
     subscriptions: List<IcsSubscriptionUiModel>,
+    contactBirthdaysEnabled: Boolean,
+    contactBirthdaysColor: Int,
+    contactBirthdaysLastSync: Long,
+    hasContactsPermission: Boolean,
     onNavigateBack: () -> Unit,
     onAddSubscription: (url: String, name: String, color: Int) -> Unit,
     onToggleSubscription: (Long, Boolean) -> Unit,
     onDeleteSubscription: (Long) -> Unit,
     onRefreshSubscription: (Long) -> Unit,
-    onUpdateSubscription: (Long, String, Int, Int) -> Unit
+    onUpdateSubscription: (Long, String, Int, Int) -> Unit,
+    onToggleContactBirthdays: (Boolean) -> Unit,
+    onContactBirthdaysColorChange: (Int) -> Unit
 ) {
     // State for dialogs
     var showAddDialog by remember { mutableStateOf(false) }
     var editingSubscription by remember { mutableStateOf<IcsSubscriptionUiModel?>(null) }
+    var showContactBirthdaysSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -90,43 +108,44 @@ fun SubscriptionsScreen(
             }
         }
     ) { paddingValues ->
-        if (subscriptions.isEmpty()) {
-            // Empty state
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top = paddingValues.calculateTopPadding(),
+                bottom = paddingValues.calculateBottomPadding() + 80.dp // Space for FAB
+            )
+        ) {
+            // Contact Birthdays Section
+            item {
+                SectionHeader("Contact Birthdays")
+            }
+
+            item {
+                ContactBirthdaysRow(
+                    enabled = contactBirthdaysEnabled,
+                    onClick = { showContactBirthdaysSheet = true }
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 32.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            // ICS Subscriptions Section
+            item {
+                SectionHeader("ICS Calendars")
+            }
+
+            if (subscriptions.isEmpty()) {
+                item {
                     Text(
-                        "🔗",
-                        style = MaterialTheme.typography.displayMedium
-                    )
-                    Text(
-                        "No Subscriptions",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Text(
-                        "Subscribe to ICS calendar feeds\nlike holidays or sports schedules",
+                        "No ICS subscriptions.\nTap + to add a calendar feed.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
                     )
                 }
-            }
-        } else {
-            // Subscription list
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = paddingValues.calculateTopPadding(),
-                    bottom = paddingValues.calculateBottomPadding() + 80.dp // Space for FAB
-                )
-            ) {
+            } else {
                 items(
                     items = subscriptions,
                     key = { it.id ?: 0L }
@@ -170,6 +189,56 @@ fun SubscriptionsScreen(
                 }
                 editingSubscription = null
             }
+        )
+    }
+
+    // Contact Birthdays sheet
+    if (showContactBirthdaysSheet) {
+        ContactBirthdaysSheet(
+            isEnabled = contactBirthdaysEnabled,
+            calendarColor = contactBirthdaysColor,
+            lastSyncTime = contactBirthdaysLastSync,
+            hasPermission = hasContactsPermission,
+            onDismiss = { showContactBirthdaysSheet = false },
+            onToggle = onToggleContactBirthdays,
+            onColorChange = onContactBirthdaysColorChange
+        )
+    }
+}
+
+/**
+ * Row item for Contact Birthdays in the subscriptions list.
+ */
+@Composable
+private fun ContactBirthdaysRow(
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                "Contact Birthdays",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                if (enabled) "Enabled" else "Disabled",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            modifier = Modifier.size(24.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

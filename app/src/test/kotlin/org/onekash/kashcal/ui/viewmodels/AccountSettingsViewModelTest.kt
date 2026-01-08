@@ -43,6 +43,8 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
+import org.onekash.kashcal.data.contacts.ContactBirthdayManager
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import kotlinx.coroutines.delay
 
 /**
@@ -74,6 +76,8 @@ class AccountSettingsViewModelTest {
     private lateinit var discoveryService: AccountDiscoveryService
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var syncLogReader: SyncLogReader
+    private lateinit var contactBirthdayManager: ContactBirthdayManager
+    private lateinit var dataStore: KashCalDataStore
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -83,6 +87,8 @@ class AccountSettingsViewModelTest {
     private lateinit var defaultReminderTimedFlow: MutableStateFlow<Int>
     private lateinit var defaultReminderAllDayFlow: MutableStateFlow<Int>
     private lateinit var syncLogsFlow: MutableStateFlow<List<SyncLog>>
+    private lateinit var contactBirthdaysEnabledFlow: MutableStateFlow<Boolean>
+    private lateinit var contactBirthdaysLastSyncFlow: MutableStateFlow<Long>
 
     // Test data
     private val testCalendars = listOf(
@@ -135,6 +141,8 @@ class AccountSettingsViewModelTest {
         discoveryService = mockk(relaxed = true)
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
+        contactBirthdayManager = mockk(relaxed = true)
+        dataStore = mockk(relaxed = true)
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -144,6 +152,8 @@ class AccountSettingsViewModelTest {
         defaultReminderTimedFlow = MutableStateFlow(15)
         defaultReminderAllDayFlow = MutableStateFlow(1440)
         syncLogsFlow = MutableStateFlow(emptyList())
+        contactBirthdaysEnabledFlow = MutableStateFlow(false)
+        contactBirthdaysLastSyncFlow = MutableStateFlow(0L)
 
         // Setup default behaviors - EventCoordinator for calendars (architecture compliant)
         every { eventCoordinator.getAllCalendars() } returns calendarsFlow
@@ -163,6 +173,11 @@ class AccountSettingsViewModelTest {
 
         // Mock ICS subscriptions flow
         every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(emptyList())
+
+        // Mock contact birthdays flows
+        every { dataStore.contactBirthdaysEnabled } returns contactBirthdaysEnabledFlow
+        every { dataStore.contactBirthdaysLastSync } returns contactBirthdaysLastSyncFlow
+        coEvery { eventCoordinator.getContactBirthdaysColor() } returns null
     }
 
     @After
@@ -178,7 +193,9 @@ class AccountSettingsViewModelTest {
             syncScheduler = syncScheduler,
             discoveryService = discoveryService,
             eventCoordinator = eventCoordinator,
-            syncLogReader = syncLogReader
+            syncLogReader = syncLogReader,
+            contactBirthdayManager = contactBirthdayManager,
+            dataStore = dataStore
         )
     }
 

@@ -12,6 +12,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -51,6 +52,9 @@ class EventCoordinatorImmediatePushTest {
 
     @MockK
     private lateinit var icsSubscriptionRepository: IcsSubscriptionRepository
+
+    @MockK
+    private lateinit var contactBirthdayRepository: ContactBirthdayRepository
 
     @MockK
     private lateinit var syncScheduler: SyncScheduler
@@ -107,6 +111,7 @@ class EventCoordinatorImmediatePushTest {
             occurrenceGenerator,
             localCalendarInitializer,
             icsSubscriptionRepository,
+            contactBirthdayRepository,
             syncScheduler,
             reminderScheduler,
             widgetUpdateManager

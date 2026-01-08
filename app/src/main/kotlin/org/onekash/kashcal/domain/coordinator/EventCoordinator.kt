@@ -8,6 +8,7 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import java.util.UUID
+import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
@@ -52,6 +53,7 @@ class EventCoordinator @Inject constructor(
     private val occurrenceGenerator: OccurrenceGenerator,
     private val localCalendarInitializer: LocalCalendarInitializer,
     private val icsSubscriptionRepository: IcsSubscriptionRepository,
+    private val contactBirthdayRepository: ContactBirthdayRepository,
     private val syncScheduler: SyncScheduler,
     private val reminderScheduler: ReminderScheduler,
     private val widgetUpdateManager: WidgetUpdateManager
@@ -900,6 +902,66 @@ class EventCoordinator @Inject constructor(
             }
             Pair(master, exceptions)
         }
+    }
+
+    // ========== Contact Birthdays ==========
+
+    /**
+     * Check if contact birthday calendar exists.
+     */
+    suspend fun birthdayCalendarExists(): Boolean {
+        return contactBirthdayRepository.birthdayCalendarExists()
+    }
+
+    /**
+     * Enable contact birthdays calendar.
+     *
+     * Creates the calendar if it doesn't exist.
+     *
+     * @param color Calendar color
+     * @return Calendar ID
+     */
+    suspend fun enableContactBirthdays(color: Int): Long {
+        return contactBirthdayRepository.ensureCalendarExists(color)
+    }
+
+    /**
+     * Disable contact birthdays calendar.
+     *
+     * Removes the calendar and all birthday events.
+     */
+    suspend fun disableContactBirthdays() {
+        contactBirthdayRepository.removeCalendar()
+        triggerWidgetUpdate()
+    }
+
+    /**
+     * Sync contact birthdays.
+     *
+     * Reads birthdays from phone contacts and syncs to calendar.
+     *
+     * @return Sync result
+     */
+    suspend fun syncContactBirthdays(): ContactBirthdayRepository.SyncResult {
+        val result = contactBirthdayRepository.syncBirthdays()
+        if (result is ContactBirthdayRepository.SyncResult.Success) {
+            triggerWidgetUpdate()
+        }
+        return result
+    }
+
+    /**
+     * Update contact birthdays calendar color.
+     */
+    suspend fun updateContactBirthdaysColor(color: Int) {
+        contactBirthdayRepository.updateCalendarColor(color)
+    }
+
+    /**
+     * Get contact birthdays calendar color.
+     */
+    suspend fun getContactBirthdaysColor(): Int? {
+        return contactBirthdayRepository.getCalendarColor()
     }
 
     companion object {

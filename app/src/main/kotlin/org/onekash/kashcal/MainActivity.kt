@@ -325,6 +325,7 @@ class MainActivity : ComponentActivity() {
                         event = event,
                         calendarColor = calendarColor,
                         calendarName = calendarName,
+                        occurrenceTs = quickViewOccurrenceTs,
                         onDismiss = {
                             showQuickViewSheet = false
                             quickViewEvent = null

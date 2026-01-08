@@ -102,4 +102,12 @@ object PreferencesKeys {
 
     /** Number of times notification permission was denied (for rationale/permanently denied logic) */
     val NOTIFICATION_PERMISSION_DENIED_COUNT = intPreferencesKey("notification_permission_denied_count")
+
+    // ========== Contact Birthdays ==========
+
+    /** Contact birthdays calendar enabled */
+    val CONTACT_BIRTHDAYS_ENABLED = booleanPreferencesKey("contact_birthdays_enabled")
+
+    /** Last sync time for contact birthdays */
+    val CONTACT_BIRTHDAYS_LAST_SYNC = longPreferencesKey("contact_birthdays_last_sync")
 }

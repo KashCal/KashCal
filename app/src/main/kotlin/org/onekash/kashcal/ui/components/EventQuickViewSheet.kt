@@ -44,6 +44,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
+import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
@@ -55,6 +57,7 @@ import org.onekash.kashcal.util.DateTimeUtils
  * @param event The event to display
  * @param calendarColor Calendar color for the event
  * @param calendarName Calendar name for display
+ * @param occurrenceTs The occurrence timestamp (for recurring events, used for birthday age calculation)
  * @param onDismiss Called when sheet is dismissed
  * @param onEdit Called to edit the event (for single events or all occurrences)
  * @param onEditOccurrence Called to edit just this occurrence (recurring events)
@@ -71,6 +74,7 @@ fun EventQuickViewSheet(
     event: Event,
     calendarColor: Int,
     calendarName: String,
+    occurrenceTs: Long? = null,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit = {},
@@ -90,6 +94,11 @@ fun EventQuickViewSheet(
 
     // Detect recurring events: master events have rrule, exception events have originalEventId
     val isRecurring = event.isRecurring || event.isException
+
+    // Format title with age for birthday events
+    val displayTitle = remember(event, occurrenceTs) {
+        formatEventTitle(event, occurrenceTs)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -128,7 +137,7 @@ fun EventQuickViewSheet(
                 ) {
                     // Title
                     Text(
-                        text = event.title,
+                        text = displayTitle,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -487,5 +496,47 @@ private fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean): 
         val startTime = DateTimeUtils.formatEventTime(startTs, isAllDay)
         val endTime = DateTimeUtils.formatEventTime(endTs, isAllDay)
         "$startDateStr \u00b7 $startTime - $endTime"
+    }
+}
+
+/**
+ * Format event title, adding age for birthday events.
+ *
+ * For contact birthday events (caldavUrl starts with "contact_birthday:"):
+ * - Decodes birth year from event description
+ * - Calculates age at the occurrence date
+ * - Returns "Name's Xth Birthday" format
+ *
+ * For all other events, returns the original title.
+ *
+ * @param event The event to format title for
+ * @param occurrenceTs The occurrence timestamp for age calculation
+ * @return Formatted title string
+ */
+private fun formatEventTitle(event: Event, occurrenceTs: Long?): String {
+    // Check if this is a contact birthday event
+    val isBirthdayEvent = event.caldavUrl?.startsWith("${ContactBirthdayRepository.SOURCE_PREFIX}:") == true
+
+    if (!isBirthdayEvent || occurrenceTs == null) {
+        return event.title
+    }
+
+    // Decode birth year from description
+    val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
+
+    if (birthYear == null) {
+        return event.title
+    }
+
+    // Calculate age and format title
+    val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
+
+    // Extract display name from existing title (remove "'s Birthday" suffix)
+    val displayName = event.title.removeSuffix("'s Birthday")
+
+    return if (age > 0 && age < 150) {
+        "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+    } else {
+        event.title
     }
 }

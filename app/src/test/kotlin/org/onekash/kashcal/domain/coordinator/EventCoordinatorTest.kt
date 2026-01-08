@@ -14,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -47,6 +48,7 @@ class EventCoordinatorTest {
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var localCalendarInitializer: LocalCalendarInitializer
     private lateinit var icsSubscriptionRepository: IcsSubscriptionRepository
+    private lateinit var contactBirthdayRepository: ContactBirthdayRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
@@ -100,6 +102,7 @@ class EventCoordinatorTest {
         occurrenceGenerator = mockk(relaxed = true)
         localCalendarInitializer = mockk(relaxed = true)
         icsSubscriptionRepository = mockk(relaxed = true)
+        contactBirthdayRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
@@ -120,6 +123,7 @@ class EventCoordinatorTest {
             occurrenceGenerator = occurrenceGenerator,
             localCalendarInitializer = localCalendarInitializer,
             icsSubscriptionRepository = icsSubscriptionRepository,
+            contactBirthdayRepository = contactBirthdayRepository,
             syncScheduler = syncScheduler,
             reminderScheduler = reminderScheduler,
             widgetUpdateManager = widgetUpdateManager
