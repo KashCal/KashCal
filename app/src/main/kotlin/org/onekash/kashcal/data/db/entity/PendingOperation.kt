@@ -95,7 +95,20 @@ data class PendingOperation(
      * Specifies which calendar to create the event in after deletion.
      */
     @ColumnInfo(name = "target_calendar_id")
-    val targetCalendarId: Long? = null
+    val targetCalendarId: Long? = null,
+
+    /**
+     * Current phase for MOVE operations (0 = DELETE, 1 = CREATE).
+     * Each phase gets independent retry budget to prevent event loss.
+     *
+     * - Phase 0: DELETE from old calendar (uses retry_count for DELETE retries)
+     * - Phase 1: CREATE in new calendar (retry_count reset to 0 for CREATE retries)
+     *
+     * This prevents the bug where DELETE succeeds but CREATE fails repeatedly,
+     * exhausting the shared retry budget and losing the event.
+     */
+    @ColumnInfo(name = "move_phase", defaultValue = "0")
+    val movePhase: Int = 0
 ) {
     // ========== Computed Properties ==========
 
@@ -120,6 +133,10 @@ data class PendingOperation(
         const val STATUS_PENDING = "PENDING"
         const val STATUS_IN_PROGRESS = "IN_PROGRESS"
         const val STATUS_FAILED = "FAILED"
+
+        // Move operation phases (each phase has independent 5-retry budget)
+        const val MOVE_PHASE_DELETE = 0  // Phase 0: DELETE from old calendar
+        const val MOVE_PHASE_CREATE = 1  // Phase 1: CREATE in new calendar
 
         /**
          * Calculate next retry delay with exponential backoff.

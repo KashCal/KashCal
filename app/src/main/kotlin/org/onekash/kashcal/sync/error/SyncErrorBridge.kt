@@ -138,6 +138,7 @@ object SyncErrorBridge {
      */
     fun fromSinglePushResult(result: SinglePushResult, eventTitle: String? = null): CalendarError? = when (result) {
         is SinglePushResult.Success -> null
+        is SinglePushResult.PhaseAdvanced -> null  // MOVE operation advanced to next phase (not an error)
         is SinglePushResult.Conflict -> CalendarError.Server.Conflict(eventTitle)
         is SinglePushResult.Error -> when (result.code) {
             401 -> CalendarError.Auth.InvalidCredentials

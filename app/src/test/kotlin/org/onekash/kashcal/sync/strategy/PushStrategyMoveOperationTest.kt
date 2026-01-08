@@ -101,6 +101,7 @@ class PushStrategyMoveOperationTest {
         // CRITICAL: This tests Pattern #6 from CLAUDE.md
         // The event's caldavUrl is NULL because EventWriter.moveEventToCalendar cleared it
         // But the operation has the old URL stored at queue time
+        // NOTE: This test uses CREATE phase since we're testing full completion
 
         val oldUrl = "https://caldav.icloud.com/123/personal/move-test-uid-123.ics"
         val newUrl = "https://caldav.icloud.com/123/work/move-test-uid-123.ics"
@@ -112,7 +113,8 @@ class PushStrategyMoveOperationTest {
             operation = PendingOperation.OPERATION_MOVE,
             targetUrl = oldUrl, // Stored at queue time BEFORE caldavUrl was cleared
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE // Phase 1: CREATE (DELETE already done)
         )
 
         val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
@@ -123,8 +125,7 @@ class PushStrategyMoveOperationTest {
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { serializer.serialize(any()) } returns icalData
-        // DELETE uses targetUrl from operation (not event.caldavUrl)
-        coEvery { client.deleteEvent(oldUrl, any()) } returns CalDavResult.success(Unit)
+        // CREATE phase - DELETE was already done in phase 0
         coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) } returns
             CalDavResult.success(Pair(newUrl, newEtag))
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, newUrl, newEtag, any()) } just Runs
@@ -138,16 +139,16 @@ class PushStrategyMoveOperationTest {
         assertEquals(1, success.eventsCreated)
         assertEquals(1, success.eventsDeleted)
 
-        // Verify DELETE was called with targetUrl from operation (not null)
-        coVerify { client.deleteEvent(oldUrl, any()) }
+        // CREATE phase skips DELETE (already done in phase 0)
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
         // Verify CREATE was called with new calendar URL
         coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
     }
 
     @Test
     fun `processMove succeeds when DELETE returns 404 (already deleted)`() = runTest {
+        // Tests DELETE phase where event is already deleted (404) - should still advance to CREATE
         val oldUrl = "https://caldav.icloud.com/123/personal/event.ics"
-        val newUrl = "https://caldav.icloud.com/123/work/event.ics"
 
         val moveOperation = PendingOperation(
             id = 1L,
@@ -155,34 +156,33 @@ class PushStrategyMoveOperationTest {
             operation = PendingOperation.OPERATION_MOVE,
             targetUrl = oldUrl,
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_DELETE // Testing DELETE phase
         )
-
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
-        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
         // DELETE returns 404 - event already deleted from old calendar
         coEvery { client.deleteEvent(oldUrl, any()) } returns CalDavResult.notFoundError("Not found")
-        coEvery { client.createEvent(any(), any(), any()) } returns
-            CalDavResult.success(Pair(newUrl, "\"etag\""))
-        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
-        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+        coEvery { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) } just Runs
 
         val result = pushStrategy.pushAll()
 
-        // Should still succeed (404 is OK for DELETE)
+        // Should still succeed (404 is OK for DELETE phase, advances to CREATE)
         assertTrue(result is PushResult.Success)
         val success = result as PushResult.Success
         assertEquals(0, success.operationsFailed)
+        assertEquals(1, success.eventsDeleted) // DELETE phase counted
+
+        // Should advance to CREATE phase (404 is treated as success)
+        coVerify { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) }
     }
 
     @Test
     fun `processMove fails when DELETE returns server error`() = runTest {
+        // Tests DELETE phase failing - should schedule retry for DELETE phase
         val oldUrl = "https://caldav.icloud.com/123/personal/event.ics"
 
         val moveOperation = PendingOperation(
@@ -191,7 +191,8 @@ class PushStrategyMoveOperationTest {
             operation = PendingOperation.OPERATION_MOVE,
             targetUrl = oldUrl,
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_DELETE // Testing DELETE phase
         )
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
@@ -210,21 +211,24 @@ class PushStrategyMoveOperationTest {
         val success = result as PushResult.Success
         assertEquals(1, success.operationsFailed)
 
-        // Should schedule retry
+        // Should schedule retry for DELETE phase
         coVerify { pendingOperationsDao.scheduleRetry(moveOperation.id, any(), any(), any()) }
+        // Should NOT advance to CREATE phase
+        coVerify(exactly = 0) { pendingOperationsDao.advanceToCreatePhase(any(), any()) }
     }
 
     @Test
     fun `processMove fails when CREATE conflicts (UID exists in target)`() = runTest {
-        val oldUrl = "https://caldav.icloud.com/123/personal/event.ics"
+        // Tests CREATE phase conflict - should schedule retry
 
         val moveOperation = PendingOperation(
             id = 1L,
             eventId = testEvent.id,
             operation = PendingOperation.OPERATION_MOVE,
-            targetUrl = oldUrl,
+            targetUrl = "https://caldav.icloud.com/old.ics",
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE // Testing CREATE phase
         )
 
         val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
@@ -235,7 +239,6 @@ class PushStrategyMoveOperationTest {
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.deleteEvent(oldUrl, any()) } returns CalDavResult.success(Unit)
         // CREATE conflicts - UID already exists in target calendar
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.conflictError("UID exists")
@@ -246,11 +249,15 @@ class PushStrategyMoveOperationTest {
 
         assertTrue(result is PushResult.Success)
         assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        // Should NOT call DELETE (CREATE phase)
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
     }
 
     @Test
     fun `processMove with null targetUrl skips DELETE step`() = runTest {
         // Event was moved from local calendar (no old URL to delete)
+        // Test CREATE phase completion when there's no old URL
         val newUrl = "https://caldav.icloud.com/123/work/event.ics"
 
         val moveOperation = PendingOperation(
@@ -259,7 +266,8 @@ class PushStrategyMoveOperationTest {
             operation = PendingOperation.OPERATION_MOVE,
             targetUrl = null, // No old URL (was local)
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE // Already in CREATE phase
         )
 
         val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
@@ -279,7 +287,7 @@ class PushStrategyMoveOperationTest {
 
         assertTrue(result is PushResult.Success)
 
-        // DELETE should NOT be called (no targetUrl)
+        // DELETE should NOT be called (CREATE phase)
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
         // CREATE should be called
         coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
@@ -359,7 +367,7 @@ class PushStrategyMoveOperationTest {
 
     @Test
     fun `processMove includes exceptions when moving recurring event`() = runTest {
-        val oldUrl = "https://caldav.icloud.com/123/personal/recurring.ics"
+        // Test CREATE phase with recurring event - should include exceptions
         val newUrl = "https://caldav.icloud.com/123/work/recurring.ics"
 
         val recurringEvent = testEvent.copy(
@@ -384,9 +392,10 @@ class PushStrategyMoveOperationTest {
             id = 1L,
             eventId = recurringEvent.id,
             operation = PendingOperation.OPERATION_MOVE,
-            targetUrl = oldUrl,
+            targetUrl = "https://caldav.icloud.com/old.ics",
             targetCalendarId = targetCalendar.id,
-            status = PendingOperation.STATUS_PENDING
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE // Testing CREATE phase
         )
 
         val icalDataWithExceptions = "BEGIN:VCALENDAR\nMASTER+EXCEPTION\nEND:VCALENDAR"
@@ -399,7 +408,6 @@ class PushStrategyMoveOperationTest {
         coEvery { eventsDao.getExceptionsForMaster(recurringEvent.id) } returns listOf(exception)
         // Should serialize with exceptions
         coEvery { serializer.serializeWithExceptions(recurringEvent, listOf(exception)) } returns icalDataWithExceptions
-        coEvery { client.deleteEvent(oldUrl, any()) } returns CalDavResult.success(Unit)
         coEvery { client.createEvent(targetCalendar.caldavUrl, recurringEvent.uid, icalDataWithExceptions) } returns
             CalDavResult.success(Pair(newUrl, "\"etag\""))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
@@ -412,12 +420,172 @@ class PushStrategyMoveOperationTest {
         // Verify exceptions were included in serialization
         coVerify { eventsDao.getExceptionsForMaster(recurringEvent.id) }
         coVerify { serializer.serializeWithExceptions(recurringEvent, listOf(exception)) }
+        // Should NOT call DELETE (CREATE phase)
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
+    }
+
+    // ==================== MOVE Phase-Aware Tests (C3 Fix) ====================
+
+    @Test
+    fun `processMove advances to CREATE phase after DELETE succeeds`() = runTest {
+        // C3 fix: DELETE phase succeeds → advance to CREATE phase with fresh retry budget
+        val oldUrl = "https://caldav.icloud.com/123/personal/event.ics"
+
+        val moveOperation = PendingOperation(
+            id = 1L,
+            eventId = testEvent.id,
+            operation = PendingOperation.OPERATION_MOVE,
+            targetUrl = oldUrl,
+            targetCalendarId = targetCalendar.id,
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_DELETE // Phase 0: DELETE
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { client.deleteEvent(oldUrl, any()) } returns CalDavResult.success(Unit)
+        coEvery { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) } just Runs
+
+        val result = pushStrategy.pushAll()
+
+        // Should count DELETE as done
+        assertTrue(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).eventsDeleted)
+
+        // Should NOT call CREATE (happens in next sync cycle)
+        coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
+
+        // Should advance to CREATE phase
+        coVerify { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) }
+
+        // Should NOT delete the operation (still pending CREATE phase)
+        coVerify(exactly = 0) { pendingOperationsDao.deleteById(moveOperation.id) }
+    }
+
+    @Test
+    fun `processMove CREATE phase runs when movePhase is 1`() = runTest {
+        // C3 fix: CREATE phase runs independently with fresh retry budget
+        val newUrl = "https://caldav.icloud.com/123/work/event.ics"
+        val newEtag = "\"new-etag\""
+        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
+
+        val moveOperation = PendingOperation(
+            id = 1L,
+            eventId = testEvent.id,
+            operation = PendingOperation.OPERATION_MOVE,
+            targetUrl = "https://caldav.icloud.com/old.ics",
+            targetCalendarId = targetCalendar.id,
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE, // Phase 1: CREATE
+            retryCount = 0 // Fresh retry budget after phase advance
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { serializer.serialize(any()) } returns icalData
+        coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) } returns
+            CalDavResult.success(Pair(newUrl, newEtag))
+        coEvery { eventsDao.markCreatedOnServer(testEvent.id, newUrl, newEtag, any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(moveOperation.id) } just Runs
+
+        val result = pushStrategy.pushAll()
+
+        assertTrue(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assertEquals(1, success.eventsCreated)
+        assertEquals(1, success.eventsDeleted) // MOVE counts as both
+
+        // Should NOT call DELETE (already done in phase 0)
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
+
+        // Should call CREATE
+        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
+
+        // Should delete operation after success
+        coVerify { pendingOperationsDao.deleteById(moveOperation.id) }
+    }
+
+    @Test
+    fun `processMove CREATE phase retries independently of DELETE failures`() = runTest {
+        // C3 fix: CREATE phase has its own 5 retry budget
+        val moveOperation = PendingOperation(
+            id = 1L,
+            eventId = testEvent.id,
+            operation = PendingOperation.OPERATION_MOVE,
+            targetUrl = "https://caldav.icloud.com/old.ics",
+            targetCalendarId = targetCalendar.id,
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_CREATE,
+            retryCount = 2 // 2 retries in CREATE phase, still has 3 more
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { serializer.serialize(any()) } returns "BEGIN:VCALENDAR\nEND:VCALENDAR"
+        // CREATE fails with retryable error
+        coEvery { client.createEvent(any(), any(), any()) } returns
+            CalDavResult.Error(500, "Server error", true)
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll()
+
+        assertTrue(result is PushResult.Success)
+        assertEquals(1, (result as PushResult.Success).operationsFailed)
+
+        // Should schedule retry (retryCount=2 < maxRetries=5)
+        coVerify { pendingOperationsDao.scheduleRetry(moveOperation.id, any(), any(), any()) }
+
+        // Should NOT mark as failed
+        coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
+    }
+
+    @Test
+    fun `processMove DELETE phase does not skip when targetUrl is null`() = runTest {
+        // When targetUrl is null in DELETE phase, should advance to CREATE phase
+        val newUrl = "https://caldav.icloud.com/123/work/event.ics"
+        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
+
+        val moveOperation = PendingOperation(
+            id = 1L,
+            eventId = testEvent.id,
+            operation = PendingOperation.OPERATION_MOVE,
+            targetUrl = null, // No old URL (was local-only event)
+            targetCalendarId = targetCalendar.id,
+            status = PendingOperation.STATUS_PENDING,
+            movePhase = PendingOperation.MOVE_PHASE_DELETE
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
+        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) } just Runs
+
+        val result = pushStrategy.pushAll()
+
+        assertTrue(result is PushResult.Success)
+
+        // Should NOT call DELETE (no targetUrl)
+        coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
+
+        // Should still advance to CREATE phase
+        coVerify { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) }
     }
 
     // ==================== MOVE Operation FIFO Order ====================
 
     @Test
     fun `multiple MOVE operations processed in FIFO order`() = runTest {
+        // Test that MOVE operations in CREATE phase are processed in FIFO order
         val operations = listOf(
             PendingOperation(
                 id = 1L,
@@ -425,7 +593,8 @@ class PushStrategyMoveOperationTest {
                 operation = PendingOperation.OPERATION_MOVE,
                 targetUrl = "https://caldav.icloud.com/old1.ics",
                 targetCalendarId = targetCalendar.id,
-                createdAt = 1000L
+                createdAt = 1000L,
+                movePhase = PendingOperation.MOVE_PHASE_CREATE
             ),
             PendingOperation(
                 id = 2L,
@@ -433,7 +602,8 @@ class PushStrategyMoveOperationTest {
                 operation = PendingOperation.OPERATION_MOVE,
                 targetUrl = "https://caldav.icloud.com/old2.ics",
                 targetCalendarId = targetCalendar.id,
-                createdAt = 2000L
+                createdAt = 2000L,
+                movePhase = PendingOperation.MOVE_PHASE_CREATE
             ),
             PendingOperation(
                 id = 3L,
@@ -441,7 +611,8 @@ class PushStrategyMoveOperationTest {
                 operation = PendingOperation.OPERATION_MOVE,
                 targetUrl = "https://caldav.icloud.com/old3.ics",
                 targetCalendarId = targetCalendar.id,
-                createdAt = 3000L
+                createdAt = 3000L,
+                movePhase = PendingOperation.MOVE_PHASE_CREATE
             )
         )
 
