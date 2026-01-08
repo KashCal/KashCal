@@ -328,8 +328,9 @@ class ReminderSchedulerTest {
 class ReminderSchedulerConstantsTest {
 
     @Test
-    fun `schedule window is 7 days`() {
-        assertEquals(7, ReminderScheduler.SCHEDULE_WINDOW_DAYS)
+    fun `schedule window is 30 days`() {
+        // Extended from 7 to 30 days in v16.5.6 to catch far-future events
+        assertEquals(30, ReminderScheduler.SCHEDULE_WINDOW_DAYS)
     }
 
     @Test

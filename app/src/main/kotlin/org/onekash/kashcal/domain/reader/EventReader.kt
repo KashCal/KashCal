@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
+import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -602,6 +603,27 @@ class EventReader @Inject constructor(
     }
 
     // ========== Reminder Scheduling ==========
+
+    /**
+     * Get events with reminders that have occurrences in the given window.
+     * Used by ReminderScheduler to find events that may need reminders scheduled.
+     *
+     * Returns events where:
+     * - Event has non-empty reminders list
+     * - Event has occurrences in [fromTime, toTime] range
+     * - Calendar is visible (user hasn't hidden it)
+     * - Occurrence is not cancelled
+     *
+     * @param fromTime Start of window (epoch ms)
+     * @param toTime End of window (epoch ms)
+     * @return List of events with their occurrence times and calendar colors
+     */
+    suspend fun getEventsWithRemindersInRange(
+        fromTime: Long,
+        toTime: Long
+    ): List<EventWithOccurrenceAndColor> {
+        return eventsDao.getEventsWithRemindersInRange(fromTime, toTime)
+    }
 
     /**
      * Get future occurrences for an event within the reminder schedule window.

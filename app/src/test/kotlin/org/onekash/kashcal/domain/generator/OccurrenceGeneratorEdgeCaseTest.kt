@@ -47,7 +47,7 @@ class OccurrenceGeneratorEdgeCaseTest {
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
 
         runTest {
             val accountId = database.accountsDao().insert(

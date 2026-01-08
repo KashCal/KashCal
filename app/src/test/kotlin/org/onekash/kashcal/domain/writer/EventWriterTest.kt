@@ -54,7 +54,7 @@ class EventWriterTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
         // Create test accounts and calendars

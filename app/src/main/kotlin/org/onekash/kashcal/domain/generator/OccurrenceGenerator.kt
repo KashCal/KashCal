@@ -8,6 +8,7 @@ import org.dmfs.rfc5545.recurrenceset.FastForwarded
 import org.dmfs.rfc5545.recurrenceset.Merged
 import org.dmfs.rfc5545.recurrenceset.OfList
 import org.dmfs.rfc5545.recurrenceset.OfRuleAndFirst
+import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.entity.Event
@@ -17,6 +18,7 @@ import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
+import androidx.room.withTransaction
 
 /**
  * Generates and manages materialized occurrences for recurring events.
@@ -33,6 +35,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class OccurrenceGenerator @Inject constructor(
+    private val database: KashCalDatabase,
     private val occurrencesDao: OccurrencesDao,
     private val eventsDao: EventsDao
 ) {
@@ -63,42 +66,44 @@ class OccurrenceGenerator @Inject constructor(
         rangeStartMs: Long,
         rangeEndMs: Long
     ): Int {
-        // PRESERVE EXCEPTION LINKS: Query existing links before modification
-        // These are occurrences modified via RECURRENCE-ID (edited single occurrences)
-        val existingOccurrences = occurrencesDao.getForEvent(event.id)
-        val exceptionLinks = existingOccurrences
-            .filter { it.exceptionEventId != null }
-            .associate { it.startTs to ExceptionLinkData(it.exceptionEventId!!, it.isCancelled) }
+        return database.withTransaction {
+            // PRESERVE EXCEPTION LINKS: Query existing links before modification
+            // These are occurrences modified via RECURRENCE-ID (edited single occurrences)
+            val existingOccurrences = occurrencesDao.getForEvent(event.id)
+            val exceptionLinks = existingOccurrences
+                .filter { it.exceptionEventId != null }
+                .associate { it.startTs to ExceptionLinkData(it.exceptionEventId!!, it.isCancelled) }
 
-        // EXPAND FIRST: Calculate new occurrences BEFORE deleting existing ones
-        // This prevents data loss if expansion fails (e.g., malformed RRULE, timezone issue)
-        val occurrences = if (event.rrule.isNullOrBlank()) {
-            // Non-recurring: single occurrence
-            listOf(createSingleOccurrence(event))
-        } else {
-            // Recurring: expand RRULE
-            expandRRule(event, rangeStartMs, rangeEndMs)
-        }
-
-        // Only delete and replace if expansion succeeded
-        if (occurrences.isNotEmpty()) {
-            // Clear existing occurrences AFTER successful expansion
-            occurrencesDao.deleteForEvent(event.id)
-
-            occurrencesDao.insertAll(occurrences)
-
-            // RESTORE EXCEPTION LINKS: Reapply after insert
-            // Uses tolerance matching because timestamps may shift slightly on re-expand
-            for ((originalStartTs, linkData) in exceptionLinks) {
-                restoreExceptionLink(event.id, originalStartTs, linkData)
+            // EXPAND FIRST: Calculate new occurrences BEFORE deleting existing ones
+            // This prevents data loss if expansion fails (e.g., malformed RRULE, timezone issue)
+            val occurrences = if (event.rrule.isNullOrBlank()) {
+                // Non-recurring: single occurrence
+                listOf(createSingleOccurrence(event))
+            } else {
+                // Recurring: expand RRULE
+                expandRRule(event, rangeStartMs, rangeEndMs)
             }
-        } else if (!event.rrule.isNullOrBlank()) {
-            // RRULE expansion returned empty - log warning but preserve existing occurrences
-            android.util.Log.w("OccurrenceGenerator",
-                "RRULE expansion returned empty for event ${event.id}, preserving existing ${existingOccurrences.size} occurrences")
-        }
 
-        return occurrences.size
+            // Only delete and replace if expansion succeeded
+            if (occurrences.isNotEmpty()) {
+                // Clear existing occurrences AFTER successful expansion
+                occurrencesDao.deleteForEvent(event.id)
+
+                occurrencesDao.insertAll(occurrences)
+
+                // RESTORE EXCEPTION LINKS: Reapply after insert
+                // Uses tolerance matching because timestamps may shift slightly on re-expand
+                for ((originalStartTs, linkData) in exceptionLinks) {
+                    restoreExceptionLink(event.id, originalStartTs, linkData)
+                }
+            } else if (!event.rrule.isNullOrBlank()) {
+                // RRULE expansion returned empty - log warning but preserve existing occurrences
+                android.util.Log.w("OccurrenceGenerator",
+                    "RRULE expansion returned empty for event ${event.id}, preserving existing ${existingOccurrences.size} occurrences")
+            }
+
+            occurrences.size
+        }  // Transaction commits here - all or nothing
     }
 
     /**
@@ -170,21 +175,23 @@ class OccurrenceGenerator @Inject constructor(
             return 0 // Non-recurring events don't need extension
         }
 
-        // Find current max occurrence
-        val currentMaxTs = occurrencesDao.getMaxStartTs(event.id) ?: return 0
+        return database.withTransaction {
+            // Find current max occurrence
+            val currentMaxTs = occurrencesDao.getMaxStartTs(event.id) ?: return@withTransaction 0
 
-        // Expand from current max to new end
-        val newOccurrences = expandRRule(
-            event,
-            currentMaxTs + 1, // Start after current max
-            extendToMs
-        )
+            // Expand from current max to new end
+            val newOccurrences = expandRRule(
+                event,
+                currentMaxTs + 1, // Start after current max
+                extendToMs
+            )
 
-        if (newOccurrences.isNotEmpty()) {
-            occurrencesDao.insertAll(newOccurrences)
+            if (newOccurrences.isNotEmpty()) {
+                occurrencesDao.insertAll(newOccurrences)
+            }
+
+            newOccurrences.size
         }
-
-        return newOccurrences.size
     }
 
     /**
@@ -238,37 +245,39 @@ class OccurrenceGenerator @Inject constructor(
         occurrenceTimeMs: Long,
         exceptionEvent: Event
     ) {
-        // Step 1: Delete Model A occurrence (if exists)
-        // PullStrategy creates occurrence with event_id = exception.id
-        // This normalizes Model A to Model B (single linked occurrence)
-        occurrencesDao.deleteForEvent(exceptionEvent.id)
+        database.withTransaction {
+            // Step 1: Delete Model A occurrence (if exists)
+            // PullStrategy creates occurrence with event_id = exception.id
+            // This normalizes Model A to Model B (single linked occurrence)
+            occurrencesDao.deleteForEvent(exceptionEvent.id)
 
-        // Step 2: Update master's occurrence with exception link and times
-        val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)
-        val newEndDay = Occurrence.toDayFormat(exceptionEvent.endTs, exceptionEvent.isAllDay)
-        val rowsUpdated = occurrencesDao.updateOccurrenceForException(
-            masterEventId,
-            occurrenceTimeMs,
-            exceptionEvent.id,
-            exceptionEvent.startTs,
-            exceptionEvent.endTs,
-            newStartDay,
-            newEndDay
-        )
+            // Step 2: Update master's occurrence with exception link and times
+            val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)
+            val newEndDay = Occurrence.toDayFormat(exceptionEvent.endTs, exceptionEvent.isAllDay)
+            val rowsUpdated = occurrencesDao.updateOccurrenceForException(
+                masterEventId,
+                occurrenceTimeMs,
+                exceptionEvent.id,
+                exceptionEvent.startTs,
+                exceptionEvent.endTs,
+                newStartDay,
+                newEndDay
+            )
 
-        // Step 3: Fallback - if no master occurrence existed, create one
-        // This handles edge case where exception is outside sync window
-        if (rowsUpdated == 0) {
-            occurrencesDao.insert(Occurrence(
-                eventId = masterEventId,
-                calendarId = exceptionEvent.calendarId,
-                startTs = exceptionEvent.startTs,
-                endTs = exceptionEvent.endTs,
-                startDay = newStartDay,
-                endDay = newEndDay,
-                exceptionEventId = exceptionEvent.id,
-                isCancelled = false
-            ))
+            // Step 3: Fallback - if no master occurrence existed, create one
+            // This handles edge case where exception is outside sync window
+            if (rowsUpdated == 0) {
+                occurrencesDao.insert(Occurrence(
+                    eventId = masterEventId,
+                    calendarId = exceptionEvent.calendarId,
+                    startTs = exceptionEvent.startTs,
+                    endTs = exceptionEvent.endTs,
+                    startDay = newStartDay,
+                    endDay = newEndDay,
+                    exceptionEventId = exceptionEvent.id,
+                    isCancelled = false
+                ))
+            }
         }
     }
 

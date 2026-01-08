@@ -61,7 +61,7 @@ class ImportExportTest {
 
         serializer = ICalSerializer()
         exporter = IcsExporter(serializer)
-        occurrenceGenerator = OccurrenceGenerator(database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         eventWriter = EventWriter(database, occurrenceGenerator)
         eventReader = EventReader(database)
 
