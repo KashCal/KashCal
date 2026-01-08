@@ -55,12 +55,21 @@ class WidgetDataRepository @Inject constructor(
         val occurrences = database.occurrencesDao().getForDayOnce(todayCode)
             .filter { it.calendarId in visibleCalendarIds }
 
+        if (occurrences.isEmpty()) return emptyList()
+
+        // Batch load events (1 query instead of N)
+        val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
+        val eventsMap = database.eventsDao().getByIds(eventIds).associateBy { it.id }
+
+        // Batch load calendars (1 query instead of N)
+        val calendarIds = occurrences.map { it.calendarId }.distinct()
+        val calendarsMap = database.calendarsDao().getByIds(calendarIds).associateBy { it.id }
+
         // Map to WidgetEvent with event details
         return occurrences.mapNotNull { occ ->
-            // Get the event (or exception event if linked)
             val eventId = occ.exceptionEventId ?: occ.eventId
-            val event = database.eventsDao().getById(eventId) ?: return@mapNotNull null
-            val calendar = database.calendarsDao().getById(occ.calendarId)
+            val event = eventsMap[eventId] ?: return@mapNotNull null
+            val calendar = calendarsMap[occ.calendarId]
 
             WidgetEvent(
                 eventId = eventId,
