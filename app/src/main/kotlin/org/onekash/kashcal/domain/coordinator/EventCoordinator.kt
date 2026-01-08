@@ -446,6 +446,9 @@ class EventCoordinator @Inject constructor(
         }
 
         val calendar = eventReader.getCalendarById(newCalendarId)
+        require(calendar?.isReadOnly != true) {
+            "Cannot move event to read-only calendar"
+        }
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
         eventWriter.moveEventToCalendar(eventId, newCalendarId, isLocal)
         triggerImmediatePushIfNeeded(isLocal)
