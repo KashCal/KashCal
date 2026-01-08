@@ -486,6 +486,12 @@ class EventWriter @Inject constructor(
                 return@withTransaction // No-op
             }
 
+            // Check target calendar isn't read-only (defense in depth - UI also filters these)
+            val targetCalendar = database.calendarsDao().getById(newCalendarId)
+            require(targetCalendar?.isReadOnly != true) {
+                "Cannot move event to read-only calendar"
+            }
+
             // Capture old URL BEFORE clearing (critical for sync)
             val oldCaldavUrl = event.caldavUrl
             val wasSynced = event.syncStatus == SyncStatus.SYNCED
