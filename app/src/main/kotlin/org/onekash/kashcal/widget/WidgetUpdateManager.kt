@@ -1,8 +1,10 @@
 package org.onekash.kashcal.widget
 
 import android.content.Context
+import android.os.RemoteException
 import android.util.Log
 import androidx.glance.appwidget.updateAll
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -12,6 +14,8 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
@@ -21,6 +25,7 @@ import javax.inject.Singleton
 private const val TAG = "WidgetUpdateManager"
 private const val WORK_NAME_PERIODIC = "widget_periodic_update"
 private const val WORK_NAME_MIDNIGHT = "widget_midnight_update"
+private const val WORK_NAME_RETRY = "widget_retry_update"
 
 /**
  * Manages widget update triggers:
@@ -35,14 +40,48 @@ class WidgetUpdateManager @Inject constructor(
     /**
      * Immediately update all widget instances.
      * Call this after event CRUD operations.
+     *
+     * Uses hybrid approach: immediate update for instant feedback,
+     * with WorkManager retry fallback for transient failures.
      */
     suspend fun updateAllWidgets() {
         Log.d(TAG, "Updating all widgets")
         try {
             AgendaWidget().updateAll(context)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to update widgets", e)
+            Log.e(TAG, "Immediate widget update failed", e)
+            if (isTransientError(e)) {
+                Log.d(TAG, "Scheduling retry for transient error")
+                scheduleRetryUpdate()
+            }
         }
+    }
+
+    /**
+     * Schedule a retry update via WorkManager.
+     * Uses exponential backoff: 10s -> 20s -> 40s.
+     */
+    private fun scheduleRetryUpdate() {
+        val workRequest = OneTimeWorkRequestBuilder<WidgetRetryWorker>()
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.SECONDS)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            WORK_NAME_RETRY,
+            ExistingWorkPolicy.REPLACE,  // Coalesces rapid retry requests
+            workRequest
+        )
+    }
+
+    /**
+     * Determine if error is transient and worth retrying.
+     * Note: SocketTimeoutException extends IOException, included for clarity.
+     */
+    private fun isTransientError(e: Exception): Boolean = when (e) {
+        is IOException -> true              // Network issues, file system
+        is SocketTimeoutException -> true   // Network timeout (subclass of IOException)
+        is RemoteException -> true          // Binder communication failed
+        else -> false                       // Permanent failures (e.g., SecurityException)
     }
 
     /**
@@ -102,6 +141,7 @@ class WidgetUpdateManager @Inject constructor(
         Log.d(TAG, "Cancelling all widget updates")
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_PERIODIC)
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_MIDNIGHT)
+        WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_RETRY)
     }
 }
 
