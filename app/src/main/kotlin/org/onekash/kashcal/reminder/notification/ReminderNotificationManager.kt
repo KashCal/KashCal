@@ -50,8 +50,11 @@ class ReminderNotificationManager @Inject constructor(
         // Default snooze duration
         const val DEFAULT_SNOOZE_MINUTES = 15
 
-        // Request code base for pending intents
-        private const val REQUEST_CODE_BASE = 3000
+        // Request code ranges for non-overlapping PendingIntents
+        // Each range supports 700M reminders before wraparound (prevents overflow)
+        private const val REQUEST_CODE_OPEN = 0
+        private const val REQUEST_CODE_SNOOZE = 700_000_000
+        private const val REQUEST_CODE_DISMISS = 1_400_000_000
     }
 
     /**
@@ -189,7 +192,7 @@ class ReminderNotificationManager @Inject constructor(
 
         return PendingIntent.getActivity(
             context,
-            (REQUEST_CODE_BASE + reminder.id).toInt(),
+            REQUEST_CODE_OPEN + (reminder.id % 700_000_000).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -208,7 +211,7 @@ class ReminderNotificationManager @Inject constructor(
 
         return PendingIntent.getBroadcast(
             context,
-            (REQUEST_CODE_BASE + reminder.id * 2).toInt(),
+            REQUEST_CODE_SNOOZE + (reminder.id % 700_000_000).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -226,7 +229,7 @@ class ReminderNotificationManager @Inject constructor(
 
         return PendingIntent.getBroadcast(
             context,
-            (REQUEST_CODE_BASE + reminder.id * 2 + 1).toInt(),
+            REQUEST_CODE_DISMISS + (reminder.id % 700_000_000).toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
