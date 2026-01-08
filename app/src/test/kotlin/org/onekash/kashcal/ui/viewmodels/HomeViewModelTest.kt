@@ -182,6 +182,13 @@ class HomeViewModelTest {
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(testOccurrences)
         coEvery { eventReader.getEventById(1L) } returns testEvents[0]
         coEvery { eventReader.getEventById(2L) } returns testEvents[1]
+        coEvery { eventReader.getEventsByIds(any()) } coAnswers {
+            val ids = firstArg<List<Long>>()
+            // Delegate to getEventById mocks so individual test setups work
+            ids.mapNotNull { id ->
+                eventReader.getEventById(id)?.let { id to it }
+            }.toMap()
+        }
         coEvery { eventReader.searchEvents(any()) } returns testEvents
         coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
         coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence

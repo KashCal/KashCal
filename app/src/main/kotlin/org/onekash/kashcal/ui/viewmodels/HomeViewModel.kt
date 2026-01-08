@@ -904,11 +904,13 @@ class HomeViewModel @Inject constructor(
                         // 2. occurrenceMap lookup works in HomeScreen
                         // 3. Edit operations get the correct event/occurrence context
                         // Pattern matches EventReader.getEventsForDay() and HomeScreen.occurrenceMap
+                        // Uses batch query to avoid N+1 (1 query instead of N)
                         val eventIds = occurrences.map { occ ->
                             occ.exceptionEventId ?: occ.eventId
                         }.distinct()
                         val events = withContext(ioDispatcher) {
-                            eventIds.mapNotNull { eventReader.getEventById(it) }
+                            val eventsMap = eventReader.getEventsByIds(eventIds)
+                            eventIds.mapNotNull { eventsMap[it] }
                         }
                         occurrences to events
                     }

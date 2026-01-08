@@ -57,6 +57,17 @@ class EventReader @Inject constructor(
     }
 
     /**
+     * Get events by IDs in a single batch query.
+     * Returns map for O(1) lookup by event ID.
+     *
+     * Used to avoid N+1 queries when loading events for multiple occurrences.
+     */
+    suspend fun getEventsByIds(ids: List<Long>): Map<Long, Event> {
+        if (ids.isEmpty()) return emptyMap()
+        return eventsDao.getByIds(ids).associateBy { it.id }
+    }
+
+    /**
      * Get all exception events for a master recurring event.
      */
     suspend fun getExceptionsForMaster(masterEventId: Long): List<Event> {
@@ -265,17 +276,27 @@ class EventReader @Inject constructor(
 
     /**
      * Get occurrences with full event details for date range.
+     * Uses batch loading to avoid N+1 queries (3 queries instead of 2N+1).
      */
     suspend fun getOccurrencesWithEventsInRange(
         startTs: Long,
         endTs: Long
     ): List<OccurrenceWithEvent> {
         val occurrences = occurrencesDao.getInRangeOnce(startTs, endTs)
+        if (occurrences.isEmpty()) return emptyList()
+
+        // Batch load events (1 query instead of N)
+        val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
+        val eventsMap = eventsDao.getByIds(eventIds).associateBy { it.id }
+
+        // Batch load calendars (1 query instead of N)
+        val calendarIds = occurrences.map { it.calendarId }.distinct()
+        val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+
         return occurrences.mapNotNull { occ ->
-            // Get the event (or exception event if linked)
             val eventId = occ.exceptionEventId ?: occ.eventId
-            val event = eventsDao.getById(eventId) ?: return@mapNotNull null
-            val calendar = calendarsDao.getById(occ.calendarId)
+            val event = eventsMap[eventId] ?: return@mapNotNull null
+            val calendar = calendarsMap[occ.calendarId]
             OccurrenceWithEvent(occ, event, calendar)
         }
     }
@@ -285,6 +306,7 @@ class EventReader @Inject constructor(
      *
      * Returns a Flow that automatically emits updates when occurrences change.
      * Used for progressive UI updates during sync - events appear as they're synced.
+     * Uses batch loading to avoid N+1 queries (3 queries per emission instead of 2N+1).
      *
      * Android best practice: Use Flow for observable data sources.
      * See: https://developer.android.com/topic/architecture/data-layer/offline-first
@@ -295,11 +317,20 @@ class EventReader @Inject constructor(
     ): Flow<List<OccurrenceWithEvent>> {
         return occurrencesDao.getInRange(startTs, endTs)
             .map { occurrences ->
+                if (occurrences.isEmpty()) return@map emptyList()
+
+                // Batch load events (1 query instead of N)
+                val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
+                val eventsMap = eventsDao.getByIds(eventIds).associateBy { it.id }
+
+                // Batch load calendars (1 query instead of N)
+                val calendarIds = occurrences.map { it.calendarId }.distinct()
+                val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+
                 occurrences.mapNotNull { occ ->
-                    // Get the event (or exception event if linked)
                     val eventId = occ.exceptionEventId ?: occ.eventId
-                    val event = eventsDao.getById(eventId) ?: return@mapNotNull null
-                    val calendar = calendarsDao.getById(occ.calendarId)
+                    val event = eventsMap[eventId] ?: return@mapNotNull null
+                    val calendar = calendarsMap[occ.calendarId]
                     OccurrenceWithEvent(occ, event, calendar)
                 }
             }
@@ -325,13 +356,24 @@ class EventReader @Inject constructor(
     /**
      * Get events for a specific day.
      * Returns OccurrenceWithEvent list sorted by start time.
+     * Uses batch loading to avoid N+1 queries (3 queries instead of 2N+1).
      */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
+        if (occurrences.isEmpty()) return emptyList()
+
+        // Batch load events (1 query instead of N)
+        val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
+        val eventsMap = eventsDao.getByIds(eventIds).associateBy { it.id }
+
+        // Batch load calendars (1 query instead of N)
+        val calendarIds = occurrences.map { it.calendarId }.distinct()
+        val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+
         return occurrences.mapNotNull { occ ->
             val eventId = occ.exceptionEventId ?: occ.eventId
-            val event = eventsDao.getById(eventId) ?: return@mapNotNull null
-            val calendar = calendarsDao.getById(occ.calendarId)
+            val event = eventsMap[eventId] ?: return@mapNotNull null
+            val calendar = calendarsMap[occ.calendarId]
             OccurrenceWithEvent(occ, event, calendar)
         }.sortedBy { it.occurrence.startTs }
     }
