@@ -9,7 +9,9 @@ import org.onekash.kashcal.data.ics.OkHttpIcsFetcher
 import org.onekash.kashcal.sync.auth.CredentialProvider
 import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
 import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.ICalParser
 import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
@@ -45,10 +47,31 @@ abstract class SyncModule {
 
     /**
      * Bind CalDavClient interface to OkHttp implementation.
+     *
+     * @deprecated For multi-account sync, use CalDavClientFactory instead.
+     * This singleton binding is kept for backward compatibility with tests
+     * and single-account scenarios.
+     *
+     * @see CalDavClientFactory
      */
+    @Deprecated(
+        message = "Use CalDavClientFactory for multi-account sync to avoid credential race conditions",
+        replaceWith = ReplaceWith("calDavClientFactory.createClient(credentials, quirks)")
+    )
     @Binds
     @Singleton
     abstract fun bindCalDavClient(impl: OkHttpCalDavClient): CalDavClient
+
+    /**
+     * Bind CalDavClientFactory interface to OkHttp implementation.
+     *
+     * Use this factory for multi-account sync scenarios. Each call to
+     * createClient() returns an isolated client with immutable credentials,
+     * preventing credential race conditions during concurrent sync.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCalDavClientFactory(impl: OkHttpCalDavClientFactory): CalDavClientFactory
 
     /**
      * Bind ICalParser interface to ical4j implementation.

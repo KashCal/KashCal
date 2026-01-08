@@ -68,21 +68,25 @@ class PullStrategy @Inject constructor(
      * @param calendar The calendar to sync
      * @param forceFullSync If true, ignores sync token and fetches all events
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
+     * @param clientOverride Optional CalDavClient to use instead of the injected one.
+     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
      * @return PullResult indicating success/failure and statistics
      */
     suspend fun pull(
         calendar: Calendar,
         forceFullSync: Boolean = false,
-        quirks: CalDavQuirks? = null
+        quirks: CalDavQuirks? = null,
+        clientOverride: CalDavClient? = null
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
+        val effectiveClient = clientOverride ?: client
 
         Log.d(TAG, "Starting pull for calendar: ${calendar.displayName}")
         SyncDebugLog.i(TAG, "pull() for calendar=${calendar.displayName}, id=${calendar.id}")
 
         return try {
             // Step 1: Quick ctag check
-            val ctagResult = client.getCtag(calendar.caldavUrl)
+            val ctagResult = effectiveClient.getCtag(calendar.caldavUrl)
             if (ctagResult.isError()) {
                 val error = ctagResult as CalDavResult.Error
                 SyncDebugLog.e(TAG, "getCtag FAILED: ${error.code} - ${error.message}")
@@ -105,10 +109,10 @@ class PullStrategy @Inject constructor(
             // Step 2: Determine sync method
             val result = if (!forceFullSync && calendar.syncToken != null) {
                 // Incremental sync using sync-token
-                pullIncremental(calendar, effectiveQuirks)
+                pullIncremental(calendar, effectiveQuirks, effectiveClient)
             } else {
                 // Full sync - fetch all events in time window
-                pullFull(calendar, effectiveQuirks)
+                pullFull(calendar, effectiveQuirks, effectiveClient)
             }
 
             // Step 3: Update calendar metadata on success
@@ -135,17 +139,21 @@ class PullStrategy @Inject constructor(
      * Incremental sync using sync-collection REPORT.
      * Only fetches changed/deleted items since last sync.
      */
-    private suspend fun pullIncremental(calendar: Calendar, quirks: CalDavQuirks): PullResult {
+    private suspend fun pullIncremental(
+        calendar: Calendar,
+        quirks: CalDavQuirks,
+        clientToUse: CalDavClient
+    ): PullResult {
         Log.d(TAG, "Incremental sync with token: ${calendar.syncToken?.take(8)}...")
         SyncDebugLog.i(TAG, "pullIncremental() with syncToken")
 
-        val reportResult = client.syncCollection(calendar.caldavUrl, calendar.syncToken)
+        val reportResult = clientToUse.syncCollection(calendar.caldavUrl, calendar.syncToken)
         if (reportResult.isError()) {
             val error = reportResult as CalDavResult.Error
             // 403/410 means sync token expired - fall back to full sync
             if (error.code == 403 || error.code == 410) {
                 Log.w(TAG, "Sync token expired, falling back to full sync")
-                return pullFull(calendar, quirks)
+                return pullFull(calendar, quirks, clientToUse)
             }
             return PullResult.Error(error.code, error.message, error.isRetryable)
         }
@@ -206,7 +214,7 @@ class PullStrategy @Inject constructor(
         }
 
         // Fetch events in batches
-        val eventsResult = client.fetchEventsByHref(calendar.caldavUrl, changedHrefs)
+        val eventsResult = clientToUse.fetchEventsByHref(calendar.caldavUrl, changedHrefs)
         if (eventsResult.isError()) {
             val error = eventsResult as CalDavResult.Error
             return PullResult.Error(error.code, error.message, error.isRetryable)
@@ -242,7 +250,11 @@ class PullStrategy @Inject constructor(
      * Full sync - fetch all events in time window.
      * Used for initial sync or when sync token is invalid.
      */
-    private suspend fun pullFull(calendar: Calendar, quirks: CalDavQuirks): PullResult {
+    private suspend fun pullFull(
+        calendar: Calendar,
+        quirks: CalDavQuirks,
+        clientToUse: CalDavClient
+    ): PullResult {
         Log.d(TAG, "Full sync for calendar: ${calendar.displayName}")
 
         // Clean up any duplicate master events before processing
@@ -259,7 +271,7 @@ class PullStrategy @Inject constructor(
         val endMs = FUTURE_END_MS  // Unlimited future - fetch all future events
 
         // Fetch all events in range
-        val eventsResult = client.fetchEventsInRange(calendar.caldavUrl, startMs, endMs)
+        val eventsResult = clientToUse.fetchEventsInRange(calendar.caldavUrl, startMs, endMs)
         if (eventsResult.isError()) {
             val error = eventsResult as CalDavResult.Error
             return PullResult.Error(error.code, error.message, error.isRetryable)
@@ -306,7 +318,7 @@ class PullStrategy @Inject constructor(
         val allChanges = deletedChanges + processResult.changes
 
         // Get new sync token if available
-        val syncTokenResult = client.getSyncToken(calendar.caldavUrl)
+        val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
         val newSyncToken = syncTokenResult.getOrNull()
 
         return PullResult.Success(
