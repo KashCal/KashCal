@@ -358,7 +358,8 @@ private fun FlatSettingsContent(
         // ==================== CALENDARS Section ====================
         SectionHeader("Calendars")
         SettingsCard {
-            // Subscriptions Row
+            // Subscriptions Row - always navigates to detail screen
+            // (Contact Birthdays is in the detail screen regardless of ICS subscriptions)
             SettingsRow(
                 icon = Icons.Default.Link,
                 label = "Subscriptions",
@@ -366,15 +367,9 @@ private fun FlatSettingsContent(
                 subtitle = if (subscriptions.isNotEmpty()) {
                     subscriptions.take(2).joinToString(", ") { it.name }
                 } else {
-                    "Add a subscription"
+                    "ICS feeds & Contact Birthdays"
                 },
-                onClick = {
-                    if (subscriptions.isEmpty()) {
-                        showAddSubscriptionDialog = true
-                    } else {
-                        onNavigateToSubscriptions()
-                    }
-                }
+                onClick = onNavigateToSubscriptions
             )
 
             // Import from File Row
