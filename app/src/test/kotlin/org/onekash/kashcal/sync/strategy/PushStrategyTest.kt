@@ -81,6 +81,11 @@ class PushStrategyTest {
         eventsDao = mockk()
         pendingOperationsDao = mockk()
 
+        // Default batch query mocks - return empty so fallback to getById is used
+        // Individual tests can override these for specific scenarios
+        coEvery { eventsDao.getByIds(any()) } returns emptyList()
+        coEvery { calendarsDao.getByIds(any()) } returns emptyList()
+
         pushStrategy = PushStrategy(
             client = client,
             serializer = serializer,
