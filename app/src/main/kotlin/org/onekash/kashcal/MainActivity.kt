@@ -130,79 +130,88 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(uiState.pendingAction) {
                     uiState.pendingAction?.let { action ->
                         Log.d(TAG, "Processing pending action: $action")
-                        when (action) {
-                            is PendingAction.ShowEventQuickView -> {
-                                val event = homeViewModel.getEventForEdit(action.eventId)
-                                if (event != null) {
-                                    quickViewEvent = event
-                                    quickViewOccurrenceTs = action.occurrenceTs
-                                    showQuickViewSheet = true
-                                } else {
-                                    Log.w(TAG, "${action.source}: Event ${action.eventId} not found")
-                                    homeViewModel.showSnackbar("Event not found")
-                                }
-                            }
-                            is PendingAction.CreateEvent -> {
-                                // Use provided startTs or default to today at next hour
-                                val startTs = action.startTs ?: run {
-                                    val now = java.util.Calendar.getInstance()
-                                    val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
-                                    java.util.Calendar.getInstance().apply {
-                                        set(java.util.Calendar.HOUR_OF_DAY, nextHour)
-                                        set(java.util.Calendar.MINUTE, 0)
-                                        set(java.util.Calendar.SECOND, 0)
-                                    }.timeInMillis / 1000
-                                }
-                                editingEventId = null
-                                newEventStartTs = startTs
-                                eventOccurrenceTs = null
-                                showEventFormSheet = true
-                            }
-                            is PendingAction.OpenSearch -> {
-                                homeViewModel.activateSearch()
-                            }
-                            is PendingAction.GoToToday -> {
-                                homeViewModel.goToToday()
-                            }
-                            is PendingAction.ImportIcsFile -> {
-                                Log.d(TAG, "Processing ICS file import: ${action.uri}")
-                                val result = IcsFileReader.readIcsContent(this@MainActivity, action.uri)
-                                result.onSuccess { content ->
-                                    try {
-                                        val events = RfcIcsParser.parseIcsContent(
-                                            content = content,
-                                            calendarId = 0, // Will be set during import
-                                            subscriptionId = 0 // Not a subscription
-                                        )
-                                        if (events.isNotEmpty()) {
-                                            Log.d(TAG, "Parsed ${events.size} events from ICS file")
-                                            icsImportEvents = events
-                                            showIcsImportSheet = true
-                                        } else {
-                                            Log.w(TAG, "No events found in ICS file")
-                                            homeViewModel.showSnackbar("No events found in file")
-                                        }
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Failed to parse ICS file", e)
-                                        homeViewModel.showSnackbar("Invalid ICS file")
-                                    }
-                                }.onFailure { e ->
-                                    Log.e(TAG, "Failed to read ICS file", e)
-                                    homeViewModel.showSnackbar("Could not read file")
-                                }
-                            }
-                            is PendingAction.CreateEventFromCalendarIntent -> {
-                                // Handle calendar intent from other apps (Gmail, Chrome, etc.)
-                                Log.d(TAG, "Processing calendar intent: title=${action.data.title}")
-                                editingEventId = null
-                                newEventStartTs = action.data.startTimeMillis?.let { it / 1000 }
-                                eventOccurrenceTs = null
-                                calendarIntentData = action.data
-                                calendarIntentInvitees = action.invitees
-                                showEventFormSheet = true
-                            }
-                        }
+
+                        // Clear action FIRST to prevent re-triggering on exception
+                        // (follows Android Architecture recommended pattern)
                         homeViewModel.clearPendingAction()
+
+                        try {
+                            when (action) {
+                                is PendingAction.ShowEventQuickView -> {
+                                    val event = homeViewModel.getEventForEdit(action.eventId)
+                                    if (event != null) {
+                                        quickViewEvent = event
+                                        quickViewOccurrenceTs = action.occurrenceTs
+                                        showQuickViewSheet = true
+                                    } else {
+                                        Log.w(TAG, "${action.source}: Event ${action.eventId} not found")
+                                        homeViewModel.showSnackbar("Event not found")
+                                    }
+                                }
+                                is PendingAction.CreateEvent -> {
+                                    // Use provided startTs or default to today at next hour
+                                    val startTs = action.startTs ?: run {
+                                        val now = java.util.Calendar.getInstance()
+                                        val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
+                                        java.util.Calendar.getInstance().apply {
+                                            set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                                            set(java.util.Calendar.MINUTE, 0)
+                                            set(java.util.Calendar.SECOND, 0)
+                                        }.timeInMillis / 1000
+                                    }
+                                    editingEventId = null
+                                    newEventStartTs = startTs
+                                    eventOccurrenceTs = null
+                                    showEventFormSheet = true
+                                }
+                                is PendingAction.OpenSearch -> {
+                                    homeViewModel.activateSearch()
+                                }
+                                is PendingAction.GoToToday -> {
+                                    homeViewModel.goToToday()
+                                }
+                                is PendingAction.ImportIcsFile -> {
+                                    Log.d(TAG, "Processing ICS file import: ${action.uri}")
+                                    val result = IcsFileReader.readIcsContent(this@MainActivity, action.uri)
+                                    result.onSuccess { content ->
+                                        try {
+                                            val events = RfcIcsParser.parseIcsContent(
+                                                content = content,
+                                                calendarId = 0, // Will be set during import
+                                                subscriptionId = 0 // Not a subscription
+                                            )
+                                            if (events.isNotEmpty()) {
+                                                Log.d(TAG, "Parsed ${events.size} events from ICS file")
+                                                icsImportEvents = events
+                                                showIcsImportSheet = true
+                                            } else {
+                                                Log.w(TAG, "No events found in ICS file")
+                                                homeViewModel.showSnackbar("No events found in file")
+                                            }
+                                        } catch (e: Exception) {
+                                            Log.e(TAG, "Failed to parse ICS file", e)
+                                            homeViewModel.showSnackbar("Invalid ICS file")
+                                        }
+                                    }.onFailure { e ->
+                                        Log.e(TAG, "Failed to read ICS file", e)
+                                        homeViewModel.showSnackbar("Could not read file")
+                                    }
+                                }
+                                is PendingAction.CreateEventFromCalendarIntent -> {
+                                    // Handle calendar intent from other apps (Gmail, Chrome, etc.)
+                                    Log.d(TAG, "Processing calendar intent: title=${action.data.title}")
+                                    editingEventId = null
+                                    newEventStartTs = action.data.startTimeMillis?.let { it / 1000 }
+                                    eventOccurrenceTs = null
+                                    calendarIntentData = action.data
+                                    calendarIntentInvitees = action.invitees
+                                    showEventFormSheet = true
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error processing pending action: $action", e)
+                            homeViewModel.showSnackbar("Action failed")
+                        }
                     }
                 }
 
