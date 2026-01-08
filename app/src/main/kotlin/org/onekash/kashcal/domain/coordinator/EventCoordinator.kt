@@ -117,6 +117,36 @@ class EventCoordinator @Inject constructor(
     // ========== Reminder Scheduling ==========
 
     /**
+     * Cancel all reminders for an account's calendars.
+     * Call BEFORE cascade-deleting account to prevent orphaned AlarmManager alarms.
+     *
+     * @param accountEmail The account email (e.g., Apple ID for iCloud)
+     */
+    suspend fun cancelRemindersForAccount(accountEmail: String) {
+        val account = eventReader.getAccountByProviderAndEmail("icloud", accountEmail) ?: return
+        val calendars = eventReader.getCalendarsByAccountIdOnce(account.id)
+
+        for (calendar in calendars) {
+            cancelRemindersForCalendar(calendar.id)
+        }
+        Log.i(TAG, "Cancelled reminders for account: ${accountEmail.take(3)}***")
+    }
+
+    /**
+     * Cancel all reminders for a calendar's events.
+     * Used when deleting a calendar or account.
+     *
+     * @param calendarId The calendar ID
+     */
+    private suspend fun cancelRemindersForCalendar(calendarId: Long) {
+        val events = eventReader.getEventsForCalendar(calendarId)
+        for (event in events) {
+            reminderScheduler.cancelRemindersForEvent(event.id)
+        }
+        Log.d(TAG, "Cancelled reminders for ${events.size} events in calendar $calendarId")
+    }
+
+    /**
      * Schedule reminders for an event.
      * Gets occurrences and schedules alarms for each reminder offset.
      *
@@ -302,6 +332,9 @@ class EventCoordinator @Inject constructor(
         )
         triggerImmediatePushIfNeeded(isLocal)
 
+        // Schedule reminders for the new series
+        scheduleRemindersForEvent(result)
+
         // Update home screen widgets
         triggerWidgetUpdate()
 
@@ -414,6 +447,13 @@ class EventCoordinator @Inject constructor(
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
         eventWriter.moveEventToCalendar(eventId, newCalendarId, isLocal)
         triggerImmediatePushIfNeeded(isLocal)
+
+        // Reschedule reminders with new calendar color
+        // Calendar color is used for notification icon tint
+        val movedEvent = eventReader.getEventById(eventId)
+        if (movedEvent != null) {
+            rescheduleRemindersForEvent(movedEvent)
+        }
 
         // Update home screen widgets
         triggerWidgetUpdate()
@@ -801,7 +841,10 @@ class EventCoordinator @Inject constructor(
                 )
 
                 // Use eventWriter.createEvent which handles both regular and recurring events
-                eventWriter.createEvent(importEvent, isLocal)
+                val result = eventWriter.createEvent(importEvent, isLocal)
+
+                // Schedule reminders for imported event
+                scheduleRemindersForEvent(result)
 
                 importCount++
                 Log.d(TAG, "Imported event: ${event.title}")

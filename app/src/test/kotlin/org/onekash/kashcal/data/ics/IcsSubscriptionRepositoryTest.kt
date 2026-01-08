@@ -253,8 +253,45 @@ class IcsSubscriptionRepositoryTest {
     // ==================== removeSubscription Tests ====================
 
     @Test
+    fun `removeSubscription cancels reminders before deleting calendar`() = runTest {
+        val event1 = Event(
+            id = 100L,
+            uid = "event-1@test.com",
+            calendarId = testSubscription.calendarId,
+            title = "Event 1",
+            startTs = 0L,
+            endTs = 0L,
+            dtstamp = 0L,
+            syncStatus = SyncStatus.SYNCED,
+            reminders = listOf("-PT15M")
+        )
+        val event2 = Event(
+            id = 101L,
+            uid = "event-2@test.com",
+            calendarId = testSubscription.calendarId,
+            title = "Event 2",
+            startTs = 0L,
+            endTs = 0L,
+            dtstamp = 0L,
+            syncStatus = SyncStatus.SYNCED,
+            reminders = listOf("-PT30M")
+        )
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { eventsDao.getAllMasterEventsForCalendar(testSubscription.calendarId) } returns listOf(event1, event2)
+
+        repository.removeSubscription(1L)
+
+        // Verify reminders were cancelled for both events BEFORE calendar deletion
+        coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
+        coVerify { reminderScheduler.cancelRemindersForEvent(101L) }
+        coVerify { calendarsDao.deleteById(testSubscription.calendarId) }
+    }
+
+    @Test
     fun `removeSubscription deletes calendar which cascades to events`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { eventsDao.getAllMasterEventsForCalendar(testSubscription.calendarId) } returns emptyList()
 
         repository.removeSubscription(1L)
 
@@ -268,6 +305,7 @@ class IcsSubscriptionRepositoryTest {
         repository.removeSubscription(999L)
 
         coVerify(exactly = 0) { calendarsDao.deleteById(any()) }
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
     }
 
     // ==================== updateSubscriptionSettings Tests ====================
@@ -292,9 +330,75 @@ class IcsSubscriptionRepositoryTest {
 
     @Test
     fun `setSubscriptionEnabled updates enabled state`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(enabled = true)
+        coEvery { eventsDao.getAllMasterEventsForCalendar(testSubscription.calendarId) } returns emptyList()
+
         repository.setSubscriptionEnabled(1L, false)
 
         coVerify { icsSubscriptionsDao.setEnabled(1L, false) }
+    }
+
+    @Test
+    fun `setSubscriptionEnabled cancels reminders when disabling`() = runTest {
+        val event1 = Event(
+            id = 100L,
+            uid = "event-1@test.com",
+            calendarId = testSubscription.calendarId,
+            title = "Event 1",
+            startTs = 0L,
+            endTs = 0L,
+            dtstamp = 0L,
+            syncStatus = SyncStatus.SYNCED,
+            reminders = listOf("-PT15M")
+        )
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(enabled = true)
+        coEvery { eventsDao.getAllMasterEventsForCalendar(testSubscription.calendarId) } returns listOf(event1)
+
+        repository.setSubscriptionEnabled(1L, false)
+
+        // Verify reminders were cancelled when disabling
+        coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
+        coVerify { icsSubscriptionsDao.setEnabled(1L, false) }
+    }
+
+    @Test
+    fun `setSubscriptionEnabled does not cancel reminders when enabling`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(enabled = false)
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.NotModified
+
+        repository.setSubscriptionEnabled(1L, true)
+
+        // Verify reminders were NOT cancelled when enabling (refresh will schedule them)
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
+    }
+
+    @Test
+    fun `setSubscriptionEnabled refreshes subscription when enabling`() = runTest {
+        // First call returns disabled subscription (for the enable check)
+        // Second call returns enabled subscription (for refreshSubscription)
+        val disabledSub = testSubscription.copy(enabled = false)
+        val enabledSub = testSubscription.copy(enabled = true)
+        coEvery { icsSubscriptionsDao.getById(1L) } returns disabledSub andThen enabledSub
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.NotModified
+
+        repository.setSubscriptionEnabled(1L, true)
+
+        // Verify refresh was called when enabling
+        coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
+        coVerify { icsFetcher.fetch(any()) }
+    }
+
+    @Test
+    fun `setSubscriptionEnabled does not refresh when disabling`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(enabled = true)
+        coEvery { eventsDao.getAllMasterEventsForCalendar(testSubscription.calendarId) } returns emptyList()
+
+        repository.setSubscriptionEnabled(1L, false)
+
+        // Verify refresh was NOT called when disabling
+        coVerify(exactly = 0) { icsFetcher.fetch(any()) }
     }
 
     // ==================== refreshSubscription Tests ====================

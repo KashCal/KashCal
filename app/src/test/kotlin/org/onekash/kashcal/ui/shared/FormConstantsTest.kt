@@ -137,4 +137,42 @@ class FormConstantsTest {
     fun `maskEmail handles email without at symbol`() {
         assertEquals("notanemail", maskEmail("notanemail"))
     }
+
+    // ==================== Reminder Migration Tests (v16.4.1) ====================
+
+    @Test
+    fun `15 minutes is valid for timed events but not all-day`() {
+        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
+        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
+
+        assertTrue("15 min should be valid for timed", timedOptions.any { it.minutes == 15 })
+        assertFalse("15 min should NOT be valid for all-day", allDayOptions.any { it.minutes == 15 })
+    }
+
+    @Test
+    fun `540 minutes (9 AM) is valid for all-day events but not timed`() {
+        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
+        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
+
+        assertFalse("540 min should NOT be valid for timed", timedOptions.any { it.minutes == 540 })
+        assertTrue("540 min should be valid for all-day", allDayOptions.any { it.minutes == 540 })
+    }
+
+    @Test
+    fun `REMINDER_OFF is valid for both timed and all-day events`() {
+        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
+        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
+
+        assertTrue("REMINDER_OFF should be valid for timed", timedOptions.any { it.minutes == REMINDER_OFF })
+        assertTrue("REMINDER_OFF should be valid for all-day", allDayOptions.any { it.minutes == REMINDER_OFF })
+    }
+
+    @Test
+    fun `1440 minutes (1 day) is valid for both timed and all-day events`() {
+        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
+        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
+
+        assertTrue("1440 min should be valid for timed", timedOptions.any { it.minutes == 1440 })
+        assertTrue("1440 min should be valid for all-day", allDayOptions.any { it.minutes == 1440 })
+    }
 }

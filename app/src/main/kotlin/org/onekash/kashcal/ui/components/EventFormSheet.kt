@@ -67,6 +67,8 @@ import java.util.Calendar as JavaCalendar
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.getReminderOptionsForEventType
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
@@ -81,6 +83,24 @@ import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.EndCondition
 
 private const val TAG = "EventFormSheet"
+
+/**
+ * Migrate a reminder value when toggling all-day.
+ * If the reminder is OFF, keep it.
+ * If the reminder is valid for the new type, keep it.
+ * Otherwise, reset to REMINDER_OFF.
+ */
+private fun migrateReminderForAllDayToggle(
+    reminderMinutes: Int,
+    newIsAllDay: Boolean
+): Int {
+    if (reminderMinutes == REMINDER_OFF) return REMINDER_OFF
+
+    val validOptions = if (newIsAllDay) ALL_DAY_REMINDER_OPTIONS else TIMED_REMINDER_OPTIONS
+    val isValid = validOptions.any { it.minutes == reminderMinutes }
+
+    return if (isValid) reminderMinutes else REMINDER_OFF
+}
 
 /**
  * Form state for event creation/editing.
@@ -588,7 +608,14 @@ fun EventFormSheet(
                                 val newIsAllDay = !state.isAllDay
                                 val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
                                 val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
-                                val newReminder = if (state.reminder1Minutes == currentDefault) newDefault else state.reminder1Minutes
+                                // Migrate reminder1: if matches current default, use new default; otherwise validate
+                                val newReminder1 = if (state.reminder1Minutes == currentDefault) {
+                                    newDefault
+                                } else {
+                                    migrateReminderForAllDayToggle(state.reminder1Minutes, newIsAllDay)
+                                }
+                                // Migrate reminder2: validate for new type
+                                val newReminder2 = migrateReminderForAllDayToggle(state.reminder2Minutes, newIsAllDay)
                                 // Normalize to midnight when toggling all-day ON to prevent timezone date shift
                                 val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
                                 val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
@@ -596,7 +623,8 @@ fun EventFormSheet(
                                     isAllDay = newIsAllDay,
                                     dateMillis = normalizedDate,
                                     endDateMillis = normalizedEndDate,
-                                    reminder1Minutes = newReminder
+                                    reminder1Minutes = newReminder1,
+                                    reminder2Minutes = newReminder2
                                 )
                             }
                             .padding(vertical = 12.dp, horizontal = 4.dp),
@@ -609,7 +637,14 @@ fun EventFormSheet(
                             onCheckedChange = { isAllDay ->
                                 val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
                                 val newDefault = if (isAllDay) defaultReminderAllDay else defaultReminderTimed
-                                val newReminder = if (state.reminder1Minutes == currentDefault) newDefault else state.reminder1Minutes
+                                // Migrate reminder1: if matches current default, use new default; otherwise validate
+                                val newReminder1 = if (state.reminder1Minutes == currentDefault) {
+                                    newDefault
+                                } else {
+                                    migrateReminderForAllDayToggle(state.reminder1Minutes, isAllDay)
+                                }
+                                // Migrate reminder2: validate for new type
+                                val newReminder2 = migrateReminderForAllDayToggle(state.reminder2Minutes, isAllDay)
                                 // Normalize to midnight when toggling all-day ON to prevent timezone date shift
                                 val normalizedDate = if (isAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
                                 val normalizedEndDate = if (isAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
@@ -617,7 +652,8 @@ fun EventFormSheet(
                                     isAllDay = isAllDay,
                                     dateMillis = normalizedDate,
                                     endDateMillis = normalizedEndDate,
-                                    reminder1Minutes = newReminder
+                                    reminder1Minutes = newReminder1,
+                                    reminder2Minutes = newReminder2
                                 )
                             }
                         )

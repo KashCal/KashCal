@@ -128,9 +128,20 @@ class IcsSubscriptionRepository @Inject constructor(
      *
      * Deletes the subscription, its calendar, and all associated events.
      * Calendar deletion cascades to events via FK.
+     *
+     * IMPORTANT: Cancels reminders BEFORE cascade delete to prevent orphaned
+     * AlarmManager alarms. This is Android best practice - AlarmManager.cancel()
+     * is safe on non-existent alarms (no-op).
      */
     suspend fun removeSubscription(subscriptionId: Long) = withContext(Dispatchers.IO) {
         val subscription = icsSubscriptionsDao.getById(subscriptionId) ?: return@withContext
+
+        // Cancel reminders for all events BEFORE cascade delete
+        val events = eventsDao.getAllMasterEventsForCalendar(subscription.calendarId)
+        for (event in events) {
+            reminderScheduler.cancelRemindersForEvent(event.id)
+        }
+        Log.i(TAG, "Cancelled reminders for ${events.size} events before removing subscription")
 
         // Delete calendar (cascades to events and subscription via FK)
         calendarsDao.deleteById(subscription.calendarId)
@@ -157,9 +168,29 @@ class IcsSubscriptionRepository @Inject constructor(
 
     /**
      * Enable or disable a subscription.
+     *
+     * When disabling, cancels all reminders for the subscription's events.
+     * When enabling, triggers a refresh which will reschedule reminders.
      */
-    suspend fun setSubscriptionEnabled(subscriptionId: Long, enabled: Boolean) {
+    suspend fun setSubscriptionEnabled(subscriptionId: Long, enabled: Boolean) = withContext(Dispatchers.IO) {
+        val subscription = icsSubscriptionsDao.getById(subscriptionId)
+
+        if (!enabled && subscription != null) {
+            // Cancel reminders when disabling
+            val events = eventsDao.getAllMasterEventsForCalendar(subscription.calendarId)
+            for (event in events) {
+                reminderScheduler.cancelRemindersForEvent(event.id)
+            }
+            Log.i(TAG, "Cancelled reminders for disabled subscription: ${subscription.name}")
+        }
+
         icsSubscriptionsDao.setEnabled(subscriptionId, enabled)
+
+        if (enabled && subscription != null) {
+            // Reschedule reminders when enabling by refreshing subscription
+            // This will re-sync and schedule reminders for all events
+            refreshSubscription(subscriptionId)
+        }
     }
 
     // ========== Sync Operations ==========

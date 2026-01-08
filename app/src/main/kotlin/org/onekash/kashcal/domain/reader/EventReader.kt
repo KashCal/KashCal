@@ -30,6 +30,7 @@ class EventReader @Inject constructor(
     private val eventsDao by lazy { database.eventsDao() }
     private val occurrencesDao by lazy { database.occurrencesDao() }
     private val calendarsDao by lazy { database.calendarsDao() }
+    private val accountsDao by lazy { database.accountsDao() }
 
     // ========== Event Lookups ==========
 
@@ -588,5 +589,41 @@ class EventReader @Inject constructor(
      */
     suspend fun getOccurrenceByExceptionEventId(exceptionEventId: Long): Occurrence? {
         return occurrencesDao.getByExceptionEventId(exceptionEventId)
+    }
+
+    // ========== Account and Calendar Lookups for Reminder Cleanup ==========
+
+    /**
+     * Get account by provider and email.
+     * Used for reminder cleanup when signing out of an account.
+     *
+     * @param provider Provider type (e.g., "icloud", "local")
+     * @param email Account email/identifier
+     * @return Account if found, null otherwise
+     */
+    suspend fun getAccountByProviderAndEmail(provider: String, email: String): org.onekash.kashcal.data.db.entity.Account? {
+        return accountsDao.getByProviderAndEmail(provider, email)
+    }
+
+    /**
+     * Get calendars for an account (one-shot).
+     * Used for bulk operations like reminder cleanup.
+     *
+     * @param accountId The account ID
+     * @return List of calendars belonging to the account
+     */
+    suspend fun getCalendarsByAccountIdOnce(accountId: Long): List<Calendar> {
+        return calendarsDao.getByAccountIdOnce(accountId)
+    }
+
+    /**
+     * Get all master events for a calendar (one-shot).
+     * Used for bulk operations like reminder cleanup.
+     *
+     * @param calendarId The calendar ID
+     * @return List of master events (excludes exception events)
+     */
+    suspend fun getEventsForCalendar(calendarId: Long): List<Event> {
+        return eventsDao.getAllMasterEventsForCalendar(calendarId)
     }
 }
