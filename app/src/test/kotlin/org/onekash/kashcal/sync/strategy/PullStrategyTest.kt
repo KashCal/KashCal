@@ -952,6 +952,54 @@ class PullStrategyTest {
     }
 
     @Test
+    fun `pullIncremental calls deleteDuplicateMasterEvents after processing`() = runTest {
+        // C2 fix: Incremental sync should also clean up duplicates from hostname changes
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = listOf(SyncItem("/event.ics", "etag-1", SyncItemStatus.OK)),
+                deleted = emptyList()
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("event.ics", "${calendar.caldavUrl}event.ics", "etag-1",
+                    createSimpleIcal("uid-1", "Test Event"))
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 2 // Found 2 duplicates
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Success)
+        // Verify dedup was called during incremental sync
+        coVerify { eventsDao.deleteDuplicateMasterEvents() }
+    }
+
+    @Test
+    fun `pullIncremental logs when duplicates are cleaned during incremental sync`() = runTest {
+        // C2 fix: Verify logging for incremental sync dedup
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = emptyList(),
+                deleted = emptyList()
+            ))
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0 // No duplicates
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Success)
+        // Dedup should still be called even when no events changed
+        // (handles accumulated duplicates from past syncs)
+        coVerify { eventsDao.deleteDuplicateMasterEvents() }
+    }
+
+    @Test
     fun `pull uses UID lookup as primary dedup method`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"

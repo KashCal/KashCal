@@ -188,6 +188,13 @@ class PullStrategy @Inject constructor(
             .map { it.href }
 
         if (changedHrefs.isEmpty()) {
+            // Clean up any duplicate master events even when no events changed
+            // This handles accumulated duplicates from previous syncs
+            val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
+            if (dedupedCount > 0) {
+                Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync (no changes)")
+                SyncDebugLog.w(TAG, "DEDUP: Removed $dedupedCount duplicates in incremental sync (no changes)")
+            }
             return PullResult.Success(
                 eventsAdded = 0,
                 eventsUpdated = 0,
@@ -207,6 +214,16 @@ class PullStrategy @Inject constructor(
 
         val serverEvents = (eventsResult as CalDavResult.Success).data
         val processResult = processEvents(calendar, serverEvents)
+
+        // Clean up any duplicate master events that may have accumulated
+        // This handles edge cases where duplicates were created due to:
+        // - iCloud hostname changes (p180 → p181)
+        // - Race conditions during concurrent syncs
+        val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
+        if (dedupedCount > 0) {
+            Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync")
+            SyncDebugLog.w(TAG, "DEDUP: Removed $dedupedCount duplicates in incremental sync")
+        }
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
