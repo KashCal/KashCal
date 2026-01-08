@@ -198,6 +198,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Timezone change receiver: update widget when timezone or time changes -->
+        <receiver
+            android:name=".widget.TimezoneChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+
         <!-- Today's Agenda widget receiver -->
         <receiver
             android:name=".widget.AgendaWidgetReceiver"

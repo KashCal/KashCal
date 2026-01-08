@@ -44,15 +44,23 @@ class ConflictResolver @Inject constructor(
      * Resolve a conflict for a pending operation.
      *
      * @param operation The pending operation that caused the conflict
+     * @param expectedCalendarId Optional calendar ID to validate against (prevents cross-calendar conflicts)
      * @param strategy Resolution strategy to use
      * @return ConflictResult indicating outcome
      */
     suspend fun resolve(
         operation: PendingOperation,
+        expectedCalendarId: Long? = null,
         strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS
     ): ConflictResult {
         val event = eventsDao.getById(operation.eventId)
             ?: return ConflictResult.EventNotFound
+
+        // Validate calendar context if provided
+        if (expectedCalendarId != null && event.calendarId != expectedCalendarId) {
+            Log.w(TAG, "Event ${event.id} moved to different calendar during conflict resolution")
+            return ConflictResult.CalendarMismatch
+        }
 
         return when (strategy) {
             ConflictStrategy.SERVER_WINS -> resolveServerWins(event, operation)
@@ -69,7 +77,7 @@ class ConflictResolver @Inject constructor(
         operations: List<PendingOperation>,
         strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS
     ): List<ConflictResult> {
-        return operations.map { resolve(it, strategy) }
+        return operations.map { resolve(it, strategy = strategy) }
     }
 
     /**
@@ -352,6 +360,11 @@ sealed class ConflictResult {
      * Event not found in local database.
      */
     data object EventNotFound : ConflictResult()
+
+    /**
+     * Event moved to a different calendar during conflict resolution.
+     */
+    data object CalendarMismatch : ConflictResult()
 
     /**
      * Error during resolution.

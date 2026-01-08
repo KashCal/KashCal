@@ -159,7 +159,7 @@ class CalDavSyncEngineTest {
             operationsFailed = 1
         )
         coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
-        coEvery { conflictResolver.resolve(conflictOp, ConflictStrategy.SERVER_WINS) } returns ConflictResult.ServerVersionKept
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.ServerVersionKept
         coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
@@ -168,7 +168,7 @@ class CalDavSyncEngineTest {
         val success = result as SyncResult.Success
         assert(success.conflictsResolved == 1)
 
-        coVerify { conflictResolver.resolve(conflictOp, ConflictStrategy.SERVER_WINS) }
+        coVerify { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) }
     }
 
     @Test
@@ -248,12 +248,12 @@ class CalDavSyncEngineTest {
             operationsFailed = 1
         )
         coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
-        coEvery { conflictResolver.resolve(conflictOp, ConflictStrategy.NEWEST_WINS) } returns ConflictResult.LocalVersionPushed
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.NEWEST_WINS) } returns ConflictResult.LocalVersionPushed
         coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
 
         syncEngine.syncCalendar(testCalendar, conflictStrategy = ConflictStrategy.NEWEST_WINS)
 
-        coVerify { conflictResolver.resolve(conflictOp, ConflictStrategy.NEWEST_WINS) }
+        coVerify { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.NEWEST_WINS) }
     }
 
     // ========== Account Sync Tests ==========
