@@ -727,4 +727,47 @@ class PushStrategyTest {
         coVerify { eventsDao.markSynced(exception1.id, "new-etag", any()) }
         coVerify { eventsDao.markSynced(exception2.id, "new-etag", any()) }
     }
+
+    // ========== Batch Query Optimization (v16.5.5) ==========
+
+    @Test
+    fun `pushForCalendar uses batch query instead of N+1`() = runTest {
+        // Given: Multiple pending operations for different calendars
+        val calendar1 = testCalendar.copy(id = 1L)
+        val calendar2 = testCalendar.copy(id = 2L)
+
+        val event1 = testEvent.copy(id = 1L, calendarId = 1L, caldavUrl = null)
+        val event2 = testEvent.copy(id = 2L, calendarId = 1L, caldavUrl = null)
+        val event3 = testEvent.copy(id = 3L, calendarId = 2L, caldavUrl = null)  // Different calendar
+
+        val op1 = PendingOperation(id = 1L, eventId = 1L, operation = PendingOperation.OPERATION_CREATE, status = PendingOperation.STATUS_PENDING)
+        val op2 = PendingOperation(id = 2L, eventId = 2L, operation = PendingOperation.OPERATION_CREATE, status = PendingOperation.STATUS_PENDING)
+        val op3 = PendingOperation(id = 3L, eventId = 3L, operation = PendingOperation.OPERATION_CREATE, status = PendingOperation.STATUS_PENDING)
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(op1, op2, op3)
+        // Batch query should be called with all event IDs
+        coEvery { eventsDao.getByIds(listOf(1L, 2L, 3L)) } returns listOf(event1, event2, event3)
+
+        // pushForCalendar should only process events for calendar1
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+        coEvery { calendarsDao.getById(1L) } returns calendar1
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { serializer.serialize(any()) } returns "ical"
+        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
+        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+
+        // When
+        val result = pushStrategy.pushForCalendar(calendar1)
+
+        // Then: getByIds called once (batch), getById NEVER called
+        coVerify(exactly = 1) { eventsDao.getByIds(any()) }
+        coVerify(exactly = 0) { eventsDao.getById(any()) }
+
+        // Should only have processed 2 events (for calendar1)
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assert(success.eventsCreated == 2)
+        assert(success.operationsProcessed == 2)
+    }
 }
