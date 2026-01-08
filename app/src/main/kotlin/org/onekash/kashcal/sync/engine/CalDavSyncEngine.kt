@@ -19,6 +19,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.util.maskEmail
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -237,8 +238,8 @@ class CalDavSyncEngine @Inject constructor(
         quirks: CalDavQuirks? = null,
         clientOverride: CalDavClient? = null
     ): SyncResult {
-        Log.i(TAG, "Starting sync for account: ${account.email}")
-        SyncDebugLog.i(TAG, "syncAccount() for ${account.email}")
+        Log.i(TAG, "Starting sync for account: ${account.email.maskEmail()}")
+        SyncDebugLog.i(TAG, "syncAccount() for ${account.email.maskEmail()}")
         val startTime = System.currentTimeMillis()
 
         val calendars = calendarsDao.getByAccountIdOnce(account.id)

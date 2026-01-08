@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.sync.scheduler.SyncStatus
@@ -124,10 +125,12 @@ class HomeViewModel @Inject constructor(
 
         // Set initial viewing state to today
         val today = Calendar.getInstance()
-        _uiState.value = _uiState.value.copy(
-            viewingMonth = today.get(Calendar.MONTH),
-            viewingYear = today.get(Calendar.YEAR)
-        )
+        _uiState.update {
+            it.copy(
+                viewingMonth = today.get(Calendar.MONTH),
+                viewingYear = today.get(Calendar.YEAR)
+            )
+        }
 
         // Initialize asynchronously
         viewModelScope.launch {
@@ -137,7 +140,7 @@ class HomeViewModel @Inject constructor(
         // Monitor network transitions
         viewModelScope.launch {
             networkMonitor.isOnline.collect { online ->
-                _uiState.value = _uiState.value.copy(isOnline = online)
+                _uiState.update { it.copy(isOnline = online) }
 
                 if (wasOnline && !online) {
                     Log.d(TAG, "Network: Went offline")
@@ -178,7 +181,7 @@ class HomeViewModel @Inject constructor(
                 val dismissed = dataStore.onboardingDismissed.first()
                 if (!dismissed) {
                     Log.d(TAG, "Showing onboarding sheet (first launch, iCloud not configured)")
-                    _uiState.value = _uiState.value.copy(showOnboardingSheet = true)
+                    _uiState.update { it.copy(showOnboardingSheet = true) }
                 }
             }
 
@@ -192,9 +195,9 @@ class HomeViewModel @Inject constructor(
             Log.d(TAG, "initializeAsync - COMPLETE")
         } catch (e: Exception) {
             Log.e(TAG, "initializeAsync FAILED", e)
-            _uiState.value = _uiState.value.copy(
-                syncMessage = "Initialization failed: ${e.message}"
-            )
+            _uiState.update {
+                it.copy(syncMessage = "Initialization failed: ${e.message}")
+            }
         }
     }
 
@@ -209,17 +212,21 @@ class HomeViewModel @Inject constructor(
         }
 
         if (account != null && account.hasCredentials()) {
-            _uiState.value = _uiState.value.copy(
-                isConfigured = true,
-                isICloudConnected = account.isEnabled
-            )
+            _uiState.update {
+                it.copy(
+                    isConfigured = true,
+                    isICloudConnected = account.isEnabled
+                )
+            }
             Log.d(TAG, "iCloud configured: ${account.appleId}")
         } else {
-            _uiState.value = _uiState.value.copy(
-                isConfigured = false,
-                isICloudConnected = false,
-                syncMessage = "Tap to set up iCloud"
-            )
+            _uiState.update {
+                it.copy(
+                    isConfigured = false,
+                    isICloudConnected = false,
+                    syncMessage = "Tap to set up iCloud"
+                )
+            }
             Log.d(TAG, "iCloud not configured")
         }
     }
@@ -291,48 +298,56 @@ class HomeViewModel @Inject constructor(
                     is SyncStatus.Running, is SyncStatus.Enqueued -> {
                         // Only show icon if not suppressed (only pull-to-refresh shows icon)
                         // Only show banner if flag is set (force sync, iCloud setup)
-                        _uiState.value = _uiState.value.copy(
-                            isSyncing = !suppressSyncIndicator,
-                            showSyncBanner = showBanner,
-                            syncBannerMessage = if (status is SyncStatus.Running)
-                                "Syncing calendars..." else "Preparing to sync..."
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isSyncing = !suppressSyncIndicator,
+                                showSyncBanner = showBanner,
+                                syncBannerMessage = if (status is SyncStatus.Running)
+                                    "Syncing calendars..." else "Preparing to sync..."
+                            )
+                        }
                     }
                     is SyncStatus.Succeeded -> {
                         suppressSyncIndicator = false  // Reset flag for next sync
-                        _uiState.value = _uiState.value.copy(
-                            isSyncing = false,
-                            showSyncBanner = showBanner,
-                            syncBannerMessage = "Sync complete"
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isSyncing = false,
+                                showSyncBanner = showBanner,
+                                syncBannerMessage = "Sync complete"
+                            )
+                        }
                         // Reload events after successful sync
                         reloadCurrentView()
                         // Auto-dismiss after 2 seconds (only if banner was shown)
                         if (showBanner) {
                             delay(2000)
-                            _uiState.value = _uiState.value.copy(showSyncBanner = false)
+                            _uiState.update { it.copy(showSyncBanner = false) }
                             syncScheduler.resetBannerFlag()
                         }
                     }
                     is SyncStatus.Failed -> {
                         suppressSyncIndicator = false  // Reset flag for next sync
                         // Always show errors regardless of flag
-                        _uiState.value = _uiState.value.copy(
-                            isSyncing = false,
-                            showSyncBanner = true,
-                            syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}"
-                        )
+                        _uiState.update {
+                            it.copy(
+                                isSyncing = false,
+                                showSyncBanner = true,
+                                syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}"
+                            )
+                        }
                         // Auto-dismiss after 3 seconds
                         delay(3000)
-                        _uiState.value = _uiState.value.copy(showSyncBanner = false)
+                        _uiState.update { it.copy(showSyncBanner = false) }
                         syncScheduler.resetBannerFlag()
                     }
                     is SyncStatus.Idle, is SyncStatus.Cancelled, is SyncStatus.Blocked -> {
                         suppressSyncIndicator = false  // Reset flag for next sync
-                        _uiState.value = _uiState.value.copy(
-                            showSyncBanner = false,
-                            isSyncing = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                showSyncBanner = false,
+                                isSyncing = false
+                            )
+                        }
                     }
                 }
             }
@@ -353,13 +368,11 @@ class HomeViewModel @Inject constructor(
                     if (message != null) {
                         Log.d(TAG, "Sync changes notification: $message (${changes.size} changes)")
                         // Store changes for bottom sheet
-                        _uiState.value = _uiState.value.copy(
-                            syncChanges = changes.toPersistentList()
-                        )
+                        _uiState.update { it.copy(syncChanges = changes.toPersistentList()) }
                         // Show snackbar with "View" action
                         showSnackbar(message) {
                             // Open bottom sheet on "View" tap
-                            _uiState.value = _uiState.value.copy(showSyncChangesSheet = true)
+                            _uiState.update { it.copy(showSyncChangesSheet = true) }
                         }
                     }
                     // Clear after consumed
@@ -440,7 +453,7 @@ class HomeViewModel @Inject constructor(
         // suppressSyncIndicator is true for silent syncs (cold start, resume, force full sync with banner)
         // Only pull-to-refresh shows the icon since it's user-initiated
         if (!suppressSyncIndicator) {
-            _uiState.value = _uiState.value.copy(isSyncing = true)
+            _uiState.update { it.copy(isSyncing = true) }
         }
 
         // Request sync - observeSyncStatus() handles all other state updates
@@ -474,10 +487,12 @@ class HomeViewModel @Inject constructor(
                         ?: calendars.firstOrNull()?.id          // Fallback to first calendar
                     calendars to defaultCalId
                 }.collect { (calendars, defaultCalId) ->
-                    _uiState.value = _uiState.value.copy(
-                        calendars = calendars.toPersistentList(),
-                        defaultCalendarId = defaultCalId
-                    )
+                    _uiState.update {
+                        it.copy(
+                            calendars = calendars.toPersistentList(),
+                            defaultCalendarId = defaultCalId
+                        )
+                    }
                     Log.d(TAG, "Calendars updated: ${calendars.size} calendars, default=$defaultCalId")
                 }
             } catch (e: Exception) {
@@ -502,10 +517,12 @@ class HomeViewModel @Inject constructor(
                         ?: cals.firstOrNull()?.id
                     cals to defaultId
                 }
-                _uiState.value = _uiState.value.copy(
-                    calendars = calendars.toPersistentList(),
-                    defaultCalendarId = defaultCalId
-                )
+                _uiState.update {
+                    it.copy(
+                        calendars = calendars.toPersistentList(),
+                        defaultCalendarId = defaultCalId
+                    )
+                }
                 Log.d(TAG, "Loaded ${calendars.size} calendars, default=$defaultCalId")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading calendars", e)
@@ -558,9 +575,7 @@ class HomeViewModel @Inject constructor(
      * Toggle calendar visibility sheet.
      */
     fun toggleCalendarVisibilitySheet() {
-        _uiState.value = _uiState.value.copy(
-            showCalendarVisibility = !_uiState.value.showCalendarVisibility
-        )
+        _uiState.update { it.copy(showCalendarVisibility = !it.showCalendarVisibility) }
     }
 
     // ==================== Event Dots ====================
@@ -649,10 +664,12 @@ class HomeViewModel @Inject constructor(
                 // Mark month as actually loaded (not just requested)
                 // This ensures cancelled loads don't falsely mark months as cached
                 val loadedMonthEncoded = encodeMonth(year, month)
-                _uiState.value = _uiState.value.copy(
-                    eventDots = currentDots.toPersistentMap(),
-                    loadedMonths = _uiState.value.loadedMonths.add(loadedMonthEncoded)
-                )
+                _uiState.update {
+                    it.copy(
+                        eventDots = currentDots.toPersistentMap(),
+                        loadedMonths = it.loadedMonths.add(loadedMonthEncoded)
+                    )
+                }
 
                 Log.d(TAG, "Loaded dots for $year-${month + 1}, total cached months: ${_uiState.value.loadedMonths.size}")
             } catch (e: CancellationException) {
@@ -736,10 +753,12 @@ class HomeViewModel @Inject constructor(
                     .toPersistentSet()
 
                 // Update state with dots and loaded months set
-                _uiState.value = _uiState.value.copy(
-                    eventDots = immutableDots,
-                    loadedMonths = loadedMonthsSet
-                )
+                _uiState.update {
+                    it.copy(
+                        eventDots = immutableDots,
+                        loadedMonths = loadedMonthsSet
+                    )
+                }
 
                 val (startYear, startMonth) = decodeMonth(startEncoded)
                 val (endYear, endMonth) = decodeMonth(endEncoded)
@@ -760,11 +779,13 @@ class HomeViewModel @Inject constructor(
         val year = today.get(Calendar.YEAR)
         val month = today.get(Calendar.MONTH)
 
-        _uiState.value = _uiState.value.copy(
-            viewingYear = year,
-            viewingMonth = month,
-            pendingNavigateToToday = true
-        )
+        _uiState.update {
+            it.copy(
+                viewingYear = year,
+                viewingMonth = month,
+                pendingNavigateToToday = true
+            )
+        }
 
         selectDate(today.timeInMillis)
     }
@@ -773,19 +794,21 @@ class HomeViewModel @Inject constructor(
      * Clear the navigate to today flag (consumed by UI).
      */
     fun clearNavigateToToday() {
-        _uiState.value = _uiState.value.copy(pendingNavigateToToday = false)
+        _uiState.update { it.copy(pendingNavigateToToday = false) }
     }
 
     /**
      * Navigate to a specific month.
      */
     fun navigateToMonth(year: Int, month: Int) {
-        _uiState.value = _uiState.value.copy(
-            viewingYear = year,
-            viewingMonth = month,
-            pendingNavigateToMonth = year to month,
-            showYearOverlay = false  // Auto-dismiss year overlay on month selection
-        )
+        _uiState.update {
+            it.copy(
+                viewingYear = year,
+                viewingMonth = month,
+                pendingNavigateToMonth = year to month,
+                showYearOverlay = false  // Auto-dismiss year overlay on month selection
+            )
+        }
 
         // Only load if outside cached range (not full rebuild!)
         ensureDotsForMonth(year, month)
@@ -795,17 +818,19 @@ class HomeViewModel @Inject constructor(
      * Clear the navigate to month flag (consumed by UI).
      */
     fun clearNavigateToMonth() {
-        _uiState.value = _uiState.value.copy(pendingNavigateToMonth = null)
+        _uiState.update { it.copy(pendingNavigateToMonth = null) }
     }
 
     /**
      * Set the viewing month/year (called on swipe).
      */
     fun setViewingMonth(year: Int, month: Int) {
-        _uiState.value = _uiState.value.copy(
-            viewingYear = year,
-            viewingMonth = month
-        )
+        _uiState.update {
+            it.copy(
+                viewingYear = year,
+                viewingMonth = month
+            )
+        }
 
         // Load dots if outside cached range (on-demand loading)
         ensureDotsForMonth(year, month)
@@ -856,11 +881,13 @@ class HomeViewModel @Inject constructor(
      * Select a date and load its events.
      */
     fun selectDate(dateMillis: Long) {
-        _uiState.value = _uiState.value.copy(
-            selectedDate = dateMillis,
-            selectedDayLabel = formatDateLabel(dateMillis),
-            isLoadingDayEvents = true
-        )
+        _uiState.update {
+            it.copy(
+                selectedDate = dateMillis,
+                selectedDayLabel = formatDateLabel(dateMillis),
+                isLoadingDayEvents = true
+            )
+        }
 
         loadEventsForSelectedDay(dateMillis)
     }
@@ -915,11 +942,13 @@ class HomeViewModel @Inject constructor(
                         occurrences to events
                     }
                     .collect { (occurrences, events) ->
-                        _uiState.value = _uiState.value.copy(
-                            selectedDayOccurrences = occurrences.toPersistentList(),
-                            selectedDayEvents = events.toPersistentList(),
-                            isLoadingDayEvents = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                selectedDayOccurrences = occurrences.toPersistentList(),
+                                selectedDayEvents = events.toPersistentList(),
+                                isLoadingDayEvents = false
+                            )
+                        }
                         Log.d(TAG, "Day events updated: ${events.size} events (dayCode=$dayCode)")
                     }
             } catch (e: CancellationException) {
@@ -927,7 +956,7 @@ class HomeViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error observing events for day", e)
-                _uiState.value = _uiState.value.copy(isLoadingDayEvents = false)
+                _uiState.update { it.copy(isLoadingDayEvents = false) }
             }
         }
     }
@@ -946,14 +975,16 @@ class HomeViewModel @Inject constructor(
      * Activate search mode.
      */
     fun activateSearch() {
-        _uiState.value = _uiState.value.copy(
-            isSearchActive = true,
-            searchQuery = "",
-            searchResults = persistentListOf(),
-            searchDateFilter = DateFilter.AnyTime,
-            showSearchDatePicker = false,
-            searchDateRangeStart = null
-        )
+        _uiState.update {
+            it.copy(
+                isSearchActive = true,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                searchDateFilter = DateFilter.AnyTime,
+                showSearchDatePicker = false,
+                searchDateRangeStart = null
+            )
+        }
     }
 
     /**
@@ -961,14 +992,16 @@ class HomeViewModel @Inject constructor(
      * Resets all search state including date filter.
      */
     fun deactivateSearch() {
-        _uiState.value = _uiState.value.copy(
-            isSearchActive = false,
-            searchQuery = "",
-            searchResults = persistentListOf(),
-            searchDateFilter = DateFilter.AnyTime,
-            showSearchDatePicker = false,
-            searchDateRangeStart = null
-        )
+        _uiState.update {
+            it.copy(
+                isSearchActive = false,
+                searchQuery = "",
+                searchResults = persistentListOf(),
+                searchDateFilter = DateFilter.AnyTime,
+                showSearchDatePicker = false,
+                searchDateRangeStart = null
+            )
+        }
     }
 
     /**
@@ -976,7 +1009,7 @@ class HomeViewModel @Inject constructor(
      * Cancels any pending search and waits 300ms before executing.
      */
     fun updateSearchQuery(query: String) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
+        _uiState.update { it.copy(searchQuery = query) }
 
         // Cancel any pending search
         searchJob?.cancel()
@@ -987,7 +1020,7 @@ class HomeViewModel @Inject constructor(
                 performSearch(query)
             }
         } else {
-            _uiState.value = _uiState.value.copy(searchResults = persistentListOf())
+            _uiState.update { it.copy(searchResults = persistentListOf()) }
         }
     }
 
@@ -996,7 +1029,7 @@ class HomeViewModel @Inject constructor(
      */
     fun toggleSearchIncludePast() {
         val newValue = !_uiState.value.searchIncludePast
-        _uiState.value = _uiState.value.copy(searchIncludePast = newValue)
+        _uiState.update { it.copy(searchIncludePast = newValue) }
 
         // Re-run search with new setting
         if (_uiState.value.searchQuery.length >= 2) {
@@ -1011,11 +1044,13 @@ class HomeViewModel @Inject constructor(
      * Called when user taps a filter chip or selects a date from picker.
      */
     fun setSearchDateFilter(filter: DateFilter) {
-        _uiState.value = _uiState.value.copy(
-            searchDateFilter = filter,
-            showSearchDatePicker = false,  // Auto-dismiss picker on selection
-            searchDateRangeStart = null    // Reset range selection
-        )
+        _uiState.update {
+            it.copy(
+                searchDateFilter = filter,
+                showSearchDatePicker = false,  // Auto-dismiss picker on selection
+                searchDateRangeStart = null    // Reset range selection
+            )
+        }
 
         // Re-run search with new filter
         if (_uiState.value.searchQuery.length >= 2) {
@@ -1027,20 +1062,24 @@ class HomeViewModel @Inject constructor(
      * Show the search date picker bottom sheet.
      */
     fun showSearchDatePicker() {
-        _uiState.value = _uiState.value.copy(
-            showSearchDatePicker = true,
-            searchDateRangeStart = null  // Reset range selection when opening
-        )
+        _uiState.update {
+            it.copy(
+                showSearchDatePicker = true,
+                searchDateRangeStart = null  // Reset range selection when opening
+            )
+        }
     }
 
     /**
      * Hide the search date picker bottom sheet.
      */
     fun hideSearchDatePicker() {
-        _uiState.value = _uiState.value.copy(
-            showSearchDatePicker = false,
-            searchDateRangeStart = null  // Reset range selection
-        )
+        _uiState.update {
+            it.copy(
+                showSearchDatePicker = false,
+                searchDateRangeStart = null  // Reset range selection
+            )
+        }
     }
 
     /**
@@ -1058,7 +1097,7 @@ class HomeViewModel @Inject constructor(
 
         if (rangeStart == null) {
             // First tap - store as range start
-            _uiState.value = _uiState.value.copy(searchDateRangeStart = dateMs)
+            _uiState.update { it.copy(searchDateRangeStart = dateMs) }
         } else {
             // Second tap - determine if single day or range
             val normalizedStart = normalizeToMidnight(rangeStart)
@@ -1131,7 +1170,7 @@ class HomeViewModel @Inject constructor(
                     .toSet()
                 val filteredResults = results.filter { it.event.calendarId in visibleCalendarIds }
 
-                _uiState.value = _uiState.value.copy(searchResults = filteredResults.toPersistentList())
+                _uiState.update { it.copy(searchResults = filteredResults.toPersistentList()) }
 
                 Log.d(TAG, "Search '$query' returned ${filteredResults.size} results (filter=${dateFilter::class.simpleName})")
             } catch (e: Exception) {
@@ -1155,7 +1194,7 @@ class HomeViewModel @Inject constructor(
         // Cancel any previous agenda observation
         agendaEventsJob?.cancel()
 
-        _uiState.value = _uiState.value.copy(isLoadingAgenda = true)
+        _uiState.update { it.copy(isLoadingAgenda = true) }
 
         val now = System.currentTimeMillis()
         val oneMonthLater = now + (30L * 24 * 60 * 60 * 1000) // 30 days
@@ -1176,10 +1215,12 @@ class HomeViewModel @Inject constructor(
                             .sortedBy { it.occurrence.startTs }
                     }
                     .collect { filteredOccurrences ->
-                        _uiState.value = _uiState.value.copy(
-                            agendaOccurrences = filteredOccurrences.toPersistentList(),
-                            isLoadingAgenda = false
-                        )
+                        _uiState.update {
+                            it.copy(
+                                agendaOccurrences = filteredOccurrences.toPersistentList(),
+                                isLoadingAgenda = false
+                            )
+                        }
                         Log.d(TAG, "Agenda updated: ${filteredOccurrences.size} occurrences")
                     }
             } catch (e: CancellationException) {
@@ -1187,7 +1228,7 @@ class HomeViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error observing agenda", e)
-                _uiState.value = _uiState.value.copy(isLoadingAgenda = false)
+                _uiState.update { it.copy(isLoadingAgenda = false) }
             }
         }
     }
@@ -1195,43 +1236,39 @@ class HomeViewModel @Inject constructor(
     // ==================== UI Sheets/Dialogs ====================
 
     fun toggleAppInfoSheet() {
-        _uiState.value = _uiState.value.copy(
-            showAppInfoSheet = !_uiState.value.showAppInfoSheet
-        )
+        _uiState.update { it.copy(showAppInfoSheet = !it.showAppInfoSheet) }
     }
 
     fun toggleOnboardingSheet() {
-        _uiState.value = _uiState.value.copy(
-            showOnboardingSheet = !_uiState.value.showOnboardingSheet
-        )
+        _uiState.update { it.copy(showOnboardingSheet = !it.showOnboardingSheet) }
     }
 
     fun dismissOnboardingSheet() {
-        _uiState.value = _uiState.value.copy(showOnboardingSheet = false)
+        _uiState.update { it.copy(showOnboardingSheet = false) }
         viewModelScope.launch {
             dataStore.setOnboardingDismissed(true)
         }
     }
 
     fun toggleSyncChangesSheet() {
-        _uiState.value = _uiState.value.copy(
-            showSyncChangesSheet = !_uiState.value.showSyncChangesSheet
-        )
+        _uiState.update { it.copy(showSyncChangesSheet = !it.showSyncChangesSheet) }
     }
 
     /**
      * Dismiss sync changes bottom sheet and clear sync changes.
      */
     fun dismissSyncChangesSheet() {
-        _uiState.value = _uiState.value.copy(
-            showSyncChangesSheet = false,
-            syncChanges = persistentListOf()
-        )
+        _uiState.update {
+            it.copy(
+                showSyncChangesSheet = false,
+                syncChanges = persistentListOf()
+            )
+        }
     }
 
     fun toggleAgendaPanel() {
         val newShowAgenda = !_uiState.value.showAgendaPanel
-        _uiState.value = _uiState.value.copy(showAgendaPanel = newShowAgenda)
+        _uiState.update { it.copy(showAgendaPanel = newShowAgenda) }
 
         if (newShowAgenda) {
             loadAgendaEvents()  // Load when opening
@@ -1239,9 +1276,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun toggleYearOverlay() {
-        _uiState.value = _uiState.value.copy(
-            showYearOverlay = !_uiState.value.showYearOverlay
-        )
+        _uiState.update { it.copy(showYearOverlay = !it.showYearOverlay) }
     }
 
     // ==================== Snackbar ====================
@@ -1251,20 +1286,24 @@ class HomeViewModel @Inject constructor(
      * Internal visibility for testing.
      */
     internal fun showSnackbar(message: String, action: (() -> Unit)? = null) {
-        _uiState.value = _uiState.value.copy(
-            pendingSnackbarMessage = message,
-            pendingSnackbarAction = action
-        )
+        _uiState.update {
+            it.copy(
+                pendingSnackbarMessage = message,
+                pendingSnackbarAction = action
+            )
+        }
     }
 
     /**
      * Clear the snackbar (consumed by UI).
      */
     fun clearSnackbar() {
-        _uiState.value = _uiState.value.copy(
-            pendingSnackbarMessage = null,
-            pendingSnackbarAction = null
-        )
+        _uiState.update {
+            it.copy(
+                pendingSnackbarMessage = null,
+                pendingSnackbarAction = null
+            )
+        }
     }
 
     // ==================== Pending Actions (from intents) ====================
@@ -1283,7 +1322,7 @@ class HomeViewModel @Inject constructor(
      */
     fun setPendingAction(action: PendingAction) {
         Log.d(TAG, "setPendingAction: $action")
-        _uiState.value = _uiState.value.copy(pendingAction = action)
+        _uiState.update { it.copy(pendingAction = action) }
     }
 
     /**
@@ -1292,7 +1331,7 @@ class HomeViewModel @Inject constructor(
      */
     fun clearPendingAction() {
         Log.d(TAG, "clearPendingAction")
-        _uiState.value = _uiState.value.copy(pendingAction = null)
+        _uiState.update { it.copy(pendingAction = null) }
     }
 
     // ==================== Refresh ====================
@@ -1667,25 +1706,31 @@ class HomeViewModel @Inject constructor(
 
         when (presentation) {
             is ErrorPresentation.Snackbar -> {
-                _uiState.value = _uiState.value.copy(
-                    currentError = presentation,
-                    showErrorDialog = false,
-                    showErrorBanner = false
-                )
+                _uiState.update {
+                    it.copy(
+                        currentError = presentation,
+                        showErrorDialog = false,
+                        showErrorBanner = false
+                    )
+                }
             }
             is ErrorPresentation.Dialog -> {
-                _uiState.value = _uiState.value.copy(
-                    currentError = presentation,
-                    showErrorDialog = true,
-                    showErrorBanner = false
-                )
+                _uiState.update {
+                    it.copy(
+                        currentError = presentation,
+                        showErrorDialog = true,
+                        showErrorBanner = false
+                    )
+                }
             }
             is ErrorPresentation.Banner -> {
-                _uiState.value = _uiState.value.copy(
-                    currentError = presentation,
-                    showErrorDialog = false,
-                    showErrorBanner = true
-                )
+                _uiState.update {
+                    it.copy(
+                        currentError = presentation,
+                        showErrorDialog = false,
+                        showErrorBanner = true
+                    )
+                }
             }
             is ErrorPresentation.Silent -> {
                 // Log only, no UI change
@@ -1711,9 +1756,7 @@ class HomeViewModel @Inject constructor(
                 Log.d(TAG, "Error action: OpenSettings")
                 clearError()
                 // Navigation handled by Activity (observes this state)
-                _uiState.value = _uiState.value.copy(
-                    pendingSnackbarMessage = null // Clear any snackbar
-                )
+                _uiState.update { it.copy(pendingSnackbarMessage = null) } // Clear any snackbar
             }
             is ErrorActionCallback.OpenAppSettings -> {
                 Log.d(TAG, "Error action: OpenAppSettings")
@@ -1738,7 +1781,7 @@ class HomeViewModel @Inject constructor(
             is ErrorActionCallback.ViewSyncDetails -> {
                 Log.d(TAG, "Error action: ViewSyncDetails")
                 clearError()
-                _uiState.value = _uiState.value.copy(showSyncChangesSheet = true)
+                _uiState.update { it.copy(showSyncChangesSheet = true) }
             }
             is ErrorActionCallback.Dismiss -> {
                 Log.d(TAG, "Error action: Dismiss")
@@ -1757,11 +1800,13 @@ class HomeViewModel @Inject constructor(
      * Called after error is dismissed or action is taken.
      */
     fun clearError() {
-        _uiState.value = _uiState.value.copy(
-            currentError = null,
-            showErrorDialog = false,
-            showErrorBanner = false
-        )
+        _uiState.update {
+            it.copy(
+                currentError = null,
+                showErrorDialog = false,
+                showErrorBanner = false
+            )
+        }
     }
 
     /**

@@ -50,7 +50,7 @@ class CredentialsTest {
     // ==================== toSafeString Tests ====================
 
     @Test
-    fun `toSafeString masks password for logging`() {
+    fun `toSafeString masks password completely`() {
         val creds = Credentials(
             username = "user@icloud.com",
             password = "abcd-efgh-ijkl-mnop"
@@ -58,52 +58,42 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        assertTrue(safeString.contains("user@icloud.com"))
-        assertFalse(safeString.contains("abcd-efgh-ijkl-mnop"))
-        assertTrue(safeString.contains("ab****op"))
+        // Password should be completely masked - no characters visible
+        assertFalse("Password should not be visible", safeString.contains("abcd"))
+        assertFalse("Password should not be visible", safeString.contains("efgh"))
+        assertFalse("Password should not be visible", safeString.contains("mnop"))
+        assertTrue("Password should show ****", safeString.contains("password=****"))
     }
 
     @Test
-    fun `toSafeString masks short password`() {
+    fun `toSafeString masks username with maskEmail`() {
         val creds = Credentials(
-            username = "user@icloud.com",
-            password = "abc"
+            username = "john.doe@icloud.com",
+            password = "secret"
         )
 
         val safeString = creds.toSafeString()
 
-        assertTrue(safeString.contains("****"))
-        assertFalse(safeString.contains("abc"))
+        // Username should be masked - shows only first 3 chars + domain TLD
+        assertTrue("Username should be masked", safeString.contains("joh***@***.com"))
+        assertFalse("Full username should not be visible", safeString.contains("john.doe@icloud.com"))
     }
 
     @Test
-    fun `toSafeString handles 4 character password`() {
+    fun `toSafeString with short username`() {
         val creds = Credentials(
-            username = "user@icloud.com",
-            password = "1234"
+            username = "jo@example.com",
+            password = "secret"
         )
 
         val safeString = creds.toSafeString()
 
-        // 4 chars = take 2 + **** + take last 2 = "12****34"
-        assertFalse(safeString.contains("1234"))
+        // Short usernames (2 chars) show first char + ***
+        assertTrue("Short username should be masked", safeString.contains("j***@***.com"))
     }
 
     @Test
-    fun `toSafeString handles 5 character password`() {
-        val creds = Credentials(
-            username = "user@icloud.com",
-            password = "12345"
-        )
-
-        val safeString = creds.toSafeString()
-
-        // 5 chars > 4, so: take 2 + **** + take last 2 = "12****45"
-        assertTrue(safeString.contains("12****45"))
-    }
-
-    @Test
-    fun `toSafeString handles empty password`() {
+    fun `toSafeString with empty password`() {
         val creds = Credentials(
             username = "user@icloud.com",
             password = ""
@@ -111,20 +101,44 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        assertTrue(safeString.contains("****"))
+        assertTrue("Empty password should show ****", safeString.contains("password=****"))
     }
 
     @Test
-    fun `toSafeString handles single character password`() {
+    fun `toSafeString never reveals any password characters`() {
+        // Test various password lengths - none should reveal characters
+        // Use distinctive passwords that won't appear in other parts of the output
+        val passwords = listOf("xyz123", "qwerty", "secretpassword", "p@ssw0rd!")
+
+        for (password in passwords) {
+            val creds = Credentials(username = "test@example.com", password = password)
+            val safeString = creds.toSafeString()
+
+            assertFalse(
+                "Password '$password' should not appear in safeString",
+                safeString.contains(password)
+            )
+            assertTrue(
+                "safeString should contain password=****",
+                safeString.contains("password=****")
+            )
+        }
+    }
+
+    @Test
+    fun `toSafeString format is correct`() {
         val creds = Credentials(
-            username = "user@icloud.com",
-            password = "x"
+            username = "john@example.com",
+            password = "secret"
         )
 
         val safeString = creds.toSafeString()
 
-        assertTrue(safeString.contains("****"))
-        assertFalse(safeString.contains("password=x"))
+        // Should match exact format: Credentials(username=masked, password=****)
+        assertEquals(
+            "Credentials(username=joh***@***.com, password=****)",
+            safeString
+        )
     }
 
     // ==================== Data Class Behavior Tests ====================

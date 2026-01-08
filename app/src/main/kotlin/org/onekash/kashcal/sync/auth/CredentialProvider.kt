@@ -1,5 +1,7 @@
 package org.onekash.kashcal.sync.auth
 
+import org.onekash.kashcal.util.maskEmail
+
 /**
  * Provides credentials for CalDAV sync operations.
  *
@@ -90,14 +92,10 @@ data class Credentials(
     }
 
     /**
-     * Mask the password for logging.
+     * Mask credentials for safe logging.
+     * Never shows any password characters. Username is masked using maskEmail().
      */
     fun toSafeString(): String {
-        val maskedPassword = if (password.length > 4) {
-            password.take(2) + "****" + password.takeLast(2)
-        } else {
-            "****"
-        }
-        return "Credentials(username=$username, password=$maskedPassword)"
+        return "Credentials(username=${username.maskEmail()}, password=****)"
     }
 }

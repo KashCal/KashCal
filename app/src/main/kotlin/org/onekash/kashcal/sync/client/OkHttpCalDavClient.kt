@@ -82,6 +82,32 @@ class OkHttpCalDavClient : CalDavClient {
         // Connection pool configuration
         private const val MAX_IDLE_CONNECTIONS = 5
         private const val KEEP_ALIVE_DURATION_MINUTES = 5L
+
+        // Response body size limit (10MB) - prevents OOM on malicious/malformed responses
+        private const val MAX_RESPONSE_SIZE_BYTES = 10L * 1024 * 1024
+    }
+
+    /**
+     * Read response body with size limit to prevent OOM.
+     * Uses .use {} to ensure body is always closed.
+     */
+    private fun Response.bodyWithLimit(): String {
+        val body = this.body ?: return ""
+        return body.use { b ->
+            val source = b.source()
+            val contentLength = b.contentLength()
+            // contentLength is -1 when unknown (chunked/streaming) - falls through to buffer check
+            if (contentLength > MAX_RESPONSE_SIZE_BYTES) {
+                Log.w(TAG, "Response rejected: Content-Length $contentLength exceeds limit")
+                throw IOException("Response too large: Content-Length $contentLength exceeds ${MAX_RESPONSE_SIZE_BYTES / 1024 / 1024}MB")
+            }
+            source.request(MAX_RESPONSE_SIZE_BYTES + 1)
+            if (source.buffer.size > MAX_RESPONSE_SIZE_BYTES) {
+                Log.w(TAG, "Response rejected: buffered ${source.buffer.size} bytes exceeds limit")
+                throw IOException("Response too large: buffered ${source.buffer.size} bytes exceeds ${MAX_RESPONSE_SIZE_BYTES / 1024 / 1024}MB")
+            }
+            source.buffer.readUtf8()
+        }
     }
 
     @Volatile
@@ -526,7 +552,7 @@ class OkHttpCalDavClient : CalDavClient {
 
             try {
                 val response = httpClient.newCall(request).execute()
-                val responseBody = response.body?.string() ?: ""
+                val responseBody = response.bodyWithLimit()
 
                 when {
                     response.isSuccessful -> {
@@ -689,7 +715,7 @@ class OkHttpCalDavClient : CalDavClient {
         repeat(MAX_RETRIES) { attempt ->
             try {
                 val response = httpClient.newCall(request).execute()
-                val responseBody = response.body?.string() ?: ""
+                val responseBody = response.bodyWithLimit()
 
                 val result = processResponse(response, responseBody, parser)
 
