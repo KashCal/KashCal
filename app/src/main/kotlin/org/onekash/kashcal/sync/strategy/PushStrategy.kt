@@ -144,10 +144,13 @@ class PushStrategy @Inject constructor(
         val now = System.currentTimeMillis()
         val allReady = pendingOperationsDao.getReadyOperations(now)
 
-        // Filter to events in this calendar
+        // Batch load events upfront (fixes N+1 query pattern)
+        val eventIds = allReady.map { it.eventId }.distinct()
+        val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
+
+        // Filter to events in this calendar using cached data
         val calendarOperations = allReady.filter { op ->
-            val event = eventsDao.getById(op.eventId)
-            event?.calendarId == calendar.id
+            eventsCache[op.eventId]?.calendarId == calendar.id
         }
 
         if (calendarOperations.isEmpty()) {
@@ -162,7 +165,7 @@ class PushStrategy @Inject constructor(
         for (operation in calendarOperations) {
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
-            val result = processOperation(operation, clientToUse = effectiveClient)
+            val result = processOperation(operation, eventsCache, emptyMap(), effectiveClient)
 
             when (result) {
                 is SinglePushResult.Success -> {
