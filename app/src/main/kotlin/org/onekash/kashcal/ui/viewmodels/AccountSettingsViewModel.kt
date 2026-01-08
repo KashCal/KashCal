@@ -431,6 +431,12 @@ class AccountSettingsViewModel @Inject constructor(
             val account = authManager.loadAccount()
             val accountEmail = account?.appleId
 
+            // Cancel reminders BEFORE cascade delete to prevent orphaned AlarmManager alarms
+            // Android best practice: AlarmManager.cancel() is safe on non-existent alarms (no-op)
+            if (accountEmail != null) {
+                eventCoordinator.cancelRemindersForAccount(accountEmail)
+            }
+
             // Clear credentials from secure storage
             authManager.clearAccount()
 

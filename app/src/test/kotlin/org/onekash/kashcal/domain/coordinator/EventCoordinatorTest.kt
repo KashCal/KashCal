@@ -744,4 +744,169 @@ class EventCoordinatorTest {
         val result = coordinator.updateEvent(validEvent)
         assertNotNull(result)
     }
+
+    // ========== Reminder Scheduling Tests (v16.4.1) ==========
+
+    @Test
+    fun `editThisAndFuture schedules reminders for new series`() = runTest {
+        val splitTime = 1704672000000L
+        val newSeries = recurringEvent.copy(
+            id = 201L,
+            startTs = splitTime,
+            uid = "split-series@kashcal.test",
+            reminders = listOf("-PT15M")
+        )
+        val testOccurrence = Occurrence(
+            eventId = newSeries.id,
+            calendarId = iCloudCalendarId,
+            startTs = splitTime,
+            endTs = splitTime + 3600000L,
+            startDay = 20240108,
+            endDay = 20240108
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any()) } returns newSeries
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
+
+        coordinator.editThisAndFuture(
+            masterEventId = recurringEvent.id,
+            splitTimeMs = splitTime,
+            changes = { it.copy(title = "New Title") }
+        )
+
+        // Verify reminder scheduling was called for new series
+        coVerify { reminderScheduler.scheduleRemindersForEvent(newSeries, any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents schedules reminders for each imported event`() = runTest {
+        // Events to import - importIcsEvents will generate new UIDs for these
+        val eventsToImport = listOf(
+            testEvent.copy(id = 0L, title = "Import Event 1", reminders = listOf("-PT15M")),
+            testEvent.copy(id = 0L, title = "Import Event 2", reminders = listOf("-PT30M"))
+        )
+
+        // Mock eventWriter to return events with IDs
+        val createdEvent1 = eventsToImport[0].copy(id = 301L, uid = "generated-1@kashcal.onekash.org")
+        val createdEvent2 = eventsToImport[1].copy(id = 302L, uid = "generated-2@kashcal.onekash.org")
+        val testOccurrence1 = Occurrence(
+            eventId = createdEvent1.id,
+            calendarId = localCalendarId,
+            startTs = createdEvent1.startTs,
+            endTs = createdEvent1.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+        val testOccurrence2 = Occurrence(
+            eventId = createdEvent2.id,
+            calendarId = localCalendarId,
+            startTs = createdEvent2.startTs,
+            endTs = createdEvent2.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+
+        // Use answers to return different events for each call
+        var callCount = 0
+        coEvery { eventWriter.createEvent(any(), any()) } answers {
+            callCount++
+            if (callCount == 1) createdEvent1 else createdEvent2
+        }
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent1.id) } returns listOf(testOccurrence1)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent2.id) } returns listOf(testOccurrence2)
+
+        val count = coordinator.importIcsEvents(eventsToImport, localCalendarId)
+
+        assertEquals(2, count)
+        // Verify reminder scheduling was called for each imported event (exactly 2 times)
+        coVerify(exactly = 2) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents skips reminder scheduling for events without reminders`() = runTest {
+        val eventWithoutReminders = testEvent.copy(
+            id = 0L,
+            uid = "no-reminder@test",
+            reminders = null
+        )
+        val createdEvent = eventWithoutReminders.copy(id = 303L)
+
+        coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
+
+        val count = coordinator.importIcsEvents(listOf(eventWithoutReminders), localCalendarId)
+
+        assertEquals(1, count)
+        // Verify reminder scheduling was NOT called (no reminders on event)
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    // ==================== Account Reminder Cleanup Tests (v16.4.1) ====================
+
+    @Test
+    fun `cancelRemindersForAccount cancels reminders for all account calendars`() = runTest {
+        // Setup: Create test account with two calendars and events
+        val testAccount = Account(
+            id = 10L,
+            provider = "icloud",
+            email = "test@icloud.com",
+            displayName = "Test Account",
+            isEnabled = true
+        )
+        val calendar1 = iCloudCalendar.copy(id = 20L, accountId = testAccount.id)
+        val calendar2 = iCloudCalendar.copy(id = 21L, accountId = testAccount.id, displayName = "Work")
+        val event1 = testEvent.copy(id = 200L, calendarId = calendar1.id)
+        val event2 = testEvent.copy(id = 201L, calendarId = calendar2.id)
+
+        coEvery { eventReader.getAccountByProviderAndEmail("icloud", "test@icloud.com") } returns testAccount
+        coEvery { eventReader.getCalendarsByAccountIdOnce(testAccount.id) } returns listOf(calendar1, calendar2)
+        coEvery { eventReader.getEventsForCalendar(calendar1.id) } returns listOf(event1)
+        coEvery { eventReader.getEventsForCalendar(calendar2.id) } returns listOf(event2)
+
+        // Act
+        coordinator.cancelRemindersForAccount("test@icloud.com")
+
+        // Assert: Reminders cancelled for both events
+        coVerify { reminderScheduler.cancelRemindersForEvent(event1.id) }
+        coVerify { reminderScheduler.cancelRemindersForEvent(event2.id) }
+    }
+
+    @Test
+    fun `cancelRemindersForAccount handles non-existent account gracefully`() = runTest {
+        // Setup: No account found
+        coEvery { eventReader.getAccountByProviderAndEmail("icloud", "nonexistent@test.com") } returns null
+
+        // Act: Should not throw
+        coordinator.cancelRemindersForAccount("nonexistent@test.com")
+
+        // Assert: No reminders cancelled
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+    }
+
+    // ==================== Move Event Reminder Reschedule Tests (v16.4.1) ====================
+
+    @Test
+    fun `moveEventToCalendar reschedules reminders with new calendar color`() = runTest {
+        // Setup: Event with reminders in calendar 1
+        val eventWithReminders = testEvent.copy(
+            id = 300L,
+            calendarId = localCalendarId,
+            reminders = listOf("-PT15M")
+        )
+        val targetCalendar = iCloudCalendar.copy(color = 0xFFFF0000.toInt()) // Different color
+        val movedEvent = eventWithReminders.copy(calendarId = targetCalendar.id)
+
+        coEvery { eventReader.getEventById(eventWithReminders.id) } returns eventWithReminders andThen movedEvent
+        coEvery { eventReader.getCalendarById(targetCalendar.id) } returns targetCalendar
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+
+        // Act
+        coordinator.moveEventToCalendar(eventWithReminders.id, targetCalendar.id)
+
+        // Assert: Move was executed
+        coVerify { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id, false) }
+
+        // Assert: Reminders were rescheduled (cancel + schedule)
+        coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }
+        coVerify { reminderScheduler.scheduleRemindersForEvent(movedEvent, any(), any()) }
+    }
 }
