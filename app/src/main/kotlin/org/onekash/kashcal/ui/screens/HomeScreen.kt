@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
+import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -722,16 +724,17 @@ private fun ColumnScope.EventListForSelectedDay(
                 uiState.selectedDayEvents.forEach { event ->
                     val eventColor = colorMap[event.calendarId] ?: defaultColor
                     // Use occurrence's endTs for recurring events (not master event's endTs)
-                    val occurrenceEndTs = occurrenceMap[event.id]?.endTs ?: event.endTs
+                    val occurrence = occurrenceMap[event.id]
+                    val occurrenceEndTs = occurrence?.endTs ?: event.endTs
                     val isPast = occurrenceEndTs < System.currentTimeMillis()
                     EventCard(
                         event = event,
                         eventColor = eventColor,
                         isPast = isPast,
                         selectedDate = uiState.selectedDate,
+                        occurrenceTs = occurrence?.startTs,
                         onClick = {
-                            val occurrenceTs = occurrenceMap[event.id]?.startTs
-                            onEventClick(event, occurrenceTs)
+                            onEventClick(event, occurrence?.startTs)
                         }
                     )
                 }
@@ -746,8 +749,13 @@ private fun EventCard(
     eventColor: Color,
     isPast: Boolean,
     selectedDate: Long,
+    occurrenceTs: Long?,
     onClick: () -> Unit
 ) {
+    val displayTitle = remember(event, occurrenceTs) {
+        formatEventTitle(event, occurrenceTs)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -765,7 +773,7 @@ private fun EventCard(
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(
-                    event.title,
+                    displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -801,6 +809,11 @@ private fun SearchResultCard(
         formatSearchResultDateWithOccurrence(event, nextOccurrenceTs)
     }
 
+    // Format title with age for birthday events
+    val displayTitle = remember(event, nextOccurrenceTs) {
+        formatEventTitle(event, nextOccurrenceTs)
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -818,7 +831,7 @@ private fun SearchResultCard(
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(
-                    event.title,
+                    displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -1054,6 +1067,11 @@ private fun AgendaCard(
     val occurrence = item.occWithEvent.occurrence
     val dateString = formatAgendaCardDate(event, occurrence, item.dayNumber, item.totalDays)
 
+    // Format title with age for birthday events
+    val displayTitle = remember(event, occurrence.startTs) {
+        formatEventTitle(event, occurrence.startTs)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1071,7 +1089,7 @@ private fun AgendaCard(
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(
-                    event.title,
+                    displayTitle,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -1089,6 +1107,48 @@ private fun AgendaCard(
                 }
             }
         }
+    }
+}
+
+/**
+ * Format event title, adding age for birthday events.
+ *
+ * For contact birthday events (caldavUrl starts with "contact_birthday:"):
+ * - Decodes birth year from event description
+ * - Calculates age at the occurrence date
+ * - Returns "Name's Xth Birthday" format
+ *
+ * For all other events, returns the original title.
+ *
+ * @param event The event to format title for
+ * @param occurrenceTs The occurrence timestamp for age calculation
+ * @return Formatted title string
+ */
+private fun formatEventTitle(event: Event, occurrenceTs: Long?): String {
+    // Check if this is a contact birthday event
+    val isBirthdayEvent = event.caldavUrl?.startsWith("${ContactBirthdayRepository.SOURCE_PREFIX}:") == true
+
+    if (!isBirthdayEvent || occurrenceTs == null) {
+        return event.title
+    }
+
+    // Decode birth year from description
+    val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
+
+    if (birthYear == null) {
+        return event.title
+    }
+
+    // Calculate age and format title
+    val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
+
+    // Extract display name from existing title (remove "'s Birthday" suffix)
+    val displayName = event.title.removeSuffix("'s Birthday")
+
+    return if (age > 0 && age < 150) {
+        "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+    } else {
+        event.title
     }
 }
 

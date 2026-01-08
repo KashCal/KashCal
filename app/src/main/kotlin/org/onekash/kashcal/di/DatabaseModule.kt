@@ -1,5 +1,6 @@
 package org.onekash.kashcal.di
 
+import android.content.ContentResolver
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
@@ -156,5 +157,16 @@ object DatabaseModule {
     @Singleton
     fun provideScheduledRemindersDao(database: KashCalDatabase): ScheduledRemindersDao {
         return database.scheduledRemindersDao()
+    }
+
+    /**
+     * Provide ContentResolver for contact queries.
+     */
+    @Provides
+    @Singleton
+    fun provideContentResolver(
+        @ApplicationContext context: Context
+    ): ContentResolver {
+        return context.contentResolver
     }
 }

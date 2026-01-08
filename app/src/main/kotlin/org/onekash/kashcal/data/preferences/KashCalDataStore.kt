@@ -326,6 +326,32 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT, 0)
     }
 
+    // ========== Contact Birthdays ==========
+
+    /**
+     * Whether contact birthdays calendar is enabled.
+     */
+    val contactBirthdaysEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED, false)
+
+    suspend fun getContactBirthdaysEnabled(): Boolean = contactBirthdaysEnabled.first()
+
+    suspend fun setContactBirthdaysEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED, enabled)
+    }
+
+    /**
+     * Last sync time for contact birthdays.
+     */
+    val contactBirthdaysLastSync: Flow<Long>
+        get() = getPreference(PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC, 0L)
+
+    suspend fun getContactBirthdaysLastSync(): Long = contactBirthdaysLastSync.first()
+
+    suspend fun setContactBirthdaysLastSync(timeMillis: Long) {
+        setPreference(PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC, timeMillis)
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set

@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
+import org.onekash.kashcal.data.contacts.ContactBirthdayManager
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
@@ -48,6 +49,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var widgetUpdateManager: WidgetUpdateManager
 
+    @Inject
+    lateinit var contactBirthdayManager: ContactBirthdayManager
+
     override fun onCreate() {
         super.onCreate()
 
@@ -64,6 +68,9 @@ class KashCalApplication : Application(), Configuration.Provider {
         // Schedule widget updates (periodic + midnight)
         widgetUpdateManager.schedulePeriodicUpdates()
         widgetUpdateManager.scheduleMidnightUpdate()
+
+        // Initialize contact birthday observer (if enabled)
+        contactBirthdayManager.initialize()
 
         Log.d(TAG, "KashCal application started")
     }

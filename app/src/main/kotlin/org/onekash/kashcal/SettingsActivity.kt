@@ -1,5 +1,6 @@
 package org.onekash.kashcal
 
+import android.Manifest
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -79,6 +80,23 @@ class SettingsActivity : ComponentActivity() {
                 val defaultReminderTimed by viewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by viewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
 
+                // Contact birthdays state
+                val contactBirthdaysEnabled by viewModel.contactBirthdaysEnabled.collectAsStateWithLifecycle()
+                val contactBirthdaysColor by viewModel.contactBirthdaysColor.collectAsStateWithLifecycle()
+                val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
+                val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
+
+                // Contacts permission launcher
+                val contactsPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    viewModel.refreshContactsPermission()
+                    if (isGranted) {
+                        // Permission granted, enable contact birthdays
+                        viewModel.onToggleContactBirthdays(true)
+                    }
+                }
+
                 // Debug log sheet state
                 var showDebugLogSheet by remember { mutableStateOf(false) }
 
@@ -143,12 +161,25 @@ class SettingsActivity : ComponentActivity() {
                     if (showSubscriptionsScreen) {
                         SubscriptionsScreen(
                             subscriptions = subscriptions,
+                            contactBirthdaysEnabled = contactBirthdaysEnabled,
+                            contactBirthdaysColor = contactBirthdaysColor,
+                            contactBirthdaysLastSync = contactBirthdaysLastSync,
+                            hasContactsPermission = hasContactsPermission,
                             onNavigateBack = { showSubscriptionsScreen = false },
                             onAddSubscription = viewModel::onAddSubscription,
                             onToggleSubscription = viewModel::onToggleSubscription,
                             onDeleteSubscription = viewModel::onDeleteSubscription,
                             onRefreshSubscription = viewModel::onRefreshSubscription,
-                            onUpdateSubscription = viewModel::onUpdateSubscription
+                            onUpdateSubscription = viewModel::onUpdateSubscription,
+                            onToggleContactBirthdays = { enabled ->
+                                if (enabled && !hasContactsPermission) {
+                                    // Request permission first
+                                    contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                } else {
+                                    viewModel.onToggleContactBirthdays(enabled)
+                                }
+                            },
+                            onContactBirthdaysColorChange = viewModel::onContactBirthdaysColorChange
                         )
                     } else {
                         AccountSettingsScreen(
@@ -303,7 +334,8 @@ class SettingsActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume - refreshing notification permission")
+        Log.d(TAG, "onResume - refreshing permissions")
         viewModel.refreshNotificationPermission()
+        viewModel.refreshContactsPermission()
     }
 }
