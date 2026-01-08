@@ -169,7 +169,7 @@ class ConflictResolverTest {
         coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
         coEvery { pendingOperationsDao.deleteById(testOperation.id) } just Runs
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.SERVER_WINS)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.SERVER_WINS)
 
         assert(result is ConflictResult.ServerVersionKept)
         coVerify { client.fetchEvent(testEvent.caldavUrl!!) }
@@ -184,7 +184,7 @@ class ConflictResolverTest {
         coEvery { eventsDao.deleteById(testEvent.id) } just Runs
         coEvery { pendingOperationsDao.deleteById(testOperation.id) } just Runs
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.SERVER_WINS)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.SERVER_WINS)
 
         assert(result is ConflictResult.LocalDeleted)
         coVerify { eventsDao.deleteById(testEvent.id) }
@@ -199,7 +199,7 @@ class ConflictResolverTest {
         coEvery { eventsDao.updateSyncStatus(testEvent.id, SyncStatus.SYNCED, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(deleteOperation.id) } just Runs
 
-        val result = conflictResolver.resolve(deleteOperation, ConflictStrategy.SERVER_WINS)
+        val result = conflictResolver.resolve(deleteOperation, strategy = ConflictStrategy.SERVER_WINS)
 
         assert(result is ConflictResult.ServerVersionKept)
         coVerify { eventsDao.updateSyncStatus(testEvent.id, SyncStatus.SYNCED, any()) }
@@ -228,7 +228,7 @@ class ConflictResolverTest {
         coEvery { occurrenceGenerator.generateOccurrences(any(), any(), any()) } returns 10
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = conflictResolver.resolve(testOperation.copy(eventId = recurringEvent.id), ConflictStrategy.SERVER_WINS)
+        val result = conflictResolver.resolve(testOperation.copy(eventId = recurringEvent.id), strategy = ConflictStrategy.SERVER_WINS)
 
         assert(result is ConflictResult.ServerVersionKept)
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
@@ -254,7 +254,7 @@ class ConflictResolverTest {
         coEvery { eventsDao.deleteById(testEvent.id) } just Runs
         coEvery { pendingOperationsDao.deleteById(testOperation.id) } just Runs
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.SERVER_WINS)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.SERVER_WINS)
 
         assert(result is ConflictResult.LocalDeleted)
         coVerify { eventsDao.deleteById(testEvent.id) }
@@ -285,7 +285,7 @@ class ConflictResolverTest {
         coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.NEWEST_WINS)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.NEWEST_WINS)
 
         assert(result is ConflictResult.ServerVersionKept)
     }
@@ -312,7 +312,7 @@ class ConflictResolverTest {
         coEvery { pendingOperationsDao.insert(any()) } returns 2L  // New operation ID
         coEvery { eventsDao.updateSyncStatus(any(), any(), any()) } just Runs
 
-        val result = conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), ConflictStrategy.NEWEST_WINS)
+        val result = conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), strategy = ConflictStrategy.NEWEST_WINS)
 
         assert(result is ConflictResult.LocalVersionPushed)
         coVerify { pendingOperationsDao.deleteById(testOperation.id) }
@@ -324,7 +324,7 @@ class ConflictResolverTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { client.fetchEvent(testEvent.caldavUrl!!) } returns CalDavResult.notFoundError("Not found")
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.NEWEST_WINS)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.NEWEST_WINS)
 
         assert(result is ConflictResult.LocalVersionPushed)
     }
@@ -354,7 +354,7 @@ class ConflictResolverTest {
         coEvery { pendingOperationsDao.insert(capture(capturedOperation)) } returns 2L
         coEvery { eventsDao.updateSyncStatus(any(), any(), any()) } just Runs
 
-        val result = conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), ConflictStrategy.NEWEST_WINS)
+        val result = conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), strategy = ConflictStrategy.NEWEST_WINS)
 
         assert(result is ConflictResult.LocalVersionPushed)
 
@@ -393,7 +393,7 @@ class ConflictResolverTest {
         coEvery { pendingOperationsDao.insert(any()) } returns 2L
         coEvery { eventsDao.updateSyncStatus(any(), any(), any()) } just Runs
 
-        conflictResolver.resolve(operationWithRetries, ConflictStrategy.NEWEST_WINS)
+        conflictResolver.resolve(operationWithRetries, strategy = ConflictStrategy.NEWEST_WINS)
 
         // Verify old operation was deleted
         coVerify { pendingOperationsDao.deleteById(operationWithRetries.id) }
@@ -425,7 +425,7 @@ class ConflictResolverTest {
         coEvery { pendingOperationsDao.insert(capture(capturedOperation)) } returns 2L
         coEvery { eventsDao.updateSyncStatus(any(), any(), any()) } just Runs
 
-        conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), ConflictStrategy.NEWEST_WINS)
+        conflictResolver.resolve(testOperation.copy(eventId = localHigherSeq.id), strategy = ConflictStrategy.NEWEST_WINS)
 
         // Verify operation is ready for immediate processing
         val newOp = capturedOperation.captured
@@ -440,7 +440,7 @@ class ConflictResolverTest {
         coEvery { pendingOperationsDao.markFailed(testOperation.id, any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(testEvent.id, any(), any()) } just Runs
 
-        val result = conflictResolver.resolve(testOperation, ConflictStrategy.MANUAL)
+        val result = conflictResolver.resolve(testOperation, strategy = ConflictStrategy.MANUAL)
 
         assert(result is ConflictResult.MarkedForManualResolution)
         coVerify { pendingOperationsDao.markFailed(testOperation.id, match { it.contains("manual") }, any()) }

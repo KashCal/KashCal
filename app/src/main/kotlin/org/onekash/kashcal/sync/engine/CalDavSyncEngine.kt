@@ -103,7 +103,7 @@ class CalDavSyncEngine @Inject constructor(
                         Log.d(TAG, "Step 1b: Resolving ${pushResult.operationsFailed} push conflicts")
                         val conflictOps = getConflictOperationsForCalendar(calendar.id)
                         for (op in conflictOps) {
-                            val resolved = conflictResolver.resolve(op, conflictStrategy)
+                            val resolved = conflictResolver.resolve(op, strategy = conflictStrategy)
                             if (resolved.isSuccess()) {
                                 conflictsResolved++
                             } else {

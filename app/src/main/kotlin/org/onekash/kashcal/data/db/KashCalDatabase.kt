@@ -147,15 +147,6 @@ abstract class KashCalDatabase : RoomDatabase() {
                 """.trimIndent())
             }
 
-            override fun onOpen(db: SupportSQLiteDatabase) {
-                super.onOpen(db)
-                // Ensure index exists even for existing databases
-                db.execSQL("""
-                    CREATE UNIQUE INDEX IF NOT EXISTS index_events_uid_calendar_master
-                    ON events (uid, calendar_id)
-                    WHERE original_event_id IS NULL
-                """.trimIndent())
-            }
         }
 
         /**

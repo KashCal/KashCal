@@ -81,6 +81,7 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val inputData = Data.Builder()
@@ -123,6 +124,7 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val inputData = Data.Builder()
@@ -157,6 +159,7 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val inputData = Data.Builder()

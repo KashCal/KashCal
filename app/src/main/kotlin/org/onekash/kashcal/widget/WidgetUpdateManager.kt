@@ -43,9 +43,11 @@ class WidgetUpdateManager @Inject constructor(
      *
      * Uses hybrid approach: immediate update for instant feedback,
      * with WorkManager retry fallback for transient failures.
+     *
+     * @param reason Debug context for logging (e.g., "sync_changes", "timezone_changed")
      */
-    suspend fun updateAllWidgets() {
-        Log.d(TAG, "Updating all widgets")
+    suspend fun updateAllWidgets(reason: String = "unknown") {
+        Log.d(TAG, "Updating all widgets (reason: $reason)")
         try {
             AgendaWidget().updateAll(context)
         } catch (e: Exception) {
