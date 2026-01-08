@@ -46,7 +46,7 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `KashCalDataStore has correct sync interval default`() {
-        val expectedMs = 24L * 60 * 60 * 1000 // 24 hours
+        val expectedMs = 1L * 60 * 60 * 1000 // 1 hour
         assertEquals(expectedMs, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
     }
 

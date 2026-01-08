@@ -13,6 +13,8 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,7 +41,9 @@ class IcsSubscriptionRepository @Inject constructor(
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
-    private val icsFetcher: IcsFetcher
+    private val icsFetcher: IcsFetcher,
+    private val reminderScheduler: ReminderScheduler,
+    private val eventReader: EventReader
 ) {
 
     // ========== Subscription Management ==========
@@ -200,11 +204,15 @@ class IcsSubscriptionRepository @Inject constructor(
                         subscriptionId = subscriptionId
                     )
 
+                    // Get calendar for color (needed for reminders)
+                    val calendar = calendarsDao.getById(subscription.calendarId)
+
                     // Sync events to database
                     val syncCount = syncEventsToDatabase(
                         events = events,
                         calendarId = subscription.calendarId,
-                        subscriptionId = subscriptionId
+                        subscriptionId = subscriptionId,
+                        calendarColor = calendar?.color ?: subscription.color
                     )
 
                     // Update subscription sync status
@@ -309,11 +317,13 @@ class IcsSubscriptionRepository @Inject constructor(
      * 2. Upsert all parsed events (add new, update existing)
      * 3. Delete events that no longer exist in feed (orphaned)
      * 4. Regenerate occurrences for all events
+     * 5. Schedule reminders for events with reminders configured
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,
         calendarId: Long,
-        subscriptionId: Long
+        subscriptionId: Long,
+        calendarColor: Int
     ): SyncCount {
         var added = 0
         var updated = 0
@@ -354,17 +364,67 @@ class IcsSubscriptionRepository @Inject constructor(
 
                 // Regenerate occurrences
                 occurrenceGenerator.regenerateOccurrences(updatedEvent)
+
+                // Reschedule reminders (cancel old, schedule new) for modified events
+                scheduleRemindersForEvent(updatedEvent, calendarColor, isModified = true)
             } else {
                 // Insert new event
                 val eventId = eventsDao.insert(event)
                 added++
 
                 // Generate occurrences for new event
-                occurrenceGenerator.regenerateOccurrences(event.copy(id = eventId))
+                val insertedEvent = event.copy(id = eventId)
+                occurrenceGenerator.regenerateOccurrences(insertedEvent)
+
+                // Schedule reminders for new event
+                scheduleRemindersForEvent(insertedEvent, calendarColor, isModified = false)
             }
         }
 
         return SyncCount(added, updated, deleted)
+    }
+
+    /**
+     * Schedule reminders for a synced event.
+     *
+     * @param event The event to schedule reminders for
+     * @param calendarColor Calendar color for notification
+     * @param isModified If true, cancels existing reminders first (handles time changes)
+     */
+    private suspend fun scheduleRemindersForEvent(
+        event: Event,
+        calendarColor: Int,
+        isModified: Boolean
+    ) {
+        // Skip events without reminders
+        if (event.reminders.isNullOrEmpty()) return
+
+        try {
+            // For modified events, cancel existing reminders first (handles time changes)
+            if (isModified) {
+                reminderScheduler.cancelRemindersForEvent(event.id)
+            }
+
+            // Get occurrences - handle exception events specially
+            val occurrences = if (event.originalEventId != null) {
+                // Exception event - get the linked occurrence by exception event ID
+                listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
+            } else {
+                // Regular/master event - get all occurrences in schedule window
+                eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+            }
+
+            if (occurrences.isEmpty()) return
+
+            reminderScheduler.scheduleRemindersForEvent(
+                event = event,
+                occurrences = occurrences,
+                calendarColor = calendarColor
+            )
+        } catch (e: Exception) {
+            // Log but don't fail sync for reminder scheduling errors
+            Log.e(TAG, "Failed to schedule reminders for event ${event.id}: ${e.message}")
+        }
     }
 
     /**

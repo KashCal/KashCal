@@ -12,7 +12,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.debug.SyncDebugLog
+import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
@@ -52,7 +56,9 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val providerRegistry: ProviderRegistry,
     private val calDavClient: CalDavClient,
     private val syncScheduler: SyncScheduler,
-    private val widgetUpdateManager: WidgetUpdateManager
+    private val widgetUpdateManager: WidgetUpdateManager,
+    private val reminderScheduler: ReminderScheduler,
+    private val eventReader: EventReader
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -180,6 +186,16 @@ class CalDavSyncWorker @AssistedInject constructor(
             if (syncResult.hasChanges()) {
                 Log.d(TAG, "Updating widgets after sync with changes")
                 widgetUpdateManager.updateAllWidgets()
+            }
+
+            // Schedule reminders for synced events (NEW and MODIFIED)
+            val changes = when (syncResult) {
+                is SyncResult.Success -> syncResult.changes
+                is SyncResult.PartialSuccess -> syncResult.changes
+                else -> emptyList()
+            }
+            if (changes.isNotEmpty()) {
+                scheduleRemindersForSyncedEvents(changes)
             }
 
             handleSyncResult(syncResult)
@@ -418,6 +434,84 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Schedule reminders for events that were added or modified during sync.
+     *
+     * For NEW events: schedules reminders for all occurrences in the schedule window.
+     * For MODIFIED events: cancels existing reminders and reschedules (handles time changes).
+     * For DELETED events: skipped (reminders cleaned up with event deletion).
+     *
+     * Follows same pattern as EventCoordinator.scheduleRemindersForEvent() for consistency.
+     * Per Android best practice: uses absolute trigger times with AlarmManager, so must
+     * recalculate when event times change.
+     */
+    private suspend fun scheduleRemindersForSyncedEvents(changes: List<SyncChange>) {
+        var scheduled = 0
+        var skipped = 0
+
+        for (change in changes) {
+            // Skip DELETED events (reminders already cleaned up)
+            if (change.type == ChangeType.DELETED || change.eventId == null) {
+                skipped++
+                continue
+            }
+
+            try {
+                val event = eventReader.getEventById(change.eventId)
+                if (event == null) {
+                    Log.w(TAG, "Event ${change.eventId} not found for reminder scheduling")
+                    skipped++
+                    continue
+                }
+
+                // Skip events without reminders
+                if (event.reminders.isNullOrEmpty()) {
+                    skipped++
+                    continue
+                }
+
+                val calendar = eventReader.getCalendarById(event.calendarId)
+                if (calendar == null) {
+                    Log.w(TAG, "Calendar ${event.calendarId} not found for event ${event.id}")
+                    skipped++
+                    continue
+                }
+
+                // For MODIFIED events, cancel existing reminders first (handles time changes)
+                if (change.type == ChangeType.MODIFIED) {
+                    reminderScheduler.cancelRemindersForEvent(event.id)
+                }
+
+                // Get occurrences - handle exception events specially
+                val occurrences = if (event.originalEventId != null) {
+                    // Exception event - get the linked occurrence by exception event ID
+                    listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
+                } else {
+                    // Regular/master event - get all occurrences in schedule window
+                    eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+                }
+
+                if (occurrences.isEmpty()) {
+                    skipped++
+                    continue
+                }
+
+                reminderScheduler.scheduleRemindersForEvent(
+                    event = event,
+                    occurrences = occurrences,
+                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                )
+                scheduled++
+            } catch (e: Exception) {
+                // Log but don't fail sync for reminder scheduling errors
+                Log.e(TAG, "Failed to schedule reminders for event ${change.eventId}: ${e.message}")
+                skipped++
+            }
+        }
+
+        Log.i(TAG, "Reminder scheduling complete: $scheduled scheduled, $skipped skipped")
     }
 
     private fun createSuccessOutput(result: SyncResult.Success): Data {

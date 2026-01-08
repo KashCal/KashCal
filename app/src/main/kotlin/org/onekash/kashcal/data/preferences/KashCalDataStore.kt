@@ -333,8 +333,8 @@ class KashCalDataStore(private val context: Context) {
         const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 12 * 60 // 12 hours before (720)
 
         // Sync constants
-        const val DEFAULT_SYNC_INTERVAL_MINUTES = 1440  // 24 hours
-        const val DEFAULT_SYNC_INTERVAL_MS = 24L * 60 * 60 * 1000 // 24 hours in ms
+        const val DEFAULT_SYNC_INTERVAL_MINUTES = 60  // 1 hour
+        const val DEFAULT_SYNC_INTERVAL_MS = 1L * 60 * 60 * 1000 // 1 hour in ms
         const val MIN_SYNC_INTERVAL_MS = 15L * 60 * 1000 // 15 minutes in ms
         const val DEFAULT_SYNC_PAST_DAYS = 30
         const val DEFAULT_SYNC_FUTURE_DAYS = 365

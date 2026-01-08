@@ -128,7 +128,7 @@ class ImmediatePushIntegrationTest {
     @Test
     fun `periodic sync work is separate from expedited sync`() {
         // Given - schedule periodic sync
-        syncScheduler.schedulePeriodicSync()
+        syncScheduler.schedulePeriodicSync(intervalMinutes = 30)
 
         // When - also request expedited sync
         syncScheduler.requestExpeditedSync(forceFullSync = false)
