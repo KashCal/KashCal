@@ -110,4 +110,13 @@ object PreferencesKeys {
 
     /** Last sync time for contact birthdays */
     val CONTACT_BIRTHDAYS_LAST_SYNC = longPreferencesKey("contact_birthdays_last_sync")
+
+    // ========== Parse Failure Retry (v16.7.0) ==========
+
+    /**
+     * Parse failure retry counts per calendar.
+     * Stored as JSON map: {"calendarId": retryCount, ...}
+     * Used to hold sync token when parse errors occur, allowing retries before advancing.
+     */
+    val PARSE_FAILURE_RETRY_COUNTS = stringPreferencesKey("parse_failure_retry_counts")
 }

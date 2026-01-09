@@ -352,6 +352,92 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC, timeMillis)
     }
 
+    // ========== Parse Failure Retry (v16.7.0) ==========
+
+    /**
+     * Parse failure retry counts per calendar as a Flow.
+     * Map of calendarId -> retryCount.
+     */
+    val parseFailureRetryCount: Flow<Map<Long, Int>>
+        get() = getPreference(PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS, "")
+            .map { json -> parseRetryCountsJson(json) }
+
+    /**
+     * Get current retry count for a calendar.
+     * Returns 0 if calendar has no tracked failures.
+     */
+    suspend fun getParseFailureRetryCount(calendarId: Long): Int {
+        val json = dataStore.data.first()[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+        return parseRetryCountsJson(json)[calendarId] ?: 0
+    }
+
+    /**
+     * Increment retry count for a calendar.
+     * Returns the new count after incrementing.
+     */
+    suspend fun incrementParseFailureRetry(calendarId: Long): Int {
+        var newCount = 0
+        dataStore.edit { preferences ->
+            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+            val counts = parseRetryCountsJson(json).toMutableMap()
+            newCount = (counts[calendarId] ?: 0) + 1
+            counts[calendarId] = newCount
+            preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] = serializeRetryCountsJson(counts)
+        }
+        return newCount
+    }
+
+    /**
+     * Reset retry count for a specific calendar.
+     * Called when sync succeeds or after giving up (max retries reached).
+     */
+    suspend fun resetParseFailureRetry(calendarId: Long) {
+        dataStore.edit { preferences ->
+            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+            val counts = parseRetryCountsJson(json).toMutableMap()
+            counts.remove(calendarId)
+            if (counts.isEmpty()) {
+                preferences.remove(PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS)
+            } else {
+                preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] = serializeRetryCountsJson(counts)
+            }
+        }
+    }
+
+    /**
+     * Clear all retry counts.
+     * Called on force full sync to give a fresh start.
+     */
+    suspend fun clearAllParseFailureRetries() {
+        removePreference(PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS)
+    }
+
+    /**
+     * Parse JSON string to retry counts map.
+     * Format: "calendarId:count,calendarId:count,..."
+     * Simple format avoids Gson dependency for this small use case.
+     */
+    private fun parseRetryCountsJson(json: String): Map<Long, Int> {
+        if (json.isBlank()) return emptyMap()
+        return try {
+            json.split(",")
+                .filter { it.contains(":") }
+                .associate { entry ->
+                    val (id, count) = entry.split(":")
+                    id.toLong() to count.toInt()
+                }
+        } catch (e: Exception) {
+            emptyMap()
+        }
+    }
+
+    /**
+     * Serialize retry counts map to JSON string.
+     */
+    private fun serializeRetryCountsJson(counts: Map<Long, Int>): String {
+        return counts.entries.joinToString(",") { "${it.key}:${it.value}" }
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set

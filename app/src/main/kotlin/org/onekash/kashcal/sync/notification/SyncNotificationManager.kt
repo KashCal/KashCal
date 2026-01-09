@@ -303,6 +303,33 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
+     * Show notification when parse errors were abandoned after max retries.
+     * This alerts the user that some events couldn't be synced.
+     *
+     * @param calendarName Name of the calendar with abandoned events
+     * @param abandonedCount Number of events that couldn't be parsed
+     */
+    fun showParseFailureNotification(calendarName: String, abandonedCount: Int) {
+        if (abandonedCount <= 0) return
+
+        val eventText = if (abandonedCount == 1) "1 event" else "$abandonedCount events"
+        val content = "$eventText in $calendarName couldn't be synced. Try Force Sync in Settings."
+
+        val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Some events couldn't be synced")
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setContentIntent(createOpenAppIntent())
+            .build()
+
+        notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR, notification)
+    }
+
+    /**
      * Cancel progress notification.
      * Should be called when sync completes (success or failure).
      */

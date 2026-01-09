@@ -183,7 +183,8 @@ class RealICloudSyncEngineTest {
             calendarsDao = calendarsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
-            syncSessionStore = mockk(relaxed = true)
+            syncSessionStore = mockk(relaxed = true),
+            notificationManager = mockk(relaxed = true)
         )
     }
 

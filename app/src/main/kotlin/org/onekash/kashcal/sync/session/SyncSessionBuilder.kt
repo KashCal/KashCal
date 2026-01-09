@@ -52,6 +52,13 @@ class SyncSessionBuilder(
     fun incrementSkipEtagUnchanged() = apply { skippedEtagUnchanged++ }
     fun incrementSkipOrphanedException() = apply { skippedOrphanedException++ }
 
+    // Accessor for parse error count (for retry logic)
+    fun getSkippedParseError(): Int = skippedParseError
+
+    // Parse failure retry tracking (v16.7.0)
+    private var abandonedParseErrors = 0
+    fun setAbandonedParseErrors(count: Int) = apply { abandonedParseErrors = count }
+
     // Token and error
     fun setTokenAdvanced(advanced: Boolean) = apply { tokenAdvanced = advanced }
     fun setError(type: ErrorType, stage: String) = apply {
@@ -83,6 +90,7 @@ class SyncSessionBuilder(
             hasMissingEvents = missingCount > 0,
             missingCount = missingCount,
             tokenAdvanced = tokenAdvanced,
+            abandonedParseErrors = abandonedParseErrors,
             errorType = errorType,
             errorStage = errorStage
         )

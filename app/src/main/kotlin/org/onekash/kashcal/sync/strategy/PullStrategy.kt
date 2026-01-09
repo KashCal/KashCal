@@ -60,6 +60,9 @@ class PullStrategy @Inject constructor(
 
         // Occurrence expansion window (local generation) - shared across codebase
         const val OCCURRENCE_EXPANSION_MS = 2 * 365L * 24 * 60 * 60 * 1000  // 2 years
+
+        // Parse failure retry: hold token for N syncs before giving up (v16.7.0)
+        private const val MAX_PARSE_RETRIES = 3
     }
 
     /**
@@ -251,15 +254,46 @@ class PullStrategy @Inject constructor(
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
 
-        // Don't advance sync token if events are missing (eventual consistency)
-        // This ensures missing events are re-fetched on next sync
-        val effectiveSyncToken = if (hasMissingEvents) {
-            Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
-            sessionBuilder?.setTokenAdvanced(false)
-            calendar.syncToken  // Keep old token - next sync will re-fetch
-        } else {
-            sessionBuilder?.setTokenAdvanced(true)
-            syncReport.syncToken  // Advance to new token (normal case)
+        // Determine if we should hold or advance the sync token
+        // Priority: 1) Missing events (eventual consistency) 2) Parse errors (retry logic)
+        val parseErrorCount = sessionBuilder?.getSkippedParseError() ?: 0
+        val currentRetryCount = dataStore.getParseFailureRetryCount(calendar.id)
+
+        val effectiveSyncToken = when {
+            // Priority 1: Missing events - hold token for eventual consistency
+            hasMissingEvents -> {
+                Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
+                sessionBuilder?.setTokenAdvanced(false)
+                calendar.syncToken  // Keep old token - next sync will re-fetch
+            }
+
+            // Priority 2: Parse errors - retry logic (v16.7.0)
+            parseErrorCount > 0 && currentRetryCount < MAX_PARSE_RETRIES -> {
+                val newCount = dataStore.incrementParseFailureRetry(calendar.id)
+                Log.w(TAG, "NOT advancing sync token due to $parseErrorCount parse errors (retry $newCount/$MAX_PARSE_RETRIES)")
+                sessionBuilder?.setTokenAdvanced(false)
+                calendar.syncToken  // Keep old token - retry on next sync
+            }
+
+            // Parse errors exceeded max retries - give up and advance
+            parseErrorCount > 0 && currentRetryCount >= MAX_PARSE_RETRIES -> {
+                Log.w(TAG, "Advancing sync token despite $parseErrorCount parse errors (max retries reached)")
+                dataStore.resetParseFailureRetry(calendar.id)
+                sessionBuilder?.setAbandonedParseErrors(parseErrorCount)
+                sessionBuilder?.setTokenAdvanced(true)
+                syncReport.syncToken  // Advance - abandon unrecoverable events
+            }
+
+            // No issues - normal advancement
+            else -> {
+                // Reset retry count on successful sync (no parse errors)
+                if (currentRetryCount > 0) {
+                    dataStore.resetParseFailureRetry(calendar.id)
+                    Log.d(TAG, "Reset parse failure retry count for calendar ${calendar.id}")
+                }
+                sessionBuilder?.setTokenAdvanced(true)
+                syncReport.syncToken  // Advance to new token (normal case)
+            }
         }
 
         return PullResult.Success(
@@ -267,7 +301,7 @@ class PullStrategy @Inject constructor(
             eventsUpdated = processResult.updated,
             eventsDeleted = deleted,
             newSyncToken = effectiveSyncToken,
-            newCtag = null,
+            newCtag = if (effectiveSyncToken == calendar.syncToken) calendar.ctag else null,
             changes = allChanges
         )
     }

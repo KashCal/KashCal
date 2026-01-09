@@ -40,6 +40,10 @@ data class SyncSession(
     val missingCount: Int = 0,
     val tokenAdvanced: Boolean = true,
 
+    // Parse failure retry tracking (v16.7.0)
+    // Events that couldn't be parsed after max retries and were abandoned
+    val abandonedParseErrors: Int = 0,
+
     // Error info (if failed)
     val errorType: ErrorType? = null,
     val errorStage: String? = null
@@ -64,7 +68,8 @@ data class SyncSession(
      * Whether this session has any issues worth highlighting.
      */
     val hasIssues: Boolean get() =
-        hasMissingEvents || skippedParseError > 0 || skippedOrphanedException > 0 || errorType != null
+        hasMissingEvents || skippedParseError > 0 || skippedOrphanedException > 0 ||
+        abandonedParseErrors > 0 || errorType != null
 }
 
 /**

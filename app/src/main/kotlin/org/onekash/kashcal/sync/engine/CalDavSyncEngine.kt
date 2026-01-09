@@ -22,6 +22,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.util.maskEmail
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -53,7 +54,8 @@ class CalDavSyncEngine @Inject constructor(
     private val calendarsDao: CalendarsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val syncLogsDao: SyncLogsDao,
-    private val syncSessionStore: SyncSessionStore
+    private val syncSessionStore: SyncSessionStore,
+    private val notificationManager: SyncNotificationManager
 ) {
     companion object {
         private const val TAG = "CalDavSyncEngine"
@@ -200,7 +202,16 @@ class CalDavSyncEngine @Inject constructor(
             }
 
             // Record sync session
-            syncSessionStore.add(sessionBuilder.build())
+            val session = sessionBuilder.build()
+            syncSessionStore.add(session)
+
+            // Notify user if parse errors were abandoned after max retries (v16.7.0)
+            if (session.abandonedParseErrors > 0) {
+                notificationManager.showParseFailureNotification(
+                    calendarName = calendar.displayName,
+                    abandonedCount = session.abandonedParseErrors
+                )
+            }
 
             // Log sync completion
             val duration = System.currentTimeMillis() - startTime
@@ -327,7 +338,15 @@ class CalDavSyncEngine @Inject constructor(
                             stage = "pull"
                         )
                         if (pullResult.code == 401) {
-                            syncSessionStore.add(sessionBuilder.build())
+                            val session = sessionBuilder.build()
+                            syncSessionStore.add(session)
+                            // Notify if parse errors were abandoned
+                            if (session.abandonedParseErrors > 0) {
+                                notificationManager.showParseFailureNotification(
+                                    calendarName = calendar.displayName,
+                                    abandonedCount = session.abandonedParseErrors
+                                )
+                            }
                             return SyncResult.AuthError(
                                 message = pullResult.message,
                                 calendarId = calendar.id
@@ -341,7 +360,15 @@ class CalDavSyncEngine @Inject constructor(
                         ))
                     }
                 }
-                syncSessionStore.add(sessionBuilder.build())
+                val session = sessionBuilder.build()
+                syncSessionStore.add(session)
+                // Notify if parse errors were abandoned (ICS subscription)
+                if (session.abandonedParseErrors > 0) {
+                    notificationManager.showParseFailureNotification(
+                        calendarName = calendar.displayName,
+                        abandonedCount = session.abandonedParseErrors
+                    )
+                }
             } else {
                 // Full sync for writable calendars
                 val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, clientOverride, trigger)

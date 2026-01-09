@@ -409,6 +409,12 @@ class HomeViewModel @Inject constructor(
         suppressSyncIndicator = true  // Has banner - no spinning icon needed
         syncScheduler.setShowBannerForSync(true)
         Log.d(TAG, "Force full sync requested (with banner, no icon)")
+
+        // Clear parse failure retry state - force sync gives a fresh start (v16.7.0)
+        viewModelScope.launch {
+            dataStore.clearAllParseFailureRetries()
+        }
+
         syncScheduler.requestImmediateSync(forceFullSync = true, trigger = SyncTrigger.FOREGROUND_MANUAL)
     }
 

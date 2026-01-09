@@ -82,7 +82,8 @@ class CalDavSyncEngineTest {
             calendarsDao = calendarsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
-            syncSessionStore = mockk(relaxed = true)
+            syncSessionStore = mockk(relaxed = true),
+            notificationManager = mockk(relaxed = true)
         )
 
         // Default mock for logging
@@ -105,7 +106,7 @@ class CalDavSyncEngineTest {
             operationsProcessed = 3,
             operationsFailed = 0
         )
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 2,
             eventsUpdated = 1,
             eventsDeleted = 0,
@@ -126,14 +127,14 @@ class CalDavSyncEngineTest {
         // Verify push happens before pull
         coVerifyOrder {
             pushStrategy.pushForCalendar(testCalendar)
-            pullStrategy.pull(testCalendar, false)
+            pullStrategy.pull(testCalendar, false, any(), any(), any())
         }
     }
 
     @Test
     fun `syncCalendar handles no pending operations`() = runTest {
         coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
 
@@ -161,7 +162,7 @@ class CalDavSyncEngineTest {
         )
         coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.ServerVersionKept
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
 
@@ -188,7 +189,7 @@ class CalDavSyncEngineTest {
         assert(authError.message == "Unauthorized")
 
         // Pull should not be called after auth error
-        coVerify(exactly = 0) { pullStrategy.pull(any(), any()) }
+        coVerify(exactly = 0) { pullStrategy.pull(any(), any(), any(), any(), any()) }
     }
 
     @Test
@@ -200,7 +201,7 @@ class CalDavSyncEngineTest {
             operationsProcessed = 1,
             operationsFailed = 0
         )
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.Error(
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
             code = 500,
             message = "Server error",
             isRetryable = true
@@ -218,7 +219,7 @@ class CalDavSyncEngineTest {
     @Test
     fun `syncCalendar with forceFullSync passes to pull`() = runTest {
         coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(testCalendar, true) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(testCalendar, true, any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 10,
             eventsUpdated = 0,
             eventsDeleted = 0,
@@ -228,7 +229,7 @@ class CalDavSyncEngineTest {
 
         syncEngine.syncCalendar(testCalendar, forceFullSync = true)
 
-        coVerify { pullStrategy.pull(testCalendar, true) }
+        coVerify { pullStrategy.pull(testCalendar, true, any(), any(), any()) }
     }
 
     @Test
@@ -250,7 +251,7 @@ class CalDavSyncEngineTest {
         )
         coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.NEWEST_WINS) } returns ConflictResult.LocalVersionPushed
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         syncEngine.syncCalendar(testCalendar, conflictStrategy = ConflictStrategy.NEWEST_WINS)
 
@@ -265,7 +266,7 @@ class CalDavSyncEngineTest {
 
         coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
         coEvery { pushStrategy.pushForCalendar(any()) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(any(), any()) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(any(), any(), any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 1,
             eventsUpdated = 0,
             eventsDeleted = 0,
@@ -284,7 +285,7 @@ class CalDavSyncEngineTest {
     @Test
     fun `syncAccount handles read-only calendars (pull only)`() = runTest {
         coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(readOnlyCalendar)
-        coEvery { pullStrategy.pull(readOnlyCalendar, false) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(readOnlyCalendar, false, any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 5,
             eventsUpdated = 0,
             eventsDeleted = 0,
@@ -341,14 +342,14 @@ class CalDavSyncEngineTest {
             eventsCreated = 1, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 0
         )
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.Error(
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
             code = 500, message = "Server error", isRetryable = true
         )
         coEvery { pushStrategy.pushForCalendar(calendar2) } returns PushResult.Success(
             eventsCreated = 0, eventsUpdated = 1, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 0
         )
-        coEvery { pullStrategy.pull(calendar2, false) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(calendar2, false, any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 1, eventsUpdated = 0, eventsDeleted = 0,
             newSyncToken = null, newCtag = null
         )
@@ -372,7 +373,7 @@ class CalDavSyncEngineTest {
         coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(testCalendar)
         coEvery { calendarsDao.getByAccountIdOnce(account2.id) } returns listOf(calendar2)
         coEvery { pushStrategy.pushForCalendar(any()) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(any(), any()) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(any(), any(), any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 1, eventsUpdated = 0, eventsDeleted = 0,
             newSyncToken = null, newCtag = null
         )
@@ -412,7 +413,7 @@ class CalDavSyncEngineTest {
 
         // Second account succeeds
         coEvery { pushStrategy.pushForCalendar(calendar2) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(calendar2, false) } returns PullResult.Success(
+        coEvery { pullStrategy.pull(calendar2, false, any(), any(), any()) } returns PullResult.Success(
             eventsAdded = 1, eventsUpdated = 0, eventsDeleted = 0,
             newSyncToken = null, newCtag = null
         )
@@ -431,7 +432,7 @@ class CalDavSyncEngineTest {
     @Test
     fun `syncCalendar tracks duration`() = runTest {
         coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
 
@@ -445,7 +446,7 @@ class CalDavSyncEngineTest {
     @Test
     fun `syncCalendar logs sync completion`() = runTest {
         coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         syncEngine.syncCalendar(testCalendar)
 
@@ -474,7 +475,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 1, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 0
         )
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
 
@@ -484,7 +485,7 @@ class CalDavSyncEngineTest {
     @Test
     fun `hasChanges returns false when no changes`() = runTest {
         coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
-        coEvery { pullStrategy.pull(testCalendar, false) } returns PullResult.NoChanges
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
 
         val result = syncEngine.syncCalendar(testCalendar)
 

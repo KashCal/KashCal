@@ -761,7 +761,7 @@ class HomeViewModelTest {
         viewModel.triggerStartupSync()
         advanceUntilIdle()
 
-        verify(exactly = 0) { syncScheduler.requestImmediateSync(any()) }
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     @Test
@@ -781,7 +781,7 @@ class HomeViewModelTest {
         viewModel.triggerStartupSync()
         advanceUntilIdle()
 
-        verify { syncScheduler.requestImmediateSync(any()) }
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     @Test
@@ -801,7 +801,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Should only be called once
-        verify(exactly = 1) { syncScheduler.requestImmediateSync(any()) }
+        verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     @Test
@@ -848,7 +848,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Verify sync was requested (may be called multiple times due to init)
-        verify(atLeast = 1) { syncScheduler.requestImmediateSync(any()) }
+        verify(atLeast = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     // ==================== Sync Banner Tests (Context-Aware) ====================
@@ -1085,7 +1085,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Should have triggered sync on restore
-        verify(atLeast = 1) { syncScheduler.requestImmediateSync(any()) }
+        verify(atLeast = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     // ==================== UI Sheet Tests ====================
@@ -1519,7 +1519,7 @@ class HomeViewModelTest {
         assertTrue(viewModel.uiState.value.isSyncing)
 
         // Verify sync was requested
-        verify { syncScheduler.requestImmediateSync(any()) }
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     @Test
@@ -1633,7 +1633,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Should only have been called once (from the first refreshSync)
-        verify(exactly = 1) { syncScheduler.requestImmediateSync(any()) }
+        verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     @Test
@@ -1663,7 +1663,7 @@ class HomeViewModelTest {
         // Should be able to start another sync now
         viewModel.refreshSync()
         assertTrue(viewModel.uiState.value.isSyncing)
-        verify(exactly = 2) { syncScheduler.requestImmediateSync(any()) }
+        verify(exactly = 2) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     // ==================== All-Day Event Tests ====================

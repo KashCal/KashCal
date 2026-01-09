@@ -300,4 +300,43 @@ class SyncNotificationManagerTest {
             SyncResult.Error(code = 500, message = "")
         )
     }
+
+    // ==================== Parse Failure Notification Tests (v16.7.0) ====================
+
+    @Test
+    fun `showParseFailureNotification shows notification when abandonedCount greater than 0`() {
+        // When - should not throw
+        manager.showParseFailureNotification(calendarName = "Home Calendar", abandonedCount = 3)
+    }
+
+    @Test
+    fun `showParseFailureNotification does not throw with zero abandonedCount`() {
+        // Edge case: should handle gracefully (early return)
+        manager.showParseFailureNotification(calendarName = "Work", abandonedCount = 0)
+    }
+
+    @Test
+    fun `showParseFailureNotification handles single abandoned event`() {
+        // When - singular text should work
+        manager.showParseFailureNotification(calendarName = "Personal", abandonedCount = 1)
+    }
+
+    @Test
+    fun `showParseFailureNotification handles multiple abandoned events`() {
+        // When - plural text
+        manager.showParseFailureNotification(calendarName = "Shared Calendar", abandonedCount = 10)
+    }
+
+    @Test
+    fun `showParseFailureNotification handles empty calendar name`() {
+        // Edge case: calendar name might be empty
+        manager.showParseFailureNotification(calendarName = "", abandonedCount = 5)
+    }
+
+    @Test
+    fun `showParseFailureNotification handles long calendar name`() {
+        // Edge case: very long calendar name should be handled
+        val longName = "A".repeat(200)
+        manager.showParseFailureNotification(calendarName = longName, abandonedCount = 2)
+    }
 }
