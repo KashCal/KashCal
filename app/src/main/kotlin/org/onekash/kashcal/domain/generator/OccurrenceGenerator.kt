@@ -13,7 +13,6 @@ import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
@@ -411,15 +410,6 @@ class OccurrenceGenerator @Inject constructor(
     private fun createSingleOccurrence(event: Event): Occurrence {
         val startDay = Occurrence.toDayFormat(event.startTs, event.isAllDay)
         val endDay = Occurrence.toDayFormat(event.endTs, event.isAllDay)
-
-        // Debug logging for timezone investigation
-        if (event.isAllDay) {
-            SyncDebugLog.d("OccurrenceGen", "=== OCCURRENCE DEBUG: ${event.title} ===")
-            SyncDebugLog.d("OccurrenceGen", "event.isAllDay: ${event.isAllDay}")
-            SyncDebugLog.d("OccurrenceGen", "event.startTs (ms): ${event.startTs}")
-            SyncDebugLog.d("OccurrenceGen", "Calculated startDay: $startDay")
-            SyncDebugLog.d("OccurrenceGen", "Device TZ: ${TimeZone.getDefault().id}")
-        }
 
         return Occurrence(
             eventId = event.id,

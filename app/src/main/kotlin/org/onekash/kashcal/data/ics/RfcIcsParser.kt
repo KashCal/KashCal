@@ -2,7 +2,6 @@ package org.onekash.kashcal.data.ics
 
 import android.util.Log
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.util.TimezoneUtils
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -123,19 +122,6 @@ object RfcIcsParser {
 
         // Check if all-day event
         val isAllDay = dtstart.length == 8 || !dtstart.contains("T")
-
-        // Debug logging for timezone investigation
-        if (isAllDay) {
-            SyncDebugLog.d(TAG, "=== ICS ALL-DAY DEBUG: $summary ===")
-            SyncDebugLog.d(TAG, "dtstart raw: '$dtstart'")
-            SyncDebugLog.d(TAG, "startTs (millis): $startTs")
-            SyncDebugLog.d(TAG, "isAllDay: $isAllDay")
-            SyncDebugLog.d(TAG, "Device TZ: ${java.util.TimeZone.getDefault().id}")
-            // Show what day this startTs represents in UTC
-            val utcDate = java.time.Instant.ofEpochMilli(startTs)
-                .atZone(ZoneOffset.UTC).toLocalDate()
-            SyncDebugLog.d(TAG, "UTC date: $utcDate")
-        }
 
         // Parse DTEND or DURATION
         val dtend = extractProperty(veventData, "DTEND")

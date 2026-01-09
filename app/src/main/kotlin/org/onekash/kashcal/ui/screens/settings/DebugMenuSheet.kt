@@ -106,11 +106,11 @@ fun DebugMenuSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Sync Log
+            // Sync History
             DebugMenuItem(
-                emoji = "🔍",
-                label = "iCloud Sync Log",
-                subtitle = "View sync activity",
+                emoji = "📊",
+                label = "Sync History",
+                subtitle = "View sync sessions (last 48 hours)",
                 onClick = {
                     onShowSyncLogs()
                     onDismiss()

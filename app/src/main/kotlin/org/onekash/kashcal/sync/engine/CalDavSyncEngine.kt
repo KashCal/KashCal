@@ -9,8 +9,11 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.sync.client.CalDavClient
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.sync.session.SyncSessionBuilder
+import org.onekash.kashcal.sync.session.SyncSessionStore
+import org.onekash.kashcal.sync.session.SyncTrigger
+import org.onekash.kashcal.sync.session.SyncType
 import org.onekash.kashcal.sync.provider.CalendarProvider
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.strategy.ConflictResolver
@@ -49,7 +52,8 @@ class CalDavSyncEngine @Inject constructor(
     private val accountsDao: AccountsDao,
     private val calendarsDao: CalendarsDao,
     private val pendingOperationsDao: PendingOperationsDao,
-    private val syncLogsDao: SyncLogsDao
+    private val syncLogsDao: SyncLogsDao,
+    private val syncSessionStore: SyncSessionStore
 ) {
     companion object {
         private const val TAG = "CalDavSyncEngine"
@@ -64,6 +68,7 @@ class CalDavSyncEngine @Inject constructor(
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
      * @param clientOverride Optional CalDavClient to use instead of the injected one.
      *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
     suspend fun syncCalendar(
@@ -71,10 +76,20 @@ class CalDavSyncEngine @Inject constructor(
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null
+        clientOverride: CalDavClient? = null,
+        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         Log.i(TAG, "Starting sync for calendar: ${calendar.displayName}")
         val startTime = System.currentTimeMillis()
+
+        // Create session builder for tracking
+        val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = syncType,
+            triggerSource = trigger
+        )
 
         // Track statistics
         var pushCreated = 0
@@ -139,13 +154,14 @@ class CalDavSyncEngine @Inject constructor(
 
             // Step 2: Pull server changes
             Log.d(TAG, "Step 2: Pulling server changes")
-            val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride)
+            val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride, sessionBuilder)
 
             when (pullResult) {
                 is PullResult.Success -> {
                     pullAdded = pullResult.eventsAdded
                     pullUpdated = pullResult.eventsUpdated
                     pullDeleted = pullResult.eventsDeleted
+                    sessionBuilder.addDeleted(pullResult.eventsDeleted)
                     // Collect changes for UI notification
                     changes.addAll(pullResult.changes)
                 }
@@ -154,6 +170,17 @@ class CalDavSyncEngine @Inject constructor(
                 }
                 is PullResult.Error -> {
                     Log.e(TAG, "Pull failed: ${pullResult.message}")
+                    sessionBuilder.setError(
+                        type = org.onekash.kashcal.sync.session.ErrorType.entries.find {
+                            it.name == when (pullResult.code) {
+                                401, 403 -> "AUTH"
+                                408 -> "TIMEOUT"
+                                in 500..599 -> "SERVER"
+                                else -> "NETWORK"
+                            }
+                        } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
+                        stage = "pull"
+                    )
                     errors.add(SyncError(
                         phase = SyncPhase.PULL,
                         code = pullResult.code,
@@ -162,6 +189,8 @@ class CalDavSyncEngine @Inject constructor(
 
                     // Auth error
                     if (pullResult.code == 401) {
+                        // Still record the session
+                        syncSessionStore.add(sessionBuilder.build())
                         return SyncResult.AuthError(
                             message = pullResult.message,
                             calendarId = calendar.id
@@ -169,6 +198,9 @@ class CalDavSyncEngine @Inject constructor(
                     }
                 }
             }
+
+            // Record sync session
+            syncSessionStore.add(sessionBuilder.build())
 
             // Log sync completion
             val duration = System.currentTimeMillis() - startTime
@@ -229,6 +261,7 @@ class CalDavSyncEngine @Inject constructor(
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
      * @param clientOverride Optional CalDavClient to use instead of the injected one.
      *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
     suspend fun syncAccount(
@@ -236,17 +269,15 @@ class CalDavSyncEngine @Inject constructor(
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null
+        clientOverride: CalDavClient? = null,
+        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         Log.i(TAG, "Starting sync for account: ${account.email.maskEmail()}")
-        SyncDebugLog.i(TAG, "syncAccount() for ${account.email.maskEmail()}")
         val startTime = System.currentTimeMillis()
 
         val calendars = calendarsDao.getByAccountIdOnce(account.id)
-        SyncDebugLog.i(TAG, "Found ${calendars.size} calendars for account")
         if (calendars.isEmpty()) {
             Log.d(TAG, "No calendars for account")
-            SyncDebugLog.w(TAG, "NO CALENDARS for account!")
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
@@ -264,19 +295,39 @@ class CalDavSyncEngine @Inject constructor(
 
         for (calendar in calendars) {
             if (calendar.isReadOnly) {
-                // Read-only calendars only need pull
-                val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride)
+                // Read-only calendars only need pull - create session builder
+                val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL
+                val sessionBuilder = SyncSessionBuilder(
+                    calendarId = calendar.id,
+                    calendarName = calendar.displayName,
+                    syncType = syncType,
+                    triggerSource = trigger
+                )
+                val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride, sessionBuilder)
                 when (pullResult) {
                     is PullResult.Success -> {
                         totalPullAdded += pullResult.eventsAdded
                         totalPullUpdated += pullResult.eventsUpdated
                         totalPullDeleted += pullResult.eventsDeleted
+                        sessionBuilder.addDeleted(pullResult.eventsDeleted)
                         allChanges.addAll(pullResult.changes)
                         totalCalendars++
                     }
                     is PullResult.NoChanges -> totalCalendars++
                     is PullResult.Error -> {
+                        sessionBuilder.setError(
+                            type = org.onekash.kashcal.sync.session.ErrorType.entries.find {
+                                it.name == when (pullResult.code) {
+                                    401, 403 -> "AUTH"
+                                    408 -> "TIMEOUT"
+                                    in 500..599 -> "SERVER"
+                                    else -> "NETWORK"
+                                }
+                            } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
+                            stage = "pull"
+                        )
                         if (pullResult.code == 401) {
+                            syncSessionStore.add(sessionBuilder.build())
                             return SyncResult.AuthError(
                                 message = pullResult.message,
                                 calendarId = calendar.id
@@ -290,9 +341,10 @@ class CalDavSyncEngine @Inject constructor(
                         ))
                     }
                 }
+                syncSessionStore.add(sessionBuilder.build())
             } else {
                 // Full sync for writable calendars
-                val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, clientOverride)
+                val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, clientOverride, trigger)
 
                 when (result) {
                     is SyncResult.Success -> {
@@ -376,6 +428,7 @@ class CalDavSyncEngine @Inject constructor(
      * @param conflictStrategy How to resolve conflicts
      * @param clientOverride Optional CalDavClient to use instead of the injected one.
      *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
     suspend fun syncAccountWithProvider(
@@ -383,10 +436,11 @@ class CalDavSyncEngine @Inject constructor(
         provider: CalendarProvider,
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
-        clientOverride: CalDavClient? = null
+        clientOverride: CalDavClient? = null,
+        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         val quirks = provider.getQuirks()
-        return syncAccount(account, forceFullSync, conflictStrategy, quirks, clientOverride)
+        return syncAccount(account, forceFullSync, conflictStrategy, quirks, clientOverride, trigger)
     }
 
     /**

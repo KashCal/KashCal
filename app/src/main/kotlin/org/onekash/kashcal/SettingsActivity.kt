@@ -31,8 +31,9 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.ics.RfcIcsParser
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.ui.components.IcsImportSheet
-import org.onekash.kashcal.ui.components.SyncDebugLogSheet
+import org.onekash.kashcal.ui.components.SyncHistorySheet
 import org.onekash.kashcal.ui.screens.AccountSettingsScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
@@ -62,6 +63,9 @@ class SettingsActivity : ComponentActivity() {
 
     @Inject
     lateinit var icsExporter: IcsExporter
+
+    @Inject
+    lateinit var syncSessionStore: SyncSessionStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -310,9 +314,10 @@ class SettingsActivity : ComponentActivity() {
                         )
                     }
 
-                    // Debug log bottom sheet
+                    // Sync history bottom sheet
                     if (showDebugLogSheet) {
-                        SyncDebugLogSheet(
+                        SyncHistorySheet(
+                            syncSessionStore = syncSessionStore,
                             onDismiss = { showDebugLogSheet = false }
                         )
                     }

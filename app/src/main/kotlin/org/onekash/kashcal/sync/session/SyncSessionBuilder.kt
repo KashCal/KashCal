@@ -1,0 +1,90 @@
+package org.onekash.kashcal.sync.session
+
+/**
+ * Builder for constructing SyncSession during a sync operation.
+ *
+ * Usage:
+ * 1. Create at start of sync: SyncSessionBuilder(calendar, syncType, trigger)
+ * 2. Call setters as sync progresses
+ * 3. Call build() at end to get final SyncSession
+ */
+class SyncSessionBuilder(
+    private val calendarId: Long,
+    private val calendarName: String,
+    private val syncType: SyncType,
+    private val triggerSource: SyncTrigger
+) {
+    private val startTime = System.currentTimeMillis()
+
+    // Pipeline numbers
+    private var hrefsReported = 0
+    private var eventsFetched = 0
+    private var eventsWritten = 0
+    private var eventsUpdated = 0
+    private var eventsDeleted = 0
+
+    // Skip counts
+    private var skippedParseError = 0
+    private var skippedPendingLocal = 0
+    private var skippedEtagUnchanged = 0
+    private var skippedOrphanedException = 0
+
+    // Token tracking
+    private var tokenAdvanced = true
+
+    // Error info
+    private var errorType: ErrorType? = null
+    private var errorStage: String? = null
+
+    // Pipeline setters
+    fun setHrefsReported(count: Int) = apply { hrefsReported = count }
+    fun setEventsFetched(count: Int) = apply { eventsFetched = count }
+
+    // Increment methods for processing loop
+    fun incrementWritten() = apply { eventsWritten++ }
+    fun incrementUpdated() = apply { eventsUpdated++ }
+    fun incrementDeleted() = apply { eventsDeleted++ }
+    fun addDeleted(count: Int) = apply { eventsDeleted += count }
+
+    // Skip reason tracking
+    fun incrementSkipParseError() = apply { skippedParseError++ }
+    fun incrementSkipPendingLocal() = apply { skippedPendingLocal++ }
+    fun incrementSkipEtagUnchanged() = apply { skippedEtagUnchanged++ }
+    fun incrementSkipOrphanedException() = apply { skippedOrphanedException++ }
+
+    // Token and error
+    fun setTokenAdvanced(advanced: Boolean) = apply { tokenAdvanced = advanced }
+    fun setError(type: ErrorType, stage: String) = apply {
+        errorType = type
+        errorStage = stage
+    }
+
+    /**
+     * Build the final SyncSession.
+     * Call this at the end of sync operation.
+     */
+    fun build(): SyncSession {
+        val missingCount = (hrefsReported - eventsFetched).coerceAtLeast(0)
+        return SyncSession(
+            calendarId = calendarId,
+            calendarName = calendarName,
+            syncType = syncType,
+            triggerSource = triggerSource,
+            durationMs = System.currentTimeMillis() - startTime,
+            hrefsReported = hrefsReported,
+            eventsFetched = eventsFetched,
+            eventsWritten = eventsWritten,
+            eventsUpdated = eventsUpdated,
+            eventsDeleted = eventsDeleted,
+            skippedParseError = skippedParseError,
+            skippedPendingLocal = skippedPendingLocal,
+            skippedEtagUnchanged = skippedEtagUnchanged,
+            skippedOrphanedException = skippedOrphanedException,
+            hasMissingEvents = missingCount > 0,
+            missingCount = missingCount,
+            tokenAdvanced = tokenAdvanced,
+            errorType = errorType,
+            errorStage = errorStage
+        )
+    }
+}

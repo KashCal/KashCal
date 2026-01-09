@@ -21,7 +21,6 @@ import net.fortuna.ical4j.model.property.RecurrenceId
 import net.fortuna.ical4j.model.property.Clazz
 import net.fortuna.ical4j.model.property.Transp
 import net.fortuna.ical4j.model.Recur
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.util.TimezoneUtils
 import java.io.StringReader
 import java.io.StringWriter
@@ -115,22 +114,6 @@ class Ical4jParser @Inject constructor() : ICalParser {
         // Canonicalize timezone to standard IANA form (e.g., US/Pacific → America/Los_Angeles)
         val rawTimezone = dtStart.getParameter<TzId>(Parameter.TZID)?.value
         val timezone = TimezoneUtils.canonicalizeTimezone(rawTimezone)
-
-        // Debug logging for timezone investigation
-        if (isAllDay) {
-            val summary = vevent.summary?.value ?: "Unknown"
-            SyncDebugLog.d(TAG, "=== ALL-DAY DEBUG: $summary ===")
-            SyncDebugLog.d(TAG, "dtStart.value: ${dtStart.value}")
-            SyncDebugLog.d(TAG, "dtStart.date.toString(): ${dtStart.date}")
-            SyncDebugLog.d(TAG, "dtStart.date.time: ${dtStart.date.time}")
-            SyncDebugLog.d(TAG, "isAllDay: $isAllDay")
-            SyncDebugLog.d(TAG, "startTs (seconds): $startTs")
-            SyncDebugLog.d(TAG, "Device TZ: ${TimeZone.getDefault().id}")
-            // Show what day this startTs represents in UTC
-            val utcDate = java.time.Instant.ofEpochSecond(startTs)
-                .atZone(ZoneOffset.UTC).toLocalDate()
-            SyncDebugLog.d(TAG, "UTC date: $utcDate")
-        }
 
         // Calculate end time
         val endTs = calculateEndTs(vevent, startTs, isAllDay)

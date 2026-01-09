@@ -40,7 +40,6 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.ui.components.EventFormState
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
@@ -430,7 +429,7 @@ class HomeViewModel @Inject constructor(
             Log.d(TAG, "syncOnResumeIfNeeded: Already syncing, skipping")
             return
         }
-        SyncDebugLog.i(TAG, "syncOnResumeIfNeeded: Triggering sync on app resume")
+        Log.d(TAG, "syncOnResumeIfNeeded: Triggering sync on app resume")
         suppressSyncIndicator = true  // Silent sync - no spinning icon
         syncScheduler.setShowBannerForSync(false)
         performSync()

@@ -11,8 +11,8 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.model.ChangeType
@@ -70,26 +70,27 @@ class PullStrategy @Inject constructor(
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
      * @param clientOverride Optional CalDavClient to use instead of the injected one.
      *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param sessionBuilder Optional builder for tracking sync session stats.
      * @return PullResult indicating success/failure and statistics
      */
     suspend fun pull(
         calendar: Calendar,
         forceFullSync: Boolean = false,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null
+        clientOverride: CalDavClient? = null,
+        sessionBuilder: SyncSessionBuilder? = null
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
         val effectiveClient = clientOverride ?: client
 
         Log.d(TAG, "Starting pull for calendar: ${calendar.displayName}")
-        SyncDebugLog.i(TAG, "pull() for calendar=${calendar.displayName}, id=${calendar.id}")
 
         return try {
             // Step 1: Quick ctag check
             val ctagResult = effectiveClient.getCtag(calendar.caldavUrl)
             if (ctagResult.isError()) {
                 val error = ctagResult as CalDavResult.Error
-                SyncDebugLog.e(TAG, "getCtag FAILED: ${error.code} - ${error.message}")
+                Log.e(TAG, "getCtag FAILED: ${error.code} - ${error.message}")
                 return PullResult.Error(
                     code = error.code,
                     message = error.message,
@@ -98,21 +99,19 @@ class PullStrategy @Inject constructor(
             }
 
             val serverCtag = (ctagResult as CalDavResult.Success).data
-            SyncDebugLog.i(TAG, "ctag check: server=$serverCtag, local=${calendar.ctag}, force=$forceFullSync")
+            Log.d(TAG, "ctag check: server=$serverCtag, local=${calendar.ctag}, force=$forceFullSync")
             if (!forceFullSync && serverCtag == calendar.ctag && calendar.ctag != null) {
                 Log.d(TAG, "No changes (ctag unchanged)")
-                SyncDebugLog.i(TAG, "SKIP: ctag unchanged, no sync needed")
                 return PullResult.NoChanges
             }
-            SyncDebugLog.i(TAG, "ctag changed or force=true, syncing...")
 
             // Step 2: Determine sync method
             val result = if (!forceFullSync && calendar.syncToken != null) {
                 // Incremental sync using sync-token
-                pullIncremental(calendar, effectiveQuirks, effectiveClient)
+                pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder)
             } else {
                 // Full sync - fetch all events in time window
-                pullFull(calendar, effectiveQuirks, effectiveClient)
+                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder)
             }
 
             // Step 3: Update calendar metadata on success
@@ -142,10 +141,10 @@ class PullStrategy @Inject constructor(
     private suspend fun pullIncremental(
         calendar: Calendar,
         quirks: CalDavQuirks,
-        clientToUse: CalDavClient
+        clientToUse: CalDavClient,
+        sessionBuilder: SyncSessionBuilder?
     ): PullResult {
         Log.d(TAG, "Incremental sync with token: ${calendar.syncToken?.take(8)}...")
-        SyncDebugLog.i(TAG, "pullIncremental() with syncToken")
 
         val reportResult = clientToUse.syncCollection(calendar.caldavUrl, calendar.syncToken)
         if (reportResult.isError()) {
@@ -153,13 +152,13 @@ class PullStrategy @Inject constructor(
             // 403/410 means sync token expired - fall back to full sync
             if (error.code == 403 || error.code == 410) {
                 Log.w(TAG, "Sync token expired, falling back to full sync")
-                return pullFull(calendar, quirks, clientToUse)
+                return pullFull(calendar, quirks, clientToUse, sessionBuilder)
             }
             return PullResult.Error(error.code, error.message, error.isRetryable)
         }
 
         val syncReport = (reportResult as CalDavResult.Success).data
-        SyncDebugLog.i(TAG, "syncCollection: ${syncReport.changed.size} changed, ${syncReport.deleted.size} deleted")
+        Log.d(TAG, "syncCollection: ${syncReport.changed.size} changed, ${syncReport.deleted.size} deleted")
 
         // Handle deletions (respecting pending local changes)
         var deleted = 0
@@ -201,8 +200,8 @@ class PullStrategy @Inject constructor(
             val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
             if (dedupedCount > 0) {
                 Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync (no changes)")
-                SyncDebugLog.w(TAG, "DEDUP: Removed $dedupedCount duplicates in incremental sync (no changes)")
             }
+            sessionBuilder?.addDeleted(deleted)
             return PullResult.Success(
                 eventsAdded = 0,
                 eventsUpdated = 0,
@@ -213,6 +212,9 @@ class PullStrategy @Inject constructor(
             )
         }
 
+        // Track hrefs reported by sync-collection
+        sessionBuilder?.setHrefsReported(changedHrefs.size)
+
         // Fetch events in batches
         val eventsResult = clientToUse.fetchEventsByHref(calendar.caldavUrl, changedHrefs)
         if (eventsResult.isError()) {
@@ -222,6 +224,9 @@ class PullStrategy @Inject constructor(
 
         val serverEvents = (eventsResult as CalDavResult.Success).data
 
+        // Track events fetched
+        sessionBuilder?.setEventsFetched(serverEvents.size)
+
         // Detect missing events due to iCloud eventual consistency
         // sync-collection may return hrefs before calendar-data server has the actual data
         val receivedHrefs = serverEvents.map { it.href }.toSet()
@@ -229,12 +234,10 @@ class PullStrategy @Inject constructor(
         val hasMissingEvents = missingHrefs.isNotEmpty()
 
         if (hasMissingEvents) {
-            Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}")
-            SyncDebugLog.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}")
-            SyncDebugLog.w(TAG, "Missing hrefs (eventual consistency): $missingHrefs")
+            Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}, missing: $missingHrefs")
         }
 
-        val processResult = processEvents(calendar, serverEvents)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
 
         // Clean up any duplicate master events that may have accumulated
         // This handles edge cases where duplicates were created due to:
@@ -243,7 +246,6 @@ class PullStrategy @Inject constructor(
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
         if (dedupedCount > 0) {
             Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync")
-            SyncDebugLog.w(TAG, "DEDUP: Removed $dedupedCount duplicates in incremental sync")
         }
 
         // Combine deletion changes with add/update changes
@@ -253,9 +255,10 @@ class PullStrategy @Inject constructor(
         // This ensures missing events are re-fetched on next sync
         val effectiveSyncToken = if (hasMissingEvents) {
             Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
-            SyncDebugLog.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
+            sessionBuilder?.setTokenAdvanced(false)
             calendar.syncToken  // Keep old token - next sync will re-fetch
         } else {
+            sessionBuilder?.setTokenAdvanced(true)
             syncReport.syncToken  // Advance to new token (normal case)
         }
 
@@ -276,7 +279,8 @@ class PullStrategy @Inject constructor(
     private suspend fun pullFull(
         calendar: Calendar,
         quirks: CalDavQuirks,
-        clientToUse: CalDavClient
+        clientToUse: CalDavClient,
+        sessionBuilder: SyncSessionBuilder?
     ): PullResult {
         Log.d(TAG, "Full sync for calendar: ${calendar.displayName}")
 
@@ -286,7 +290,6 @@ class PullStrategy @Inject constructor(
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
         if (dedupedCount > 0) {
             Log.w(TAG, "Cleaned up $dedupedCount duplicate master events")
-            SyncDebugLog.w(TAG, "DEDUP: Removed $dedupedCount duplicate master events")
         }
 
         val now = System.currentTimeMillis()
@@ -301,6 +304,10 @@ class PullStrategy @Inject constructor(
         }
 
         val serverEvents = (eventsResult as CalDavResult.Success).data
+
+        // Track events fetched (for full sync, hrefs reported = events fetched)
+        sessionBuilder?.setHrefsReported(serverEvents.size)
+        sessionBuilder?.setEventsFetched(serverEvents.size)
 
         // Get all server URLs for deletion detection
         val serverUrls = serverEvents.map { it.url }.toSet()
@@ -335,7 +342,7 @@ class PullStrategy @Inject constructor(
         }
 
         // Process server events
-        val processResult = processEvents(calendar, serverEvents)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
@@ -375,7 +382,8 @@ class PullStrategy @Inject constructor(
      */
     private suspend fun processEvents(
         calendar: Calendar,
-        serverEvents: List<CalDavEvent>
+        serverEvents: List<CalDavEvent>,
+        sessionBuilder: SyncSessionBuilder? = null
     ): ProcessEventsResult {
         var added = 0
         var updated = 0
@@ -393,6 +401,7 @@ class PullStrategy @Inject constructor(
             val parseResult = parser.parse(serverEvent.icalData)
             if (!parseResult.isSuccess() || parseResult.events.isEmpty()) {
                 Log.w(TAG, "Failed to parse event at ${serverEvent.url}")
+                sessionBuilder?.incrementSkipParseError()
                 continue
             }
 
@@ -423,6 +432,7 @@ class PullStrategy @Inject constructor(
             // Server wins only AFTER local changes are synced (prevents data loss)
             if (existingEvent != null && existingEvent.hasPendingChanges()) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - has pending local changes (${existingEvent.syncStatus})")
+                sessionBuilder?.incrementSkipPendingLocal()
                 uidToMasterEvent[meta.parsed.uid] = existingEvent
                 continue
             }
@@ -433,6 +443,7 @@ class PullStrategy @Inject constructor(
             // This handles iCloud eventual consistency where pull may return stale data.
             if (existingEvent != null && existingEvent.etag == meta.etag) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - etag unchanged (${meta.etag})")
+                sessionBuilder?.incrementSkipEtagUnchanged()
                 uidToMasterEvent[meta.parsed.uid] = existingEvent
                 continue
             }
@@ -487,7 +498,13 @@ class PullStrategy @Inject constructor(
 
             // Track change for UI notification
             val changeType = if (existingEvent == null) ChangeType.NEW else ChangeType.MODIFIED
-            if (existingEvent == null) added++ else updated++
+            if (existingEvent == null) {
+                added++
+                sessionBuilder?.incrementWritten()
+            } else {
+                updated++
+                sessionBuilder?.incrementUpdated()
+            }
 
             changes.add(SyncChange(
                 type = changeType,
@@ -518,6 +535,7 @@ class PullStrategy @Inject constructor(
                     |  Title: ${meta.parsed.summary}
                     |  Possible causes: Master outside sync window, master deleted, or sync order issue.
                 """.trimMargin())
+                sessionBuilder?.incrementSkipOrphanedException()
                 continue
             }
 
@@ -529,12 +547,14 @@ class PullStrategy @Inject constructor(
             // LOCAL-FIRST: Skip exception events with pending local changes
             if (existingException != null && existingException.hasPendingChanges()) {
                 Log.d(TAG, "Skipping exception ${meta.caldavUrl} - has pending local changes (${existingException.syncStatus})")
+                sessionBuilder?.incrementSkipPendingLocal()
                 continue
             }
 
             // Skip if etag unchanged (prevents overwrite with stale data after push)
             if (existingException != null && existingException.etag == meta.etag) {
                 Log.d(TAG, "Skipping exception ${meta.caldavUrl} - etag unchanged (${meta.etag})")
+                sessionBuilder?.incrementSkipEtagUnchanged()
                 continue
             }
 
@@ -572,7 +592,13 @@ class PullStrategy @Inject constructor(
 
             // Track change for UI notification (exception events are shown like regular events)
             val changeType = if (existingException == null) ChangeType.NEW else ChangeType.MODIFIED
-            if (existingException == null) added++ else updated++
+            if (existingException == null) {
+                added++
+                sessionBuilder?.incrementWritten()
+            } else {
+                updated++
+                sessionBuilder?.incrementUpdated()
+            }
 
             changes.add(SyncChange(
                 type = changeType,

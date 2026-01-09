@@ -32,7 +32,6 @@ import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
@@ -444,10 +443,10 @@ class AccountSettingsViewModel @Inject constructor(
                     val intervalMinutes = userPreferences.syncIntervalMs.first() / (60 * 1000L)
                     if (intervalMinutes > 0 && intervalMinutes != Long.MAX_VALUE / (60 * 1000L)) {
                         syncScheduler.schedulePeriodicSync(intervalMinutes)
-                        // User-friendly format for sync log
+                        // User-friendly format for log
                         val hours = intervalMinutes / 60
                         val displayInterval = if (hours >= 24) "${hours / 24} day(s)" else "$hours hour(s)"
-                        SyncDebugLog.i(TAG, "Periodic background sync: every $displayInterval")
+                        Log.d(TAG, "Periodic background sync: every $displayInterval")
                     }
                 }
 

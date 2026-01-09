@@ -14,8 +14,8 @@ import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
-import org.onekash.kashcal.sync.debug.SyncDebugLog
 import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
@@ -239,7 +239,11 @@ class CalDavSyncWorker @AssistedInject constructor(
         }
 
         Log.d(TAG, "Syncing calendar: ${calendar.displayName}")
-        return syncEngine.syncCalendar(calendar, forceFullSync)
+        return syncEngine.syncCalendar(
+            calendar = calendar,
+            forceFullSync = forceFullSync,
+            trigger = SyncTrigger.BACKGROUND_PERIODIC
+        )
     }
 
     /**
@@ -253,7 +257,11 @@ class CalDavSyncWorker @AssistedInject constructor(
         }
 
         Log.d(TAG, "Syncing account: ${account.email.maskEmail()}")
-        return syncEngine.syncAccount(account, forceFullSync)
+        return syncEngine.syncAccount(
+            account = account,
+            forceFullSync = forceFullSync,
+            trigger = SyncTrigger.BACKGROUND_PERIODIC
+        )
     }
 
     /**
@@ -267,13 +275,9 @@ class CalDavSyncWorker @AssistedInject constructor(
      */
     private suspend fun syncAll(forceFullSync: Boolean): SyncResult {
         val accounts = accountsDao.getEnabledAccounts()
-        SyncDebugLog.i(TAG, "syncAll() found ${accounts.size} enabled accounts")
-        for (account in accounts) {
-            SyncDebugLog.i(TAG, "Account: id=${account.id}, ${account.provider}, ${account.email.maskEmail()}")
-        }
+        Log.d(TAG, "syncAll() found ${accounts.size} enabled accounts")
         if (accounts.isEmpty()) {
             Log.d(TAG, "No enabled accounts to sync")
-            SyncDebugLog.w(TAG, "NO ACCOUNTS - sync skipped!")
             return SyncResult.Success(
                 calendarsSynced = 0,
                 durationMs = 0
@@ -327,7 +331,13 @@ class CalDavSyncWorker @AssistedInject constructor(
             Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
             // Sync this account with its provider's quirks and isolated client
-            val result = syncEngine.syncAccountWithProvider(account, provider, forceFullSync, clientOverride = isolatedClient)
+            val result = syncEngine.syncAccountWithProvider(
+                account = account,
+                provider = provider,
+                forceFullSync = forceFullSync,
+                clientOverride = isolatedClient,
+                trigger = SyncTrigger.BACKGROUND_PERIODIC
+            )
 
             when (result) {
                 is SyncResult.Success -> {
