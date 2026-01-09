@@ -221,6 +221,19 @@ class PullStrategy @Inject constructor(
         }
 
         val serverEvents = (eventsResult as CalDavResult.Success).data
+
+        // Detect missing events due to iCloud eventual consistency
+        // sync-collection may return hrefs before calendar-data server has the actual data
+        val receivedHrefs = serverEvents.map { it.href }.toSet()
+        val missingHrefs = changedHrefs.filter { it !in receivedHrefs }
+        val hasMissingEvents = missingHrefs.isNotEmpty()
+
+        if (hasMissingEvents) {
+            Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}")
+            SyncDebugLog.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}")
+            SyncDebugLog.w(TAG, "Missing hrefs (eventual consistency): $missingHrefs")
+        }
+
         val processResult = processEvents(calendar, serverEvents)
 
         // Clean up any duplicate master events that may have accumulated
@@ -236,11 +249,21 @@ class PullStrategy @Inject constructor(
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
 
+        // Don't advance sync token if events are missing (eventual consistency)
+        // This ensures missing events are re-fetched on next sync
+        val effectiveSyncToken = if (hasMissingEvents) {
+            Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
+            SyncDebugLog.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
+            calendar.syncToken  // Keep old token - next sync will re-fetch
+        } else {
+            syncReport.syncToken  // Advance to new token (normal case)
+        }
+
         return PullResult.Success(
             eventsAdded = processResult.added,
             eventsUpdated = processResult.updated,
             eventsDeleted = deleted,
-            newSyncToken = syncReport.syncToken,
+            newSyncToken = effectiveSyncToken,
             newCtag = null,
             changes = allChanges
         )
