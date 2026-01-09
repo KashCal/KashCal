@@ -457,12 +457,10 @@ class HomeViewModel @Inject constructor(
             return
         }
 
-        // Set isSyncing immediately to prevent duplicate sync requests (only if not suppressed)
-        // suppressSyncIndicator is true for silent syncs (cold start, resume, force full sync with banner)
-        // Only pull-to-refresh shows the icon since it's user-initiated
-        if (!suppressSyncIndicator) {
-            _uiState.update { it.copy(isSyncing = true) }
-        }
+        // Set isSyncing immediately to prevent duplicate sync requests (race condition guard)
+        // This closes the window between performSync() and observeSyncStatus() receiving Running status
+        // The UI indicator is controlled separately by observeSyncStatus() using suppressSyncIndicator
+        _uiState.update { it.copy(isSyncing = true) }
 
         // Request sync - observeSyncStatus() handles all other state updates
         // including calling reloadCurrentView() when sync succeeds
