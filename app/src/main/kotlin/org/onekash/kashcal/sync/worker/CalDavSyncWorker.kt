@@ -73,6 +73,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         const val KEY_FORCE_FULL_SYNC = "force_full_sync"
         const val KEY_SYNC_TYPE = "sync_type"
         const val KEY_SHOW_NOTIFICATION = "show_notification"
+        const val KEY_SYNC_TRIGGER = "sync_trigger"
 
         // Output data keys
         const val KEY_CALENDARS_SYNCED = "calendars_synced"
@@ -90,11 +91,16 @@ class CalDavSyncWorker @AssistedInject constructor(
         /**
          * Create input data for full sync (all accounts).
          */
-        fun createFullSyncInput(forceFullSync: Boolean = false, showNotification: Boolean = false): Data {
+        fun createFullSyncInput(
+            forceFullSync: Boolean = false,
+            showNotification: Boolean = false,
+            trigger: SyncTrigger = SyncTrigger.BACKGROUND_PERIODIC
+        ): Data {
             return Data.Builder()
                 .putString(KEY_SYNC_TYPE, SYNC_TYPE_FULL)
                 .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
                 .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .putString(KEY_SYNC_TRIGGER, trigger.name)
                 .build()
         }
 
@@ -104,13 +110,15 @@ class CalDavSyncWorker @AssistedInject constructor(
         fun createCalendarSyncInput(
             calendarId: Long,
             forceFullSync: Boolean = false,
-            showNotification: Boolean = false
+            showNotification: Boolean = false,
+            trigger: SyncTrigger = SyncTrigger.BACKGROUND_PERIODIC
         ): Data {
             return Data.Builder()
                 .putString(KEY_SYNC_TYPE, SYNC_TYPE_CALENDAR)
                 .putLong(KEY_CALENDAR_ID, calendarId)
                 .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
                 .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .putString(KEY_SYNC_TRIGGER, trigger.name)
                 .build()
         }
 
@@ -120,13 +128,15 @@ class CalDavSyncWorker @AssistedInject constructor(
         fun createAccountSyncInput(
             accountId: Long,
             forceFullSync: Boolean = false,
-            showNotification: Boolean = false
+            showNotification: Boolean = false,
+            trigger: SyncTrigger = SyncTrigger.BACKGROUND_PERIODIC
         ): Data {
             return Data.Builder()
                 .putString(KEY_SYNC_TYPE, SYNC_TYPE_ACCOUNT)
                 .putLong(KEY_ACCOUNT_ID, accountId)
                 .putBoolean(KEY_FORCE_FULL_SYNC, forceFullSync)
                 .putBoolean(KEY_SHOW_NOTIFICATION, showNotification)
+                .putString(KEY_SYNC_TRIGGER, trigger.name)
                 .build()
         }
     }
@@ -135,8 +145,9 @@ class CalDavSyncWorker @AssistedInject constructor(
         val syncType = inputData.getString(KEY_SYNC_TYPE) ?: SYNC_TYPE_FULL
         val forceFullSync = inputData.getBoolean(KEY_FORCE_FULL_SYNC, false)
         val showNotification = inputData.getBoolean(KEY_SHOW_NOTIFICATION, false)
+        val trigger = parseTrigger(inputData)
 
-        Log.i(TAG, "Starting sync: type=$syncType, force=$forceFullSync, attempt=${runAttemptCount + 1}")
+        Log.i(TAG, "Starting sync: type=$syncType, force=$forceFullSync, trigger=${trigger.name}, attempt=${runAttemptCount + 1}")
 
         // Set foreground for expedited work (shows progress notification)
         try {
@@ -160,7 +171,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                             createErrorOutput("No calendar_id provided")
                         )
                     }
-                    syncCalendar(calendarId, forceFullSync)
+                    syncCalendar(calendarId, forceFullSync, trigger)
                 }
                 SYNC_TYPE_ACCOUNT -> {
                     val accountId = inputData.getLong(KEY_ACCOUNT_ID, -1)
@@ -170,10 +181,10 @@ class CalDavSyncWorker @AssistedInject constructor(
                             createErrorOutput("No account_id provided")
                         )
                     }
-                    syncAccount(accountId, forceFullSync)
+                    syncAccount(accountId, forceFullSync, trigger)
                 }
                 else -> {
-                    syncAll(forceFullSync)
+                    syncAll(forceFullSync, trigger)
                 }
             }
 
@@ -231,7 +242,7 @@ class CalDavSyncWorker @AssistedInject constructor(
     /**
      * Sync a specific calendar.
      */
-    private suspend fun syncCalendar(calendarId: Long, forceFullSync: Boolean): SyncResult {
+    private suspend fun syncCalendar(calendarId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val calendar = calendarsDao.getById(calendarId)
         if (calendar == null) {
             Log.w(TAG, "Calendar $calendarId not found")
@@ -242,14 +253,14 @@ class CalDavSyncWorker @AssistedInject constructor(
         return syncEngine.syncCalendar(
             calendar = calendar,
             forceFullSync = forceFullSync,
-            trigger = SyncTrigger.BACKGROUND_PERIODIC
+            trigger = trigger
         )
     }
 
     /**
      * Sync all calendars for an account.
      */
-    private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean): SyncResult {
+    private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val account = accountsDao.getById(accountId)
         if (account == null) {
             Log.w(TAG, "Account $accountId not found")
@@ -260,7 +271,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         return syncEngine.syncAccount(
             account = account,
             forceFullSync = forceFullSync,
-            trigger = SyncTrigger.BACKGROUND_PERIODIC
+            trigger = trigger
         )
     }
 
@@ -273,7 +284,7 @@ class CalDavSyncWorker @AssistedInject constructor(
      * 3. Load credentials from provider's credential provider
      * 4. Sync using provider-specific quirks
      */
-    private suspend fun syncAll(forceFullSync: Boolean): SyncResult {
+    private suspend fun syncAll(forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val accounts = accountsDao.getEnabledAccounts()
         Log.d(TAG, "syncAll() found ${accounts.size} enabled accounts")
         if (accounts.isEmpty()) {
@@ -336,7 +347,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 provider = provider,
                 forceFullSync = forceFullSync,
                 clientOverride = isolatedClient,
-                trigger = SyncTrigger.BACKGROUND_PERIODIC
+                trigger = trigger
             )
 
             when (result) {
@@ -557,6 +568,24 @@ class CalDavSyncWorker @AssistedInject constructor(
         return Data.Builder()
             .putString(KEY_ERROR_MESSAGE, message)
             .build()
+    }
+
+    /**
+     * Parse SyncTrigger from input data.
+     * Returns BACKGROUND_PERIODIC if missing or invalid (backward compatibility).
+     */
+    private fun parseTrigger(inputData: Data): SyncTrigger {
+        val triggerStr = inputData.getString(KEY_SYNC_TRIGGER)
+        return if (triggerStr != null) {
+            try {
+                SyncTrigger.valueOf(triggerStr)
+            } catch (e: IllegalArgumentException) {
+                Log.w(TAG, "Invalid trigger string: $triggerStr, defaulting to BACKGROUND_PERIODIC")
+                SyncTrigger.BACKGROUND_PERIODIC
+            }
+        } else {
+            SyncTrigger.BACKGROUND_PERIODIC
+        }
     }
 }
 

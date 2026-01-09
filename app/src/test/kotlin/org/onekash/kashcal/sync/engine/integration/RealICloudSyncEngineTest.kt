@@ -182,7 +182,8 @@ class RealICloudSyncEngineTest {
             accountsDao = accountsDao,
             calendarsDao = calendarsDao,
             pendingOperationsDao = pendingOperationsDao,
-            syncLogsDao = syncLogsDao
+            syncLogsDao = syncLogsDao,
+            syncSessionStore = mockk(relaxed = true)
         )
     }
 

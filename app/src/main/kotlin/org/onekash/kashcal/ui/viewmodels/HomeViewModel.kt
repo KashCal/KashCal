@@ -38,6 +38,7 @@ import org.onekash.kashcal.error.ErrorMapper
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
@@ -275,7 +276,7 @@ class HomeViewModel @Inject constructor(
         suppressSyncIndicator = true  // Silent cold start - no spinning icon
         syncScheduler.setShowBannerForSync(false)
         Log.d(TAG, "triggerStartupSync: Starting sync (silent, no icon)")
-        performSync()
+        performSync(SyncTrigger.FOREGROUND_APP_OPEN)
     }
 
     // ==================== Sync Status Observation ====================
@@ -394,7 +395,7 @@ class HomeViewModel @Inject constructor(
         suppressSyncIndicator = false  // User-initiated - show spinning icon
         syncScheduler.setShowBannerForSync(false)
         Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
-        performSync()
+        performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
     }
 
     /**
@@ -408,7 +409,7 @@ class HomeViewModel @Inject constructor(
         suppressSyncIndicator = true  // Has banner - no spinning icon needed
         syncScheduler.setShowBannerForSync(true)
         Log.d(TAG, "Force full sync requested (with banner, no icon)")
-        syncScheduler.requestImmediateSync(forceFullSync = true)
+        syncScheduler.requestImmediateSync(forceFullSync = true, trigger = SyncTrigger.FOREGROUND_MANUAL)
     }
 
     /**
@@ -432,7 +433,7 @@ class HomeViewModel @Inject constructor(
         Log.d(TAG, "syncOnResumeIfNeeded: Triggering sync on app resume")
         suppressSyncIndicator = true  // Silent sync - no spinning icon
         syncScheduler.setShowBannerForSync(false)
-        performSync()
+        performSync(SyncTrigger.FOREGROUND_APP_OPEN)
     }
 
     /**
@@ -441,8 +442,10 @@ class HomeViewModel @Inject constructor(
      * Sets isSyncing=true immediately for duplicate sync guard, then enqueues WorkManager work.
      * All other state updates (isSyncing=false, reloadCurrentView) happen via observeSyncStatus()
      * when WorkManager emits SyncStatus.Succeeded/Failed/etc.
+     *
+     * @param trigger The sync trigger source for history tracking
      */
-    private fun performSync() {
+    private fun performSync(trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL) {
         if (!_uiState.value.isConfigured) {
             Log.d(TAG, "performSync: Not configured, skipping")
             return
@@ -457,8 +460,8 @@ class HomeViewModel @Inject constructor(
 
         // Request sync - observeSyncStatus() handles all other state updates
         // including calling reloadCurrentView() when sync succeeds
-        Log.d(TAG, "performSync: Requesting immediate sync (showIcon=${!suppressSyncIndicator})")
-        syncScheduler.requestImmediateSync()
+        Log.d(TAG, "performSync: Requesting immediate sync (trigger=${trigger.name}, showIcon=${!suppressSyncIndicator})")
+        syncScheduler.requestImmediateSync(trigger = trigger)
     }
 
     // ==================== Calendar Loading ====================

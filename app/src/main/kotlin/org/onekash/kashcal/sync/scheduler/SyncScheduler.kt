@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.worker.CalDavSyncWorker
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -212,12 +213,16 @@ class SyncScheduler @Inject constructor(
      * Queues sync to run as soon as network is available.
      *
      * @param forceFullSync If true, ignores ctag/sync-token
+     * @param trigger The trigger source for sync history tracking
      * @return UUID of the work request for status tracking
      */
-    fun requestImmediateSync(forceFullSync: Boolean = false): java.util.UUID {
-        Log.i(TAG, "Requesting immediate sync (force=$forceFullSync)")
+    fun requestImmediateSync(
+        forceFullSync: Boolean = false,
+        trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
+    ): java.util.UUID {
+        Log.i(TAG, "Requesting immediate sync (force=$forceFullSync, trigger=${trigger.name})")
 
-        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync)
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync, trigger = trigger)
 
         val oneShotWork = OneTimeWorkRequestBuilder<CalDavSyncWorker>()
             .setConstraints(networkConstraints)
