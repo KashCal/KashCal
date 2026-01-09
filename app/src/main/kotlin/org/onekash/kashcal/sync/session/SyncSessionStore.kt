@@ -162,6 +162,7 @@ class SyncSessionStore @Inject constructor(
                 if (session.eventsUpdated > 0) appendLine("Updated: ${session.eventsUpdated}")
                 if (session.eventsDeleted > 0) appendLine("Deleted: ${session.eventsDeleted}")
                 if (session.hasMissingEvents) appendLine("⚠️ Missing: ${session.missingCount} (token ${if (session.tokenAdvanced) "advanced" else "NOT advanced"})")
+                if (session.abandonedParseErrors > 0) appendLine("❌ Abandoned: ${session.abandonedParseErrors} events (parse failed after max retries)")
                 if (session.totalSkipped > 0) {
                     appendLine("Skipped: ${session.totalSkipped}")
                     if (session.skippedParseError > 0) appendLine("  • Parse error: ${session.skippedParseError}")

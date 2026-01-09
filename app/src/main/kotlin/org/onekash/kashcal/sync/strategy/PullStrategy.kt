@@ -193,9 +193,19 @@ class PullStrategy @Inject constructor(
         }
 
         // Fetch full iCal data for changed items
-        val changedHrefs = syncReport.changed
+        // IMPORTANT: Apply .distinct() to handle iCloud returning duplicate hrefs
+        // Without this, hrefsReported != receivedHrefs.size even when all events are fetched,
+        // causing confusing "Missing: N" in Sync History when nothing is actually missing
+        val rawHrefs = syncReport.changed
             .filter { it.status == SyncItemStatus.OK }
             .map { it.href }
+        val changedHrefs = rawHrefs.distinct()
+
+        // Log duplicate hrefs if detected (helps diagnose sync issues)
+        val duplicateCount = rawHrefs.size - changedHrefs.size
+        if (duplicateCount > 0) {
+            Log.w(TAG, "sync-collection returned $duplicateCount duplicate hrefs (raw=${rawHrefs.size}, deduped=${changedHrefs.size})")
+        }
 
         if (changedHrefs.isEmpty()) {
             // Clean up any duplicate master events even when no events changed
@@ -434,7 +444,13 @@ class PullStrategy @Inject constructor(
         for (serverEvent in serverEvents) {
             val parseResult = parser.parse(serverEvent.icalData)
             if (!parseResult.isSuccess() || parseResult.events.isEmpty()) {
-                Log.w(TAG, "Failed to parse event at ${serverEvent.url}")
+                // Log parse failure with reason for diagnosis
+                val reason = when {
+                    !parseResult.isSuccess() -> "parse error: ${parseResult.errors.firstOrNull()}"
+                    parseResult.events.isEmpty() -> "no VEVENT components found"
+                    else -> "unknown"
+                }
+                Log.w(TAG, "Failed to parse event at ${serverEvent.url}: $reason")
                 sessionBuilder?.incrementSkipParseError()
                 continue
             }

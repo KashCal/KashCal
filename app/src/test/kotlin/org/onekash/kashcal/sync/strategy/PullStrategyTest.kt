@@ -218,6 +218,61 @@ class PullStrategyTest {
         coVerify { client.fetchEventsByHref(calendar.caldavUrl, listOf(changedHref)) }
     }
 
+    @Test
+    fun `incremental sync dedupes duplicate hrefs from sync-collection`() = runTest {
+        // Regression test: iCloud can return duplicate hrefs in sync-collection response
+        // Without deduplication, hrefsReported != eventsFetched even when all events are fetched,
+        // causing confusing "Missing: N" in Sync History when nothing is actually missing
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
+        val href1 = "/calendars/home/event1.ics"
+        val href2 = "/calendars/home/event2.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        // sync-collection returns duplicate href1
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-456",
+                changed = listOf(
+                    SyncItem(href1, "etag-1", SyncItemStatus.OK),
+                    SyncItem(href2, "etag-2", SyncItemStatus.OK),
+                    SyncItem(href1, "etag-1", SyncItemStatus.OK)  // Duplicate!
+                ),
+                deleted = emptyList()
+            ))
+
+        // Server returns unique events (deduped request should only have 2 unique hrefs)
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(
+                    href = href1,
+                    url = "${calendar.caldavUrl}event1.ics",
+                    etag = "etag-1",
+                    icalData = createSimpleIcal("uid-1", "Event 1")
+                ),
+                CalDavEvent(
+                    href = href2,
+                    url = "${calendar.caldavUrl}event2.ics",
+                    etag = "etag-2",
+                    icalData = createSimpleIcal("uid-2", "Event 2")
+                )
+            ))
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar)
+
+        // Verify: Both events added successfully
+        assertTrue(result is PullResult.Success)
+        val success = result as PullResult.Success
+        assertEquals(2, success.eventsAdded)
+
+        // Verify: Token should advance (no actual missing events)
+        assertEquals("sync-token-456", success.newSyncToken)
+
+        // Verify: fetchEventsByHref should be called with deduped list (2 unique hrefs, not 3)
+        coVerify { client.fetchEventsByHref(calendar.caldavUrl, match { it.size == 2 }) }
+    }
+
     // ========== Full Sync Tests ==========
 
     @Test
