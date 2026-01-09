@@ -338,6 +338,15 @@ private fun SyncSessionCard(session: SyncSession) {
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color(0xFFE53935)
                 )
+                // Show error message if available
+                session.errorMessage?.let { message ->
+                    Text(
+                        text = message.take(100) + if (message.length > 100) "..." else "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color(0xFFE53935).copy(alpha = 0.8f),
+                        maxLines = 2
+                    )
+                }
             } else {
                 Text(
                     text = "Server: ${session.hrefsReported}  →  Fetched: ${session.eventsFetched}  →  Written: ${session.eventsWritten}",
@@ -346,6 +355,13 @@ private fun SyncSessionCard(session: SyncSession) {
             }
 
             // Issue summary (collapsed)
+            if (session.fallbackUsed && !expanded) {
+                Text(
+                    text = "🔄 Fallback used${if (session.fetchFailedCount > 0) " (${session.fetchFailedCount} failed)" else ""}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFFFA000)
+                )
+            }
             if (session.hasMissingEvents && !expanded) {
                 Text(
                     text = "⚠️ ${session.missingCount} missing (will retry)",
@@ -404,6 +420,36 @@ private fun SyncSessionCard(session: SyncSession) {
                         if (session.skippedOrphanedException > 0) DetailRow("No master found", session.skippedOrphanedException.toString())
                         if (session.skippedPendingLocal > 0) DetailRow("Pending local", session.skippedPendingLocal.toString())
                         if (session.skippedEtagUnchanged > 0) DetailRow("ETag unchanged", session.skippedEtagUnchanged.toString())
+                    }
+
+                    // Fetch fallback details (v16.8.0)
+                    if (session.fallbackUsed) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "FETCH FALLBACK",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFFA000)
+                        )
+                        DetailRow("Batch multiget", "Failed")
+                        DetailRow("Individual fallback", "Used")
+                        if (session.fetchFailedCount > 0) {
+                            DetailRow("Individual failures", session.fetchFailedCount.toString())
+                        }
+                    }
+
+                    // Error message details (v16.8.0)
+                    if (session.errorMessage != null) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "ERROR DETAILS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFE53935)
+                        )
+                        Text(
+                            text = session.errorMessage,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
             }

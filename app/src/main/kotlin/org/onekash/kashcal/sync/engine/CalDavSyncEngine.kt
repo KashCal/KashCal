@@ -181,7 +181,8 @@ class CalDavSyncEngine @Inject constructor(
                                 else -> "NETWORK"
                             }
                         } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
-                        stage = "pull"
+                        stage = "pull",
+                        message = pullResult.message
                     )
                     errors.add(SyncError(
                         phase = SyncPhase.PULL,
@@ -335,7 +336,8 @@ class CalDavSyncEngine @Inject constructor(
                                     else -> "NETWORK"
                                 }
                             } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
-                            stage = "pull"
+                            stage = "pull",
+                            message = pullResult.message
                         )
                         if (pullResult.code == 401) {
                             val session = sessionBuilder.build()

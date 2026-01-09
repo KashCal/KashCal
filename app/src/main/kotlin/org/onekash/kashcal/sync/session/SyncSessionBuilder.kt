@@ -61,10 +61,20 @@ class SyncSessionBuilder(
 
     // Token and error
     fun setTokenAdvanced(advanced: Boolean) = apply { tokenAdvanced = advanced }
-    fun setError(type: ErrorType, stage: String) = apply {
+    fun setError(type: ErrorType, stage: String, message: String? = null) = apply {
         errorType = type
         errorStage = stage
+        errorMessage = message
     }
+
+    // Error message (v16.8.0)
+    private var errorMessage: String? = null
+
+    // Fetch fallback tracking (v16.8.0)
+    private var fallbackUsed = false
+    private var fetchFailedCount = 0
+    fun setFallbackUsed(used: Boolean) = apply { fallbackUsed = used }
+    fun setFetchFailedCount(count: Int) = apply { fetchFailedCount = count }
 
     /**
      * Build the final SyncSession.
@@ -92,7 +102,10 @@ class SyncSessionBuilder(
             tokenAdvanced = tokenAdvanced,
             abandonedParseErrors = abandonedParseErrors,
             errorType = errorType,
-            errorStage = errorStage
+            errorStage = errorStage,
+            errorMessage = errorMessage,
+            fallbackUsed = fallbackUsed,
+            fetchFailedCount = fetchFailedCount
         )
     }
 }

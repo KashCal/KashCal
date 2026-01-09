@@ -46,7 +46,12 @@ data class SyncSession(
 
     // Error info (if failed)
     val errorType: ErrorType? = null,
-    val errorStage: String? = null
+    val errorStage: String? = null,
+    val errorMessage: String? = null,  // Detailed error message (v16.8.0)
+
+    // Fetch fallback tracking (v16.8.0)
+    val fallbackUsed: Boolean = false,  // True if batch multiget failed and we fell back
+    val fetchFailedCount: Int = 0       // Individual fetches that failed during fallback
 ) {
     /**
      * Overall status derived from session data.
@@ -69,7 +74,7 @@ data class SyncSession(
      */
     val hasIssues: Boolean get() =
         hasMissingEvents || skippedParseError > 0 || skippedOrphanedException > 0 ||
-        abandonedParseErrors > 0 || errorType != null
+        abandonedParseErrors > 0 || errorType != null || fallbackUsed || fetchFailedCount > 0
 }
 
 /**

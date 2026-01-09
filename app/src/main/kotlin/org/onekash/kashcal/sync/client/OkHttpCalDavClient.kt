@@ -742,20 +742,25 @@ class OkHttpCalDavClient : CalDavClient {
                 return result
 
             } catch (e: SocketTimeoutException) {
-                Log.w(TAG, "Socket timeout, retry ${attempt + 1}")
+                Log.w(TAG, "Socket timeout on ${request.method} ${request.url}, " +
+                        "retry ${attempt + 1}/$MAX_RETRIES: ${e.message}")
                 lastException = e
             } catch (e: UnknownHostException) {
-                Log.w(TAG, "Unknown host, retry ${attempt + 1}")
+                Log.w(TAG, "Unknown host for ${request.url}, " +
+                        "retry ${attempt + 1}/$MAX_RETRIES: ${e.message}")
                 lastException = e
             } catch (e: SSLHandshakeException) {
                 // Don't retry SSL errors - likely a security issue
+                Log.e(TAG, "SSL error on ${request.url} (not retrying): ${e.message}", e)
                 return CalDavResult.networkError("SSL error: ${e.message}")
             } catch (e: IOException) {
                 if (isRetryableError(e)) {
-                    Log.w(TAG, "Retryable network error, retry ${attempt + 1}: ${e.message}")
+                    Log.w(TAG, "Retryable IO error on ${request.method} ${request.url}, " +
+                            "retry ${attempt + 1}/$MAX_RETRIES: ${e.javaClass.simpleName} - ${e.message}")
                     lastException = e
                 } else {
-                    return CalDavResult.networkError("Network error: ${e.message}")
+                    Log.e(TAG, "Non-retryable IO error on ${request.url}: ${e.javaClass.simpleName} - ${e.message}", e)
+                    return CalDavResult.networkError("Network error: ${e.javaClass.simpleName} - ${e.message}")
                 }
             }
 
@@ -767,8 +772,11 @@ class OkHttpCalDavClient : CalDavClient {
         }
 
         // All retries exhausted
+        Log.e(TAG, "All $MAX_RETRIES retries exhausted for ${request.method} ${request.url}: " +
+                "${lastException?.javaClass?.simpleName} - ${lastException?.message}")
         return lastResult
-            ?: CalDavResult.networkError("Network error after $MAX_RETRIES retries: ${lastException?.message}")
+            ?: CalDavResult.networkError("Network error after $MAX_RETRIES retries: " +
+                    "${lastException?.javaClass?.simpleName} - ${lastException?.message}")
     }
 
     /**

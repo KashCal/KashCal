@@ -2,6 +2,7 @@ package org.onekash.kashcal.sync.strategy
 
 import android.database.sqlite.SQLiteConstraintException
 import android.util.Log
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.CalendarsDao
@@ -63,6 +64,10 @@ class PullStrategy @Inject constructor(
 
         // Parse failure retry: hold token for N syncs before giving up (v16.7.0)
         private const val MAX_PARSE_RETRIES = 3
+
+        // Multiget fallback: retry delay and batch size for individual fetches (v16.8.0)
+        private const val MULTIGET_RETRY_DELAY_MS = 2000L
+        private const val INDIVIDUAL_FETCH_BATCH_SIZE = 10
     }
 
     /**
@@ -228,14 +233,19 @@ class PullStrategy @Inject constructor(
         // Track hrefs reported by sync-collection
         sessionBuilder?.setHrefsReported(changedHrefs.size)
 
-        // Fetch events in batches
-        val eventsResult = clientToUse.fetchEventsByHref(calendar.caldavUrl, changedHrefs)
-        if (eventsResult.isError()) {
-            val error = eventsResult as CalDavResult.Error
-            return PullResult.Error(error.code, error.message, error.isRetryable)
-        }
+        // Fetch events with retry and fallback to individual fetches (v16.8.0)
+        val fetchResult = fetchEventsWithFallback(
+            clientToUse,
+            calendar.caldavUrl,
+            changedHrefs
+        )
+        val serverEvents = fetchResult.events
 
-        val serverEvents = (eventsResult as CalDavResult.Success).data
+        // Track fallback usage in session
+        if (fetchResult.fallbackUsed) {
+            sessionBuilder?.setFallbackUsed(true)
+            sessionBuilder?.setFetchFailedCount(fetchResult.fetchFailedCount)
+        }
 
         // Track events fetched
         sessionBuilder?.setEventsFetched(serverEvents.size)
@@ -684,4 +694,103 @@ class PullStrategy @Inject constructor(
         val caldavUrl: String,
         val etag: String?
     )
+
+    /**
+     * Result of fetchEventsWithFallback containing events and tracking info.
+     */
+    private data class FetchResult(
+        val events: List<CalDavEvent>,
+        val fallbackUsed: Boolean,
+        val fetchFailedCount: Int
+    )
+
+    /**
+     * Fetch events with retry and fallback to individual fetches (v16.8.0).
+     *
+     * Strategy:
+     * 1. Try batch multiget (normal path)
+     * 2. If batch fails, retry once after delay
+     * 3. If still fails, fall back to individual fetches in small batches
+     * 4. Return whatever events we successfully fetched (missing handled by caller)
+     *
+     * This handles transient network issues and isolates problematic events.
+     */
+    private suspend fun fetchEventsWithFallback(
+        client: CalDavClient,
+        calendarUrl: String,
+        hrefs: List<String>
+    ): FetchResult {
+        if (hrefs.isEmpty()) return FetchResult(emptyList(), fallbackUsed = false, fetchFailedCount = 0)
+
+        // Step 1: Try batch multiget
+        Log.d(TAG, "fetchEventsWithFallback: attempting batch fetch of ${hrefs.size} events")
+        val batchResult = client.fetchEventsByHref(calendarUrl, hrefs)
+
+        if (batchResult is CalDavResult.Success) {
+            Log.d(TAG, "fetchEventsWithFallback: batch fetch succeeded, got ${batchResult.data.size} events")
+            return FetchResult(batchResult.data, fallbackUsed = false, fetchFailedCount = 0)
+        }
+
+        // Log the error details
+        val batchError = batchResult as CalDavResult.Error
+        Log.w(TAG, "fetchEventsWithFallback: batch fetch FAILED - code=${batchError.code}, " +
+                "message='${batchError.message}', retryable=${batchError.isRetryable}, hrefs=${hrefs.size}")
+
+        // Step 2: Retry once after delay (handles transient issues)
+        Log.d(TAG, "fetchEventsWithFallback: retrying batch after ${MULTIGET_RETRY_DELAY_MS}ms delay")
+        delay(MULTIGET_RETRY_DELAY_MS)
+
+        val retryResult = client.fetchEventsByHref(calendarUrl, hrefs)
+        if (retryResult is CalDavResult.Success) {
+            Log.d(TAG, "fetchEventsWithFallback: batch retry succeeded, got ${retryResult.data.size} events")
+            return FetchResult(retryResult.data, fallbackUsed = false, fetchFailedCount = 0)
+        }
+
+        val retryError = retryResult as CalDavResult.Error
+        Log.w(TAG, "fetchEventsWithFallback: batch retry FAILED - code=${retryError.code}, " +
+                "message='${retryError.message}', falling back to individual fetches")
+
+        // Step 3: Fall back to individual fetches in small batches
+        val fetchedEvents = mutableListOf<CalDavEvent>()
+        val failedHrefs = mutableListOf<String>()
+
+        // Process in small batches to balance efficiency and isolation
+        hrefs.chunked(INDIVIDUAL_FETCH_BATCH_SIZE).forEachIndexed { batchIndex, batch ->
+            Log.d(TAG, "fetchEventsWithFallback: individual batch ${batchIndex + 1}, " +
+                    "fetching ${batch.size} events")
+
+            val smallBatchResult = client.fetchEventsByHref(calendarUrl, batch)
+            if (smallBatchResult is CalDavResult.Success) {
+                fetchedEvents.addAll(smallBatchResult.data)
+                Log.d(TAG, "fetchEventsWithFallback: small batch succeeded, got ${smallBatchResult.data.size}")
+            } else {
+                // Small batch failed, try one-by-one
+                val smallBatchError = smallBatchResult as CalDavResult.Error
+                Log.w(TAG, "fetchEventsWithFallback: small batch failed - code=${smallBatchError.code}, " +
+                        "trying individual fetches")
+
+                for (href in batch) {
+                    val singleResult = client.fetchEventsByHref(calendarUrl, listOf(href))
+                    if (singleResult is CalDavResult.Success && singleResult.data.isNotEmpty()) {
+                        fetchedEvents.addAll(singleResult.data)
+                    } else {
+                        failedHrefs.add(href)
+                        val singleError = singleResult as? CalDavResult.Error
+                        Log.w(TAG, "fetchEventsWithFallback: individual fetch FAILED for href=$href, " +
+                                "code=${singleError?.code}, message='${singleError?.message}'")
+                    }
+                }
+            }
+        }
+
+        if (failedHrefs.isNotEmpty()) {
+            Log.w(TAG, "fetchEventsWithFallback: completed with ${failedHrefs.size} failed hrefs: " +
+                    failedHrefs.take(5).joinToString())
+        }
+
+        Log.d(TAG, "fetchEventsWithFallback: fallback complete - requested=${hrefs.size}, " +
+                "fetched=${fetchedEvents.size}, failed=${failedHrefs.size}")
+
+        return FetchResult(fetchedEvents, fallbackUsed = true, fetchFailedCount = failedHrefs.size)
+    }
 }
