@@ -234,7 +234,8 @@ class HomeViewModelTest {
     fun `initial state has online from network monitor`() = runTest {
         val viewModel = createViewModel()
 
-        assertTrue(viewModel.uiState.value.isOnline)
+        // isOnline is exposed directly as StateFlow, not in uiState
+        assertTrue(viewModel.isOnline.value)
     }
 
     // ==================== Async Initialization Tests ====================
@@ -1055,37 +1056,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.isOnline)
+        // isOnline is exposed directly as StateFlow from NetworkMonitor
+        assertTrue(viewModel.isOnline.value)
 
         // Go offline
         networkStateFlow.value = false
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.isOnline)
-    }
-
-    @Test
-    fun `network restore triggers sync when configured`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Go offline
-        networkStateFlow.value = false
-        advanceUntilIdle()
-
-        // Come back online
-        networkStateFlow.value = true
-        advanceUntilIdle()
-
-        // Should have triggered sync on restore
-        verify(atLeast = 1) { syncScheduler.requestImmediateSync(any(), any()) }
+        assertFalse(viewModel.isOnline.value)
     }
 
     // ==================== UI Sheet Tests ====================
@@ -1137,16 +1115,16 @@ class HomeViewModelTest {
 
     @Test
     fun `clearSnackbar clears pending message`() = runTest {
+        // Trigger snackbar via a failed delete operation
+        coEvery { eventCoordinator.deleteEvent(999L) } throws RuntimeException("DB error")
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Go offline then online to trigger snackbar
-        networkStateFlow.value = false
-        advanceUntilIdle()
-        networkStateFlow.value = true
+        viewModel.deleteEventOptimistic(999L)
         advanceUntilIdle()
 
-        // Should have snackbar message
+        // Should have snackbar message from failed delete
         assertTrue(viewModel.uiState.value.pendingSnackbarMessage != null)
 
         viewModel.clearSnackbar()

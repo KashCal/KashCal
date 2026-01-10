@@ -187,19 +187,20 @@ class FlowTestingPatternsTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.isOnline)
+        // isOnline is exposed directly as StateFlow from NetworkMonitor
+        assertTrue(viewModel.isOnline.value)
 
         // Go offline
         networkStateFlow.value = false
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.isOnline)
+        assertFalse(viewModel.isOnline.value)
 
         // Go back online
         networkStateFlow.value = true
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.isOnline)
+        assertTrue(viewModel.isOnline.value)
     }
 
     @Test
@@ -251,24 +252,22 @@ class FlowTestingPatternsTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.uiState.test {
+        // isOnline is exposed directly as StateFlow from NetworkMonitor
+        viewModel.isOnline.test {
             // Initial state - online
-            val initial = awaitItem()
-            assertTrue(initial.isOnline)
+            assertTrue(awaitItem())
 
             // Go offline
             networkStateFlow.value = false
             advanceUntilIdle()
 
-            val offline = expectMostRecentItem()
-            assertFalse(offline.isOnline)
+            assertFalse(expectMostRecentItem())
 
             // Go online
             networkStateFlow.value = true
             advanceUntilIdle()
 
-            val online = expectMostRecentItem()
-            assertTrue(online.isOnline)
+            assertTrue(expectMostRecentItem())
         }
     }
 
@@ -448,7 +447,8 @@ class FlowTestingPatternsTest {
 
         // Both should be reflected
         assertEquals(1, viewModel.uiState.value.calendars.size)
-        assertFalse(viewModel.uiState.value.isOnline)
+        // isOnline is exposed directly as StateFlow from NetworkMonitor
+        assertFalse(viewModel.isOnline.value)
     }
 
     // ==================== Sync Status Flow Tests ====================

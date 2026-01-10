@@ -96,9 +96,6 @@ class HomeViewModel @Inject constructor(
     // Track if startup sync has been triggered
     private var hasTriggeredStartupSync = false
 
-    // Track previous network state for transitions
-    private var wasOnline = true
-
     // Job for search debouncing (cancel previous search when new query arrives)
     private var searchJob: Job? = null
 
@@ -135,23 +132,6 @@ class HomeViewModel @Inject constructor(
         // Initialize asynchronously
         viewModelScope.launch {
             initializeAsync()
-        }
-
-        // Monitor network transitions
-        viewModelScope.launch {
-            networkMonitor.isOnline.collect { online ->
-                _uiState.update { it.copy(isOnline = online) }
-
-                if (wasOnline && !online) {
-                    Log.d(TAG, "Network: Went offline")
-                } else if (!wasOnline && online) {
-                    Log.d(TAG, "Network: Back online, triggering sync (silent)")
-                    showSnackbar("Back online, syncing...")
-                    syncScheduler.setShowBannerForSync(false)  // Snackbar is sufficient feedback
-                    syncScheduler.requestImmediateSync()
-                }
-                wasOnline = online
-            }
         }
 
         // Observe sync status for inline banner

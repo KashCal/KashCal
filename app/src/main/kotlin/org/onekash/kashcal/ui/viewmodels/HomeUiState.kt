@@ -145,10 +145,6 @@ data class HomeUiState(
      */
     val pendingAction: PendingAction? = null,
 
-    // === NETWORK STATE ===
-    /** Current network connectivity status */
-    val isOnline: Boolean = true,
-
     // === SYNC BANNER STATE ===
     /** Show sync progress banner */
     val showSyncBanner: Boolean = false,
