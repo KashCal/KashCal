@@ -113,6 +113,16 @@ interface OccurrencesDao {
     suspend fun getForEvent(eventId: Long): List<Occurrence>
 
     /**
+     * Get occurrences for multiple events in a single query.
+     * Used to avoid N+1 queries when loading occurrences for search results.
+     *
+     * @param eventIds List of event IDs to fetch occurrences for
+     * @return All occurrences for the given events, sorted by start time
+     */
+    @Query("SELECT * FROM occurrences WHERE event_id IN (:eventIds) ORDER BY start_ts ASC")
+    suspend fun getForEvents(eventIds: List<Long>): List<Occurrence>
+
+    /**
      * Get occurrence count for an event.
      */
     @Query("SELECT COUNT(*) FROM occurrences WHERE event_id = :eventId")

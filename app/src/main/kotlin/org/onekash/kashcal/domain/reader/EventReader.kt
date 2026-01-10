@@ -518,6 +518,7 @@ class EventReader @Inject constructor(
 
     /**
      * Search events with occurrence info.
+     * Uses batch loading to avoid N+1 queries (3 queries instead of 1+N+M).
      */
     suspend fun searchEventsWithOccurrences(
         query: String,
@@ -527,20 +528,30 @@ class EventReader @Inject constructor(
         if (events.isEmpty()) return emptyList()
 
         val now = if (futureOnly) System.currentTimeMillis() else 0L
-        val results = mutableListOf<OccurrenceWithEvent>()
 
-        for (event in events) {
-            val occurrences = occurrencesDao.getForEvent(event.id)
-                .filter { it.startTs >= now && !it.isCancelled }
-                .take(5) // Limit results per event
+        // Batch load occurrences (1 query instead of N)
+        val eventIds = events.map { it.id }
+        val allOccurrences = occurrencesDao.getForEvents(eventIds)
+            .filter { it.startTs >= now && !it.isCancelled }
 
-            for (occ in occurrences) {
-                val calendar = calendarsDao.getById(occ.calendarId)
-                results.add(OccurrenceWithEvent(occ, event, calendar))
-            }
-        }
+        // Group by event and take 5 per event
+        val occurrencesByEvent = allOccurrences.groupBy { it.eventId }
+        val limitedOccurrences = occurrencesByEvent.flatMap { (_, occs) -> occs.take(5) }
 
-        return results.sortedBy { it.occurrence.startTs }
+        if (limitedOccurrences.isEmpty()) return emptyList()
+
+        // Create events map for O(1) lookup
+        val eventsMap = events.associateBy { it.id }
+
+        // Batch load calendars (1 query instead of M)
+        val calendarIds = limitedOccurrences.map { it.calendarId }.distinct()
+        val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+
+        return limitedOccurrences.mapNotNull { occ ->
+            val event = eventsMap[occ.eventId] ?: return@mapNotNull null
+            val calendar = calendarsMap[occ.calendarId]
+            OccurrenceWithEvent(occ, event, calendar)
+        }.sortedBy { it.occurrence.startTs }
     }
 
     // ========== Sync-Related Queries ==========
