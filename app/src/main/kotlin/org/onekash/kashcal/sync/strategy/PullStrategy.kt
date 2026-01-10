@@ -21,6 +21,8 @@ import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.parser.ICalParser
 import org.onekash.kashcal.sync.parser.ParsedEvent
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import java.io.IOException
+import java.net.SocketTimeoutException
 import javax.inject.Inject
 
 /**
@@ -132,12 +134,26 @@ class PullStrategy @Inject constructor(
             }
 
             result
+        } catch (e: SocketTimeoutException) {
+            Log.e(TAG, "Pull timed out: ${e.message}", e)
+            PullResult.Error(
+                code = CalDavResult.CODE_TIMEOUT,
+                message = "Timeout: ${e.message}",
+                isRetryable = true
+            )
+        } catch (e: IOException) {
+            Log.e(TAG, "Pull network error: ${e.message}", e)
+            PullResult.Error(
+                code = 0,
+                message = "Network: ${e.message}",
+                isRetryable = true
+            )
         } catch (e: Exception) {
             Log.e(TAG, "Pull failed: ${e.message}", e)
             PullResult.Error(
                 code = -1,
                 message = e.message ?: "Unknown error",
-                isRetryable = true
+                isRetryable = false
             )
         }
     }

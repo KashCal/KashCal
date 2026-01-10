@@ -1231,6 +1231,72 @@ class PullStrategyTest {
         assertTrue(capturedEvent.captured.reminders!!.isNotEmpty())
     }
 
+    // ========== Error Code Differentiation Tests ==========
+
+    @Test
+    fun `pull returns TIMEOUT error code for SocketTimeoutException`() = runTest {
+        val calendar = createCalendar()
+        coEvery { client.getCtag(any()) } throws java.net.SocketTimeoutException("Read timed out")
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Error)
+        assertEquals(-408, (result as PullResult.Error).code)
+        assertTrue(result.isRetryable)
+        assertTrue(result.message.contains("Timeout"))
+    }
+
+    @Test
+    fun `pull returns NETWORK error code for IOException`() = runTest {
+        val calendar = createCalendar()
+        coEvery { client.getCtag(any()) } throws java.io.IOException("Connection reset")
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Error)
+        assertEquals(0, (result as PullResult.Error).code)
+        assertTrue(result.isRetryable)
+        assertTrue(result.message.contains("Network"))
+    }
+
+    @Test
+    fun `pull returns PARSE error code for non-IO Exception`() = runTest {
+        val calendar = createCalendar()
+        coEvery { client.getCtag(any()) } throws IllegalStateException("Unexpected state")
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Error)
+        assertEquals(-1, (result as PullResult.Error).code)
+        assertFalse(result.isRetryable)
+    }
+
+    @Test
+    fun `pull returns TIMEOUT error code for ConnectTimeoutException`() = runTest {
+        // ConnectTimeoutException is also a SocketTimeoutException subclass
+        val calendar = createCalendar()
+        coEvery { client.getCtag(any()) } throws java.net.SocketTimeoutException("Connect timed out")
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Error)
+        assertEquals(-408, (result as PullResult.Error).code)
+        assertTrue(result.isRetryable)
+    }
+
+    @Test
+    fun `pull returns NETWORK error code for UnknownHostException`() = runTest {
+        val calendar = createCalendar()
+        coEvery { client.getCtag(any()) } throws java.net.UnknownHostException("caldav.icloud.com")
+
+        val result = pullStrategy.pull(calendar)
+
+        assertTrue(result is PullResult.Error)
+        assertEquals(0, (result as PullResult.Error).code)
+        assertTrue(result.isRetryable)
+        assertTrue(result.message.contains("Network"))
+    }
+
     // ========== Helper Methods ==========
 
     private fun createCalendar(

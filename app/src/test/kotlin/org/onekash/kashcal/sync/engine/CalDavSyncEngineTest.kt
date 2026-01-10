@@ -12,6 +12,8 @@ import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.sync.session.ErrorType
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.ConflictResult
 import org.onekash.kashcal.sync.strategy.ConflictStrategy
@@ -29,6 +31,7 @@ class CalDavSyncEngineTest {
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var syncLogsDao: SyncLogsDao
+    private lateinit var syncSessionStore: SyncSessionStore
     private lateinit var syncEngine: CalDavSyncEngine
 
     private val testAccount = Account(
@@ -73,6 +76,7 @@ class CalDavSyncEngineTest {
         calendarsDao = mockk()
         pendingOperationsDao = mockk()
         syncLogsDao = mockk()
+        syncSessionStore = mockk(relaxed = true)
 
         syncEngine = CalDavSyncEngine(
             pullStrategy = pullStrategy,
@@ -82,7 +86,7 @@ class CalDavSyncEngineTest {
             calendarsDao = calendarsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
-            syncSessionStore = mockk(relaxed = true),
+            syncSessionStore = syncSessionStore,
             notificationManager = mockk(relaxed = true)
         )
 
@@ -540,5 +544,117 @@ class CalDavSyncEngineTest {
         assert(!error.hasChanges())
         assert(!authError.isSuccess())
         assert(!authError.hasChanges())
+    }
+
+    // ========== Error Type Mapping Tests (v16.8.1) ==========
+
+    @Test
+    fun `syncCalendar maps code -408 to TIMEOUT ErrorType`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = -408,
+            message = "Socket timeout",
+            isRetryable = true
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.TIMEOUT
+            })
+        }
+    }
+
+    @Test
+    fun `syncCalendar maps code -1 to PARSE ErrorType`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = -1,
+            message = "Processing error",
+            isRetryable = false
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.PARSE
+            })
+        }
+    }
+
+    @Test
+    fun `syncCalendar maps code 0 to NETWORK ErrorType`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = 0,
+            message = "Connection failed",
+            isRetryable = true
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.NETWORK
+            })
+        }
+    }
+
+    @Test
+    fun `syncCalendar maps code 401 to AUTH ErrorType`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = 401,
+            message = "Unauthorized",
+            isRetryable = false
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        // Auth error causes early return with session stored
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.AUTH
+            })
+        }
+    }
+
+    @Test
+    fun `syncCalendar maps code 500 to SERVER ErrorType`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = 500,
+            message = "Internal server error",
+            isRetryable = true
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.SERVER
+            })
+        }
+    }
+
+    @Test
+    fun `syncCalendar maps HTTP 408 to TIMEOUT ErrorType`() = runTest {
+        // HTTP 408 Request Timeout should also map to TIMEOUT
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.NoPendingOperations
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.Error(
+            code = 408,
+            message = "Request timeout",
+            isRetryable = true
+        )
+
+        syncEngine.syncCalendar(testCalendar)
+
+        coVerify {
+            syncSessionStore.add(match { session ->
+                session.errorType == ErrorType.TIMEOUT
+            })
+        }
     }
 }

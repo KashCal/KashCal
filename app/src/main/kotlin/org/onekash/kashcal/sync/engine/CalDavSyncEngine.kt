@@ -173,14 +173,7 @@ class CalDavSyncEngine @Inject constructor(
                 is PullResult.Error -> {
                     Log.e(TAG, "Pull failed: ${pullResult.message}")
                     sessionBuilder.setError(
-                        type = org.onekash.kashcal.sync.session.ErrorType.entries.find {
-                            it.name == when (pullResult.code) {
-                                401, 403 -> "AUTH"
-                                408 -> "TIMEOUT"
-                                in 500..599 -> "SERVER"
-                                else -> "NETWORK"
-                            }
-                        } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
+                        type = mapErrorCodeToType(pullResult.code),
                         stage = "pull",
                         message = pullResult.message
                     )
@@ -328,14 +321,7 @@ class CalDavSyncEngine @Inject constructor(
                     is PullResult.NoChanges -> totalCalendars++
                     is PullResult.Error -> {
                         sessionBuilder.setError(
-                            type = org.onekash.kashcal.sync.session.ErrorType.entries.find {
-                                it.name == when (pullResult.code) {
-                                    401, 403 -> "AUTH"
-                                    408 -> "TIMEOUT"
-                                    in 500..599 -> "SERVER"
-                                    else -> "NETWORK"
-                                }
-                            } ?: org.onekash.kashcal.sync.session.ErrorType.NETWORK,
+                            type = mapErrorCodeToType(pullResult.code),
                             stage = "pull",
                             message = pullResult.message
                         )
@@ -589,6 +575,23 @@ class CalDavSyncEngine @Inject constructor(
     private suspend fun getConflictOperationsForCalendar(calendarId: Long): List<org.onekash.kashcal.data.db.entity.PendingOperation> {
         val allConflicts = pendingOperationsDao.getConflictOperations()
         return allConflicts // For now return all - could filter by calendar if needed
+    }
+
+    /**
+     * Map error code to ErrorType for sync session tracking.
+     *
+     * Error code conventions:
+     * - HTTP status codes (401, 403, 5xx) map to their respective types
+     * - -408: SocketTimeoutException (mirrors HTTP 408)
+     * - 0: Generic network error (IOException)
+     * - -1: Non-IO exceptions (parse, processing errors)
+     */
+    private fun mapErrorCodeToType(code: Int): org.onekash.kashcal.sync.session.ErrorType = when (code) {
+        401, 403 -> org.onekash.kashcal.sync.session.ErrorType.AUTH
+        408, -408 -> org.onekash.kashcal.sync.session.ErrorType.TIMEOUT
+        in 500..599 -> org.onekash.kashcal.sync.session.ErrorType.SERVER
+        -1 -> org.onekash.kashcal.sync.session.ErrorType.PARSE
+        else -> org.onekash.kashcal.sync.session.ErrorType.NETWORK
     }
 
     /**

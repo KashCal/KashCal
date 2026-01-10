@@ -774,9 +774,15 @@ class OkHttpCalDavClient : CalDavClient {
         // All retries exhausted
         Log.e(TAG, "All $MAX_RETRIES retries exhausted for ${request.method} ${request.url}: " +
                 "${lastException?.javaClass?.simpleName} - ${lastException?.message}")
-        return lastResult
-            ?: CalDavResult.networkError("Network error after $MAX_RETRIES retries: " +
-                    "${lastException?.javaClass?.simpleName} - ${lastException?.message}")
+        return lastResult ?: when (lastException) {
+            is SocketTimeoutException -> CalDavResult.timeoutError(
+                "Timeout after $MAX_RETRIES retries: ${lastException.message}"
+            )
+            else -> CalDavResult.networkError(
+                "Network error after $MAX_RETRIES retries: " +
+                "${lastException?.javaClass?.simpleName} - ${lastException?.message}"
+            )
+        }
     }
 
     /**

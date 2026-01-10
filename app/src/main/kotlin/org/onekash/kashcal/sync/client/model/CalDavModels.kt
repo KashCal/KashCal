@@ -90,6 +90,9 @@ sealed class CalDavResult<out T> {
     }
 
     companion object {
+        /** Error code for SocketTimeoutException (mirrors HTTP 408 but negative to distinguish) */
+        const val CODE_TIMEOUT = -408
+
         fun <T> success(data: T) = Success(data)
 
         fun error(code: Int, message: String, isRetryable: Boolean = false) =
@@ -97,6 +100,9 @@ sealed class CalDavResult<out T> {
 
         fun networkError(message: String) =
             Error(0, message, isRetryable = true)
+
+        fun timeoutError(message: String) =
+            Error(CODE_TIMEOUT, message, isRetryable = true)
 
         fun authError(message: String) =
             Error(401, message, isRetryable = false)
