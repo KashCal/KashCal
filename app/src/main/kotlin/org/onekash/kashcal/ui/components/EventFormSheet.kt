@@ -18,16 +18,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -57,7 +65,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.util.location.AddressSuggestion
+import org.onekash.kashcal.util.location.LocationSuggestionService
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.CalendarIntentData
@@ -178,7 +190,8 @@ fun EventFormSheet(
     onLoadEvent: (suspend (Long) -> Event?)? = null,
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 1440,
-    onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null
+    onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
+    locationSuggestionService: LocationSuggestionService? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -744,15 +757,81 @@ fun EventFormSheet(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Location field - always visible
-                    OutlinedTextField(
-                        value = state.location,
-                        onValueChange = { state = state.copy(location = it) },
-                        label = { Text("Location") },
-                        placeholder = { Text("Address, room, or meeting link") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
+                    // Location field with address autocomplete
+                    var locationExpanded by remember { mutableStateOf(false) }
+                    var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
+                    var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
+                    var locationSearchJob by remember { mutableStateOf<Job?>(null) }
+
+                    ExposedDropdownMenuBox(
+                        expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                        onExpandedChange = { locationExpanded = it }
+                    ) {
+                        OutlinedTextField(
+                            value = state.location,
+                            onValueChange = { newValue ->
+                                state = state.copy(location = newValue)
+
+                                // Cancel previous search
+                                locationSearchJob?.cancel()
+
+                                // Only search if service available AND looks like address
+                                // (5+ chars, has digit + letter)
+                                if (locationSuggestionService != null &&
+                                    newValue.length >= 5 &&
+                                    newValue.any { it.isDigit() } &&
+                                    newValue.any { it.isLetter() }
+                                ) {
+                                    locationSearchJob = coroutineScope.launch {
+                                        delay(300) // Debounce
+                                        isLoadingLocationSuggestions = true
+                                        locationSuggestions = locationSuggestionService.getSuggestions(newValue)
+                                        isLoadingLocationSuggestions = false
+                                        locationExpanded = locationSuggestions.isNotEmpty()
+                                    }
+                                } else {
+                                    locationSuggestions = emptyList()
+                                    locationExpanded = false
+                                }
+                            },
+                            label = { Text("Location") },
+                            placeholder = { Text("Address, room, or meeting link") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(MenuAnchorType.PrimaryEditable),
+                            singleLine = true,
+                            trailingIcon = {
+                                if (isLoadingLocationSuggestions) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
+                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                }
+                            }
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                            onDismissRequest = { locationExpanded = false }
+                        ) {
+                            locationSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion.displayName) },
+                                    onClick = {
+                                        state = state.copy(location = suggestion.displayName)
+                                        locationExpanded = false
+                                        locationSuggestions = emptyList()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Place, contentDescription = null)
+                                    },
+                                    modifier = Modifier.height(48.dp) // Material touch target
+                                )
+                            }
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 

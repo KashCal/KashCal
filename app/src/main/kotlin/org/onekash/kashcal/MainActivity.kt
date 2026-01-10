@@ -35,6 +35,7 @@ import org.onekash.kashcal.ui.components.OnboardingBanner
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.location.LocationSuggestionService
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
@@ -63,6 +64,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var icsExporter: IcsExporter
+
+    @Inject
+    lateinit var locationSuggestionService: LocationSuggestionService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -535,7 +539,8 @@ class MainActivity : ComponentActivity() {
                                     callback(false)  // Ensure callback fires even on error
                                 }
                             }
-                        }
+                        },
+                        locationSuggestionService = locationSuggestionService
                     )
                 }
 

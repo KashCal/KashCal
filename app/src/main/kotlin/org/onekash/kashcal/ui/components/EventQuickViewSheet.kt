@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ButtonDefaults
@@ -41,10 +44,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
+import org.onekash.kashcal.util.location.looksLikeAddress
+import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
@@ -152,13 +159,50 @@ fun EventQuickViewSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Location
+                    // Location - clickable if looks like address
                     if (!event.location.isNullOrEmpty()) {
-                        Text(
-                            text = event.location,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        val context = LocalContext.current
+                        val isAddress = remember(event.location) { looksLikeAddress(event.location) }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = if (isAddress) {
+                                Modifier.clickable { openInMaps(context, event.location) }
+                            } else {
+                                Modifier
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.Place,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = if (isAddress) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                }
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = event.location,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isAddress) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                                textDecoration = if (isAddress) TextDecoration.Underline else null
+                            )
+                            if (isAddress) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Launch,
+                                    contentDescription = "Open in maps",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
                     }
 
                     // Repeat info
