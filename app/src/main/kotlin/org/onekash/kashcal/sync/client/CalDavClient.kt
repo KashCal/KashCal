@@ -91,6 +91,22 @@ interface CalDavClient {
     ): CalDavResult<List<CalDavEvent>>
 
     /**
+     * Fetch only etags (not iCal data) for events in time range.
+     * Used for etag-based fallback sync when sync-token expires (403/410).
+     * Much lighter than fetchEventsInRange() - returns only href+etag pairs.
+     *
+     * @param calendarUrl Full calendar URL
+     * @param startMillis Start of time range (epoch millis)
+     * @param endMillis End of time range (epoch millis)
+     * @return List of (href, etag) pairs for events in range
+     */
+    suspend fun fetchEtagsInRange(
+        calendarUrl: String,
+        startMillis: Long,
+        endMillis: Long
+    ): CalDavResult<List<Pair<String, String?>>>
+
+    /**
      * Fetch specific events by href using calendar-multiget REPORT.
      * Used to retrieve full iCal data for changed items from sync-collection.
      *

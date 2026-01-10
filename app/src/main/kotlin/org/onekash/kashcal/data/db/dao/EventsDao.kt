@@ -35,6 +35,16 @@ data class EventWithOccurrenceAndColor(
 )
 
 /**
+ * Lightweight etag entry for etag-based sync comparison.
+ * Used by pullWithEtagComparison() to compare local vs server etags
+ * without loading full Event objects (saves memory for large calendars).
+ */
+data class EtagEntry(
+    @ColumnInfo(name = "caldav_url") val caldavUrl: String,
+    @ColumnInfo(name = "etag") val etag: String?
+)
+
+/**
  * Data Access Object for Event operations.
  *
  * Provides comprehensive CRUD and sync operations for calendar events.
@@ -201,6 +211,27 @@ interface EventsDao {
      */
     @Query("SELECT COUNT(*) FROM events WHERE sync_status != 'SYNCED'")
     fun getPendingSyncCount(): Flow<Int>
+
+    /**
+     * Get etags for all synced events in a calendar.
+     *
+     * Used by etag-based fallback sync when sync-token expires (403/410).
+     * Returns only caldav_url + etag pairs (lightweight, no full Event load).
+     *
+     * Filters:
+     * - Only events with caldav_url (synced to server)
+     * - Excludes PENDING_DELETE (will be deleted, not compared)
+     *
+     * @param calendarId Calendar to get etags for
+     * @return List of (caldavUrl, etag) pairs
+     */
+    @Query("""
+        SELECT caldav_url, etag FROM events
+        WHERE calendar_id = :calendarId
+        AND caldav_url IS NOT NULL
+        AND sync_status != 'PENDING_DELETE'
+    """)
+    suspend fun getEtagsByCalendarId(calendarId: Long): List<EtagEntry>
 
     // ========== Write Operations ==========
 

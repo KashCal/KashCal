@@ -173,9 +173,16 @@ class PullStrategy @Inject constructor(
         val reportResult = clientToUse.syncCollection(calendar.caldavUrl, calendar.syncToken)
         if (reportResult.isError()) {
             val error = reportResult as CalDavResult.Error
-            // 403/410 means sync token expired - fall back to full sync
+            // 403/410 means sync token expired - try etag comparison first, then full sync
+            // Etag comparison saves ~96% bandwidth (33KB vs 834KB for 231 events)
             if (error.code == 403 || error.code == 410) {
-                Log.w(TAG, "Sync token expired, falling back to full sync")
+                Log.w(TAG, "Sync token expired (${error.code}), trying etag-based fallback")
+                val etagResult = pullWithEtagComparison(calendar, quirks, clientToUse, sessionBuilder)
+                if (etagResult != null) {
+                    Log.d(TAG, "Etag-based fallback succeeded")
+                    return etagResult
+                }
+                Log.w(TAG, "Etag fallback returned null, falling back to full sync")
                 return pullFull(calendar, quirks, clientToUse, sessionBuilder)
             }
             return PullResult.Error(error.code, error.message, error.isRetryable)
@@ -418,6 +425,173 @@ class PullStrategy @Inject constructor(
         val allChanges = deletedChanges + processResult.changes
 
         // Get new sync token if available
+        val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
+        val newSyncToken = syncTokenResult.getOrNull()
+
+        return PullResult.Success(
+            eventsAdded = processResult.added,
+            eventsUpdated = processResult.updated,
+            eventsDeleted = deleted,
+            newSyncToken = newSyncToken,
+            newCtag = null,
+            changes = allChanges
+        )
+    }
+
+    /**
+     * Etag-based fallback sync when sync-token expires (403/410).
+     *
+     * Instead of fetching all events (~834KB), this fetches only etags (~33KB),
+     * compares with local database, and multigets only changed events.
+     * Saves ~96% bandwidth for large calendars.
+     *
+     * @return PullResult.Success if sync worked, null if should fall through to pullFull()
+     */
+    private suspend fun pullWithEtagComparison(
+        calendar: Calendar,
+        quirks: CalDavQuirks,
+        clientToUse: CalDavClient,
+        sessionBuilder: SyncSessionBuilder?
+    ): PullResult? {
+        Log.d(TAG, "Attempting etag-based fallback sync for calendar: ${calendar.displayName}")
+
+        // Step 1: Load local etags
+        val localEtags = eventsDao.getEtagsByCalendarId(calendar.id)
+        if (localEtags.isEmpty()) {
+            Log.d(TAG, "No local events with etags - falling through to pullFull")
+            return null  // No local data to compare, fall through to full sync
+        }
+
+        // Build local lookup map (caldavUrl -> etag)
+        val localEtagMap = localEtags.associate { it.caldavUrl to it.etag }
+        Log.d(TAG, "Local etags loaded: ${localEtagMap.size} events")
+
+        // Step 2: Fetch server etags (lightweight - no iCal data)
+        val now = System.currentTimeMillis()
+        val startMs = now - PAST_WINDOW_MS
+        val endMs = FUTURE_END_MS
+
+        val etagResult = clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+        if (etagResult.isError()) {
+            val error = etagResult as CalDavResult.Error
+            Log.w(TAG, "fetchEtagsInRange failed: ${error.code} - ${error.message}, falling through to pullFull")
+            return null  // Etag fetch failed, fall through to full sync
+        }
+
+        val serverEtags = (etagResult as CalDavResult.Success).data
+        Log.d(TAG, "Server etags fetched: ${serverEtags.size} events")
+
+        // Build server lookup map (full URL -> etag)
+        val serverEtagMap = serverEtags.associate { (href, etag) ->
+            quirks.buildEventUrl(href, calendar.caldavUrl) to etag
+        }
+
+        // Step 3: Compare etags to find changes
+        // Changed: etag differs (including null -> non-null)
+        // New: on server but not local
+        // Deleted: on local but not server (handled separately)
+
+        val changedUrls = mutableListOf<String>()
+        val newUrls = mutableListOf<String>()
+
+        for ((serverUrl, serverEtag) in serverEtagMap) {
+            val localEtag = localEtagMap[serverUrl]
+            if (localEtag == null) {
+                // New event on server
+                newUrls.add(serverUrl)
+            } else if (localEtag != serverEtag) {
+                // Etag differs - event changed
+                changedUrls.add(serverUrl)
+            }
+            // else: etag matches, no change needed
+        }
+
+        // Find deleted events (on local but not server)
+        val deletedUrls = localEtagMap.keys.filter { it !in serverEtagMap }
+
+        Log.d(TAG, "Etag comparison: changed=${changedUrls.size}, new=${newUrls.size}, deleted=${deletedUrls.size}")
+
+        // Step 4: Handle deletions (respecting pending local changes)
+        var deleted = 0
+        val deletedChanges = mutableListOf<SyncChange>()
+        for (url in deletedUrls) {
+            val event = eventsDao.getByCaldavUrl(url)
+            if (event != null) {
+                // LOCAL-FIRST: Don't delete events with pending local changes
+                if (event.hasPendingChanges()) {
+                    Log.d(TAG, "Skipping deletion of $url - has pending local changes (${event.syncStatus})")
+                    continue
+                }
+                deletedChanges.add(SyncChange(
+                    type = ChangeType.DELETED,
+                    eventId = null,
+                    eventTitle = event.title,
+                    eventStartTs = event.startTs,
+                    isAllDay = event.isAllDay,
+                    isRecurring = !event.rrule.isNullOrBlank(),
+                    calendarName = calendar.displayName,
+                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                ))
+                eventsDao.deleteById(event.id)
+                deleted++
+            }
+        }
+
+        // Step 5: Fetch changed + new events via multiget
+        val hrefsToFetch = (changedUrls + newUrls).map { url ->
+            // Convert full URL back to href for multiget
+            if (url.contains("://")) {
+                "/" + url.substringAfter("://").substringAfter("/")
+            } else {
+                url
+            }
+        }
+
+        if (hrefsToFetch.isEmpty()) {
+            // No changes to fetch, just deletions
+            Log.d(TAG, "No events to fetch - only deletions")
+            sessionBuilder?.addDeleted(deleted)
+
+            // Get new sync token
+            val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
+            val newSyncToken = syncTokenResult.getOrNull()
+
+            return PullResult.Success(
+                eventsAdded = 0,
+                eventsUpdated = 0,
+                eventsDeleted = deleted,
+                newSyncToken = newSyncToken,
+                newCtag = null,
+                changes = deletedChanges
+            )
+        }
+
+        // Track hrefs for session
+        sessionBuilder?.setHrefsReported(hrefsToFetch.size)
+
+        // Fetch events with fallback
+        val fetchResult = fetchEventsWithFallback(
+            clientToUse,
+            calendar.caldavUrl,
+            hrefsToFetch
+        )
+        val serverEvents = fetchResult.events
+
+        if (fetchResult.fallbackUsed) {
+            sessionBuilder?.setFallbackUsed(true)
+            sessionBuilder?.setFetchFailedCount(fetchResult.fetchFailedCount)
+        }
+        sessionBuilder?.setEventsFetched(serverEvents.size)
+
+        Log.d(TAG, "Fetched ${serverEvents.size} events via multiget (requested ${hrefsToFetch.size})")
+
+        // Step 6: Process fetched events
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
+
+        // Combine deletion changes with add/update changes
+        val allChanges = deletedChanges + processResult.changes
+
+        // Get new sync token
         val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
         val newSyncToken = syncTokenResult.getOrNull()
 

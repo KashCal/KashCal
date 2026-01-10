@@ -498,6 +498,45 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
+    override suspend fun fetchEtagsInRange(
+        calendarUrl: String,
+        startMillis: Long,
+        endMillis: Long
+    ): CalDavResult<List<Pair<String, String?>>> = withContext(Dispatchers.IO) {
+        val startDate = quirks.formatDateForQuery(startMillis)
+        val endDate = quirks.formatDateForQuery(endMillis)
+
+        // Same calendar-query as fetchEventsInRange but WITHOUT <c:calendar-data/>
+        // This returns only href+etag pairs, saving ~96% bandwidth (33KB vs 834KB for 231 events)
+        val body = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                <d:prop>
+                    <d:getetag/>
+                </d:prop>
+                <c:filter>
+                    <c:comp-filter name="VCALENDAR">
+                        <c:comp-filter name="VEVENT">
+                            <c:time-range start="$startDate" end="$endDate"/>
+                        </c:comp-filter>
+                    </c:comp-filter>
+                </c:filter>
+            </c:calendar-query>
+        """.trimIndent()
+
+        val request = Request.Builder()
+            .url(calendarUrl)
+            .method("REPORT", body.toRequestBody(XML_MEDIA_TYPE))
+            .header("Depth", "1")
+            .build()
+
+        executeRequest(request) { responseBody ->
+            // Reuse extractChangedItems which parses href+etag pairs
+            val items = quirks.extractChangedItems(responseBody)
+            CalDavResult.success(items)
+        }
+    }
+
     override suspend fun fetchEventsByHref(
         calendarUrl: String,
         hrefs: List<String>
