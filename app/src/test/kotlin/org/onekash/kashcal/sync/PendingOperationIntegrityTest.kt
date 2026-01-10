@@ -24,6 +24,7 @@ import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 /**
  * PendingOperation integrity tests.
@@ -285,6 +286,37 @@ class PendingOperationIntegrityTest {
         )
 
         assertFalse("IN_PROGRESS operation should not be ready", op.isReady(System.currentTimeMillis()))
+    }
+
+    @Test
+    fun `stuck IN_PROGRESS operation can be recovered`() = runTest {
+        val event = createAndInsertEvent("Stuck Event")
+        val twoHoursAgo = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(2)
+
+        val opId = database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = event.id,
+                operation = PendingOperation.OPERATION_UPDATE,
+                status = PendingOperation.STATUS_IN_PROGRESS,
+                updatedAt = twoHoursAgo
+            )
+        )
+
+        // Before recovery - not ready
+        val beforeReady = database.pendingOperationsDao().getReadyOperations(System.currentTimeMillis())
+        assertTrue("Operation should NOT be ready before recovery", beforeReady.none { it.id == opId })
+
+        // Recover stuck operations
+        val oneHourAgo = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
+        val recoveredCount = database.pendingOperationsDao().resetStaleInProgress(
+            cutoff = oneHourAgo,
+            now = System.currentTimeMillis()
+        )
+        assertEquals("Should recover exactly 1 operation", 1, recoveredCount)
+
+        // After recovery - ready for processing
+        val afterReady = database.pendingOperationsDao().getReadyOperations(System.currentTimeMillis())
+        assertTrue("Operation should be ready after recovery", afterReady.any { it.id == opId })
     }
 
     // ==================== Queue Consistency Tests ====================

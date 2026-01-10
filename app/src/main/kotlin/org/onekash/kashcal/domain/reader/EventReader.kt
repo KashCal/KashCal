@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.reader
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
@@ -246,7 +247,7 @@ class EventReader @Inject constructor(
         ) { calendars, occurrences ->
             val visibleCalendarIds = calendars.map { it.id }.toSet()
             occurrences.filter { it.calendarId in visibleCalendarIds }
-        }
+        }.distinctUntilChanged()
     }
 
     /**
@@ -260,7 +261,7 @@ class EventReader @Inject constructor(
         ) { calendars, occurrences ->
             val visibleCalendarIds = calendars.map { it.id }.toSet()
             occurrences.filter { it.calendarId in visibleCalendarIds }
-        }
+        }.distinctUntilChanged()
     }
 
     // ========== Event with Occurrence Data ==========

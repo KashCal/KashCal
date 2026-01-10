@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.robolectric.RobolectricTestRunner
+import java.util.concurrent.TimeUnit
 import org.robolectric.annotation.Config
 
 /**
@@ -620,5 +621,67 @@ class PendingOperationsDaoTest {
         assertEquals(60_000L, delay1)
         assertEquals(120_000L, delay2)
         assertEquals(240_000L, delay3)
+    }
+
+    // ==================== Stale IN_PROGRESS Recovery Tests ====================
+
+    @Test
+    fun `resetStaleInProgress resets old IN_PROGRESS operations`() = runTest {
+        val now = System.currentTimeMillis()
+        val twoHoursAgo = now - TimeUnit.HOURS.toMillis(2)
+        val thirtyMinutesAgo = now - TimeUnit.MINUTES.toMillis(30)
+
+        // Stuck operation (2 hours old) - create PendingOperation directly for updatedAt control
+        val stuckOpId = pendingOpsDao.insert(PendingOperation(
+            eventId = testEventId,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_IN_PROGRESS,
+            updatedAt = twoHoursAgo
+        ))
+
+        // Recent operation (30 min - should NOT be reset)
+        val recentOpId = pendingOpsDao.insert(PendingOperation(
+            eventId = testEventId,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_IN_PROGRESS,
+            updatedAt = thirtyMinutesAgo
+        ))
+
+        // PENDING operation (should NOT be affected)
+        val pendingOpId = pendingOpsDao.insert(PendingOperation(
+            eventId = testEventId,
+            operation = PendingOperation.OPERATION_CREATE,
+            status = PendingOperation.STATUS_PENDING,
+            updatedAt = twoHoursAgo
+        ))
+
+        val oneHourAgo = now - TimeUnit.HOURS.toMillis(1)
+        val resetCount = pendingOpsDao.resetStaleInProgress(cutoff = oneHourAgo, now = now)
+
+        assertEquals(1, resetCount)
+
+        val stuckOp = pendingOpsDao.getById(stuckOpId)
+        assertEquals(PendingOperation.STATUS_PENDING, stuckOp?.status)
+
+        val recentOp = pendingOpsDao.getById(recentOpId)
+        assertEquals(PendingOperation.STATUS_IN_PROGRESS, recentOp?.status)
+
+        val pendingOp = pendingOpsDao.getById(pendingOpId)
+        assertEquals(PendingOperation.STATUS_PENDING, pendingOp?.status)
+    }
+
+    @Test
+    fun `resetStaleInProgress returns zero when no stuck operations`() = runTest {
+        val now = System.currentTimeMillis()
+
+        // Only PENDING and FAILED operations (no IN_PROGRESS)
+        pendingOpsDao.insert(createOperation(status = PendingOperation.STATUS_PENDING))
+        val failedId = pendingOpsDao.insert(createOperation())
+        pendingOpsDao.markFailed(failedId, "Error", now)
+
+        val oneHourAgo = now - TimeUnit.HOURS.toMillis(1)
+        val resetCount = pendingOpsDao.resetStaleInProgress(cutoff = oneHourAgo, now = now)
+
+        assertEquals(0, resetCount)
     }
 }

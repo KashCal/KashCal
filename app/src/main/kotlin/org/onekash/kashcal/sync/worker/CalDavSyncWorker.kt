@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.model.ChangeType
@@ -26,6 +27,7 @@ import org.onekash.kashcal.sync.provider.ProviderRegistry
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.util.maskEmail
 import org.onekash.kashcal.widget.WidgetUpdateManager
+import java.util.concurrent.TimeUnit
 
 /**
  * WorkManager worker for CalDAV synchronization.
@@ -61,7 +63,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val syncScheduler: SyncScheduler,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val reminderScheduler: ReminderScheduler,
-    private val eventReader: EventReader
+    private val eventReader: EventReader,
+    private val pendingOperationsDao: PendingOperationsDao
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -162,6 +165,19 @@ class CalDavSyncWorker @AssistedInject constructor(
         }
 
         try {
+            // Recover any operations stuck in IN_PROGRESS from previous crashed syncs
+            // Uses 1-hour timeout - operations legitimately in progress complete in <2 min
+            val staleCount = run {
+                val oneHourAgo = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
+                pendingOperationsDao.resetStaleInProgress(
+                    cutoff = oneHourAgo,
+                    now = System.currentTimeMillis()
+                )
+            }
+            if (staleCount > 0) {
+                Log.w(TAG, "Recovered $staleCount stuck IN_PROGRESS operations from previous sync")
+            }
+
             val syncResult = when (syncType) {
                 SYNC_TYPE_CALENDAR -> {
                     val calendarId = inputData.getLong(KEY_CALENDAR_ID, -1)

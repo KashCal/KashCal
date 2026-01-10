@@ -179,6 +179,24 @@ interface PendingOperationsDao {
     suspend fun resetAllFailed(now: Long)
 
     /**
+     * Reset operations stuck in IN_PROGRESS state back to PENDING.
+     * Called at sync startup to recover from app crashes during processing.
+     * Uses 1-hour timeout to avoid resetting legitimately active operations.
+     *
+     * @param cutoff Operations with updated_at before this are considered stuck
+     * @param now Current timestamp for updated_at
+     * @return Number of operations reset
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET status = 'PENDING',
+            updated_at = :now
+        WHERE status = 'IN_PROGRESS'
+        AND updated_at < :cutoff
+    """)
+    suspend fun resetStaleInProgress(cutoff: Long, now: Long): Int
+
+    /**
      * Advance MOVE operation to CREATE phase with fresh retry budget.
      *
      * Called after DELETE phase succeeds. Resets retry_count to 0 so CREATE

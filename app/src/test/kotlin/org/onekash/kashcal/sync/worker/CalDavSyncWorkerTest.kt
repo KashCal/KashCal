@@ -14,6 +14,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.sync.auth.CredentialProvider
@@ -66,6 +67,7 @@ class CalDavSyncWorkerTest {
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var eventReader: EventReader
+    private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -92,6 +94,7 @@ class CalDavSyncWorkerTest {
         widgetUpdateManager = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
+        pendingOperationsDao = mockk(relaxed = true)
 
         // Default: return empty input data
         every { workerParams.inputData } returns Data.EMPTY
@@ -140,7 +143,8 @@ class CalDavSyncWorkerTest {
             syncScheduler = syncScheduler,
             widgetUpdateManager = widgetUpdateManager,
             reminderScheduler = reminderScheduler,
-            eventReader = eventReader
+            eventReader = eventReader,
+            pendingOperationsDao = pendingOperationsDao
         )
     }
 
