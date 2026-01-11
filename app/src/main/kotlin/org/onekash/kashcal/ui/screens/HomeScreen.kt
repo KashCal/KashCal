@@ -109,6 +109,7 @@ fun HomeScreen(
     // Event callbacks
     onEventClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, occurrenceStartTs)
     onCreateEvent: () -> Unit = {},
+    onCreateEventWithDateTime: (Long) -> Unit = {},  // timestamp for pre-filled event form
     // Sync callbacks
     onRefresh: () -> Unit = {},
     // Search callbacks
@@ -142,6 +143,7 @@ fun HomeScreen(
     onNextWeek: () -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
+    onWeekPagerPositionChange: (Int) -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {}
 ) {
@@ -248,6 +250,7 @@ fun HomeScreen(
                 onSearchQueryChange = onSearchQueryChange,
                 onAgendaClick = onAgendaClick,
                 onAgendaClose = onAgendaClose,
+                onAgendaViewTypeChange = onAgendaViewTypeChange,
                 onGoToToday = onGoToToday,
                 onSettingsClick = onSettingsClick,
                 onInfoClick = onInfoClick
@@ -303,26 +306,7 @@ fun HomeScreen(
                         }
                         uiState.showAgendaPanel -> {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                // List/Week chips at top
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    FilterChip(
-                                        selected = uiState.agendaViewType == AgendaViewType.LIST,
-                                        onClick = { onAgendaViewTypeChange(AgendaViewType.LIST) },
-                                        label = { Text("List") }
-                                    )
-                                    FilterChip(
-                                        selected = uiState.agendaViewType == AgendaViewType.WEEK,
-                                        onClick = { onAgendaViewTypeChange(AgendaViewType.WEEK) },
-                                        label = { Text("Week") }
-                                    )
-                                }
-
-                                // Content based on view type
+                                // Content based on view type (chips moved to TopAppBar)
                                 when (uiState.agendaViewType) {
                                     AgendaViewType.LIST -> {
                                         if (uiState.isLoadingAgenda) {
@@ -356,7 +340,16 @@ fun HomeScreen(
                                             onEventClick = { event, occurrence ->
                                                 onEventClick(event, occurrence.startTs)
                                             },
+                                            onLongPress = { date, hour, minute ->
+                                                // Convert date/time to timestamp for event creation
+                                                val calendar = JavaCalendar.getInstance().apply {
+                                                    set(date.year, date.monthValue - 1, date.dayOfMonth, hour, minute, 0)
+                                                    set(JavaCalendar.MILLISECOND, 0)
+                                                }
+                                                onCreateEventWithDateTime(calendar.timeInMillis)
+                                            },
                                             onScrollPositionChange = onWeekScrollPositionChange,
+                                            onPagerPositionChange = onWeekPagerPositionChange,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -384,7 +377,16 @@ fun HomeScreen(
                                         onEventClick = { event, occurrence ->
                                             onEventClick(event, occurrence.startTs)
                                         },
+                                        onLongPress = { date, hour, minute ->
+                                            // Convert date/time to timestamp for event creation
+                                            val calendar = JavaCalendar.getInstance().apply {
+                                                set(date.year, date.monthValue - 1, date.dayOfMonth, hour, minute, 0)
+                                                set(JavaCalendar.MILLISECOND, 0)
+                                            }
+                                            onCreateEventWithDateTime(calendar.timeInMillis)
+                                        },
                                         onScrollPositionChange = onWeekScrollPositionChange,
+                                        onPagerPositionChange = onWeekPagerPositionChange,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
@@ -477,6 +479,7 @@ private fun HomeTopAppBar(
     onSearchQueryChange: (String) -> Unit,
     onAgendaClick: () -> Unit,
     onAgendaClose: () -> Unit,
+    onAgendaViewTypeChange: (AgendaViewType) -> Unit,
     onGoToToday: () -> Unit,
     onSettingsClick: () -> Unit,
     onInfoClick: () -> Unit
@@ -528,6 +531,20 @@ private fun HomeTopAppBar(
                         }
                         Text("Agenda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     }
+                },
+                actions = {
+                    FilterChip(
+                        selected = uiState.agendaViewType == AgendaViewType.LIST,
+                        onClick = { onAgendaViewTypeChange(AgendaViewType.LIST) },
+                        label = { Text("List") }
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    FilterChip(
+                        selected = uiState.agendaViewType == AgendaViewType.WEEK,
+                        onClick = { onAgendaViewTypeChange(AgendaViewType.WEEK) },
+                        label = { Text("Week") }
+                    )
+                    Spacer(Modifier.width(8.dp))
                 }
             )
         }

@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components.weekview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -54,21 +56,26 @@ fun DayHeadersRow(
         Box(modifier = Modifier.width(timeColumnWidth))
 
         // Day headers pager (syncs with time grid)
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f),
-            beyondViewportPageCount = 2
-        ) { dayIndex ->
-            val date = WeekViewUtils.getDateForDayIndex(weekStartMs, dayIndex)
-            val isToday = date == today
-            val isWeekend = WeekViewUtils.isWeekend(date)
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            val columnWidth = maxWidth / 3  // Match TimeGrid's 3-day view
 
-            DayHeader(
-                date = date,
-                isToday = isToday,
-                isWeekend = isWeekend,
-                modifier = Modifier.fillMaxWidth()
-            )
+            HorizontalPager(
+                state = pagerState,
+                pageSize = PageSize.Fixed(columnWidth),  // CRITICAL: Show 3 days
+                beyondViewportPageCount = 2,
+                userScrollEnabled = false  // Scrolling controlled by TimeGrid
+            ) { dayIndex ->
+                val date = WeekViewUtils.getDateForDayIndex(weekStartMs, dayIndex)
+                val isToday = date == today
+                val isWeekend = WeekViewUtils.isWeekend(date)
+
+                DayHeader(
+                    date = date,
+                    isToday = isToday,
+                    isWeekend = isWeekend,
+                    modifier = Modifier.width(columnWidth)
+                )
+            }
         }
     }
 }

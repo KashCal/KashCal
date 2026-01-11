@@ -1048,6 +1048,13 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Save week view pager position for context-aware FAB.
+     */
+    fun setWeekViewPagerPosition(position: Int) {
+        _uiState.update { it.copy(weekViewPagerPosition = position) }
+    }
+
+    /**
      * Show week view date picker dialog.
      */
     fun showWeekViewDatePicker() {

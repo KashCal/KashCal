@@ -341,4 +341,74 @@ class WeekViewUtilsTest {
         val dayIndex = WeekViewUtils.getDayIndex(saturdayNoon, weekStart)
         assertEquals(6, dayIndex)
     }
+
+    // ==================== Individual Date Formatting Tests ====================
+
+    @Test
+    fun `formatIndividualDate returns month and day for current year`() {
+        // Use a date in the current year
+        val currentYear = LocalDate.now().year
+        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 0)  // Day 0 = Sunday
+
+        assertEquals("Jan 5", result)
+    }
+
+    @Test
+    fun `formatIndividualDate returns month day and year for different year`() {
+        // Use a date in a future year
+        val weekStart = LocalDate.of(2027, 6, 13)  // Sunday Jun 13, 2027
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 0)
+
+        assertTrue(result.contains("Jun"))
+        assertTrue(result.contains("13"))
+        assertTrue(result.contains("2027"))
+    }
+
+    @Test
+    fun `formatIndividualDate returns correct date for day index 3`() {
+        val currentYear = LocalDate.now().year
+        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 3)  // Day 3 = Wednesday
+
+        assertEquals("Jan 8", result)
+    }
+
+    @Test
+    fun `formatIndividualDate returns correct date for day index 6`() {
+        val currentYear = LocalDate.now().year
+        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Day 6 = Saturday
+
+        assertEquals("Jan 11", result)
+    }
+
+    @Test
+    fun `formatIndividualDate handles month boundary`() {
+        val currentYear = LocalDate.now().year
+        val weekStart = LocalDate.of(currentYear, 1, 26)  // Sunday Jan 26
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Day 6 = Saturday Feb 1
+
+        assertEquals("Feb 1", result)
+    }
 }

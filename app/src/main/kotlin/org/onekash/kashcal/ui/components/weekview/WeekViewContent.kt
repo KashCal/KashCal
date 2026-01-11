@@ -69,6 +69,7 @@ fun WeekViewContent(
     onEventClick: (Event, Occurrence) -> Unit,
     onLongPress: (java.time.LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit,
+    onPagerPositionChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Pager state: 7 pages, one per day, starting at 0 (today)
@@ -77,19 +78,37 @@ fun WeekViewContent(
         pageCount = { 7 }
     )
 
+    // Track pager position for FAB context
+    LaunchedEffect(pagerState.currentPage) {
+        onPagerPositionChange(pagerState.currentPage)
+    }
+
+    // Track navigation direction for pager reset
+    var pendingReset by remember { mutableStateOf<Int?>(null) }
+
     // Auto-advance at week boundary
     LaunchedEffect(pagerState) {
         snapshotFlow {
             pagerState.currentPage to pagerState.currentPageOffsetFraction
         }.collect { (page, offset) ->
             // At last page (day 6 = Saturday), swiping right past threshold
-            if (page == 6 && offset > 0.3f) {
+            if (page == 6 && offset > 0.15f) {
+                pendingReset = 0  // Will reset to Sunday of next week
                 onNextWeek()
             }
             // At first page (day 0 = Sunday), swiping left past threshold
-            if (page == 0 && offset < -0.3f) {
+            if (page == 0 && offset < -0.15f) {
+                pendingReset = 6  // Will reset to Saturday of previous week
                 onPreviousWeek()
             }
+        }
+    }
+
+    // Reset pager when week changes (after week data updates)
+    LaunchedEffect(weekStartMs) {
+        pendingReset?.let { targetPage ->
+            pagerState.scrollToPage(targetPage)
+            pendingReset = null
         }
     }
 

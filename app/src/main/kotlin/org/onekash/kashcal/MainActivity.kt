@@ -256,22 +256,59 @@ class MainActivity : ComponentActivity() {
                     },
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
-                        // Use selected date for date portion, set time to next hour
-                        val selectedDateMillis = if (uiState.selectedDate > 946684800000L) {
-                            uiState.selectedDate
+
+                        // Check if in week view
+                        val isInWeekView = uiState.calendarViewType == org.onekash.kashcal.ui.viewmodels.CalendarViewType.WEEK ||
+                            (uiState.showAgendaPanel && uiState.agendaViewType == org.onekash.kashcal.ui.viewmodels.AgendaViewType.WEEK)
+
+                        val eventTimestamp = if (isInWeekView && uiState.weekViewStartDate > 0L) {
+                            // Week view: use current pager position and scroll position
+                            val dayIndex = uiState.weekViewPagerPosition
+
+                            // Calculate visible hour from scroll position
+                            // Hour height is 60.dp, scroll position is in pixels
+                            // Approximate conversion: scroll / densityDp / 60 + 6 (START_HOUR)
+                            // Use a simplified approach: estimate based on screen density (~2.75)
+                            val hourHeightPx = 60 * 2.75f  // Approximate for typical density
+                            val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + 6  // START_HOUR = 6
+                            val hour = visibleHour.coerceIn(6, 22)
+
+                            val eventCal = java.util.Calendar.getInstance().apply {
+                                timeInMillis = uiState.weekViewStartDate
+                                add(java.util.Calendar.DAY_OF_YEAR, dayIndex)
+                                set(java.util.Calendar.HOUR_OF_DAY, hour)
+                                set(java.util.Calendar.MINUTE, 0)
+                                set(java.util.Calendar.SECOND, 0)
+                            }
+                            Log.d(TAG, "Week view FAB: dayIndex=$dayIndex, hour=$hour")
+                            eventCal.timeInMillis
                         } else {
-                            System.currentTimeMillis()
+                            // Month view: use selected date with next hour
+                            val selectedDateMillis = if (uiState.selectedDate > 946684800000L) {
+                                uiState.selectedDate
+                            } else {
+                                System.currentTimeMillis()
+                            }
+                            val now = java.util.Calendar.getInstance()
+                            val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
+                            val eventCal = java.util.Calendar.getInstance().apply {
+                                timeInMillis = selectedDateMillis
+                                set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                                set(java.util.Calendar.MINUTE, 0)
+                                set(java.util.Calendar.SECOND, 0)
+                            }
+                            eventCal.timeInMillis
                         }
-                        val now = java.util.Calendar.getInstance()
-                        val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
-                        val eventCal = java.util.Calendar.getInstance().apply {
-                            timeInMillis = selectedDateMillis
-                            set(java.util.Calendar.HOUR_OF_DAY, nextHour)
-                            set(java.util.Calendar.MINUTE, 0)
-                            set(java.util.Calendar.SECOND, 0)
-                        }
+
                         editingEventId = null
-                        newEventStartTs = eventCal.timeInMillis / 1000
+                        newEventStartTs = eventTimestamp / 1000
+                        eventOccurrenceTs = null
+                        showEventFormSheet = true
+                    },
+                    onCreateEventWithDateTime = { timestampMs ->
+                        Log.d(TAG, "Create event with date/time: $timestampMs")
+                        editingEventId = null
+                        newEventStartTs = timestampMs / 1000
                         eventOccurrenceTs = null
                         showEventFormSheet = true
                     },
@@ -314,6 +351,7 @@ class MainActivity : ComponentActivity() {
                     onNextWeek = { homeViewModel.navigateToNextWeek() },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
+                    onWeekPagerPositionChange = { position -> homeViewModel.setWeekViewPagerPosition(position) },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() }
                 )

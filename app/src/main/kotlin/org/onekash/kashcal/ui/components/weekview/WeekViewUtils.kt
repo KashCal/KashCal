@@ -482,4 +482,24 @@ object WeekViewUtils {
         val dayFormatter = DateTimeFormatter.ofPattern("EEE d", Locale.getDefault())
         return date.format(dayFormatter)
     }
+
+    /**
+     * Format individual date for week header (e.g., "Jan 4").
+     * Shows year only if not current year.
+     *
+     * @param weekStartMs Start of the week in milliseconds
+     * @param dayIndex Day index (0=Sunday, 1=Monday, ...)
+     * @return Formatted date string (e.g., "Jan 4" or "Jan 4, 2027")
+     */
+    fun formatIndividualDate(weekStartMs: Long, dayIndex: Int): String {
+        val date = getDateForDayIndex(weekStartMs, dayIndex)
+        val now = LocalDate.now()
+        val showYear = date.year != now.year
+        val formatter = if (showYear) {
+            DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+        } else {
+            DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
+        }
+        return date.format(formatter)
+    }
 }

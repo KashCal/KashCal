@@ -197,14 +197,15 @@ private fun TimeLabel(
 }
 
 /**
- * Format hour for display (e.g., "9 AM", "12 PM").
+ * Format hour for display (e.g., "9a", "12p").
+ * Uses compact format to fit in narrow time column.
  */
 private fun formatHour(hour: Int): String {
     return when {
-        hour == 0 -> "12 AM"
-        hour < 12 -> "$hour AM"
-        hour == 12 -> "12 PM"
-        else -> "${hour - 12} PM"
+        hour == 0 -> "12a"
+        hour < 12 -> "${hour}a"
+        hour == 12 -> "12p"
+        else -> "${hour - 12}p"
     }
 }
 

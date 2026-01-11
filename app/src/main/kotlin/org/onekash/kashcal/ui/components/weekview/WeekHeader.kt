@@ -2,11 +2,14 @@ package org.onekash.kashcal.ui.components.weekview
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -22,23 +25,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 /**
- * Week view header with navigation arrows and tappable date range.
+ * Week view header with navigation arrows and individual date labels.
  *
  * Shows:
  * - Previous week arrow (jumps 7 days back)
- * - Current visible date range (e.g., "Jan 6-8" or "Jan 6-8, 2027")
+ * - Individual dates for visible days (e.g., "Jan 4  Jan 5  Jan 6")
  * - Next week arrow (jumps 7 days forward)
  *
- * Tapping the date range opens the date picker.
+ * Tapping the date area opens the date picker.
+ * The date labels sync with the main TimeGrid pager.
  *
  * @param weekStartMs Start of the current week in milliseconds
- * @param pagerState Pager state for deriving visible range
+ * @param pagerState Pager state for syncing date labels
  * @param onPreviousWeek Called when previous week arrow is tapped
  * @param onNextWeek Called when next week arrow is tapped
- * @param onDatePickerRequest Called when date range is tapped (opens date picker)
+ * @param onDatePickerRequest Called when date area is tapped (opens date picker)
  * @param modifier Modifier for the header row
  */
 @Composable
@@ -50,23 +55,14 @@ fun WeekHeader(
     onDatePickerRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Calculate visible date range based on pager position
-    val visibleRange by remember(weekStartMs) {
-        derivedStateOf {
-            WeekViewUtils.formatHeaderRange(
-                weekStartMs = weekStartMs,
-                pagerPosition = pagerState.currentPage,
-                visibleDays = 3
-            )
-        }
-    }
+    // Reserve same width as time labels column (48.dp) for alignment
+    val timeColumnWidth = 48.dp
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // Previous week button
         IconButton(onClick = onPreviousWeek) {
@@ -77,19 +73,32 @@ fun WeekHeader(
             )
         }
 
-        // Tappable date range
-        Row(
+        // Spacer to align with time column (minus button width)
+        Spacer(modifier = Modifier.width(timeColumnWidth - 48.dp))
+
+        // Individual dates synced with pager
+        BoxWithConstraints(
             modifier = Modifier
+                .weight(1f)
                 .clickable(onClick = onDatePickerRequest)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = visibleRange,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            val columnWidth = maxWidth / 3
+
+            HorizontalPager(
+                state = pagerState,
+                pageSize = PageSize.Fixed(columnWidth),
+                beyondViewportPageCount = 2,
+                userScrollEnabled = false  // Scrolling controlled by main pager
+            ) { dayIndex ->
+                Text(
+                    text = WeekViewUtils.formatIndividualDate(weekStartMs, dayIndex),
+                    modifier = Modifier.width(columnWidth),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
         // Next week button

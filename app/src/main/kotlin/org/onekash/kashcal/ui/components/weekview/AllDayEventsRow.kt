@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -84,24 +86,31 @@ fun AllDayEventsRow(
             }
 
             // All-day events pager (syncs with time grid)
-            HorizontalPager(
-                state = pagerState,
+            BoxWithConstraints(
                 modifier = Modifier
                     .weight(1f)
                     .heightIn(max = if (expanded) MAX_EXPANDED_HEIGHT else MAX_COLLAPSED_HEIGHT)
-                    .animateContentSize(),
-                beyondViewportPageCount = 2
-            ) { dayIndex ->
-                val dayEvents = allDayEvents[dayIndex] ?: emptyList()
+                    .animateContentSize()
+            ) {
+                val columnWidth = maxWidth / 3  // Match TimeGrid's 3-day view
 
-                AllDayColumn(
-                    events = dayEvents,
-                    calendarColors = calendarColors,
-                    expanded = expanded,
-                    onExpand = { expanded = true },
-                    onEventClick = onEventClick,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                HorizontalPager(
+                    state = pagerState,
+                    pageSize = PageSize.Fixed(columnWidth),  // CRITICAL: Show 3 days
+                    beyondViewportPageCount = 2,
+                    userScrollEnabled = false  // Scrolling controlled by TimeGrid
+                ) { dayIndex ->
+                    val dayEvents = allDayEvents[dayIndex] ?: emptyList()
+
+                    AllDayColumn(
+                        events = dayEvents,
+                        calendarColors = calendarColors,
+                        expanded = expanded,
+                        onExpand = { expanded = true },
+                        onEventClick = onEventClick,
+                        modifier = Modifier.width(columnWidth)
+                    )
+                }
             }
         }
 
