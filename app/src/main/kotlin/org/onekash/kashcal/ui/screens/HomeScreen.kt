@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -156,6 +157,16 @@ fun HomeScreen(
     val initialPage = 600
     val pagerState = rememberPagerState(initialPage = initialPage) { 1200 }
     val coroutineScope = rememberCoroutineScope()
+
+    // Handle system back button - close overlays before closing app
+    // Priority: Search (if active) > Agenda (if active) > Default (close app)
+    BackHandler(enabled = uiState.isSearchActive || uiState.showAgendaPanel) {
+        when {
+            uiState.isSearchActive -> onSearchClose()
+            uiState.showAgendaPanel -> onAgendaClose()
+            // else: do nothing - back will be handled by Activity (close app)
+        }
+    }
 
     // Today's date for reference
     val todayCal = JavaCalendar.getInstance()
