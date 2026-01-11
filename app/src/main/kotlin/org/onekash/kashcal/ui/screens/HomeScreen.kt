@@ -138,14 +138,12 @@ fun HomeScreen(
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
     // View type callbacks
     onViewTypeChange: (CalendarViewType) -> Unit = {},
-    // Week view callbacks
-    onPreviousWeek: () -> Unit = {},
-    onNextWeek: () -> Unit = {},
+    // Week view callbacks (infinite day pager)
+    onDayPagerPageChanged: (Int) -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
     onWeekDatePickerDismiss: () -> Unit = {},
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
-    onWeekPagerPositionChange: (Int) -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {}
@@ -337,7 +335,6 @@ fun HomeScreen(
                                     }
                                     AgendaViewType.THREE_DAYS -> {
                                         WeekViewContent(
-                                            weekStartMs = uiState.weekViewStartDate,
                                             timedOccurrences = uiState.weekViewOccurrences,
                                             timedEvents = uiState.weekViewEvents,
                                             allDayOccurrences = uiState.weekViewAllDayOccurrences,
@@ -346,8 +343,6 @@ fun HomeScreen(
                                             isLoading = uiState.isLoadingWeekView,
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
-                                            onPreviousWeek = onPreviousWeek,
-                                            onNextWeek = onNextWeek,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { event, occurrence ->
                                                 onEventClick(event, occurrence.startTs)
@@ -361,9 +356,9 @@ fun HomeScreen(
                                                 onCreateEventWithDateTime(calendar.timeInMillis)
                                             },
                                             onScrollPositionChange = onWeekScrollPositionChange,
-                                            onPagerPositionChange = onWeekPagerPositionChange,
-                                            pendingPagerPosition = uiState.pendingWeekViewPagerPosition,
-                                            onPendingPagerPositionConsumed = onClearPendingWeekPagerPosition,
+                                            onPageChanged = onDayPagerPageChanged,
+                                            pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
+                                            onNavigationConsumed = onClearPendingWeekPagerPosition,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -376,7 +371,6 @@ fun HomeScreen(
                                 CalendarViewType.WEEK -> {
                                     // Week view
                                     WeekViewContent(
-                                        weekStartMs = uiState.weekViewStartDate,
                                         timedOccurrences = uiState.weekViewOccurrences,
                                         timedEvents = uiState.weekViewEvents,
                                         allDayOccurrences = uiState.weekViewAllDayOccurrences,
@@ -385,8 +379,6 @@ fun HomeScreen(
                                         isLoading = uiState.isLoadingWeekView,
                                         error = uiState.weekViewError,
                                         scrollPosition = uiState.weekViewScrollPosition,
-                                        onPreviousWeek = onPreviousWeek,
-                                        onNextWeek = onNextWeek,
                                         onDatePickerRequest = onWeekDatePickerRequest,
                                         onEventClick = { event, occurrence ->
                                             onEventClick(event, occurrence.startTs)
@@ -400,9 +392,9 @@ fun HomeScreen(
                                             onCreateEventWithDateTime(calendar.timeInMillis)
                                         },
                                         onScrollPositionChange = onWeekScrollPositionChange,
-                                        onPagerPositionChange = onWeekPagerPositionChange,
-                                        pendingPagerPosition = uiState.pendingWeekViewPagerPosition,
-                                        onPendingPagerPositionConsumed = onClearPendingWeekPagerPosition,
+                                        onPageChanged = onDayPagerPageChanged,
+                                        pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
+                                        onNavigationConsumed = onClearPendingWeekPagerPosition,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }

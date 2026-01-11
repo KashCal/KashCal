@@ -346,14 +346,12 @@ class MainActivity : ComponentActivity() {
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
                     // View type callbacks
                     onViewTypeChange = { viewType -> homeViewModel.setCalendarViewType(viewType) },
-                    // Week view callbacks
-                    onPreviousWeek = { homeViewModel.navigateToPreviousWeek() },
-                    onNextWeek = { homeViewModel.navigateToNextWeek() },
+                    // Week view callbacks (infinite day pager)
+                    onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
-                    onWeekPagerPositionChange = { position -> homeViewModel.setWeekViewPagerPosition(position) },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() }

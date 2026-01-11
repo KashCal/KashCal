@@ -36,6 +36,87 @@ object WeekViewUtils {
     val MIN_EVENT_HEIGHT = 20.dp
     val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
+    // Infinite day pager constants
+    // Using large page count for pseudo-infinite scrolling
+    // HorizontalPager is lazy - large pageCount costs nothing
+    const val TOTAL_DAY_PAGES = Int.MAX_VALUE
+    const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
+    const val VISIBLE_DAYS = 3  // 3-day view
+
+    // ==================== Day Pager Functions ====================
+
+    /**
+     * Convert a pager page index to an absolute date.
+     * CENTER_DAY_PAGE corresponds to today.
+     *
+     * @param page The pager page index
+     * @return LocalDate for that page
+     */
+    fun pageToDate(page: Int): LocalDate {
+        val today = LocalDate.now()
+        val dayOffset = page.toLong() - CENTER_DAY_PAGE.toLong()
+        return today.plusDays(dayOffset)
+    }
+
+    /**
+     * Convert an absolute date to a pager page index.
+     * Today corresponds to CENTER_DAY_PAGE.
+     *
+     * @param date The date to convert
+     * @return Page index for that date
+     */
+    fun dateToPage(date: LocalDate): Int {
+        val today = LocalDate.now()
+        val dayOffset = ChronoUnit.DAYS.between(today, date)
+        return (CENTER_DAY_PAGE.toLong() + dayOffset).toInt()
+    }
+
+    /**
+     * Get the date range for currently visible days.
+     *
+     * @param currentPage The current (leftmost) visible page
+     * @param visibleDays Number of visible days (default: 3)
+     * @return Pair of (startDate, endDate) inclusive
+     */
+    fun getVisibleDateRange(currentPage: Int, visibleDays: Int = VISIBLE_DAYS): Pair<LocalDate, LocalDate> {
+        val startDate = pageToDate(currentPage)
+        val endDate = startDate.plusDays((visibleDays - 1).toLong())
+        return startDate to endDate
+    }
+
+    /**
+     * Get the date range for event loading (visible + buffer).
+     * Loads extra days to ensure smooth scrolling.
+     *
+     * @param currentPage The current (leftmost) visible page
+     * @param visibleDays Number of visible days
+     * @param bufferDays Days to load before and after visible range
+     * @return Pair of (startDate, endDate) inclusive
+     */
+    fun getLoadingDateRange(
+        currentPage: Int,
+        visibleDays: Int = VISIBLE_DAYS,
+        bufferDays: Int = 7
+    ): Pair<LocalDate, LocalDate> {
+        val startDate = pageToDate(currentPage).minusDays(bufferDays.toLong())
+        val endDate = pageToDate(currentPage).plusDays((visibleDays - 1 + bufferDays).toLong())
+        return startDate to endDate
+    }
+
+    /**
+     * Convert LocalDate to epoch milliseconds at start of day in system timezone.
+     */
+    fun dateToEpochMs(date: LocalDate): Long {
+        return date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    }
+
+    /**
+     * Convert epoch milliseconds to LocalDate in system timezone.
+     */
+    fun epochMsToDate(epochMs: Long): LocalDate {
+        return Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate()
+    }
+
     /**
      * Time slot classification for events.
      * Events are categorized based on their relationship to the visible grid (6am-11pm).

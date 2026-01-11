@@ -2444,23 +2444,28 @@ class HomeViewModelTest {
     // ==================== Week View Tests ====================
 
     @Test
-    fun `setAgendaViewType THREE_DAYS initializes weekViewStartDate`() = runTest {
+    fun `setAgendaViewType THREE_DAYS sets pending pager position to today`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially weekViewStartDate should be 0
-        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
+        // Initially pendingWeekViewPagerPosition should be null
+        assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
         // Switch to 3-day view
         viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
         advanceUntilIdle()
 
-        // weekViewStartDate should now be set (non-zero)
-        assertTrue("weekViewStartDate should be > 0", viewModel.uiState.value.weekViewStartDate > 0L)
+        // With infinite pager, switching to 3-day view sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
+        assertEquals(
+            "pendingWeekViewPagerPosition should be CENTER_DAY_PAGE",
+            expectedPage,
+            viewModel.uiState.value.pendingWeekViewPagerPosition
+        )
     }
 
     @Test
-    fun `goToToday in 3-day view navigates week view not month view`() = runTest {
+    fun `goToToday in 3-day view sets pending pager position to CENTER_DAY_PAGE`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -2469,24 +2474,22 @@ class HomeViewModelTest {
         viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
         advanceUntilIdle()
 
-        // Get the initial week start (should be current week)
-        val initialWeekStart = viewModel.uiState.value.weekViewStartDate
-        assertTrue("weekViewStartDate should be set", initialWeekStart > 0L)
-
-        // Navigate to next week
-        viewModel.navigateToNextWeek()
+        // Clear any pending navigation from initialization
+        viewModel.clearPendingWeekViewPagerPosition()
         advanceUntilIdle()
+        assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        val nextWeekStart = viewModel.uiState.value.weekViewStartDate
-        assertTrue("Should be a different week", nextWeekStart != initialWeekStart)
-
-        // Call goToToday - should navigate back to current week
+        // Call goToToday - should set pending position to CENTER_DAY_PAGE (today)
         viewModel.goToToday()
         advanceUntilIdle()
 
-        // Should be back to current week
-        val todayWeekStart = viewModel.uiState.value.weekViewStartDate
-        assertEquals("Should return to today's week", initialWeekStart, todayWeekStart)
+        // With infinite pager, goToToday sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
+        assertEquals(
+            "Should navigate to CENTER_DAY_PAGE (today)",
+            expectedPage,
+            viewModel.uiState.value.pendingWeekViewPagerPosition
+        )
     }
 
     @Test
@@ -2518,25 +2521,28 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `onWeekViewDateSelected sets pending pager position for selected day`() = runTest {
+    fun `onWeekViewDateSelected sets pending pager position for selected date`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         // Initial state: no pending position
         assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        // Select Monday Jan 13, 2025 (week starts Sunday Jan 12)
-        // Monday = day 1 in the week
-        val mondayMs = getTimestamp(2025, 0, 13, 12, 0) // January 13, 2025
-        viewModel.onWeekViewDateSelected(mondayMs)
+        // Select a date 5 days from today
+        val today = java.time.LocalDate.now()
+        val targetDate = today.plusDays(5)
+        val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
+            .plusHours(12)
+            .toInstant()
+            .toEpochMilli()
+
+        viewModel.onWeekViewDateSelected(targetMs)
         advanceUntilIdle()
 
-        // Should set pending pager position to day offset (1 for Monday)
-        assertEquals(1, viewModel.uiState.value.pendingWeekViewPagerPosition)
-
-        // Week start should be Sunday Jan 12
-        val weekStart = viewModel.uiState.value.weekViewStartDate
-        assertTrue("weekViewStartDate should be set", weekStart > 0L)
+        // With infinite pager, pendingWeekViewPagerPosition is the absolute page number
+        // dateToPage(date) = CENTER_DAY_PAGE + days from today
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE + 5
+        assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
     }
 
     @Test
@@ -2544,13 +2550,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set a pending position via date selection
-        val wednesdayMs = getTimestamp(2025, 0, 15, 12, 0) // January 15, 2025 (Wednesday)
-        viewModel.onWeekViewDateSelected(wednesdayMs)
+        // Set a pending position via date selection (7 days from today)
+        val today = java.time.LocalDate.now()
+        val targetDate = today.plusDays(7)
+        val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
+            .plusHours(12)
+            .toInstant()
+            .toEpochMilli()
+
+        viewModel.onWeekViewDateSelected(targetMs)
         advanceUntilIdle()
 
-        // Should have pending position (3 for Wednesday)
-        assertEquals(3, viewModel.uiState.value.pendingWeekViewPagerPosition)
+        // Should have pending position (absolute page number)
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE + 7
+        assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
         // Clear it
         viewModel.clearPendingWeekViewPagerPosition()

@@ -42,9 +42,11 @@ import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.util.Calendar
 import java.util.Locale
@@ -115,6 +117,12 @@ class HomeViewModel @Inject constructor(
 
     // Job for week view events observation (cancel previous when week changes)
     private var weekEventsJob: Job? = null
+
+    // Job for debounced day pager loading (cancel previous on fast swipe)
+    private var dayPagerLoadJob: Job? = null
+
+    // Track current loaded date range to avoid redundant loads
+    private var currentLoadedRange: Pair<LocalDate, LocalDate>? = null
 
     // Suppress sync indicator for silent syncs (cold start, resume, force full sync with banner)
     // Only pull-to-refresh shows the spinning icon since it's user-initiated
@@ -960,22 +968,19 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Navigate week view to today (today becomes first visible day).
+     * Navigate week view to today (infinite pager: today = CENTER_DAY_PAGE).
      */
     fun goToTodayWeek() {
-        val now = System.currentTimeMillis()
-        val todayStart = getWeekStart(now)
+        val targetPage = WeekViewUtils.CENTER_DAY_PAGE
 
-        // Calculate today's day offset (0=Sun, 1=Mon, etc)
-        val dayOffset = ((now - todayStart) / (24 * 60 * 60 * 1000)).toInt().coerceIn(0, 6)
+        // Clear cached range to force reload
+        currentLoadedRange = null
 
+        // Set pending navigation and trigger load
         _uiState.update {
-            it.copy(
-                weekViewStartDate = todayStart,
-                pendingWeekViewPagerPosition = dayOffset
-            )
+            it.copy(pendingWeekViewPagerPosition = targetPage)
         }
-        loadEventsForWeek(todayStart)
+        onDayPagerPageChanged(targetPage)
     }
 
     /**
@@ -1059,6 +1064,144 @@ class HomeViewModel @Inject constructor(
         return calendar.timeInMillis
     }
 
+    // ==================== Infinite Day Pager Functions ====================
+
+    /**
+     * Called when the day pager page changes (user swipes or animates).
+     * Debounces loading to avoid rapid API calls during fast swipes.
+     *
+     * @param currentPage The current (leftmost visible) page in the pager
+     */
+    fun onDayPagerPageChanged(currentPage: Int) {
+        // Update pager position immediately for FAB context
+        _uiState.update { it.copy(weekViewPagerPosition = currentPage) }
+
+        // Cancel previous debounce job
+        dayPagerLoadJob?.cancel()
+        dayPagerLoadJob = viewModelScope.launch {
+            // Debounce: wait for scroll to settle
+            delay(300)
+
+            // Get visible and loading date ranges
+            val (visibleStart, visibleEnd) = WeekViewUtils.getVisibleDateRange(currentPage)
+            val (loadStart, loadEnd) = WeekViewUtils.getLoadingDateRange(currentPage)
+
+            // Skip if range already loaded
+            currentLoadedRange?.let { (loadedStart, loadedEnd) ->
+                if (visibleStart >= loadedStart && visibleEnd <= loadedEnd) {
+                    Log.d(TAG, "Day pager: range already loaded, skipping")
+                    return@launch
+                }
+            }
+
+            // Load events for new range
+            Log.d(TAG, "Day pager: loading range $loadStart to $loadEnd")
+            loadEventsForDateRange(loadStart, loadEnd)
+            currentLoadedRange = loadStart to loadEnd
+        }
+    }
+
+    /**
+     * Load events for a date range (used by infinite day pager).
+     * More flexible than loadEventsForWeek - accepts any date range.
+     *
+     * @param startDate First day to load (inclusive)
+     * @param endDate Last day to load (inclusive)
+     */
+    private fun loadEventsForDateRange(startDate: LocalDate, endDate: LocalDate) {
+        // Cancel previous load
+        weekEventsJob?.cancel()
+
+        val startMs = WeekViewUtils.dateToEpochMs(startDate)
+        val endMs = WeekViewUtils.dateToEpochMs(endDate.plusDays(1)) // exclusive end
+
+        _uiState.update { it.copy(isLoadingWeekView = true, weekViewError = null) }
+
+        weekEventsJob = viewModelScope.launch {
+            try {
+                eventReader.getOccurrencesWithEventsInRangeFlow(startMs, endMs)
+                    .distinctUntilChanged()
+                    .collect { occurrencesWithEvents ->
+                        // Filter by visible calendars
+                        val visibleCalendarIds = _uiState.value.calendars
+                            .filter { it.isVisible }
+                            .map { it.id }
+                            .toSet()
+
+                        val visible = occurrencesWithEvents.filter {
+                            it.occurrence.calendarId in visibleCalendarIds
+                        }
+
+                        // Separate timed and all-day events
+                        val timedOccurrences = visible
+                            .filter { !it.event.isAllDay }
+                            .sortedBy { it.occurrence.startTs }
+
+                        val allDayOccurrences = visible
+                            .filter { it.event.isAllDay }
+                            .sortedBy { it.occurrence.startTs }
+
+                        _uiState.update {
+                            it.copy(
+                                weekViewOccurrences = timedOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
+                                weekViewEvents = timedOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                weekViewAllDayOccurrences = allDayOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
+                                weekViewAllDayEvents = allDayOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                isLoadingWeekView = false
+                            )
+                        }
+
+                        Log.d(TAG, "Day pager updated: ${timedOccurrences.size} timed, ${allDayOccurrences.size} all-day")
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading events for date range", e)
+                _uiState.update {
+                    it.copy(
+                        isLoadingWeekView = false,
+                        weekViewError = "Failed to load events: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Navigate infinite day pager to today (CENTER_DAY_PAGE).
+     * Returns the target page for the pager to scroll to.
+     */
+    fun goToTodayInDayPager(): Int {
+        val targetPage = WeekViewUtils.CENTER_DAY_PAGE
+
+        // Clear cached range to force reload
+        currentLoadedRange = null
+
+        // Trigger immediate load for today's range
+        onDayPagerPageChanged(targetPage)
+
+        return targetPage
+    }
+
+    /**
+     * Navigate infinite day pager to a specific date.
+     * Returns the target page for the pager to scroll to.
+     *
+     * @param dateMs Date in epoch milliseconds
+     */
+    fun navigateDayPagerToDate(dateMs: Long): Int {
+        val date = WeekViewUtils.epochMsToDate(dateMs)
+        val targetPage = WeekViewUtils.dateToPage(date)
+
+        // Clear cached range to force reload
+        currentLoadedRange = null
+
+        // Trigger immediate load
+        onDayPagerPageChanged(targetPage)
+
+        return targetPage
+    }
+
     /**
      * Save week view scroll position for state preservation.
      */
@@ -1089,25 +1232,23 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Handle date selection from week view date picker.
-     * Navigates to the week containing the selected date and positions pager
-     * so the selected date is the first visible day.
+     * Navigates the infinite day pager to the selected date.
      */
     fun onWeekViewDateSelected(dateMs: Long) {
         hideWeekViewDatePicker()
 
-        val weekStart = getWeekStart(dateMs)
+        // Convert date to page in infinite pager
+        val date = WeekViewUtils.epochMsToDate(dateMs)
+        val targetPage = WeekViewUtils.dateToPage(date)
 
-        // Calculate day offset (0=Sun, 1=Mon, etc)
-        val dayOffset = ((dateMs - weekStart) / (24 * 60 * 60 * 1000)).toInt().coerceIn(0, 6)
+        // Clear cached range to force reload
+        currentLoadedRange = null
 
-        // Update week and set pending pager position
+        // Set pending navigation and trigger load
         _uiState.update {
-            it.copy(
-                weekViewStartDate = weekStart,
-                pendingWeekViewPagerPosition = dayOffset
-            )
+            it.copy(pendingWeekViewPagerPosition = targetPage)
         }
-        loadEventsForWeek(weekStart)
+        onDayPagerPageChanged(targetPage)
     }
 
     /**
@@ -1519,16 +1660,17 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Set the agenda panel view type (agenda or 3-day).
-     * When switching to 3-day view, load week data if needed.
+     * When switching to 3-day view, load events for today's range.
      */
     fun setAgendaViewType(viewType: AgendaViewType) {
         _uiState.update { it.copy(agendaViewType = viewType) }
 
-        // Load week data when switching to 3-day view
+        // Load events when switching to 3-day view
         if (viewType == AgendaViewType.THREE_DAYS) {
-            // Initialize week view to current week if not already set
-            if (_uiState.value.weekViewStartDate == 0L) {
-                goToTodayWeek()  // Sets weekViewStartDate AND loads events
+            // Always initialize to today when switching to 3-day view
+            // (infinite pager centered on today)
+            if (currentLoadedRange == null) {
+                goToTodayWeek()
             }
         }
     }

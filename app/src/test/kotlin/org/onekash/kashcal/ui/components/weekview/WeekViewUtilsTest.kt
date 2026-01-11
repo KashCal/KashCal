@@ -7,9 +7,136 @@ import java.time.ZoneId
 
 /**
  * Unit tests for WeekViewUtils.
- * Tests week calculations, range formatting, time snapping, and event clamping.
+ * Tests week calculations, range formatting, time snapping, event clamping,
+ * and infinite day pager functions.
  */
 class WeekViewUtilsTest {
+
+    // ==================== Day Pager Tests ====================
+
+    @Test
+    fun `pageToDate returns today for CENTER_DAY_PAGE`() {
+        val today = LocalDate.now()
+        val result = WeekViewUtils.pageToDate(WeekViewUtils.CENTER_DAY_PAGE)
+        assertEquals(today, result)
+    }
+
+    @Test
+    fun `pageToDate returns tomorrow for CENTER_DAY_PAGE + 1`() {
+        val tomorrow = LocalDate.now().plusDays(1)
+        val result = WeekViewUtils.pageToDate(WeekViewUtils.CENTER_DAY_PAGE + 1)
+        assertEquals(tomorrow, result)
+    }
+
+    @Test
+    fun `pageToDate returns yesterday for CENTER_DAY_PAGE - 1`() {
+        val yesterday = LocalDate.now().minusDays(1)
+        val result = WeekViewUtils.pageToDate(WeekViewUtils.CENTER_DAY_PAGE - 1)
+        assertEquals(yesterday, result)
+    }
+
+    @Test
+    fun `pageToDate handles large positive offset`() {
+        val futureDate = LocalDate.now().plusDays(365)
+        val result = WeekViewUtils.pageToDate(WeekViewUtils.CENTER_DAY_PAGE + 365)
+        assertEquals(futureDate, result)
+    }
+
+    @Test
+    fun `pageToDate handles large negative offset`() {
+        val pastDate = LocalDate.now().minusDays(365)
+        val result = WeekViewUtils.pageToDate(WeekViewUtils.CENTER_DAY_PAGE - 365)
+        assertEquals(pastDate, result)
+    }
+
+    @Test
+    fun `dateToPage returns CENTER_DAY_PAGE for today`() {
+        val today = LocalDate.now()
+        val result = WeekViewUtils.dateToPage(today)
+        assertEquals(WeekViewUtils.CENTER_DAY_PAGE, result)
+    }
+
+    @Test
+    fun `dateToPage returns CENTER_DAY_PAGE + 1 for tomorrow`() {
+        val tomorrow = LocalDate.now().plusDays(1)
+        val result = WeekViewUtils.dateToPage(tomorrow)
+        assertEquals(WeekViewUtils.CENTER_DAY_PAGE + 1, result)
+    }
+
+    @Test
+    fun `dateToPage returns CENTER_DAY_PAGE - 1 for yesterday`() {
+        val yesterday = LocalDate.now().minusDays(1)
+        val result = WeekViewUtils.dateToPage(yesterday)
+        assertEquals(WeekViewUtils.CENTER_DAY_PAGE - 1, result)
+    }
+
+    @Test
+    fun `pageToDate and dateToPage are inverse operations`() {
+        // Test various dates
+        val testDates = listOf(
+            LocalDate.now(),
+            LocalDate.now().plusDays(100),
+            LocalDate.now().minusDays(100),
+            LocalDate.now().plusDays(1000),
+            LocalDate.now().minusDays(1000)
+        )
+
+        for (date in testDates) {
+            val page = WeekViewUtils.dateToPage(date)
+            val roundTrip = WeekViewUtils.pageToDate(page)
+            assertEquals("Round trip failed for $date", date, roundTrip)
+        }
+    }
+
+    @Test
+    fun `getVisibleDateRange returns 3 consecutive days`() {
+        val (start, end) = WeekViewUtils.getVisibleDateRange(WeekViewUtils.CENTER_DAY_PAGE)
+
+        val today = LocalDate.now()
+        assertEquals(today, start)
+        assertEquals(today.plusDays(2), end)
+    }
+
+    @Test
+    fun `getVisibleDateRange respects visibleDays parameter`() {
+        val (start, end) = WeekViewUtils.getVisibleDateRange(
+            WeekViewUtils.CENTER_DAY_PAGE,
+            visibleDays = 5
+        )
+
+        val today = LocalDate.now()
+        assertEquals(today, start)
+        assertEquals(today.plusDays(4), end)
+    }
+
+    @Test
+    fun `getLoadingDateRange includes buffer days`() {
+        val (start, end) = WeekViewUtils.getLoadingDateRange(
+            WeekViewUtils.CENTER_DAY_PAGE,
+            visibleDays = 3,
+            bufferDays = 7
+        )
+
+        val today = LocalDate.now()
+        assertEquals(today.minusDays(7), start)
+        assertEquals(today.plusDays(9), end)  // 2 visible + 7 buffer
+    }
+
+    @Test
+    fun `dateToEpochMs and epochMsToDate are inverse operations`() {
+        val testDates = listOf(
+            LocalDate.now(),
+            LocalDate.of(2025, 1, 1),
+            LocalDate.of(2024, 12, 31),
+            LocalDate.of(2030, 6, 15)
+        )
+
+        for (date in testDates) {
+            val epochMs = WeekViewUtils.dateToEpochMs(date)
+            val roundTrip = WeekViewUtils.epochMsToDate(epochMs)
+            assertEquals("Round trip failed for $date", date, roundTrip)
+        }
+    }
 
     // ==================== Week Calculation Tests ====================
 
