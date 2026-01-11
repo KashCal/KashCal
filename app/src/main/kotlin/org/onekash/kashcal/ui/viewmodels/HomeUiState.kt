@@ -158,6 +158,8 @@ data class HomeUiState(
     val pendingNavigateToToday: Boolean = false,
     /** Navigate to specific month (year, month) - consumed after use */
     val pendingNavigateToMonth: Pair<Int, Int>? = null,
+    /** Scroll agenda list to top (today) - consumed after use */
+    val pendingScrollAgendaToTop: Boolean = false,
 
     // === SNACKBAR EVENTS ===
     /** Pending snackbar message */

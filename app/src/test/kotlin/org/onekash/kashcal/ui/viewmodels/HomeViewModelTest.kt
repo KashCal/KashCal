@@ -2521,6 +2521,67 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `goToToday in agenda list view sets pendingScrollAgendaToTop`() = runTest {
+        val testOccurrencesWithEvents = listOf(
+            EventReader.OccurrenceWithEvent(
+                occurrence = testOccurrences[0],
+                event = testEvents[0],
+                calendar = testCalendars[0]
+            )
+        )
+        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Open agenda panel (defaults to AGENDA view type)
+        viewModel.toggleAgendaPanel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showAgendaPanel)
+        assertEquals(AgendaViewType.AGENDA, viewModel.uiState.value.agendaViewType)
+
+        // Initially pendingScrollAgendaToTop should be false
+        assertFalse(viewModel.uiState.value.pendingScrollAgendaToTop)
+
+        // Call goToToday
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        // Should set pendingScrollAgendaToTop = true
+        assertTrue(viewModel.uiState.value.pendingScrollAgendaToTop)
+    }
+
+    @Test
+    fun `clearScrollAgendaToTop clears the flag`() = runTest {
+        val testOccurrencesWithEvents = listOf(
+            EventReader.OccurrenceWithEvent(
+                occurrence = testOccurrences[0],
+                event = testEvents[0],
+                calendar = testCalendars[0]
+            )
+        )
+        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Open agenda panel and trigger scroll
+        viewModel.toggleAgendaPanel()
+        advanceUntilIdle()
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.pendingScrollAgendaToTop)
+
+        // Clear the flag
+        viewModel.clearScrollAgendaToTop()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.pendingScrollAgendaToTop)
+    }
+
+    @Test
     fun `onWeekViewDateSelected sets pending pager position for selected date`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

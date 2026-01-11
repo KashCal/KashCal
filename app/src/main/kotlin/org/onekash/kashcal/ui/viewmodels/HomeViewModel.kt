@@ -795,6 +795,13 @@ class HomeViewModel @Inject constructor(
             return
         }
 
+        // If in agenda list view, scroll to top (today)
+        if (_uiState.value.showAgendaPanel &&
+            _uiState.value.agendaViewType == AgendaViewType.AGENDA) {
+            _uiState.update { it.copy(pendingScrollAgendaToTop = true) }
+            return
+        }
+
         // Month view: navigate to today's month and select today
         val today = Calendar.getInstance()
         val year = today.get(Calendar.YEAR)
@@ -816,6 +823,13 @@ class HomeViewModel @Inject constructor(
      */
     fun clearNavigateToToday() {
         _uiState.update { it.copy(pendingNavigateToToday = false) }
+    }
+
+    /**
+     * Clear the scroll agenda to top flag (consumed by UI).
+     */
+    fun clearScrollAgendaToTop() {
+        _uiState.update { it.copy(pendingScrollAgendaToTop = false) }
     }
 
     /**

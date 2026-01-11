@@ -353,6 +353,8 @@ class MainActivity : ComponentActivity() {
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
+                    // Agenda scroll callback
+                    onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() }
                 )

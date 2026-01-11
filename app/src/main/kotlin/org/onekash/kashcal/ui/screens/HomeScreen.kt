@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -145,6 +147,8 @@ fun HomeScreen(
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
+    // Agenda scroll callback
+    onClearScrollAgendaToTop: () -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {}
 ) {
@@ -316,6 +320,17 @@ fun HomeScreen(
                                     onTodayClick = onGoToToday
                                 )
 
+                                // Agenda list scroll state
+                                val agendaListState = rememberLazyListState()
+
+                                // Handle scroll to top when Today button is pressed in agenda view
+                                LaunchedEffect(uiState.pendingScrollAgendaToTop) {
+                                    if (uiState.pendingScrollAgendaToTop) {
+                                        agendaListState.animateScrollToItem(0)
+                                        onClearScrollAgendaToTop()
+                                    }
+                                }
+
                                 // Content based on view type (chips moved to TopAppBar)
                                 when (uiState.agendaViewType) {
                                     AgendaViewType.AGENDA -> {
@@ -327,6 +342,7 @@ fun HomeScreen(
                                             AgendaContent(
                                                 occurrences = uiState.agendaOccurrences,
                                                 calendars = uiState.calendars,
+                                                listState = agendaListState,
                                                 onEventClick = { event, occurrenceTs ->
                                                     onEventClick(event, occurrenceTs)
                                                 }
@@ -1153,6 +1169,7 @@ private data class AgendaDisplayItem(
 private fun AgendaContent(
     occurrences: ImmutableList<OccurrenceWithEvent>,
     calendars: ImmutableList<Calendar>,
+    listState: LazyListState = rememberLazyListState(),
     onEventClick: (Event, Long) -> Unit  // (event, occurrenceStartTs)
 ) {
     val colorMap = remember(calendars) { calendars.associate { it.id to Color(it.color) } }
@@ -1204,6 +1221,7 @@ private fun AgendaContent(
         }
     } else {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
