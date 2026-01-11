@@ -82,6 +82,7 @@ fun DayHeadersRow(
 
 /**
  * Single day header showing day name and date.
+ * Apple style: "Mon 6" format with filled circle for today.
  */
 @Composable
 private fun DayHeader(
@@ -90,6 +91,7 @@ private fun DayHeader(
     isWeekend: Boolean,
     modifier: Modifier = Modifier
 ) {
+    // 3-letter day name (Mon, Tue, etc.) - not uppercase
     val dayName = remember(date) {
         date.format(DateTimeFormatter.ofPattern("EEE", Locale.getDefault()))
     }
@@ -98,50 +100,44 @@ private fun DayHeader(
 
     // Colors based on state
     val textColor = when {
-        isToday -> MaterialTheme.colorScheme.onPrimary
         isWeekend -> MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.onSurface
     }
 
-    val dayNameColor = when {
-        isWeekend -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-
-    Column(
-        modifier = modifier.padding(vertical = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Row(
+        modifier = modifier.padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        // Day name (Mon, Tue, etc.)
+        // Day name
         Text(
-            text = dayName.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = dayNameColor,
+            text = dayName,
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
             textAlign = TextAlign.Center
         )
 
-        // Day number with optional today highlight
+        // Day number with optional today highlight (filled circle)
         Box(
             modifier = Modifier
-                .padding(top = 2.dp)
+                .padding(start = 4.dp)
                 .then(
                     if (isToday) {
                         Modifier
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     } else {
-                        Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     }
                 ),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = dayNumber,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                color = textColor,
+                color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
                 textAlign = TextAlign.Center
             )
         }

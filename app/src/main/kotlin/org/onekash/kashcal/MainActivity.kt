@@ -350,6 +350,8 @@ class MainActivity : ComponentActivity() {
                     onPreviousWeek = { homeViewModel.navigateToPreviousWeek() },
                     onNextWeek = { homeViewModel.navigateToNextWeek() },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
+                    onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
+                    onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
                     onWeekPagerPositionChange = { position -> homeViewModel.setWeekViewPagerPosition(position) },
                     // Snackbar callback

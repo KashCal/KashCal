@@ -777,8 +777,17 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Navigate to today and select it.
+     * Context-aware: If in 3-day view, navigates week view to today.
      */
     fun goToToday() {
+        // If in 3-day view, navigate the week view instead of month view
+        if (_uiState.value.showAgendaPanel &&
+            _uiState.value.agendaViewType == AgendaViewType.THREE_DAYS) {
+            goToTodayWeek()
+            return
+        }
+
+        // Month view: navigate to today's month and select today
         val today = Calendar.getInstance()
         val year = today.get(Calendar.YEAR)
         val month = today.get(Calendar.MONTH)
@@ -1488,8 +1497,7 @@ class HomeViewModel @Inject constructor(
         if (viewType == AgendaViewType.THREE_DAYS) {
             // Initialize week view to current week if not already set
             if (_uiState.value.weekViewStartDate == 0L) {
-                val weekStart = getWeekStart(System.currentTimeMillis())
-                loadEventsForWeek(weekStart)
+                goToTodayWeek()  // Sets weekViewStartDate AND loads events
             }
         }
     }

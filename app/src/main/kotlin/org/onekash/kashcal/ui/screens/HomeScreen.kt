@@ -142,6 +142,8 @@ fun HomeScreen(
     onPreviousWeek: () -> Unit = {},
     onNextWeek: () -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
+    onWeekDatePickerDismiss: () -> Unit = {},
+    onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
     onWeekPagerPositionChange: (Int) -> Unit = {},
     // Snackbar callback
@@ -474,6 +476,15 @@ fun HomeScreen(
             selectedDateMs = uiState.searchDateRangeStart,
             onDateSelected = onSearchDateSelected,
             onDismiss = onSearchHideDatePicker
+        )
+    }
+
+    // Week view date picker bottom sheet
+    if (uiState.showWeekViewDatePicker) {
+        WeekViewDatePickerSheet(
+            currentWeekStartMs = uiState.weekViewStartDate,
+            onDateSelected = onWeekDateSelected,
+            onDismiss = onWeekDatePickerDismiss
         )
     }
 }
@@ -1610,6 +1621,79 @@ private fun SearchDatePickerSheet(
                 displayedMonth = displayedMonth,
                 onDateSelect = { dateMs ->
                     onDateSelected(dateMs)
+                },
+                onMonthChange = { newMonth ->
+                    displayedMonth = newMonth
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Cancel button
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Cancel")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+    }
+}
+
+// ==================== Week View Date Picker ====================
+
+/**
+ * Modal bottom sheet for selecting a date to navigate to in the 3-day view.
+ * Single tap on any date navigates to the week containing that date.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WeekViewDatePickerSheet(
+    currentWeekStartMs: Long,
+    onDateSelected: (Long) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Stable current date - prevents recomposition jank
+    val stableCurrentDate = remember(currentWeekStartMs) {
+        if (currentWeekStartMs > 0L) currentWeekStartMs else System.currentTimeMillis()
+    }
+
+    // Track displayed month - opens to current week's month
+    var displayedMonth by remember {
+        mutableStateOf(
+            JavaCalendar.getInstance().apply {
+                timeInMillis = stableCurrentDate
+            }
+        )
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+        ) {
+            // Header
+            Text(
+                text = "Go to date",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+            // Calendar picker
+            InlineDatePickerContent(
+                selectedDateMillis = stableCurrentDate,
+                displayedMonth = displayedMonth,
+                onDateSelect = { dateMs ->
+                    onDateSelected(dateMs)
+                    onDismiss()
                 },
                 onMonthChange = { newMonth ->
                     displayedMonth = newMonth

@@ -2441,6 +2441,82 @@ class HomeViewModelTest {
         assertEquals(null, viewModel.uiState.value.pendingAction)
     }
 
+    // ==================== Week View Tests ====================
+
+    @Test
+    fun `setAgendaViewType THREE_DAYS initializes weekViewStartDate`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Initially weekViewStartDate should be 0
+        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
+
+        // Switch to 3-day view
+        viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
+        advanceUntilIdle()
+
+        // weekViewStartDate should now be set (non-zero)
+        assertTrue("weekViewStartDate should be > 0", viewModel.uiState.value.weekViewStartDate > 0L)
+    }
+
+    @Test
+    fun `goToToday in 3-day view navigates week view not month view`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Switch to 3-day view within agenda panel
+        viewModel.toggleAgendaPanel()  // Open agenda panel
+        viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
+        advanceUntilIdle()
+
+        // Get the initial week start (should be current week)
+        val initialWeekStart = viewModel.uiState.value.weekViewStartDate
+        assertTrue("weekViewStartDate should be set", initialWeekStart > 0L)
+
+        // Navigate to next week
+        viewModel.navigateToNextWeek()
+        advanceUntilIdle()
+
+        val nextWeekStart = viewModel.uiState.value.weekViewStartDate
+        assertTrue("Should be a different week", nextWeekStart != initialWeekStart)
+
+        // Call goToToday - should navigate back to current week
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        // Should be back to current week
+        val todayWeekStart = viewModel.uiState.value.weekViewStartDate
+        assertEquals("Should return to today's week", initialWeekStart, todayWeekStart)
+    }
+
+    @Test
+    fun `goToToday in month view still navigates month view`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Make sure agenda panel is closed (month view)
+        if (viewModel.uiState.value.showAgendaPanel) {
+            viewModel.toggleAgendaPanel()
+            advanceUntilIdle()
+        }
+
+        // Navigate to a different month
+        viewModel.setViewingMonth(2027, 5)  // June 2027
+        advanceUntilIdle()
+
+        assertEquals(2027, viewModel.uiState.value.viewingYear)
+        assertEquals(5, viewModel.uiState.value.viewingMonth)
+
+        // Call goToToday
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        // Should navigate to today's month
+        val today = JavaCalendar.getInstance()
+        assertEquals(today.get(JavaCalendar.YEAR), viewModel.uiState.value.viewingYear)
+        assertEquals(today.get(JavaCalendar.MONTH), viewModel.uiState.value.viewingMonth)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun getTimestamp(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {

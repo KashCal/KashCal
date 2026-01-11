@@ -1,7 +1,6 @@
 package org.onekash.kashcal.ui.components.weekview
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -56,9 +56,9 @@ fun EventBlock(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = Color(color).copy(alpha = 0.2f)
-    val borderColor = Color(color)
-    val textColor = MaterialTheme.colorScheme.onSurface
+    // Google style: solid fill, white text, no border
+    val backgroundColor = Color(color)
+    val textColor = Color.White
 
     // Determine what content fits based on height
     val showTime = height >= HEIGHT_THRESHOLD_TIME
@@ -69,24 +69,19 @@ fun EventBlock(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))
             .background(backgroundColor)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(4.dp)
-            )
             .clickable(onClick = onClick)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 4.dp, vertical = 2.dp)
+                .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
             // Clamp indicator (start) - shown above title
             if (clampedStart) {
                 Text(
                     text = "\u2191 ${WeekViewUtils.formatClampIndicatorTime(originalStartMinutes)}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = borderColor,
+                    color = textColor.copy(alpha = 0.8f),
                     maxLines = 1
                 )
             }
@@ -95,6 +90,7 @@ fun EventBlock(
             Text(
                 text = event.title,
                 style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
                 color = textColor,
                 maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis
@@ -127,7 +123,7 @@ fun EventBlock(
                 Text(
                     text = "\u2193 ${WeekViewUtils.formatClampIndicatorTime(originalEndMinutes)}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = borderColor,
+                    color = textColor.copy(alpha = 0.8f),
                     maxLines = 1
                 )
             }
@@ -138,6 +134,7 @@ fun EventBlock(
 /**
  * Compact event block for overflow display ("+N more" list).
  * Shows only title and time in a single line.
+ * Google style: solid fill, white text.
  */
 @Composable
 fun CompactEventBlock(
@@ -147,25 +144,19 @@ fun CompactEventBlock(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = Color(color).copy(alpha = 0.15f)
-    val borderColor = Color(color)
+    val backgroundColor = Color(color)
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))
             .background(backgroundColor)
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(4.dp)
-            )
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = "${event.title} - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs)}",
             style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = Color.White,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
