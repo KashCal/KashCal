@@ -302,6 +302,7 @@ class MainActivity : ComponentActivity() {
                     // Agenda callbacks
                     onAgendaClick = { homeViewModel.toggleAgendaPanel() },
                     onAgendaClose = { homeViewModel.toggleAgendaPanel() },
+                    onAgendaViewTypeChange = { viewType -> homeViewModel.setAgendaViewType(viewType) },
                     // Year overlay callbacks
                     onMonthHeaderClick = { homeViewModel.toggleYearOverlay() },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },

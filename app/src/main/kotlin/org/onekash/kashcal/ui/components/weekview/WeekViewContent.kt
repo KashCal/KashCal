@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
  * @param onNextWeek Called when next week arrow tapped
  * @param onDatePickerRequest Called when date range tapped
  * @param onEventClick Called when an event is tapped
+ * @param onLongPress Called when user long-presses empty space (date, hour, minute)
  * @param onScrollPositionChange Called when scroll position changes
  * @param modifier Modifier for the container
  */
@@ -65,6 +67,7 @@ fun WeekViewContent(
     onNextWeek: () -> Unit,
     onDatePickerRequest: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit,
+    onLongPress: (java.time.LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -73,6 +76,22 @@ fun WeekViewContent(
         initialPage = 0,
         pageCount = { 7 }
     )
+
+    // Auto-advance at week boundary
+    LaunchedEffect(pagerState) {
+        snapshotFlow {
+            pagerState.currentPage to pagerState.currentPageOffsetFraction
+        }.collect { (page, offset) ->
+            // At last page (day 6 = Saturday), swiping right past threshold
+            if (page == 6 && offset > 0.3f) {
+                onNextWeek()
+            }
+            // At first page (day 0 = Sunday), swiping left past threshold
+            if (page == 0 && offset < -0.3f) {
+                onPreviousWeek()
+            }
+        }
+    }
 
     // Scroll state for time grid
     val scrollState = rememberScrollState(initial = scrollPosition)
@@ -156,6 +175,7 @@ fun WeekViewContent(
                         scrollState = scrollState,
                         onEventClick = onEventClick,
                         onOverflowClick = { events -> overflowEvents = events },
+                        onLongPress = onLongPress,
                         onScrollPositionChange = onScrollPositionChange,
                         modifier = Modifier.fillMaxSize()
                     )

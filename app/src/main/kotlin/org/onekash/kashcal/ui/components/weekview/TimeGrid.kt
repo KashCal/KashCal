@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -56,6 +57,7 @@ import java.time.ZoneId
  * @param scrollState Scroll state for time grid vertical scroll
  * @param onEventClick Called when an event is tapped
  * @param onOverflowClick Called when "+N more" badge is tapped
+ * @param onLongPress Called when user long-presses on empty space (date, hour, minute)
  * @param onScrollPositionChange Called when scroll position changes (for state preservation)
  * @param modifier Modifier for the container
  */
@@ -69,6 +71,7 @@ fun TimeGrid(
     scrollState: androidx.compose.foundation.ScrollState = rememberScrollState(),
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onLongPress: (java.time.LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -109,7 +112,10 @@ fun TimeGrid(
         }
 
         // Day columns pager
-        Box(modifier = Modifier.weight(1f)) {
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            // Calculate column width for 3-day view
+            val columnWidth = maxWidth / 3
+
             // Scrollable content
             Column(
                 modifier = Modifier
@@ -127,10 +133,11 @@ fun TimeGrid(
                         totalHours = WeekViewUtils.TOTAL_HOURS
                     )
 
-                    // Pager with 7 pages (one per day)
+                    // Pager with 7 pages (one per day), 3 visible at a time
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier.fillMaxSize(),
+                        pageSize = PageSize.Fixed(columnWidth),  // CRITICAL: Show 3 days
                         beyondViewportPageCount = 2  // Keep adjacent pages ready
                     ) { dayIndex ->
                         val date = WeekViewUtils.getDateForDayIndex(weekStartMs, dayIndex)
@@ -144,7 +151,8 @@ fun TimeGrid(
                             isToday = dayIndex == todayIndex,
                             onEventClick = onEventClick,
                             onOverflowClick = onOverflowClick,
-                            modifier = Modifier.fillMaxSize()
+                            onLongPress = onLongPress,
+                            modifier = Modifier.width(columnWidth)
                         )
                     }
 
@@ -154,6 +162,7 @@ fun TimeGrid(
                             hourHeight = hourHeight,
                             todayIndex = todayIndex,
                             pagerState = pagerState,
+                            columnWidth = columnWidth,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -230,12 +239,14 @@ private fun GridLines(
 /**
  * Current time indicator (red line).
  * Only visible when today's column is in view.
+ * Positioned on today's column only.
  */
 @Composable
 private fun CurrentTimeIndicator(
     hourHeight: Dp,
     todayIndex: Int,
     pagerState: PagerState,
+    columnWidth: Dp,
     modifier: Modifier = Modifier
 ) {
     val currentTime = LocalTime.now()
@@ -252,22 +263,24 @@ private fun CurrentTimeIndicator(
     val density = LocalDensity.current
     val yOffset = with(density) { (minutesFromStart.toFloat() / 60f * hourHeight.toPx()).toDp() }
 
-    // Check if today's column is visible (current page or adjacent)
+    // Calculate today's visible position (0, 1, or 2 for the 3 visible columns)
     val currentPage = pagerState.currentPage
-    val isVisible = todayIndex in (currentPage - 1)..(currentPage + 3)
+    val todayVisibleOffset = todayIndex - currentPage
 
-    if (!isVisible) return
+    // Only show if today is in visible range (0, 1, or 2)
+    if (todayVisibleOffset !in 0..2) return
 
+    val xOffset = with(density) { (columnWidth * todayVisibleOffset) }
     val indicatorColor = MaterialTheme.colorScheme.error
 
     Box(
         modifier = modifier
-            .offset(y = yOffset)
-            .fillMaxWidth()
+            .offset(x = xOffset, y = yOffset)
+            .width(columnWidth)
             .height(2.dp)
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            // Draw horizontal line
+            // Draw horizontal line across today's column
             drawLine(
                 color = indicatorColor,
                 start = Offset(0f, size.height / 2),

@@ -65,11 +65,11 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
-import org.onekash.kashcal.ui.components.CalendarBottomNavBar
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
+import org.onekash.kashcal.ui.viewmodels.AgendaViewType
 import org.onekash.kashcal.ui.viewmodels.CalendarViewType
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
@@ -130,6 +130,7 @@ fun HomeScreen(
     // Agenda callbacks
     onAgendaClick: () -> Unit = {},
     onAgendaClose: () -> Unit = {},
+    onAgendaViewTypeChange: (org.onekash.kashcal.ui.viewmodels.AgendaViewType) -> Unit = {},
     // Year overlay callbacks
     onMonthHeaderClick: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
@@ -260,15 +261,7 @@ fun HomeScreen(
                 Icon(Icons.Default.Add, contentDescription = "Create event")
             }
         },
-        bottomBar = {
-            // Only show bottom nav when not in search or agenda mode
-            if (!uiState.isSearchActive && !uiState.showAgendaPanel) {
-                CalendarBottomNavBar(
-                    currentViewType = uiState.calendarViewType,
-                    onViewTypeChange = onViewTypeChange
-                )
-            }
-        }
+        // No bottom bar - week view is now in agenda panel
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -309,18 +302,65 @@ fun HomeScreen(
                             )
                         }
                         uiState.showAgendaPanel -> {
-                            if (uiState.isLoadingAgenda) {
-                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                    CircularProgressIndicator()
+                            Column(modifier = Modifier.fillMaxSize()) {
+                                // List/Week chips at top
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    FilterChip(
+                                        selected = uiState.agendaViewType == AgendaViewType.LIST,
+                                        onClick = { onAgendaViewTypeChange(AgendaViewType.LIST) },
+                                        label = { Text("List") }
+                                    )
+                                    FilterChip(
+                                        selected = uiState.agendaViewType == AgendaViewType.WEEK,
+                                        onClick = { onAgendaViewTypeChange(AgendaViewType.WEEK) },
+                                        label = { Text("Week") }
+                                    )
                                 }
-                            } else {
-                                AgendaContent(
-                                    occurrences = uiState.agendaOccurrences,
-                                    calendars = uiState.calendars,
-                                    onEventClick = { event, occurrenceTs ->
-                                        onEventClick(event, occurrenceTs)
+
+                                // Content based on view type
+                                when (uiState.agendaViewType) {
+                                    AgendaViewType.LIST -> {
+                                        if (uiState.isLoadingAgenda) {
+                                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                                CircularProgressIndicator()
+                                            }
+                                        } else {
+                                            AgendaContent(
+                                                occurrences = uiState.agendaOccurrences,
+                                                calendars = uiState.calendars,
+                                                onEventClick = { event, occurrenceTs ->
+                                                    onEventClick(event, occurrenceTs)
+                                                }
+                                            )
+                                        }
                                     }
-                                )
+                                    AgendaViewType.WEEK -> {
+                                        WeekViewContent(
+                                            weekStartMs = uiState.weekViewStartDate,
+                                            timedOccurrences = uiState.weekViewOccurrences,
+                                            timedEvents = uiState.weekViewEvents,
+                                            allDayOccurrences = uiState.weekViewAllDayOccurrences,
+                                            allDayEvents = uiState.weekViewAllDayEvents,
+                                            calendars = uiState.calendars,
+                                            isLoading = uiState.isLoadingWeekView,
+                                            error = uiState.weekViewError,
+                                            scrollPosition = uiState.weekViewScrollPosition,
+                                            onPreviousWeek = onPreviousWeek,
+                                            onNextWeek = onNextWeek,
+                                            onDatePickerRequest = onWeekDatePickerRequest,
+                                            onEventClick = { event, occurrence ->
+                                                onEventClick(event, occurrence.startTs)
+                                            },
+                                            onScrollPositionChange = onWeekScrollPositionChange,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
                             }
                         }
                         else -> {
