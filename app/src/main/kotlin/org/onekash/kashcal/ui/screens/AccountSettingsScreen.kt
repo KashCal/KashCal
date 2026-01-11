@@ -50,6 +50,7 @@ import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SignOutConfirmationSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
+import org.onekash.kashcal.ui.shared.formatDurationShort
 import org.onekash.kashcal.ui.shared.formatReminderShort
 import org.onekash.kashcal.ui.shared.maskEmail
 
@@ -121,8 +122,10 @@ fun AccountSettingsScreen(
     // Default reminder preferences
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 720,
+    defaultEventDuration: Int = 30,
     onDefaultReminderTimedChange: (Int) -> Unit = {},
     onDefaultReminderAllDayChange: (Int) -> Unit = {},
+    onDefaultEventDurationChange: (Int) -> Unit = {},
     // ICS Import/Export
     onImportCalendarFile: () -> Unit = {},
     onExportCalendar: (Long) -> Unit = {},
@@ -180,8 +183,10 @@ fun AccountSettingsScreen(
                     onRequestNotificationPermission = onRequestNotificationPermission,
                     defaultReminderTimed = defaultReminderTimed,
                     defaultReminderAllDay = defaultReminderAllDay,
+                    defaultEventDuration = defaultEventDuration,
                     onDefaultReminderTimedChange = onDefaultReminderTimedChange,
                     onDefaultReminderAllDayChange = onDefaultReminderAllDayChange,
+                    onDefaultEventDurationChange = onDefaultEventDurationChange,
                     onImportCalendarFile = onImportCalendarFile,
                     onExportCalendar = onExportCalendar,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
@@ -266,8 +271,10 @@ private fun FlatSettingsContent(
     onRequestNotificationPermission: () -> Unit,
     defaultReminderTimed: Int,
     defaultReminderAllDay: Int,
+    defaultEventDuration: Int,
     onDefaultReminderTimedChange: (Int) -> Unit,
     onDefaultReminderAllDayChange: (Int) -> Unit,
+    onDefaultEventDurationChange: (Int) -> Unit,
     onImportCalendarFile: () -> Unit,
     onExportCalendar: (Long) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
@@ -442,7 +449,7 @@ private fun FlatSettingsContent(
                 SettingsRow(
                     icon = Icons.Default.Notifications,
                     label = "Default Alerts",
-                    subtitle = "${formatReminderShort(defaultReminderTimed)} · ${formatReminderShort(defaultReminderAllDay)}",
+                    subtitle = "${formatReminderShort(defaultReminderTimed)} · ${formatReminderShort(defaultReminderAllDay)} · ${formatDurationShort(defaultEventDuration)}",
                     onClick = { showAlertsSheet = true }
                 )
             }
@@ -513,8 +520,10 @@ private fun FlatSettingsContent(
             sheetState = alertsSheetState,
             defaultReminderTimed = defaultReminderTimed,
             defaultReminderAllDay = defaultReminderAllDay,
+            defaultEventDuration = defaultEventDuration,
             onTimedReminderChange = onDefaultReminderTimedChange,
             onAllDayReminderChange = onDefaultReminderAllDayChange,
+            onEventDurationChange = onDefaultEventDurationChange,
             onDismiss = { showAlertsSheet = false }
         )
     }

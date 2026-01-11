@@ -83,6 +83,7 @@ class SettingsActivity : ComponentActivity() {
                 val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
                 val defaultReminderTimed by viewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by viewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
+                val defaultEventDuration by viewModel.defaultEventDuration.collectAsStateWithLifecycle()
                 val showEventEmojis by viewModel.showEventEmojis.collectAsStateWithLifecycle()
 
                 // Contact birthdays state
@@ -226,11 +227,13 @@ class SettingsActivity : ComponentActivity() {
                             onShowSyncLogs = { showDebugLogSheet = true },
                             notificationsEnabled = notificationsEnabled,
                             onRequestNotificationPermission = viewModel::onRequestNotificationPermission,
-                            // Default reminders
+                            // Default reminders and event duration
                             defaultReminderTimed = defaultReminderTimed,
                             defaultReminderAllDay = defaultReminderAllDay,
+                            defaultEventDuration = defaultEventDuration,
                             onDefaultReminderTimedChange = viewModel::onDefaultReminderTimedChange,
                             onDefaultReminderAllDayChange = viewModel::onDefaultReminderAllDayChange,
+                            onDefaultEventDurationChange = viewModel::onDefaultEventDurationChange,
                             // ICS Import
                             onImportCalendarFile = {
                                 importFileLauncher.launch(arrayOf(

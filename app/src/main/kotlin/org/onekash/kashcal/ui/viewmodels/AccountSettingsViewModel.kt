@@ -114,6 +114,10 @@ class AccountSettingsViewModel @Inject constructor(
     private val _defaultReminderAllDay = MutableStateFlow(1440)
     val defaultReminderAllDay: StateFlow<Int> = _defaultReminderAllDay.asStateFlow()
 
+    // Default event duration
+    private val _defaultEventDuration = MutableStateFlow(KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
+    val defaultEventDuration: StateFlow<Int> = _defaultEventDuration.asStateFlow()
+
     // Sync logs
     private val _syncLogs = MutableStateFlow<List<SyncLog>>(emptyList())
     val syncLogs: StateFlow<List<SyncLog>> = _syncLogs.asStateFlow()
@@ -270,14 +274,16 @@ class AccountSettingsViewModel @Inject constructor(
                 userPreferences.defaultCalendarId,
                 userPreferences.syncIntervalMs,
                 userPreferences.defaultReminderTimed,
-                userPreferences.defaultReminderAllDay
-            ) { defaultId, syncInterval, reminderTimed, reminderAllDay ->
-                Preferences(defaultId, syncInterval, reminderTimed, reminderAllDay)
+                userPreferences.defaultReminderAllDay,
+                userPreferences.defaultEventDuration
+            ) { defaultId, syncInterval, reminderTimed, reminderAllDay, eventDuration ->
+                Preferences(defaultId, syncInterval, reminderTimed, reminderAllDay, eventDuration)
             }.collect { prefs ->
                 _defaultCalendarId.value = prefs.defaultCalendarId
                 _syncIntervalMs.value = prefs.syncIntervalMs
                 _defaultReminderTimed.value = prefs.defaultReminderTimed
                 _defaultReminderAllDay.value = prefs.defaultReminderAllDay
+                _defaultEventDuration.value = prefs.defaultEventDuration
             }
         }
     }
@@ -286,7 +292,8 @@ class AccountSettingsViewModel @Inject constructor(
         val defaultCalendarId: Long?,
         val syncIntervalMs: Long,
         val defaultReminderTimed: Int,
-        val defaultReminderAllDay: Int
+        val defaultReminderAllDay: Int,
+        val defaultEventDuration: Int
     )
 
     private fun observeDisplaySettings() {
@@ -789,6 +796,12 @@ class AccountSettingsViewModel @Inject constructor(
     fun onDefaultReminderAllDayChange(minutes: Int) {
         viewModelScope.launch {
             userPreferences.setDefaultReminderAllDay(minutes)
+        }
+    }
+
+    fun onDefaultEventDurationChange(minutes: Int) {
+        viewModelScope.launch {
+            userPreferences.setDefaultEventDuration(minutes)
         }
     }
 

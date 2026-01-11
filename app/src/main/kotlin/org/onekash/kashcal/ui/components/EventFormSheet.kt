@@ -190,6 +190,7 @@ fun EventFormSheet(
     onLoadEvent: (suspend (Long) -> Event?)? = null,
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 1440,
+    defaultEventDuration: Int = 30,
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null
 ) {
@@ -333,21 +334,29 @@ fun EventFormSheet(
                 )
             }
         } else {
-            // Create mode
+            // Create mode - set default end time based on duration setting
+            val currentStartHour = newState.startHour
+            val currentStartMinute = newState.startMinute
+            val endTotalMinutes = currentStartHour * 60 + currentStartMinute + defaultEventDuration
+            val computedEndHour = (endTotalMinutes / 60).coerceAtMost(23)
+            val computedEndMinute = if (endTotalMinutes >= 24 * 60) 59 else endTotalMinutes % 60
+
             newState = newState.copy(
                 selectedCalendarId = defaultCalendar?.id,
                 selectedCalendarName = defaultCalendar?.displayName ?: "",
                 selectedCalendarColor = defaultCalendar?.color,
-                reminder1Minutes = defaultReminderTimed
+                reminder1Minutes = defaultReminderTimed,
+                endHour = computedEndHour,
+                endMinute = computedEndMinute
             )
 
-            // Handle initial start time
+            // Handle initial start time (overrides defaults if provided)
             if (initialStartTs != null) {
                 val calendar = JavaCalendar.getInstance()
                 calendar.timeInMillis = initialStartTs * 1000
                 val startHour = calendar.get(JavaCalendar.HOUR_OF_DAY)
-                val endMinutes = (0 + 20) % 60
-                val endHour = startHour + (0 + 20) / 60
+                val endMinutes = (0 + defaultEventDuration) % 60
+                val endHour = startHour + (0 + defaultEventDuration) / 60
                 newState = newState.copy(
                     dateMillis = calendar.timeInMillis,
                     endDateMillis = calendar.timeInMillis,
@@ -1009,9 +1018,9 @@ fun EventFormSheet(
                     val startDateOnly = normalizeToLocalMidnight(normalizedDateMillis)
                     val endDateOnly = normalizeToLocalMidnight(state.endDateMillis)
 
-                    // Helper: calculate end = start + 20 mins, handling midnight overflow
-                    fun calcEndPlus20(dateMls: Long, startHr: Int, startMin: Int): Triple<Long, Int, Int> {
-                        val endMins = startHr * 60 + startMin + 20
+                    // Helper: calculate end = start + duration, handling midnight overflow
+                    fun calcEndPlusDuration(dateMls: Long, startHr: Int, startMin: Int): Triple<Long, Int, Int> {
+                        val endMins = startHr * 60 + startMin + defaultEventDuration
                         return if (endMins >= 24 * 60) {
                             val nextDay = dateMls + (24 * 60 * 60 * 1000)
                             Triple(nextDay, (endMins - 24 * 60) / 60, (endMins - 24 * 60) % 60)
@@ -1021,16 +1030,16 @@ fun EventFormSheet(
                     }
 
                     val (newEndDate, newEndHour, newEndMinute) = when {
-                        // Start date > end date: set end = start + 20 mins
+                        // Start date > end date: set end = start + duration
                         startDateOnly > endDateOnly -> {
-                            calcEndPlus20(normalizedDateMillis, hour, minute)
+                            calcEndPlusDuration(normalizedDateMillis, hour, minute)
                         }
                         // Same date: check if start time > end time
                         startDateOnly == endDateOnly -> {
                             val startMins = hour * 60 + minute
                             val endMins = state.endHour * 60 + state.endMinute
                             if (startMins > endMins) {
-                                calcEndPlus20(state.endDateMillis, hour, minute)
+                                calcEndPlusDuration(state.endDateMillis, hour, minute)
                             } else {
                                 Triple(state.endDateMillis, state.endHour, state.endMinute)
                             }

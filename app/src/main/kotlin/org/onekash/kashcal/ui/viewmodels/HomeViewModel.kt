@@ -95,6 +95,10 @@ class HomeViewModel @Inject constructor(
     val defaultReminderAllDay: StateFlow<Int> = dataStore.defaultAllDayReminder
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1440) // 1 day
 
+    /** Default event duration (minutes) */
+    val defaultEventDuration: StateFlow<Int> = dataStore.defaultEventDuration
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
+
     // Track if startup sync has been triggered
     private var hasTriggeredStartupSync = false
 

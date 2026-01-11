@@ -495,7 +495,7 @@ class KashCalDataStore(private val context: Context) {
         // Other defaults
         const val DEFAULT_CALENDAR_VIEW = "month"
         const val DEFAULT_CALENDAR_VIEW_TYPE = "MONTH"  // CalendarViewType.MONTH.name
-        const val DEFAULT_EVENT_DURATION_MINUTES = 60
+        const val DEFAULT_EVENT_DURATION_MINUTES = 30
 
         // Theme values
         const val THEME_SYSTEM = "system"

@@ -175,4 +175,74 @@ class FormConstantsTest {
         assertTrue("1440 min should be valid for timed", timedOptions.any { it.minutes == 1440 })
         assertTrue("1440 min should be valid for all-day", allDayOptions.any { it.minutes == 1440 })
     }
+
+    // ==================== Event Duration Tests (v20.8.0) ====================
+
+    @Test
+    fun `EVENT_DURATION_OPTIONS should not be empty`() {
+        assertTrue(EVENT_DURATION_OPTIONS.isNotEmpty())
+    }
+
+    @Test
+    fun `EVENT_DURATION_OPTIONS should have no duplicate minutes values`() {
+        val minutes = EVENT_DURATION_OPTIONS.map { it.minutes }
+        assertEquals(minutes.size, minutes.distinct().size)
+    }
+
+    @Test
+    fun `EVENT_DURATION_OPTIONS should be in ascending order`() {
+        val minutes = EVENT_DURATION_OPTIONS.map { it.minutes }
+        assertEquals(minutes, minutes.sorted())
+    }
+
+    @Test
+    fun `EVENT_DURATION_OPTIONS should contain expected values`() {
+        val minutes = EVENT_DURATION_OPTIONS.map { it.minutes }
+        assertTrue("Should contain 15 minutes", minutes.contains(15))
+        assertTrue("Should contain 30 minutes", minutes.contains(30))
+        assertTrue("Should contain 60 minutes", minutes.contains(60))
+        assertTrue("Should contain 120 minutes", minutes.contains(120))
+    }
+
+    @Test
+    fun `formatDuration returns correct string for minutes under 60`() {
+        assertEquals("15 minutes", formatDuration(15))
+        assertEquals("30 minutes", formatDuration(30))
+        assertEquals("45 minutes", formatDuration(45))
+    }
+
+    @Test
+    fun `formatDuration returns correct string for exactly 1 hour`() {
+        assertEquals("1 hour", formatDuration(60))
+    }
+
+    @Test
+    fun `formatDuration returns correct string for whole hours`() {
+        assertEquals("2 hours", formatDuration(120))
+        assertEquals("3 hours", formatDuration(180))
+    }
+
+    @Test
+    fun `formatDuration returns correct string for hours and minutes`() {
+        assertEquals("1h 30m", formatDuration(90))
+        assertEquals("2h 15m", formatDuration(135))
+    }
+
+    @Test
+    fun `formatDurationShort returns correct string for minutes under 60`() {
+        assertEquals("15m", formatDurationShort(15))
+        assertEquals("30m", formatDurationShort(30))
+    }
+
+    @Test
+    fun `formatDurationShort returns correct string for whole hours`() {
+        assertEquals("1h", formatDurationShort(60))
+        assertEquals("2h", formatDurationShort(120))
+    }
+
+    @Test
+    fun `formatDurationShort returns correct string for hours and minutes`() {
+        assertEquals("1h30m", formatDurationShort(90))
+        assertEquals("2h15m", formatDurationShort(135))
+    }
 }

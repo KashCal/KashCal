@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by homeViewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
+                val defaultEventDuration by homeViewModel.defaultEventDuration.collectAsStateWithLifecycle()
 
                 val coroutineScope = rememberCoroutineScope()
 
@@ -569,6 +570,7 @@ class MainActivity : ComponentActivity() {
                         },
                         defaultReminderTimed = defaultReminderTimed,
                         defaultReminderAllDay = defaultReminderAllDay,
+                        defaultEventDuration = defaultEventDuration,
                         onRequestNotificationPermission = { callback ->
                             coroutineScope.launch {
                                 try {

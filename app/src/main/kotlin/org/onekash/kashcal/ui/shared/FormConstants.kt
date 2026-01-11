@@ -129,6 +129,65 @@ fun formatReminderShort(minutes: Int): String {
 }
 
 /**
+ * Represents a duration option with display label and minutes.
+ *
+ * @property label Human-readable description (e.g., "30 minutes")
+ * @property minutes Duration in minutes
+ */
+data class DurationOption(
+    val label: String,
+    val minutes: Int
+)
+
+/**
+ * Default event duration options for new events.
+ * Used in Settings to configure how long new events should be by default.
+ */
+val EVENT_DURATION_OPTIONS = listOf(
+    DurationOption("15 minutes", 15),
+    DurationOption("30 minutes", 30),
+    DurationOption("1 hour", 60),
+    DurationOption("2 hours", 120)
+)
+
+/**
+ * Format duration for display.
+ *
+ * @param minutes Duration in minutes
+ * @return Human-readable label (e.g., "30 minutes", "1 hour")
+ */
+fun formatDuration(minutes: Int): String {
+    return when {
+        minutes < 60 -> "$minutes minutes"
+        minutes == 60 -> "1 hour"
+        minutes % 60 == 0 -> "${minutes / 60} hours"
+        else -> {
+            val hours = minutes / 60
+            val mins = minutes % 60
+            "${hours}h ${mins}m"
+        }
+    }
+}
+
+/**
+ * Format duration as short label for summary display.
+ *
+ * @param minutes Duration in minutes
+ * @return Short label (e.g., "30m", "1h", "2h")
+ */
+fun formatDurationShort(minutes: Int): String {
+    return when {
+        minutes < 60 -> "${minutes}m"
+        minutes % 60 == 0 -> "${minutes / 60}h"
+        else -> {
+            val hours = minutes / 60
+            val mins = minutes % 60
+            "${hours}h${mins}m"
+        }
+    }
+}
+
+/**
  * Represents a sync frequency option.
  *
  * @property label Human-readable description (e.g., "1 hour")
