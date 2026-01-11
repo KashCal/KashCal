@@ -195,18 +195,30 @@ object ContactBirthdayUtils {
     /**
      * Get the next upcoming birthday timestamp from today.
      *
+     * Uses local timezone for date comparison to correctly determine if
+     * today's birthday has passed. The returned timestamp is still UTC
+     * midnight (correct for all-day events per RFC 5545).
+     *
      * @param month Birthday month (1-12)
      * @param day Birthday day (1-31)
-     * @return Timestamp of the next birthday occurrence
+     * @return Timestamp of the next birthday occurrence (UTC midnight)
      */
     fun getNextBirthdayTimestamp(month: Int, day: Int): Long {
-        val now = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        val now = Calendar.getInstance()  // Local timezone for date comparison
         val currentYear = now.get(Calendar.YEAR)
+        val currentMonth = now.get(Calendar.MONTH) + 1  // Calendar.MONTH is 0-based
+        val currentDay = now.get(Calendar.DAY_OF_MONTH)
 
-        // Try this year first
-        val thisYearBirthday = getBirthdayTimestamp(month, day, currentYear)
-        return if (thisYearBirthday >= now.timeInMillis) {
-            thisYearBirthday
+        // Compare calendar dates in local time (not timestamps)
+        // This ensures today's birthday shows up even late in the day
+        val isBirthdayTodayOrLater = when {
+            month > currentMonth -> true
+            month < currentMonth -> false
+            else -> day >= currentDay  // Same month, compare days
+        }
+
+        return if (isBirthdayTodayOrLater) {
+            getBirthdayTimestamp(month, day, currentYear)
         } else {
             // Birthday already passed this year, use next year
             getBirthdayTimestamp(month, day, currentYear + 1)

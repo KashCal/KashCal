@@ -18,6 +18,7 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
+import java.util.TimeZone
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -220,9 +221,20 @@ class ContactBirthdayRepository @Inject constructor(
                     } else {
                         null
                     }
+
+                    // Migration: Fix events with startTs in future year (v20.8.0 timezone bug)
+                    // These events were created with wrong year due to UTC comparison
+                    val existingCal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+                        timeInMillis = existingEvent.startTs
+                    }
+                    val existingYear = existingCal.get(java.util.Calendar.YEAR)
+                    val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+                    val startTsNeedsMigration = existingYear > currentYear
+
                     val needsUpdate = existingEvent.title != contact.displayName ||
                             ContactBirthdayUtils.decodeBirthYear(existingEvent.description) != contact.birthday.year ||
-                            existingEvent.reminders != expectedReminders
+                            existingEvent.reminders != expectedReminders ||
+                            startTsNeedsMigration
 
                     if (needsUpdate) {
                         val updatedEvent = createBirthdayEvent(contact, calendarId, existingEvent.id, reminderMinutes)
