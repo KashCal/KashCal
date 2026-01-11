@@ -36,6 +36,28 @@ class LocationSuggestionService @Inject constructor(
     } else null
 
     /**
+     * Format display name combining place name and address.
+     * Shows "Place Name, Address" when place name is meaningful.
+     */
+    private fun formatDisplayName(featureName: String?, addressLine: String?): String {
+        val address = addressLine ?: ""
+        val feature = featureName?.trim()
+
+        // Skip featureName if:
+        // - null/blank
+        // - just a number (street number)
+        // - already starts the address line
+        if (feature.isNullOrBlank() ||
+            feature.all { it.isDigit() } ||
+            address.startsWith(feature, ignoreCase = true)
+        ) {
+            return address
+        }
+
+        return "$feature, $address"
+    }
+
+    /**
      * Get address suggestions for a query.
      *
      * @param query Search query (minimum 5 characters)
@@ -53,7 +75,7 @@ class LocationSuggestionService @Inject constructor(
                         geocoder.getFromLocationName(query, maxResults) { addresses ->
                             val suggestions = addresses.map { addr ->
                                 AddressSuggestion(
-                                    displayName = addr.getAddressLine(0) ?: "",
+                                    displayName = formatDisplayName(addr.featureName, addr.getAddressLine(0)),
                                     latitude = addr.latitude,
                                     longitude = addr.longitude
                                 )
@@ -67,7 +89,7 @@ class LocationSuggestionService @Inject constructor(
                     val addresses = geocoder.getFromLocationName(query, maxResults) ?: emptyList()
                     addresses.map { addr ->
                         AddressSuggestion(
-                            displayName = addr.getAddressLine(0) ?: "",
+                            displayName = formatDisplayName(addr.featureName, addr.getAddressLine(0)),
                             latitude = addr.latitude,
                             longitude = addr.longitude
                         )
