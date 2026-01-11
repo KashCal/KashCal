@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
  * @param subscriptions List of current ICS subscriptions
  * @param contactBirthdaysEnabled Whether contact birthdays is enabled
  * @param contactBirthdaysColor Calendar color for birthdays
+ * @param contactBirthdaysReminder Birthday reminder minutes (-1 = no reminder)
  * @param contactBirthdaysLastSync Last sync timestamp
  * @param hasContactsPermission Whether READ_CONTACTS permission is granted
  * @param onNavigateBack Callback to navigate back
@@ -59,6 +60,7 @@ import androidx.compose.ui.unit.dp
  * @param onUpdateSubscription Callback when ICS subscription updated
  * @param onToggleContactBirthdays Callback when contact birthdays toggled
  * @param onContactBirthdaysColorChange Callback when birthday calendar color changed
+ * @param onContactBirthdaysReminderChange Callback when birthday reminder setting changed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +68,7 @@ fun SubscriptionsScreen(
     subscriptions: List<IcsSubscriptionUiModel>,
     contactBirthdaysEnabled: Boolean,
     contactBirthdaysColor: Int,
+    contactBirthdaysReminder: Int,
     contactBirthdaysLastSync: Long,
     hasContactsPermission: Boolean,
     onNavigateBack: () -> Unit,
@@ -75,7 +78,8 @@ fun SubscriptionsScreen(
     onRefreshSubscription: (Long) -> Unit,
     onUpdateSubscription: (Long, String, Int, Int) -> Unit,
     onToggleContactBirthdays: (Boolean) -> Unit,
-    onContactBirthdaysColorChange: (Int) -> Unit
+    onContactBirthdaysColorChange: (Int) -> Unit,
+    onContactBirthdaysReminderChange: (Int) -> Unit
 ) {
     // State for dialogs
     var showAddDialog by remember { mutableStateOf(false) }
@@ -197,11 +201,13 @@ fun SubscriptionsScreen(
         ContactBirthdaysSheet(
             isEnabled = contactBirthdaysEnabled,
             calendarColor = contactBirthdaysColor,
+            reminderMinutes = contactBirthdaysReminder,
             lastSyncTime = contactBirthdaysLastSync,
             hasPermission = hasContactsPermission,
             onDismiss = { showContactBirthdaysSheet = false },
             onToggle = onToggleContactBirthdays,
-            onColorChange = onContactBirthdaysColorChange
+            onColorChange = onContactBirthdaysColorChange,
+            onReminderChange = onContactBirthdaysReminderChange
         )
     }
 }

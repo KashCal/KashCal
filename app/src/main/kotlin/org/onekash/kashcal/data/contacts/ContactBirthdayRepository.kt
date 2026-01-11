@@ -13,6 +13,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
@@ -50,7 +51,8 @@ class ContactBirthdayRepository @Inject constructor(
     private val occurrenceGenerator: OccurrenceGenerator,
     private val reminderScheduler: ReminderScheduler,
     private val eventReader: EventReader,
-    private val contentResolver: ContentResolver
+    private val contentResolver: ContentResolver,
+    private val dataStore: KashCalDataStore
 ) {
 
     companion object {
@@ -188,6 +190,9 @@ class ContactBirthdayRepository @Inject constructor(
             val calendar = calendarsDao.getById(calendarId)
                 ?: return@withContext SyncResult.Error("Calendar not found")
 
+            // Read birthday reminder setting
+            val reminderMinutes = dataStore.getBirthdayReminder()
+
             // Read birthdays from contacts
             val contactBirthdays = readBirthdaysFromContacts()
             Log.d(TAG, "Found ${contactBirthdays.size} contacts with birthdays")
@@ -209,12 +214,18 @@ class ContactBirthdayRepository @Inject constructor(
 
                 val existingEvent = existingByLookupKey[contact.lookupKey]
                 if (existingEvent != null) {
-                    // Update if changed
+                    // Update if changed (including reminder changes)
+                    val expectedReminders = if (reminderMinutes > 0) {
+                        listOf(minutesToIsoDuration(reminderMinutes))
+                    } else {
+                        null
+                    }
                     val needsUpdate = existingEvent.title != contact.displayName ||
-                            ContactBirthdayUtils.decodeBirthYear(existingEvent.description) != contact.birthday.year
+                            ContactBirthdayUtils.decodeBirthYear(existingEvent.description) != contact.birthday.year ||
+                            existingEvent.reminders != expectedReminders
 
                     if (needsUpdate) {
-                        val updatedEvent = createBirthdayEvent(contact, calendarId, existingEvent.id)
+                        val updatedEvent = createBirthdayEvent(contact, calendarId, existingEvent.id, reminderMinutes)
                         eventsDao.update(updatedEvent)
                         occurrenceGenerator.regenerateOccurrences(updatedEvent)
                         scheduleRemindersForEvent(updatedEvent, calendar.color, isModified = true)
@@ -223,7 +234,7 @@ class ContactBirthdayRepository @Inject constructor(
                     }
                 } else {
                     // Insert new
-                    val newEvent = createBirthdayEvent(contact, calendarId)
+                    val newEvent = createBirthdayEvent(contact, calendarId, reminderMinutes = reminderMinutes)
                     val eventId = eventsDao.insert(newEvent)
                     val insertedEvent = newEvent.copy(id = eventId)
 
@@ -320,16 +331,29 @@ class ContactBirthdayRepository @Inject constructor(
 
     /**
      * Create a birthday event for a contact.
+     *
+     * @param contact The contact with birthday info
+     * @param calendarId The calendar ID
+     * @param existingId Existing event ID for updates (0 for new events)
+     * @param reminderMinutes Reminder minutes from user preferences (REMINDER_OFF for no reminder)
      */
     private fun createBirthdayEvent(
         contact: ContactBirthday,
         calendarId: Long,
-        existingId: Long = 0
+        existingId: Long = 0,
+        reminderMinutes: Int = KashCalDataStore.REMINDER_OFF
     ): Event {
         val birthday = contact.birthday
         val startTs = ContactBirthdayUtils.getNextBirthdayTimestamp(birthday.month, birthday.day)
         // All-day event: end is same as start (Room handles all-day correctly)
         val endTs = startTs + (24 * 60 * 60 * 1000) - 1 // End of day
+
+        // Convert reminder minutes to ISO 8601 duration format
+        val reminders = if (reminderMinutes > 0) {
+            listOf(minutesToIsoDuration(reminderMinutes))
+        } else {
+            null
+        }
 
         return Event(
             id = existingId,
@@ -344,8 +368,34 @@ class ContactBirthdayRepository @Inject constructor(
             rrule = ContactBirthdayUtils.generateBirthdayRRule(),
             caldavUrl = getCaldavUrl(contact.lookupKey),
             syncStatus = SyncStatus.SYNCED, // Read-only, no push needed
-            dtstamp = System.currentTimeMillis()
+            dtstamp = System.currentTimeMillis(),
+            reminders = reminders
         )
+    }
+
+    /**
+     * Convert reminder minutes to ISO 8601 duration format.
+     * Positive minutes = before event (negative trigger in iCal).
+     */
+    private fun minutesToIsoDuration(minutes: Int): String {
+        return when {
+            minutes <= 0 -> "PT0M"
+            minutes < 60 -> "-PT${minutes}M"
+            minutes < 1440 -> {
+                val hours = minutes / 60
+                val mins = minutes % 60
+                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
+            }
+            minutes < 10080 -> { // Less than 1 week
+                val days = minutes / 1440
+                val hours = (minutes % 1440) / 60
+                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
+            }
+            else -> {
+                val weeks = minutes / 10080
+                "-P${weeks}W"
+            }
+        }
     }
 
     /**

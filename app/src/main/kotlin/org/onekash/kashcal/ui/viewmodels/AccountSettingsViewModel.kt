@@ -132,6 +132,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _contactBirthdaysLastSync = MutableStateFlow(0L)
     val contactBirthdaysLastSync: StateFlow<Long> = _contactBirthdaysLastSync.asStateFlow()
 
+    private val _contactBirthdaysReminder = MutableStateFlow(KashCalDataStore.DEFAULT_BIRTHDAY_REMINDER_MINUTES)
+    val contactBirthdaysReminder: StateFlow<Int> = _contactBirthdaysReminder.asStateFlow()
+
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
 
@@ -244,6 +247,12 @@ class AccountSettingsViewModel @Inject constructor(
             // Observe last sync time
             dataStore.contactBirthdaysLastSync.collect { lastSync ->
                 _contactBirthdaysLastSync.value = lastSync
+            }
+        }
+        viewModelScope.launch {
+            // Observe birthday reminder setting
+            dataStore.birthdayReminder.collect { reminder ->
+                _contactBirthdaysReminder.value = reminder
             }
         }
         viewModelScope.launch {
@@ -731,6 +740,16 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Contact birthdays color change: $color")
             _contactBirthdaysColor.value = color
             eventCoordinator.updateContactBirthdaysColor(color)
+        }
+    }
+
+    /**
+     * Update birthday reminder setting.
+     */
+    fun onContactBirthdaysReminderChange(minutes: Int) {
+        viewModelScope.launch {
+            Log.i(TAG, "Birthday reminder change: $minutes minutes")
+            dataStore.setBirthdayReminder(minutes)
         }
     }
 

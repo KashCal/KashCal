@@ -4,6 +4,7 @@ import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.formatReminderOption
 
 /**
  * Bottom sheet for configuring Contact Birthdays calendar.
@@ -37,29 +40,35 @@ import androidx.compose.ui.unit.dp
  * Features:
  * - Enable/disable toggle
  * - Color picker (visible when enabled)
+ * - Reminder setting (visible when enabled)
  * - Last sync time display
  * - Permission status indicator
  *
  * @param isEnabled Whether contact birthdays is currently enabled
  * @param calendarColor Current calendar color (ARGB int)
+ * @param reminderMinutes Current birthday reminder setting (minutes, -1 for no reminder)
  * @param lastSyncTime Last sync timestamp (millis), 0 if never synced
  * @param hasPermission Whether READ_CONTACTS permission is granted
  * @param onDismiss Callback when sheet is dismissed
  * @param onToggle Callback when toggle is changed (will trigger permission request if needed)
  * @param onColorChange Callback when color is changed
+ * @param onReminderChange Callback when reminder setting is changed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ContactBirthdaysSheet(
     isEnabled: Boolean,
     calendarColor: Int,
+    reminderMinutes: Int,
     lastSyncTime: Long,
     hasPermission: Boolean,
     onDismiss: () -> Unit,
     onToggle: (Boolean) -> Unit,
-    onColorChange: (Int) -> Unit
+    onColorChange: (Int) -> Unit,
+    onReminderChange: (Int) -> Unit
 ) {
     var selectedColor by remember(calendarColor) { mutableIntStateOf(calendarColor) }
+    var showReminderPicker by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -139,6 +148,42 @@ fun ContactBirthdaysSheet(
                 }
             }
 
+            // Reminder Setting (only visible when enabled)
+            AnimatedVisibility(
+                visible = isEnabled,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Default Reminder",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showReminderPicker = true }
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            formatReminderOption(reminderMinutes, isAllDay = true),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Text(
+                            "Change",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+
             // Sync Status (only visible when enabled)
             AnimatedVisibility(
                 visible = isEnabled,
@@ -178,5 +223,21 @@ fun ContactBirthdaysSheet(
                 }
             }
         }
+    }
+
+    // Reminder picker sheet
+    if (showReminderPicker) {
+        val reminderSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        SingleAlertPickerSheet(
+            sheetState = reminderSheetState,
+            title = "Birthday Reminder",
+            options = ALL_DAY_REMINDER_OPTIONS,
+            currentValue = reminderMinutes,
+            onSelect = { minutes ->
+                onReminderChange(minutes)
+                showReminderPicker = false
+            },
+            onDismiss = { showReminderPicker = false }
+        )
     }
 }

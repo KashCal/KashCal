@@ -87,6 +87,7 @@ class SettingsActivity : ComponentActivity() {
                 // Contact birthdays state
                 val contactBirthdaysEnabled by viewModel.contactBirthdaysEnabled.collectAsStateWithLifecycle()
                 val contactBirthdaysColor by viewModel.contactBirthdaysColor.collectAsStateWithLifecycle()
+                val contactBirthdaysReminder by viewModel.contactBirthdaysReminder.collectAsStateWithLifecycle()
                 val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
                 val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
 
@@ -167,6 +168,7 @@ class SettingsActivity : ComponentActivity() {
                             subscriptions = subscriptions,
                             contactBirthdaysEnabled = contactBirthdaysEnabled,
                             contactBirthdaysColor = contactBirthdaysColor,
+                            contactBirthdaysReminder = contactBirthdaysReminder,
                             contactBirthdaysLastSync = contactBirthdaysLastSync,
                             hasContactsPermission = hasContactsPermission,
                             onNavigateBack = { showSubscriptionsScreen = false },
@@ -183,7 +185,8 @@ class SettingsActivity : ComponentActivity() {
                                     viewModel.onToggleContactBirthdays(enabled)
                                 }
                             },
-                            onContactBirthdaysColorChange = viewModel::onContactBirthdaysColorChange
+                            onContactBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
+                            onContactBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange
                         )
                     } else {
                         AccountSettingsScreen(

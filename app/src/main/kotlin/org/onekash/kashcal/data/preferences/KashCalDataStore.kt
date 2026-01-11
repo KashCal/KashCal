@@ -378,6 +378,20 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC, timeMillis)
     }
 
+    /**
+     * Birthday reminder minutes.
+     * Uses ALL_DAY_REMINDER_OPTIONS values (540 = 9 AM day of, 1440 = 1 day before, etc.)
+     * Default: 540 (9 AM on day of birthday)
+     */
+    val birthdayReminder: Flow<Int>
+        get() = getPreference(PreferencesKeys.BIRTHDAY_REMINDER, DEFAULT_BIRTHDAY_REMINDER_MINUTES)
+
+    suspend fun getBirthdayReminder(): Int = birthdayReminder.first()
+
+    suspend fun setBirthdayReminder(minutes: Int) {
+        setPreference(PreferencesKeys.BIRTHDAY_REMINDER, minutes)
+    }
+
     // ========== Parse Failure Retry (v16.7.0) ==========
 
     /**
@@ -469,6 +483,7 @@ class KashCalDataStore(private val context: Context) {
         const val REMINDER_OFF = -1  // Sentinel: no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
         const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 12 * 60 // 12 hours before (720)
+        const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = 9 * 60 // 9 AM day of birthday (540)
 
         // Sync constants
         const val DEFAULT_SYNC_INTERVAL_MINUTES = 60  // 1 hour
