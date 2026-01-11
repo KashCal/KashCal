@@ -252,27 +252,24 @@ private fun UnifiedTimeGrid(
             // Empty spacer for time column alignment
             Box(modifier = Modifier.width(timeColumnWidth))
 
-            // Day headers pager - synced with main pager
+            // Day headers - render 3 columns directly based on currentPage
+            // (No HorizontalPager to avoid lag with other direct-rendered rows)
             BoxWithConstraints(modifier = Modifier.weight(1f)) {
                 val columnWidth = maxWidth / 3
 
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.fillMaxWidth(),
-                    pageSize = PageSize.Fixed(columnWidth),
-                    beyondViewportPageCount = 3,
-                    key = { page -> "header_$page" }
-                ) { page ->
-                    val date = WeekViewUtils.pageToDate(page)
-                    val isToday = date == today
-                    val isWeekend = WeekViewUtils.isWeekend(date)
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    repeat(3) { offset ->
+                        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+                        val isToday = date == today
+                        val isWeekend = WeekViewUtils.isWeekend(date)
 
-                    DayHeaderCell(
-                        date = date,
-                        isToday = isToday,
-                        isWeekend = isWeekend,
-                        modifier = Modifier.width(columnWidth)
-                    )
+                        DayHeaderCell(
+                            date = date,
+                            isToday = isToday,
+                            isWeekend = isWeekend,
+                            modifier = Modifier.width(columnWidth)
+                        )
+                    }
                 }
             }
         }
@@ -523,20 +520,18 @@ private fun OverflowEventsPagerRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(vertical = 4.dp)
     ) {
-        // Moon icon column - just emoji, no text
+        // Moon icon column - same styling as "All day" label
         Box(
-            modifier = Modifier
-                .width(timeColumnWidth)
-                .padding(end = 4.dp, top = 4.dp),
-            contentAlignment = Alignment.TopEnd
+            modifier = Modifier.width(timeColumnWidth),
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "🌙",
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
