@@ -397,13 +397,13 @@ private fun FetchResultFeedback(fetchState: FetchCalendarState) {
                 Icon(
                     Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = AppleColors.Green,
+                    tint = AccentColors.Green,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
                     "Found: ${fetchState.eventCount} events",
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppleColors.Green
+                    color = AccentColors.Green
                 )
             }
         }

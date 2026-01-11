@@ -212,7 +212,7 @@ class ICalSerializer @Inject constructor() {
      * Append a VALARM component.
      * @param trigger Trigger in ISO 8601 duration format (e.g., "-PT15M")
      *
-     * Includes Apple-specific properties for proper iCloud/iPhone handling:
+     * Includes platform-specific properties for proper iCloud/device handling:
      * - UID: Unique identifier for this alarm
      * - X-WR-ALARMUID: iCloud alarm identifier (same as UID)
      * - X-APPLE-DEFAULT-ALARM:FALSE: Prevents iPhone from treating this as

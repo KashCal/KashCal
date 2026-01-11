@@ -37,13 +37,13 @@ interface CalendarProvider {
 
     /**
      * Unique provider identifier stored in Account.provider.
-     * Examples: "icloud", "local", "google"
+     * Examples: "icloud", "local"
      */
     val providerId: String
 
     /**
      * Human-readable display name for UI.
-     * Examples: "iCloud", "Local", "Google Calendar"
+     * Examples: "iCloud", "Local"
      */
     val displayName: String
 

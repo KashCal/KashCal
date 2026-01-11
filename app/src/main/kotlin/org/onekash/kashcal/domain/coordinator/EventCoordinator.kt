@@ -96,8 +96,7 @@ class EventCoordinator @Inject constructor(
      * - Network constraint ensures no wasted attempts when offline
      * - ExistingWorkPolicy.REPLACE coalesces rapid consecutive changes
      *
-     * This is the industry standard pattern used by Google Calendar,
-     * Apple Calendar, and other major calendar applications.
+     * This is the industry standard pattern used by major calendar applications.
      */
     private fun triggerImmediatePushIfNeeded(isLocal: Boolean) {
         if (!isLocal) {

@@ -47,12 +47,8 @@ fun looksLikeAddress(text: String): Boolean {
 /**
  * Open address in maps app with web fallback.
  *
- * Uses geo: URI scheme which is supported by:
- * - Google Maps
- * - Waze
- * - Other navigation apps
- *
- * Falls back to Google Maps web if no maps app is installed.
+ * Uses geo: URI scheme supported by most maps applications.
+ * Falls back to web maps if no maps app is installed.
  *
  * @param context Android context for launching intent
  * @param address The address to open in maps
@@ -64,7 +60,7 @@ fun openInMaps(context: Context, address: String) {
     if (mapIntent.resolveActivity(context.packageManager) != null) {
         context.startActivity(mapIntent)
     } else {
-        // Fallback: open Google Maps web
+        // Fallback: open web maps
         val webUri = Uri.parse("https://www.google.com/maps/search/${Uri.encode(address)}")
         context.startActivity(Intent(Intent.ACTION_VIEW, webUri))
     }

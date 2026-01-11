@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
 /**
  * ICS calendar subscription entity.
  *
- * Represents a subscription to an external ICS/iCal feed (e.g., public Google Calendar,
+ * Represents a subscription to an external ICS/iCal feed (e.g., public calendar feeds,
  * sports schedules, holidays). Events from subscriptions are stored in the events table
  * linked to the associated Calendar.
  *

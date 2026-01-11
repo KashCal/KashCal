@@ -3,13 +3,13 @@ package org.onekash.kashcal.sync.quirks
 /**
  * Abstraction for CalDAV provider-specific behaviors.
  *
- * Different CalDAV servers (iCloud, Google, FastMail, Nextcloud) have quirks
+ * Different CalDAV servers have quirks
  * in their XML responses, authentication flows, and supported features.
  * This interface allows the sync layer to handle these differences cleanly.
  */
 interface CalDavQuirks {
 
-    /** Provider identifier (e.g., "icloud", "google", "fastmail") */
+    /** Provider identifier (e.g., "icloud", "fastmail") */
     val providerId: String
 
     /** Human-readable provider name */

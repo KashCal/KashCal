@@ -3,9 +3,9 @@ package org.onekash.kashcal.ui.screens.settings
 import androidx.compose.ui.graphics.Color
 
 /**
- * Apple-style UI colors used across settings screens.
+ * Accent colors for UI feedback indicators (success, info, etc.).
  */
-object AppleColors {
+object AccentColors {
     val Green = Color(0xFF34C759)
     val Blue = Color(0xFF007AFF)
     val iCloudBlue = Color(0xFF5AC8FA)

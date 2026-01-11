@@ -38,7 +38,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
 import org.onekash.kashcal.ui.screens.settings.AlertsSheet
-import org.onekash.kashcal.ui.screens.settings.AppleColors
+import org.onekash.kashcal.ui.screens.settings.AccentColors
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
@@ -441,7 +441,7 @@ private fun FlatSettingsContent(
                         Icon(
                             Icons.Default.Check,
                             contentDescription = "Enabled",
-                            tint = AppleColors.Green,
+                            tint = AccentColors.Green,
                             modifier = Modifier.size(24.dp)
                         )
                     }

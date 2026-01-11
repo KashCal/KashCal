@@ -29,7 +29,7 @@ private const val TAG = "IcsSubscriptionRepo"
  * - Syncing events to database
  * - Deleting orphaned events (removed from feed)
  *
- * Industry standard behavior (Apple/Google/Outlook):
+ * Industry standard behavior:
  * - Events are read-only (overwritten on sync)
  * - Deleted events from feed are removed locally
  * - Auto-creates "ICS Subscriptions" account on first subscription

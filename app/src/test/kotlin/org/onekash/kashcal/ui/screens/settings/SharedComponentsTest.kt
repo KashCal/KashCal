@@ -14,24 +14,24 @@ import org.junit.Test
  */
 class SharedComponentsTest {
 
-    // ==================== AppleColors Tests ====================
+    // ==================== AccentColors Tests ====================
 
     @Test
-    fun `AppleColors Green has correct value`() {
-        // Apple's SF Green: #34C759
-        assertEquals(0xFF34C759.toInt().toLong(), AppleColors.Green.value.toLong() shr 32)
+    fun `AccentColors Green has correct value`() {
+        // System green: #34C759
+        assertEquals(0xFF34C759.toInt().toLong(), AccentColors.Green.value.toLong() shr 32)
     }
 
     @Test
-    fun `AppleColors Blue has correct value`() {
-        // Apple's SF Blue: #007AFF
-        assertEquals(0xFF007AFF.toInt().toLong(), AppleColors.Blue.value.toLong() shr 32)
+    fun `AccentColors Blue has correct value`() {
+        // System blue: #007AFF
+        assertEquals(0xFF007AFF.toInt().toLong(), AccentColors.Blue.value.toLong() shr 32)
     }
 
     @Test
-    fun `AppleColors iCloudBlue has correct value`() {
+    fun `AccentColors iCloudBlue has correct value`() {
         // iCloud Blue: #5AC8FA
-        assertEquals(0xFF5AC8FA.toInt().toLong(), AppleColors.iCloudBlue.value.toLong() shr 32)
+        assertEquals(0xFF5AC8FA.toInt().toLong(), AccentColors.iCloudBlue.value.toLong() shr 32)
     }
 
     // ==================== SubscriptionColors Tests ====================

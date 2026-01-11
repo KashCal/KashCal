@@ -64,24 +64,24 @@ class SubscriptionDialogsTest {
         assertFalse(success is FetchCalendarState.Error)
     }
 
-    // ==================== AppleColors Tests ====================
+    // ==================== AccentColors Tests ====================
 
     @Test
-    fun `AppleColors Green is the correct Apple SF Green`() {
-        // Apple SF Green: #34C759
-        assertNotNull(AppleColors.Green)
+    fun `AccentColors Green exists`() {
+        // System green: #34C759
+        assertNotNull(AccentColors.Green)
     }
 
     @Test
-    fun `AppleColors Blue is the correct Apple SF Blue`() {
-        // Apple SF Blue: #007AFF
-        assertNotNull(AppleColors.Blue)
+    fun `AccentColors Blue exists`() {
+        // System blue: #007AFF
+        assertNotNull(AccentColors.Blue)
     }
 
     @Test
-    fun `AppleColors iCloudBlue is the correct iCloud blue`() {
+    fun `AccentColors iCloudBlue exists`() {
         // iCloud Blue: #5AC8FA
-        assertNotNull(AppleColors.iCloudBlue)
+        assertNotNull(AccentColors.iCloudBlue)
     }
 
     // ==================== SyncInterval Integration Tests ====================

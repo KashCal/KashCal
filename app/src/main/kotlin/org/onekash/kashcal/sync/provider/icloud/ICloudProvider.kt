@@ -18,7 +18,7 @@ import javax.inject.Singleton
  * iCloud CalDAV characteristics:
  * - Uses app-specific passwords (2FA requirement)
  * - Supports incremental sync via sync-token
- * - Supports VALARM with Apple-specific extensions
+ * - Supports VALARM with vendor-specific extensions
  * - Redirects to regional servers (p*-caldav.icloud.com)
  *
  * @see ICloudQuirks for XML parsing details
