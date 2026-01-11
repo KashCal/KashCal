@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,32 +66,15 @@ private const val TAG = "WeekViewContent"
  * Architecture:
  * - Uses pseudo-infinite pager (Int.MAX_VALUE pages) where each page = 1 day
  * - CENTER_DAY_PAGE corresponds to today
- * - Smooth scrolling across any date range without boundary issues
+ * - Headers scroll WITH content (like monthly view) for smooth, non-jarring scrolling
  * - Debounced event loading in ViewModel
  *
- * Combines:
- * - DayHeadersRow (Mon, Tue, Wed headers with dates)
- * - AllDayEventsRow (expandable all-day events)
- * - TimeGrid (scrollable time grid with events)
- * - OverflowEventsRow (events before 6am / after 11pm)
- * - OverlapListSheet (shown when overflow badge tapped)
- *
- * @param timedOccurrences List of timed occurrences for visible range + buffer
- * @param timedEvents Events corresponding to timed occurrences
- * @param allDayOccurrences List of all-day occurrences for visible range
- * @param allDayEvents Events corresponding to all-day occurrences
- * @param calendars List of calendars (for colors)
- * @param isLoading True while loading events
- * @param error Error message if load failed
- * @param scrollPosition Saved scroll position for state preservation
- * @param onDatePickerRequest Called when date range tapped
- * @param onEventClick Called when an event is tapped
- * @param onLongPress Called when user long-presses empty space (date, hour, minute)
- * @param onScrollPositionChange Called when scroll position changes
- * @param onPageChanged Called when pager page changes (for debounced loading)
- * @param pendingNavigateToPage Target page for programmatic navigation
- * @param onNavigationConsumed Called after navigation is handled
- * @param modifier Modifier for the container
+ * Each page contains:
+ * - Day header (Mon 6, Tue 7, etc.)
+ * - All-day events (1 item + "+N more" with bottom picker)
+ * - Early overflow events (before 6am) with contrast background
+ * - Time grid with timed events
+ * - Late overflow events (after 11pm) with contrast background
  */
 @Composable
 fun WeekViewContent(
@@ -144,7 +127,7 @@ fun WeekViewContent(
         calendars.associate { it.id to it.color }
     }
 
-    // Group events by date (LocalDate key instead of day index)
+    // Group events by date (LocalDate key)
     val timedEventsByDate = remember(timedOccurrences, timedEvents) {
         groupEventsByDate(timedOccurrences.toList(), timedEvents.toList())
     }
@@ -161,90 +144,47 @@ fun WeekViewContent(
     // State for overflow sheet
     var overflowEvents by remember { mutableStateOf<List<Pair<Event, Occurrence>>?>(null) }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        // Day headers row (Mon, Tue, Wed... with dates)
-        // Note: Month/Year row with Today button is now in HomeScreen's AgendaMonthYearRow
-        // Uses page-based dates (no weekStartMs)
-        InfiniteDayHeadersRow(
-            currentPage = pagerState.currentPage,
-            visibleDays = WeekViewUtils.VISIBLE_DAYS
-        )
-
-        // All-day events row (static for reliable sync)
-        InfiniteAllDayEventsRow(
-            currentPage = pagerState.currentPage,
-            allDayEvents = allDayEventsByDate,
-            calendarColors = calendarColors,
-            onEventClick = onEventClick,
-            onOverflowBadgeClick = { events -> overflowEvents = events },
-            visibleDays = WeekViewUtils.VISIBLE_DAYS
-        )
-
-        // Early events row (before 6am) - shown after all-day row
-        InfiniteOverflowEventsRow(
-            label = "Before 6am",
-            currentPage = pagerState.currentPage,
-            overflowEvents = earlyEventsByDate,
-            calendarColors = calendarColors,
-            onEventClick = onEventClick,
-            onOverflowBadgeClick = { events -> overflowEvents = events },
-            visibleDays = WeekViewUtils.VISIBLE_DAYS
-        )
-
-        // Main content area
-        Box(modifier = Modifier.weight(1f)) {
-            when {
-                isLoading -> {
-                    // Loading state
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-                error != null -> {
-                    // Error state
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = error,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-                else -> {
-                    // Time grid with events (only normal events - 6am to 11pm)
-                    InfiniteTimeGrid(
-                        pagerState = pagerState,
-                        eventsByDate = normalEventsByDate,
-                        calendarColors = calendarColors,
-                        scrollState = scrollState,
-                        onEventClick = onEventClick,
-                        onOverflowClick = { events -> overflowEvents = events },
-                        onLongPress = onLongPress,
-                        onScrollPositionChange = onScrollPositionChange,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+    // Main content
+    when {
+        isLoading -> {
+            Box(
+                modifier = modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
             }
         }
-
-        // Late events row (after 11pm) - shown after time grid
-        InfiniteOverflowEventsRow(
-            label = "After 11pm",
-            currentPage = pagerState.currentPage,
-            overflowEvents = lateEventsByDate,
-            calendarColors = calendarColors,
-            onEventClick = onEventClick,
-            onOverflowBadgeClick = { events -> overflowEvents = events },
-            visibleDays = WeekViewUtils.VISIBLE_DAYS
-        )
+        error != null -> {
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+        else -> {
+            // Time grid with unified day columns (headers inside pager)
+            UnifiedTimeGrid(
+                pagerState = pagerState,
+                normalEventsByDate = normalEventsByDate,
+                allDayEventsByDate = allDayEventsByDate,
+                earlyEventsByDate = earlyEventsByDate,
+                lateEventsByDate = lateEventsByDate,
+                calendarColors = calendarColors,
+                scrollState = scrollState,
+                onEventClick = onEventClick,
+                onOverflowClick = { events -> overflowEvents = events },
+                onLongPress = onLongPress,
+                onScrollPositionChange = onScrollPositionChange,
+                modifier = modifier.fillMaxSize()
+            )
+        }
     }
 
     // Overflow sheet
@@ -259,122 +199,173 @@ fun WeekViewContent(
 }
 
 /**
- * Preview/placeholder version of week view for empty state.
+ * Unified time grid where each page contains header + all sections.
+ * This creates smooth scrolling (like monthly view) because headers move with content.
  */
 @Composable
-fun EmptyWeekView(
+private fun UnifiedTimeGrid(
+    pagerState: PagerState,
+    normalEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+    allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+    earlyEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+    lateEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+    calendarColors: Map<Long, Int>,
+    hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
+    scrollState: ScrollState = rememberScrollState(),
+    onEventClick: (Event, Occurrence) -> Unit,
+    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
+    onScrollPositionChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "No events this week",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    val totalHeight = hourHeight * WeekViewUtils.TOTAL_HOURS
+    val timeColumnWidth = 48.dp
+    val today = LocalDate.now()
+
+    // Track scroll position changes
+    LaunchedEffect(scrollState.value) {
+        onScrollPositionChange(scrollState.value)
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        // Header row with pager (scrolls horizontally with content)
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // Empty spacer for time column alignment
+            Box(modifier = Modifier.width(timeColumnWidth))
+
+            // Day headers pager - synced with main pager
+            BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                val columnWidth = maxWidth / 3
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxWidth(),
+                    pageSize = PageSize.Fixed(columnWidth),
+                    beyondViewportPageCount = 3,
+                    key = { page -> "header_$page" }
+                ) { page ->
+                    val date = WeekViewUtils.pageToDate(page)
+                    val isToday = date == today
+                    val isWeekend = WeekViewUtils.isWeekend(date)
+
+                    DayHeaderCell(
+                        date = date,
+                        isToday = isToday,
+                        isWeekend = isWeekend,
+                        modifier = Modifier.width(columnWidth)
+                    )
+                }
+            }
+        }
+
+        // All-day events row with pager
+        AllDayEventsPagerRow(
+            pagerState = pagerState,
+            allDayEventsByDate = allDayEventsByDate,
+            calendarColors = calendarColors,
+            timeColumnWidth = timeColumnWidth,
+            onEventClick = onEventClick,
+            onOverflowClick = onOverflowClick
+        )
+
+        // Early events row (before 6am) with pager
+        OverflowEventsPagerRow(
+            label = "Before 6am",
+            pagerState = pagerState,
+            overflowEventsByDate = earlyEventsByDate,
+            calendarColors = calendarColors,
+            timeColumnWidth = timeColumnWidth,
+            onEventClick = onEventClick,
+            onOverflowClick = onOverflowClick
+        )
+
+        // Main time grid area
+        Row(modifier = Modifier.weight(1f)) {
+            // Time labels column (fixed)
+            Column(
+                modifier = Modifier
+                    .width(timeColumnWidth)
+                    .verticalScroll(scrollState)
+                    .height(totalHeight)
+            ) {
+                for (hour in WeekViewUtils.START_HOUR until WeekViewUtils.END_HOUR) {
+                    TimeLabel(hour = hour, height = hourHeight)
+                }
+            }
+
+            // Day columns pager (infinite)
+            BoxWithConstraints(modifier = Modifier.weight(1f)) {
+                val columnWidth = maxWidth / 3
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(totalHeight)
+                    ) {
+                        // Grid lines
+                        GridLines(
+                            hourHeight = hourHeight,
+                            totalHours = WeekViewUtils.TOTAL_HOURS
+                        )
+
+                        // Infinite pager - each page is one day
+                        HorizontalPager(
+                            state = pagerState,
+                            modifier = Modifier.fillMaxSize(),
+                            pageSize = PageSize.Fixed(columnWidth),
+                            beyondViewportPageCount = 3,
+                            key = { page -> "grid_$page" }
+                        ) { page ->
+                            val date = WeekViewUtils.pageToDate(page)
+                            val dayEvents = normalEventsByDate[date] ?: emptyList()
+
+                            DayColumn(
+                                date = date,
+                                events = dayEvents,
+                                calendarColors = calendarColors,
+                                hourHeight = hourHeight,
+                                isToday = date == today,
+                                onEventClick = onEventClick,
+                                onOverflowClick = onOverflowClick,
+                                onLongPress = onLongPress,
+                                modifier = Modifier.width(columnWidth)
+                            )
+                        }
+
+                        // Current time indicator
+                        CurrentTimeIndicator(
+                            hourHeight = hourHeight,
+                            pagerState = pagerState,
+                            columnWidth = columnWidth
+                        )
+                    }
+                }
+            }
+        }
+
+        // Late events row (after 11pm) with pager
+        OverflowEventsPagerRow(
+            label = "After 11pm",
+            pagerState = pagerState,
+            overflowEventsByDate = lateEventsByDate,
+            calendarColors = calendarColors,
+            timeColumnWidth = timeColumnWidth,
+            onEventClick = onEventClick,
+            onOverflowClick = onOverflowClick
         )
     }
 }
 
 /**
- * Group events by LocalDate (for infinite pager).
- *
- * @param occurrences All occurrences
- * @param events Events corresponding to occurrences (by exceptionEventId ?: eventId)
- * @return Map of LocalDate to list of (Event, Occurrence) pairs
- */
-private fun groupEventsByDate(
-    occurrences: List<Occurrence>,
-    events: List<Event>
-): Map<LocalDate, List<Pair<Event, Occurrence>>> {
-    val eventMap = events.associateBy { it.id }
-    val result = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-
-    for (occurrence in occurrences) {
-        val eventId = occurrence.exceptionEventId ?: occurrence.eventId
-        val event = eventMap[eventId] ?: continue
-        val date = WeekViewUtils.epochMsToDate(occurrence.startTs)
-        result.getOrPut(date) { mutableListOf() }.add(event to occurrence)
-    }
-
-    return result
-}
-
-/**
- * Separates events by time slot into early (before 6am), normal (6am-11pm), and late (after 11pm).
- * Uses LocalDate keys for infinite pager compatibility.
- *
- * @param eventsByDate Map of LocalDate to list of events
- * @return Triple of (earlyEventsByDate, normalEventsByDate, lateEventsByDate)
- */
-private fun separateEventsByTimeSlotByDate(
-    eventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>
-): Triple<Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>> {
-    val earlyEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-    val normalEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-    val lateEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-
-    for ((date, events) in eventsByDate) {
-        for (eventPair in events) {
-            val (_, occurrence) = eventPair
-            when (WeekViewUtils.classifyTimeSlot(occurrence)) {
-                WeekViewUtils.TimeSlot.EARLY -> {
-                    earlyEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
-                }
-                WeekViewUtils.TimeSlot.NORMAL -> {
-                    normalEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
-                }
-                WeekViewUtils.TimeSlot.LATE -> {
-                    lateEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
-                }
-            }
-        }
-    }
-
-    return Triple(earlyEvents, normalEvents, lateEvents)
-}
-
-// ==================== Infinite Day Pager Components ====================
-
-/**
- * Day headers row for infinite pager (uses page-based dates).
+ * Single day header cell (Mon 6, Tue 7, etc.)
  */
 @Composable
-fun InfiniteDayHeadersRow(
-    currentPage: Int,
-    visibleDays: Int = 3,
-    timeColumnWidth: androidx.compose.ui.unit.Dp = 48.dp,
-    modifier: Modifier = Modifier
-) {
-    val today = LocalDate.now()
-
-    Row(modifier = modifier.fillMaxWidth()) {
-        // Spacer for time column alignment
-        Box(modifier = Modifier.width(timeColumnWidth))
-
-        // Day headers for visible days
-        repeat(visibleDays) { offset ->
-            val page = currentPage + offset
-            val date = WeekViewUtils.pageToDate(page)
-            val isToday = date == today
-            val isWeekend = WeekViewUtils.isWeekend(date)
-
-            InfiniteDayHeader(
-                date = date,
-                isToday = isToday,
-                isWeekend = isWeekend,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-}
-
-/**
- * Single day header for infinite pager.
- */
-@Composable
-private fun InfiniteDayHeader(
+private fun DayHeaderCell(
     date: LocalDate,
     isToday: Boolean,
     isWeekend: Boolean,
@@ -429,116 +420,31 @@ private fun InfiniteDayHeader(
 }
 
 /**
- * All-day events row for infinite pager.
- *
- * Shows up to 2 all-day events per day column, plus a clickable
- * "+N more" badge when more events exist. Tapping the badge opens a bottom
- * sheet with all all-day events for that day.
- *
- * @param currentPage Current pager page (leftmost visible day)
- * @param allDayEvents Map of LocalDate to all-day events for that day
- * @param calendarColors Map of calendar ID to color
- * @param onEventClick Called when an individual event is tapped
- * @param onOverflowBadgeClick Called when "+N more" badge is tapped with all events for that day
- * @param visibleDays Number of visible day columns (default 3)
- * @param timeColumnWidth Width of the label column
- * @param modifier Modifier for the row
+ * All-day events row with pager synchronization.
+ * Shows 1 item + "+N more" for compact display.
  */
 @Composable
-fun InfiniteAllDayEventsRow(
-    currentPage: Int,
-    allDayEvents: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+private fun AllDayEventsPagerRow(
+    pagerState: PagerState,
+    allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
+    timeColumnWidth: Dp,
     onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowBadgeClick: (List<Pair<Event, Occurrence>>) -> Unit = {},
-    visibleDays: Int = 3,
-    timeColumnWidth: androidx.compose.ui.unit.Dp = 48.dp,
+    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Check if there are any all-day events in visible range
-    val hasAnyAllDayEvents = (0 until visibleDays).any { offset ->
-        val date = WeekViewUtils.pageToDate(currentPage + offset)
-        allDayEvents[date]?.isNotEmpty() == true
+    // Check if any visible day has all-day events
+    val hasAnyEvents = (0 until 3).any { offset ->
+        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+        allDayEventsByDate[date]?.isNotEmpty() == true
     }
 
-    if (!hasAnyAllDayEvents) return
-
-    Row(modifier = modifier.fillMaxWidth()) {
-        Box(modifier = Modifier.width(timeColumnWidth))
-
-        repeat(visibleDays) { offset ->
-            val date = WeekViewUtils.pageToDate(currentPage + offset)
-            val dayEvents = allDayEvents[date] ?: emptyList()
-
-            Box(modifier = Modifier.weight(1f).padding(horizontal = 2.dp)) {
-                Column {
-                    dayEvents.take(2).forEach { (event, occurrence) ->
-                        val color = calendarColors[event.calendarId] ?: 0xFF6200EE.toInt()
-                        CompactEventChip(
-                            event = event,
-                            occurrence = occurrence,
-                            color = color,
-                            onClick = { onEventClick(event, occurrence) }
-                        )
-                    }
-                    if (dayEvents.size > 2) {
-                        Text(
-                            text = "+${dayEvents.size - 2} more",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onOverflowBadgeClick(dayEvents) }
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * Overflow events row (early/late) for infinite pager.
- *
- * Shows up to 2 events per day column with time prefix, plus a clickable
- * "+N more" badge when more events exist. Tapping the badge opens a bottom
- * sheet with all events for that time slot.
- *
- * @param label Row label (e.g., "Before 6am", "After 11pm")
- * @param currentPage Current pager page (leftmost visible day)
- * @param overflowEvents Map of LocalDate to events for that day
- * @param calendarColors Map of calendar ID to color
- * @param onEventClick Called when an individual event is tapped
- * @param onOverflowBadgeClick Called when "+N more" badge is tapped with all events for that day
- * @param visibleDays Number of visible day columns (default 3)
- * @param timeColumnWidth Width of the label column
- * @param modifier Modifier for the row
- */
-@Composable
-fun InfiniteOverflowEventsRow(
-    label: String,
-    currentPage: Int,
-    overflowEvents: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    calendarColors: Map<Long, Int>,
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowBadgeClick: (List<Pair<Event, Occurrence>>) -> Unit = {},
-    visibleDays: Int = 3,
-    timeColumnWidth: androidx.compose.ui.unit.Dp = 48.dp,
-    modifier: Modifier = Modifier
-) {
-    // Check if there are any overflow events in visible range
-    val hasAnyOverflowEvents = (0 until visibleDays).any { offset ->
-        val date = WeekViewUtils.pageToDate(currentPage + offset)
-        overflowEvents[date]?.isNotEmpty() == true
-    }
-
-    if (!hasAnyOverflowEvents) return
+    if (!hasAnyEvents) return
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .padding(vertical = 4.dp)
     ) {
         // Label column
@@ -547,42 +453,155 @@ fun InfiniteOverflowEventsRow(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = label,
+                text = "All day",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        // Event columns
-        repeat(visibleDays) { offset ->
-            val date = WeekViewUtils.pageToDate(currentPage + offset)
-            val dayEvents = overflowEvents[date] ?: emptyList()
+        // All-day events pager
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            val columnWidth = maxWidth / 3
 
-            Box(modifier = Modifier.weight(1f).padding(horizontal = 2.dp)) {
-                Column {
-                    dayEvents.take(2).forEach { (event, occurrence) ->
-                        val color = calendarColors[event.calendarId] ?: 0xFF6200EE.toInt()
-                        CompactEventChip(
-                            event = event,
-                            occurrence = occurrence,
-                            color = color,
-                            onClick = { onEventClick(event, occurrence) },
-                            showTime = true
-                        )
-                    }
-                    if (dayEvents.size > 2) {
-                        Text(
-                            text = "+${dayEvents.size - 2} more",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(4.dp))
-                                .clickable { onOverflowBadgeClick(dayEvents) }
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
-                    }
-                }
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+                pageSize = PageSize.Fixed(columnWidth),
+                beyondViewportPageCount = 3,
+                key = { page -> "allday_$page" }
+            ) { page ->
+                val date = WeekViewUtils.pageToDate(page)
+                val dayEvents = allDayEventsByDate[date] ?: emptyList()
+
+                CompactEventCell(
+                    events = dayEvents,
+                    calendarColors = calendarColors,
+                    showTime = false,
+                    onEventClick = onEventClick,
+                    onOverflowClick = onOverflowClick,
+                    modifier = Modifier
+                        .width(columnWidth)
+                        .padding(horizontal = 2.dp)
+                )
             }
+        }
+    }
+}
+
+/**
+ * Overflow events row (before 6am / after 11pm) with pager synchronization.
+ * Shows 1 item + "+N more" with contrast background for visibility.
+ */
+@Composable
+private fun OverflowEventsPagerRow(
+    label: String,
+    pagerState: PagerState,
+    overflowEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
+    calendarColors: Map<Long, Int>,
+    timeColumnWidth: Dp,
+    onEventClick: (Event, Occurrence) -> Unit,
+    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Check if any visible day has overflow events
+    val hasAnyEvents = (0 until 3).any { offset ->
+        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+        overflowEventsByDate[date]?.isNotEmpty() == true
+    }
+
+    if (!hasAnyEvents) return
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+            .padding(vertical = 4.dp)
+    ) {
+        // Label column with contrast styling
+        Box(
+            modifier = Modifier.width(timeColumnWidth),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+
+        // Overflow events pager
+        BoxWithConstraints(modifier = Modifier.weight(1f)) {
+            val columnWidth = maxWidth / 3
+
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxWidth(),
+                pageSize = PageSize.Fixed(columnWidth),
+                beyondViewportPageCount = 3,
+                key = { page -> "overflow_${label}_$page" }
+            ) { page ->
+                val date = WeekViewUtils.pageToDate(page)
+                val dayEvents = overflowEventsByDate[date] ?: emptyList()
+
+                CompactEventCell(
+                    events = dayEvents,
+                    calendarColors = calendarColors,
+                    showTime = true,
+                    onEventClick = onEventClick,
+                    onOverflowClick = onOverflowClick,
+                    modifier = Modifier
+                        .width(columnWidth)
+                        .padding(horizontal = 2.dp)
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Compact event cell showing 1 event + "+N more" badge.
+ * Used for all-day and overflow rows.
+ */
+@Composable
+private fun CompactEventCell(
+    events: List<Pair<Event, Occurrence>>,
+    calendarColors: Map<Long, Int>,
+    showTime: Boolean,
+    onEventClick: (Event, Occurrence) -> Unit,
+    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (events.isEmpty()) {
+        Box(modifier = modifier)
+        return
+    }
+
+    Column(modifier = modifier) {
+        // Show only 1 event
+        val (firstEvent, firstOccurrence) = events.first()
+        val color = calendarColors[firstEvent.calendarId] ?: DEFAULT_EVENT_COLOR
+
+        CompactEventChip(
+            event = firstEvent,
+            occurrence = firstOccurrence,
+            color = color,
+            onClick = { onEventClick(firstEvent, firstOccurrence) },
+            showTime = showTime
+        )
+
+        // Show "+N more" if there are more events
+        if (events.size > 1) {
+            Text(
+                text = "+${events.size - 1} more",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .clickable { onOverflowClick(events) }
+                    .padding(horizontal = 4.dp, vertical = 2.dp)
+            )
         }
     }
 }
@@ -625,109 +644,11 @@ private fun CompactEventChip(
     }
 }
 
-// ==================== Infinite Time Grid ====================
-
 /**
- * Time grid with infinite day pager.
- * Each page represents one absolute day (pageToDate(page)).
- * Uses HorizontalPager with PageSize.Fixed for smooth 3-day scrolling.
+ * Time label for the time grid.
  */
 @Composable
-fun InfiniteTimeGrid(
-    pagerState: PagerState,
-    eventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    calendarColors: Map<Long, Int>,
-    hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
-    scrollState: ScrollState = rememberScrollState(),
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
-    onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
-    onScrollPositionChange: (Int) -> Unit = {},
-    modifier: Modifier = Modifier
-) {
-    val totalHeight = hourHeight * WeekViewUtils.TOTAL_HOURS
-    val timeColumnWidth = 48.dp
-    val today = LocalDate.now()
-
-    // Track scroll position changes
-    LaunchedEffect(scrollState.value) {
-        onScrollPositionChange(scrollState.value)
-    }
-
-    Row(modifier = modifier.fillMaxWidth()) {
-        // Time labels column (fixed)
-        Column(
-            modifier = Modifier
-                .width(timeColumnWidth)
-                .verticalScroll(scrollState)
-                .height(totalHeight)
-        ) {
-            for (hour in WeekViewUtils.START_HOUR until WeekViewUtils.END_HOUR) {
-                InfiniteTimeLabel(hour = hour, height = hourHeight)
-            }
-        }
-
-        // Day columns pager (infinite)
-        BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val columnWidth = maxWidth / 3  // 3-day view
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(totalHeight)
-                ) {
-                    // Grid lines
-                    InfiniteGridLines(
-                        hourHeight = hourHeight,
-                        totalHours = WeekViewUtils.TOTAL_HOURS
-                    )
-
-                    // Infinite pager - each page is one day
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.fillMaxSize(),
-                        pageSize = PageSize.Fixed(columnWidth),
-                        beyondViewportPageCount = 3,  // Preload 3 pages each direction
-                        key = { page -> page }  // Stable key for recomposition
-                    ) { page ->
-                        val date = WeekViewUtils.pageToDate(page)
-                        val dayEvents = eventsByDate[date] ?: emptyList()
-
-                        DayColumn(
-                            date = date,
-                            events = dayEvents,
-                            calendarColors = calendarColors,
-                            hourHeight = hourHeight,
-                            isToday = date == today,
-                            onEventClick = onEventClick,
-                            onOverflowClick = onOverflowClick,
-                            onLongPress = onLongPress,
-                            modifier = Modifier.width(columnWidth)
-                        )
-                    }
-
-                    // Current time indicator
-                    InfiniteCurrentTimeIndicator(
-                        hourHeight = hourHeight,
-                        pagerState = pagerState,
-                        columnWidth = columnWidth
-                    )
-                }
-            }
-        }
-    }
-}
-
-/**
- * Time label for infinite time grid.
- */
-@Composable
-private fun InfiniteTimeLabel(
+private fun TimeLabel(
     hour: Int,
     height: Dp,
     modifier: Modifier = Modifier
@@ -757,10 +678,10 @@ private fun formatHour(hour: Int): String {
 }
 
 /**
- * Grid lines for infinite time grid.
+ * Grid lines for the time grid.
  */
 @Composable
-private fun InfiniteGridLines(
+private fun GridLines(
     hourHeight: Dp,
     totalHours: Int,
     modifier: Modifier = Modifier
@@ -785,11 +706,10 @@ private fun InfiniteGridLines(
 }
 
 /**
- * Current time indicator for infinite time grid.
- * Positioned on today's column if visible.
+ * Current time indicator positioned on today's column.
  */
 @Composable
-private fun InfiniteCurrentTimeIndicator(
+private fun CurrentTimeIndicator(
     hourHeight: Dp,
     pagerState: PagerState,
     columnWidth: Dp,
@@ -850,3 +770,76 @@ private fun InfiniteCurrentTimeIndicator(
         }
     }
 }
+
+// ==================== Helper Functions ====================
+
+/**
+ * Group events by LocalDate.
+ */
+private fun groupEventsByDate(
+    occurrences: List<Occurrence>,
+    events: List<Event>
+): Map<LocalDate, List<Pair<Event, Occurrence>>> {
+    val eventMap = events.associateBy { it.id }
+    val result = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+
+    for (occurrence in occurrences) {
+        val eventId = occurrence.exceptionEventId ?: occurrence.eventId
+        val event = eventMap[eventId] ?: continue
+        val date = WeekViewUtils.epochMsToDate(occurrence.startTs)
+        result.getOrPut(date) { mutableListOf() }.add(event to occurrence)
+    }
+
+    return result
+}
+
+/**
+ * Separates events by time slot into early (before 6am), normal (6am-11pm), and late (after 11pm).
+ */
+private fun separateEventsByTimeSlotByDate(
+    eventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>
+): Triple<Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>> {
+    val earlyEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+    val normalEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+    val lateEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+
+    for ((date, events) in eventsByDate) {
+        for (eventPair in events) {
+            val (_, occurrence) = eventPair
+            when (WeekViewUtils.classifyTimeSlot(occurrence)) {
+                WeekViewUtils.TimeSlot.EARLY -> {
+                    earlyEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                }
+                WeekViewUtils.TimeSlot.NORMAL -> {
+                    normalEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                }
+                WeekViewUtils.TimeSlot.LATE -> {
+                    lateEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                }
+            }
+        }
+    }
+
+    return Triple(earlyEvents, normalEvents, lateEvents)
+}
+
+/**
+ * Preview/placeholder version of week view for empty state.
+ */
+@Composable
+fun EmptyWeekView(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = "No events this week",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+private const val DEFAULT_EVENT_COLOR = 0xFF6200EE.toInt()
