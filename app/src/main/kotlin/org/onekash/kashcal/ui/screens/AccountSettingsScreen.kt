@@ -435,7 +435,11 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Filled.Visibility,
                 label = "Display Options",
-                subtitle = if (showEventEmojis) "Event emojis enabled" else "Event emojis disabled",
+                subtitle = if (showEventEmojis) {
+                    "Emojis on · ${formatDurationShort(defaultEventDuration)}"
+                } else {
+                    "Emojis off · ${formatDurationShort(defaultEventDuration)}"
+                },
                 onClick = { showDisplayOptionsSheet = true },
                 showDivider = false
             )
@@ -449,7 +453,7 @@ private fun FlatSettingsContent(
                 SettingsRow(
                     icon = Icons.Default.Notifications,
                     label = "Default Alerts",
-                    subtitle = "${formatReminderShort(defaultReminderTimed)} · ${formatReminderShort(defaultReminderAllDay)} · ${formatDurationShort(defaultEventDuration)}",
+                    subtitle = "${formatReminderShort(defaultReminderTimed)} · ${formatReminderShort(defaultReminderAllDay)}",
                     onClick = { showAlertsSheet = true }
                 )
             }
@@ -520,10 +524,8 @@ private fun FlatSettingsContent(
             sheetState = alertsSheetState,
             defaultReminderTimed = defaultReminderTimed,
             defaultReminderAllDay = defaultReminderAllDay,
-            defaultEventDuration = defaultEventDuration,
             onTimedReminderChange = onDefaultReminderTimedChange,
             onAllDayReminderChange = onDefaultReminderAllDayChange,
-            onEventDurationChange = onDefaultEventDurationChange,
             onDismiss = { showAlertsSheet = false }
         )
     }
@@ -534,6 +536,8 @@ private fun FlatSettingsContent(
             sheetState = displayOptionsSheetState,
             showEventEmojis = showEventEmojis,
             onShowEventEmojisChange = onShowEventEmojisChange,
+            defaultEventDuration = defaultEventDuration,
+            onEventDurationChange = onDefaultEventDurationChange,
             onDismiss = { showDisplayOptionsSheet = false }
         )
     }
