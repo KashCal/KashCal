@@ -63,6 +63,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
+import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -315,6 +316,7 @@ fun HomeScreen(
                                 results = uiState.searchResults,
                                 calendars = uiState.calendars,
                                 currentFilter = uiState.searchDateFilter,
+                                showEventEmojis = uiState.showEventEmojis,
                                 onResultClick = onSearchResultClick,
                                 onFilterSelect = onSearchDateFilterChange,
                                 onCustomDateClick = onSearchShowDatePicker
@@ -354,6 +356,7 @@ fun HomeScreen(
                                                 occurrences = uiState.agendaOccurrences,
                                                 calendars = uiState.calendars,
                                                 listState = agendaListState,
+                                                showEventEmojis = uiState.showEventEmojis,
                                                 onEventClick = { event, occurrenceTs ->
                                                     onEventClick(event, occurrenceTs)
                                                 }
@@ -370,6 +373,7 @@ fun HomeScreen(
                                             isLoading = uiState.isLoadingWeekView,
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
+                                            showEventEmojis = uiState.showEventEmojis,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { event, occurrence ->
                                                 onEventClick(event, occurrence.startTs)
@@ -406,6 +410,7 @@ fun HomeScreen(
                                         isLoading = uiState.isLoadingWeekView,
                                         error = uiState.weekViewError,
                                         scrollPosition = uiState.weekViewScrollPosition,
+                                        showEventEmojis = uiState.showEventEmojis,
                                         onDatePickerRequest = onWeekDatePickerRequest,
                                         onEventClick = { event, occurrence ->
                                             onEventClick(event, occurrence.startTs)
@@ -894,6 +899,7 @@ private fun ColumnScope.EventListForSelectedDay(
                         isPast = isPast,
                         selectedDate = uiState.selectedDate,
                         occurrenceTs = occurrence?.startTs,
+                        showEventEmojis = uiState.showEventEmojis,
                         onClick = {
                             onEventClick(event, occurrence?.startTs)
                         }
@@ -911,10 +917,11 @@ private fun EventCard(
     isPast: Boolean,
     selectedDate: Long,
     occurrenceTs: Long?,
+    showEventEmojis: Boolean = true,
     onClick: () -> Unit
 ) {
-    val displayTitle = remember(event, occurrenceTs) {
-        formatEventTitle(event, occurrenceTs)
+    val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
+        formatEventTitle(event, occurrenceTs, showEventEmojis)
     }
 
     Card(
@@ -961,6 +968,7 @@ private fun SearchResultCard(
     nextOccurrenceTs: Long?,
     eventColor: Color,
     isPast: Boolean,
+    showEventEmojis: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -970,9 +978,9 @@ private fun SearchResultCard(
         formatSearchResultDateWithOccurrence(event, nextOccurrenceTs)
     }
 
-    // Format title with age for birthday events
-    val displayTitle = remember(event, nextOccurrenceTs) {
-        formatEventTitle(event, nextOccurrenceTs)
+    // Format title with age for birthday events and optional emoji
+    val displayTitle = remember(event, nextOccurrenceTs, showEventEmojis) {
+        formatEventTitle(event, nextOccurrenceTs, showEventEmojis)
     }
 
     Card(
@@ -1024,6 +1032,7 @@ private fun SearchContent(
     results: ImmutableList<EventWithNextOccurrence>,
     calendars: ImmutableList<Calendar>,
     currentFilter: DateFilter,
+    showEventEmojis: Boolean = true,
     onResultClick: (Event, Long?) -> Unit,
     onFilterSelect: (DateFilter) -> Unit,
     onCustomDateClick: () -> Unit
@@ -1096,6 +1105,7 @@ private fun SearchContent(
                         nextOccurrenceTs = result.nextOccurrenceTs,
                         eventColor = eventColor,
                         isPast = isPast,
+                        showEventEmojis = showEventEmojis,
                         onClick = { onResultClick(event, result.nextOccurrenceTs) }
                     )
                 }
@@ -1181,6 +1191,7 @@ private fun AgendaContent(
     occurrences: ImmutableList<OccurrenceWithEvent>,
     calendars: ImmutableList<Calendar>,
     listState: LazyListState = rememberLazyListState(),
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Long) -> Unit  // (event, occurrenceStartTs)
 ) {
     val colorMap = remember(calendars) { calendars.associate { it.id to Color(it.color) } }
@@ -1261,6 +1272,7 @@ private fun AgendaContent(
                         item = item,
                         eventColor = eventColor,
                         isPast = isPast,
+                        showEventEmojis = showEventEmojis,
                         onClick = { onEventClick(item.occWithEvent.event, item.occWithEvent.occurrence.startTs) }
                     )
                 }
@@ -1279,15 +1291,16 @@ private fun AgendaCard(
     item: AgendaDisplayItem,
     eventColor: Color,
     isPast: Boolean,
+    showEventEmojis: Boolean = true,
     onClick: () -> Unit
 ) {
     val event = item.occWithEvent.event
     val occurrence = item.occWithEvent.occurrence
     val dateString = formatAgendaCardDate(event, occurrence, item.dayNumber, item.totalDays)
 
-    // Format title with age for birthday events
-    val displayTitle = remember(event, occurrence.startTs) {
-        formatEventTitle(event, occurrence.startTs)
+    // Format title with age for birthday events and optional emoji
+    val displayTitle = remember(event, occurrence.startTs, showEventEmojis) {
+        formatEventTitle(event, occurrence.startTs, showEventEmojis)
     }
 
     Card(
@@ -1329,47 +1342,51 @@ private fun AgendaCard(
 }
 
 /**
- * Format event title, adding age for birthday events.
+ * Format event title, adding age for birthday events and optional emoji.
  *
  * For contact birthday events (caldavUrl starts with "contact_birthday:"):
  * - Decodes birth year from event description
  * - Calculates age at the occurrence date
  * - Returns "Name's Xth Birthday" format
  *
- * For all other events, returns the original title.
+ * For all other events, returns the original title with optional emoji prefix.
  *
  * @param event The event to format title for
  * @param occurrenceTs The occurrence timestamp for age calculation
+ * @param showEmojis Whether to prefix auto-detected emoji to the title
  * @return Formatted title string
  */
-private fun formatEventTitle(event: Event, occurrenceTs: Long?): String {
+private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
     // Check if this is a contact birthday event
     val isBirthdayEvent = event.caldavUrl?.startsWith("${ContactBirthdayRepository.SOURCE_PREFIX}:") == true
 
-    if (!isBirthdayEvent || occurrenceTs == null) {
-        return event.title
-    }
-
-    // Decode birth year from description
-    val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
-
-    // Display name is the raw title (e.g., "John Smith")
-    val displayName = event.title
-
-    if (birthYear == null) {
-        // No birth year - show "Name's Birthday" without age
-        return "$displayName's Birthday"
-    }
-
-    // Calculate age and format title
-    val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
-
-    return if (age > 0 && age < 150) {
-        "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+    val baseTitle = if (!isBirthdayEvent || occurrenceTs == null) {
+        event.title
     } else {
-        // Invalid age - show "Name's Birthday" without age
-        "$displayName's Birthday"
+        // Decode birth year from description
+        val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
+
+        // Display name is the raw title (e.g., "John Smith")
+        val displayName = event.title
+
+        if (birthYear == null) {
+            // No birth year - show "Name's Birthday" without age
+            "$displayName's Birthday"
+        } else {
+            // Calculate age and format title
+            val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
+
+            if (age > 0 && age < 150) {
+                "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+            } else {
+                // Invalid age - show "Name's Birthday" without age
+                "$displayName's Birthday"
+            }
+        }
     }
+
+    // Apply emoji formatting if enabled
+    return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
 }
 
 /**

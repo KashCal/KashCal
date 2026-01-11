@@ -82,6 +82,11 @@ object PreferencesKeys {
     /** Quick add event enabled (shows FAB) */
     val QUICK_ADD_ENABLED = booleanPreferencesKey("quick_add_enabled")
 
+    // ========== Display Settings ==========
+
+    /** Show auto-detected emojis in event titles */
+    val SHOW_EVENT_EMOJIS = booleanPreferencesKey("show_event_emojis")
+
     // ========== Migration Flags ==========
 
     /** Data migration from v1 completed */
@@ -113,6 +118,9 @@ object PreferencesKeys {
 
     /** Last sync time for contact birthdays */
     val CONTACT_BIRTHDAYS_LAST_SYNC = longPreferencesKey("contact_birthdays_last_sync")
+
+    /** Birthday reminder minutes (uses ALL_DAY_REMINDER_OPTIONS values, default: 540 = 9 AM day of) */
+    val BIRTHDAY_REMINDER = intPreferencesKey("birthday_reminder")
 
     // ========== Parse Failure Retry (v16.7.0) ==========
 

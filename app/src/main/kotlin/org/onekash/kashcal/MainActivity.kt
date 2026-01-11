@@ -383,6 +383,7 @@ class MainActivity : ComponentActivity() {
                         calendarColor = calendarColor,
                         calendarName = calendarName,
                         occurrenceTs = quickViewOccurrenceTs,
+                        showEventEmojis = uiState.showEventEmojis,
                         onDismiss = {
                             showQuickViewSheet = false
                             quickViewEvent = null

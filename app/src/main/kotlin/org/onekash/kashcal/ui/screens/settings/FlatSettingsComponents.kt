@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -136,6 +138,92 @@ fun SettingsRow(
         if (showDivider) {
             HorizontalDivider(
                 modifier = Modifier.padding(start = 52.dp), // Align with text after icon
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+        }
+    }
+}
+
+/**
+ * Settings row with toggle switch.
+ *
+ * Used for boolean preferences that can be toggled on/off.
+ * The entire row is clickable to toggle the switch.
+ *
+ * @param label Primary text label
+ * @param subtitle Secondary text below label
+ * @param checked Current toggle state
+ * @param onCheckedChange Callback when toggle changes
+ * @param icon Optional Material icon
+ * @param iconEmoji Optional emoji icon (alternative to Material icon)
+ * @param showDivider Whether to show bottom divider
+ */
+@Composable
+fun SettingsToggleRow(
+    label: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    iconEmoji: String? = null,
+    showDivider: Boolean = true
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onCheckedChange(!checked) }
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Leading icon + text
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                // Icon (Material or Emoji)
+                when {
+                    icon != null -> {
+                        Icon(
+                            icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    iconEmoji != null -> {
+                        Text(iconEmoji, fontSize = 20.sp)
+                    }
+                }
+
+                // Label and subtitle
+                Column {
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Toggle switch
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange
+            )
+        }
+
+        // Divider
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 52.dp),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
         }

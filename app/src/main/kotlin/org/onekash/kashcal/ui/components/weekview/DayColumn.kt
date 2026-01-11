@@ -49,6 +49,7 @@ fun DayColumn(
     calendarColors: Map<Long, Int>,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     isToday: Boolean = false,
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
@@ -123,6 +124,7 @@ fun DayColumn(
                     clampedEnd = positioned.clampedEnd,
                     originalStartMinutes = positioned.originalStartMinutes,
                     originalEndMinutes = positioned.originalEndMinutes,
+                    showEventEmojis = showEventEmojis,
                     onClick = { onEventClick(positioned.event, positioned.occurrence) },
                     modifier = Modifier
                         .offset(x = eventLeft, y = positioned.topOffset)

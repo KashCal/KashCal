@@ -135,6 +135,10 @@ class AccountSettingsViewModel @Inject constructor(
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
 
+    // Display settings
+    private val _showEventEmojis = MutableStateFlow(true)
+    val showEventEmojis: StateFlow<Boolean> = _showEventEmojis.asStateFlow()
+
     init {
         loadInitialState()
         observeCalendars()
@@ -142,6 +146,7 @@ class AccountSettingsViewModel @Inject constructor(
         observeIcsSubscriptions()
         observeContactBirthdays()
         observeUserPreferences()
+        observeDisplaySettings()
         checkNotificationPermission()
         checkContactsPermission()
     }
@@ -274,6 +279,23 @@ class AccountSettingsViewModel @Inject constructor(
         val defaultReminderTimed: Int,
         val defaultReminderAllDay: Int
     )
+
+    private fun observeDisplaySettings() {
+        viewModelScope.launch {
+            dataStore.showEventEmojis.collect { show ->
+                _showEventEmojis.value = show
+            }
+        }
+    }
+
+    /**
+     * Update the show event emojis preference.
+     */
+    fun setShowEventEmojis(show: Boolean) {
+        viewModelScope.launch {
+            dataStore.setShowEventEmojis(show)
+        }
+    }
 
     private fun checkNotificationPermission() {
         val context = getApplication<Application>()

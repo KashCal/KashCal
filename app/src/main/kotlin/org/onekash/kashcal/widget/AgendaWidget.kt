@@ -6,7 +6,9 @@ import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 import java.util.Locale
 
@@ -44,6 +46,10 @@ class AgendaWidget : GlanceAppWidget() {
         val repository = WidgetDataRepository(database)
         val events = repository.getTodayEvents()
 
+        // Get display preferences
+        val dataStore = KashCalDataStore(context)
+        val showEventEmojis = dataStore.showEventEmojis.first()
+
         // Format current date
         val currentDate = formatCurrentDate()
 
@@ -51,7 +57,8 @@ class AgendaWidget : GlanceAppWidget() {
             GlanceTheme {
                 AgendaWidgetContent(
                     events = events,
-                    currentDate = currentDate
+                    currentDate = currentDate,
+                    showEventEmojis = showEventEmojis
                 )
             }
         }

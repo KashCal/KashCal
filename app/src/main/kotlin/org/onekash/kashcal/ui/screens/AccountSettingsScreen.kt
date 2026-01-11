@@ -41,6 +41,7 @@ import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
+import org.onekash.kashcal.ui.screens.settings.DisplayOptionsSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
@@ -127,6 +128,9 @@ fun AccountSettingsScreen(
     onExportCalendar: (Long) -> Unit = {},
     // Navigation to detail screens
     onNavigateToSubscriptions: () -> Unit = {},
+    // Display settings
+    showEventEmojis: Boolean = true,
+    onShowEventEmojisChange: (Boolean) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = ""
 ) {
@@ -181,6 +185,8 @@ fun AccountSettingsScreen(
                     onImportCalendarFile = onImportCalendarFile,
                     onExportCalendar = onExportCalendar,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
+                    showEventEmojis = showEventEmojis,
+                    onShowEventEmojisChange = onShowEventEmojisChange,
                     showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
                     prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
                     onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
@@ -265,6 +271,8 @@ private fun FlatSettingsContent(
     onImportCalendarFile: () -> Unit,
     onExportCalendar: (Long) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
+    showEventEmojis: Boolean,
+    onShowEventEmojisChange: (Boolean) -> Unit,
     showAddSubscriptionDialogFromIntent: Boolean,
     prefillSubscriptionUrl: String?,
     onHideAddSubscriptionDialog: () -> Unit,
@@ -276,6 +284,7 @@ private fun FlatSettingsContent(
     var showVisibleCalendarsSheet by remember { mutableStateOf(false) }
     var showDefaultCalendarSheet by remember { mutableStateOf(false) }
     var showAlertsSheet by remember { mutableStateOf(false) }
+    var showDisplayOptionsSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
     var showSignOutConfirmation by remember { mutableStateOf(false) }
@@ -283,6 +292,7 @@ private fun FlatSettingsContent(
     val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
     val alertsSheetState = rememberModalBottomSheetState()
+    val displayOptionsSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
     val signOutSheetState = rememberModalBottomSheetState()
 
@@ -412,6 +422,18 @@ private fun FlatSettingsContent(
             }
         }
 
+        // ==================== DISPLAY Section ====================
+        SectionHeader("Display")
+        SettingsCard {
+            SettingsRow(
+                iconEmoji = "🎨",
+                label = "Display Options",
+                subtitle = if (showEventEmojis) "Event emojis enabled" else "Event emojis disabled",
+                onClick = { showDisplayOptionsSheet = true },
+                showDivider = false
+            )
+        }
+
         // ==================== NOTIFICATIONS Section ====================
         SectionHeader("Notifications")
         SettingsCard {
@@ -494,6 +516,16 @@ private fun FlatSettingsContent(
             onTimedReminderChange = onDefaultReminderTimedChange,
             onAllDayReminderChange = onDefaultReminderAllDayChange,
             onDismiss = { showAlertsSheet = false }
+        )
+    }
+
+    // Display Options Sheet
+    if (showDisplayOptionsSheet) {
+        DisplayOptionsSheet(
+            sheetState = displayOptionsSheetState,
+            showEventEmojis = showEventEmojis,
+            onShowEventEmojisChange = onShowEventEmojisChange,
+            onDismiss = { showDisplayOptionsSheet = false }
         )
     }
 

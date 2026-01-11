@@ -35,6 +35,7 @@ import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
+import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.ZoneId
@@ -45,11 +46,16 @@ import java.time.format.DateTimeFormatter
  *
  * Displays today's date header and a list of events.
  * Supports tap actions to open the app.
+ *
+ * @param events List of events to display
+ * @param currentDate Formatted current date for header
+ * @param showEventEmojis Whether to show auto-detected emojis in event titles
  */
 @Composable
 fun AgendaWidgetContent(
     events: List<WidgetDataRepository.WidgetEvent>,
-    currentDate: String
+    currentDate: String,
+    showEventEmojis: Boolean = true
 ) {
     Column(
         modifier = GlanceModifier
@@ -64,7 +70,7 @@ fun AgendaWidgetContent(
         if (events.isEmpty()) {
             EmptyState()
         } else {
-            EventList(events)
+            EventList(events, showEventEmojis)
         }
     }
 }
@@ -111,7 +117,10 @@ private fun WidgetHeader(date: String) {
  * Limited to MAX_VISIBLE_EVENTS with overflow indicator.
  */
 @Composable
-private fun EventList(events: List<WidgetDataRepository.WidgetEvent>) {
+private fun EventList(
+    events: List<WidgetDataRepository.WidgetEvent>,
+    showEventEmojis: Boolean
+) {
     val visibleEvents = events.take(MAX_VISIBLE_EVENTS)
     val overflowCount = events.size - MAX_VISIBLE_EVENTS
 
@@ -121,7 +130,7 @@ private fun EventList(events: List<WidgetDataRepository.WidgetEvent>) {
             .padding(vertical = 4.dp)
     ) {
         visibleEvents.forEach { event ->
-            EventRow(event)
+            EventRow(event, showEventEmojis)
         }
 
         if (overflowCount > 0) {
@@ -135,7 +144,13 @@ private fun EventList(events: List<WidgetDataRepository.WidgetEvent>) {
  * Tapping opens the event quick view.
  */
 @Composable
-private fun EventRow(event: WidgetDataRepository.WidgetEvent) {
+private fun EventRow(
+    event: WidgetDataRepository.WidgetEvent,
+    showEventEmojis: Boolean
+) {
+    // Format title with optional emoji prefix
+    val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
+
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
@@ -166,7 +181,7 @@ private fun EventRow(event: WidgetDataRepository.WidgetEvent) {
 
         // Title (fills remaining space)
         Text(
-            text = event.title,
+            text = displayTitle,
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.primaryText,
                 fontSize = 14.sp,

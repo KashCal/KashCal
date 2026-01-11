@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.LocalTime
@@ -93,6 +94,7 @@ fun WeekViewContent(
     isLoading: Boolean,
     error: String?,
     scrollPosition: Int,
+    showEventEmojis: Boolean = true,
     onDatePickerRequest: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -192,6 +194,7 @@ fun WeekViewContent(
                 lateEventsByDate = lateEventsByDate,
                 calendarColors = calendarColors,
                 scrollState = scrollState,
+                showEventEmojis = showEventEmojis,
                 onEventClick = onEventClick,
                 onOverflowClick = { events -> overflowEvents = events },
                 onLongPress = onLongPress,
@@ -206,6 +209,7 @@ fun WeekViewContent(
         OverlapListSheet(
             events = events,
             calendarColors = calendarColors,
+            showEventEmojis = showEventEmojis,
             onDismiss = { overflowEvents = null },
             onEventClick = onEventClick
         )
@@ -226,6 +230,7 @@ private fun UnifiedTimeGrid(
     calendarColors: Map<Long, Int>,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     scrollState: ScrollState = rememberScrollState(),
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -280,6 +285,7 @@ private fun UnifiedTimeGrid(
             allDayEventsByDate = allDayEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
+            showEventEmojis = showEventEmojis,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -290,6 +296,7 @@ private fun UnifiedTimeGrid(
             overflowEventsByDate = earlyEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
+            showEventEmojis = showEventEmojis,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -345,6 +352,7 @@ private fun UnifiedTimeGrid(
                                 calendarColors = calendarColors,
                                 hourHeight = hourHeight,
                                 isToday = date == today,
+                                showEventEmojis = showEventEmojis,
                                 onEventClick = onEventClick,
                                 onOverflowClick = onOverflowClick,
                                 onLongPress = onLongPress,
@@ -369,6 +377,7 @@ private fun UnifiedTimeGrid(
             overflowEventsByDate = lateEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
+            showEventEmojis = showEventEmojis,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -443,6 +452,7 @@ private fun AllDayEventsPagerRow(
     allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
     timeColumnWidth: Dp,
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
@@ -484,6 +494,7 @@ private fun AllDayEventsPagerRow(
                     events = dayEvents,
                     calendarColors = calendarColors,
                     showTime = false,
+                    showEventEmojis = showEventEmojis,
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
                     modifier = Modifier
@@ -505,6 +516,7 @@ private fun OverflowEventsPagerRow(
     overflowEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
     timeColumnWidth: Dp,
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
@@ -546,6 +558,7 @@ private fun OverflowEventsPagerRow(
                     events = dayEvents,
                     calendarColors = calendarColors,
                     showTime = true,
+                    showEventEmojis = showEventEmojis,
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
                     modifier = Modifier
@@ -566,6 +579,7 @@ private fun CompactEventCell(
     events: List<Pair<Event, Occurrence>>,
     calendarColors: Map<Long, Int>,
     showTime: Boolean,
+    showEventEmojis: Boolean = true,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
@@ -585,7 +599,8 @@ private fun CompactEventCell(
             occurrence = firstOccurrence,
             color = color,
             onClick = { onEventClick(firstEvent, firstOccurrence) },
-            showTime = showTime
+            showTime = showTime,
+            showEventEmojis = showEventEmojis
         )
 
         // Show "+N more" if there are more events
@@ -614,12 +629,14 @@ private fun CompactEventChip(
     color: Int,
     onClick: () -> Unit,
     showTime: Boolean = false,
+    showEventEmojis: Boolean = true,
     modifier: Modifier = Modifier
 ) {
+    val formattedTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
     val displayText = if (showTime) {
-        "${WeekViewUtils.formatOverflowTime(occurrence.startTs)} ${event.title}"
+        "${WeekViewUtils.formatOverflowTime(occurrence.startTs)} $formattedTitle"
     } else {
-        event.title
+        formattedTitle
     }
 
     // Calculate luminance to determine text color (dark text for light backgrounds)

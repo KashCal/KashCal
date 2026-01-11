@@ -194,7 +194,11 @@ data class HomeUiState(
     /** Show error dialog (when currentError is Dialog type) */
     val showErrorDialog: Boolean = false,
     /** Show error banner (when currentError is Banner type) */
-    val showErrorBanner: Boolean = false
+    val showErrorBanner: Boolean = false,
+
+    // === DISPLAY PREFERENCES ===
+    /** Show auto-detected emojis in event titles */
+    val showEventEmojis: Boolean = true
 ) {
     /**
      * Format the current viewing month/year for display.

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.EmojiMatcher
 
 /**
  * Displays a single event block in the week view time grid.
@@ -54,6 +55,7 @@ fun EventBlock(
     clampedEnd: Boolean = false,
     originalStartMinutes: Int = 0,
     originalEndMinutes: Int = 0,
+    showEventEmojis: Boolean = true,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -92,7 +94,7 @@ fun EventBlock(
 
             // Title (always shown)
             Text(
-                text = event.title,
+                text = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
@@ -146,12 +148,14 @@ fun CompactEventBlock(
     occurrence: Occurrence,
     color: Int,
     onClick: () -> Unit,
+    showEventEmojis: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = Color(color)
     // Calculate luminance to determine text color
     val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
     val textColor = if (luminance > 0.5f) Color.Black else Color.White
+    val formattedTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
 
     Box(
         modifier = modifier
@@ -161,7 +165,7 @@ fun CompactEventBlock(
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
-            text = "${event.title} - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs)}",
+            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs)}",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
             maxLines = 1,

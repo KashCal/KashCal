@@ -54,6 +54,7 @@ import org.onekash.kashcal.util.location.looksLikeAddress
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
 
@@ -82,6 +83,7 @@ fun EventQuickViewSheet(
     calendarColor: Int,
     calendarName: String,
     occurrenceTs: Long? = null,
+    showEventEmojis: Boolean = true,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit = {},
@@ -102,9 +104,9 @@ fun EventQuickViewSheet(
     // Detect recurring events: master events have rrule, exception events have originalEventId
     val isRecurring = event.isRecurring || event.isException
 
-    // Format title with age for birthday events
-    val displayTitle = remember(event, occurrenceTs) {
-        formatEventTitle(event, occurrenceTs)
+    // Format title with age for birthday events and optional emoji
+    val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
+        formatEventTitle(event, occurrenceTs, showEventEmojis)
     }
 
     ModalBottomSheet(
@@ -548,45 +550,49 @@ private fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean): 
 }
 
 /**
- * Format event title, adding age for birthday events.
+ * Format event title, adding age for birthday events and optional emoji.
  *
  * For contact birthday events (caldavUrl starts with "contact_birthday:"):
  * - Decodes birth year from event description
  * - Calculates age at the occurrence date
  * - Returns "Name's Xth Birthday" format
  *
- * For all other events, returns the original title.
+ * For all other events, returns the original title with optional emoji prefix.
  *
  * @param event The event to format title for
  * @param occurrenceTs The occurrence timestamp for age calculation
+ * @param showEmojis Whether to prefix auto-detected emoji to the title
  * @return Formatted title string
  */
-private fun formatEventTitle(event: Event, occurrenceTs: Long?): String {
+private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
     // Check if this is a contact birthday event
     val isBirthdayEvent = event.caldavUrl?.startsWith("${ContactBirthdayRepository.SOURCE_PREFIX}:") == true
 
-    if (!isBirthdayEvent || occurrenceTs == null) {
-        return event.title
-    }
-
-    // Decode birth year from description
-    val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
-
-    // Display name is the raw title (e.g., "John Smith")
-    val displayName = event.title
-
-    if (birthYear == null) {
-        // No birth year - show "Name's Birthday" without age
-        return "$displayName's Birthday"
-    }
-
-    // Calculate age and format title
-    val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
-
-    return if (age > 0 && age < 150) {
-        "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+    val baseTitle = if (!isBirthdayEvent || occurrenceTs == null) {
+        event.title
     } else {
-        // Invalid age - show "Name's Birthday" without age
-        "$displayName's Birthday"
+        // Decode birth year from description
+        val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
+
+        // Display name is the raw title (e.g., "John Smith")
+        val displayName = event.title
+
+        if (birthYear == null) {
+            // No birth year - show "Name's Birthday" without age
+            "$displayName's Birthday"
+        } else {
+            // Calculate age and format title
+            val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
+
+            if (age > 0 && age < 150) {
+                "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
+            } else {
+                // Invalid age - show "Name's Birthday" without age
+                "$displayName's Birthday"
+            }
+        }
     }
+
+    // Apply emoji formatting if enabled
+    return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
 }

@@ -150,6 +150,9 @@ class HomeViewModel @Inject constructor(
 
         // Observe sync changes for snackbar notification
         observeSyncChanges()
+
+        // Observe display settings
+        observeDisplaySettings()
     }
 
     /**
@@ -384,6 +387,18 @@ class HomeViewModel @Inject constructor(
                     // Clear after consumed
                     syncScheduler.clearSyncChanges()
                 }
+            }
+        }
+    }
+
+    /**
+     * Observe display settings preference.
+     * Updates uiState when showEventEmojis preference changes.
+     */
+    private fun observeDisplaySettings() {
+        viewModelScope.launch {
+            dataStore.showEventEmojis.collect { showEmojis ->
+                _uiState.update { it.copy(showEventEmojis = showEmojis) }
             }
         }
     }

@@ -35,6 +35,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 fun OverlapListSheet(
     events: List<Pair<Event, Occurrence>>,
     calendarColors: Map<Long, Int>,
+    showEventEmojis: Boolean = true,
     onDismiss: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit
 ) {
@@ -75,6 +76,7 @@ fun OverlapListSheet(
                             onEventClick(event, occurrence)
                             onDismiss()
                         },
+                        showEventEmojis = showEventEmojis,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)

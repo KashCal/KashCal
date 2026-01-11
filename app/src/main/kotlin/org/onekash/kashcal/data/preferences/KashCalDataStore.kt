@@ -271,6 +271,19 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.QUICK_ADD_ENABLED, enabled)
     }
 
+    // ========== Display Settings ==========
+
+    /**
+     * Show auto-detected emojis in event titles.
+     * Default: true (enabled)
+     */
+    val showEventEmojis: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.SHOW_EVENT_EMOJIS, true)
+
+    suspend fun setShowEventEmojis(show: Boolean) {
+        setPreference(PreferencesKeys.SHOW_EVENT_EMOJIS, show)
+    }
+
     // ========== Migration Flags ==========
 
     val migrationV1Completed: Flow<Boolean>
