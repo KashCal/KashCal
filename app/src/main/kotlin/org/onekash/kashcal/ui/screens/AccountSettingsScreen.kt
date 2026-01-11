@@ -426,7 +426,7 @@ private fun FlatSettingsContent(
         SectionHeader("Display")
         SettingsCard {
             SettingsRow(
-                iconEmoji = "🎨",
+                icon = Icons.Filled.Visibility,
                 label = "Display Options",
                 subtitle = if (showEventEmojis) "Event emojis enabled" else "Event emojis disabled",
                 onClick = { showDisplayOptionsSheet = true },

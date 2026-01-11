@@ -83,6 +83,7 @@ class SettingsActivity : ComponentActivity() {
                 val notificationsEnabled by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
                 val defaultReminderTimed by viewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by viewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
+                val showEventEmojis by viewModel.showEventEmojis.collectAsStateWithLifecycle()
 
                 // Contact birthdays state
                 val contactBirthdaysEnabled by viewModel.contactBirthdaysEnabled.collectAsStateWithLifecycle()
@@ -276,6 +277,9 @@ class SettingsActivity : ComponentActivity() {
                             },
                             // Navigate to Subscriptions detail screen
                             onNavigateToSubscriptions = { showSubscriptionsScreen = true },
+                            // Display settings
+                            showEventEmojis = showEventEmojis,
+                            onShowEventEmojisChange = viewModel::setShowEventEmojis,
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME
                         )
