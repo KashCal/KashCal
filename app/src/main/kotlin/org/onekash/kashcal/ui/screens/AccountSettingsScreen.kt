@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
@@ -436,13 +438,13 @@ private fun FlatSettingsContent(
         SectionHeader("Display")
         SettingsCard {
             SettingsRow(
-                iconEmoji = "😀",
+                icon = Icons.Default.SentimentSatisfied,
                 label = "Event Emojis",
                 subtitle = if (showEventEmojis) "On" else "Off",
                 onClick = { showEventEmojisSheet = true }
             )
             SettingsRow(
-                iconEmoji = "🕐",
+                icon = Icons.Default.Schedule,
                 label = "Default Event Length",
                 subtitle = formatDuration(defaultEventDuration),
                 onClick = { showEventDurationSheet = true },

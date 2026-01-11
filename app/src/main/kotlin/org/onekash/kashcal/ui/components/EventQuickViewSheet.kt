@@ -84,6 +84,7 @@ fun EventQuickViewSheet(
     calendarName: String,
     occurrenceTs: Long? = null,
     showEventEmojis: Boolean = true,
+    isReadOnlyCalendar: Boolean = false,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit = {},
@@ -257,145 +258,186 @@ fun EventQuickViewSheet(
                     .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Edit button / inline confirmation
-                if (!showDeleteConfirmation) {
-                    // Hide edit when delete confirmation is active
-                    if (!showEditConfirmation) {
-                        FilledTonalButton(
-                            onClick = {
-                                if (isRecurring) {
-                                    showEditConfirmation = true
-                                } else {
-                                    onEdit()
-                                }
-                            },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Edit")
-                        }
-                    } else {
-                        // Inline edit confirmation for recurring events
-                        FilledTonalButton(
-                            onClick = {
-                                showEditConfirmation = false
-                                editAllOccurrences = false
-                            },
-                            modifier = Modifier.weight(0.5f)
-                        ) {
-                            Text("Cancel")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilledTonalButton(
-                            onClick = {
-                                showEditConfirmation = false
-                                if (editAllOccurrences) {
-                                    onEdit()
-                                } else {
-                                    onEditOccurrence()
-                                }
-                            },
-                            modifier = Modifier.weight(0.5f)
-                        ) {
-                            Text("Confirm")
-                        }
+                if (isReadOnlyCalendar) {
+                    // Read-only calendar: show Duplicate, Share, Export as primary buttons
+                    FilledTonalButton(
+                        onClick = onDuplicate,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Duplicate")
                     }
-                }
-
-                // Delete button / inline confirmation (hide when edit confirmation is active)
-                if (!showEditConfirmation) {
+                    FilledTonalButton(
+                        onClick = onShare,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Share")
+                    }
+                    FilledTonalButton(
+                        onClick = onExportIcs,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            Icons.Default.FileDownload,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Export")
+                    }
+                } else {
+                    // Editable calendar: Edit, Delete, More menu
+                    // Edit button / inline confirmation
                     if (!showDeleteConfirmation) {
-                        FilledTonalButton(
-                            onClick = { showDeleteConfirmation = true },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer,
-                                contentColor = MaterialTheme.colorScheme.onErrorContainer
-                            )
-                        ) {
-                            Text("Delete")
-                        }
-                    } else {
-                        // Inline delete confirmation
-                        FilledTonalButton(
-                            onClick = {
-                                showDeleteConfirmation = false
-                                deleteAllFuture = false
-                            },
-                            modifier = Modifier.weight(0.5f)
-                        ) {
-                            Text("Cancel")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        FilledTonalButton(
-                            onClick = {
-                                showDeleteConfirmation = false
-                                if (isRecurring) {
-                                    if (deleteAllFuture) {
-                                        onDeleteFuture()
+                        // Hide edit when delete confirmation is active
+                        if (!showEditConfirmation) {
+                            FilledTonalButton(
+                                onClick = {
+                                    if (isRecurring) {
+                                        showEditConfirmation = true
                                     } else {
-                                        onDeleteOccurrence()
+                                        onEdit()
                                     }
-                                } else {
-                                    onDeleteSingle()
-                                }
-                            },
-                            modifier = Modifier.weight(0.5f),
-                            colors = ButtonDefaults.filledTonalButtonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError
-                            )
-                        ) {
-                            Text("Confirm")
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Edit")
+                            }
+                        } else {
+                            // Inline edit confirmation for recurring events
+                            FilledTonalButton(
+                                onClick = {
+                                    showEditConfirmation = false
+                                    editAllOccurrences = false
+                                },
+                                modifier = Modifier.weight(0.5f)
+                            ) {
+                                Text("Cancel")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledTonalButton(
+                                onClick = {
+                                    showEditConfirmation = false
+                                    if (editAllOccurrences) {
+                                        onEdit()
+                                    } else {
+                                        onEditOccurrence()
+                                    }
+                                },
+                                modifier = Modifier.weight(0.5f)
+                            ) {
+                                Text("Confirm")
+                            }
                         }
                     }
-                }
 
-                // More button with dropdown (hidden during confirmation)
-                if (!showEditConfirmation && !showDeleteConfirmation) {
-                    Box {
-                        FilledTonalButton(
-                            onClick = { showMoreMenu = true }
-                        ) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = "More options"
-                            )
+                    // Delete button / inline confirmation (hide when edit confirmation is active)
+                    if (!showEditConfirmation) {
+                        if (!showDeleteConfirmation) {
+                            FilledTonalButton(
+                                onClick = { showDeleteConfirmation = true },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            ) {
+                                Text("Delete")
+                            }
+                        } else {
+                            // Inline delete confirmation
+                            FilledTonalButton(
+                                onClick = {
+                                    showDeleteConfirmation = false
+                                    deleteAllFuture = false
+                                },
+                                modifier = Modifier.weight(0.5f)
+                            ) {
+                                Text("Cancel")
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            FilledTonalButton(
+                                onClick = {
+                                    showDeleteConfirmation = false
+                                    if (isRecurring) {
+                                        if (deleteAllFuture) {
+                                            onDeleteFuture()
+                                        } else {
+                                            onDeleteOccurrence()
+                                        }
+                                    } else {
+                                        onDeleteSingle()
+                                    }
+                                },
+                                modifier = Modifier.weight(0.5f),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError
+                                )
+                            ) {
+                                Text("Confirm")
+                            }
                         }
+                    }
 
-                        DropdownMenu(
-                            expanded = showMoreMenu,
-                            onDismissRequest = { showMoreMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Duplicate") },
-                                onClick = {
-                                    showMoreMenu = false
-                                    onDuplicate()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.ContentCopy, contentDescription = "Duplicate")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Share") },
-                                onClick = {
-                                    showMoreMenu = false
-                                    onShare()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Share, contentDescription = "Share")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Export as .ics") },
-                                onClick = {
-                                    showMoreMenu = false
-                                    onExportIcs()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
-                                }
-                            )
+                    // More button with dropdown (hidden during confirmation)
+                    if (!showEditConfirmation && !showDeleteConfirmation) {
+                        Box {
+                            FilledTonalButton(
+                                onClick = { showMoreMenu = true }
+                            ) {
+                                Icon(
+                                    Icons.Default.MoreVert,
+                                    contentDescription = "More options"
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showMoreMenu,
+                                onDismissRequest = { showMoreMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Duplicate") },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        onDuplicate()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.ContentCopy, contentDescription = "Duplicate")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Share") },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        onShare()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Share, contentDescription = "Share")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Export as .ics") },
+                                    onClick = {
+                                        showMoreMenu = false
+                                        onExportIcs()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
+                                    }
+                                )
+                            }
                         }
                     }
                 }

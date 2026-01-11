@@ -385,6 +385,7 @@ class MainActivity : ComponentActivity() {
                         calendarName = calendarName,
                         occurrenceTs = quickViewOccurrenceTs,
                         showEventEmojis = uiState.showEventEmojis,
+                        isReadOnlyCalendar = calendar?.isReadOnly ?: false,
                         onDismiss = {
                             showQuickViewSheet = false
                             quickViewEvent = null
