@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
@@ -26,8 +27,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +53,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -104,6 +113,7 @@ fun WeekViewContent(
     // Track pager position changes - use settledPage for debounced loading
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()  // Prevent duplicate emissions
             .collect { page ->
                 Log.d(TAG, "Pager settled on page $page (date: ${WeekViewUtils.pageToDate(page)})")
                 onPageChanged(page)
@@ -111,8 +121,14 @@ fun WeekViewContent(
     }
 
     // Handle programmatic navigation (from Today button, date picker)
+    // Wait for any ongoing gesture to complete before animating
     LaunchedEffect(pendingNavigateToPage) {
         pendingNavigateToPage?.let { targetPage ->
+            // Wait for user gesture to complete (prevents racing with user scroll)
+            snapshotFlow { pagerState.isScrollInProgress }
+                .filter { !it }
+                .first()
+
             Log.d(TAG, "Navigating to page $targetPage (date: ${WeekViewUtils.pageToDate(targetPage)})")
             pagerState.animateScrollToPage(targetPage)
             onNavigationConsumed()
@@ -222,9 +238,14 @@ private fun UnifiedTimeGrid(
     val timeColumnWidth = 48.dp
     val today = LocalDate.now()
 
-    // Track scroll position changes
-    LaunchedEffect(scrollState.value) {
-        onScrollPositionChange(scrollState.value)
+    // Track scroll position changes - debounced to prevent per-pixel state updates
+    LaunchedEffect(scrollState) {
+        @OptIn(FlowPreview::class)
+        snapshotFlow { scrollState.value }
+            .debounce(100)  // 100ms debounce prevents recomposition storms
+            .collect { position ->
+                onScrollPositionChange(position)
+            }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -517,11 +538,19 @@ private fun OverflowEventsPagerRow(
             .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
             .padding(vertical = 4.dp)
     ) {
-        // Label column with contrast styling
-        Box(
+        // Label column with moon icon and contrast styling
+        Row(
             modifier = Modifier.width(timeColumnWidth),
-            contentAlignment = Alignment.Center
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Icon(
+                imageVector = Icons.Outlined.NightsStay,
+                contentDescription = null,
+                modifier = Modifier.size(12.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
