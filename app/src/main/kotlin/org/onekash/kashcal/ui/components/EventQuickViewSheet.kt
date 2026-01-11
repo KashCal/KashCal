@@ -259,42 +259,18 @@ fun EventQuickViewSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isReadOnlyCalendar) {
-                    // Read-only calendar: show Duplicate, Share, Export as primary buttons
+                    // Read-only calendar: show Duplicate and Share (matching Edit/Delete style)
                     FilledTonalButton(
                         onClick = onDuplicate,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            Icons.Default.ContentCopy,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
                         Text("Duplicate")
                     }
                     FilledTonalButton(
                         onClick = onShare,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(
-                            Icons.Default.Share,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
                         Text("Share")
-                    }
-                    FilledTonalButton(
-                        onClick = onExportIcs,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            Icons.Default.FileDownload,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text("Export")
                     }
                 } else {
                     // Editable calendar: Edit, Delete, More menu

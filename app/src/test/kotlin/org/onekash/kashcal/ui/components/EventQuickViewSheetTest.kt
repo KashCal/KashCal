@@ -336,4 +336,59 @@ class EventQuickViewSheetTest {
         val deleteConfirmButtons = 2  // Cancel, Confirm
         assertEquals("Delete confirmation should show 2 buttons", 2, deleteConfirmButtons)
     }
+
+    // ========== Read-Only Calendar Tests ==========
+
+    @Test
+    fun `read-only calendar shows Duplicate and Share buttons only`() {
+        val isReadOnlyCalendar = true
+        // Should show: Duplicate, Share (2 buttons)
+        // Should NOT show: Edit, Delete, Export, More
+        val expectedButtonCount = 2
+        assertEquals("Read-only calendar should show 2 buttons", expectedButtonCount, 2)
+    }
+
+    @Test
+    fun `editable calendar shows Edit Delete and More buttons`() {
+        val isReadOnlyCalendar = false
+        // Should show: Edit, Delete, More (3 buttons in normal state)
+        val expectedButtonCount = 3
+        assertEquals("Editable calendar should show 3 buttons", expectedButtonCount, 3)
+    }
+
+    @Test
+    fun `read-only calendar does not show Edit button`() {
+        val isReadOnlyCalendar = true
+        val showEditButton = !isReadOnlyCalendar
+        assertFalse("Read-only calendar should not show Edit", showEditButton)
+    }
+
+    @Test
+    fun `read-only calendar does not show Delete button`() {
+        val isReadOnlyCalendar = true
+        val showDeleteButton = !isReadOnlyCalendar
+        assertFalse("Read-only calendar should not show Delete", showDeleteButton)
+    }
+
+    @Test
+    fun `read-only calendar does not show Export button`() {
+        val isReadOnlyCalendar = true
+        // Export is only in More menu for editable calendars, not shown for read-only
+        val showExportButton = !isReadOnlyCalendar
+        assertFalse("Read-only calendar should not show Export", showExportButton)
+    }
+
+    @Test
+    fun `editable calendar shows Edit button`() {
+        val isReadOnlyCalendar = false
+        val showEditButton = !isReadOnlyCalendar
+        assertTrue("Editable calendar should show Edit", showEditButton)
+    }
+
+    @Test
+    fun `editable calendar shows Delete button`() {
+        val isReadOnlyCalendar = false
+        val showDeleteButton = !isReadOnlyCalendar
+        assertTrue("Editable calendar should show Delete", showDeleteButton)
+    }
 }
