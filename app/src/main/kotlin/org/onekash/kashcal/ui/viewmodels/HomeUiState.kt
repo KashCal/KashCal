@@ -132,6 +132,8 @@ data class HomeUiState(
     val weekViewScrollPosition: Int = 0,
     /** Current pager position (day index 0-6) for context-aware FAB */
     val weekViewPagerPosition: Int = 0,
+    /** Pending pager position to scroll to (null = no pending navigation) */
+    val pendingWeekViewPagerPosition: Int? = null,
     /** Show week view date picker dialog */
     val showWeekViewDatePicker: Boolean = false,
 

@@ -230,3 +230,76 @@ private val MAX_COLLAPSED_HEIGHT = 36.dp
 private val MAX_EXPANDED_HEIGHT = 120.dp
 private const val MAX_VISIBLE_COLLAPSED = 1
 private const val DEFAULT_ALL_DAY_COLOR = 0xFF6200EE.toInt()
+
+/**
+ * Static all-day events row (not paged, shows visible days based on currentPage).
+ * More reliable sync than paged version.
+ */
+@Composable
+fun StaticAllDayEventsRow(
+    weekStartMs: Long,
+    currentPage: Int,
+    allDayEvents: Map<Int, List<Pair<Event, Occurrence>>>,
+    calendarColors: Map<Long, Int>,
+    visibleDays: Int = 3,
+    timeColumnWidth: Dp = 48.dp,
+    onEventClick: (Event, Occurrence) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    // Check if there are any all-day events to show
+    val hasAnyEvents = allDayEvents.values.any { it.isNotEmpty() }
+    if (!hasAnyEvents) return
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            // "All day" label column
+            Box(
+                modifier = Modifier
+                    .width(timeColumnWidth)
+                    .padding(end = 8.dp, top = 4.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                Text(
+                    text = "All day",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // All-day events for visible days
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(max = if (expanded) MAX_EXPANDED_HEIGHT else MAX_COLLAPSED_HEIGHT)
+                    .animateContentSize()
+            ) {
+                repeat(visibleDays) { offset ->
+                    val dayIndex = currentPage + offset
+                    if (dayIndex in 0..6) {
+                        val dayEvents = allDayEvents[dayIndex] ?: emptyList()
+
+                        AllDayColumn(
+                            events = dayEvents,
+                            calendarColors = calendarColors,
+                            expanded = expanded,
+                            onExpand = { expanded = true },
+                            onEventClick = onEventClick,
+                            modifier = Modifier.weight(1f)
+                        )
+                    } else {
+                        // Empty space for out-of-range days
+                        Box(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        // Divider below all-day section
+        HorizontalDivider(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.outlineVariant
+        )
+    }
+}

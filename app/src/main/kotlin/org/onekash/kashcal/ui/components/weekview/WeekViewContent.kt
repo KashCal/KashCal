@@ -70,6 +70,8 @@ fun WeekViewContent(
     onLongPress: (java.time.LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit,
     onPagerPositionChange: (Int) -> Unit = {},
+    pendingPagerPosition: Int? = null,
+    onPendingPagerPositionConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // Pager state: 7 pages, one per day, starting at 0 (today)
@@ -83,29 +85,48 @@ fun WeekViewContent(
         onPagerPositionChange(pagerState.currentPage)
     }
 
+    // Handle pending pager position (from date picker navigation)
+    LaunchedEffect(pendingPagerPosition) {
+        pendingPagerPosition?.let { targetPosition ->
+            // Coerce to valid range (max is 4 for 7 days, 3 visible)
+            val validPosition = targetPosition.coerceIn(0, 4)
+            pagerState.scrollToPage(validPosition)
+            onPendingPagerPositionConsumed()
+        }
+    }
+
     // Track navigation direction for pager reset
     var pendingReset by remember { mutableStateOf<Int?>(null) }
     // Guard to prevent multiple week transitions during a single gesture
     var isTransitioning by remember { mutableStateOf(false) }
 
     // Auto-advance at week boundary
+    // With 7 pages (0-6) and 3 visible at a time, max currentPage is 4 (showing days 4,5,6)
+    // Min currentPage is 0 (showing days 0,1,2)
+    val maxPage = 4  // 7 days - 3 visible = 4
+
     LaunchedEffect(pagerState) {
         snapshotFlow {
-            pagerState.currentPage to pagerState.currentPageOffsetFraction
-        }.collect { (page, offset) ->
+            Triple(
+                pagerState.currentPage,
+                pagerState.currentPageOffsetFraction,
+                pagerState.isScrollInProgress
+            )
+        }.collect { (page, offset, isScrolling) ->
             // Skip if already transitioning to prevent multiple triggers
             if (isTransitioning) return@collect
 
-            // At last page (day 6 = Saturday), swiping right past threshold
-            if (page == 6 && offset > 0.15f) {
+            // At last reachable page (day 4 = showing Thu-Sat), swiping right
+            // Use small threshold since overscroll at edge is limited
+            if (page >= maxPage && offset > 0.02f) {
                 isTransitioning = true
                 pendingReset = 0  // Will reset to Sunday of next week
                 onNextWeek()
             }
             // At first page (day 0 = Sunday), swiping left past threshold
-            else if (page == 0 && offset < -0.15f) {
+            else if (page == 0 && offset < -0.02f) {
                 isTransitioning = true
-                pendingReset = 6  // Will reset to Saturday of previous week
+                pendingReset = maxPage  // Will reset to show last 3 days of previous week
                 onPreviousWeek()
             }
         }
@@ -138,22 +159,38 @@ fun WeekViewContent(
         groupEventsByDay(allDayOccurrences.toList(), allDayEvents.toList(), weekStartMs)
     }
 
+    // Separate timed events into early (before 6am), normal (6am-11pm), and late (after 11pm)
+    val (earlyEventsByDay, normalEventsByDay, lateEventsByDay) = remember(timedEventsByDay) {
+        separateEventsByTimeSlot(timedEventsByDay)
+    }
+
     // State for overflow sheet
     var overflowEvents by remember { mutableStateOf<List<Pair<Event, Occurrence>>?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
         // Day headers row (Mon, Tue, Wed... with dates)
         // Note: Month/Year row with Today button is now in HomeScreen's AgendaMonthYearRow
-        DayHeadersRow(
-            pagerState = pagerState,
-            weekStartMs = weekStartMs
+        // Use StaticDayHeadersRow (not paged) for reliable sync with TimeGrid
+        StaticDayHeadersRow(
+            weekStartMs = weekStartMs,
+            currentPage = pagerState.currentPage
         )
 
-        // All-day events row
-        AllDayEventsRow(
-            pagerState = pagerState,
+        // All-day events row (static for reliable sync)
+        StaticAllDayEventsRow(
             weekStartMs = weekStartMs,
+            currentPage = pagerState.currentPage,
             allDayEvents = allDayEventsByDay,
+            calendarColors = calendarColors,
+            onEventClick = onEventClick
+        )
+
+        // Early events row (before 6am) - shown after all-day row
+        OverflowEventsRow(
+            label = "Before 6am",
+            weekStartMs = weekStartMs,
+            currentPage = pagerState.currentPage,
+            overflowEvents = earlyEventsByDay,
             calendarColors = calendarColors,
             onEventClick = onEventClick
         )
@@ -186,11 +223,11 @@ fun WeekViewContent(
                     }
                 }
                 else -> {
-                    // Time grid with events
+                    // Time grid with events (only normal events - 6am to 11pm)
                     TimeGrid(
                         pagerState = pagerState,
                         weekStartMs = weekStartMs,
-                        events = timedEventsByDay,
+                        events = normalEventsByDay,
                         calendarColors = calendarColors,
                         scrollState = scrollState,
                         onEventClick = onEventClick,
@@ -202,6 +239,16 @@ fun WeekViewContent(
                 }
             }
         }
+
+        // Late events row (after 11pm) - shown after time grid
+        OverflowEventsRow(
+            label = "After 11pm",
+            weekStartMs = weekStartMs,
+            currentPage = pagerState.currentPage,
+            overflowEvents = lateEventsByDay,
+            calendarColors = calendarColors,
+            onEventClick = onEventClick
+        )
     }
 
     // Overflow sheet
@@ -232,4 +279,37 @@ fun EmptyWeekView(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+}
+
+/**
+ * Separates events by time slot into early (before 6am), normal (6am-11pm), and late (after 11pm).
+ *
+ * @param eventsByDay Map of day index to list of events
+ * @return Triple of (earlyEventsByDay, normalEventsByDay, lateEventsByDay)
+ */
+private fun separateEventsByTimeSlot(
+    eventsByDay: Map<Int, List<Pair<Event, Occurrence>>>
+): Triple<Map<Int, List<Pair<Event, Occurrence>>>, Map<Int, List<Pair<Event, Occurrence>>>, Map<Int, List<Pair<Event, Occurrence>>>> {
+    val earlyEvents = mutableMapOf<Int, MutableList<Pair<Event, Occurrence>>>()
+    val normalEvents = mutableMapOf<Int, MutableList<Pair<Event, Occurrence>>>()
+    val lateEvents = mutableMapOf<Int, MutableList<Pair<Event, Occurrence>>>()
+
+    for ((dayIndex, events) in eventsByDay) {
+        for (eventPair in events) {
+            val (_, occurrence) = eventPair
+            when (WeekViewUtils.classifyTimeSlot(occurrence)) {
+                WeekViewUtils.TimeSlot.EARLY -> {
+                    earlyEvents.getOrPut(dayIndex) { mutableListOf() }.add(eventPair)
+                }
+                WeekViewUtils.TimeSlot.NORMAL -> {
+                    normalEvents.getOrPut(dayIndex) { mutableListOf() }.add(eventPair)
+                }
+                WeekViewUtils.TimeSlot.LATE -> {
+                    lateEvents.getOrPut(dayIndex) { mutableListOf() }.add(eventPair)
+                }
+            }
+        }
+    }
+
+    return Triple(earlyEvents, normalEvents, lateEvents)
 }

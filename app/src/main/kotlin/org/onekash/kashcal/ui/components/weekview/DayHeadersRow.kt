@@ -82,7 +82,7 @@ fun DayHeadersRow(
 
 /**
  * Single day header showing day name and date.
- * Apple style: "Mon 6" format with filled circle for today.
+ * Compact format: "Mon 6" with filled circle for today.
  */
 @Composable
 private fun DayHeader(

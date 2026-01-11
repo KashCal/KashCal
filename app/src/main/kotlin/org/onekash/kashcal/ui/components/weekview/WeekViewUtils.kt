@@ -36,6 +36,69 @@ object WeekViewUtils {
     val MIN_EVENT_HEIGHT = 20.dp
     val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
+    /**
+     * Time slot classification for events.
+     * Events are categorized based on their relationship to the visible grid (6am-11pm).
+     */
+    enum class TimeSlot {
+        /** Event occurs entirely before 6am */
+        EARLY,
+        /** Event overlaps with the visible grid (6am-11pm) */
+        NORMAL,
+        /** Event occurs entirely after 11pm */
+        LATE
+    }
+
+    /**
+     * Classify an event based on its time relative to the visible grid.
+     *
+     * - EARLY: Event ends at or before 6am
+     * - LATE: Event starts at or after 11pm
+     * - NORMAL: Event overlaps with 6am-11pm range
+     *
+     * @param occurrence The occurrence to classify
+     * @return TimeSlot indicating where the event belongs
+     */
+    fun classifyTimeSlot(occurrence: Occurrence): TimeSlot {
+        val startTime = Instant.ofEpochMilli(occurrence.startTs)
+            .atZone(ZoneId.systemDefault())
+        val endTime = Instant.ofEpochMilli(occurrence.endTs)
+            .atZone(ZoneId.systemDefault())
+
+        val startMinutes = startTime.hour * MINUTES_PER_HOUR + startTime.minute
+        val endMinutes = endTime.hour * MINUTES_PER_HOUR + endTime.minute
+
+        val gridStartMinutes = START_HOUR * MINUTES_PER_HOUR  // 360 (6am)
+        val gridEndMinutes = END_HOUR * MINUTES_PER_HOUR      // 1380 (11pm)
+
+        return when {
+            // Event ends at or before 6am - it's an early event
+            endMinutes <= gridStartMinutes -> TimeSlot.EARLY
+            // Event starts at or after 11pm - it's a late event
+            startMinutes >= gridEndMinutes -> TimeSlot.LATE
+            // Event overlaps with the grid
+            else -> TimeSlot.NORMAL
+        }
+    }
+
+    /**
+     * Format time for overflow row display (e.g., "5:30am").
+     */
+    fun formatOverflowTime(timestampMs: Long): String {
+        val time = Instant.ofEpochMilli(timestampMs)
+            .atZone(ZoneId.systemDefault())
+            .toLocalTime()
+        val hour = time.hour
+        val minute = time.minute
+        val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+        val amPm = if (hour < 12) "am" else "pm"
+        return if (minute == 0) {
+            "$hour12$amPm"
+        } else {
+            "$hour12:${minute.toString().padStart(2, '0')}$amPm"
+        }
+    }
+
     // ==================== Week Calculations ====================
 
     /**
@@ -145,6 +208,31 @@ object WeekViewUtils {
         val startDate = weekStart.plusDays(pagerPosition.toLong())
         val endDate = startDate.plusDays((visibleDays - 1).toLong())
         return formatCompactRange(startDate, endDate)
+    }
+
+    /**
+     * Format just the month and year for the header (e.g., "January 2025").
+     * Shows year only if different from current year.
+     *
+     * @param weekStartMs Start of the week in milliseconds
+     * @param pagerPosition Current pager position (0-6, index of first visible day)
+     * @return Formatted month/year string
+     */
+    fun formatMonthYear(weekStartMs: Long, pagerPosition: Int): String {
+        val weekStart = Instant.ofEpochMilli(weekStartMs)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDate()
+        val centerDate = weekStart.plusDays(pagerPosition.toLong() + 1) // Center of 3-day view
+        val now = LocalDate.now()
+
+        val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
+        val month = centerDate.format(monthFormatter)
+
+        return if (centerDate.year != now.year) {
+            "$month ${centerDate.year}"
+        } else {
+            month
+        }
     }
 
     // ==================== Time Snapping ====================

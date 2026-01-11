@@ -2517,6 +2517,48 @@ class HomeViewModelTest {
         assertEquals(today.get(JavaCalendar.MONTH), viewModel.uiState.value.viewingMonth)
     }
 
+    @Test
+    fun `onWeekViewDateSelected sets pending pager position for selected day`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Initial state: no pending position
+        assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
+
+        // Select Monday Jan 13, 2025 (week starts Sunday Jan 12)
+        // Monday = day 1 in the week
+        val mondayMs = getTimestamp(2025, 0, 13, 12, 0) // January 13, 2025
+        viewModel.onWeekViewDateSelected(mondayMs)
+        advanceUntilIdle()
+
+        // Should set pending pager position to day offset (1 for Monday)
+        assertEquals(1, viewModel.uiState.value.pendingWeekViewPagerPosition)
+
+        // Week start should be Sunday Jan 12
+        val weekStart = viewModel.uiState.value.weekViewStartDate
+        assertTrue("weekViewStartDate should be set", weekStart > 0L)
+    }
+
+    @Test
+    fun `clearPendingWeekViewPagerPosition clears the pending position`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Set a pending position via date selection
+        val wednesdayMs = getTimestamp(2025, 0, 15, 12, 0) // January 15, 2025 (Wednesday)
+        viewModel.onWeekViewDateSelected(wednesdayMs)
+        advanceUntilIdle()
+
+        // Should have pending position (3 for Wednesday)
+        assertEquals(3, viewModel.uiState.value.pendingWeekViewPagerPosition)
+
+        // Clear it
+        viewModel.clearPendingWeekViewPagerPosition()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun getTimestamp(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {

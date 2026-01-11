@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -56,9 +57,11 @@ fun EventBlock(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Google style: solid fill, white text, no border
+    // Solid fill with contrasting text for readability
     val backgroundColor = Color(color)
-    val textColor = Color.White
+    // Calculate luminance to determine text color (dark text for light backgrounds)
+    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
+    val textColor = if (luminance > 0.5f) Color.Black else Color.White
 
     // Determine what content fits based on height
     val showTime = height >= HEIGHT_THRESHOLD_TIME
@@ -67,6 +70,7 @@ fun EventBlock(
 
     Box(
         modifier = modifier
+            .height(height)  // Apply the calculated height
             .clip(RoundedCornerShape(4.dp))
             .background(backgroundColor)
             .clickable(onClick = onClick)
@@ -134,7 +138,7 @@ fun EventBlock(
 /**
  * Compact event block for overflow display ("+N more" list).
  * Shows only title and time in a single line.
- * Google style: solid fill, white text.
+ * Solid fill with contrasting text.
  */
 @Composable
 fun CompactEventBlock(
@@ -145,6 +149,9 @@ fun CompactEventBlock(
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = Color(color)
+    // Calculate luminance to determine text color
+    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
+    val textColor = if (luminance > 0.5f) Color.Black else Color.White
 
     Box(
         modifier = modifier
@@ -156,7 +163,7 @@ fun CompactEventBlock(
         Text(
             text = "${event.title} - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs)}",
             style = MaterialTheme.typography.bodySmall,
-            color = Color.White,
+            color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

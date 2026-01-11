@@ -963,8 +963,18 @@ class HomeViewModel @Inject constructor(
      * Navigate week view to today (today becomes first visible day).
      */
     fun goToTodayWeek() {
-        val todayStart = getWeekStart(System.currentTimeMillis())
-        _uiState.update { it.copy(weekViewStartDate = todayStart) }
+        val now = System.currentTimeMillis()
+        val todayStart = getWeekStart(now)
+
+        // Calculate today's day offset (0=Sun, 1=Mon, etc)
+        val dayOffset = ((now - todayStart) / (24 * 60 * 60 * 1000)).toInt().coerceIn(0, 6)
+
+        _uiState.update {
+            it.copy(
+                weekViewStartDate = todayStart,
+                pendingWeekViewPagerPosition = dayOffset
+            )
+        }
         loadEventsForWeek(todayStart)
     }
 
@@ -1079,11 +1089,32 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Handle date selection from week view date picker.
-     * Navigates to the week containing the selected date.
+     * Navigates to the week containing the selected date and positions pager
+     * so the selected date is the first visible day.
      */
     fun onWeekViewDateSelected(dateMs: Long) {
         hideWeekViewDatePicker()
-        navigateToWeek(dateMs)
+
+        val weekStart = getWeekStart(dateMs)
+
+        // Calculate day offset (0=Sun, 1=Mon, etc)
+        val dayOffset = ((dateMs - weekStart) / (24 * 60 * 60 * 1000)).toInt().coerceIn(0, 6)
+
+        // Update week and set pending pager position
+        _uiState.update {
+            it.copy(
+                weekViewStartDate = weekStart,
+                pendingWeekViewPagerPosition = dayOffset
+            )
+        }
+        loadEventsForWeek(weekStart)
+    }
+
+    /**
+     * Clear pending pager position after it has been consumed by the UI.
+     */
+    fun clearPendingWeekViewPagerPosition() {
+        _uiState.update { it.copy(pendingWeekViewPagerPosition = null) }
     }
 
     // ==================== Day Selection ====================

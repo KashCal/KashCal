@@ -146,6 +146,7 @@ fun HomeScreen(
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
     onWeekPagerPositionChange: (Int) -> Unit = {},
+    onClearPendingWeekPagerPosition: () -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {}
 ) {
@@ -361,6 +362,8 @@ fun HomeScreen(
                                             },
                                             onScrollPositionChange = onWeekScrollPositionChange,
                                             onPagerPositionChange = onWeekPagerPositionChange,
+                                            pendingPagerPosition = uiState.pendingWeekViewPagerPosition,
+                                            onPendingPagerPositionConsumed = onClearPendingWeekPagerPosition,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -398,6 +401,8 @@ fun HomeScreen(
                                         },
                                         onScrollPositionChange = onWeekScrollPositionChange,
                                         onPagerPositionChange = onWeekPagerPositionChange,
+                                        pendingPagerPosition = uiState.pendingWeekViewPagerPosition,
+                                        onPendingPagerPositionConsumed = onClearPendingWeekPagerPosition,
                                         modifier = Modifier.fillMaxSize()
                                     )
                                 }
@@ -1098,14 +1103,13 @@ private fun AgendaMonthYearRow(
             AgendaViewType.AGENDA -> "Upcoming Events"
             AgendaViewType.THREE_DAYS -> {
                 if (weekStartMs > 0L) {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatHeaderRange(
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
                         weekStartMs = weekStartMs,
-                        pagerPosition = pagerPosition,
-                        visibleDays = 3
+                        pagerPosition = pagerPosition
                     )
                 } else {
                     // Default to current month if week not initialized
-                    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                    val monthFormat = SimpleDateFormat("MMMM", Locale.getDefault())
                     monthFormat.format(Date())
                 }
             }
