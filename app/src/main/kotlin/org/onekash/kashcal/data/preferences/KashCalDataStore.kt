@@ -127,6 +127,19 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.CALENDAR_VIEW, view)
     }
 
+    /**
+     * Calendar view type for bottom nav (Month/Week toggle).
+     * Returns "MONTH" or "WEEK".
+     */
+    val calendarViewType: Flow<String>
+        get() = getPreference(PreferencesKeys.CALENDAR_VIEW_TYPE, DEFAULT_CALENDAR_VIEW_TYPE)
+
+    suspend fun getCalendarViewType(): String = calendarViewType.first()
+
+    suspend fun setCalendarViewType(viewType: String) {
+        setPreference(PreferencesKeys.CALENDAR_VIEW_TYPE, viewType)
+    }
+
     val firstDayOfWeek: Flow<Int>
         get() = getPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, Calendar.SUNDAY)
 
@@ -453,6 +466,7 @@ class KashCalDataStore(private val context: Context) {
 
         // Other defaults
         const val DEFAULT_CALENDAR_VIEW = "month"
+        const val DEFAULT_CALENDAR_VIEW_TYPE = "MONTH"  // CalendarViewType.MONTH.name
         const val DEFAULT_EVENT_DURATION_MINUTES = 60
 
         // Theme values

@@ -65,9 +65,12 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.ui.components.CalendarBottomNavBar
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
+import org.onekash.kashcal.ui.components.weekview.WeekViewContent
+import org.onekash.kashcal.ui.viewmodels.CalendarViewType
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.util.DateTimeUtils
@@ -131,6 +134,13 @@ fun HomeScreen(
     onMonthHeaderClick: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
+    // View type callbacks
+    onViewTypeChange: (CalendarViewType) -> Unit = {},
+    // Week view callbacks
+    onPreviousWeek: () -> Unit = {},
+    onNextWeek: () -> Unit = {},
+    onWeekDatePickerRequest: () -> Unit = {},
+    onWeekScrollPositionChange: (Int) -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {}
 ) {
@@ -249,6 +259,15 @@ fun HomeScreen(
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Create event")
             }
+        },
+        bottomBar = {
+            // Only show bottom nav when not in search or agenda mode
+            if (!uiState.isSearchActive && !uiState.showAgendaPanel) {
+                CalendarBottomNavBar(
+                    currentViewType = uiState.calendarViewType,
+                    onViewTypeChange = onViewTypeChange
+                )
+            }
         }
     ) { paddingValues ->
         Column(
@@ -305,63 +324,92 @@ fun HomeScreen(
                             }
                         }
                         else -> {
-                            // Calendar with pager
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.Top
-                            ) { page ->
-                                val monthOffset = page - initialPage
-                                val pageCal = JavaCalendar.getInstance().apply {
-                                    set(todayYear, todayMonth, 1)
-                                    add(JavaCalendar.MONTH, monthOffset)
-                                }
-                                val pageYear = pageCal.get(JavaCalendar.YEAR)
-                                val pageMonth = pageCal.get(JavaCalendar.MONTH)
-
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.Top
-                                ) {
-                                    // Month navigation header
-                                    MonthNavHeader(
-                                        year = pageYear,
-                                        month = pageMonth,
-                                        onPrevious = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                            }
+                            // Calendar views based on view type
+                            when (uiState.calendarViewType) {
+                                CalendarViewType.WEEK -> {
+                                    // Week view
+                                    WeekViewContent(
+                                        weekStartMs = uiState.weekViewStartDate,
+                                        timedOccurrences = uiState.weekViewOccurrences,
+                                        timedEvents = uiState.weekViewEvents,
+                                        allDayOccurrences = uiState.weekViewAllDayOccurrences,
+                                        allDayEvents = uiState.weekViewAllDayEvents,
+                                        calendars = uiState.calendars,
+                                        isLoading = uiState.isLoadingWeekView,
+                                        error = uiState.weekViewError,
+                                        scrollPosition = uiState.weekViewScrollPosition,
+                                        onPreviousWeek = onPreviousWeek,
+                                        onNextWeek = onNextWeek,
+                                        onDatePickerRequest = onWeekDatePickerRequest,
+                                        onEventClick = { event, occurrence ->
+                                            onEventClick(event, occurrence.startTs)
                                         },
-                                        onNext = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                            }
-                                        },
-                                        onMonthClick = onMonthHeaderClick
+                                        onScrollPositionChange = onWeekScrollPositionChange,
+                                        modifier = Modifier.fillMaxSize()
                                     )
+                                }
+                                CalendarViewType.MONTH -> {
+                                    // Month view with pager
+                                    // CRITICAL: userScrollEnabled must be true for month view
+                                    HorizontalPager(
+                                        state = pagerState,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top,
+                                        userScrollEnabled = true  // Always enabled in month view
+                                    ) { page ->
+                                        val monthOffset = page - initialPage
+                                        val pageCal = JavaCalendar.getInstance().apply {
+                                            set(todayYear, todayMonth, 1)
+                                            add(JavaCalendar.MONTH, monthOffset)
+                                        }
+                                        val pageYear = pageCal.get(JavaCalendar.YEAR)
+                                        val pageMonth = pageCal.get(JavaCalendar.MONTH)
 
-                                    // Day of week headers
-                                    DayOfWeekHeaders()
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.Top
+                                        ) {
+                                            // Month navigation header
+                                            MonthNavHeader(
+                                                year = pageYear,
+                                                month = pageMonth,
+                                                onPrevious = {
+                                                    coroutineScope.launch {
+                                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                                    }
+                                                },
+                                                onNext = {
+                                                    coroutineScope.launch {
+                                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                                    }
+                                                },
+                                                onMonthClick = onMonthHeaderClick
+                                            )
 
-                                    // Calendar grid
-                                    CalendarGrid(
-                                        year = pageYear,
-                                        month = pageMonth,
-                                        selectedDate = uiState.selectedDate,
-                                        eventDots = uiState.eventDots,
-                                        onDateSelected = onDateSelected
+                                            // Day of week headers
+                                            DayOfWeekHeaders()
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            // Calendar grid
+                                            CalendarGrid(
+                                                year = pageYear,
+                                                month = pageMonth,
+                                                selectedDate = uiState.selectedDate,
+                                                eventDots = uiState.eventDots,
+                                                onDateSelected = onDateSelected
+                                            )
+                                        }
+                                    }
+
+                                    // Event list below calendar
+                                    HorizontalDivider()
+                                    EventListForSelectedDay(
+                                        uiState = uiState,
+                                        calendars = uiState.calendars,
+                                        onEventClick = onEventClick
                                     )
                                 }
                             }
-
-                            // Event list below calendar
-                            HorizontalDivider()
-                            EventListForSelectedDay(
-                                uiState = uiState,
-                                calendars = uiState.calendars,
-                                onEventClick = onEventClick
-                            )
                         }
                     }
                 }

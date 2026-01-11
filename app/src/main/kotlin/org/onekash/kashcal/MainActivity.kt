@@ -40,6 +40,7 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
+import org.onekash.kashcal.ui.viewmodels.CalendarViewType
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
@@ -55,6 +56,9 @@ class MainActivity : ComponentActivity() {
 
     private val homeViewModel: HomeViewModel by viewModels()
     private var isFirstResume = true
+    // Skip sync when returning from internal activities (currently only SettingsActivity)
+    // Note: Share/Export choosers are NOT internal - user leaves app, sync on return is appropriate
+    private var returningFromInternalActivity = false
 
     @Inject
     lateinit var eventCoordinator: EventCoordinator
@@ -302,6 +306,13 @@ class MainActivity : ComponentActivity() {
                     onMonthHeaderClick = { homeViewModel.toggleYearOverlay() },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
+                    // View type callbacks
+                    onViewTypeChange = { viewType -> homeViewModel.setCalendarViewType(viewType) },
+                    // Week view callbacks
+                    onPreviousWeek = { homeViewModel.navigateToPreviousWeek() },
+                    onNextWeek = { homeViewModel.navigateToNextWeek() },
+                    onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
+                    onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() }
                 )
@@ -651,17 +662,38 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /**
+     * Launch an internal activity (e.g., SettingsActivity) and set flag to skip sync on return.
+     * Uses try-catch to reset flag if launch fails (rare but possible).
+     */
+    private fun launchInternalActivity(intent: Intent) {
+        try {
+            returningFromInternalActivity = true
+            startActivity(intent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to launch internal activity", e)
+            returningFromInternalActivity = false  // Reset - don't skip sync incorrectly
+        }
+    }
+
     override fun onResume() {
         super.onResume()
-        Log.d(TAG, "onResume, isFirstResume=$isFirstResume")
+        Log.d(TAG, "onResume, isFirstResume=$isFirstResume, returningFromInternal=$returningFromInternalActivity")
 
         if (!isFirstResume) {
             Log.d(TAG, "Returning to calendar, refreshing")
             homeViewModel.refreshICloudStatus()
             homeViewModel.refreshCalendars()
-            homeViewModel.syncOnResumeIfNeeded()
+
+            // Only sync if returning from external navigation (not Settings)
+            if (!returningFromInternalActivity) {
+                homeViewModel.syncOnResumeIfNeeded()
+            } else {
+                Log.d(TAG, "Skipping sync - returning from internal navigation")
+            }
         }
         isFirstResume = false
+        returningFromInternalActivity = false  // Reset for next time
     }
 
     override fun onNewIntent(intent: Intent) {

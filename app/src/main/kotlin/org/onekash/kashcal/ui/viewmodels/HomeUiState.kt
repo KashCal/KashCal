@@ -111,6 +111,28 @@ data class HomeUiState(
     /** Loading state for agenda */
     val isLoadingAgenda: Boolean = false,
 
+    // === WEEK VIEW STATE ===
+    /** Current calendar view type (Month or Week) */
+    val calendarViewType: CalendarViewType = CalendarViewType.MONTH,
+    /** First day of the currently displayed week (epoch millis at midnight) */
+    val weekViewStartDate: Long = 0L,
+    /** Timed events for the week (excludes all-day) */
+    val weekViewOccurrences: ImmutableList<Occurrence> = persistentListOf(),
+    /** Event data for weekViewOccurrences (keyed by exceptionEventId ?: eventId) */
+    val weekViewEvents: ImmutableList<Event> = persistentListOf(),
+    /** All-day occurrences for the week */
+    val weekViewAllDayOccurrences: ImmutableList<Occurrence> = persistentListOf(),
+    /** Event data for weekViewAllDayOccurrences */
+    val weekViewAllDayEvents: ImmutableList<Event> = persistentListOf(),
+    /** Loading state for week view */
+    val isLoadingWeekView: Boolean = false,
+    /** Error message if week view load fails */
+    val weekViewError: String? = null,
+    /** Scroll position in week time grid (pixels) for state preservation */
+    val weekViewScrollPosition: Int = 0,
+    /** Show week view date picker dialog */
+    val showWeekViewDatePicker: Boolean = false,
+
     // === UI DIALOGS/SHEETS ===
     /** Show onboarding for first-time users */
     val showOnboardingSheet: Boolean = false,
@@ -302,4 +324,14 @@ sealed class PendingAction {
         val data: CalendarIntentData,
         val invitees: List<String>
     ) : PendingAction()
+}
+
+/**
+ * Calendar view type for switching between month and week views.
+ */
+enum class CalendarViewType {
+    /** Traditional month grid view */
+    MONTH,
+    /** 3-day scrollable week view */
+    WEEK
 }

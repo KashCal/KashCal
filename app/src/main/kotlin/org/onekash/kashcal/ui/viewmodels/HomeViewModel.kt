@@ -113,6 +113,9 @@ class HomeViewModel @Inject constructor(
     // Job for occurrence extension (cancel previous on rapid swipe)
     private var extensionJob: Job? = null
 
+    // Job for week view events observation (cancel previous when week changes)
+    private var weekEventsJob: Job? = null
+
     // Suppress sync indicator for silent syncs (cold start, resume, force full sync with banner)
     // Only pull-to-refresh shows the spinning icon since it's user-initiated
     private var suppressSyncIndicator = false
@@ -153,6 +156,16 @@ class HomeViewModel @Inject constructor(
             // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
             observeCalendars()
 
+            // Restore saved view type preference
+            val savedViewType = dataStore.getCalendarViewType()
+            val viewType = try {
+                CalendarViewType.valueOf(savedViewType)
+            } catch (e: IllegalArgumentException) {
+                CalendarViewType.MONTH
+            }
+            _uiState.update { it.copy(calendarViewType = viewType) }
+            Log.d(TAG, "Restored calendar view type: $viewType")
+
             // Check if iCloud is configured
             checkICloudStatus()
 
@@ -171,6 +184,11 @@ class HomeViewModel @Inject constructor(
 
             // Auto-select today
             goToToday()
+
+            // Initialize week view if that's the current view type
+            if (viewType == CalendarViewType.WEEK) {
+                goToTodayWeek()
+            }
 
             Log.d(TAG, "initializeAsync - COMPLETE")
         } catch (e: Exception) {
@@ -861,6 +879,197 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // ==================== Week View Navigation ====================
+
+    /**
+     * Set calendar view type (Month or Week).
+     * Persists preference to DataStore.
+     */
+    fun setCalendarViewType(viewType: CalendarViewType) {
+        _uiState.update { it.copy(calendarViewType = viewType) }
+
+        // Persist preference
+        viewModelScope.launch {
+            dataStore.setCalendarViewType(viewType.name)
+        }
+
+        // Load data for new view type
+        when (viewType) {
+            CalendarViewType.WEEK -> {
+                // Initialize week view to today if not set
+                if (_uiState.value.weekViewStartDate == 0L) {
+                    goToTodayWeek()
+                } else {
+                    loadEventsForWeek(_uiState.value.weekViewStartDate)
+                }
+            }
+            CalendarViewType.MONTH -> {
+                // Cancel any week view loading
+                weekEventsJob?.cancel()
+            }
+        }
+    }
+
+    /**
+     * Navigate to a specific week.
+     * The weekStartMs should be the first day of the week (Sunday at midnight).
+     */
+    fun navigateToWeek(weekStartMs: Long) {
+        val normalizedStart = getWeekStart(weekStartMs)
+
+        // Only load if different week than current
+        if (normalizedStart != getWeekStart(_uiState.value.weekViewStartDate)) {
+            _uiState.update { it.copy(weekViewStartDate = normalizedStart) }
+            loadEventsForWeek(normalizedStart)
+        }
+    }
+
+    /**
+     * Navigate to the previous week (7 days back).
+     */
+    fun navigateToPreviousWeek() {
+        val currentStart = _uiState.value.weekViewStartDate
+        if (currentStart == 0L) {
+            goToTodayWeek()
+            return
+        }
+        val newStart = currentStart - (7L * 24 * 60 * 60 * 1000)
+        navigateToWeek(newStart)
+    }
+
+    /**
+     * Navigate to the next week (7 days forward).
+     */
+    fun navigateToNextWeek() {
+        val currentStart = _uiState.value.weekViewStartDate
+        if (currentStart == 0L) {
+            goToTodayWeek()
+            return
+        }
+        val newStart = currentStart + (7L * 24 * 60 * 60 * 1000)
+        navigateToWeek(newStart)
+    }
+
+    /**
+     * Navigate week view to today (today becomes first visible day).
+     */
+    fun goToTodayWeek() {
+        val todayStart = getWeekStart(System.currentTimeMillis())
+        _uiState.update { it.copy(weekViewStartDate = todayStart) }
+        loadEventsForWeek(todayStart)
+    }
+
+    /**
+     * Load events for the specified week.
+     * Cancels any previous load operation (handles fast navigation).
+     *
+     * Loads both timed events and all-day events separately for proper week view rendering.
+     */
+    private fun loadEventsForWeek(weekStartMs: Long) {
+        // Cancel previous load
+        weekEventsJob?.cancel()
+
+        _uiState.update { it.copy(isLoadingWeekView = true, weekViewError = null) }
+
+        // Week end is 7 days later
+        val weekEndMs = weekStartMs + (7L * 24 * 60 * 60 * 1000)
+
+        weekEventsJob = viewModelScope.launch {
+            try {
+                eventReader.getOccurrencesWithEventsInRangeFlow(weekStartMs, weekEndMs)
+                    .distinctUntilChanged()
+                    .collect { occurrencesWithEvents ->
+                        // Filter by visible calendars
+                        val visibleCalendarIds = _uiState.value.calendars
+                            .filter { it.isVisible }
+                            .map { it.id }
+                            .toSet()
+
+                        val visible = occurrencesWithEvents.filter {
+                            it.occurrence.calendarId in visibleCalendarIds
+                        }
+
+                        // Separate timed and all-day events
+                        val timedOccurrences = visible
+                            .filter { !it.event.isAllDay }
+                            .sortedBy { it.occurrence.startTs }
+
+                        val allDayOccurrences = visible
+                            .filter { it.event.isAllDay }
+                            .sortedBy { it.occurrence.startTs }
+
+                        _uiState.update {
+                            it.copy(
+                                weekViewOccurrences = timedOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
+                                weekViewEvents = timedOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                weekViewAllDayOccurrences = allDayOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
+                                weekViewAllDayEvents = allDayOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                isLoadingWeekView = false
+                            )
+                        }
+
+                        Log.d(TAG, "Week view updated: ${timedOccurrences.size} timed, ${allDayOccurrences.size} all-day")
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading week events", e)
+                _uiState.update {
+                    it.copy(
+                        isLoadingWeekView = false,
+                        weekViewError = "Failed to load events: ${e.message}"
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the start of the week (Sunday at midnight) for a given timestamp.
+     * Uses device's default timezone.
+     */
+    private fun getWeekStart(timestampMs: Long): Long {
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = timestampMs
+            set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+        return calendar.timeInMillis
+    }
+
+    /**
+     * Save week view scroll position for state preservation.
+     */
+    fun setWeekViewScrollPosition(position: Int) {
+        _uiState.update { it.copy(weekViewScrollPosition = position) }
+    }
+
+    /**
+     * Show week view date picker dialog.
+     */
+    fun showWeekViewDatePicker() {
+        _uiState.update { it.copy(showWeekViewDatePicker = true) }
+    }
+
+    /**
+     * Hide week view date picker dialog.
+     */
+    fun hideWeekViewDatePicker() {
+        _uiState.update { it.copy(showWeekViewDatePicker = false) }
+    }
+
+    /**
+     * Handle date selection from week view date picker.
+     * Navigates to the week containing the selected date.
+     */
+    fun onWeekViewDateSelected(dateMs: Long) {
+        hideWeekViewDatePicker()
+        navigateToWeek(dateMs)
+    }
+
     // ==================== Day Selection ====================
 
     /**
@@ -1336,6 +1545,11 @@ class HomeViewModel @Inject constructor(
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
         if (_uiState.value.selectedDate > 0) {
             loadEventsForSelectedDay(_uiState.value.selectedDate)
+        }
+        // Also reload week view if active
+        if (_uiState.value.calendarViewType == CalendarViewType.WEEK &&
+            _uiState.value.weekViewStartDate > 0) {
+            loadEventsForWeek(_uiState.value.weekViewStartDate)
         }
     }
 
