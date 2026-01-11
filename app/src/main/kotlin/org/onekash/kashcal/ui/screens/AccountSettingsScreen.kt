@@ -41,7 +41,8 @@ import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
-import org.onekash.kashcal.ui.screens.settings.DisplayOptionsSheet
+import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
+import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
@@ -50,7 +51,7 @@ import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SignOutConfirmationSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
-import org.onekash.kashcal.ui.shared.formatDurationShort
+import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatReminderShort
 import org.onekash.kashcal.ui.shared.maskEmail
 
@@ -291,7 +292,8 @@ private fun FlatSettingsContent(
     var showVisibleCalendarsSheet by remember { mutableStateOf(false) }
     var showDefaultCalendarSheet by remember { mutableStateOf(false) }
     var showAlertsSheet by remember { mutableStateOf(false) }
-    var showDisplayOptionsSheet by remember { mutableStateOf(false) }
+    var showEventEmojisSheet by remember { mutableStateOf(false) }
+    var showEventDurationSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
     var showSignOutConfirmation by remember { mutableStateOf(false) }
@@ -299,7 +301,8 @@ private fun FlatSettingsContent(
     val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
     val alertsSheetState = rememberModalBottomSheetState()
-    val displayOptionsSheetState = rememberModalBottomSheetState()
+    val eventEmojisSheetState = rememberModalBottomSheetState()
+    val eventDurationSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
     val signOutSheetState = rememberModalBottomSheetState()
 
@@ -433,14 +436,16 @@ private fun FlatSettingsContent(
         SectionHeader("Display")
         SettingsCard {
             SettingsRow(
-                icon = Icons.Filled.Visibility,
-                label = "Display Options",
-                subtitle = if (showEventEmojis) {
-                    "Emojis on · ${formatDurationShort(defaultEventDuration)}"
-                } else {
-                    "Emojis off · ${formatDurationShort(defaultEventDuration)}"
-                },
-                onClick = { showDisplayOptionsSheet = true },
+                iconEmoji = "😀",
+                label = "Event Emojis",
+                subtitle = if (showEventEmojis) "On" else "Off",
+                onClick = { showEventEmojisSheet = true }
+            )
+            SettingsRow(
+                iconEmoji = "🕐",
+                label = "Default Event Length",
+                subtitle = formatDuration(defaultEventDuration),
+                onClick = { showEventDurationSheet = true },
                 showDivider = false
             )
         }
@@ -530,15 +535,23 @@ private fun FlatSettingsContent(
         )
     }
 
-    // Display Options Sheet
-    if (showDisplayOptionsSheet) {
-        DisplayOptionsSheet(
-            sheetState = displayOptionsSheetState,
+    // Event Emojis Sheet
+    if (showEventEmojisSheet) {
+        EventEmojisSheet(
+            sheetState = eventEmojisSheetState,
             showEventEmojis = showEventEmojis,
             onShowEventEmojisChange = onShowEventEmojisChange,
+            onDismiss = { showEventEmojisSheet = false }
+        )
+    }
+
+    // Event Duration Sheet
+    if (showEventDurationSheet) {
+        EventDurationSheet(
+            sheetState = eventDurationSheetState,
             defaultEventDuration = defaultEventDuration,
             onEventDurationChange = onDefaultEventDurationChange,
-            onDismiss = { showDisplayOptionsSheet = false }
+            onDismiss = { showEventDurationSheet = false }
         )
     }
 

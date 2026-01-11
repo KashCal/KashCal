@@ -16,32 +16,24 @@ import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.ui.shared.EVENT_DURATION_OPTIONS
 
 /**
- * Bottom sheet for display options.
+ * Bottom sheet for event emoji settings.
  *
- * Includes:
- * - Event emoji toggle (auto-detect emojis from titles)
- * - Default event duration selector
+ * Shows toggle for auto-detecting emojis from event titles,
+ * with animated preview of example events.
  *
  * @param sheetState Material3 sheet state
  * @param showEventEmojis Current emoji preference value
  * @param onShowEventEmojisChange Callback when preference changes
- * @param defaultEventDuration Current default event duration (minutes)
- * @param onEventDurationChange Callback when duration changes
  * @param onDismiss Callback when sheet is dismissed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DisplayOptionsSheet(
+fun EventEmojisSheet(
     sheetState: SheetState,
     showEventEmojis: Boolean,
     onShowEventEmojisChange: (Boolean) -> Unit,
-    defaultEventDuration: Int,
-    onEventDurationChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Find selected duration option
-    val selectedDurationOption = EVENT_DURATION_OPTIONS.find { it.minutes == defaultEventDuration }
-        ?: EVENT_DURATION_OPTIONS[1]  // Default to 30 minutes
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
@@ -53,7 +45,7 @@ fun DisplayOptionsSheet(
         ) {
             // Header
             Text(
-                "Display Options",
+                "Event Emojis",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -61,8 +53,8 @@ fun DisplayOptionsSheet(
             // Event Emojis Toggle
             SettingsCard {
                 SettingsToggleRow(
-                    label = "Event Emojis",
-                    subtitle = "Auto-detect from event titles",
+                    label = "Auto-detect Emojis",
+                    subtitle = "Show emojis based on event titles",
                     checked = showEventEmojis,
                     onCheckedChange = onShowEventEmojisChange,
                     showDivider = false
@@ -86,22 +78,52 @@ fun DisplayOptionsSheet(
                     EmojiPreviewCard()
                 }
             }
+        }
+    }
+}
 
-            // Event Duration Section
+/**
+ * Bottom sheet for default event duration setting.
+ *
+ * Shows duration options for new events.
+ *
+ * @param sheetState Material3 sheet state
+ * @param defaultEventDuration Current default event duration (minutes)
+ * @param onEventDurationChange Callback when duration changes
+ * @param onDismiss Callback when sheet is dismissed
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EventDurationSheet(
+    sheetState: SheetState,
+    defaultEventDuration: Int,
+    onEventDurationChange: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Find selected duration option
+    val selectedDurationOption = EVENT_DURATION_OPTIONS.find { it.minutes == defaultEventDuration }
+        ?: EVENT_DURATION_OPTIONS[1]  // Default to 30 minutes
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            // Header
             Text(
-                "NEW EVENTS",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(
-                    start = 24.dp,
-                    end = 24.dp,
-                    top = 16.dp,
-                    bottom = 8.dp
-                )
+                "Default Event Length",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
+
+            // Duration picker
             SettingsCard {
                 SettingsDropdownRow(
-                    label = "Default Length",
+                    label = "New events",
                     options = EVENT_DURATION_OPTIONS,
                     selectedOption = selectedDurationOption,
                     onOptionSelected = { onEventDurationChange(it.minutes) },
