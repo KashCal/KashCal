@@ -622,12 +622,17 @@ private fun CompactEventChip(
         event.title
     }
 
+    // Calculate luminance to determine text color (dark text for light backgrounds)
+    val backgroundColor = Color(color)
+    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
+    val textColor = if (luminance > 0.5f) Color.Black else Color.White
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 1.dp)
             .clip(RoundedCornerShape(4.dp))
-            .background(Color(color))
+            .background(backgroundColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -635,7 +640,7 @@ private fun CompactEventChip(
         Text(
             text = displayText,
             style = MaterialTheme.typography.labelSmall,
-            color = Color.White,
+            color = textColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
