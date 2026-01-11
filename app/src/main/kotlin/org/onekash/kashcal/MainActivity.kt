@@ -294,7 +294,7 @@ class MainActivity : ComponentActivity() {
                     onSearchDateSelected = { dateMs -> homeViewModel.onSearchDateSelected(dateMs) },
                     // Settings/filter callbacks
                     onSettingsClick = {
-                        startActivity(Intent(this@MainActivity, SettingsActivity::class.java))
+                        launchInternalActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                     },
                     onFilterClick = { showCalendarVisibilitySheet = true },
                     // Info callbacks
@@ -569,7 +569,7 @@ class MainActivity : ComponentActivity() {
                         onConnect = {
                             homeViewModel.dismissOnboardingSheet()
                             // Navigate to Settings and auto-open iCloud sign-in sheet
-                            startActivity(Intent(this@MainActivity, SettingsActivity::class.java).apply {
+                            launchInternalActivity(Intent(this@MainActivity, SettingsActivity::class.java).apply {
                                 putExtra(SettingsActivity.EXTRA_OPEN_ICLOUD_SIGNIN, true)
                             })
                         },
@@ -783,7 +783,7 @@ class MainActivity : ComponentActivity() {
                 // webcal:// subscription links → route to Settings
                 scheme == "webcal" || scheme == "webcals" -> {
                     Log.d(TAG, "Handling webcal deep link: $uri")
-                    startActivity(Intent(this, SettingsActivity::class.java).apply {
+                    launchInternalActivity(Intent(this, SettingsActivity::class.java).apply {
                         putExtra(SettingsActivity.EXTRA_SUBSCRIPTION_URL, uri.toString())
                     })
                 }
