@@ -27,11 +27,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +59,7 @@ import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -291,7 +289,6 @@ private fun UnifiedTimeGrid(
 
         // Early events row (before 6am) with pager
         OverflowEventsPagerRow(
-            label = "Before 6am",
             pagerState = pagerState,
             overflowEventsByDate = earlyEventsByDate,
             calendarColors = calendarColors,
@@ -371,7 +368,6 @@ private fun UnifiedTimeGrid(
 
         // Late events row (after 11pm) with pager
         OverflowEventsPagerRow(
-            label = "After 11pm",
             pagerState = pagerState,
             overflowEventsByDate = lateEventsByDate,
             calendarColors = calendarColors,
@@ -480,18 +476,11 @@ private fun AllDayEventsPagerRow(
             )
         }
 
-        // All-day events pager
-        BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val columnWidth = maxWidth / 3
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth(),
-                pageSize = PageSize.Fixed(columnWidth),
-                beyondViewportPageCount = 3,
-                key = { page -> "allday_$page" }
-            ) { page ->
-                val date = WeekViewUtils.pageToDate(page)
+        // All-day events - render 3 columns directly based on currentPage
+        // (No HorizontalPager to avoid gesture conflicts with main time grid)
+        Row(modifier = Modifier.weight(1f)) {
+            repeat(3) { offset ->
+                val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
                 val dayEvents = allDayEventsByDate[date] ?: emptyList()
 
                 CompactEventCell(
@@ -501,7 +490,7 @@ private fun AllDayEventsPagerRow(
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
                     modifier = Modifier
-                        .width(columnWidth)
+                        .weight(1f)
                         .padding(horizontal = 2.dp)
                 )
             }
@@ -515,7 +504,6 @@ private fun AllDayEventsPagerRow(
  */
 @Composable
 private fun OverflowEventsPagerRow(
-    label: String,
     pagerState: PagerState,
     overflowEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
@@ -538,39 +526,25 @@ private fun OverflowEventsPagerRow(
             .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
             .padding(vertical = 4.dp)
     ) {
-        // Label column with moon icon and contrast styling
-        Row(
-            modifier = Modifier.width(timeColumnWidth),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+        // Moon icon column - just emoji, no text
+        Box(
+            modifier = Modifier
+                .width(timeColumnWidth)
+                .padding(end = 4.dp, top = 4.dp),
+            contentAlignment = Alignment.TopEnd
         ) {
-            Icon(
-                imageVector = Icons.Outlined.NightsStay,
-                contentDescription = null,
-                modifier = Modifier.size(12.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Spacer(modifier = Modifier.width(2.dp))
             Text(
-                text = label,
+                text = "🌙",
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
         }
 
-        // Overflow events pager
-        BoxWithConstraints(modifier = Modifier.weight(1f)) {
-            val columnWidth = maxWidth / 3
-
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxWidth(),
-                pageSize = PageSize.Fixed(columnWidth),
-                beyondViewportPageCount = 3,
-                key = { page -> "overflow_${label}_$page" }
-            ) { page ->
-                val date = WeekViewUtils.pageToDate(page)
+        // Overflow events - render 3 columns directly based on currentPage
+        // (No HorizontalPager to avoid gesture conflicts with main time grid)
+        Row(modifier = Modifier.weight(1f)) {
+            repeat(3) { offset ->
+                val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
                 val dayEvents = overflowEventsByDate[date] ?: emptyList()
 
                 CompactEventCell(
@@ -580,7 +554,7 @@ private fun OverflowEventsPagerRow(
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
                     modifier = Modifier
-                        .width(columnWidth)
+                        .weight(1f)
                         .padding(horizontal = 2.dp)
                 )
             }
@@ -804,6 +778,10 @@ private fun CurrentTimeIndicator(
 
 /**
  * Group events by LocalDate.
+ *
+ * Uses DateTimeUtils.eventTsToLocalDate() for correct timezone handling:
+ * - All-day events: UTC to preserve calendar date (fixes birthday showing day before)
+ * - Timed events: Local timezone for user's perspective
  */
 private fun groupEventsByDate(
     occurrences: List<Occurrence>,
@@ -815,7 +793,8 @@ private fun groupEventsByDate(
     for (occurrence in occurrences) {
         val eventId = occurrence.exceptionEventId ?: occurrence.eventId
         val event = eventMap[eventId] ?: continue
-        val date = WeekViewUtils.epochMsToDate(occurrence.startTs)
+        // Use DateTimeUtils for correct all-day event timezone handling
+        val date = DateTimeUtils.eventTsToLocalDate(occurrence.startTs, event.isAllDay)
         result.getOrPut(date) { mutableListOf() }.add(event to occurrence)
     }
 

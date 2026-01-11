@@ -152,9 +152,13 @@ fun EventQuickViewSheet(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Date and time
+                    // Date and time - use occurrence timestamp for recurring events
+                    // to show the date the user tapped (not master event's original date)
+                    val displayStartTs = occurrenceTs ?: event.startTs
+                    val duration = event.endTs - event.startTs
+                    val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
                     Text(
-                        text = formatEventDateTime(event.startTs, event.endTs, event.isAllDay),
+                        text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
