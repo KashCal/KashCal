@@ -1135,20 +1135,22 @@ private fun formatEventTitle(event: Event, occurrenceTs: Long?): String {
     // Decode birth year from description
     val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
 
+    // Display name is the raw title (e.g., "John Smith")
+    val displayName = event.title
+
     if (birthYear == null) {
-        return event.title
+        // No birth year - show "Name's Birthday" without age
+        return "$displayName's Birthday"
     }
 
     // Calculate age and format title
     val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
 
-    // Extract display name from existing title (remove "'s Birthday" suffix)
-    val displayName = event.title.removeSuffix("'s Birthday")
-
     return if (age > 0 && age < 150) {
         "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
     } else {
-        event.title
+        // Invalid age - show "Name's Birthday" without age
+        "$displayName's Birthday"
     }
 }
 
