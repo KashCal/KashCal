@@ -775,11 +775,10 @@ fun EventFormSheet(
                                 // Cancel previous search
                                 locationSearchJob?.cancel()
 
-                                // Only search if service available AND looks like address
-                                // (5+ chars, has digit + letter)
+                                // Only search if service available AND meaningful input
+                                // (5+ chars with letters - supports addresses AND place names)
                                 if (locationSuggestionService != null &&
                                     newValue.length >= 5 &&
-                                    newValue.any { it.isDigit() } &&
                                     newValue.any { it.isLetter() }
                                 ) {
                                     locationSearchJob = coroutineScope.launch {
