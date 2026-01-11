@@ -257,12 +257,12 @@ class MainActivity : ComponentActivity() {
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
 
-                        // Check if in week view
-                        val isInWeekView = uiState.calendarViewType == org.onekash.kashcal.ui.viewmodels.CalendarViewType.WEEK ||
-                            (uiState.showAgendaPanel && uiState.agendaViewType == org.onekash.kashcal.ui.viewmodels.AgendaViewType.WEEK)
+                        // Check if in 3-day view
+                        val isInThreeDaysView = uiState.calendarViewType == org.onekash.kashcal.ui.viewmodels.CalendarViewType.WEEK ||
+                            (uiState.showAgendaPanel && uiState.agendaViewType == org.onekash.kashcal.ui.viewmodels.AgendaViewType.THREE_DAYS)
 
-                        val eventTimestamp = if (isInWeekView && uiState.weekViewStartDate > 0L) {
-                            // Week view: use current pager position and scroll position
+                        val eventTimestamp = if (isInThreeDaysView && uiState.weekViewStartDate > 0L) {
+                            // 3-day view: use current pager position and scroll position
                             val dayIndex = uiState.weekViewPagerPosition
 
                             // Calculate visible hour from scroll position

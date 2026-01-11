@@ -1478,14 +1478,14 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Set the agenda panel view type (list or week).
-     * When switching to week, load week data if needed.
+     * Set the agenda panel view type (agenda or 3-day).
+     * When switching to 3-day view, load week data if needed.
      */
     fun setAgendaViewType(viewType: AgendaViewType) {
         _uiState.update { it.copy(agendaViewType = viewType) }
 
-        // Load week data when switching to week view
-        if (viewType == AgendaViewType.WEEK) {
+        // Load week data when switching to 3-day view
+        if (viewType == AgendaViewType.THREE_DAYS) {
             // Initialize week view to current week if not already set
             if (_uiState.value.weekViewStartDate == 0L) {
                 val weekStart = getWeekStart(System.currentTimeMillis())

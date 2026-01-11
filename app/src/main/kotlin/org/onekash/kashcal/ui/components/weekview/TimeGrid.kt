@@ -25,7 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -241,6 +243,7 @@ private fun GridLines(
  * Current time indicator (red line).
  * Only visible when today's column is in view.
  * Positioned on today's column only.
+ * Updates every minute to reflect current time.
  */
 @Composable
 private fun CurrentTimeIndicator(
@@ -250,8 +253,21 @@ private fun CurrentTimeIndicator(
     columnWidth: Dp,
     modifier: Modifier = Modifier
 ) {
-    val currentTime = LocalTime.now()
-    val currentMinutes = currentTime.hour * 60 + currentTime.minute
+    // Update current time every minute
+    var currentMinutes by remember { mutableStateOf(LocalTime.now().let { it.hour * 60 + it.minute }) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            // Calculate delay until next minute boundary
+            val now = LocalTime.now()
+            val secondsUntilNextMinute = 60 - now.second
+            kotlinx.coroutines.delay(secondsUntilNextMinute * 1000L)
+
+            // Update the current minutes
+            val newTime = LocalTime.now()
+            currentMinutes = newTime.hour * 60 + newTime.minute
+        }
+    }
 
     // Calculate position relative to 6am start
     val startMinutes = WeekViewUtils.START_HOUR * 60

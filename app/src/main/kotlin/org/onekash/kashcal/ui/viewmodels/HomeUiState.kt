@@ -146,8 +146,8 @@ data class HomeUiState(
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
     /** Show agenda panel (upcoming events) */
     val showAgendaPanel: Boolean = false,
-    /** Agenda panel view type (list or week) */
-    val agendaViewType: AgendaViewType = AgendaViewType.LIST,
+    /** Agenda panel view type (agenda list or 3-day grid) */
+    val agendaViewType: AgendaViewType = AgendaViewType.AGENDA,
     /** Show year overlay for quick navigation */
     val showYearOverlay: Boolean = false,
 
@@ -343,11 +343,11 @@ enum class CalendarViewType {
 }
 
 /**
- * Agenda panel view type for switching between list and week views.
+ * Agenda panel view type for switching between agenda list and 3-day grid.
  */
 enum class AgendaViewType {
     /** 30-day upcoming events list */
-    LIST,
-    /** 3-day scrollable week grid */
-    WEEK
+    AGENDA,
+    /** 3-day scrollable time grid */
+    THREE_DAYS
 }

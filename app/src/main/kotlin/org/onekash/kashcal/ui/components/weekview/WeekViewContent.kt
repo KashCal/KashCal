@@ -85,19 +85,26 @@ fun WeekViewContent(
 
     // Track navigation direction for pager reset
     var pendingReset by remember { mutableStateOf<Int?>(null) }
+    // Guard to prevent multiple week transitions during a single gesture
+    var isTransitioning by remember { mutableStateOf(false) }
 
     // Auto-advance at week boundary
     LaunchedEffect(pagerState) {
         snapshotFlow {
             pagerState.currentPage to pagerState.currentPageOffsetFraction
         }.collect { (page, offset) ->
+            // Skip if already transitioning to prevent multiple triggers
+            if (isTransitioning) return@collect
+
             // At last page (day 6 = Saturday), swiping right past threshold
             if (page == 6 && offset > 0.15f) {
+                isTransitioning = true
                 pendingReset = 0  // Will reset to Sunday of next week
                 onNextWeek()
             }
             // At first page (day 0 = Sunday), swiping left past threshold
-            if (page == 0 && offset < -0.15f) {
+            else if (page == 0 && offset < -0.15f) {
+                isTransitioning = true
                 pendingReset = 6  // Will reset to Saturday of previous week
                 onPreviousWeek()
             }
@@ -110,6 +117,8 @@ fun WeekViewContent(
             pagerState.scrollToPage(targetPage)
             pendingReset = null
         }
+        // Clear transition guard after week data updates
+        isTransitioning = false
     }
 
     // Scroll state for time grid
@@ -133,16 +142,8 @@ fun WeekViewContent(
     var overflowEvents by remember { mutableStateOf<List<Pair<Event, Occurrence>>?>(null) }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Header with navigation
-        WeekHeader(
-            weekStartMs = weekStartMs,
-            pagerState = pagerState,
-            onPreviousWeek = onPreviousWeek,
-            onNextWeek = onNextWeek,
-            onDatePickerRequest = onDatePickerRequest
-        )
-
-        // Day headers row (Mon, Tue, Wed...)
+        // Day headers row (Mon, Tue, Wed... with dates)
+        // Note: Month/Year row with Today button is now in HomeScreen's AgendaMonthYearRow
         DayHeadersRow(
             pagerState = pagerState,
             weekStartMs = weekStartMs

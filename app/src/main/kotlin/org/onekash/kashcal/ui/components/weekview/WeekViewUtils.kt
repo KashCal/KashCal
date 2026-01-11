@@ -247,6 +247,46 @@ object WeekViewUtils {
     // ==================== Event Positioning ====================
 
     /**
+     * Time span for an event in minutes from midnight.
+     * Used for overlap detection during layout.
+     */
+    private data class EventTimeSpan(
+        val startMinutes: Int,
+        val endMinutes: Int
+    ) {
+        /**
+         * Check if this time span overlaps with another.
+         * Events that touch at exact boundaries (one ends at 10:00, other starts at 10:00)
+         * are NOT considered overlapping - they can stack vertically in the same slot.
+         */
+        fun overlapsWith(other: EventTimeSpan): Boolean {
+            return startMinutes < other.endMinutes && endMinutes > other.startMinutes
+        }
+    }
+
+    /**
+     * A vertical layout slot that holds non-overlapping events.
+     * Events in the same slot are stacked vertically without horizontal overlap.
+     */
+    private class LayoutSlot(val slotIndex: Int) {
+        private val spans = mutableListOf<EventTimeSpan>()
+
+        /**
+         * Check if an event can fit in this slot (no overlap with existing events).
+         */
+        fun canAccommodate(span: EventTimeSpan): Boolean {
+            return spans.none { it.overlapsWith(span) }
+        }
+
+        /**
+         * Place an event in this slot.
+         */
+        fun place(span: EventTimeSpan) {
+            spans.add(span)
+        }
+    }
+
+    /**
      * Positioned event for rendering in the week view.
      */
     data class PositionedEvent(
@@ -278,7 +318,11 @@ object WeekViewUtils {
 
     /**
      * Calculate positions for events in a single day column.
-     * Handles overlap detection and stacking.
+     * Uses a Layout Slot algorithm for consistent overlap handling:
+     * 1. Sort events by start time, then duration (longer first)
+     * 2. Place each event in the leftmost available slot
+     * 3. Group transitively overlapping events into clusters
+     * 4. Calculate width based on slots used in each cluster
      *
      * @param events List of (Event, Occurrence) pairs for the day
      * @param dayIndex Day index (0-6)
@@ -292,33 +336,62 @@ object WeekViewUtils {
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
-        // Sort by start time, then by duration (longer events first for better stacking)
+        // Step 1: Sort by start time, then by duration (longer events first for better stacking)
         val sorted = events.sortedWith(compareBy(
             { it.second.startTs },
-            { -(it.second.endTs - it.second.startTs) }  // Negative for descending duration
+            { -(it.second.endTs - it.second.startTs) }
         ))
 
-        // Convert to positioned events with overlap detection
-        val positioned = mutableListOf<PositionedEvent>()
-        val activeEvents = mutableListOf<PositionedEvent>()
+        // Step 2: Convert to time spans
+        val timeSpans = sorted.map { (_, occ) ->
+            val start = Instant.ofEpochMilli(occ.startTs).atZone(ZoneId.systemDefault())
+            val end = Instant.ofEpochMilli(occ.endTs).atZone(ZoneId.systemDefault())
+            EventTimeSpan(
+                startMinutes = start.hour * MINUTES_PER_HOUR + start.minute,
+                endMinutes = end.hour * MINUTES_PER_HOUR + end.minute
+            )
+        }
 
-        for ((event, occurrence) in sorted) {
-            // Calculate time in minutes from midnight
-            val startDateTime = Instant.ofEpochMilli(occurrence.startTs)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
-            val endDateTime = Instant.ofEpochMilli(occurrence.endTs)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
+        // Step 3: Assign each event to a layout slot
+        val slots = mutableListOf<LayoutSlot>()
+        val slotAssignments = IntArray(sorted.size)
 
-            val startMinutes = startDateTime.hour * MINUTES_PER_HOUR + startDateTime.minute
-            val endMinutes = endDateTime.hour * MINUTES_PER_HOUR + endDateTime.minute
+        for (i in sorted.indices) {
+            val span = timeSpans[i]
+            val availableSlot = slots.firstOrNull { it.canAccommodate(span) }
+
+            if (availableSlot != null) {
+                availableSlot.place(span)
+                slotAssignments[i] = availableSlot.slotIndex
+            } else {
+                val newSlot = LayoutSlot(slots.size)
+                newSlot.place(span)
+                slots.add(newSlot)
+                slotAssignments[i] = newSlot.slotIndex
+            }
+        }
+
+        // Step 4: Find connected event clusters (events that transitively overlap)
+        val clusters = findConnectedClusters(timeSpans)
+
+        // Step 5: Build positioned events with correct layout fractions
+        return sorted.mapIndexedNotNull { i, (event, occurrence) ->
+            val span = timeSpans[i]
+            val slotIndex = slotAssignments[i]
+
+            // Find cluster containing this event
+            val cluster = clusters.first { i in it }
+            val slotsInCluster = cluster.map { slotAssignments[it] }.toSet().size
+
+            // Calculate layout fractions based on slots used in this cluster
+            val widthFraction = 1f / slotsInCluster
+            val leftFraction = slotIndex * widthFraction
 
             // Clamp to visible range
-            val clampResult = clampToVisibleRange(startMinutes, endMinutes)
+            val clampResult = clampToVisibleRange(span.startMinutes, span.endMinutes)
 
             // Skip if entirely outside visible range
-            if (clampResult.displayEndMinutes <= clampResult.displayStartMinutes) continue
+            if (clampResult.displayEndMinutes <= clampResult.displayStartMinutes) return@mapIndexedNotNull null
 
             // Calculate visual position
             val topMinutes = clampResult.displayStartMinutes - START_HOUR * MINUTES_PER_HOUR
@@ -330,84 +403,66 @@ object WeekViewUtils {
                 MIN_EVENT_HEIGHT
             )
 
-            // Remove events that have ended before this event starts
-            activeEvents.removeAll { active ->
-                val activeEndMinutes = active.originalEndMinutes
-                activeEndMinutes <= startMinutes
-            }
-
-            // Count overlapping events (events that overlap with this one's time slot)
-            val overlapIndex = activeEvents.size
-            val overlapTotal = overlapIndex + 1  // Will be updated for all in group
-
-            // Calculate horizontal position based on overlap
-            val widthFraction = 1f / maxOf(overlapTotal, 1)
-            val leftFraction = overlapIndex * widthFraction
-
-            val positionedEvent = PositionedEvent(
+            PositionedEvent(
                 event = event,
                 occurrence = occurrence,
                 topOffset = topOffset,
                 height = height,
                 leftFraction = leftFraction,
                 widthFraction = widthFraction,
-                overlapIndex = overlapIndex,
-                overlapTotal = overlapTotal,
+                overlapIndex = slotIndex,
+                overlapTotal = slotsInCluster,
                 clampedStart = clampResult.clampedStart,
                 clampedEnd = clampResult.clampedEnd,
-                originalStartMinutes = startMinutes,
-                originalEndMinutes = endMinutes,
+                originalStartMinutes = span.startMinutes,
+                originalEndMinutes = span.endMinutes,
                 dayIndex = dayIndex
             )
-
-            activeEvents.add(positionedEvent)
-            positioned.add(positionedEvent)
         }
-
-        // Update overlap totals for all events in each group
-        return updateOverlapTotals(positioned)
     }
 
     /**
-     * Update overlap totals after initial positioning.
-     * Ensures all events in an overlap group know the total count.
+     * Find clusters of events that transitively overlap.
+     * Events A and C are in the same cluster if there's an event B
+     * that overlaps both, even if A and C don't directly overlap.
+     *
+     * Example: A(9-10), B(9:30-11), C(10-11)
+     * - A overlaps B, B overlaps C → All in one cluster {A, B, C}
+     *
+     * @param spans List of event time spans
+     * @return List of clusters, where each cluster is a set of event indices
      */
-    private fun updateOverlapTotals(events: List<PositionedEvent>): List<PositionedEvent> {
-        if (events.isEmpty()) return events
+    private fun findConnectedClusters(spans: List<EventTimeSpan>): List<Set<Int>> {
+        val clusters = mutableListOf<MutableSet<Int>>()
 
-        // Group events that overlap each other
-        val groups = mutableListOf<MutableList<PositionedEvent>>()
+        for (i in spans.indices) {
+            // Find all existing clusters this event overlaps with
+            val overlappingClusters = clusters.filter { cluster ->
+                cluster.any { j -> spans[i].overlapsWith(spans[j]) }
+            }
 
-        for (event in events) {
-            val startMinutes = event.originalStartMinutes
-            val endMinutes = event.originalEndMinutes
-
-            // Find existing group that this event overlaps with
-            val overlappingGroup = groups.find { group ->
-                group.any { other ->
-                    startMinutes < other.originalEndMinutes && endMinutes > other.originalStartMinutes
+            when (overlappingClusters.size) {
+                0 -> {
+                    // No overlap - create new cluster
+                    clusters.add(mutableSetOf(i))
+                }
+                1 -> {
+                    // Overlaps one cluster - add to it
+                    overlappingClusters[0].add(i)
+                }
+                else -> {
+                    // Overlaps multiple clusters - merge them all
+                    val merged = mutableSetOf(i)
+                    for (cluster in overlappingClusters) {
+                        merged.addAll(cluster)
+                    }
+                    clusters.removeAll(overlappingClusters.toSet())
+                    clusters.add(merged)
                 }
             }
-
-            if (overlappingGroup != null) {
-                overlappingGroup.add(event)
-            } else {
-                groups.add(mutableListOf(event))
-            }
         }
 
-        // Update all events with correct totals and positions
-        return groups.flatMap { group ->
-            val total = group.size
-            group.mapIndexed { index, event ->
-                event.copy(
-                    overlapIndex = index,
-                    overlapTotal = total,
-                    leftFraction = index.toFloat() / total,
-                    widthFraction = 1f / total
-                )
-            }
-        }
+        return clusters
     }
 
     /**

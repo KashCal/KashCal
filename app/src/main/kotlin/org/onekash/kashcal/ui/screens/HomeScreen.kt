@@ -306,9 +306,18 @@ fun HomeScreen(
                         }
                         uiState.showAgendaPanel -> {
                             Column(modifier = Modifier.fillMaxSize()) {
+                                // Month/Year row with Today button
+                                AgendaMonthYearRow(
+                                    viewType = uiState.agendaViewType,
+                                    weekStartMs = uiState.weekViewStartDate,
+                                    pagerPosition = uiState.weekViewPagerPosition,
+                                    onMonthClick = onWeekDatePickerRequest,
+                                    onTodayClick = onGoToToday
+                                )
+
                                 // Content based on view type (chips moved to TopAppBar)
                                 when (uiState.agendaViewType) {
-                                    AgendaViewType.LIST -> {
+                                    AgendaViewType.AGENDA -> {
                                         if (uiState.isLoadingAgenda) {
                                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                                 CircularProgressIndicator()
@@ -323,7 +332,7 @@ fun HomeScreen(
                                             )
                                         }
                                     }
-                                    AgendaViewType.WEEK -> {
+                                    AgendaViewType.THREE_DAYS -> {
                                         WeekViewContent(
                                             weekStartMs = uiState.weekViewStartDate,
                                             timedOccurrences = uiState.weekViewOccurrences,
@@ -524,27 +533,39 @@ private fun HomeTopAppBar(
                 title = {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         IconButton(onClick = onAgendaClose) {
                             Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(28.dp))
                         }
-                        Text("Agenda", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        // Equal-width chips for view toggle
+                        FilterChip(
+                            selected = uiState.agendaViewType == AgendaViewType.AGENDA,
+                            onClick = { onAgendaViewTypeChange(AgendaViewType.AGENDA) },
+                            label = {
+                                Text(
+                                    "Agenda",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        FilterChip(
+                            selected = uiState.agendaViewType == AgendaViewType.THREE_DAYS,
+                            onClick = { onAgendaViewTypeChange(AgendaViewType.THREE_DAYS) },
+                            label = {
+                                Text(
+                                    "3 Days",
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(Modifier.width(8.dp))
                     }
-                },
-                actions = {
-                    FilterChip(
-                        selected = uiState.agendaViewType == AgendaViewType.LIST,
-                        onClick = { onAgendaViewTypeChange(AgendaViewType.LIST) },
-                        label = { Text("List") }
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    FilterChip(
-                        selected = uiState.agendaViewType == AgendaViewType.WEEK,
-                        onClick = { onAgendaViewTypeChange(AgendaViewType.WEEK) },
-                        label = { Text("Week") }
-                    )
-                    Spacer(Modifier.width(8.dp))
                 }
             )
         }
@@ -1045,6 +1066,62 @@ private fun SearchContent(
                 }
             }
         }
+    }
+}
+
+/**
+ * Month/Year row for agenda panel - shows current viewing month with Today button.
+ * For 3-day view: Shows month based on visible days (e.g., "January 2026" or "Jan - Feb 2026")
+ * For agenda view: Shows "Upcoming Events"
+ */
+@Composable
+private fun AgendaMonthYearRow(
+    viewType: AgendaViewType,
+    weekStartMs: Long,
+    pagerPosition: Int,
+    onMonthClick: () -> Unit,
+    onTodayClick: () -> Unit
+) {
+    val displayText = remember(viewType, weekStartMs, pagerPosition) {
+        when (viewType) {
+            AgendaViewType.AGENDA -> "Upcoming Events"
+            AgendaViewType.THREE_DAYS -> {
+                if (weekStartMs > 0L) {
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatHeaderRange(
+                        weekStartMs = weekStartMs,
+                        pagerPosition = pagerPosition,
+                        visibleDays = 3
+                    )
+                } else {
+                    // Default to current month if week not initialized
+                    val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                    monthFormat.format(Date())
+                }
+            }
+        }
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Month/Year text - clickable to open date picker (only for 3-day view)
+        Text(
+            text = displayText,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = if (viewType == AgendaViewType.THREE_DAYS) {
+                Modifier.clickable(onClick = onMonthClick)
+            } else {
+                Modifier
+            }
+        )
+
+        // Today button
+        TodayButton(onClick = onTodayClick)
     }
 }
 
