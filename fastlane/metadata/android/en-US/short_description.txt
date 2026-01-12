@@ -1,0 +1,1 @@
+Privacy-focused calendar with iCloud sync. Offline-first. No tracking.

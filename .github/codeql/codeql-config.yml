@@ -1,0 +1,12 @@
+name: "KashCal CodeQL Config"
+
+paths-ignore:
+  - '.gradle'
+  - '.gradle/**'
+  - 'build'
+  - '**/build'
+  - '**/build/**'
+  - '**/*_Impl.kt'
+  - '**/*_Impl.java'
+  - '**/generated/**'
+  - '**/ksp/**'

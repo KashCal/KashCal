@@ -1,0 +1,5 @@
+v16.3.0
+
+• Search now shows "Next: date" for recurring events instead of original start date
+• Improved search result display for recurring and exception events
+• Better handling of cancelled occurrences in search

@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Network: CalDAV sync -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Background sync with WorkManager -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Notifications for sync progress (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Vibration for reminder notifications -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Exact alarm permission for calendar reminders (Android 12+) -->
+    <!-- USE_EXACT_ALARM is auto-granted for calendar/alarm apps per Google Play policy -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Contact birthdays: Read contacts to generate birthday calendar -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!--
+        Declare touchscreen as optional for Chromebook/tablet compatibility.
+        Without this, app is filtered out of Play Store for non-touch devices.
+    -->
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <application
+        android:name=".KashCalApplication"
+        android:allowBackup="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.KashCal">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/Theme.KashCal">
+
+            <!-- Launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Register as calendar app (for "Default calendar" picker) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
+
+            <!-- Handle .ics file imports (MIME type) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/calendar" />
+            </intent-filter>
+
+            <!-- Handle .ics file imports (content:// URI) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" />
+                <data android:mimeType="text/calendar" />
+            </intent-filter>
+
+            <!-- Handle .ics file imports (file:// URI by extension) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="file" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.ics" />
+            </intent-filter>
+
+            <!-- Handle .ics (application/ics - Gmail attachments, some email clients) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="application/ics" />
+            </intent-filter>
+
+            <!-- Handle .ics (text/x-vcalendar - legacy vCalendar format) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/x-vcalendar" />
+            </intent-filter>
+
+            <!-- Handle webcal:// subscription links -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="webcal" />
+            </intent-filter>
+
+            <!-- Handle webcals:// (secure) subscription links -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="webcals" />
+            </intent-filter>
+
+            <!-- Handle calendar event creation from other apps (ACTION_INSERT) -->
+            <!-- Allows "Add to Calendar" from Gmail, Chrome, etc. -->
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.dir/event" />
+            </intent-filter>
+
+            <!-- App Shortcuts (long-press launcher icon) -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+
+        </activity>
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.KashCal"
+            android:parentActivityName=".MainActivity" />
+
+        <!--
+            Disable default WorkManager initialization.
+            We provide custom configuration via KashCalApplication.workManagerConfiguration
+            to use HiltWorkerFactory for dependency injection in workers.
+        -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
+
+        <!--
+            WorkManager foreground service with dataSync type.
+            Required for foreground sync operations on Android 14+.
+        -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <!-- Reminder alarm receiver: handles alarm triggers -->
+        <receiver
+            android:name=".reminder.receiver.ReminderAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.onekash.kashcal.REMINDER_ALARM" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Reminder action receiver: handles snooze/dismiss from notification -->
+        <receiver
+            android:name=".reminder.receiver.ReminderActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.onekash.kashcal.SNOOZE_REMINDER" />
+                <action android:name="org.onekash.kashcal.DISMISS_REMINDER" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Boot receiver: reschedule reminders after device boot or app update -->
+        <receiver
+            android:name=".reminder.receiver.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Timezone change receiver: update widget when timezone or time changes -->
+        <receiver
+            android:name=".widget.TimezoneChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Today's Agenda widget receiver -->
+        <receiver
+            android:name=".widget.AgendaWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/agenda_widget_info" />
+        </receiver>
+
+        <!--
+            FileProvider for secure file sharing (ICS exports).
+            Required for sharing files via Intent on Android 7.0+.
+            Uses content:// URIs instead of file:// URIs.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+
+</manifest>

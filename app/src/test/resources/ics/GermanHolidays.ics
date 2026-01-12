@@ -1,0 +1,808 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN
+BEGIN:VEVENT
+SUMMARY:Neujahrstag 
+DTSTART;VALUE=DATE:20250101
+DTEND;VALUE=DATE:20250102
+DTSTAMP:20250430T135817Z
+UID:a067005ffb4da8f5dbe2b6b61e771024-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Neujahrstag\, der auf den 1. Januar od
+ er den ersten Tag des Jahres im Gregorianischen Kalender fällt\, ist in D
+ eutschland ein gesetzlicher Feiertag.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Karfreitag 
+DTSTART;VALUE=DATE:20250418
+DTEND;VALUE=DATE:20250419
+DTSTAMP:20250430T135817Z
+UID:8f9109f2961a97002ecc49d3413b303f-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Christen in Deutschland begehen den Karfrei
+ tag\, um die Kreuzigung Jesu Christi zu feiern.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostermontag 
+DTSTART;VALUE=DATE:20250421
+DTEND;VALUE=DATE:20250422
+DTSTAMP:20250430T135817Z
+UID:f962ef5815d7fe5d973afe04693183c6-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Menschen in Deutschland begehen jährlich d
+ en Ostermontag am Tag nach dem Ostersonntag. Es ist in allen Bundesstaaten
+  ein Feiertag.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Maifeiertag 
+DTSTART;VALUE=DATE:20250501
+DTEND;VALUE=DATE:20250502
+DTSTAMP:20250430T135817Z
+UID:eb09a22b976c060ab4b354b0fa9c13e0-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der 1. Mai in Deutschland ist ein Feiertag
+ \, um den Beginn des Frühlings zu feiern und sich für Arbeitnehmerrechte
+  einzusetzen. Es ist immer am 1. Mai.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Christi Himmelfahrt 
+DTSTART;VALUE=DATE:20250529
+DTEND;VALUE=DATE:20250530
+DTSTAMP:20250430T135817Z
+UID:cac702ee4614e8d756a6423a2afd644b-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Himmelfahrtstag in Deutschland ist an einem D
+ onnerstag 39 Tage nach dem Ostersonntag.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstmontag 
+DTSTART;VALUE=DATE:20250609
+DTEND;VALUE=DATE:20250610
+DTSTAMP:20250430T135817Z
+UID:038380b4790848b4d6002c64bbb7b054-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Pfingsttag ist\, der auf den Montag na
+ ch Pfingsten (oder Pfingstsonntag) fällt\, ist ein gesetzlicher Feiertag 
+ in Deutschland.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Tag der Deutschen Einheit 
+DTSTART;VALUE=DATE:20251003
+DTEND;VALUE=DATE:20251004
+DTSTAMP:20250430T135817Z
+UID:cbe2035650118282d1f7310463974076-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Tag der Deutschen Einheit feiert die W
+ iedervereinigung Deutschlands im Jahr 1990. Er ist jedes Jahr am 3. Oktobe
+ r.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weihnachten 
+DTSTART;VALUE=DATE:20251225
+DTEND;VALUE=DATE:20251226
+DTSTAMP:20250430T135817Z
+UID:3038f65e815def791704b5a1a015fc06-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Weihnachtstag markiert die Geburt Jesu Christ
+ i und ist ein gesetzlicher Feiertag in Deutschland. Es ist jedes Jahr am 2
+ 5. Dezember.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day 
+DTSTART;VALUE=DATE:20251226
+DTEND;VALUE=DATE:20251227
+DTSTAMP:20250430T135817Z
+UID:5f900e579c4399273eb8a824c5e57d20-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Weihnachtstag ist in Deutschland ein g
+ esetzlicher Feiertag. Er fällt immer auf den 26. Dezember.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dreikönigstag  (BW\, BY\, ST)
+DTSTART;VALUE=DATE:20250106
+DTEND;VALUE=DATE:20250107
+DTSTAMP:20250430T135817Z
+UID:31f819f63dfb093cb5fb91b5fb317f13-2025-bw-by-st
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Dreikönigstag am 6. Januar ist in
+  3 deutschen Bundesstaaten ein Feiertag und erinnert an die biblische Gesc
+ hichte vom Besuch der Heiligen Drei Könige beim Jesuskind.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weltfrauentag  (MVP\, B)
+DTSTART;VALUE=DATE:20250308
+DTEND;VALUE=DATE:20250309
+DTSTAMP:20250430T135817Z
+UID:02dda637ab37743520b18dac874f5606-2025-mvp-b
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Internationale Frauentag ist ein 
+ üblicher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostersonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20250420
+DTEND;VALUE=DATE:20250421
+DTSTAMP:20250430T135817Z
+UID:02429d97cbd75f16196720f106a062a1-2025-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Ostersonntag ist laut der christli
+ chen Bibel ein Feiertag in Deutschland\, um die Auferstehung Jesu Christi 
+ zu feiern.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jahrestag des Endes des Zweiten Weltkriegs  (Berlin)
+DTSTART;VALUE=DATE:20250508
+DTEND;VALUE=DATE:20250509
+DTSTAMP:20250430T135817Z
+UID:def90680a5f265e29a7ebbb781a0d848-2025-b
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstsonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20250608
+DTEND;VALUE=DATE:20250609
+DTSTAMP:20250430T135817Z
+UID:973d55afb039f7b52af49f157973436c-2025-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Pfingsten ist ein christlicher Feierta
+ g\, um an die Herabkunft des Heiligen Geistes auf die Nachfolger Jesu zu e
+ rinnern.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fronleichnam  (BW\, BY\, HE\, NRW\, RLP\, SL\, SN (community)\, TH
+  (community))
+DTSTART;VALUE=DATE:20250619
+DTEND;VALUE=DATE:20250620
+DTSTAMP:20250430T135817Z
+UID:56a61fe12f339c046000b6a68725b1e8-2025-bw-by-he-nrw-rlp-sl-sn-(communit
+ y)-th-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Fronleichnam feiert die Eucharistie un
+ d ist in einigen Teilen Deutschlands ein Feiertag.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Mariä Himmelfahrt  (SL\, BY (community))
+DTSTART;VALUE=DATE:20250815
+DTEND;VALUE=DATE:20250816
+DTSTAMP:20250430T135817Z
+UID:71cce140b9dfd0347ad4ba8dc27f7c0c-2025-sl-by-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Das Fest Mariä Himmelfahrt ist eine G
+ elegenheit für Katholiken\, den Glauben zu ehren\, dass Gott die Jungfrau
+  Maria in den Himmel aufgenommen hat. In einigen Teilen Deutschlands ist e
+ s jedes Jahr am 15. August ein Feiertag.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Deutscher Weltkindertag  (Thuringia)
+DTSTART;VALUE=DATE:20250920
+DTEND;VALUE=DATE:20250921
+DTSTAMP:20250430T135817Z
+UID:4713055def2e1790ccdbbf29e05148d6-2025-th
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Deutsche Weltkindertag ist ein üb
+ licher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Reformationstag  (BB\, MVP\, SN\, ST\, TH\, SH\, HH\, NDS\, HB)
+DTSTART;VALUE=DATE:20251031
+DTEND;VALUE=DATE:20251101
+DTSTAMP:20250430T135817Z
+UID:342fddd300cb780377234b7fad82b82c-2025-bb-mvp-sn-st-th-sh-hh-nds-hb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Reformationstag in Deutschland wir
+ d jährlich am 31. Oktober begangen\, um an die Reformation zu erinnern\, 
+ eine Zeit großer religiöser Veränderungen zwischen 1517 und 1648 n. Chr
+ .
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Allerheiligen  (BW\, BY\, NRW\, RLP\, SL)
+DTSTART;VALUE=DATE:20251101
+DTEND;VALUE=DATE:20251102
+DTSTAMP:20250430T135817Z
+UID:1b4101b421e01ac1686079611ad40772-2025-bw-by-nrw-rlp-sl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Silent Day\, public holiday -  Allerheiligen ist in fünf Bund
+ esländern ein jährlicher Feiertag zum Gedenken an alle christlichen Heil
+ igen am 1. November.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Bußtag  (Saxony)
+DTSTART;VALUE=DATE:20251119
+DTEND;VALUE=DATE:20251120
+DTSTAMP:20250430T135817Z
+UID:ba24e3ac12e6e1bfb6fc930a8e564a81-2025-sn
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Buß- und Bettag ist ein protestan
+ tischer Feiertag und ein gesetzlicher Feiertag im Bundesland Sachsen (Sach
+ sen) am letzten Mittwoch vor dem 23. November.
+LAST-MODIFIED:20250430T135817Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Neujahrstag 
+DTSTART;VALUE=DATE:20260101
+DTEND;VALUE=DATE:20260102
+DTSTAMP:20250430T135818Z
+UID:a067005ffb4da8f5dbe2b6b61e771024-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Neujahrstag\, der auf den 1. Januar od
+ er den ersten Tag des Jahres im Gregorianischen Kalender fällt\, ist in D
+ eutschland ein gesetzlicher Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Karfreitag 
+DTSTART;VALUE=DATE:20260403
+DTEND;VALUE=DATE:20260404
+DTSTAMP:20250430T135818Z
+UID:8f9109f2961a97002ecc49d3413b303f-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Christen in Deutschland begehen den Karfrei
+ tag\, um die Kreuzigung Jesu Christi zu feiern.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostermontag 
+DTSTART;VALUE=DATE:20260406
+DTEND;VALUE=DATE:20260407
+DTSTAMP:20250430T135818Z
+UID:f962ef5815d7fe5d973afe04693183c6-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Menschen in Deutschland begehen jährlich d
+ en Ostermontag am Tag nach dem Ostersonntag. Es ist in allen Bundesstaaten
+  ein Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Maifeiertag 
+DTSTART;VALUE=DATE:20260501
+DTEND;VALUE=DATE:20260502
+DTSTAMP:20250430T135818Z
+UID:eb09a22b976c060ab4b354b0fa9c13e0-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der 1. Mai in Deutschland ist ein Feiertag
+ \, um den Beginn des Frühlings zu feiern und sich für Arbeitnehmerrechte
+  einzusetzen. Es ist immer am 1. Mai.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Christi Himmelfahrt 
+DTSTART;VALUE=DATE:20260514
+DTEND;VALUE=DATE:20260515
+DTSTAMP:20250430T135818Z
+UID:cac702ee4614e8d756a6423a2afd644b-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Himmelfahrtstag in Deutschland ist an einem D
+ onnerstag 39 Tage nach dem Ostersonntag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstmontag 
+DTSTART;VALUE=DATE:20260525
+DTEND;VALUE=DATE:20260526
+DTSTAMP:20250430T135818Z
+UID:038380b4790848b4d6002c64bbb7b054-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Pfingsttag ist\, der auf den Montag na
+ ch Pfingsten (oder Pfingstsonntag) fällt\, ist ein gesetzlicher Feiertag 
+ in Deutschland.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Tag der Deutschen Einheit 
+DTSTART;VALUE=DATE:20261003
+DTEND;VALUE=DATE:20261004
+DTSTAMP:20250430T135818Z
+UID:cbe2035650118282d1f7310463974076-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Tag der Deutschen Einheit feiert die W
+ iedervereinigung Deutschlands im Jahr 1990. Er ist jedes Jahr am 3. Oktobe
+ r.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weihnachten 
+DTSTART;VALUE=DATE:20261225
+DTEND;VALUE=DATE:20261226
+DTSTAMP:20250430T135818Z
+UID:3038f65e815def791704b5a1a015fc06-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Weihnachtstag markiert die Geburt Jesu Christ
+ i und ist ein gesetzlicher Feiertag in Deutschland. Es ist jedes Jahr am 2
+ 5. Dezember.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day 
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261227
+DTSTAMP:20250430T135818Z
+UID:5f900e579c4399273eb8a824c5e57d20-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Weihnachtstag ist in Deutschland ein g
+ esetzlicher Feiertag. Er fällt immer auf den 26. Dezember.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dreikönigstag  (BW\, BY\, ST)
+DTSTART;VALUE=DATE:20260106
+DTEND;VALUE=DATE:20260107
+DTSTAMP:20250430T135818Z
+UID:31f819f63dfb093cb5fb91b5fb317f13-2026-bw-by-st
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Dreikönigstag am 6. Januar ist in
+  3 deutschen Bundesstaaten ein Feiertag und erinnert an die biblische Gesc
+ hichte vom Besuch der Heiligen Drei Könige beim Jesuskind.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weltfrauentag  (MVP\, B)
+DTSTART;VALUE=DATE:20260308
+DTEND;VALUE=DATE:20260309
+DTSTAMP:20250430T135818Z
+UID:02dda637ab37743520b18dac874f5606-2026-mvp-b
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Internationale Frauentag ist ein 
+ üblicher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostersonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20260405
+DTEND;VALUE=DATE:20260406
+DTSTAMP:20250430T135818Z
+UID:02429d97cbd75f16196720f106a062a1-2026-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Ostersonntag ist laut der christli
+ chen Bibel ein Feiertag in Deutschland\, um die Auferstehung Jesu Christi 
+ zu feiern.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstsonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20260524
+DTEND;VALUE=DATE:20260525
+DTSTAMP:20250430T135818Z
+UID:973d55afb039f7b52af49f157973436c-2026-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Pfingsten ist ein christlicher Feierta
+ g\, um an die Herabkunft des Heiligen Geistes auf die Nachfolger Jesu zu e
+ rinnern.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fronleichnam  (BW\, BY\, HE\, NRW\, RLP\, SL\, SN (community)\, TH
+  (community))
+DTSTART;VALUE=DATE:20260604
+DTEND;VALUE=DATE:20260605
+DTSTAMP:20250430T135818Z
+UID:56a61fe12f339c046000b6a68725b1e8-2026-bw-by-he-nrw-rlp-sl-sn-(communit
+ y)-th-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Fronleichnam feiert die Eucharistie un
+ d ist in einigen Teilen Deutschlands ein Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Mariä Himmelfahrt  (SL\, BY (community))
+DTSTART;VALUE=DATE:20260815
+DTEND;VALUE=DATE:20260816
+DTSTAMP:20250430T135818Z
+UID:71cce140b9dfd0347ad4ba8dc27f7c0c-2026-sl-by-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Das Fest Mariä Himmelfahrt ist eine G
+ elegenheit für Katholiken\, den Glauben zu ehren\, dass Gott die Jungfrau
+  Maria in den Himmel aufgenommen hat. In einigen Teilen Deutschlands ist e
+ s jedes Jahr am 15. August ein Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Deutscher Weltkindertag  (Thuringia)
+DTSTART;VALUE=DATE:20260920
+DTEND;VALUE=DATE:20260921
+DTSTAMP:20250430T135818Z
+UID:4713055def2e1790ccdbbf29e05148d6-2026-th
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Deutsche Weltkindertag ist ein üb
+ licher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Reformationstag  (BB\, MVP\, SN\, ST\, TH\, SH\, HH\, NDS\, HB)
+DTSTART;VALUE=DATE:20261031
+DTEND;VALUE=DATE:20261101
+DTSTAMP:20250430T135818Z
+UID:342fddd300cb780377234b7fad82b82c-2026-bb-mvp-sn-st-th-sh-hh-nds-hb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Reformationstag in Deutschland wir
+ d jährlich am 31. Oktober begangen\, um an die Reformation zu erinnern\, 
+ eine Zeit großer religiöser Veränderungen zwischen 1517 und 1648 n. Chr
+ .
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Allerheiligen  (BW\, BY\, NRW\, RLP\, SL)
+DTSTART;VALUE=DATE:20261101
+DTEND;VALUE=DATE:20261102
+DTSTAMP:20250430T135818Z
+UID:1b4101b421e01ac1686079611ad40772-2026-bw-by-nrw-rlp-sl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Silent Day\, public holiday -  Allerheiligen ist in fünf Bund
+ esländern ein jährlicher Feiertag zum Gedenken an alle christlichen Heil
+ igen am 1. November.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Bußtag  (Saxony)
+DTSTART;VALUE=DATE:20261118
+DTEND;VALUE=DATE:20261119
+DTSTAMP:20250430T135818Z
+UID:ba24e3ac12e6e1bfb6fc930a8e564a81-2026-sn
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Buß- und Bettag ist ein protestan
+ tischer Feiertag und ein gesetzlicher Feiertag im Bundesland Sachsen (Sach
+ sen) am letzten Mittwoch vor dem 23. November.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Neujahrstag 
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+DTSTAMP:20250430T135818Z
+UID:a067005ffb4da8f5dbe2b6b61e771024-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Neujahrstag\, der auf den 1. Januar od
+ er den ersten Tag des Jahres im Gregorianischen Kalender fällt\, ist in D
+ eutschland ein gesetzlicher Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Karfreitag 
+DTSTART;VALUE=DATE:20270326
+DTEND;VALUE=DATE:20270327
+DTSTAMP:20250430T135818Z
+UID:8f9109f2961a97002ecc49d3413b303f-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Christen in Deutschland begehen den Karfrei
+ tag\, um die Kreuzigung Jesu Christi zu feiern.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostermontag 
+DTSTART;VALUE=DATE:20270329
+DTEND;VALUE=DATE:20270330
+DTSTAMP:20250430T135818Z
+UID:f962ef5815d7fe5d973afe04693183c6-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Viele Menschen in Deutschland begehen jährlich d
+ en Ostermontag am Tag nach dem Ostersonntag. Es ist in allen Bundesstaaten
+  ein Feiertag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Maifeiertag 
+DTSTART;VALUE=DATE:20270501
+DTEND;VALUE=DATE:20270502
+DTSTAMP:20250430T135818Z
+UID:eb09a22b976c060ab4b354b0fa9c13e0-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der 1. Mai in Deutschland ist ein Feiertag
+ \, um den Beginn des Frühlings zu feiern und sich für Arbeitnehmerrechte
+  einzusetzen. Es ist immer am 1. Mai.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Christi Himmelfahrt 
+DTSTART;VALUE=DATE:20270506
+DTEND;VALUE=DATE:20270507
+DTSTAMP:20250430T135818Z
+UID:cac702ee4614e8d756a6423a2afd644b-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Himmelfahrtstag in Deutschland ist an einem D
+ onnerstag 39 Tage nach dem Ostersonntag.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstmontag 
+DTSTART;VALUE=DATE:20270517
+DTEND;VALUE=DATE:20270518
+DTSTAMP:20250430T135818Z
+UID:038380b4790848b4d6002c64bbb7b054-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Pfingsttag ist\, der auf den Montag na
+ ch Pfingsten (oder Pfingstsonntag) fällt\, ist ein gesetzlicher Feiertag 
+ in Deutschland.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Tag der Deutschen Einheit 
+DTSTART;VALUE=DATE:20271003
+DTEND;VALUE=DATE:20271004
+DTSTAMP:20250430T135818Z
+UID:cbe2035650118282d1f7310463974076-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:National holiday -  Der Tag der Deutschen Einheit feiert die W
+ iedervereinigung Deutschlands im Jahr 1990. Er ist jedes Jahr am 3. Oktobe
+ r.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weihnachten 
+DTSTART;VALUE=DATE:20271225
+DTEND;VALUE=DATE:20271226
+DTSTAMP:20250430T135818Z
+UID:3038f65e815def791704b5a1a015fc06-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der Weihnachtstag markiert die Geburt Jesu Christ
+ i und ist ein gesetzlicher Feiertag in Deutschland. Es ist jedes Jahr am 2
+ 5. Dezember.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day 
+DTSTART;VALUE=DATE:20271226
+DTEND;VALUE=DATE:20271227
+DTSTAMP:20250430T135818Z
+UID:5f900e579c4399273eb8a824c5e57d20-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Christian -  Der zweite Weihnachtstag ist in Deutschland ein g
+ esetzlicher Feiertag. Er fällt immer auf den 26. Dezember.
+LAST-MODIFIED:20250430T135818Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dreikönigstag  (BW\, BY\, ST)
+DTSTART;VALUE=DATE:20270106
+DTEND;VALUE=DATE:20270107
+DTSTAMP:20250430T135819Z
+UID:31f819f63dfb093cb5fb91b5fb317f13-2027-bw-by-st
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Dreikönigstag am 6. Januar ist in
+  3 deutschen Bundesstaaten ein Feiertag und erinnert an die biblische Gesc
+ hichte vom Besuch der Heiligen Drei Könige beim Jesuskind.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Weltfrauentag  (MVP\, B)
+DTSTART;VALUE=DATE:20270308
+DTEND;VALUE=DATE:20270309
+DTSTAMP:20250430T135819Z
+UID:02dda637ab37743520b18dac874f5606-2027-mvp-b
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Internationale Frauentag ist ein 
+ üblicher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Ostersonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20270328
+DTEND;VALUE=DATE:20270329
+DTSTAMP:20250430T135819Z
+UID:02429d97cbd75f16196720f106a062a1-2027-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Ostersonntag ist laut der christli
+ chen Bibel ein Feiertag in Deutschland\, um die Auferstehung Jesu Christi 
+ zu feiern.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Pfingstsonntag  (Brandenburg)
+DTSTART;VALUE=DATE:20270516
+DTEND;VALUE=DATE:20270517
+DTSTAMP:20250430T135819Z
+UID:973d55afb039f7b52af49f157973436c-2027-bb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Pfingsten ist ein christlicher Feierta
+ g\, um an die Herabkunft des Heiligen Geistes auf die Nachfolger Jesu zu e
+ rinnern.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fronleichnam  (BW\, BY\, HE\, NRW\, RLP\, SL\, SN (community)\, TH
+  (community))
+DTSTART;VALUE=DATE:20270527
+DTEND;VALUE=DATE:20270528
+DTSTAMP:20250430T135819Z
+UID:56a61fe12f339c046000b6a68725b1e8-2027-bw-by-he-nrw-rlp-sl-sn-(communit
+ y)-th-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Fronleichnam feiert die Eucharistie un
+ d ist in einigen Teilen Deutschlands ein Feiertag.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Mariä Himmelfahrt  (SL\, BY (community))
+DTSTART;VALUE=DATE:20270815
+DTEND;VALUE=DATE:20270816
+DTSTAMP:20250430T135819Z
+UID:71cce140b9dfd0347ad4ba8dc27f7c0c-2027-sl-by-(community)
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Das Fest Mariä Himmelfahrt ist eine G
+ elegenheit für Katholiken\, den Glauben zu ehren\, dass Gott die Jungfrau
+  Maria in den Himmel aufgenommen hat. In einigen Teilen Deutschlands ist e
+ s jedes Jahr am 15. August ein Feiertag.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Deutscher Weltkindertag  (Thuringia)
+DTSTART;VALUE=DATE:20270920
+DTEND;VALUE=DATE:20270921
+DTSTAMP:20250430T135819Z
+UID:4713055def2e1790ccdbbf29e05148d6-2027-th
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Deutsche Weltkindertag ist ein üb
+ licher lokaler Feiertag in Deutschland
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Reformationstag  (BB\, MVP\, SN\, ST\, TH\, SH\, HH\, NDS\, HB)
+DTSTART;VALUE=DATE:20271031
+DTEND;VALUE=DATE:20271101
+DTSTAMP:20250430T135819Z
+UID:342fddd300cb780377234b7fad82b82c-2027-bb-mvp-sn-st-th-sh-hh-nds-hb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Reformationstag in Deutschland wir
+ d jährlich am 31. Oktober begangen\, um an die Reformation zu erinnern\, 
+ eine Zeit großer religiöser Veränderungen zwischen 1517 und 1648 n. Chr
+ .
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Allerheiligen  (BW\, BY\, NRW\, RLP\, SL)
+DTSTART;VALUE=DATE:20271101
+DTEND;VALUE=DATE:20271102
+DTSTAMP:20250430T135819Z
+UID:1b4101b421e01ac1686079611ad40772-2027-bw-by-nrw-rlp-sl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Silent Day\, public holiday -  Allerheiligen ist in fünf Bund
+ esländern ein jährlicher Feiertag zum Gedenken an alle christlichen Heil
+ igen am 1. November.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Bußtag  (Saxony)
+DTSTART;VALUE=DATE:20271117
+DTEND;VALUE=DATE:20271118
+DTSTAMP:20250430T135819Z
+UID:ba24e3ac12e6e1bfb6fc930a8e564a81-2027-sn
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Common local holiday -  Der Buß- und Bettag ist ein protestan
+ tischer Feiertag und ein gesetzlicher Feiertag im Bundesland Sachsen (Sach
+ sen) am letzten Mittwoch vor dem 23. November.
+LAST-MODIFIED:20250430T135819Z
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

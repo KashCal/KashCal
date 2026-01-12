@@ -1,0 +1,621 @@
+package org.onekash.kashcal.domain.writer
+
+import androidx.room.withTransaction
+import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.sync.strategy.PullStrategy
+import java.util.UUID
+import javax.inject.Inject
+import javax.inject.Singleton
+
+/**
+ * Handles all event write operations with proper occurrence management.
+ *
+ * Responsibilities:
+ * - Create single and recurring events
+ * - Update events (with RRULE change detection)
+ * - Soft delete events for sync
+ * - Create exceptions (edit single occurrence)
+ * - Cancel occurrences (delete single occurrence via EXDATE)
+ * - Split recurring series ("this and all future")
+ *
+ * All operations:
+ * - Use database transactions for atomicity
+ * - Update sync status for offline-first
+ * - Queue pending operations for CalDAV sync
+ * - Regenerate occurrences when needed
+ */
+@Singleton
+class EventWriter @Inject constructor(
+    private val database: KashCalDatabase,
+    private val occurrenceGenerator: OccurrenceGenerator
+) {
+    private val eventsDao by lazy { database.eventsDao() }
+    private val pendingOpsDao by lazy { database.pendingOperationsDao() }
+    private val occurrencesDao by lazy { database.occurrencesDao() }
+
+    /**
+     * Create a new event.
+     *
+     * @param event The event to create (id will be ignored)
+     * @param isLocal True if this is a local-only event (no sync)
+     * @return The created event with assigned ID
+     */
+    suspend fun createEvent(event: Event, isLocal: Boolean = false): Event {
+        return database.withTransaction {
+            // Generate UID if not provided
+            val eventWithUid = if (event.uid.isBlank()) {
+                event.copy(uid = generateUid())
+            } else {
+                event
+            }
+
+            // Set timestamps
+            val now = System.currentTimeMillis()
+            val eventToInsert = eventWithUid.copy(
+                syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
+                dtstamp = now,
+                createdAt = now,
+                updatedAt = now,
+                localModifiedAt = now
+            )
+
+            // Insert event
+            val eventId = eventsDao.insert(eventToInsert)
+            val createdEvent = eventToInsert.copy(id = eventId)
+
+            // Generate occurrences
+            // Round startTs down to seconds and subtract 1 second to ensure DTSTART is included
+            // (OccurrenceGenerator uses seconds precision internally)
+            val rangeStartSeconds = (createdEvent.startTs / 1000) - 1
+            val rangeStart = rangeStartSeconds * 1000
+            // Sync window: 2 years forward (consistent with PullStrategy.OCCURRENCE_EXPANSION_MS)
+            val rangeEnd = now + PullStrategy.OCCURRENCE_EXPANSION_MS
+            occurrenceGenerator.generateOccurrences(createdEvent, rangeStart, rangeEnd)
+
+            // Queue sync operation (unless local-only)
+            if (!isLocal) {
+                queueOperation(eventId, PendingOperation.OPERATION_CREATE)
+            }
+
+            createdEvent
+        }
+    }
+
+    /**
+     * Update an existing event.
+     *
+     * Detects RRULE changes and regenerates occurrences as needed.
+     *
+     * @param event The event with updated fields
+     * @param isLocal True if this is a local-only event
+     * @return The updated event
+     */
+    suspend fun updateEvent(event: Event, isLocal: Boolean = false): Event {
+        return database.withTransaction {
+            val existingEvent = requireNotNull(eventsDao.getById(event.id)) {
+                "Event not found: ${event.id}"
+            }
+
+            val now = System.currentTimeMillis()
+
+            // Check if RRULE changed
+            val rruleChanged = existingEvent.rrule != event.rrule ||
+                    existingEvent.exdate != event.exdate ||
+                    existingEvent.rdate != event.rdate
+
+            // Check if timing changed
+            val timingChanged = existingEvent.startTs != event.startTs ||
+                    existingEvent.endTs != event.endTs ||
+                    existingEvent.isAllDay != event.isAllDay
+
+            // Increment sequence for significant changes (CalDAV requirement)
+            val newSequence = if (rruleChanged || timingChanged) {
+                event.sequence + 1
+            } else {
+                event.sequence
+            }
+
+            // Determine sync status
+            val newSyncStatus = when {
+                isLocal -> SyncStatus.SYNCED
+                existingEvent.syncStatus == SyncStatus.PENDING_CREATE -> SyncStatus.PENDING_CREATE
+                else -> SyncStatus.PENDING_UPDATE
+            }
+
+            val eventToUpdate = event.copy(
+                syncStatus = newSyncStatus,
+                sequence = newSequence,
+                updatedAt = now,
+                localModifiedAt = now
+            )
+
+            // Update event
+            eventsDao.update(eventToUpdate)
+
+            // Regenerate occurrences if RRULE or timing changed
+            if (rruleChanged || timingChanged) {
+                occurrenceGenerator.regenerateOccurrences(eventToUpdate)
+            }
+
+            // Queue sync operation (unless local-only or already pending create)
+            if (!isLocal && existingEvent.syncStatus != SyncStatus.PENDING_CREATE) {
+                queueOperation(event.id, PendingOperation.OPERATION_UPDATE)
+            }
+
+            eventToUpdate
+        }
+    }
+
+    /**
+     * Soft delete an event (marks for deletion, doesn't remove from DB).
+     *
+     * For CalDAV sync, the event is kept until successfully deleted from server.
+     * For local-only events, immediately removes from DB.
+     *
+     * @param eventId The event ID to delete
+     * @param isLocal True if this is a local-only event
+     */
+    suspend fun deleteEvent(eventId: Long, isLocal: Boolean = false) {
+        database.withTransaction {
+            val event = requireNotNull(eventsDao.getById(eventId)) {
+                "Event not found: $eventId"
+            }
+
+            if (isLocal || event.syncStatus == SyncStatus.PENDING_CREATE) {
+                // Local or never synced - hard delete
+                eventsDao.deleteById(eventId)
+                // Cascade delete handles occurrences and exceptions
+            } else {
+                // CalDAV event - soft delete
+                val now = System.currentTimeMillis()
+                eventsDao.markForDeletion(eventId, now)
+
+                // Clear occurrences (won't show in UI)
+                occurrencesDao.deleteForEvent(eventId)
+
+                // Queue delete operation
+                queueOperation(eventId, PendingOperation.OPERATION_DELETE)
+            }
+        }
+    }
+
+    /**
+     * Edit a single occurrence of a recurring event (creates exception).
+     *
+     * Creates a new exception event linked to the master via originalEventId.
+     * The occurrence is updated to reference the exception.
+     *
+     * @param masterEventId The master recurring event ID
+     * @param occurrenceTimeMs The original occurrence start time
+     * @param modifiedEvent Event with modified fields (title, time, etc.)
+     * @param isLocal True if master is local-only
+     * @return The created exception event
+     */
+    suspend fun editSingleOccurrence(
+        masterEventId: Long,
+        occurrenceTimeMs: Long,
+        modifiedEvent: Event,
+        isLocal: Boolean = false
+    ): Event {
+        return database.withTransaction {
+            val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
+                "Master event not found: $masterEventId"
+            }
+
+            require(masterEvent.isRecurring) { "Event is not recurring: $masterEventId" }
+
+            val now = System.currentTimeMillis()
+
+            // Check if exception already exists for this occurrence
+            val existingException = eventsDao.getExceptionForOccurrence(masterEventId, occurrenceTimeMs)
+
+            val (exceptionId, createdException) = if (existingException != null) {
+                // Update existing exception (re-editing a previously modified occurrence)
+                // Exception is bundled with master for sync, so mark as SYNCED locally
+                val updatedEvent = modifiedEvent.copy(
+                    id = existingException.id,
+                    uid = existingException.uid, // Preserve UID (should equal master UID)
+                    calendarId = masterEvent.calendarId,
+                    originalEventId = masterEventId,
+                    originalInstanceTime = occurrenceTimeMs,
+                    rrule = null, // Exception cannot have RRULE
+                    exdate = null,
+                    rdate = null,
+                    // Exception is bundled with master for sync, so mark as SYNCED locally
+                    syncStatus = SyncStatus.SYNCED,
+                    dtstamp = now,
+                    createdAt = existingException.createdAt, // Preserve original creation time
+                    updatedAt = now,
+                    localModifiedAt = now
+                )
+                eventsDao.update(updatedEvent)
+                Pair(existingException.id, updatedEvent)
+            } else {
+                // Create new exception event
+                // RFC 5545: Exception MUST have same UID as master, distinguished by RECURRENCE-ID
+                val exceptionEvent = modifiedEvent.copy(
+                    id = 0, // New event
+                    uid = masterEvent.uid, // Same UID as master (RFC 5545 requirement)
+                    calendarId = masterEvent.calendarId,
+                    originalEventId = masterEventId,
+                    originalInstanceTime = occurrenceTimeMs,
+                    rrule = null, // Exception cannot have RRULE
+                    exdate = null,
+                    rdate = null,
+                    // Exception is bundled with master for sync, so mark as SYNCED locally
+                    // Master will be marked PENDING_UPDATE to trigger the bundled push
+                    syncStatus = SyncStatus.SYNCED,
+                    dtstamp = now,
+                    createdAt = now,
+                    updatedAt = now,
+                    localModifiedAt = now
+                )
+                val newId = eventsDao.insert(exceptionEvent)
+                Pair(newId, exceptionEvent.copy(id = newId))
+            }
+
+            // Link occurrence to exception AND update occurrence times
+            // Using the Event overload updates start_ts, end_ts, start_day, end_day
+            // to match the exception's modified times (critical for correct display)
+            occurrenceGenerator.linkException(masterEventId, occurrenceTimeMs, createdException)
+
+            // Queue sync on MASTER event (not exception)
+            // Exception is bundled with master when serialized via serializeWithExceptions()
+            // This ensures the server receives master + all exceptions as one atomic .ics file
+            if (!isLocal && masterEvent.caldavUrl != null) {
+                // Mark master as pending update if it was previously synced
+                if (masterEvent.syncStatus == SyncStatus.SYNCED) {
+                    eventsDao.updateSyncStatus(masterEventId, SyncStatus.PENDING_UPDATE, now)
+                }
+                queueOperation(masterEventId, PendingOperation.OPERATION_UPDATE)
+            }
+
+            createdException
+        }
+    }
+
+    /**
+     * Delete a single occurrence of a recurring event (adds EXDATE).
+     *
+     * Does not create an exception - simply excludes the occurrence.
+     * Updates the master event's EXDATE field.
+     *
+     * @param masterEventId The master recurring event ID
+     * @param occurrenceTimeMs The occurrence start time to cancel
+     * @param isLocal True if master is local-only
+     */
+    suspend fun deleteSingleOccurrence(
+        masterEventId: Long,
+        occurrenceTimeMs: Long,
+        isLocal: Boolean = false
+    ) {
+        database.withTransaction {
+            val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
+                "Master event not found: $masterEventId"
+            }
+
+            require(masterEvent.isRecurring) { "Event is not recurring: $masterEventId" }
+
+            // Add to EXDATE
+            val newExdate = addToExdate(masterEvent.exdate, occurrenceTimeMs, masterEvent.isAllDay)
+            val now = System.currentTimeMillis()
+
+            eventsDao.updateExdate(masterEventId, newExdate, now)
+
+            // Delete exception event if one exists for this occurrence
+            // (prevents orphaned exception events in database)
+            val exception = eventsDao.getExceptionForOccurrence(masterEventId, occurrenceTimeMs)
+            exception?.let { eventsDao.deleteById(it.id) }
+
+            // Mark occurrence as cancelled
+            occurrenceGenerator.cancelOccurrence(masterEventId, occurrenceTimeMs)
+
+            // Queue sync for master (EXDATE changed)
+            if (!isLocal) {
+                val newSyncStatus = when (masterEvent.syncStatus) {
+                    SyncStatus.PENDING_CREATE -> SyncStatus.PENDING_CREATE
+                    else -> SyncStatus.PENDING_UPDATE
+                }
+                eventsDao.updateSyncStatus(masterEventId, newSyncStatus, now)
+
+                if (masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
+                    queueOperation(masterEventId, PendingOperation.OPERATION_UPDATE)
+                }
+            }
+        }
+    }
+
+    /**
+     * Split a recurring series ("edit this and all future").
+     *
+     * 1. Truncates the master event (UNTIL set to before split point)
+     * 2. Creates a new event with the modifications starting from split point
+     *
+     * @param masterEventId The master recurring event ID
+     * @param splitTimeMs The occurrence time to split from
+     * @param modifiedEvent Event with modifications for the new series
+     * @param isLocal True if master is local-only
+     * @return The new event for "this and all future"
+     */
+    suspend fun splitSeries(
+        masterEventId: Long,
+        splitTimeMs: Long,
+        modifiedEvent: Event,
+        isLocal: Boolean = false
+    ): Event {
+        return database.withTransaction {
+            val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
+                "Master event not found: $masterEventId"
+            }
+
+            require(masterEvent.isRecurring) { "Event is not recurring: $masterEventId" }
+
+            val now = System.currentTimeMillis()
+
+            // Step 1: Truncate master event's RRULE with UNTIL
+            val rrule = checkNotNull(masterEvent.rrule) {
+                "Recurring event has no RRULE: ${masterEvent.id}"
+            }
+            val truncatedRrule = addUntilToRrule(rrule, splitTimeMs - 1)
+            eventsDao.updateRrule(masterEventId, truncatedRrule, now)
+
+            // Delete occurrences at/after split point
+            occurrencesDao.deleteForEventAfter(masterEventId, splitTimeMs)
+
+            // Update master sync status
+            if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
+                eventsDao.updateSyncStatus(masterEventId, SyncStatus.PENDING_UPDATE, now)
+                queueOperation(masterEventId, PendingOperation.OPERATION_UPDATE)
+            }
+
+            // Step 2: Create new event for "this and all future"
+            val newEvent = modifiedEvent.copy(
+                id = 0,
+                uid = generateUid(),
+                calendarId = masterEvent.calendarId,
+                startTs = splitTimeMs + (modifiedEvent.startTs - masterEvent.startTs),
+                originalEventId = null, // Not an exception - new series
+                originalInstanceTime = null,
+                syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
+                dtstamp = now,
+                createdAt = now,
+                updatedAt = now,
+                localModifiedAt = now
+            )
+
+            val newEventId = eventsDao.insert(newEvent)
+            val createdEvent = newEvent.copy(id = newEventId)
+
+            // Generate occurrences for new event
+            occurrenceGenerator.regenerateOccurrences(createdEvent)
+
+            // Queue sync for new event
+            if (!isLocal) {
+                queueOperation(newEventId, PendingOperation.OPERATION_CREATE)
+            }
+
+            createdEvent
+        }
+    }
+
+    /**
+     * Delete "this and all future" occurrences.
+     *
+     * Truncates the master event's RRULE with UNTIL before the split point.
+     *
+     * @param masterEventId The master recurring event ID
+     * @param fromTimeMs Delete occurrences from this time onwards
+     * @param isLocal True if master is local-only
+     */
+    suspend fun deleteThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isLocal: Boolean = false
+    ) {
+        database.withTransaction {
+            val masterEvent = requireNotNull(eventsDao.getById(masterEventId)) {
+                "Master event not found: $masterEventId"
+            }
+
+            require(masterEvent.isRecurring) { "Event is not recurring: $masterEventId" }
+
+            val now = System.currentTimeMillis()
+
+            // If deleting from the first occurrence, delete entire event
+            if (fromTimeMs <= masterEvent.startTs) {
+                deleteEvent(masterEventId, isLocal)
+                return@withTransaction
+            }
+
+            // Truncate RRULE with UNTIL
+            val rrule = checkNotNull(masterEvent.rrule) {
+                "Recurring event has no RRULE: ${masterEvent.id}"
+            }
+            val truncatedRrule = addUntilToRrule(rrule, fromTimeMs - 1)
+            eventsDao.updateRrule(masterEventId, truncatedRrule, now)
+
+            // Delete occurrences at/after point
+            occurrencesDao.deleteForEventAfter(masterEventId, fromTimeMs)
+
+            // Delete any exception events for deleted occurrences
+            val exceptions = eventsDao.getExceptionsForMaster(masterEventId)
+            for (exception in exceptions) {
+                if (exception.originalInstanceTime != null && exception.originalInstanceTime >= fromTimeMs) {
+                    eventsDao.deleteById(exception.id)
+                }
+            }
+
+            // Update sync status
+            if (!isLocal && masterEvent.syncStatus != SyncStatus.PENDING_CREATE) {
+                eventsDao.updateSyncStatus(masterEventId, SyncStatus.PENDING_UPDATE, now)
+                queueOperation(masterEventId, PendingOperation.OPERATION_UPDATE)
+            }
+        }
+    }
+
+    /**
+     * Move event to a different calendar.
+     *
+     * For CalDAV sync, this uses OPERATION_MOVE which atomically:
+     * 1. DELETEs from old calendar (using stored targetUrl)
+     * 2. CREATEs in new calendar
+     *
+     * This fixes the bug where caldavUrl was cleared before DELETE processed,
+     * causing the event to disappear without proper server sync.
+     *
+     * @param eventId The event to move
+     * @param newCalendarId The destination calendar ID
+     * @param isLocal True if destination is a local calendar (no sync needed)
+     */
+    suspend fun moveEventToCalendar(
+        eventId: Long,
+        newCalendarId: Long,
+        isLocal: Boolean = false
+    ) {
+        database.withTransaction {
+            val event = requireNotNull(eventsDao.getById(eventId)) {
+                "Event not found: $eventId"
+            }
+
+            if (event.calendarId == newCalendarId) {
+                return@withTransaction // No-op
+            }
+
+            // Check target calendar isn't read-only (defense in depth - UI also filters these)
+            val targetCalendar = database.calendarsDao().getById(newCalendarId)
+            require(targetCalendar?.isReadOnly != true) {
+                "Cannot move event to read-only calendar"
+            }
+
+            // Capture old URL BEFORE clearing (critical for sync)
+            val oldCaldavUrl = event.caldavUrl
+            val wasSynced = event.syncStatus == SyncStatus.SYNCED
+            val now = System.currentTimeMillis()
+
+            // Update event with new calendar
+            val movedEvent = event.copy(
+                calendarId = newCalendarId,
+                caldavUrl = null, // Will get new URL on sync
+                etag = null,
+                syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
+                updatedAt = now,
+                localModifiedAt = now
+            )
+            eventsDao.update(movedEvent)
+
+            // Update occurrences with new calendar ID (single UPDATE query, not N inserts)
+            occurrencesDao.updateCalendarIdForEvent(eventId, newCalendarId)
+
+            // Queue sync operation (only if not moving to local calendar)
+            if (!isLocal) {
+                // Cancel any existing pending operations (they're for old calendar)
+                pendingOpsDao.deleteForEvent(eventId)
+
+                if (wasSynced && oldCaldavUrl != null) {
+                    // MOVE: DELETE from old + CREATE in new (atomic operation)
+                    // Stores targetUrl so processMove knows where to delete from
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_MOVE,
+                            targetUrl = oldCaldavUrl,
+                            targetCalendarId = newCalendarId
+                        )
+                    )
+                } else {
+                    // Just CREATE (event was never on server or is new)
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_CREATE
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    // ========== Helper Functions ==========
+
+    private fun generateUid(): String {
+        return "${UUID.randomUUID()}@kashcal.onekash.org"
+    }
+
+    private suspend fun queueOperation(eventId: Long, operation: String) {
+        // Check if operation already pending for this event
+        val existingList = pendingOpsDao.getForEvent(eventId)
+        val existing = existingList.firstOrNull { it.status == PendingOperation.STATUS_PENDING }
+        if (existing != null) {
+            // Update existing operation if upgrading (e.g., UPDATE -> DELETE)
+            if (operation == PendingOperation.OPERATION_DELETE) {
+                pendingOpsDao.update(existing.copy(operation = operation))
+            }
+            return
+        }
+
+        val pendingOp = PendingOperation(
+            eventId = eventId,
+            operation = operation
+        )
+        pendingOpsDao.insert(pendingOp)
+    }
+
+    /**
+     * Add a timestamp to EXDATE field.
+     * Format: YYYYMMDD (date only for simplicity)
+     *
+     * @param isAllDay Pass true for all-day events to use UTC for date calculation
+     */
+    private fun addToExdate(currentExdate: String?, timestampMs: Long, isAllDay: Boolean): String {
+        val dateCode = Occurrence.toDayFormat(timestampMs, isAllDay).toString()
+        return if (currentExdate.isNullOrBlank()) {
+            dateCode
+        } else {
+            "$currentExdate,$dateCode"
+        }
+    }
+
+    /**
+     * Add UNTIL parameter to RRULE.
+     * Handles existing UNTIL/COUNT parameters.
+     */
+    private fun addUntilToRrule(rrule: String, untilMs: Long): String {
+        val untilDate = formatUntilDate(untilMs)
+
+        return when {
+            // Remove existing UNTIL if present
+            rrule.contains("UNTIL=") -> {
+                rrule.replace(Regex("UNTIL=[^;]+"), "UNTIL=$untilDate")
+            }
+            // Remove COUNT and add UNTIL
+            rrule.contains("COUNT=") -> {
+                val withoutCount = rrule.replace(Regex(";?COUNT=\\d+"), "")
+                "$withoutCount;UNTIL=$untilDate"
+            }
+            // Just add UNTIL
+            else -> "$rrule;UNTIL=$untilDate"
+        }
+    }
+
+    /**
+     * Format timestamp as RRULE UNTIL value (UTC).
+     */
+    private fun formatUntilDate(timestampMs: Long): String {
+        val calendar = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        calendar.timeInMillis = timestampMs
+        return String.format(
+            "%04d%02d%02dT%02d%02d%02dZ",
+            calendar.get(java.util.Calendar.YEAR),
+            calendar.get(java.util.Calendar.MONTH) + 1,
+            calendar.get(java.util.Calendar.DAY_OF_MONTH),
+            calendar.get(java.util.Calendar.HOUR_OF_DAY),
+            calendar.get(java.util.Calendar.MINUTE),
+            calendar.get(java.util.Calendar.SECOND)
+        )
+    }
+}

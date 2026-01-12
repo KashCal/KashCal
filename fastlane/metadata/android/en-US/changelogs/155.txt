@@ -1,0 +1,5 @@
+Version 15.1.7:
+- Timezone picker in time picker dialog
+- Timezone floating badge shows selected timezone
+- Settings screen UX improvements with card sections
+- Bug fixes and polish

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Data extraction rules for Android 12 (API 31) and above.
+    Separate rules for cloud backup vs device-to-device transfer.
+
+    Cloud backup: Same device restoration (Google Drive)
+    Device transfer: New device migration (D2D, cable transfer)
+-->
+<data-extraction-rules>
+    <!--
+        Cloud Backup (Google Drive)
+        Restores to same device after factory reset.
+    -->
+    <cloud-backup>
+        <!-- Include Room database -->
+        <include domain="database" path="." />
+
+        <!-- Include DataStore preferences -->
+        <include domain="file" path="datastore/" />
+
+        <!-- Include regular SharedPreferences -->
+        <include domain="sharedpref" path="." />
+
+        <!--
+            EXCLUDE: EncryptedSharedPreferences
+            Master key is device-bound, won't work after restore.
+        -->
+        <exclude domain="sharedpref" path="icloud_credentials.xml" />
+
+        <!-- Note: cache/ is automatically excluded by Android backup system -->
+    </cloud-backup>
+
+    <!--
+        Device-to-Device Transfer
+        Migrating to a new device via cable or D2D.
+        Same exclusions apply - new device = new Keystore.
+    -->
+    <device-transfer>
+        <include domain="database" path="." />
+        <include domain="file" path="datastore/" />
+        <include domain="sharedpref" path="." />
+        <exclude domain="sharedpref" path="icloud_credentials.xml" />
+        <!-- Note: cache/ is automatically excluded by Android backup system -->
+    </device-transfer>
+</data-extraction-rules>
