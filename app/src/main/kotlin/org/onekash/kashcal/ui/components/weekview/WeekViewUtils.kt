@@ -10,7 +10,9 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.util.Calendar
 import java.util.Locale
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Utility functions for the week view component.
@@ -183,15 +185,15 @@ object WeekViewUtils {
     // ==================== Week Calculations ====================
 
     /**
-     * Get the start of the week (Sunday at midnight) for a given date.
+     * Get the start of the week for a given date.
      *
      * @param date The date to find the week start for
-     * @return LocalDate representing Sunday of that week
+     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
+     * @return LocalDate representing the first day of that week
      */
-    fun getWeekStart(date: LocalDate): LocalDate {
-        val dayOfWeek = date.dayOfWeek.value  // Monday=1, Sunday=7
-        val daysToSubtract = if (dayOfWeek == 7) 0L else dayOfWeek.toLong()
-        return date.minusDays(daysToSubtract)
+    fun getWeekStart(date: LocalDate, firstDayOfWeek: Int = Calendar.SUNDAY): LocalDate {
+        val daysToSubtract = DateTimeUtils.getDayOfWeekOffset(date, firstDayOfWeek)
+        return date.minusDays(daysToSubtract.toLong())
     }
 
     /**
@@ -199,13 +201,18 @@ object WeekViewUtils {
      *
      * @param timestampMs Timestamp in milliseconds
      * @param zoneId Timezone to use (default: system default)
-     * @return Timestamp of Sunday at midnight in the given timezone
+     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
+     * @return Timestamp of the first day of the week at midnight in the given timezone
      */
-    fun getWeekStartMs(timestampMs: Long, zoneId: ZoneId = ZoneId.systemDefault()): Long {
+    fun getWeekStartMs(
+        timestampMs: Long,
+        zoneId: ZoneId = ZoneId.systemDefault(),
+        firstDayOfWeek: Int = Calendar.SUNDAY
+    ): Long {
         val date = Instant.ofEpochMilli(timestampMs)
             .atZone(zoneId)
             .toLocalDate()
-        val weekStart = getWeekStart(date)
+        val weekStart = getWeekStart(date, firstDayOfWeek)
         return weekStart.atStartOfDay(zoneId).toInstant().toEpochMilli()
     }
 

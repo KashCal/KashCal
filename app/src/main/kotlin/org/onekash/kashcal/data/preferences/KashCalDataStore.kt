@@ -530,5 +530,9 @@ class KashCalDataStore(private val context: Context) {
         const val TIME_FORMAT_SYSTEM = "system"
         const val TIME_FORMAT_12H = "12h"
         const val TIME_FORMAT_24H = "24h"
+
+        // First day of week values
+        /** Special value for "follow system locale" */
+        const val FIRST_DAY_SYSTEM = 0
     }
 }

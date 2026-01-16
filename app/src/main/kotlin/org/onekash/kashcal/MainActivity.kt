@@ -605,7 +605,8 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         locationSuggestionService = locationSuggestionService,
-                        timeFormat = uiState.timeFormat
+                        timeFormat = uiState.timeFormat,
+                        firstDayOfWeek = uiState.firstDayOfWeek
                     )
                 }
 

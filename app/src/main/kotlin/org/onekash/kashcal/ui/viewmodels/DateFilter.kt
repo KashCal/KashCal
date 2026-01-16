@@ -4,6 +4,8 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Represents date filter options for search.
@@ -16,18 +18,23 @@ sealed class DateFilter {
 
     /**
      * Compute the time range for this filter.
+     * @param zone Timezone for date calculations
+     * @param firstDayOfWeek User's preferred first day of week (only affects ThisWeek/NextWeek)
      * @return Pair of (startMs, endMs) or null for AnyTime
      */
-    abstract fun getTimeRange(zone: ZoneId = ZoneId.systemDefault()): Pair<Long, Long>?
+    abstract fun getTimeRange(
+        zone: ZoneId = ZoneId.systemDefault(),
+        firstDayOfWeek: Int = Calendar.SUNDAY
+    ): Pair<Long, Long>?
 
     data object AnyTime : DateFilter() {
         override val displayName = "Any time"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long>? = null
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long>? = null
     }
 
     data object Today : DateFilter() {
         override val displayName = "Today"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val today = LocalDate.now(zone)
             val start = today.atStartOfDay(zone).toInstant().toEpochMilli()
             val end = today.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
@@ -37,7 +44,7 @@ sealed class DateFilter {
 
     data object Tomorrow : DateFilter() {
         override val displayName = "Tomorrow"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val tomorrow = LocalDate.now(zone).plusDays(1)
             val start = tomorrow.atStartOfDay(zone).toInstant().toEpochMilli()
             val end = tomorrow.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
@@ -47,11 +54,10 @@ sealed class DateFilter {
 
     data object ThisWeek : DateFilter() {
         override val displayName = "This week"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val today = LocalDate.now(zone)
-            // Week starts on Sunday (dayOfWeek: Monday=1, Sunday=7)
-            val daysSinceSunday = today.dayOfWeek.value % 7
-            val startOfWeek = today.minusDays(daysSinceSunday.toLong())
+            val daysFromWeekStart = DateTimeUtils.getDayOfWeekOffset(today, firstDayOfWeek)
+            val startOfWeek = today.minusDays(daysFromWeekStart.toLong())
             val endOfWeek = startOfWeek.plusDays(6)
             val start = startOfWeek.atStartOfDay(zone).toInstant().toEpochMilli()
             val end = endOfWeek.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
@@ -61,10 +67,10 @@ sealed class DateFilter {
 
     data object NextWeek : DateFilter() {
         override val displayName = "Next week"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val today = LocalDate.now(zone)
-            val daysSinceSunday = today.dayOfWeek.value % 7
-            val startOfThisWeek = today.minusDays(daysSinceSunday.toLong())
+            val daysFromWeekStart = DateTimeUtils.getDayOfWeekOffset(today, firstDayOfWeek)
+            val startOfThisWeek = today.minusDays(daysFromWeekStart.toLong())
             val startOfNextWeek = startOfThisWeek.plusDays(7)
             val endOfNextWeek = startOfNextWeek.plusDays(6)
             val start = startOfNextWeek.atStartOfDay(zone).toInstant().toEpochMilli()
@@ -75,7 +81,7 @@ sealed class DateFilter {
 
     data object ThisMonth : DateFilter() {
         override val displayName = "This month"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val today = LocalDate.now(zone)
             val startOfMonth = today.withDayOfMonth(1)
             val endOfMonth = today.withDayOfMonth(today.lengthOfMonth())
@@ -87,7 +93,7 @@ sealed class DateFilter {
 
     data object NextMonth : DateFilter() {
         override val displayName = "Next month"
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val today = LocalDate.now(zone)
             val startOfNextMonth = today.plusMonths(1).withDayOfMonth(1)
             val endOfNextMonth = startOfNextMonth.withDayOfMonth(startOfNextMonth.lengthOfMonth())
@@ -109,7 +115,7 @@ sealed class DateFilter {
                 return date.format(DateTimeFormatter.ofPattern("MMM d"))
             }
 
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             val date = Instant.ofEpochMilli(dateMs).atZone(zone).toLocalDate()
             val start = date.atStartOfDay(zone).toInstant().toEpochMilli()
             val end = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
@@ -133,7 +139,7 @@ sealed class DateFilter {
                 return "${startDate.format(formatter)} - ${endDate.format(formatter)}"
             }
 
-        override fun getTimeRange(zone: ZoneId): Pair<Long, Long> {
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
             // Use start of startMs day and end of endMs day
             val startDate = Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
             val endDate = Instant.ofEpochMilli(endMs).atZone(zone).toLocalDate()

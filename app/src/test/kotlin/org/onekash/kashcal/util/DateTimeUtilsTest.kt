@@ -2,6 +2,7 @@ package org.onekash.kashcal.util
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
@@ -865,5 +866,114 @@ class DateTimeUtilsTest {
     fun `formatTime noon`() {
         val result = DateTimeUtils.formatTime(12, 0)
         assertTrue("Should be 12:00 PM: $result", result.contains("12:00") && (result.contains("PM") || result.contains("pm")))
+    }
+
+    // ==================== First Day of Week Tests ====================
+
+    @Test
+    fun `getOrderedDaysOfWeek_sunday returns Sunday first`() {
+        val result = DateTimeUtils.getOrderedDaysOfWeek(java.util.Calendar.SUNDAY)
+        assertEquals(java.time.DayOfWeek.SUNDAY, result[0])
+        assertEquals(java.time.DayOfWeek.MONDAY, result[1])
+        assertEquals(java.time.DayOfWeek.SATURDAY, result[6])
+    }
+
+    @Test
+    fun `getOrderedDaysOfWeek_monday returns Monday first`() {
+        val result = DateTimeUtils.getOrderedDaysOfWeek(java.util.Calendar.MONDAY)
+        assertEquals(java.time.DayOfWeek.MONDAY, result[0])
+        assertEquals(java.time.DayOfWeek.TUESDAY, result[1])
+        assertEquals(java.time.DayOfWeek.SUNDAY, result[6])
+    }
+
+    @Test
+    fun `getOrderedDaysOfWeek_saturday returns Saturday first`() {
+        val result = DateTimeUtils.getOrderedDaysOfWeek(java.util.Calendar.SATURDAY)
+        assertEquals(java.time.DayOfWeek.SATURDAY, result[0])
+        assertEquals(java.time.DayOfWeek.SUNDAY, result[1])
+        assertEquals(java.time.DayOfWeek.FRIDAY, result[6])
+    }
+
+    @Test
+    fun `resolveFirstDayOfWeek_explicit returns same value`() {
+        assertEquals(java.util.Calendar.SUNDAY, DateTimeUtils.resolveFirstDayOfWeek(java.util.Calendar.SUNDAY))
+        assertEquals(java.util.Calendar.MONDAY, DateTimeUtils.resolveFirstDayOfWeek(java.util.Calendar.MONDAY))
+        assertEquals(java.util.Calendar.SATURDAY, DateTimeUtils.resolveFirstDayOfWeek(java.util.Calendar.SATURDAY))
+    }
+
+    @Test
+    fun `getLocaleFirstDayOfWeek returns valid DayOfWeek`() {
+        val result = DateTimeUtils.getLocaleFirstDayOfWeek()
+        // Result should be a valid DayOfWeek (not null)
+        assertNotNull(result)
+        assertTrue(result in java.time.DayOfWeek.values())
+    }
+
+    @Test
+    fun `getFirstDayOffset_jan2026_sunday first`() {
+        // Jan 1, 2026 is a Thursday
+        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) }
+        val offset = DateTimeUtils.getFirstDayOffset(calendar, java.util.Calendar.SUNDAY)
+        // Thursday is the 5th day when Sunday is first (Sun=0, Mon=1, Tue=2, Wed=3, Thu=4)
+        assertEquals(4, offset)
+    }
+
+    @Test
+    fun `getFirstDayOffset_jan2026_monday first`() {
+        // Jan 1, 2026 is a Thursday
+        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) }
+        val offset = DateTimeUtils.getFirstDayOffset(calendar, java.util.Calendar.MONDAY)
+        // Thursday is the 4th day when Monday is first (Mon=0, Tue=1, Wed=2, Thu=3)
+        assertEquals(3, offset)
+    }
+
+    @Test
+    fun `getFirstDayOffset_jan2026_saturday first`() {
+        // Jan 1, 2026 is a Thursday
+        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) }
+        val offset = DateTimeUtils.getFirstDayOffset(calendar, java.util.Calendar.SATURDAY)
+        // Thursday is the 6th day when Saturday is first (Sat=0, Sun=1, Mon=2, Tue=3, Wed=4, Thu=5)
+        assertEquals(5, offset)
+    }
+
+    @Test
+    fun `getDayOfWeekOffset_wednesday_sunday first`() {
+        // Jan 15, 2026 is a Thursday (let's use a Wednesday instead: Jan 14, 2026)
+        val date = LocalDate.of(2026, 1, 14) // Wednesday
+        val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.SUNDAY)
+        // Wednesday is the 4th day when Sunday is first (Sun=0, Mon=1, Tue=2, Wed=3)
+        assertEquals(3, offset)
+    }
+
+    @Test
+    fun `getDayOfWeekOffset_wednesday_monday first`() {
+        val date = LocalDate.of(2026, 1, 14) // Wednesday
+        val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.MONDAY)
+        // Wednesday is the 3rd day when Monday is first (Mon=0, Tue=1, Wed=2)
+        assertEquals(2, offset)
+    }
+
+    @Test
+    fun `getDayOfWeekOffset_sunday_sunday first`() {
+        val date = LocalDate.of(2026, 1, 11) // Sunday
+        val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.SUNDAY)
+        // Sunday is the first day (offset = 0) when Sunday is first
+        assertEquals(0, offset)
+    }
+
+    @Test
+    fun `getDayOfWeekOffset_sunday_monday first`() {
+        val date = LocalDate.of(2026, 1, 11) // Sunday
+        val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.MONDAY)
+        // Sunday is the last day (offset = 6) when Monday is first
+        assertEquals(6, offset)
+    }
+
+    @Test
+    fun `getDayOfWeekOffset_saturday_saturday first`() {
+        val date = LocalDate.of(2026, 1, 10) // Saturday
+        val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.SATURDAY)
+        // Saturday is the first day (offset = 0) when Saturday is first
+        assertEquals(0, offset)
     }
 }

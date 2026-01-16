@@ -486,7 +486,7 @@ fun HomeScreen(
                                             )
 
                                             // Day of week headers
-                                            DayOfWeekHeaders()
+                                            DayOfWeekHeaders(firstDayOfWeek = uiState.firstDayOfWeek)
                                             Spacer(modifier = Modifier.height(4.dp))
 
                                             // Calendar grid
@@ -495,7 +495,8 @@ fun HomeScreen(
                                                 month = pageMonth,
                                                 selectedDate = uiState.selectedDate,
                                                 eventDots = uiState.eventDots,
-                                                onDateSelected = onDateSelected
+                                                onDateSelected = onDateSelected,
+                                                firstDayOfWeekPref = uiState.firstDayOfWeek
                                             )
                                         }
                                     }
@@ -529,7 +530,8 @@ fun HomeScreen(
         SearchDatePickerSheet(
             selectedDateMs = uiState.searchDateRangeStart,
             onDateSelected = onSearchDateSelected,
-            onDismiss = onSearchHideDatePicker
+            onDismiss = onSearchHideDatePicker,
+            firstDayOfWeek = uiState.firstDayOfWeek
         )
     }
 
@@ -538,7 +540,8 @@ fun HomeScreen(
         WeekViewDatePickerSheet(
             currentWeekStartMs = uiState.weekViewStartDate,
             onDateSelected = onWeekDateSelected,
-            onDismiss = onWeekDatePickerDismiss
+            onDismiss = onWeekDatePickerDismiss,
+            firstDayOfWeek = uiState.firstDayOfWeek
         )
     }
 }
@@ -745,12 +748,11 @@ private fun MonthNavHeader(
 }
 
 @Composable
-private fun DayOfWeekHeaders() {
+private fun DayOfWeekHeaders(firstDayOfWeek: Int) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-        val daysOfWeek = listOf(
-            java.time.DayOfWeek.SUNDAY, java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.TUESDAY,
-            java.time.DayOfWeek.WEDNESDAY, java.time.DayOfWeek.THURSDAY, java.time.DayOfWeek.FRIDAY, java.time.DayOfWeek.SATURDAY
-        )
+        val daysOfWeek = remember(firstDayOfWeek) {
+            DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
+        }
         daysOfWeek.forEach { day ->
             val isWeekend = day == java.time.DayOfWeek.SUNDAY || day == java.time.DayOfWeek.SATURDAY
             Text(
@@ -772,14 +774,20 @@ private fun CalendarGrid(
     month: Int,
     selectedDate: Long,
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
-    onDateSelected: (Long) -> Unit
+    onDateSelected: (Long) -> Unit,
+    firstDayOfWeekPref: Int = java.util.Calendar.SUNDAY
 ) {
     val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
 
     val calendar = JavaCalendar.getInstance().apply { set(year, month, 1) }
     val daysInMonth = calendar.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
-    val firstDayOfWeek = calendar.get(JavaCalendar.DAY_OF_WEEK) - 1
+    val gridOffset = DateTimeUtils.getFirstDayOffset(calendar, firstDayOfWeekPref)
+
+    // Get ordered days of week for weekend detection by column position
+    val orderedDays = remember(firstDayOfWeekPref) {
+        DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeekPref)
+    }
 
     val today = JavaCalendar.getInstance()
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
@@ -792,8 +800,8 @@ private fun CalendarGrid(
             if (dayCounter > daysInMonth) break
 
             Row(modifier = Modifier.fillMaxWidth()) {
-                for (dayOfWeek in 0..6) {
-                    if (week == 0 && dayOfWeek < firstDayOfWeek || dayCounter > daysInMonth) {
+                for (dayOfWeekIdx in 0..6) {
+                    if (week == 0 && dayOfWeekIdx < gridOffset || dayCounter > daysInMonth) {
                         Box(modifier = Modifier.weight(1f).height(44.dp))
                     } else {
                         val day = dayCounter
@@ -801,7 +809,9 @@ private fun CalendarGrid(
                         val isToday = dateCal.get(JavaCalendar.DAY_OF_YEAR) == today.get(JavaCalendar.DAY_OF_YEAR) &&
                                       dateCal.get(JavaCalendar.YEAR) == today.get(JavaCalendar.YEAR)
                         val isSelected = selectedInThisMonth && day == selectedCal.get(JavaCalendar.DAY_OF_MONTH)
-                        val isWeekend = dayOfWeek == 0 || dayOfWeek == 6
+                        // Check actual day of week for weekend highlighting, not column position
+                        val columnDay = orderedDays[dayOfWeekIdx]
+                        val isWeekend = columnDay == java.time.DayOfWeek.SATURDAY || columnDay == java.time.DayOfWeek.SUNDAY
 
                         val dayColors = monthDots[day] ?: emptyList()
 
@@ -1770,7 +1780,8 @@ internal fun formatSearchResultDateWithOccurrence(
 private fun SearchDatePickerSheet(
     selectedDateMs: Long?,
     onDateSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -1818,7 +1829,8 @@ private fun SearchDatePickerSheet(
                 },
                 onMonthChange = { newMonth ->
                     displayedMonth = newMonth
-                }
+                },
+                firstDayOfWeek = firstDayOfWeek
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -1847,7 +1859,8 @@ private fun SearchDatePickerSheet(
 private fun WeekViewDatePickerSheet(
     currentWeekStartMs: Long,
     onDateSelected: (Long) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -1891,7 +1904,8 @@ private fun WeekViewDatePickerSheet(
                 },
                 onMonthChange = { newMonth ->
                     displayedMonth = newMonth
-                }
+                },
+                firstDayOfWeek = firstDayOfWeek
             )
 
             Spacer(modifier = Modifier.height(16.dp))

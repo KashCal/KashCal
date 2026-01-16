@@ -217,7 +217,8 @@ fun DateTimeSheet(
     isAllDay: Boolean,
     use24Hour: Boolean = false,
     onConfirm: (dateMillis: Long, hour: Int, minute: Int, timezone: String?) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     // Local buffered state
     var localDateMillis by remember { mutableStateOf(selectedDateMillis) }
@@ -279,7 +280,8 @@ fun DateTimeSheet(
                 selectedDateMillis = localDateMillis,
                 displayedMonth = displayedMonth,
                 onDateSelect = { localDateMillis = it },
-                onMonthChange = { displayedMonth = it }
+                onMonthChange = { displayedMonth = it },
+                firstDayOfWeek = firstDayOfWeek
             )
 
             // Time picker with timezone - updates LOCAL state (unless all-day)
@@ -421,7 +423,8 @@ fun InlineDatePickerContent(
     selectedDateMillis: Long,
     displayedMonth: JavaCalendar,
     onDateSelect: (Long) -> Unit,
-    onMonthChange: (JavaCalendar) -> Unit
+    onMonthChange: (JavaCalendar) -> Unit,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val today = JavaCalendar.getInstance()
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
@@ -491,13 +494,16 @@ fun InlineDatePickerContent(
         }
 
         // Day of week headers
+        val orderedDays = remember(firstDayOfWeek) {
+            DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            listOf("S", "M", "T", "W", "T", "F", "S").forEach { day ->
+            orderedDays.forEach { day ->
                 Text(
-                    text = day,
+                    text = day.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(1f),
@@ -511,17 +517,17 @@ fun InlineDatePickerContent(
         // Calendar grid
         val firstDayOfMonth = displayedMonth.clone() as JavaCalendar
         firstDayOfMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
-        val startDayOfWeek = firstDayOfMonth.get(JavaCalendar.DAY_OF_WEEK) - 1
+        val gridOffset = DateTimeUtils.getFirstDayOffset(firstDayOfMonth, firstDayOfWeek)
         val daysInMonth = displayedMonth.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
-        val weeks = ((startDayOfWeek + daysInMonth + 6) / 7)
+        val weeks = ((gridOffset + daysInMonth + 6) / 7)
 
         for (week in 0 until weeks) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                for (dayOfWeek in 0..6) {
-                    val dayIndex = week * 7 + dayOfWeek - startDayOfWeek + 1
+                for (dayOfWeekIdx in 0..6) {
+                    val dayIndex = week * 7 + dayOfWeekIdx - gridOffset + 1
 
                     if (dayIndex in 1..daysInMonth) {
                         val dayCal = displayedMonth.clone() as JavaCalendar

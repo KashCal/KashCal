@@ -233,4 +233,105 @@ class DateFilterTest {
         // Tokyo is ahead of NY, so their "today" starts at different UTC times
         assertTrue("Different timezones should have different start times", nyRange.first != tokyoRange.first)
     }
+
+    // ==================== First Day of Week Tests ====================
+
+    @Test
+    fun `ThisWeek with monday first starts on monday`() {
+        val range = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
+        val weekStartDate = java.time.Instant.ofEpochMilli(range.first)
+            .atZone(testZone)
+            .toLocalDate()
+
+        assertEquals(
+            "ThisWeek with Monday-first should start on Monday",
+            java.time.DayOfWeek.MONDAY,
+            weekStartDate.dayOfWeek
+        )
+    }
+
+    @Test
+    fun `ThisWeek with saturday first starts on saturday`() {
+        val range = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SATURDAY)!!
+        val weekStartDate = java.time.Instant.ofEpochMilli(range.first)
+            .atZone(testZone)
+            .toLocalDate()
+
+        assertEquals(
+            "ThisWeek with Saturday-first should start on Saturday",
+            java.time.DayOfWeek.SATURDAY,
+            weekStartDate.dayOfWeek
+        )
+    }
+
+    @Test
+    fun `ThisWeek with sunday first starts on sunday`() {
+        val range = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SUNDAY)!!
+        val weekStartDate = java.time.Instant.ofEpochMilli(range.first)
+            .atZone(testZone)
+            .toLocalDate()
+
+        assertEquals(
+            "ThisWeek with Sunday-first should start on Sunday",
+            java.time.DayOfWeek.SUNDAY,
+            weekStartDate.dayOfWeek
+        )
+    }
+
+    @Test
+    fun `NextWeek with monday first starts on monday`() {
+        val range = DateFilter.NextWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
+        val weekStartDate = java.time.Instant.ofEpochMilli(range.first)
+            .atZone(testZone)
+            .toLocalDate()
+
+        assertEquals(
+            "NextWeek with Monday-first should start on Monday",
+            java.time.DayOfWeek.MONDAY,
+            weekStartDate.dayOfWeek
+        )
+    }
+
+    @Test
+    fun `NextWeek with saturday first starts on saturday`() {
+        val range = DateFilter.NextWeek.getTimeRange(testZone, java.util.Calendar.SATURDAY)!!
+        val weekStartDate = java.time.Instant.ofEpochMilli(range.first)
+            .atZone(testZone)
+            .toLocalDate()
+
+        assertEquals(
+            "NextWeek with Saturday-first should start on Saturday",
+            java.time.DayOfWeek.SATURDAY,
+            weekStartDate.dayOfWeek
+        )
+    }
+
+    @Test
+    fun `NextWeek with monday first starts 7 days after ThisWeek with monday first`() {
+        val thisWeekRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
+        val nextWeekRange = DateFilter.NextWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
+        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
+
+        assertEquals(thisWeekRange.first + sevenDaysMs, nextWeekRange.first)
+    }
+
+    @Test
+    fun `ThisWeek spans 7 days regardless of first day`() {
+        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
+
+        // Test Sunday first
+        val sundayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SUNDAY)!!
+        val sundayDuration = sundayRange.second - sundayRange.first
+        assertTrue("Sunday-first week should be ~7 days", sundayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
+
+        // Test Monday first
+        val mondayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
+        val mondayDuration = mondayRange.second - mondayRange.first
+        assertTrue("Monday-first week should be ~7 days", mondayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
+
+        // Test Saturday first
+        val saturdayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SATURDAY)!!
+        val saturdayDuration = saturdayRange.second - saturdayRange.first
+        assertTrue("Saturday-first week should be ~7 days", saturdayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
+    }
 }

@@ -149,6 +149,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _timeFormat = MutableStateFlow(KashCalDataStore.TIME_FORMAT_SYSTEM)
     val timeFormat: StateFlow<String> = _timeFormat.asStateFlow()
 
+    private val _firstDayOfWeek = MutableStateFlow(java.util.Calendar.SUNDAY)
+    val firstDayOfWeek: StateFlow<Int> = _firstDayOfWeek.asStateFlow()
+
     init {
         loadInitialState()
         observeCalendars()
@@ -310,6 +313,11 @@ class AccountSettingsViewModel @Inject constructor(
                 _timeFormat.value = format
             }
         }
+        viewModelScope.launch {
+            dataStore.firstDayOfWeek.collect { day ->
+                _firstDayOfWeek.value = day
+            }
+        }
     }
 
     /**
@@ -327,6 +335,15 @@ class AccountSettingsViewModel @Inject constructor(
     fun setTimeFormat(format: String) {
         viewModelScope.launch {
             dataStore.setTimeFormat(format)
+        }
+    }
+
+    /**
+     * Update the first day of week preference.
+     */
+    fun setFirstDayOfWeek(day: Int) {
+        viewModelScope.launch {
+            dataStore.setFirstDayOfWeek(day)
         }
     }
 

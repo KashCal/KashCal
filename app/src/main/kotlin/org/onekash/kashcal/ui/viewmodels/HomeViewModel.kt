@@ -104,6 +104,10 @@ class HomeViewModel @Inject constructor(
     val timeFormat: StateFlow<String> = dataStore.timeFormat
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.TIME_FORMAT_SYSTEM)
 
+    /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
+    val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
+
     // Track if startup sync has been triggered
     private var hasTriggeredStartupSync = false
 
@@ -405,7 +409,7 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Observe display settings preferences.
-     * Updates uiState when showEventEmojis or timeFormat preferences change.
+     * Updates uiState when showEventEmojis, timeFormat, or firstDayOfWeek preferences change.
      */
     private fun observeDisplaySettings() {
         viewModelScope.launch {
@@ -416,6 +420,11 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.timeFormat.collect { format ->
                 _uiState.update { it.copy(timeFormat = format) }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.firstDayOfWeek.collect { day ->
+                _uiState.update { it.copy(firstDayOfWeek = day) }
             }
         }
     }
@@ -1095,13 +1104,15 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Get the start of the week (Sunday at midnight) for a given timestamp.
-     * Uses device's default timezone.
+     * Get the start of the week for a given timestamp.
+     * Uses user's firstDayOfWeek preference and device's default timezone.
      */
     private fun getWeekStart(timestampMs: Long): Long {
+        val effectiveFirstDay = DateTimeUtils.resolveFirstDayOfWeek(_uiState.value.firstDayOfWeek)
         val calendar = Calendar.getInstance().apply {
             timeInMillis = timestampMs
-            set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+            firstDayOfWeek = effectiveFirstDay  // Set before DAY_OF_WEEK
+            set(Calendar.DAY_OF_WEEK, effectiveFirstDay)
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
@@ -1680,7 +1691,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val dateFilter = _uiState.value.searchDateFilter
-                val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault())
+                val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault(), _uiState.value.firstDayOfWeek)
 
                 // Use new search methods that return EventWithNextOccurrence
                 val results = withContext(ioDispatcher) {

@@ -189,6 +189,68 @@ class WeekViewUtilsTest {
         assertEquals(LocalDate.of(2025, 1, 5), weekStart)
     }
 
+    // ==================== First Day of Week Tests ====================
+
+    @Test
+    fun `getWeekStart wednesday with sunday first returns sunday`() {
+        // Wednesday Jan 21, 2026
+        val wednesday = LocalDate.of(2026, 1, 21)
+        val weekStart = WeekViewUtils.getWeekStart(wednesday, java.util.Calendar.SUNDAY)
+
+        // Should return Sunday Jan 18, 2026
+        assertEquals(LocalDate.of(2026, 1, 18), weekStart)
+    }
+
+    @Test
+    fun `getWeekStart wednesday with monday first returns monday`() {
+        // Wednesday Jan 21, 2026
+        val wednesday = LocalDate.of(2026, 1, 21)
+        val weekStart = WeekViewUtils.getWeekStart(wednesday, java.util.Calendar.MONDAY)
+
+        // Should return Monday Jan 19, 2026
+        assertEquals(LocalDate.of(2026, 1, 19), weekStart)
+    }
+
+    @Test
+    fun `getWeekStart sunday with sunday first returns same sunday`() {
+        // Sunday Jan 18, 2026
+        val sunday = LocalDate.of(2026, 1, 18)
+        val weekStart = WeekViewUtils.getWeekStart(sunday, java.util.Calendar.SUNDAY)
+
+        // Should return same Sunday Jan 18, 2026
+        assertEquals(LocalDate.of(2026, 1, 18), weekStart)
+    }
+
+    @Test
+    fun `getWeekStart sunday with monday first returns previous monday`() {
+        // Sunday Jan 18, 2026
+        val sunday = LocalDate.of(2026, 1, 18)
+        val weekStart = WeekViewUtils.getWeekStart(sunday, java.util.Calendar.MONDAY)
+
+        // Should return Monday Jan 12, 2026 (previous week's Monday)
+        assertEquals(LocalDate.of(2026, 1, 12), weekStart)
+    }
+
+    @Test
+    fun `getWeekStart saturday with saturday first returns same saturday`() {
+        // Saturday Jan 17, 2026
+        val saturday = LocalDate.of(2026, 1, 17)
+        val weekStart = WeekViewUtils.getWeekStart(saturday, java.util.Calendar.SATURDAY)
+
+        // Should return same Saturday Jan 17, 2026
+        assertEquals(LocalDate.of(2026, 1, 17), weekStart)
+    }
+
+    @Test
+    fun `getWeekStart friday with saturday first returns previous saturday`() {
+        // Friday Jan 16, 2026
+        val friday = LocalDate.of(2026, 1, 16)
+        val weekStart = WeekViewUtils.getWeekStart(friday, java.util.Calendar.SATURDAY)
+
+        // Should return Saturday Jan 10, 2026
+        assertEquals(LocalDate.of(2026, 1, 10), weekStart)
+    }
+
     // ==================== Range Formatting Tests ====================
 
     @Test

@@ -195,7 +195,8 @@ fun EventFormSheet(
     defaultEventDuration: Int = 30,
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null,
-    timeFormat: String = "system"
+    timeFormat: String = "system",
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -780,7 +781,8 @@ fun EventFormSheet(
                             onSelect = { rrule ->
                                 state = state.copy(rrule = rrule)
                                 // Don't auto-close - let user configure all options
-                            }
+                            },
+                            firstDayOfWeek = firstDayOfWeek
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -1017,6 +1019,7 @@ fun EventFormSheet(
             selectedTimezone = state.timezone,
             isAllDay = state.isAllDay,
             use24Hour = use24Hour,
+            firstDayOfWeek = firstDayOfWeek,
             onConfirm = { dateMillis, hour, minute, timezone ->
                 // Normalize to midnight for all-day events to prevent timezone date shift
                 val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
@@ -1096,6 +1099,7 @@ fun EventFormSheet(
             selectedTimezone = state.timezone,
             isAllDay = state.isAllDay,
             use24Hour = use24Hour,
+            firstDayOfWeek = firstDayOfWeek,
             onConfirm = { dateMillis, hour, minute, timezone ->
                 // Normalize to midnight for all-day events to prevent timezone date shift
                 val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis

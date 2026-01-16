@@ -71,7 +71,8 @@ fun RecurrencePickerCard(
     isExpanded: Boolean,
     onToggle: () -> Unit,
     onSelect: (String?) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val focusManager = LocalFocusManager.current
     val displayText = RruleBuilder.formatForDisplay(selectedRrule)
@@ -243,7 +244,8 @@ fun RecurrencePickerCard(
                             onDaysChange = { days ->
                                 selectedWeekdays = days
                                 notifyChange()
-                            }
+                            },
+                            firstDayOfWeek = firstDayOfWeek
                         )
                     }
 
@@ -283,7 +285,8 @@ fun RecurrencePickerCard(
                             onEndConditionChange = { condition ->
                                 endCondition = condition
                                 notifyChange()
-                            }
+                            },
+                            firstDayOfWeek = firstDayOfWeek
                         )
                     }
                 }
@@ -338,17 +341,13 @@ fun FrequencyChipRow(
 fun WeekdaySelector(
     selectedDays: Set<DayOfWeek>,
     onDaysChange: (Set<DayOfWeek>) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    val daysOrder = listOf(
-        DayOfWeek.SUNDAY,
-        DayOfWeek.MONDAY,
-        DayOfWeek.TUESDAY,
-        DayOfWeek.WEDNESDAY,
-        DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY,
-        DayOfWeek.SATURDAY
-    )
+    // Display order based on user preference (doesn't affect RRULE storage)
+    val daysOrder = remember(firstDayOfWeek) {
+        DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
+    }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -441,7 +440,8 @@ fun EndConditionSelector(
     endCondition: EndCondition,
     startDateMillis: Long,
     onEndConditionChange: (EndCondition) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     var countText by remember(endCondition) {
         mutableStateOf(
@@ -591,7 +591,8 @@ fun EndConditionSelector(
                 },
                 onMonthChange = { newMonth ->
                     displayedMonth = newMonth
-                }
+                },
+                firstDayOfWeek = firstDayOfWeek
             )
         }
     }

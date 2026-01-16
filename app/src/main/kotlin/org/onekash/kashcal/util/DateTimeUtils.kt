@@ -1,5 +1,6 @@
 package org.onekash.kashcal.util
 
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -7,6 +8,8 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.time.temporal.WeekFields
+import java.util.Calendar
 import java.util.Locale
 
 /**
@@ -62,6 +65,100 @@ object DateTimeUtils {
      */
     fun getTimePattern(preferenceString: String, is24HourDevice: Boolean): String {
         return getTimePattern(TimeFormatPreference.fromString(preferenceString), is24HourDevice)
+    }
+
+    // ==================== First Day of Week Preference ====================
+
+    /**
+     * Get ordered days of week starting from the specified first day.
+     *
+     * @param firstDayOfWeek Calendar constant (SUNDAY=1, MONDAY=2, SATURDAY=7) or 0 for system default
+     * @return List of DayOfWeek in display order (7 elements)
+     */
+    fun getOrderedDaysOfWeek(firstDayOfWeek: Int): List<DayOfWeek> {
+        val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
+        return when (effectiveFirst) {
+            Calendar.SUNDAY -> listOf(
+                DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY,
+                DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY
+            )
+            Calendar.MONDAY -> listOf(
+                DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
+            )
+            Calendar.SATURDAY -> listOf(
+                DayOfWeek.SATURDAY, DayOfWeek.SUNDAY, DayOfWeek.MONDAY,
+                DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
+            )
+            else -> getOrderedDaysOfWeek(Calendar.SUNDAY) // Fallback
+        }
+    }
+
+    /**
+     * Resolve first day preference to actual Calendar constant.
+     *
+     * @param preference User preference: 0 = system default, or Calendar.SUNDAY/MONDAY/SATURDAY
+     * @return Resolved Calendar constant (SUNDAY=1, MONDAY=2, or SATURDAY=7)
+     */
+    fun resolveFirstDayOfWeek(preference: Int): Int {
+        return if (preference == 0) {
+            // Use java.time.temporal.WeekFields for locale-aware detection
+            val localeFirstDay = WeekFields.of(Locale.getDefault()).firstDayOfWeek
+            when (localeFirstDay) {
+                DayOfWeek.SUNDAY -> Calendar.SUNDAY
+                DayOfWeek.MONDAY -> Calendar.MONDAY
+                DayOfWeek.SATURDAY -> Calendar.SATURDAY
+                else -> Calendar.SUNDAY // Rare cases (Friday-first in some locales)
+            }
+        } else {
+            preference // User explicitly chose
+        }
+    }
+
+    /**
+     * Get the locale's default first day of week.
+     *
+     * NOTE: Do NOT wrap calls to this in remember{} - must respond to system locale changes.
+     * (Same pattern as is24HourDevice fix in commit afd7a76)
+     *
+     * @return DayOfWeek representing the locale's first day
+     */
+    fun getLocaleFirstDayOfWeek(): DayOfWeek {
+        return WeekFields.of(Locale.getDefault()).firstDayOfWeek
+    }
+
+    /**
+     * Calculate grid offset for month 1st day placement.
+     *
+     * @param calendar Calendar instance set to the 1st of the month
+     * @param firstDayOfWeek Calendar constant or 0 for system default
+     * @return Offset (0-6) for where day 1 should appear in the grid
+     */
+    fun getFirstDayOffset(calendar: Calendar, firstDayOfWeek: Int): Int {
+        val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
+        val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK) // 1=Sunday, 7=Saturday
+        val offset = dayOfWeek - effectiveFirst
+        return if (offset < 0) offset + 7 else offset
+    }
+
+    /**
+     * Calculate days since the specified first day of week.
+     * Used by DateFilter for "This Week"/"Next Week" calculations.
+     *
+     * @param date The date to check
+     * @param firstDayOfWeek Calendar constant or 0 for system default
+     * @return 0 for first day of week, 6 for last day
+     */
+    fun getDayOfWeekOffset(date: LocalDate, firstDayOfWeek: Int): Int {
+        val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
+        val dayValue = date.dayOfWeek.value // Monday=1, Sunday=7
+
+        return when (effectiveFirst) {
+            Calendar.SUNDAY -> if (dayValue == 7) 0 else dayValue // Sun=0, Mon=1, ..., Sat=6
+            Calendar.MONDAY -> dayValue - 1 // Mon=0, Tue=1, ..., Sun=6
+            Calendar.SATURDAY -> (dayValue + 1) % 7 // Sat=0, Sun=1, ..., Fri=6
+            else -> if (dayValue == 7) 0 else dayValue // Fallback to Sunday-first
+        }
     }
 
     // ==================== Date Conversion Functions ====================

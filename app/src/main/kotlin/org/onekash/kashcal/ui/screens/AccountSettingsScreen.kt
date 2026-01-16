@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.ViewWeek
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +53,7 @@ import org.onekash.kashcal.ui.screens.settings.SectionHeader
 import org.onekash.kashcal.ui.screens.settings.SettingsCard
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SignOutConfirmationSheet
+import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
@@ -142,6 +144,8 @@ fun AccountSettingsScreen(
     onShowEventEmojisChange: (Boolean) -> Unit = {},
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     onTimeFormatChange: (String) -> Unit = {},
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    onFirstDayOfWeekChange: (Int) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = ""
 ) {
@@ -202,6 +206,8 @@ fun AccountSettingsScreen(
                     onShowEventEmojisChange = onShowEventEmojisChange,
                     timeFormat = timeFormat,
                     onTimeFormatChange = onTimeFormatChange,
+                    firstDayOfWeek = firstDayOfWeek,
+                    onFirstDayOfWeekChange = onFirstDayOfWeekChange,
                     showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
                     prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
                     onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
@@ -292,6 +298,8 @@ private fun FlatSettingsContent(
     onShowEventEmojisChange: (Boolean) -> Unit,
     timeFormat: String,
     onTimeFormatChange: (String) -> Unit,
+    firstDayOfWeek: Int,
+    onFirstDayOfWeekChange: (Int) -> Unit,
     showAddSubscriptionDialogFromIntent: Boolean,
     prefillSubscriptionUrl: String?,
     onHideAddSubscriptionDialog: () -> Unit,
@@ -305,6 +313,7 @@ private fun FlatSettingsContent(
     var showAlertsSheet by remember { mutableStateOf(false) }
     var showEventEmojisSheet by remember { mutableStateOf(false) }
     var showTimeFormatSheet by remember { mutableStateOf(false) }
+    var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
     var showEventDurationSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
@@ -315,6 +324,7 @@ private fun FlatSettingsContent(
     val alertsSheetState = rememberModalBottomSheetState()
     val eventEmojisSheetState = rememberModalBottomSheetState()
     val timeFormatSheetState = rememberModalBottomSheetState()
+    val firstDayOfWeekSheetState = rememberModalBottomSheetState()
     val eventDurationSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
     val signOutSheetState = rememberModalBottomSheetState()
@@ -465,6 +475,17 @@ private fun FlatSettingsContent(
                 onClick = { showTimeFormatSheet = true }
             )
             SettingsRow(
+                icon = Icons.Default.ViewWeek,
+                label = "Start Week On",
+                subtitle = when (firstDayOfWeek) {
+                    java.util.Calendar.SUNDAY -> "Sunday"
+                    java.util.Calendar.MONDAY -> "Monday"
+                    java.util.Calendar.SATURDAY -> "Saturday"
+                    else -> "System default"
+                },
+                onClick = { showFirstDayOfWeekSheet = true }
+            )
+            SettingsRow(
                 icon = Icons.Default.Schedule,
                 label = "Default Event Length",
                 subtitle = formatDuration(defaultEventDuration),
@@ -575,6 +596,16 @@ private fun FlatSettingsContent(
             currentFormat = timeFormat,
             onFormatSelect = onTimeFormatChange,
             onDismiss = { showTimeFormatSheet = false }
+        )
+    }
+
+    // First Day of Week Sheet
+    if (showFirstDayOfWeekSheet) {
+        FirstDayOfWeekSheet(
+            sheetState = firstDayOfWeekSheetState,
+            currentValue = firstDayOfWeek,
+            onSelect = onFirstDayOfWeekChange,
+            onDismiss = { showFirstDayOfWeekSheet = false }
         )
     }
 

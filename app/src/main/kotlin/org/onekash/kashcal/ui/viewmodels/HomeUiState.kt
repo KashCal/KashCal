@@ -216,7 +216,9 @@ data class HomeUiState(
     /** Show auto-detected emojis in event titles */
     val showEventEmojis: Boolean = true,
     /** Time format preference: "system", "12h", or "24h" */
-    val timeFormat: String = "system"
+    val timeFormat: String = "system",
+    /** First day of week: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
+    val firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     /**
      * Format the current viewing month/year for display.
