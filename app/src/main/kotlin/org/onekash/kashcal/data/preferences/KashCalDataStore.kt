@@ -496,6 +496,24 @@ class KashCalDataStore(private val context: Context) {
         return counts.entries.joinToString(",") { "${it.key}:${it.value}" }
     }
 
+    // ========== Reminder Migration ==========
+
+    /**
+     * Get the reminder migration version.
+     * Returns 0 if no migrations have been applied.
+     */
+    suspend fun getReminderMigrationVersion(): Int {
+        return dataStore.data.first()[PreferencesKeys.REMINDER_MIGRATION_VERSION] ?: 0
+    }
+
+    /**
+     * Set the reminder migration version.
+     * Called after a migration is successfully applied.
+     */
+    suspend fun setReminderMigrationVersion(version: Int) {
+        setPreference(PreferencesKeys.REMINDER_MIGRATION_VERSION, version)
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set

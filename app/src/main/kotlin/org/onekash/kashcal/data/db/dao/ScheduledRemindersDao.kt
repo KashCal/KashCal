@@ -105,6 +105,13 @@ interface ScheduledRemindersDao {
     """)
     suspend fun snooze(id: Long, newTriggerTime: Long)
 
+    /**
+     * Update trigger time for a reminder.
+     * Used when timezone changes require recalculating all-day reminder times.
+     */
+    @Query("UPDATE scheduled_reminders SET trigger_time = :triggerTime WHERE id = :id")
+    suspend fun updateTriggerTime(id: Long, triggerTime: Long)
+
     // ========== Delete Operations ==========
 
     /**

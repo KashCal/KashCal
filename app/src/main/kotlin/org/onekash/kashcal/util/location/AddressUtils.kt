@@ -2,6 +2,7 @@ package org.onekash.kashcal.util.location
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 
 /**
@@ -45,23 +46,48 @@ fun looksLikeAddress(text: String): Boolean {
 }
 
 /**
- * Open address in maps app with web fallback.
+ * Open address in maps app with app chooser dialog.
  *
- * Uses geo: URI scheme supported by most maps applications.
- * Falls back to web maps if no maps app is installed.
+ * Uses geo: URI scheme (RFC 5870) supported by most maps applications.
+ * Always shows chooser dialog to respect user preference (Issue #19).
+ * Falls back to OpenStreetMap web if no maps app is installed.
+ *
+ * Note: We use queryIntentActivities() instead of try/catch because
+ * Intent.createChooser() always succeeds (the chooser activity is always
+ * available). When no apps can handle geo:, the chooser shows "No apps
+ * can perform this action" but doesn't throw ActivityNotFoundException.
+ *
+ * Requires <queries> declaration in AndroidManifest.xml for API 30+.
  *
  * @param context Android context for launching intent
  * @param address The address to open in maps
  */
 fun openInMaps(context: Context, address: String) {
-    val geoUri = Uri.parse("geo:0,0?q=${Uri.encode(address)}")
-    val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+    if (address.isBlank()) return  // Nothing to search
 
-    if (mapIntent.resolveActivity(context.packageManager) != null) {
-        context.startActivity(mapIntent)
+    val geoUri = Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+    val mapIntent = Intent(Intent.ACTION_VIEW, geoUri).apply {
+        // Required when called from non-Activity context (widgets, notifications)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+
+    // Check if any app can handle geo: URI (requires <queries> in manifest for API 30+)
+    val hasHandler = context.packageManager.queryIntentActivities(
+        mapIntent, PackageManager.MATCH_DEFAULT_ONLY
+    ).isNotEmpty()
+
+    if (hasHandler) {
+        // Show chooser dialog to respect user preference
+        val chooserIntent = Intent.createChooser(mapIntent, null).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(chooserIntent)
     } else {
-        // Fallback: open web maps
-        val webUri = Uri.parse("https://www.google.com/maps/search/${Uri.encode(address)}")
-        context.startActivity(Intent(Intent.ACTION_VIEW, webUri))
+        // No maps app installed - fall back to OpenStreetMap web
+        val webUri = Uri.parse("https://www.openstreetmap.org/search?query=${Uri.encode(address)}")
+        val webIntent = Intent(Intent.ACTION_VIEW, webUri).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(webIntent)
     }
 }

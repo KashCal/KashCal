@@ -310,6 +310,51 @@ class EventCoordinatorTest {
         }
     }
 
+    @Test
+    fun `editSingleOccurrence cancels original occurrence reminders before scheduling new`() = runTest {
+        // Bug 3 fix: Editing an occurrence should cancel reminders for the original
+        // occurrence time BEFORE scheduling new reminders for the exception event
+        val occurrenceTime = 1704672000000L // Original occurrence time
+        val exceptionEventResult = recurringEvent.copy(
+            id = 200L,
+            title = "Modified Meeting",
+            originalEventId = recurringEvent.id,
+            originalInstanceTime = occurrenceTime,
+            reminders = listOf("-PT15M")
+        )
+        val testOccurrence = Occurrence(
+            eventId = exceptionEventResult.id,
+            calendarId = iCloudCalendarId,
+            startTs = exceptionEventResult.startTs,
+            endTs = exceptionEventResult.endTs,
+            startDay = 20240108,
+            endDay = 20240108
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.editSingleOccurrence(any(), any(), any(), any()) } returns exceptionEventResult
+        coEvery { eventReader.getOccurrenceByExceptionEventId(exceptionEventResult.id) } returns testOccurrence
+
+        // Act
+        coordinator.editSingleOccurrence(
+            masterEventId = recurringEvent.id,
+            occurrenceTimeMs = occurrenceTime,
+            changes = { it.copy(title = "Modified Meeting") }
+        )
+
+        // Assert: Cancel is called for the ORIGINAL occurrence (master event ID + occurrence time)
+        coVerify { reminderScheduler.cancelReminderForOccurrence(recurringEvent.id, occurrenceTime) }
+
+        // Assert: Schedule is called for the new exception event
+        coVerify { reminderScheduler.scheduleRemindersForEvent(exceptionEventResult, any(), any()) }
+
+        // Verify order: cancel should be called before schedule
+        // MockK verifyOrder ensures methods are called in the specified order
+        io.mockk.coVerifyOrder {
+            reminderScheduler.cancelReminderForOccurrence(recurringEvent.id, occurrenceTime)
+            reminderScheduler.scheduleRemindersForEvent(exceptionEventResult, any(), any())
+        }
+    }
+
     // ==================== Edit This And Future Tests ====================
 
     @Test

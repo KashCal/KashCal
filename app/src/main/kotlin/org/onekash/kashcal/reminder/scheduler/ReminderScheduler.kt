@@ -16,6 +16,9 @@ import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -108,6 +111,60 @@ internal fun parseIsoDuration(duration: String): Long? {
     // Return null if nothing was parsed (invalid format like "PXYZ")
     // But return 0L for explicit "0" values like PT0M
     return if (totalMillis > 0 || duration == "PT0M" || duration == "PT0S") totalMillis else null
+}
+
+/**
+ * Calculate trigger time for all-day event reminders in user's local timezone.
+ *
+ * All-day events store startTs as UTC midnight. Reminders should fire at
+ * appropriate LOCAL time, not UTC.
+ *
+ * Uses LocalDate.atTime().atZone() pattern for DST-correct calculations.
+ * This ensures correct behavior even on DST transition days.
+ *
+ * Offset semantics:
+ * - "-PT9H" (540 min, "9 AM day of event"): Fire at 9 AM local on event date
+ * - "-P1D" (1440 min, "1 day before"): Fire at 9 AM local, one day before
+ * - "-P2D", "-P1W" etc.: Fire at 9 AM local, N days before
+ *
+ * @param occurrenceStartTs UTC midnight of the all-day event
+ * @param offsetMs The reminder offset in milliseconds (negative = before)
+ * @param localZone The user's timezone (default: device timezone)
+ */
+internal fun calculateAllDayTriggerTime(
+    occurrenceStartTs: Long,
+    offsetMs: Long,
+    localZone: ZoneId = ZoneId.systemDefault()
+): Long {
+    // Get the event date from UTC midnight (not affected by local zone)
+    val eventDate = Instant.ofEpochMilli(occurrenceStartTs)
+        .atZone(ZoneOffset.UTC)
+        .toLocalDate()
+    val oneDayMs = 24 * 60 * 60 * 1000L
+
+    return when {
+        // Sub-day offset (e.g., -PT9H for "9 AM day of event")
+        // Convert negative offset to hours/minutes, fire at that time on event day
+        offsetMs > -oneDayMs && offsetMs < 0 -> {
+            val hours = (-offsetMs / (60 * 60 * 1000L)).toInt()
+            val minutes = ((-offsetMs % (60 * 60 * 1000L)) / (60 * 1000L)).toInt()
+            eventDate.atTime(hours, minutes)
+                .atZone(localZone)
+                .toInstant()
+                .toEpochMilli()
+        }
+
+        // Day-based offset (e.g., -P1D = -86400000ms, -P2D, -P1W)
+        // Fire at 9 AM local, N days before (industry standard per common calendar apps)
+        else -> {
+            val days = (offsetMs / oneDayMs).toInt()
+            eventDate.plusDays(days.toLong())
+                .atTime(9, 0)
+                .atZone(localZone)
+                .toInstant()
+                .toEpochMilli()
+        }
+    }
 }
 
 /**
@@ -236,7 +293,11 @@ class ReminderScheduler @Inject constructor(
         calendarColor: Int
     ): Boolean {
         val offsetMs = parseReminderOffset(reminderOffset) ?: return false
-        val triggerTime = occurrenceStartTs + offsetMs
+        val triggerTime = if (event.isAllDay) {
+            calculateAllDayTriggerTime(occurrenceStartTs, offsetMs)
+        } else {
+            occurrenceStartTs + offsetMs
+        }
         val now = System.currentTimeMillis()
 
         // Skip past/immediate triggers
@@ -290,7 +351,11 @@ class ReminderScheduler @Inject constructor(
             return
         }
 
-        val triggerTime = occurrence.startTs + offsetMs
+        val triggerTime = if (event.isAllDay) {
+            calculateAllDayTriggerTime(occurrence.startTs, offsetMs)
+        } else {
+            occurrence.startTs + offsetMs
+        }
         val now = System.currentTimeMillis()
 
         // Skip if trigger time is in the past or too soon
@@ -455,16 +520,41 @@ class ReminderScheduler @Inject constructor(
 
     /**
      * Reschedule all pending reminders.
-     * Called after device boot or app update.
+     * Called after device boot, app update, or timezone change.
+     *
+     * For all-day events, recalculates trigger time using current timezone.
+     * This ensures reminders fire at the correct local time after timezone changes.
      */
     suspend fun rescheduleAllPending() {
         val now = System.currentTimeMillis()
         val pendingReminders = scheduledRemindersDao.getAllPendingAfter(now)
+        val localZone = ZoneId.systemDefault()
 
-        Log.d(TAG, "Rescheduling ${pendingReminders.size} pending reminders")
+        Log.d(TAG, "Rescheduling ${pendingReminders.size} pending reminders (tz: ${localZone.id})")
 
         for (reminder in pendingReminders) {
-            scheduleAlarm(reminder.id, reminder.triggerTime)
+            val effectiveTriggerTime = if (reminder.isAllDay) {
+                // Recalculate for current timezone
+                val offsetMs = parseReminderOffset(reminder.reminderOffset)
+                if (offsetMs != null) {
+                    calculateAllDayTriggerTime(reminder.occurrenceTime, offsetMs, localZone)
+                } else {
+                    reminder.triggerTime
+                }
+            } else {
+                reminder.triggerTime  // Timed events: same UTC instant
+            }
+
+            // Update DB if changed
+            if (effectiveTriggerTime != reminder.triggerTime) {
+                scheduledRemindersDao.updateTriggerTime(reminder.id, effectiveTriggerTime)
+                Log.d(TAG, "Updated trigger time for reminder ${reminder.id}: ${reminder.triggerTime} -> $effectiveTriggerTime")
+            }
+
+            // Schedule if still in future
+            if (effectiveTriggerTime > now) {
+                scheduleAlarm(reminder.id, effectiveTriggerTime)
+            }
         }
     }
 

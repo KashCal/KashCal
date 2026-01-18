@@ -293,6 +293,10 @@ class EventCoordinator @Inject constructor(
         )
         triggerImmediatePushIfNeeded(isLocal)
 
+        // Cancel reminders for the ORIGINAL occurrence (being replaced by exception)
+        // Must cancel before scheduling new to prevent duplicate reminders
+        reminderScheduler.cancelReminderForOccurrence(masterEventId, occurrenceTimeMs)
+
         // Schedule reminders for the newly created exception event
         scheduleRemindersForEvent(result)
 

@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.ZoneId
 
 /**
  * Unit tests for ReminderScheduler reminder offset parsing.
@@ -341,5 +342,229 @@ class ReminderSchedulerConstantsTest {
     @Test
     fun `extra reminder id constant is correct`() {
         assertEquals("reminder_id", ReminderScheduler.EXTRA_REMINDER_ID)
+    }
+}
+
+/**
+ * Unit tests for calculateAllDayTriggerTime() timezone-aware all-day reminder calculations.
+ *
+ * These tests verify the fix for Bug 1 where all-day reminders were calculated
+ * from UTC instead of the user's local timezone.
+ *
+ * Expected behavior:
+ * - "-PT9H" (9 AM day of event): Fire at 9 AM local on the event date
+ * - "-P1D" (1 day before): Fire at 9 AM local, one day before
+ * - "-P2D", "-P1W" etc.: Fire at 9 AM local, N days before
+ */
+class CalculateAllDayTriggerTimeTest {
+
+    // ==================== Sub-day offsets (e.g., "9 AM day of event") ====================
+
+    @Test
+    fun `9 AM day of event in PST`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!!  // -32,400,000ms
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 6 09:00 PST = Jan 6 17:00 UTC
+        assertEquals(1736182800000L, result)
+    }
+
+    @Test
+    fun `9 AM day of event in Tokyo (JST = UTC+9)`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Tokyo"))
+
+        // Jan 6 09:00 JST = Jan 6 00:00 UTC
+        assertEquals(1736121600000L, result)
+    }
+
+    @Test
+    fun `9 AM day of event in New York (EST = UTC-5)`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/New_York"))
+
+        // Jan 6 09:00 EST = Jan 6 14:00 UTC = 1736121600000 + 14*3600000 = 1736172000000
+        assertEquals(1736172000000L, result)
+    }
+
+    @Test
+    fun `6 AM day of event in PST`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT6H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 6 06:00 PST = Jan 6 14:00 UTC = 1736121600000 + 14*3600000 = 1736172000000
+        assertEquals(1736172000000L, result)
+    }
+
+    @Test
+    fun `12 noon day of event in PST`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT12H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 6 12:00 PST = Jan 6 20:00 UTC
+        assertEquals(1736193600000L, result)
+    }
+
+    // ==================== Day-based offsets (fire at 9 AM local) ====================
+
+    @Test
+    fun `1 day before in PST fires at 9 AM`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-P1D")!!  // -86,400,000ms
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 5 09:00 PST = Jan 5 17:00 UTC
+        assertEquals(1736096400000L, result)
+    }
+
+    @Test
+    fun `1 day before in Tokyo fires at 9 AM`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-P1D")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Tokyo"))
+
+        // Jan 5 09:00 JST = Jan 5 00:00 UTC
+        assertEquals(1736035200000L, result)
+    }
+
+    @Test
+    fun `2 days before in PST fires at 9 AM`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-P2D")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 4 09:00 PST = Jan 4 17:00 UTC
+        assertEquals(1736010000000L, result)
+    }
+
+    @Test
+    fun `1 week before in PST fires at 9 AM`() {
+        // Jan 13, 2025 00:00 UTC
+        val utcMidnight = 1736726400000L
+        val offset = parseReminderOffset("-P1W")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Jan 6 09:00 PST = Jan 6 17:00 UTC
+        assertEquals(1736182800000L, result)
+    }
+
+    // ==================== DST transition edge cases ====================
+
+    @Test
+    fun `DST spring forward - 9 AM day of event in PST to PDT transition`() {
+        // March 9, 2025: PST → PDT (2 AM jumps to 3 AM)
+        // All-day event on March 9, 2025
+        // March 9, 2025 00:00 UTC
+        val marchUtcMidnight = 1741478400000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // March 9 09:00 PDT = March 9 16:00 UTC (7hr offset after DST)
+        assertEquals(1741536000000L, result)
+    }
+
+    @Test
+    fun `DST fall back - 9 AM day of event in PDT to PST transition`() {
+        // Nov 2, 2025: PDT → PST (2 AM falls back to 1 AM)
+        // Nov 2, 2025 is Sunday (first Sunday of November = DST end)
+        // Nov 2, 2025 00:00 UTC
+        val novUtcMidnight = 1762041600000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(novUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // Nov 2 09:00 PST = Nov 2 17:00 UTC (PST is UTC-8 after fall back)
+        assertEquals(1762102800000L, result)
+    }
+
+    @Test
+    fun `DST spring forward - 1 day before fires at correct 9 AM`() {
+        // Event on March 10, 2025 (day after DST spring forward)
+        // March 10, 2025 00:00 UTC
+        val marchUtcMidnight = 1741564800000L
+        val offset = parseReminderOffset("-P1D")!!
+
+        val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // March 9 09:00 PDT = March 9 16:00 UTC
+        // Note: March 9 is the DST transition day, but 9 AM is after 2 AM so it's PDT
+        assertEquals(1741536000000L, result)
+    }
+
+    // ==================== Edge cases ====================
+
+    @Test
+    fun `zero offset - fires at 9 AM for all-day events`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT0M")!!  // Returns 0
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
+
+        // For all-day events, zero offset means "day of event" which fires at 9 AM local
+        // (same as "-P0D" would behave - day-based offset defaults to 9 AM)
+        // Jan 6 09:00 PST = Jan 6 17:00 UTC = 1736182800000
+        assertEquals(1736182800000L, result)
+    }
+
+    @Test
+    fun `UTC timezone - no offset difference`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("UTC"))
+
+        // Jan 6 09:00 UTC
+        assertEquals(1736154000000L, result)
+    }
+
+    // ==================== Half-hour timezone offsets ====================
+
+    @Test
+    fun `9 AM day of event in India (IST UTC+530)`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-PT9H")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Kolkata"))
+
+        // Jan 6 09:00 IST = Jan 6 03:30 UTC
+        assertEquals(1736134200000L, result)
+    }
+
+    @Test
+    fun `1 day before in India fires at 9 AM`() {
+        // Jan 6, 2025 00:00 UTC
+        val utcMidnight = 1736121600000L
+        val offset = parseReminderOffset("-P1D")!!
+
+        val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("Asia/Kolkata"))
+
+        // Jan 5 09:00 IST = Jan 5 03:30 UTC
+        assertEquals(1736047800000L, result)
     }
 }

@@ -133,4 +133,12 @@ object PreferencesKeys {
      * Used to hold sync token when parse errors occur, allowing retries before advancing.
      */
     val PARSE_FAILURE_RETRY_COUNTS = stringPreferencesKey("parse_failure_retry_counts")
+
+    // ========== Reminder Migration ==========
+
+    /**
+     * Reminder migration version for one-time data fixes.
+     * v1: Timezone fix - recalculate all-day reminder trigger times (v21.x)
+     */
+    val REMINDER_MIGRATION_VERSION = intPreferencesKey("reminder_migration_version")
 }

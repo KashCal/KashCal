@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -184,8 +185,17 @@ fun HomeScreen(
         }
     }
 
-    // Today's date for reference
-    val todayCal = JavaCalendar.getInstance()
+    // Refresh key for today-dependent values - increments on app resume
+    // This triggers recomposition of today highlights, day numbers, and agenda filters
+    var refreshKey by remember { mutableIntStateOf(0) }
+
+    LifecycleResumeEffect(Unit) {
+        refreshKey++  // Triggers recomposition of today-dependent values
+        onPauseOrDispose { }
+    }
+
+    // Today's date for reference - refreshes on resume via refreshKey
+    val todayCal = remember(refreshKey) { JavaCalendar.getInstance() }
     val todayYear = todayCal.get(JavaCalendar.YEAR)
     val todayMonth = todayCal.get(JavaCalendar.MONTH)
 
@@ -277,6 +287,7 @@ fun HomeScreen(
             HomeTopAppBar(
                 uiState = uiState,
                 searchFocusRequester = searchFocusRequester,
+                refreshKey = refreshKey,
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
                 onSearchQueryChange = onSearchQueryChange,
@@ -345,6 +356,7 @@ fun HomeScreen(
                                     viewType = uiState.agendaViewType,
                                     weekStartMs = uiState.weekViewStartDate,
                                     pagerPosition = uiState.weekViewPagerPosition,
+                                    refreshKey = refreshKey,
                                     onMonthClick = onWeekDatePickerRequest,
                                     onTodayClick = onGoToToday
                                 )
@@ -374,6 +386,7 @@ fun HomeScreen(
                                                 listState = agendaListState,
                                                 showEventEmojis = uiState.showEventEmojis,
                                                 timePattern = timePattern,
+                                                refreshKey = refreshKey,
                                                 onEventClick = { event, occurrenceTs ->
                                                     onEventClick(event, occurrenceTs)
                                                 }
@@ -496,7 +509,8 @@ fun HomeScreen(
                                                 selectedDate = uiState.selectedDate,
                                                 eventDots = uiState.eventDots,
                                                 onDateSelected = onDateSelected,
-                                                firstDayOfWeekPref = uiState.firstDayOfWeek
+                                                firstDayOfWeekPref = uiState.firstDayOfWeek,
+                                                refreshKey = refreshKey
                                             )
                                         }
                                     }
@@ -551,6 +565,7 @@ fun HomeScreen(
 private fun HomeTopAppBar(
     uiState: HomeUiState,
     searchFocusRequester: FocusRequester,
+    refreshKey: Int,
     onSearchClick: () -> Unit,
     onSearchClose: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
@@ -658,7 +673,7 @@ private fun HomeTopAppBar(
                     }
                 },
                 actions = {
-                    TodayButton(onClick = onGoToToday)
+                    TodayButton(onClick = onGoToToday, refreshKey = refreshKey)
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Default.Tune, contentDescription = "Settings", modifier = Modifier.size(28.dp))
                     }
@@ -669,8 +684,8 @@ private fun HomeTopAppBar(
 }
 
 @Composable
-private fun TodayButton(onClick: () -> Unit) {
-    val today = JavaCalendar.getInstance()
+private fun TodayButton(onClick: () -> Unit, refreshKey: Int) {
+    val today = remember(refreshKey) { JavaCalendar.getInstance() }
     val dayOfMonth = today.get(JavaCalendar.DAY_OF_MONTH)
 
     IconButton(onClick = onClick) {
@@ -775,7 +790,8 @@ private fun CalendarGrid(
     selectedDate: Long,
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
     onDateSelected: (Long) -> Unit,
-    firstDayOfWeekPref: Int = java.util.Calendar.SUNDAY
+    firstDayOfWeekPref: Int = java.util.Calendar.SUNDAY,
+    refreshKey: Int = 0
 ) {
     val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
@@ -789,7 +805,7 @@ private fun CalendarGrid(
         DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeekPref)
     }
 
-    val today = JavaCalendar.getInstance()
+    val today = remember(refreshKey) { JavaCalendar.getInstance() }
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
     val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
                                selectedCal.get(JavaCalendar.YEAR) == year
@@ -1277,6 +1293,7 @@ private fun AgendaMonthYearRow(
     viewType: AgendaViewType,
     weekStartMs: Long,
     pagerPosition: Int,
+    refreshKey: Int,
     onMonthClick: () -> Unit,
     onTodayClick: () -> Unit
 ) {
@@ -1318,7 +1335,7 @@ private fun AgendaMonthYearRow(
         )
 
         // Today button
-        TodayButton(onClick = onTodayClick)
+        TodayButton(onClick = onTodayClick, refreshKey = refreshKey)
     }
 }
 
@@ -1346,14 +1363,15 @@ private fun AgendaContent(
     listState: LazyListState = rememberLazyListState(),
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
+    refreshKey: Int = 0,
     onEventClick: (Event, Long) -> Unit  // (event, occurrenceStartTs)
 ) {
     val colorMap = remember(calendars) { calendars.associate { it.id to Color(it.color) } }
     val defaultColor = Color(0xFF6200EE)
     val dateFormat = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()) }
 
-    // Calculate today's day code for filtering
-    val todayDayCode = remember {
+    // Calculate today's day code for filtering - refreshes on resume via refreshKey
+    val todayDayCode = remember(refreshKey) {
         val cal = JavaCalendar.getInstance()
         cal.get(JavaCalendar.YEAR) * 10000 +
             (cal.get(JavaCalendar.MONTH) + 1) * 100 +

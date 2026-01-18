@@ -14,6 +14,7 @@ import androidx.work.WorkRequest
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +35,8 @@ import java.util.concurrent.TimeUnit
 class ReminderRefreshWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
-    private val reminderScheduler: ReminderScheduler
+    private val reminderScheduler: ReminderScheduler,
+    private val dataStore: KashCalDataStore
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -48,6 +50,10 @@ class ReminderRefreshWorker @AssistedInject constructor(
 
         // Run once per day
         const val REFRESH_INTERVAL_HOURS = 24L
+
+        // Migration versions
+        // v1: Timezone fix - recalculate all-day reminder trigger times
+        private const val MIGRATION_VERSION_TZ_FIX = 1
 
         /**
          * Schedule periodic reminder refresh.
@@ -105,6 +111,14 @@ class ReminderRefreshWorker @AssistedInject constructor(
         Log.i(TAG, "Starting reminder refresh scan")
 
         return try {
+            // One-time migration: recalculate all-day reminder times with timezone fix
+            val migrationVersion = dataStore.getReminderMigrationVersion()
+            if (migrationVersion < MIGRATION_VERSION_TZ_FIX) {
+                Log.i(TAG, "Running reminder timezone migration v$MIGRATION_VERSION_TZ_FIX")
+                reminderScheduler.rescheduleAllPending()
+                dataStore.setReminderMigrationVersion(MIGRATION_VERSION_TZ_FIX)
+            }
+
             val scheduled = reminderScheduler.scheduleUpcomingReminders(SCAN_WINDOW_DAYS)
 
             // Cleanup is best-effort - don't fail job if it throws
