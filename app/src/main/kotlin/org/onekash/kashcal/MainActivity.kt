@@ -180,6 +180,10 @@ class MainActivity : ComponentActivity() {
                                 is PendingAction.GoToToday -> {
                                     homeViewModel.goToToday()
                                 }
+                                is PendingAction.GoToDate -> {
+                                    val date = org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(action.dayCode)
+                                    homeViewModel.navigateToDate(date)
+                                }
                                 is PendingAction.ImportIcsFile -> {
                                     Log.d(TAG, "Processing ICS file import: ${action.uri}")
                                     val result = IcsFileReader.readIcsContent(this@MainActivity, action.uri)
@@ -807,8 +811,22 @@ class MainActivity : ComponentActivity() {
                     return
                 }
                 org.onekash.kashcal.widget.ACTION_CREATE_EVENT -> {
-                    Log.d(TAG, "Widget: creating new event")
-                    homeViewModel.setPendingAction(PendingAction.CreateEvent())
+                    // Check for optional start timestamp from week widget
+                    val startTs = intent.getLongExtra(org.onekash.kashcal.widget.EXTRA_CREATE_EVENT_START_TS, 0L)
+                    Log.d(TAG, "Widget: creating new event (startTs=$startTs)")
+                    if (startTs > 0) {
+                        homeViewModel.setPendingAction(PendingAction.CreateEvent(startTs = startTs))
+                    } else {
+                        homeViewModel.setPendingAction(PendingAction.CreateEvent())
+                    }
+                    return
+                }
+                org.onekash.kashcal.widget.ACTION_GO_TO_DATE -> {
+                    val dayCode = intent.getIntExtra(org.onekash.kashcal.widget.EXTRA_DAY_CODE, 0)
+                    Log.d(TAG, "Widget: navigating to date (dayCode=$dayCode)")
+                    if (dayCode > 0) {
+                        homeViewModel.setPendingAction(PendingAction.GoToDate(dayCode))
+                    }
                     return
                 }
                 org.onekash.kashcal.widget.ACTION_GO_TO_TODAY -> {

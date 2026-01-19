@@ -211,6 +211,7 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }
@@ -227,6 +228,7 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }
@@ -243,6 +245,7 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }
@@ -259,11 +262,35 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }
 
         assertEquals("today", result)
+    }
+
+    @Test
+    fun `when expression matches GoToDate`() {
+        val action: PendingAction = PendingAction.GoToDate(dayCode = 20250119)
+
+        val result = when (action) {
+            is PendingAction.ShowEventQuickView -> "quick_view"
+            is PendingAction.CreateEvent -> "create"
+            is PendingAction.OpenSearch -> "search"
+            is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
+            is PendingAction.ImportIcsFile -> "import"
+            is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+        }
+
+        assertEquals("go_to_date", result)
+    }
+
+    @Test
+    fun `GoToDate stores dayCode correctly`() {
+        val action = PendingAction.GoToDate(dayCode = 20250315)
+        assertEquals(20250315, action.dayCode)
     }
 
     @Test
@@ -276,6 +303,7 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }
@@ -299,6 +327,7 @@ class PendingActionTest {
             is PendingAction.CreateEvent -> "create"
             is PendingAction.OpenSearch -> "search"
             is PendingAction.GoToToday -> "today"
+            is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
         }

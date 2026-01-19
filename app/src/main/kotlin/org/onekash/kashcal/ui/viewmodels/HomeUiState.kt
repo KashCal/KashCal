@@ -343,6 +343,13 @@ sealed class PendingAction {
     data object GoToToday : PendingAction()
 
     /**
+     * Navigate to a specific date (from week widget day tap).
+     *
+     * @param dayCode Target date in YYYYMMDD format
+     */
+    data class GoToDate(val dayCode: Int) : PendingAction()
+
+    /**
      * Create event from external calendar intent (ACTION_INSERT).
      * Pre-fills EventFormSheet with data from CalendarContract extras.
      *

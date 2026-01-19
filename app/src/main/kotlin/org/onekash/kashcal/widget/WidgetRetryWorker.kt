@@ -31,6 +31,8 @@ class WidgetRetryWorker(
         Log.d(TAG, "WidgetRetryWorker running (attempt ${runAttemptCount + 1})")
         return try {
             AgendaWidget().updateAll(applicationContext)
+            WeekWidget().updateAll(applicationContext)
+            DateWidget().updateAll(applicationContext)
             Log.d(TAG, "Widget update succeeded on retry")
             Result.success()
         } catch (e: Exception) {

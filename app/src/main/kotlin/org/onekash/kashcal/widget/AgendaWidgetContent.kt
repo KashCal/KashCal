@@ -297,6 +297,11 @@ const val ACTION_SHOW_EVENT = "show_event"
 const val ACTION_CREATE_EVENT = "create_event"
 const val ACTION_GO_TO_TODAY = "go_to_today"
 const val ACTION_OPEN_SEARCH = "open_search"
+const val ACTION_GO_TO_DATE = "go_to_date"
+
+// Extra keys for week widget
+const val EXTRA_DAY_CODE = "widget_day_code"
+const val EXTRA_CREATE_EVENT_START_TS = "widget_create_event_start_ts"
 
 /** Maximum number of events to show in widget */
 private const val MAX_VISIBLE_EVENTS = 5

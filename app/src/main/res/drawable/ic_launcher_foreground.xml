@@ -1,17 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Adaptive icon foreground layer.
+    Canvas: 108x108dp, Safe zone: 21-87dp (66dp centered)
+    KashCal branded icon: calendar + cloud + sync arrow + code braces
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- Green curved arrow (behind calendar) -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M22,82 Q22,58 42,52 Q62,46 78,58 L74,52 L82,56 L76,64 L72,58 Q58,48 42,54 Q28,60 26,82 Z"/>
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M22,82 Q24,65 38,56 Q30,65 26,82 Z"/>
+
+    <!-- Calendar outer frame - dark teal -->
+    <path
+        android:fillColor="#2D6B7A"
+        android:pathData="M28,30 L68,30 Q74,30 74,36 L74,76 Q74,82 68,82 L28,82 Q22,82 22,76 L22,36 Q22,30 28,30 Z"/>
+
+    <!-- Calendar header - darker teal -->
+    <path
+        android:fillColor="#1F4F5A"
+        android:pathData="M22,36 Q22,30 28,30 L68,30 Q74,30 74,36 L74,44 L22,44 Z"/>
+
+    <!-- Binding ring - oval -->
+    <path
+        android:fillColor="#1F4F5A"
+        android:pathData="M32,26 Q32,22 36,22 Q40,22 40,26 L40,34 Q40,38 36,38 Q32,38 32,34 Z"/>
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,36L54,72M36,54L72,54"
-        android:strokeWidth="4"
-        android:strokeColor="#FFFFFF"/>
+        android:pathData="M34,27 Q34,24 36,24 Q38,24 38,27 L38,33 Q38,36 36,36 Q34,36 34,33 Z"/>
+
+    <!-- Calendar white interior -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M30,30h48v48h-48z"
-        android:strokeWidth="3"
-        android:strokeColor="#FFFFFF"/>
+        android:pathData="M26,48 L70,48 L70,78 L26,78 Z"/>
+
+    <!-- Calendar grid - 4x4 teal squares -->
+    <path
+        android:fillColor="#2D6B7A"
+        android:pathData="M28,50h9v7h-9z M39,50h9v7h-9z M50,50h9v7h-9z M61,50h7v7h-7z
+                          M28,59h9v7h-9z M39,59h9v7h-9z M50,59h9v7h-9z M61,59h7v7h-7z
+                          M28,68h9v7h-9z M39,68h9v7h-9z M50,68h9v7h-9z M61,68h7v7h-7z"/>
+
+    <!-- Cloud - light blue -->
+    <path
+        android:fillColor="#B3E5FC"
+        android:pathData="M82,28 Q86,28 86,32 Q86,36 82,36 L64,36 Q60,36 60,32 Q60,30 62,29 Q62,25 66,25 Q68,25 69,26 Q70,22 74,22 Q79,22 80,27 Q82,26 82,28 Z"/>
+
+    <!-- Code braces - green { } -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M78,46 Q82,46 82,50 L82,52 Q82,54 80,54 Q82,54 82,56 L82,58 Q82,62 78,62 L78,60 Q80,60 80,58 L80,55 Q80,53 78,53 L78,51 Q80,51 80,50 Q80,48 78,48 Z"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M86,46 Q82,46 82,50 L82,52 Q82,54 84,54 Q82,54 82,56 L82,58 Q82,62 86,62 L86,60 Q84,60 84,58 L84,55 Q84,53 86,53 L86,51 Q84,51 84,50 Q84,48 86,48 Z"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M78,66 Q82,66 82,70 L82,72 Q82,74 80,74 Q82,74 82,76 L82,78 Q82,82 78,82 L78,80 Q80,80 80,78 L80,75 Q80,73 78,73 L78,71 Q80,71 80,70 Q80,68 78,68 Z"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M86,66 Q82,66 82,70 L82,72 Q82,74 84,74 Q82,74 82,76 L82,78 Q82,82 86,82 L86,80 Q84,80 84,78 L84,75 Q84,73 86,73 L86,71 Q84,71 84,70 Q84,68 86,68 Z"/>
+
 </vector>

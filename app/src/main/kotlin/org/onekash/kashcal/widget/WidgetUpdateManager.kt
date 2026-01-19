@@ -50,6 +50,8 @@ class WidgetUpdateManager @Inject constructor(
         Log.d(TAG, "Updating all widgets (reason: $reason)")
         try {
             AgendaWidget().updateAll(context)
+            WeekWidget().updateAll(context)
+            DateWidget().updateAll(context)
         } catch (e: Exception) {
             Log.e(TAG, "Immediate widget update failed", e)
             if (isTransientError(e)) {
@@ -159,6 +161,8 @@ class WidgetUpdateWorker(
         Log.d(TAG, "WidgetUpdateWorker running")
         try {
             AgendaWidget().updateAll(applicationContext)
+            WeekWidget().updateAll(applicationContext)
+            DateWidget().updateAll(applicationContext)
             return Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Widget update failed", e)
@@ -181,6 +185,8 @@ class MidnightWidgetUpdateWorker(
         try {
             // Update widgets with new day's events
             AgendaWidget().updateAll(applicationContext)
+            WeekWidget().updateAll(applicationContext)
+            DateWidget().updateAll(applicationContext)
 
             // Reschedule for next midnight
             val manager = WidgetUpdateManager(applicationContext)

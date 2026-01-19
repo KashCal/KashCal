@@ -230,6 +230,32 @@
                 android:resource="@xml/agenda_widget_info" />
         </receiver>
 
+        <!-- Week View widget receiver -->
+        <receiver
+            android:name=".widget.WeekWidgetReceiver"
+            android:exported="true"
+            android:label="@string/week_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/week_widget_info" />
+        </receiver>
+
+        <!-- Date widget receiver (icon-like, shows today's date) -->
+        <receiver
+            android:name=".widget.DateWidgetReceiver"
+            android:exported="true"
+            android:label="@string/date_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/date_widget_info" />
+        </receiver>
+
         <!--
             FileProvider for secure file sharing (ICS exports).
             Required for sharing files via Intent on Android 7.0+.

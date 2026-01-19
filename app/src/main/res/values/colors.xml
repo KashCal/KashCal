@@ -10,6 +10,6 @@
     <!-- KashCal brand colors -->
     <color name="color_primary">#106d20</color>
     <color name="color_primary_dark">#0a4d15</color>
-    <!-- Launcher icon background (light gray to match icon design) -->
-    <color name="ic_launcher_background">#F5F5F5</color>
+    <!-- Launcher icon background -->
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>

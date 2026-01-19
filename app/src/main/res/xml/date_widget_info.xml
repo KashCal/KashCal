@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget metadata for Date widget.
+
+    Size: 1x1 cell (icon-like, approximately 57dp x 57dp)
+    Update: Every 30 minutes (1800000ms), primarily updates at midnight
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="57dp"
+    android:minHeight="57dp"
+    android:targetCellWidth="1"
+    android:targetCellHeight="1"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeWidth="80dp"
+    android:maxResizeHeight="80dp"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/widget_loading"
+    android:previewLayout="@layout/widget_loading"
+    android:description="@string/date_widget_description"
+    android:updatePeriodMillis="1800000"
+    android:widgetFeatures="reconfigurable" />

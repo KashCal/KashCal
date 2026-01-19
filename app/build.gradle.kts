@@ -27,6 +27,13 @@ android {
     namespace = "org.onekash.kashcal"
     compileSdk = 35
 
+    // Disable encrypted dependency metadata (only Google can read it)
+    // Required for F-Droid/IzzyOnDroid transparency
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     defaultConfig {
         applicationId = "org.onekash.kashcal"
         minSdk = 26

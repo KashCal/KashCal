@@ -867,6 +867,30 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Navigate calendar to a specific date.
+     * Updates viewing month/year and selects the date.
+     * Used by week widget for "go to date" action.
+     *
+     * @param date The target date to navigate to
+     */
+    fun navigateToDate(date: LocalDate) {
+        // Update viewing month (handles cross-month navigation)
+        _uiState.update {
+            it.copy(
+                viewingYear = date.year,
+                viewingMonth = date.monthValue - 1,  // 0-indexed
+                pendingNavigateToMonth = date.year to (date.monthValue - 1)
+            )
+        }
+
+        // Select the date (triggers day events load)
+        val dateMs = date.atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        selectDate(dateMs)
+    }
+
+    /**
      * Clear the scroll agenda to top flag (consumed by UI).
      */
     fun clearScrollAgendaToTop() {

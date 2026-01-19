@@ -5,6 +5,10 @@
     <!-- Widget -->
     <string name="widget_name">Today\'s Agenda</string>
     <string name="widget_description">Shows today\'s calendar events</string>
+    <string name="week_widget_name">Week View</string>
+    <string name="week_widget_description">Shows calendar events for the next 7 days</string>
+    <string name="date_widget_name">Date</string>
+    <string name="date_widget_description">Shows today\'s date like an app icon</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">New Event</string>
