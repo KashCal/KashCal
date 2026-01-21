@@ -222,9 +222,12 @@ class MainActivity : ComponentActivity() {
                                     showEventFormSheet = true
                                 }
                             }
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e  // Don't catch cancellation
                         } catch (e: Exception) {
                             Log.e(TAG, "Error processing pending action: $action", e)
-                            homeViewModel.showSnackbar("Action failed")
+                            val message = e.message?.take(50) ?: "Unknown error"
+                            homeViewModel.showSnackbar("Action failed: $message")
                         }
                     }
                 }
