@@ -267,9 +267,23 @@ class ReminderScheduler @Inject constructor(
 
         var scheduled = 0
         for (eventData in eventsWithReminders) {
+            // Use targetEventId if available (exception event ID for modified occurrences)
+            // Falls back to event.id for backwards compatibility
+            val targetEventId = eventData.targetEventId ?: eventData.event.id
+
+            // If targetEventId differs from event.id, we need the target event's display data
+            // (title, location, isAllDay) for the notification. This happens when an exception
+            // inherits reminders from its master.
+            val displayEvent = if (targetEventId != eventData.event.id) {
+                eventReader.getEventById(targetEventId) ?: eventData.event
+            } else {
+                eventData.event
+            }
+
             for (reminderOffset in eventData.event.reminders.orEmpty()) {
                 val wasScheduled = scheduleReminderForOccurrenceIfMissing(
-                    event = eventData.event,
+                    displayEvent = displayEvent,
+                    targetEventId = targetEventId,
                     occurrenceStartTs = eventData.occurrenceStartTs,
                     reminderOffset = reminderOffset,
                     calendarColor = eventData.calendarColor
@@ -284,16 +298,23 @@ class ReminderScheduler @Inject constructor(
 
     /**
      * Schedule reminder only if it doesn't already exist.
+     *
+     * @param displayEvent Event containing display data (title, location, isAllDay) for notification.
+     *                     For exceptions inheriting reminders, this is the exception event.
+     * @param targetEventId The event ID to store in the reminder - used when notification
+     *                      is clicked to load the correct event. For exception occurrences,
+     *                      this is the exception event ID.
      * @return true if new reminder was scheduled, false if already exists
      */
     private suspend fun scheduleReminderForOccurrenceIfMissing(
-        event: Event,
+        displayEvent: Event,
+        targetEventId: Long,
         occurrenceStartTs: Long,
         reminderOffset: String,
         calendarColor: Int
     ): Boolean {
         val offsetMs = parseReminderOffset(reminderOffset) ?: return false
-        val triggerTime = if (event.isAllDay) {
+        val triggerTime = if (displayEvent.isAllDay) {
             calculateAllDayTriggerTime(occurrenceStartTs, offsetMs)
         } else {
             occurrenceStartTs + offsetMs
@@ -303,39 +324,43 @@ class ReminderScheduler @Inject constructor(
         // Skip past/immediate triggers
         if (triggerTime < now + MIN_TRIGGER_FUTURE_MS) return false
 
-        // Check if already scheduled
+        // Check if already scheduled with targetEventId
         val existing = scheduledRemindersDao.findExisting(
-            eventId = event.id,
+            eventId = targetEventId,
             occurrenceTime = occurrenceStartTs,
             reminderOffset = reminderOffset
         )
         if (existing != null) return false
 
-        // Schedule new reminder
+        // Schedule new reminder with targetEventId (so clicking notification opens correct event)
         val scheduledReminder = ScheduledReminder(
-            eventId = event.id,
+            eventId = targetEventId,
             occurrenceTime = occurrenceStartTs,
             triggerTime = triggerTime,
             reminderOffset = reminderOffset,
             status = ReminderStatus.PENDING,
-            eventTitle = event.title,
-            eventLocation = event.location,
-            isAllDay = event.isAllDay,
+            eventTitle = displayEvent.title,
+            eventLocation = displayEvent.location,
+            isAllDay = displayEvent.isAllDay,
             calendarColor = calendarColor
         )
 
         val reminderId = scheduledRemindersDao.insert(scheduledReminder)
         scheduleAlarm(reminderId, triggerTime)
 
-        Log.d(TAG, "Scheduled missing reminder $reminderId for event ${event.id}")
+        Log.d(TAG, "Scheduled missing reminder $reminderId for event $targetEventId (display: ${displayEvent.id})")
         return true
     }
 
     /**
      * Schedule a single reminder for an occurrence.
      *
-     * @param event The event
-     * @param occurrence The occurrence
+     * Uses occurrence.exceptionEventId if set (for Model B occurrences where the
+     * occurrence links to an exception event). This ensures clicking the notification
+     * opens the correct event. Follows CLAUDE.md pattern 12.
+     *
+     * @param event The event (provides display data: title, location, isAllDay)
+     * @param occurrence The occurrence (provides timing and exceptionEventId)
      * @param reminderOffset The reminder offset (e.g., "-PT15M")
      * @param calendarColor The calendar color
      */
@@ -364,9 +389,21 @@ class ReminderScheduler @Inject constructor(
             return
         }
 
+        // Use exception event ID if available (for Model B occurrences)
+        // This follows CLAUDE.md pattern 12: exceptionEventId ?: eventId
+        val targetEventId = occurrence.exceptionEventId ?: event.id
+
+        // Load exception event for display data if targetEventId differs from event.id
+        // This ensures notification shows exception's title/location, not master's
+        val displayEvent = if (occurrence.exceptionEventId != null) {
+            eventReader.getEventById(occurrence.exceptionEventId) ?: event
+        } else {
+            event
+        }
+
         // Check if reminder already exists
         val existing = scheduledRemindersDao.findExisting(
-            eventId = event.id,
+            eventId = targetEventId,
             occurrenceTime = occurrence.startTs,
             reminderOffset = reminderOffset
         )
@@ -375,21 +412,21 @@ class ReminderScheduler @Inject constructor(
             return
         }
 
-        // Create and save the scheduled reminder
+        // Create and save the scheduled reminder with targetEventId and displayEvent data
         val scheduledReminder = ScheduledReminder(
-            eventId = event.id,
+            eventId = targetEventId,
             occurrenceTime = occurrence.startTs,
             triggerTime = triggerTime,
             reminderOffset = reminderOffset,
             status = ReminderStatus.PENDING,
-            eventTitle = event.title,
-            eventLocation = event.location,
-            isAllDay = event.isAllDay,
+            eventTitle = displayEvent.title,
+            eventLocation = displayEvent.location,
+            isAllDay = displayEvent.isAllDay,
             calendarColor = calendarColor
         )
 
         val reminderId = scheduledRemindersDao.insert(scheduledReminder)
-        Log.d(TAG, "Created scheduled reminder $reminderId for event ${event.id}")
+        Log.d(TAG, "Created scheduled reminder $reminderId for event $targetEventId (from ${event.id})")
 
         // Schedule the alarm
         scheduleAlarm(reminderId, triggerTime)

@@ -66,3 +66,6 @@ AGENTS.md
 ARCHITECTURE.md
 CHANGELOG.md
 CLAUDE.md
+
+# Claude Code local state
+.claude/

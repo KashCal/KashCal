@@ -26,12 +26,18 @@ data class EventWithNextOccurrence(
  * Result from getEventsWithRemindersInRange query.
  * Contains embedded Event with occurrence timing and calendar color.
  * Used by ReminderScheduler to find events that may need reminders scheduled.
+ *
+ * The `event` field contains the event with reminder configuration (may be master
+ * if exception inherits reminders). The `targetEventId` field contains the actual
+ * event ID to store in the reminder (exception if exists, otherwise master).
+ * This ensures clicking the reminder opens the correct event.
  */
 data class EventWithOccurrenceAndColor(
     @Embedded val event: Event,
     @ColumnInfo(name = "occurrence_start_ts") val occurrenceStartTs: Long,
     @ColumnInfo(name = "occurrence_end_ts") val occurrenceEndTs: Long,
-    @ColumnInfo(name = "calendar_color") val calendarColor: Int
+    @ColumnInfo(name = "calendar_color") val calendarColor: Int,
+    @ColumnInfo(name = "target_event_id") val targetEventId: Long? = null
 )
 
 /**
@@ -618,15 +624,26 @@ interface EventsDao {
      * - Calendar is visible (user hasn't hidden it)
      * - Occurrence is not cancelled
      *
+     * IMPORTANT: Uses COALESCE(exception_event_id, event_id) to load the correct event
+     * for modified occurrences. This follows CLAUDE.md pattern 12:
+     * "When loading events from occurrences, always use exceptionEventId ?: eventId"
+     *
+     * Also handles reminder inheritance: if an exception event has no reminders,
+     * it inherits from the master. The query uses UNION to cover:
+     * 1. Exception events with their own reminders
+     * 2. Normal occurrences with master reminders
+     * 3. Exception events inheriting reminders from master
+     *
      * @param fromTime Start of window (epoch ms)
      * @param toTime End of window (epoch ms)
      * @return List of events with their occurrence times and calendar colors
      */
     @Query("""
         SELECT e.*, o.start_ts as occurrence_start_ts, o.end_ts as occurrence_end_ts,
-               c.color as calendar_color
-        FROM events e
-        JOIN occurrences o ON e.id = o.event_id
+               c.color as calendar_color,
+               COALESCE(o.exception_event_id, o.event_id) as target_event_id
+        FROM occurrences o
+        JOIN events e ON e.id = COALESCE(o.exception_event_id, o.event_id)
         JOIN calendars c ON e.calendar_id = c.id
         WHERE e.reminders IS NOT NULL
           AND e.reminders != '[]'
@@ -634,7 +651,23 @@ interface EventsDao {
           AND o.start_ts <= :toTime
           AND o.is_cancelled = 0
           AND c.is_visible = 1
-        ORDER BY o.start_ts ASC
+        UNION
+        SELECT master.*, o.start_ts as occurrence_start_ts, o.end_ts as occurrence_end_ts,
+               c.color as calendar_color,
+               o.exception_event_id as target_event_id
+        FROM occurrences o
+        JOIN events exc ON exc.id = o.exception_event_id
+        JOIN events master ON master.id = o.event_id
+        JOIN calendars c ON exc.calendar_id = c.id
+        WHERE o.exception_event_id IS NOT NULL
+          AND (exc.reminders IS NULL OR exc.reminders = '[]')
+          AND master.reminders IS NOT NULL
+          AND master.reminders != '[]'
+          AND o.start_ts >= :fromTime
+          AND o.start_ts <= :toTime
+          AND o.is_cancelled = 0
+          AND c.is_visible = 1
+        ORDER BY occurrence_start_ts ASC
     """)
     suspend fun getEventsWithRemindersInRange(
         fromTime: Long,
