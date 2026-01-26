@@ -3,11 +3,14 @@ package org.onekash.kashcal.sync.engine
 import android.util.Log
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncLog
+import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
@@ -52,6 +55,7 @@ class CalDavSyncEngine @Inject constructor(
     private val conflictResolver: ConflictResolver,
     private val accountsDao: AccountsDao,
     private val calendarsDao: CalendarsDao,
+    private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val syncLogsDao: SyncLogsDao,
     private val syncSessionStore: SyncSessionStore,
@@ -59,6 +63,13 @@ class CalDavSyncEngine @Inject constructor(
 ) {
     companion object {
         private const val TAG = "CalDavSyncEngine"
+
+        /**
+         * Maximum sync cycles with conflict before abandoning local changes.
+         * Each cycle: push→412→scheduleRetry→retryCount++→conflict resolution.
+         * After this many cycles, we give up and let pull overwrite with server version.
+         */
+        private const val MAX_CONFLICT_SYNC_CYCLES = 3
     }
 
     /**
@@ -81,7 +92,6 @@ class CalDavSyncEngine @Inject constructor(
         clientOverride: CalDavClient? = null,
         trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
-        Log.i(TAG, "Starting sync for calendar: ${calendar.displayName}")
         val startTime = System.currentTimeMillis()
 
         // Create session builder for tracking
@@ -106,7 +116,6 @@ class CalDavSyncEngine @Inject constructor(
 
         try {
             // Step 1: Push local changes first
-            Log.d(TAG, "Step 1: Pushing local changes")
             val pushResult = pushStrategy.pushForCalendar(calendar, clientOverride)
 
             when (pushResult) {
@@ -119,17 +128,34 @@ class CalDavSyncEngine @Inject constructor(
                         // Some operations failed - try to resolve conflicts
                         Log.d(TAG, "Step 1b: Resolving ${pushResult.operationsFailed} push conflicts")
                         val conflictOps = getConflictOperationsForCalendar(calendar.id)
+                        var abandonedCount = 0
+                        var lastAbandonedTitle: String? = null
+
                         for (op in conflictOps) {
                             val resolved = conflictResolver.resolve(op, strategy = conflictStrategy)
                             if (resolved.isSuccess()) {
                                 conflictsResolved++
                             } else {
-                                errors.add(SyncError(
-                                    phase = SyncPhase.CONFLICT_RESOLUTION,
-                                    eventId = op.eventId,
-                                    message = "Conflict resolution failed"
-                                ))
+                                // Check if we should abandon after max sync cycles
+                                if (op.retryCount >= MAX_CONFLICT_SYNC_CYCLES) {
+                                    val title = abandonConflictedOperation(op)
+                                    if (abandonedCount == 0) lastAbandonedTitle = title
+                                    abandonedCount++
+                                    conflictsResolved++ // Count as resolved (abandoned)
+                                } else {
+                                    errors.add(SyncError(
+                                        phase = SyncPhase.CONFLICT_RESOLUTION,
+                                        eventId = op.eventId,
+                                        message = "Conflict resolution failed (cycle ${op.retryCount}/$MAX_CONFLICT_SYNC_CYCLES)"
+                                    ))
+                                }
                             }
+                        }
+
+                        // Notify user if any conflicts were abandoned
+                        if (abandonedCount > 0) {
+                            val titleForNotification = if (abandonedCount == 1) lastAbandonedTitle else null
+                            notificationManager.showConflictAbandonedNotification(titleForNotification, abandonedCount)
                         }
                     }
                 }
@@ -154,8 +180,10 @@ class CalDavSyncEngine @Inject constructor(
                 }
             }
 
+            // Pass push stats to session builder (regardless of push result)
+            sessionBuilder.setPushStats(pushCreated, pushUpdated, pushDeleted)
+
             // Step 2: Pull server changes
-            Log.d(TAG, "Step 2: Pulling server changes")
             val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride, sessionBuilder)
 
             when (pullResult) {
@@ -246,9 +274,23 @@ class CalDavSyncEngine @Inject constructor(
                     changes = changes
                 )
             }
+        } catch (e: java.util.concurrent.CancellationException) {
+            // Rethrow cancellation to properly handle coroutine cancellation
+            Log.d(TAG, "Sync cancelled for calendar: ${calendar.displayName}")
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Sync failed with exception", e)
             logSync(calendar.id, "SYNC_COMPLETE", "ERROR", 0, 1)
+
+            // Record the error in session history for debugging
+            val errorType = when (e) {
+                is java.net.SocketTimeoutException -> org.onekash.kashcal.sync.session.ErrorType.TIMEOUT
+                is java.io.IOException -> org.onekash.kashcal.sync.session.ErrorType.NETWORK
+                else -> org.onekash.kashcal.sync.session.ErrorType.PARSE
+            }
+            sessionBuilder.setError(errorType, "exception", e.message)
+            syncSessionStore.add(sessionBuilder.build())
+
             return SyncResult.Error(
                 code = -1,
                 message = e.message ?: "Unknown error",
@@ -283,6 +325,15 @@ class CalDavSyncEngine @Inject constructor(
         val calendars = calendarsDao.getByAccountIdOnce(account.id)
         if (calendars.isEmpty()) {
             Log.d(TAG, "No calendars for account")
+            // Record session for debugging
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = -1L,
+                calendarName = "Account: ${account.email.maskEmail()}",
+                syncType = SyncType.FULL,
+                triggerSource = trigger
+            )
+            sessionBuilder.setError(org.onekash.kashcal.sync.session.ErrorType.SERVER, "no_calendars", "No calendars found for account")
+            syncSessionStore.add(sessionBuilder.build())
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
@@ -298,7 +349,7 @@ class CalDavSyncEngine @Inject constructor(
         val allErrors = mutableListOf<SyncError>()
         val allChanges = mutableListOf<SyncChange>()
 
-        for (calendar in calendars) {
+        for ((index, calendar) in calendars.withIndex()) {
             if (calendar.isReadOnly) {
                 // Read-only calendars only need pull - create session builder
                 val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL
@@ -572,9 +623,33 @@ class CalDavSyncEngine @Inject constructor(
     /**
      * Get pending operations that are in conflict state for a calendar.
      */
-    private suspend fun getConflictOperationsForCalendar(calendarId: Long): List<org.onekash.kashcal.data.db.entity.PendingOperation> {
+    private suspend fun getConflictOperationsForCalendar(calendarId: Long): List<PendingOperation> {
         val allConflicts = pendingOperationsDao.getConflictOperations()
         return allConflicts // For now return all - could filter by calendar if needed
+    }
+
+    /**
+     * Abandon a conflicted operation after max sync cycles.
+     * Resets event to SYNCED so pull can update it with server version.
+     *
+     * @param op The pending operation to abandon
+     * @return The event title if available (for notification)
+     */
+    private suspend fun abandonConflictedOperation(op: PendingOperation): String? {
+        val now = System.currentTimeMillis()
+        val event = eventsDao.getById(op.eventId)
+
+        Log.w(TAG, "Abandoning conflict for event ${op.eventId} (${event?.title}) after ${op.retryCount} sync cycles")
+
+        // Reset event to SYNCED so pull can update it (if event still exists)
+        if (event != null) {
+            eventsDao.updateSyncStatus(op.eventId, SyncStatus.SYNCED, now)
+        }
+
+        // Always delete the stuck pending operation
+        pendingOperationsDao.deleteById(op.id)
+
+        return event?.title
     }
 
     /**

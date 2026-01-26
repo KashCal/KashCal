@@ -111,7 +111,7 @@ cd KashCal
 - **Async**: Kotlin Coroutines + Flow
 - **Background**: WorkManager
 - **Network**: OkHttp
-- **iCal**: ical4j + lib-recur
+- **iCal**: icaldav (ical4j 4.2.2 + lib-recur)
 
 ## Contributing
 

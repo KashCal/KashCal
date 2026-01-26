@@ -24,7 +24,8 @@ import androidx.room.PrimaryKey
     ],
     indices = [
         Index(value = ["account_id"]),
-        Index(value = ["caldav_url"], unique = true)
+        Index(value = ["caldav_url"], unique = true),
+        Index(value = ["is_visible"])
     ]
 )
 data class Calendar(

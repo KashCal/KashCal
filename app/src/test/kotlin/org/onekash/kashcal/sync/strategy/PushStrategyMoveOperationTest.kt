@@ -16,7 +16,6 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
-import org.onekash.kashcal.sync.serializer.ICalSerializer
 
 /**
  * Tests for MOVE operation in PushStrategy.
@@ -32,7 +31,6 @@ import org.onekash.kashcal.sync.serializer.ICalSerializer
 class PushStrategyMoveOperationTest {
 
     private lateinit var client: CalDavClient
-    private lateinit var serializer: ICalSerializer
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
@@ -71,7 +69,6 @@ class PushStrategyMoveOperationTest {
     @Before
     fun setup() {
         client = mockk()
-        serializer = mockk()
         calendarsDao = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
@@ -82,7 +79,6 @@ class PushStrategyMoveOperationTest {
 
         pushStrategy = PushStrategy(
             client = client,
-            serializer = serializer,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
@@ -117,16 +113,14 @@ class PushStrategyMoveOperationTest {
             movePhase = PendingOperation.MOVE_PHASE_CREATE // Phase 1: CREATE (DELETE already done)
         )
 
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
-
+        
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent // Event has caldavUrl = null
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        // CREATE phase - DELETE was already done in phase 0
-        coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) } returns
+                // CREATE phase - DELETE was already done in phase 0
+        coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) } returns
             CalDavResult.success(Pair(newUrl, newEtag))
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, newUrl, newEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(moveOperation.id) } just Runs
@@ -142,7 +136,7 @@ class PushStrategyMoveOperationTest {
         // CREATE phase skips DELETE (already done in phase 0)
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
         // Verify CREATE was called with new calendar URL
-        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
+        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) }
     }
 
     @Test
@@ -231,15 +225,13 @@ class PushStrategyMoveOperationTest {
             movePhase = PendingOperation.MOVE_PHASE_CREATE // Testing CREATE phase
         )
 
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
-
+        
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        // CREATE conflicts - UID already exists in target calendar
+                // CREATE conflicts - UID already exists in target calendar
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.conflictError("UID exists")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
@@ -270,15 +262,13 @@ class PushStrategyMoveOperationTest {
             movePhase = PendingOperation.MOVE_PHASE_CREATE // Already in CREATE phase
         )
 
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
-
+        
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.createEvent(any(), any(), any()) } returns
+                coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair(newUrl, "\"etag\""))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
@@ -290,7 +280,7 @@ class PushStrategyMoveOperationTest {
         // DELETE should NOT be called (CREATE phase)
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
         // CREATE should be called
-        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
+        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) }
     }
 
     @Test
@@ -398,17 +388,13 @@ class PushStrategyMoveOperationTest {
             movePhase = PendingOperation.MOVE_PHASE_CREATE // Testing CREATE phase
         )
 
-        val icalDataWithExceptions = "BEGIN:VCALENDAR\nMASTER+EXCEPTION\nEND:VCALENDAR"
-
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(recurringEvent.id) } returns recurringEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         // Should fetch exceptions for master
         coEvery { eventsDao.getExceptionsForMaster(recurringEvent.id) } returns listOf(exception)
-        // Should serialize with exceptions
-        coEvery { serializer.serializeWithExceptions(recurringEvent, listOf(exception)) } returns icalDataWithExceptions
-        coEvery { client.createEvent(targetCalendar.caldavUrl, recurringEvent.uid, icalDataWithExceptions) } returns
+        coEvery { client.createEvent(targetCalendar.caldavUrl, recurringEvent.uid, any()) } returns
             CalDavResult.success(Pair(newUrl, "\"etag\""))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
@@ -417,9 +403,8 @@ class PushStrategyMoveOperationTest {
 
         assertTrue(result is PushResult.Success)
 
-        // Verify exceptions were included in serialization
+        // Verify exceptions were fetched for master
         coVerify { eventsDao.getExceptionsForMaster(recurringEvent.id) }
-        coVerify { serializer.serializeWithExceptions(recurringEvent, listOf(exception)) }
         // Should NOT call DELETE (CREATE phase)
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
     }
@@ -469,8 +454,7 @@ class PushStrategyMoveOperationTest {
         // C3 fix: CREATE phase runs independently with fresh retry budget
         val newUrl = "https://caldav.icloud.com/123/work/event.ics"
         val newEtag = "\"new-etag\""
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
-
+        
         val moveOperation = PendingOperation(
             id = 1L,
             eventId = testEvent.id,
@@ -487,8 +471,7 @@ class PushStrategyMoveOperationTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) } returns
+                coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) } returns
             CalDavResult.success(Pair(newUrl, newEtag))
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, newUrl, newEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(moveOperation.id) } just Runs
@@ -504,7 +487,7 @@ class PushStrategyMoveOperationTest {
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
 
         // Should call CREATE
-        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, icalData) }
+        coVerify { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) }
 
         // Should delete operation after success
         coVerify { pendingOperationsDao.deleteById(moveOperation.id) }
@@ -529,8 +512,7 @@ class PushStrategyMoveOperationTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "BEGIN:VCALENDAR\nEND:VCALENDAR"
-        // CREATE fails with retryable error
+                // CREATE fails with retryable error
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.Error(500, "Server error", true)
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
@@ -552,8 +534,7 @@ class PushStrategyMoveOperationTest {
     fun `processMove DELETE phase does not skip when targetUrl is null`() = runTest {
         // When targetUrl is null in DELETE phase, should advance to CREATE phase
         val newUrl = "https://caldav.icloud.com/123/work/event.ics"
-        val icalData = "BEGIN:VCALENDAR\nEND:VCALENDAR"
-
+        
         val moveOperation = PendingOperation(
             id = 1L,
             eventId = testEvent.id,
@@ -625,8 +606,7 @@ class PushStrategyMoveOperationTest {
         coEvery { eventsDao.getById(any()) } returns testEvent
         coEvery { calendarsDao.getById(any()) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "BEGIN:VCALENDAR\nEND:VCALENDAR"
-        coEvery { client.deleteEvent(any(), any()) } returns CalDavResult.success(Unit)
+                coEvery { client.deleteEvent(any(), any()) } returns CalDavResult.success(Unit)
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair("https://new.ics", "\"etag\""))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs

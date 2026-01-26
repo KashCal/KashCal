@@ -35,7 +35,8 @@ import androidx.room.PrimaryKey
     ],
     indices = [
         Index(value = ["url"], unique = true),
-        Index(value = ["calendar_id"], unique = true)
+        Index(value = ["calendar_id"], unique = true),
+        Index(value = ["enabled"])
     ]
 )
 data class IcsSubscription(

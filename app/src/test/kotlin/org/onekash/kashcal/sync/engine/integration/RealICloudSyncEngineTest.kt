@@ -22,12 +22,11 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
-import org.onekash.kashcal.sync.serializer.ICalSerializer
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import kotlinx.coroutines.flow.flowOf
 import java.io.File
@@ -49,8 +48,6 @@ class RealICloudSyncEngineTest {
 
     // Real components
     private lateinit var client: OkHttpCalDavClient
-    private lateinit var parser: Ical4jParser
-    private lateinit var serializer: ICalSerializer
     private lateinit var quirks: ICloudQuirks
 
     // Strategies
@@ -68,6 +65,7 @@ class RealICloudSyncEngineTest {
     private lateinit var syncLogsDao: SyncLogsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var syncSessionStore: SyncSessionStore
 
     // Credentials
     private var username: String? = null
@@ -84,8 +82,6 @@ class RealICloudSyncEngineTest {
 
         quirks = ICloudQuirks()
         client = OkHttpCalDavClient(quirks)
-        parser = Ical4jParser()
-        serializer = ICalSerializer()
 
         if (username != null && password != null) {
             client.setCredentials(username!!, password!!)
@@ -120,6 +116,7 @@ class RealICloudSyncEngineTest {
         syncLogsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        syncSessionStore = mockk(relaxed = true)
 
         // Mock database.runInTransaction to execute the block directly
         coEvery {
@@ -149,17 +146,16 @@ class RealICloudSyncEngineTest {
         pullStrategy = PullStrategy(
             database = database,
             client = client,
-            parser = parser,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
         )
 
         pushStrategy = PushStrategy(
             client = client,
-            serializer = serializer,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
@@ -167,7 +163,6 @@ class RealICloudSyncEngineTest {
 
         conflictResolver = ConflictResolver(
             client = client,
-            parser = parser,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
@@ -181,6 +176,7 @@ class RealICloudSyncEngineTest {
             conflictResolver = conflictResolver,
             accountsDao = accountsDao,
             calendarsDao = calendarsDao,
+            eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
             syncSessionStore = mockk(relaxed = true),

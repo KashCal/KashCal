@@ -35,6 +35,7 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -68,6 +69,7 @@ class CalDavSyncWorkerTest {
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var eventReader: EventReader
     private lateinit var pendingOperationsDao: PendingOperationsDao
+    private lateinit var syncSessionStore: SyncSessionStore
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -95,6 +97,7 @@ class CalDavSyncWorkerTest {
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
         pendingOperationsDao = mockk(relaxed = true)
+        syncSessionStore = mockk(relaxed = true)
 
         // Default: return empty input data
         every { workerParams.inputData } returns Data.EMPTY
@@ -144,7 +147,8 @@ class CalDavSyncWorkerTest {
             widgetUpdateManager = widgetUpdateManager,
             reminderScheduler = reminderScheduler,
             eventReader = eventReader,
-            pendingOperationsDao = pendingOperationsDao
+            pendingOperationsDao = pendingOperationsDao,
+            syncSessionStore = syncSessionStore
         )
     }
 

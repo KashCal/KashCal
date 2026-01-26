@@ -423,12 +423,19 @@ class OccurrenceGenerator @Inject constructor(
 
     /**
      * Parse a multi-value field (RDATE or EXDATE) into list of date codes.
-     * Handles comma-separated values and date-time formats.
+     * Handles comma-separated values in multiple formats:
+     *
+     * Supported formats:
+     *   - Milliseconds: "1737331200000" -> converts to day code via Occurrence.toDayFormat()
+     *   - Day codes: "20251225" -> used directly
+     *   - DateTime: "20251225T100000Z" -> extracts date portion
      *
      * Examples:
-     *   "20251225" -> ["20251225"]
+     *   "1737331200000" -> ["20260120"] (milliseconds from ICalEventMapper)
+     *   "20251225" -> ["20251225"] (legacy day code format)
      *   "20251225,20251226" -> ["20251225", "20251226"]
      *   "20251225T100000Z" -> ["20251225"]
+     *   "1737331200000,20260127" -> ["20260120", "20260127"] (mixed format - backward compat)
      */
     private fun parseMultiValueField(field: String?): List<String> {
         if (field.isNullOrBlank()) return emptyList()
@@ -436,12 +443,20 @@ class OccurrenceGenerator @Inject constructor(
         return field.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
-            .map { dateValue ->
-                // Extract date portion (YYYYMMDD) from various formats
+            .mapNotNull { dateValue ->
+                // Detect format and convert to day code (YYYYMMDD)
                 when {
+                    // Milliseconds format: 10+ digit number (timestamps are 13 digits for 2020s)
+                    dateValue.length >= 10 && dateValue.all { it.isDigit() } -> {
+                        dateValue.toLongOrNull()?.let { ms ->
+                            Occurrence.toDayFormat(ms, false).toString()
+                        }
+                    }
+                    // DateTime format: has T separator
                     dateValue.contains("T") -> dateValue.substringBefore("T")
+                    // Day code format: 8 digits
                     dateValue.length >= 8 -> dateValue.substring(0, 8)
-                    else -> dateValue
+                    else -> null
                 }
             }
             .filter { it.length == 8 && it.all { c -> c.isDigit() } }

@@ -18,8 +18,8 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -51,7 +51,9 @@ class PullStrategyEtagFallbackTest {
     @MockK
     private lateinit var dataStore: KashCalDataStore
 
-    private val parser = Ical4jParser()
+    @MockK
+    private lateinit var syncSessionStore: SyncSessionStore
+
     private val quirks = ICloudQuirks()
 
     @Before
@@ -77,12 +79,12 @@ class PullStrategyEtagFallbackTest {
         pullStrategy = PullStrategy(
             database = database,
             client = client,
-            parser = parser,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
         )
     }
 

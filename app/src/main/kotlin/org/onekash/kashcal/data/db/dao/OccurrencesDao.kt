@@ -88,19 +88,21 @@ interface OccurrencesDao {
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
                o.start_ts, o.end_ts, o.start_day, o.end_day, o.is_cancelled,
-               e.id AS e_id, e.uid AS e_uid, e.calendar_id AS e_calendar_id,
+               e.id AS e_id, e.uid AS e_uid, e.import_id AS e_import_id, e.calendar_id AS e_calendar_id,
                e.title AS e_title, e.description AS e_description, e.location AS e_location,
                e.start_ts AS e_start_ts, e.end_ts AS e_end_ts, e.is_all_day AS e_is_all_day,
                e.timezone AS e_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
                e.caldav_url AS e_caldav_url, e.etag AS e_etag, e.sync_status AS e_sync_status,
-               e.sequence AS e_sequence, e.reminders AS e_reminders,
+               e.sequence AS e_sequence, e.reminders AS e_reminders, e.alarm_count AS e_alarm_count,
                e.original_event_id AS e_original_event_id, e.original_instance_time AS e_original_instance_time,
                e.status AS e_status, e.transp AS e_transp, e.classification AS e_classification,
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.raw_ical AS e_raw_ical, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
+               e.priority AS e_priority, e.geo_lat AS e_geo_lat, e.geo_lon AS e_geo_lon,
+               e.color AS e_color, e.url AS e_url, e.categories AS e_categories,
                e.created_at AS e_created_at, e.updated_at AS e_updated_at, e.local_modified_at AS e_local_modified_at
         FROM occurrences o
         JOIN events e ON (o.exception_event_id IS NOT NULL AND o.exception_event_id = e.id)
@@ -121,19 +123,21 @@ interface OccurrencesDao {
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
                o.start_ts, o.end_ts, o.start_day, o.end_day, o.is_cancelled,
-               e.id AS e_id, e.uid AS e_uid, e.calendar_id AS e_calendar_id,
+               e.id AS e_id, e.uid AS e_uid, e.import_id AS e_import_id, e.calendar_id AS e_calendar_id,
                e.title AS e_title, e.description AS e_description, e.location AS e_location,
                e.start_ts AS e_start_ts, e.end_ts AS e_end_ts, e.is_all_day AS e_is_all_day,
                e.timezone AS e_timezone, e.rrule AS e_rrule, e.exdate AS e_exdate, e.rdate AS e_rdate,
                e.caldav_url AS e_caldav_url, e.etag AS e_etag, e.sync_status AS e_sync_status,
-               e.sequence AS e_sequence, e.reminders AS e_reminders,
+               e.sequence AS e_sequence, e.reminders AS e_reminders, e.alarm_count AS e_alarm_count,
                e.original_event_id AS e_original_event_id, e.original_instance_time AS e_original_instance_time,
                e.status AS e_status, e.transp AS e_transp, e.classification AS e_classification,
                e.organizer_email AS e_organizer_email, e.organizer_name AS e_organizer_name,
                e.duration AS e_duration, e.original_sync_id AS e_original_sync_id,
-               e.extra_properties AS e_extra_properties, e.dtstamp AS e_dtstamp,
+               e.extra_properties AS e_extra_properties, e.raw_ical AS e_raw_ical, e.dtstamp AS e_dtstamp,
                e.last_sync_error AS e_last_sync_error, e.sync_retry_count AS e_sync_retry_count,
                e.server_modified_at AS e_server_modified_at,
+               e.priority AS e_priority, e.geo_lat AS e_geo_lat, e.geo_lon AS e_geo_lon,
+               e.color AS e_color, e.url AS e_url, e.categories AS e_categories,
                e.created_at AS e_created_at, e.updated_at AS e_updated_at, e.local_modified_at AS e_local_modified_at
         FROM occurrences o
         JOIN events e ON (o.exception_event_id IS NOT NULL AND o.exception_event_id = e.id)

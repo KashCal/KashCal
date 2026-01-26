@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.integration
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
@@ -17,6 +18,7 @@ import java.io.File
  *
  * Run with: ./gradlew testDebugUnitTest --tests "*ICloudEventualConsistencyTest*"
  */
+@Ignore("Integration test - requires iCloud credentials in local.properties")
 class ICloudEventualConsistencyTest {
 
     private lateinit var client: OkHttpCalDavClient

@@ -2,12 +2,11 @@ BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//KashCal//Test//EN
 BEGIN:VEVENT
-UID:high-seq-001@kashcal.test
+UID:high-sequence-001@kashcal.test
 DTSTAMP:20241215T120000Z
 DTSTART:20241220T140000Z
 DTEND:20241220T150000Z
-SUMMARY:Much Edited Event
-DESCRIPTION:Event with high sequence number from many edits
+SUMMARY:Event with High Sequence
 STATUS:CONFIRMED
 SEQUENCE:42
 END:VEVENT

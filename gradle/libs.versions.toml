@@ -12,14 +12,14 @@ activityCompose = "1.9.3"
 # Compose
 composeBom = "2024.12.01"
 
-# Room
-room = "2.6.1"
+# Room (2.8.x has kotlinx.serialization incompatibility with KSP - https://issuetracker.google.com/issues/478659001)
+room = "2.7.0"
 
 # Coroutines
-coroutines = "1.9.0"
+coroutines = "1.10.2"
 
 # Collections
-collectionsImmutable = "0.3.7"
+collectionsImmutable = "0.3.8"
 
 # DI
 hilt = "2.53.1"
@@ -34,8 +34,8 @@ gson = "2.11.0"
 # RFC 5545 Recurrence
 libRecur = "0.17.1"
 
-# iCal Parsing (RFC 5545) - v3.x is more Android-compatible
-ical4j = "3.2.18"
+# iCal/CalDAV library (includes ical4j 4.2.2) - from GitHub Packages
+icaldav = "2.8.0"
 
 # HTTP Client
 okhttp = "4.12.0"
@@ -52,7 +52,10 @@ hiltWork = "1.2.0"
 glance = "1.1.1"
 
 # Code Coverage
-kover = "0.9.0"
+kover = "0.9.4"
+
+# Documentation
+dokka = "2.0.0"
 
 # Testing
 junit = "4.13.2"
@@ -60,9 +63,9 @@ junitExt = "1.2.1"
 espressoCore = "3.6.1"
 mockk = "1.13.12"
 turbine = "1.1.0"
-coroutinesTest = "1.8.1"
+coroutinesTest = "1.10.2"
 archCoreTesting = "2.2.0"
-robolectric = "4.13"
+robolectric = "4.14"
 androidxTestCore = "1.6.1"
 
 [libraries]
@@ -109,8 +112,8 @@ gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 # RFC 5545 Recurrence
 lib-recur = { group = "org.dmfs", name = "lib-recur", version.ref = "libRecur" }
 
-# iCal Parsing (RFC 5545)
-ical4j = { group = "org.mnode.ical4j", name = "ical4j", version.ref = "ical4j" }
+# iCal/CalDAV library (includes ical4j 4.2.2) - from GitHub Packages
+icaldav-core = { group = "org.onekash", name = "icaldav-core", version.ref = "icaldav" }
 
 # HTTP Client
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
@@ -149,3 +152,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

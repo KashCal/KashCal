@@ -17,8 +17,8 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -46,7 +46,9 @@ class PullStrategyTest {
     @MockK
     private lateinit var dataStore: KashCalDataStore
 
-    private val parser = Ical4jParser()
+    @MockK
+    private lateinit var syncSessionStore: SyncSessionStore
+
     private val quirks = ICloudQuirks()
 
     @Before
@@ -72,12 +74,12 @@ class PullStrategyTest {
         pullStrategy = PullStrategy(
             database = database,
             client = client,
-            parser = parser,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
         )
     }
 
@@ -550,7 +552,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
         coEvery { eventsDao.getByUid("master-uid") } returns emptyList()
-        coEvery { eventsDao.getExceptionForOccurrence(any(), any()) } returns null
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime(any(), any(), any()) } returns null
         coEvery { eventsDao.upsert(any()) } returnsMany listOf(1L, 2L)
 
         val result = pullStrategy.pull(calendar)
@@ -772,7 +774,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
         coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent)
-        coEvery { eventsDao.getExceptionForOccurrence(500L, any()) } returns existingException
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, any()) } returns existingException
         coEvery { eventsDao.upsert(any()) } returns 500L
 
         pullStrategy.pull(calendar)
@@ -942,7 +944,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
         coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent)
-        coEvery { eventsDao.getExceptionForOccurrence(500L, any()) } returns existingException
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, any()) } returns existingException
         coEvery { eventsDao.upsert(any()) } returns 500L
 
         pullStrategy.pull(calendar)

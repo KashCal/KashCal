@@ -321,7 +321,7 @@ sealed class PendingAction {
     /**
      * Open event form to create new event (from widget).
      *
-     * @param startTs Optional start timestamp for the new event
+     * @param startTs Optional start timestamp in milliseconds (epoch ms), or null for current time
      */
     data class CreateEvent(val startTs: Long? = null) : PendingAction()
 

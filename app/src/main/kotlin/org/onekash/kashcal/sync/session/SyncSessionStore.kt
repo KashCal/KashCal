@@ -117,60 +117,70 @@ class SyncSessionStore @Inject constructor(
      * Get summary statistics for display.
      */
     fun getSummaryStats(sessions: List<SyncSession> = _sessions.value): SyncSummaryStats {
-        val successCount = sessions.count { it.status == SyncStatus.SUCCESS }
-        val partialCount = sessions.count { it.status == SyncStatus.PARTIAL }
-        val failedCount = sessions.count { it.status == SyncStatus.FAILED }
-
-        val backgroundMissing = sessions.count {
-            it.triggerSource.isBackground && it.hasMissingEvents
-        }
-        val foregroundMissing = sessions.count {
-            it.triggerSource.isForeground && it.hasMissingEvents
-        }
-
-        val totalEvents = sessions.sumOf { it.eventsWritten + it.eventsUpdated }
-
         return SyncSummaryStats(
             totalSyncs = sessions.size,
-            successCount = successCount,
-            partialCount = partialCount,
-            failedCount = failedCount,
-            totalEventsProcessed = totalEvents,
-            backgroundMissingCount = backgroundMissing,
-            foregroundMissingCount = foregroundMissing
+            totalPushed = sessions.sumOf { it.totalPushed },
+            totalPulled = sessions.sumOf { it.totalPullChanges },
+            issueCount = sessions.count { it.status != SyncStatus.SUCCESS }
         )
     }
 
     /**
-     * Export all sessions as text for sharing/debugging.
+     * Export all sessions as text for sharing.
+     * Simplified format matching the UI display.
      */
     fun getExportText(): String {
-        val dateFormat = SimpleDateFormat("MMM d, HH:mm:ss", Locale.US)
+        val dateFormat = SimpleDateFormat("MMM d, HH:mm", Locale.US)
+        val sessions = _sessions.value
+        val stats = getSummaryStats(sessions)
 
         return buildString {
-            appendLine("=== KashCal Sync History ===")
-            appendLine("Exported: ${dateFormat.format(Date())}")
-            appendLine("Sessions: ${_sessions.value.size}")
+            appendLine("KashCal Sync History")
+            // Header: "X syncs   ↑Y pushed   ↓Z pulled" or with issues
+            val headerParts = mutableListOf("${stats.totalSyncs} syncs")
+            headerParts.add("↑${stats.totalPushed} pushed")
+            headerParts.add("↓${stats.totalPulled} pulled")
+            if (stats.issueCount > 0) {
+                headerParts.add("⚠ ${stats.issueCount} issues")
+            }
+            appendLine(headerParts.joinToString("   "))
             appendLine()
 
-            _sessions.value.forEach { session ->
-                appendLine("─".repeat(40))
-                appendLine("${dateFormat.format(Date(session.timestamp))} - ${session.calendarName}")
-                appendLine("${session.syncType} | ${session.triggerSource.icon} ${session.triggerSource.displayName} | ${session.durationMs}ms")
-                appendLine("Server: ${session.hrefsReported} → Fetched: ${session.eventsFetched} → Written: ${session.eventsWritten}")
-
-                if (session.eventsUpdated > 0) appendLine("Updated: ${session.eventsUpdated}")
-                if (session.eventsDeleted > 0) appendLine("Deleted: ${session.eventsDeleted}")
-                if (session.hasMissingEvents) appendLine("⚠️ Missing: ${session.missingCount} (token ${if (session.tokenAdvanced) "advanced" else "NOT advanced"})")
-                if (session.abandonedParseErrors > 0) appendLine("❌ Abandoned: ${session.abandonedParseErrors} events (parse failed after max retries)")
-                if (session.totalSkipped > 0) {
-                    appendLine("Skipped: ${session.totalSkipped}")
-                    if (session.skippedParseError > 0) appendLine("  • Parse error: ${session.skippedParseError}")
-                    if (session.skippedOrphanedException > 0) appendLine("  • No master: ${session.skippedOrphanedException}")
-                    if (session.skippedPendingLocal > 0) appendLine("  • Pending local: ${session.skippedPendingLocal}")
-                    if (session.skippedEtagUnchanged > 0) appendLine("  • ETag unchanged: ${session.skippedEtagUnchanged}")
+            sessions.forEach { session ->
+                val icon = when (session.status) {
+                    SyncStatus.SUCCESS -> "✓"
+                    SyncStatus.PARTIAL -> "⚠"
+                    SyncStatus.FAILED -> "✗"
                 }
-                if (session.errorType != null) appendLine("❌ Error: ${session.errorType} at ${session.errorStage}")
+
+                // Build change summary
+                val changes = buildString {
+                    if (session.status == SyncStatus.FAILED) {
+                        append(session.errorMessage ?: session.errorType?.name ?: "Failed")
+                    } else if (!session.hasAnyChanges) {
+                        append("↑ 0   ↓ 0")
+                    } else {
+                        // Push summary
+                        append("↑ ${session.totalPushed}   ")
+                        // Pull summary with breakdown
+                        val pullParts = mutableListOf<String>()
+                        if (session.eventsWritten > 0) pullParts.add("+${session.eventsWritten}")
+                        if (session.eventsUpdated > 0) pullParts.add("~${session.eventsUpdated}")
+                        if (session.eventsDeleted > 0) pullParts.add("-${session.eventsDeleted}")
+                        append("↓ ${if (pullParts.isEmpty()) "0" else pullParts.joinToString(" ")}")
+                    }
+                }
+
+                appendLine("$icon  ${session.calendarName}  •  ${session.triggerSource.icon} ${session.syncType.name.lowercase().replaceFirstChar { it.uppercase() }}  •  ${dateFormat.format(Date(session.timestamp))}")
+                appendLine("   $changes")
+
+                // Issue lines
+                if (session.hasParseFailures) {
+                    appendLine("   ⚠ ${session.skippedParseError} failed to parse")
+                }
+                if (session.fallbackUsed) {
+                    appendLine("   ⚡ Fallback${if (session.fetchFailedCount > 0) " (${session.fetchFailedCount} failed)" else ""}")
+                }
                 appendLine()
             }
         }
@@ -191,10 +201,7 @@ class SyncSessionStore @Inject constructor(
  */
 data class SyncSummaryStats(
     val totalSyncs: Int,
-    val successCount: Int,
-    val partialCount: Int,
-    val failedCount: Int,
-    val totalEventsProcessed: Int,
-    val backgroundMissingCount: Int,
-    val foregroundMissingCount: Int
+    val totalPushed: Int,
+    val totalPulled: Int,
+    val issueCount: Int
 )

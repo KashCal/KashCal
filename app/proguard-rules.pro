@@ -158,20 +158,88 @@
 -keep class okhttp3.logging.** { *; }
 
 # ----------------------------------------------------------------------------
-# ical4j (RFC 5545 iCalendar parsing)
+# ical4j (RFC 5545 iCalendar parsing) - NUCLEAR OPTION
+# ical4j 4.x uses heavy reflection and ServiceLoader, R8 breaks it
 # ----------------------------------------------------------------------------
 
 -dontwarn net.fortuna.ical4j.**
 -dontwarn org.slf4j.**
 -dontwarn javax.cache.**
 -dontwarn groovy.**
+-dontwarn org.joda.convert.**
+-dontwarn org.threeten.extra.**
 
-# Keep ical4j model classes
--keep class net.fortuna.ical4j.** { *; }
--keep interface net.fortuna.ical4j.** { *; }
+# NUCLEAR: Keep EVERYTHING in ical4j - no shrinking, no optimization, no obfuscation
+-keep,includedescriptorclasses class net.fortuna.ical4j.** { *; }
+-keep,includedescriptorclasses interface net.fortuna.ical4j.** { *; }
+-keep,includedescriptorclasses enum net.fortuna.ical4j.** { *; }
 
-# Keep service providers for ical4j
--keep class * implements net.fortuna.ical4j.model.** { *; }
+# Keep all members with all access levels
+-keepclassmembers class net.fortuna.ical4j.** {
+    public *;
+    protected *;
+    private *;
+    <init>(...);
+    <fields>;
+    <methods>;
+}
+
+# Prevent any modification to ical4j classes
+-keepclasseswithmembers class net.fortuna.ical4j.** { *; }
+-keepclasseswithmembernames class net.fortuna.ical4j.** { *; }
+
+# Keep class hierarchy and generic signatures
+-keepattributes Signature,InnerClasses,EnclosingMethod,Exceptions
+-keepattributes SourceFile,LineNumberTable
+-keepattributes *Annotation*
+-keepattributes RuntimeVisible*Annotations
+
+# Keep ical4j service providers (loaded via ServiceLoader from META-INF/services)
+-keep class * implements net.fortuna.ical4j.model.ComponentFactory { *; }
+-keep class * implements net.fortuna.ical4j.model.PropertyFactory { *; }
+-keep class * implements net.fortuna.ical4j.model.ParameterFactory { *; }
+-keep class * implements net.fortuna.ical4j.validate.CalendarValidatorFactory { *; }
+-keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545ComponentRule { *; }
+-keep class * implements net.fortuna.ical4j.transform.compliance.Rfc5545PropertyRule { *; }
+
+# Keep ical4j ZoneRulesProvider (loaded via ServiceLoader)
+-keep class net.fortuna.ical4j.model.DefaultZoneRulesProvider { *; }
+-keep class * implements java.time.zone.ZoneRulesProvider { *; }
+
+# Ensure ServiceLoader can instantiate service providers
+-keepclassmembers class * implements net.fortuna.ical4j.model.ComponentFactory {
+    public <init>();
+}
+-keepclassmembers class * implements net.fortuna.ical4j.model.PropertyFactory {
+    public <init>();
+}
+-keepclassmembers class * implements net.fortuna.ical4j.model.ParameterFactory {
+    public <init>();
+}
+
+# ical4j dependencies that also need protection
+-keep class org.cache2k.** { *; }
+-dontwarn org.cache2k.**
+
+# Remove JCacheTimeZoneCache, use MapTimeZoneCache instead (from k3b/calef)
+-assumenosideeffects class net.fortuna.ical4j.util.JCacheTimeZoneCache
+-assumenosideeffects class javax.cache.Cache
+-assumenosideeffects class javax.cache.CacheManager
+-assumenosideeffects class javax.cache.Caching
+-assumenosideeffects class javax.cache.configuration.Configuration
+-assumenosideeffects class javax.cache.configuration.MutableConfiguration
+-assumenosideeffects class javax.cache.spi.CachingProvider
+-keep class net.fortuna.ical4j.util.MapTimeZoneCache { *; }
+
+# Groovy (unused in Android)
+-dontwarn org.codehaus.groovy.**
+
+# ----------------------------------------------------------------------------
+# icaldav library
+# ----------------------------------------------------------------------------
+
+-keep class org.onekash.icaldav.** { *; }
+-keep interface org.onekash.icaldav.** { *; }
 
 # ----------------------------------------------------------------------------
 # lib-recur (RFC 5545 RRULE expansion)

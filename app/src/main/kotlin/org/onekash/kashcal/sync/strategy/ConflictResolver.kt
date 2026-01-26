@@ -12,7 +12,9 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
-import org.onekash.kashcal.sync.parser.ICalParser
+import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
+import org.onekash.icaldav.parser.ICalParser
+import org.onekash.icaldav.model.ParseResult
 import javax.inject.Inject
 
 /**
@@ -29,13 +31,14 @@ import javax.inject.Inject
  */
 class ConflictResolver @Inject constructor(
     private val client: CalDavClient,
-    private val parser: ICalParser,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     private val dataStore: KashCalDataStore
 ) {
+    private val icalParser = ICalParser()
+
     companion object {
         private const val TAG = "ConflictResolver"
     }
@@ -121,12 +124,16 @@ class ConflictResolver @Inject constructor(
         val serverEvent = (fetchResult as CalDavResult.Success).data
 
         // Parse server iCal
-        val parseResult = parser.parse(serverEvent.icalData)
-        if (!parseResult.isSuccess() || parseResult.events.isEmpty()) {
-            return ConflictResult.Error("Failed to parse server event")
+        val parseResult = icalParser.parseAllEvents(serverEvent.icalData)
+        val parsedEvents = when (parseResult) {
+            is ParseResult.Success -> parseResult.value
+            is ParseResult.Error -> return ConflictResult.Error("Failed to parse server event: ${parseResult.error.message}")
+        }
+        if (parsedEvents.isEmpty()) {
+            return ConflictResult.Error("Failed to parse server event: no events found")
         }
 
-        val parsedEvent = parseResult.events.first()
+        val parsedEvent = parsedEvents.first()
 
         // Validate calendar still exists (prevents FK violation if deleted mid-sync)
         val calendar = calendarsDao.getById(event.calendarId)
@@ -141,15 +148,29 @@ class ConflictResolver @Inject constructor(
         val defaultReminderMinutes = dataStore.defaultReminderMinutes.first()
         val defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
 
-        // Update local event with server data
-        val updatedEvent = EventMapper.toEntity(
-            parsed = parsedEvent,
+        // Update local event with server data using ICalEventMapper
+        var updatedEvent = ICalEventMapper.toEntity(
+            icalEvent = parsedEvent,
+            rawIcal = serverEvent.icalData,
             calendarId = event.calendarId,
             caldavUrl = serverEvent.url,
-            etag = serverEvent.etag,
-            existingEvent = event,
-            defaultReminderMinutes = defaultReminderMinutes,
-            defaultAllDayReminderMinutes = defaultAllDayReminderMinutes
+            etag = serverEvent.etag
+        )
+
+        // Apply default reminders if server didn't provide any
+        if (updatedEvent.reminders.isNullOrEmpty()) {
+            val defaultMinutes = if (updatedEvent.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
+            if (defaultMinutes > 0) {
+                val defaultReminder = minutesToIsoDuration(defaultMinutes)
+                updatedEvent = updatedEvent.copy(reminders = listOf(defaultReminder))
+            }
+        }
+
+        // Preserve existing event ID and timestamps
+        updatedEvent = updatedEvent.copy(
+            id = event.id,
+            createdAt = event.createdAt,
+            localModifiedAt = event.localModifiedAt
         )
 
         eventsDao.upsert(updatedEvent)
@@ -232,15 +253,19 @@ class ConflictResolver @Inject constructor(
         }
 
         val serverEvent = (fetchResult as CalDavResult.Success).data
-        val parseResult = parser.parse(serverEvent.icalData)
-        if (!parseResult.isSuccess() || parseResult.events.isEmpty()) {
-            return ConflictResult.Error("Failed to parse server event")
+        val parseResult = icalParser.parseAllEvents(serverEvent.icalData)
+        val parsedEvents = when (parseResult) {
+            is ParseResult.Success -> parseResult.value
+            is ParseResult.Error -> return ConflictResult.Error("Failed to parse server event: ${parseResult.error.message}")
+        }
+        if (parsedEvents.isEmpty()) {
+            return ConflictResult.Error("Failed to parse server event: no events found")
         }
 
-        val parsedEvent = parseResult.events.first()
+        val parsedICalEvent = parsedEvents.first()
 
         // Compare sequence numbers (RFC 5545 requires incrementing SEQUENCE on changes)
-        val serverSequence = parsedEvent.sequence
+        val serverSequence = parsedICalEvent.sequence
         val localSequence = event.sequence
 
         val serverWins = when {
@@ -248,9 +273,9 @@ class ConflictResolver @Inject constructor(
             serverSequence < localSequence -> false
             // Equal sequence - compare modification times
             else -> {
-                val serverModified = parsedEvent.dtstamp
+                val serverModified = parsedICalEvent.dtstamp?.timestamp ?: 0L
                 val localModified = event.localModifiedAt ?: event.updatedAt
-                serverModified > localModified / 1000 // dtstamp is in seconds
+                serverModified > localModified // Both in milliseconds now
             }
         }
 
@@ -301,6 +326,22 @@ class ConflictResolver @Inject constructor(
         )
 
         return ConflictResult.MarkedForManualResolution
+    }
+
+    /**
+     * Convert reminder minutes to ISO 8601 duration format.
+     */
+    private fun minutesToIsoDuration(minutes: Int): String {
+        return when {
+            minutes <= 0 -> "PT0M"
+            minutes < 60 -> "-PT${minutes}M"
+            minutes < 1440 -> {
+                val hours = minutes / 60
+                val mins = minutes % 60
+                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
+            }
+            else -> "-P${minutes / 1440}D"
+        }
     }
 }
 

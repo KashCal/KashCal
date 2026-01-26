@@ -20,10 +20,10 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -50,10 +50,10 @@ class LocalFirstSyncIntegrationTest {
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var client: CalDavClient
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var syncSessionStore: SyncSessionStore
     private lateinit var testCalendar: Calendar
     private var testAccountId: Long = 0
 
-    private val parser = Ical4jParser()
     private val quirks = ICloudQuirks()
 
     @Before
@@ -66,6 +66,7 @@ class LocalFirstSyncIntegrationTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         client = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        syncSessionStore = mockk(relaxed = true)
 
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
@@ -73,12 +74,12 @@ class LocalFirstSyncIntegrationTest {
         pullStrategy = PullStrategy(
             database = database,
             client = client,
-            parser = parser,
             calendarsDao = database.calendarsDao(),
             eventsDao = database.eventsDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
         )
 
         // Create test account and calendar

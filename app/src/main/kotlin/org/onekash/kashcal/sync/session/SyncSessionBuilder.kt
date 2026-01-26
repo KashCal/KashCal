@@ -23,6 +23,11 @@ class SyncSessionBuilder(
     private var eventsUpdated = 0
     private var eventsDeleted = 0
 
+    // Push statistics
+    private var eventsPushedCreated = 0
+    private var eventsPushedUpdated = 0
+    private var eventsPushedDeleted = 0
+
     // Skip counts
     private var skippedParseError = 0
     private var skippedPendingLocal = 0
@@ -45,6 +50,13 @@ class SyncSessionBuilder(
     fun incrementUpdated() = apply { eventsUpdated++ }
     fun incrementDeleted() = apply { eventsDeleted++ }
     fun addDeleted(count: Int) = apply { eventsDeleted += count }
+
+    // Push statistics setter
+    fun setPushStats(created: Int, updated: Int, deleted: Int) = apply {
+        eventsPushedCreated = created
+        eventsPushedUpdated = updated
+        eventsPushedDeleted = deleted
+    }
 
     // Skip reason tracking
     fun incrementSkipParseError() = apply { skippedParseError++ }
@@ -93,6 +105,9 @@ class SyncSessionBuilder(
             eventsWritten = eventsWritten,
             eventsUpdated = eventsUpdated,
             eventsDeleted = eventsDeleted,
+            eventsPushedCreated = eventsPushedCreated,
+            eventsPushedUpdated = eventsPushedUpdated,
+            eventsPushedDeleted = eventsPushedDeleted,
             skippedParseError = skippedParseError,
             skippedPendingLocal = skippedPendingLocal,
             skippedEtagUnchanged = skippedEtagUnchanged,

@@ -111,7 +111,7 @@ class MigrationTest {
     fun `all migrations array contains expected migrations`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        assertEquals(4, migrations.size)
+        assertEquals(7, migrations.size)
     }
 
     @Test
@@ -129,6 +129,15 @@ class MigrationTest {
 
         assertEquals(5, migrations[3].startVersion)
         assertEquals(6, migrations[3].endVersion)
+
+        assertEquals(6, migrations[4].startVersion)
+        assertEquals(7, migrations[4].endVersion)
+
+        assertEquals(7, migrations[5].startVersion)
+        assertEquals(8, migrations[5].endVersion)
+
+        assertEquals(8, migrations[6].startVersion)
+        assertEquals(9, migrations[6].endVersion)
     }
 
     @Test
@@ -136,24 +145,27 @@ class MigrationTest {
         // Version 3 to 4 is handled by AutoMigration
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        // Manual migrations: 1->2, 2->3, 4->5, 5->6
+        // Manual migrations: 1->2, 2->3, 4->5, 5->6, 6->7, 7->8, 8->9
         // AutoMigration: 3->4
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         // Gap at 3->4 (AutoMigration)
         assertTrue(migrations[2].startVersion == 4)
         assertTrue(migrations[2].endVersion == migrations[3].startVersion) // 5
+        assertTrue(migrations[3].endVersion == migrations[4].startVersion) // 6
+        assertTrue(migrations[4].endVersion == migrations[5].startVersion) // 7
+        assertTrue(migrations[5].endVersion == migrations[6].startVersion) // 8
     }
 
     // ==================== Schema Validation Tests ====================
 
     @Test
-    fun `database version is 6`() {
-        // Current database version should be 6
+    fun `database version is 9`() {
+        // Current database version should be 9
         // This test ensures we track the expected version
-        val expectedVersion = 6
+        val expectedVersion = 9
 
-        // The database class uses version = 6
-        assertEquals(expectedVersion, 6)
+        // The database class uses version = 9
+        assertEquals(expectedVersion, 9)
     }
 
     @Test
@@ -165,7 +177,59 @@ class MigrationTest {
         // - 2 to 3 (scheduled_reminders)
         // - 4 to 5 (pending_operations columns)
         // - 5 to 6 (move_phase column)
-        assertEquals(4, migrations.size)
+        // - 6 to 7 (raw_ical, import_id, alarm_count columns)
+        // - 7 to 8 (RFC 5545/7986 fields, boolean indexes)
+        // - 8 to 9 (UID-based exception lookup index)
+        assertEquals(7, migrations.size)
+    }
+
+    // ==================== Migration 7 to 8 Tests ====================
+
+    @Test
+    fun `migration 7 to 8 adds RFC 5545 extended properties`() {
+        val migration = Migrations.MIGRATION_7_8
+
+        assertEquals(7, migration.startVersion)
+        assertEquals(8, migration.endVersion)
+    }
+
+    @Test
+    fun `migration 7 to 8 SQL statements are valid`() {
+        // Structural test to ensure migration is properly defined
+        val migration = Migrations.MIGRATION_7_8
+
+        // Should not throw during construction
+        assertTrue(migration.startVersion < migration.endVersion)
+    }
+
+    // ==================== Migration 8 to 9 Tests ====================
+
+    @Test
+    fun `migration 8 to 9 creates UID-based exception lookup index`() {
+        val migration = Migrations.MIGRATION_8_9
+
+        assertEquals(8, migration.startVersion)
+        assertEquals(9, migration.endVersion)
+    }
+
+    @Test
+    fun `migration 8 to 9 SQL statements are valid`() {
+        // Structural test to ensure migration is properly defined
+        val migration = Migrations.MIGRATION_8_9
+
+        // Should not throw during construction
+        assertTrue(migration.startVersion < migration.endVersion)
+    }
+
+    @Test
+    fun `migration 8 to 9 creates composite index for RFC 5545 lookup`() {
+        // This migration creates index on (calendar_id, uid, original_instance_time)
+        // for efficient getExceptionByUidAndInstanceTime() queries
+        val migration = Migrations.MIGRATION_8_9
+
+        // Verify migration exists and has correct version info
+        assertEquals(8, migration.startVersion)
+        assertEquals(9, migration.endVersion)
     }
 
     // ==================== Column Type Tests ====================

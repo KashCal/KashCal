@@ -9,7 +9,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
-import org.onekash.kashcal.sync.serializer.ICalSerializer
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import javax.inject.Inject
 
 /**
@@ -29,7 +29,6 @@ import javax.inject.Inject
  */
 class PushStrategy @Inject constructor(
     private val client: CalDavClient,
-    private val serializer: ICalSerializer,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao
@@ -543,11 +542,11 @@ class PushStrategy @Inject constructor(
         return if (event.rrule != null && event.originalEventId == null) {
             // Master recurring event - include exceptions
             val exceptions = eventsDao.getExceptionsForMaster(event.id)
-            val icalData = serializer.serializeWithExceptions(event, exceptions)
+            val icalData = IcsPatcher.serializeWithExceptions(event, exceptions)
             icalData to exceptions
         } else {
             // Single event or exception event
-            serializer.serialize(event) to emptyList()
+            IcsPatcher.serialize(event) to emptyList()
         }
     }
 

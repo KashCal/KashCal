@@ -160,7 +160,7 @@ data class EventFormState(
  * Event creation/editing bottom sheet with iOS-style UI.
  *
  * @param eventId Event ID for edit mode, null for create mode
- * @param initialStartTs Initial start timestamp (epoch seconds) for new events
+ * @param initialStartTs Initial start timestamp (epoch milliseconds) for new events
  * @param occurrenceTs Occurrence timestamp when editing single occurrence of recurring event
  * @param calendars Available calendars
  * @param defaultCalendarId Default calendar ID for new events
@@ -372,7 +372,7 @@ fun EventFormSheet(
             // Handle initial start time (overrides defaults if provided)
             if (initialStartTs != null) {
                 val calendar = JavaCalendar.getInstance()
-                calendar.timeInMillis = initialStartTs * 1000
+                calendar.timeInMillis = initialStartTs
                 val startHour = calendar.get(JavaCalendar.HOUR_OF_DAY)
                 val endMinutes = (0 + defaultEventDuration) % 60
                 val endHour = startHour + (0 + defaultEventDuration) / 60

@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.sync.serializer.ICalSerializer
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -25,12 +25,10 @@ private const val TAG = "IcsExporter"
  * - Single event export (with exceptions for recurring)
  * - Full calendar export (all events bundled)
  *
- * @see ICalSerializer for RFC 5545 serialization
+ * @see IcsPatcher for RFC 5545 serialization
  */
 @Singleton
-class IcsExporter @Inject constructor(
-    private val serializer: ICalSerializer
-) {
+class IcsExporter @Inject constructor() {
     companion object {
         private const val AUTHORITY_SUFFIX = ".fileprovider"
         private const val SHARED_DIR = "shared"
@@ -64,9 +62,9 @@ CALSCALE:GREGORIAN"""
             Log.d(TAG, "Exporting event: ${event.title} with ${exceptions.size} exceptions")
 
             val icsContent = if (exceptions.isNotEmpty()) {
-                serializer.serializeWithExceptions(event, exceptions)
+                IcsPatcher.serializeWithExceptions(event, exceptions)
             } else {
-                serializer.serialize(event)
+                IcsPatcher.serialize(event)
             }
 
             val fileName = generateFileName(event.title)
@@ -143,9 +141,9 @@ CALSCALE:GREGORIAN"""
             // Add all VEVENTs
             events.forEach { (master, exceptions) ->
                 val eventIcs = if (exceptions.isNotEmpty()) {
-                    serializer.serializeWithExceptions(master, exceptions)
+                    IcsPatcher.serializeWithExceptions(master, exceptions)
                 } else {
-                    serializer.serialize(master)
+                    IcsPatcher.serialize(master)
                 }
 
                 // Extract VEVENT blocks from individual serialization

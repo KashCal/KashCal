@@ -14,7 +14,8 @@ import androidx.room.PrimaryKey
 @Entity(
     tableName = "accounts",
     indices = [
-        Index(value = ["provider", "email"], unique = true)
+        Index(value = ["provider", "email"], unique = true),
+        Index(value = ["is_enabled"])
     ]
 )
 data class Account(

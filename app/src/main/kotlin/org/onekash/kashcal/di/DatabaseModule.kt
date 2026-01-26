@@ -36,33 +36,57 @@ object DatabaseModule {
     private const val TAG = "DatabaseModule"
 
     /**
-     * Database callback to create partial unique index for duplicate prevention.
+     * Database callback to create triggers for master event duplicate prevention.
      *
-     * This creates a unique index on (uid, calendar_id) for master events only.
-     * Exception events share the master's UID and are excluded via WHERE clause.
-     * This is RFC 5545 compliant: master events must have unique UIDs within a calendar.
+     * Uses triggers instead of partial unique index because Room doesn't support
+     * partial indexes in @Index annotations, causing schema validation failures.
+     *
+     * The triggers enforce RFC 5545: master events must have unique UIDs within a calendar.
+     * This prevents duplicates during iCloud sync (multiple servers may send same data).
+     * Exception events share the master's UID and are allowed (original_event_id IS NOT NULL).
      */
     private val databaseCallback = object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
-            Log.d(TAG, "Creating partial unique index for master event deduplication")
-            db.execSQL("""
-                CREATE UNIQUE INDEX IF NOT EXISTS index_events_uid_calendar_master
-                ON events (uid, calendar_id)
-                WHERE original_event_id IS NULL
-            """.trimIndent())
+            Log.d(TAG, "Creating triggers for master event deduplication")
+            createMasterEventUniqueTriggers(db)
         }
+    }
 
-        override fun onOpen(db: SupportSQLiteDatabase) {
-            super.onOpen(db)
-            // Ensure index exists even for existing databases (fresh install covers onCreate,
-            // but onOpen handles any edge cases where index might be missing)
-            db.execSQL("""
-                CREATE UNIQUE INDEX IF NOT EXISTS index_events_uid_calendar_master
-                ON events (uid, calendar_id)
-                WHERE original_event_id IS NULL
-            """.trimIndent())
-        }
+    /**
+     * Creates triggers to enforce unique (uid, calendar_id) for master events.
+     */
+    private fun createMasterEventUniqueTriggers(db: SupportSQLiteDatabase) {
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_insert
+            BEFORE INSERT ON events
+            WHEN NEW.original_event_id IS NULL
+            BEGIN
+                SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar')
+                WHERE EXISTS (
+                    SELECT 1 FROM events
+                    WHERE uid = NEW.uid
+                    AND calendar_id = NEW.calendar_id
+                    AND original_event_id IS NULL
+                );
+            END
+        """.trimIndent())
+
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_update
+            BEFORE UPDATE ON events
+            WHEN NEW.original_event_id IS NULL
+            BEGIN
+                SELECT RAISE(ABORT, 'UNIQUE constraint failed: duplicate master event uid in calendar')
+                WHERE EXISTS (
+                    SELECT 1 FROM events
+                    WHERE uid = NEW.uid
+                    AND calendar_id = NEW.calendar_id
+                    AND original_event_id IS NULL
+                    AND id != NEW.id
+                );
+            END
+        """.trimIndent())
     }
 
     /**
@@ -82,7 +106,7 @@ object DatabaseModule {
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
             // Add migrations
             .addMigrations(*Migrations.ALL_MIGRATIONS)
-            // Add callback for partial unique index creation
+            // Add callback for trigger creation on fresh install
             .addCallback(databaseCallback)
             .build()
     }

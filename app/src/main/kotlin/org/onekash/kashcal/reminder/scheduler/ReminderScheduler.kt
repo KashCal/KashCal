@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
+import org.onekash.kashcal.sync.parser.icaldav.RawIcsParser
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -225,9 +226,27 @@ class ReminderScheduler @Inject constructor(
         occurrences: List<Occurrence>,
         calendarColor: Int
     ) {
-        val reminders = event.reminders
-        if (reminders.isNullOrEmpty()) {
+        // Fast path: use stored reminders (99% of events have ≤3 alarms)
+        val storedReminders = event.reminders
+        if (storedReminders.isNullOrEmpty() && event.alarmCount == 0) {
             Log.d(TAG, "No reminders for event ${event.id}")
+            return
+        }
+
+        // Determine which alarms to schedule
+        val reminderOffsets: List<String> = if (event.alarmCount > 3 && event.rawIcal != null) {
+            // Slow path: parse rawIcal for all alarms (rare case)
+            Log.d(TAG, "Event ${event.id} has ${event.alarmCount} alarms, parsing rawIcal")
+            RawIcsParser.getAllAlarmTriggers(event.rawIcal)
+                .takeIf { it.isNotEmpty() }
+                ?: storedReminders.orEmpty()
+        } else {
+            // Fast path: use stored reminders
+            storedReminders.orEmpty()
+        }
+
+        if (reminderOffsets.isEmpty()) {
+            Log.d(TAG, "No reminders after processing for event ${event.id}")
             return
         }
 
@@ -240,7 +259,7 @@ class ReminderScheduler @Inject constructor(
                 continue
             }
 
-            for (reminderOffset in reminders) {
+            for (reminderOffset in reminderOffsets) {
                 scheduleReminderForOccurrence(
                     event = event,
                     occurrence = occurrence,
@@ -280,7 +299,16 @@ class ReminderScheduler @Inject constructor(
                 eventData.event
             }
 
-            for (reminderOffset in eventData.event.reminders.orEmpty()) {
+            // Determine which alarms to schedule (same logic as scheduleRemindersForEvent)
+            val reminderOffsets = if (eventData.event.alarmCount > 3 && eventData.event.rawIcal != null) {
+                RawIcsParser.getAllAlarmTriggers(eventData.event.rawIcal)
+                    .takeIf { it.isNotEmpty() }
+                    ?: eventData.event.reminders.orEmpty()
+            } else {
+                eventData.event.reminders.orEmpty()
+            }
+
+            for (reminderOffset in reminderOffsets) {
                 val wasScheduled = scheduleReminderForOccurrenceIfMissing(
                     displayEvent = displayEvent,
                     targetEventId = targetEventId,

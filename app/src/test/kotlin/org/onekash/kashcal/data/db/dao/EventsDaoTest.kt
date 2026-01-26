@@ -386,6 +386,99 @@ class EventsDaoTest {
         assertEquals("Exception", exception?.title)
     }
 
+    @Test
+    fun `getExceptionByUidAndInstanceTime finds exception by UID`() = runTest {
+        val uid = "recurring-uid-${System.nanoTime()}"
+        val masterId = eventsDao.insert(createTestEvent(
+            uid = uid,
+            title = "Master",
+            rrule = "FREQ=WEEKLY"
+        ))
+        val instanceTime = parseDate("2025-01-13 10:00")
+        eventsDao.insert(createTestEvent(
+            uid = uid, // Same UID as master (RFC 5545)
+            title = "Exception",
+            originalEventId = masterId,
+            originalInstanceTime = instanceTime
+        ))
+
+        val exception = eventsDao.getExceptionByUidAndInstanceTime(
+            uid = uid,
+            calendarId = calendarId,
+            originalInstanceTime = instanceTime
+        )
+
+        assertNotNull(exception)
+        assertEquals("Exception", exception?.title)
+        assertEquals(uid, exception?.uid)
+    }
+
+    @Test
+    fun `getExceptionByUidAndInstanceTime finds exception regardless of which master it points to`() = runTest {
+        // This tests the RFC 5545 compliant lookup:
+        // UID + originalInstanceTime finds the exception regardless of originalEventId value
+        // This is key for sync where master ID might change
+        val uid = "recurring-uid-${System.nanoTime()}"
+        val instanceTime = parseDate("2025-01-13 10:00")
+
+        // Create master
+        val masterId = eventsDao.insert(createTestEvent(
+            uid = uid,
+            title = "Master",
+            rrule = "FREQ=WEEKLY"
+        ))
+
+        // Create exception linked to master
+        val exceptionId = eventsDao.insert(createTestEvent(
+            uid = uid,
+            title = "Exception Event",
+            originalEventId = masterId,
+            originalInstanceTime = instanceTime
+        ))
+
+        // UID-based lookup should find the exception using UID + instanceTime
+        // NOT using originalEventId (which is the old fragile approach)
+        val exception = eventsDao.getExceptionByUidAndInstanceTime(
+            uid = uid,
+            calendarId = calendarId,
+            originalInstanceTime = instanceTime
+        )
+
+        assertNotNull("Exception should be found via UID + instanceTime lookup", exception)
+        assertEquals(exceptionId, exception?.id)
+        assertEquals("Exception Event", exception?.title)
+
+        // Also verify that searching with WRONG master ID still finds it
+        // (because the lookup uses UID, not originalEventId)
+        val anotherLookup = eventsDao.getExceptionByUidAndInstanceTime(
+            uid = uid,
+            calendarId = calendarId,
+            originalInstanceTime = instanceTime
+        )
+        assertEquals(exceptionId, anotherLookup?.id)
+    }
+
+    @Test
+    fun `getExceptionByUidAndInstanceTime returns null for master events`() = runTest {
+        // Master events have originalEventId = null, so they should NOT be returned
+        val uid = "master-uid-${System.nanoTime()}"
+        val masterId = eventsDao.insert(createTestEvent(
+            uid = uid,
+            title = "Master Event",
+            rrule = "FREQ=WEEKLY",
+            startTs = parseDate("2025-01-13 10:00")
+        ))
+
+        // Try to find with master's start time (as if it were an exception)
+        val result = eventsDao.getExceptionByUidAndInstanceTime(
+            uid = uid,
+            calendarId = calendarId,
+            originalInstanceTime = parseDate("2025-01-13 10:00")
+        )
+
+        assertNull("Master events should NOT be returned (originalEventId IS NOT NULL filter)", result)
+    }
+
     // ==================== Sync Status Tests ====================
 
     @Test

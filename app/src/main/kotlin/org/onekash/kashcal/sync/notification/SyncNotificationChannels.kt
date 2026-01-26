@@ -34,6 +34,7 @@ class SyncNotificationChannels @Inject constructor(
         const val NOTIFICATION_ID_SYNC_PROGRESS = 1001
         const val NOTIFICATION_ID_SYNC_COMPLETE = 1002
         const val NOTIFICATION_ID_SYNC_ERROR = 1003
+        const val NOTIFICATION_ID_CONFLICT_ABANDONED = 1004
     }
 
     private val notificationManager: NotificationManager by lazy {
@@ -129,5 +130,6 @@ class SyncNotificationChannels @Inject constructor(
         cancel(NOTIFICATION_ID_SYNC_PROGRESS)
         cancel(NOTIFICATION_ID_SYNC_COMPLETE)
         cancel(NOTIFICATION_ID_SYNC_ERROR)
+        cancel(NOTIFICATION_ID_CONFLICT_ABANDONED)
     }
 }

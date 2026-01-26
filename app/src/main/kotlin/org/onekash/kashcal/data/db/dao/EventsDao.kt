@@ -87,6 +87,51 @@ interface EventsDao {
     suspend fun getByUid(uid: String): List<Event>
 
     /**
+     * Find event by import_id within a calendar.
+     *
+     * import_id uniquely identifies events during sync:
+     * - Master events: "{uid}"
+     * - Exception events: "{uid}:RECID:{datetime}"
+     *
+     * @param importId The unique import identifier
+     * @param calendarId Calendar to search within
+     * @return The matching event, or null if not found
+     *
+     * @deprecated Use [getExceptionByUidAndInstanceTime] for exception lookup during sync.
+     * UID + originalInstanceTime is the RFC 5545 compliant approach and doesn't depend
+     * on local database IDs that can become stale. Kept for potential debugging use.
+     */
+    @Deprecated(
+        message = "Use getExceptionByUidAndInstanceTime for exception lookup",
+        replaceWith = ReplaceWith("getExceptionByUidAndInstanceTime(uid, calendarId, originalInstanceTime)")
+    )
+    @Query("""
+        SELECT * FROM events
+        WHERE import_id = :importId
+        AND calendar_id = :calendarId
+        LIMIT 1
+    """)
+    suspend fun findByImportId(importId: String, calendarId: Long): Event?
+
+    /**
+     * Find all events by UID within a calendar (master + all exceptions).
+     *
+     * Returns master event and all exception events that share the same UID.
+     * Useful for operations that affect the entire recurring series.
+     *
+     * @param uid RFC 5545 UID
+     * @param calendarId Calendar to search within
+     * @return List of events (master first, then exceptions by original_instance_time)
+     */
+    @Query("""
+        SELECT * FROM events
+        WHERE uid = :uid
+        AND calendar_id = :calendarId
+        ORDER BY original_event_id IS NOT NULL, original_instance_time ASC
+    """)
+    suspend fun findAllByUid(uid: String, calendarId: Long): List<Event>
+
+    /**
      * Get event by CalDAV URL (unique per event).
      */
     @Query("SELECT * FROM events WHERE caldav_url = :caldavUrl")
@@ -173,6 +218,32 @@ interface EventsDao {
         AND original_instance_time = :instanceTime
     """)
     suspend fun getExceptionForOccurrence(masterEventId: Long, instanceTime: Long): Event?
+
+    /**
+     * Find exception by UID and instance time (RFC 5545 compliant).
+     *
+     * PRIMARY lookup for sync - uses server-stable identifiers.
+     * Per RFC 5545, exception events share the same UID as their master
+     * and are distinguished by RECURRENCE-ID (originalInstanceTime).
+     *
+     * @param uid RFC 5545 UID (shared by master and all exceptions)
+     * @param calendarId Calendar to search within
+     * @param originalInstanceTime RECURRENCE-ID timestamp (the original occurrence being modified)
+     * @return The exception event, or null if not found
+     */
+    @Query("""
+        SELECT * FROM events
+        WHERE uid = :uid
+        AND calendar_id = :calendarId
+        AND original_instance_time = :originalInstanceTime
+        AND original_event_id IS NOT NULL
+        LIMIT 1
+    """)
+    suspend fun getExceptionByUidAndInstanceTime(
+        uid: String,
+        calendarId: Long,
+        originalInstanceTime: Long
+    ): Event?
 
     // ========== Read Operations - Sync ==========
 
@@ -378,6 +449,18 @@ interface EventsDao {
         WHERE id = :id
     """)
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, now: Long)
+
+    /**
+     * Clear all etags to force re-parsing on next sync.
+     *
+     * Used when parser version changes (e.g., timezone fix) to ensure
+     * all events are re-parsed with the new logic, even if server etags
+     * haven't changed.
+     *
+     * @see KashCalDataStore.CURRENT_PARSER_VERSION
+     */
+    @Query("UPDATE events SET etag = NULL")
+    suspend fun clearAllEtags()
 
     // ========== Recurrence Updates ==========
 

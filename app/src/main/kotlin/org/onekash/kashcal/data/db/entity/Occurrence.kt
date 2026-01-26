@@ -35,7 +35,8 @@ import androidx.room.PrimaryKey
         Index(value = ["start_day"]),
         Index(value = ["event_id"]),
         Index(value = ["calendar_id", "start_ts"]),
-        Index(value = ["exception_event_id"])
+        Index(value = ["exception_event_id"]),
+        Index(value = ["is_cancelled"])
     ]
 )
 data class Occurrence(

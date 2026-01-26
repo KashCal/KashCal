@@ -38,8 +38,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.foundation.border
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.rrule.EndCondition
 import org.onekash.kashcal.domain.rrule.FrequencyOption
@@ -443,10 +452,41 @@ fun EndConditionSelector(
     modifier: Modifier = Modifier,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    var countText by remember(endCondition) {
-        mutableStateOf(
-            if (endCondition is EndCondition.Count) endCondition.count.toString() else "10"
-        )
+    // Use TextFieldState for modern select-all on focus support
+    val initialCountText = if (endCondition is EndCondition.Count) endCondition.count.toString() else "10"
+    val countTextFieldState = rememberTextFieldState(initialCountText)
+
+    // Use rememberUpdatedState to capture current values in long-running LaunchedEffect
+    val currentEndCondition by androidx.compose.runtime.rememberUpdatedState(endCondition)
+    val currentOnEndConditionChange by androidx.compose.runtime.rememberUpdatedState(onEndConditionChange)
+
+    // Track if we're in Count mode to detect type changes (not value changes)
+    var wasCountMode by remember { mutableStateOf(endCondition is EndCondition.Count) }
+
+    // Sync text field only when switching TO Count mode (not on every value change)
+    androidx.compose.runtime.LaunchedEffect(endCondition) {
+        val isCountMode = endCondition is EndCondition.Count
+        if (isCountMode && !wasCountMode) {
+            // Switched to Count mode - sync the value
+            val newText = (endCondition as EndCondition.Count).count.toString()
+            if (countTextFieldState.text.toString() != newText) {
+                countTextFieldState.setTextAndPlaceCursorAtEnd(newText)
+            }
+        }
+        wasCountMode = isCountMode
+    }
+
+    // Observe text changes and update the end condition (only when valid number entered)
+    androidx.compose.runtime.LaunchedEffect(countTextFieldState) {
+        androidx.compose.runtime.snapshotFlow { countTextFieldState.text.toString() }
+            .collect { text ->
+                // Only propagate valid positive numbers - allow empty/partial input while typing
+                val count = text.toIntOrNull()?.takeIf { it > 0 }
+                if (count != null && currentEndCondition is EndCondition.Count &&
+                    (currentEndCondition as EndCondition.Count).count != count) {
+                    currentOnEndConditionChange(EndCondition.Count(count))
+                }
+            }
     }
 
     var untilMillis by remember(endCondition) {
@@ -490,7 +530,7 @@ fun EndConditionSelector(
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
                     .clickable {
-                        val count = countText.toIntOrNull() ?: 10
+                        val count = countTextFieldState.text.toString().toIntOrNull() ?: 10
                         onEndConditionChange(EndCondition.Count(count))
                         showDatePicker = false
                     },
@@ -506,19 +546,39 @@ fun EndConditionSelector(
                 }
             }
             Text("After", style = MaterialTheme.typography.bodyMedium)
-            OutlinedTextField(
-                value = countText,
-                onValueChange = { newValue ->
-                    countText = newValue.filter { it.isDigit() }.take(3)
-                    val count = countText.toIntOrNull() ?: 10
-                    if (endCondition is EndCondition.Count) {
-                        onEndConditionChange(EndCondition.Count(count))
+            BasicTextField(
+                state = countTextFieldState,
+                modifier = Modifier
+                    .width(60.dp)
+                    .border(
+                        width = 1.dp,
+                        color = if (endCondition is EndCondition.Count)
+                            MaterialTheme.colorScheme.outline
+                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    .padding(horizontal = 8.dp, vertical = 12.dp)
+                    .onFocusChanged { focusState ->
+                        if (focusState.isFocused) {
+                            // Select all text when field gains focus (modern API)
+                            countTextFieldState.edit { selectAll() }
+                        }
+                    },
+                lineLimits = TextFieldLineLimits.SingleLine,
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    textAlign = TextAlign.Center,
+                    color = if (endCondition is EndCondition.Count)
+                        MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                ),
+                enabled = endCondition is EndCondition.Count,
+                inputTransformation = InputTransformation {
+                    // Filter to digits only and limit to 3 characters
+                    val filtered = asCharSequence().filter { it.isDigit() }.take(3)
+                    if (filtered.toString() != asCharSequence().toString()) {
+                        replace(0, length, filtered)
                     }
-                },
-                modifier = Modifier.width(60.dp),
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center),
-                enabled = endCondition is EndCondition.Count
+                }
             )
             Text("occurrences", style = MaterialTheme.typography.bodyMedium)
         }

@@ -7,11 +7,15 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.session.ErrorType
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.ConflictResolver
@@ -29,9 +33,11 @@ class CalDavSyncEngineTest {
     private lateinit var conflictResolver: ConflictResolver
     private lateinit var accountsDao: AccountsDao
     private lateinit var calendarsDao: CalendarsDao
+    private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var syncLogsDao: SyncLogsDao
     private lateinit var syncSessionStore: SyncSessionStore
+    private lateinit var notificationManager: SyncNotificationManager
     private lateinit var syncEngine: CalDavSyncEngine
 
     private val testAccount = Account(
@@ -74,9 +80,11 @@ class CalDavSyncEngineTest {
         conflictResolver = mockk()
         accountsDao = mockk()
         calendarsDao = mockk()
+        eventsDao = mockk()
         pendingOperationsDao = mockk()
         syncLogsDao = mockk()
         syncSessionStore = mockk(relaxed = true)
+        notificationManager = mockk(relaxed = true)
 
         syncEngine = CalDavSyncEngine(
             pullStrategy = pullStrategy,
@@ -84,10 +92,11 @@ class CalDavSyncEngineTest {
             conflictResolver = conflictResolver,
             accountsDao = accountsDao,
             calendarsDao = calendarsDao,
+            eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
             syncSessionStore = syncSessionStore,
-            notificationManager = mockk(relaxed = true)
+            notificationManager = notificationManager
         )
 
         // Default mock for logging
@@ -656,5 +665,220 @@ class CalDavSyncEngineTest {
                 session.errorType == ErrorType.TIMEOUT
             })
         }
+    }
+
+    // ========== Conflict Abandonment Tests (v20.12.41) ==========
+
+    private fun createTestEvent(id: Long = 100L, title: String = "Test Event") = Event(
+        id = id,
+        calendarId = 1L,
+        uid = "uid-$id",
+        title = title,
+        startTs = System.currentTimeMillis(),
+        endTs = System.currentTimeMillis() + 3600000,
+        isAllDay = false,
+        syncStatus = SyncStatus.PENDING_UPDATE,
+        dtstamp = System.currentTimeMillis()
+    )
+
+    @Test
+    fun `conflict resolved on first try does not abandon`() = runTest {
+        val conflictOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING,
+            retryCount = 0,
+            lastError = "Conflict: server has newer version"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.ServerVersionKept
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar)
+
+        assert(result is SyncResult.Success)
+        val success = result as SyncResult.Success
+        assert(success.conflictsResolved == 1)
+
+        // Should NOT abandon - resolved successfully
+        coVerify(exactly = 0) { eventsDao.updateSyncStatus(any(), any(), any()) }
+        coVerify(exactly = 0) { pendingOperationsDao.deleteById(any()) }
+        coVerify(exactly = 0) { notificationManager.showConflictAbandonedNotification(any(), any()) }
+    }
+
+    @Test
+    fun `conflict fails with retryCount 2 continues retrying`() = runTest {
+        val conflictOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING,
+            retryCount = 2,  // Less than MAX_CONFLICT_SYNC_CYCLES (3)
+            lastError = "Conflict: server has newer version"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.Error("Network error")
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar)
+
+        // Should be partial success with error recorded
+        assert(result is SyncResult.PartialSuccess)
+        val partial = result as SyncResult.PartialSuccess
+        assert(partial.errors.any { it.phase == SyncPhase.CONFLICT_RESOLUTION })
+        assert(partial.errors[0].message.contains("cycle 2/3"))
+
+        // Should NOT abandon yet
+        coVerify(exactly = 0) { eventsDao.updateSyncStatus(any(), any(), any()) }
+        coVerify(exactly = 0) { pendingOperationsDao.deleteById(any()) }
+        coVerify(exactly = 0) { notificationManager.showConflictAbandonedNotification(any(), any()) }
+    }
+
+    @Test
+    fun `conflict fails with retryCount 3 abandons operation`() = runTest {
+        val testEvent = createTestEvent(id = 100L, title = "My Meeting")
+        val conflictOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING,
+            retryCount = 3,  // Equal to MAX_CONFLICT_SYNC_CYCLES
+            lastError = "Conflict: server has newer version"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.Error("Network error")
+        coEvery { eventsDao.getById(100L) } returns testEvent
+        coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(1L) } just Runs
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar)
+
+        // Should be success - conflict was abandoned (counted as resolved)
+        assert(result is SyncResult.Success)
+        val success = result as SyncResult.Success
+        assert(success.conflictsResolved == 1)
+
+        // Verify abandonment
+        coVerify { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) }
+        coVerify { pendingOperationsDao.deleteById(1L) }
+        coVerify { notificationManager.showConflictAbandonedNotification("My Meeting", 1) }
+    }
+
+    @Test
+    fun `abandoned conflict with deleted event still deletes operation`() = runTest {
+        val conflictOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING,
+            retryCount = 5,  // Greater than MAX_CONFLICT_SYNC_CYCLES
+            lastError = "Conflict: server has newer version"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.Error("Network error")
+        coEvery { eventsDao.getById(100L) } returns null  // Event was deleted
+        coEvery { pendingOperationsDao.deleteById(1L) } just Runs
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar)
+
+        assert(result is SyncResult.Success)
+
+        // Should NOT call updateSyncStatus (event doesn't exist)
+        coVerify(exactly = 0) { eventsDao.updateSyncStatus(any(), any(), any()) }
+        // Should still delete the operation
+        coVerify { pendingOperationsDao.deleteById(1L) }
+        // Should still show notification (with null title)
+        coVerify { notificationManager.showConflictAbandonedNotification(null, 1) }
+    }
+
+    @Test
+    fun `notification shows count without title for multiple abandoned conflicts`() = runTest {
+        val testEvent1 = createTestEvent(id = 100L, title = "Meeting 1")
+        val testEvent2 = createTestEvent(id = 101L, title = "Meeting 2")
+        val conflictOp1 = PendingOperation(
+            id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING, retryCount = 3,
+            lastError = "Conflict"
+        )
+        val conflictOp2 = PendingOperation(
+            id = 2L, eventId = 101L, operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING, retryCount = 4,
+            lastError = "Conflict"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 2, operationsFailed = 2
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp1, conflictOp2)
+        coEvery { conflictResolver.resolve(any(), strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.Error("Network error")
+        coEvery { eventsDao.getById(100L) } returns testEvent1
+        coEvery { eventsDao.getById(101L) } returns testEvent2
+        coEvery { eventsDao.updateSyncStatus(any(), SyncStatus.SYNCED, any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        syncEngine.syncCalendar(testCalendar)
+
+        // Should show notification with null title (multiple events) and count = 2
+        coVerify { notificationManager.showConflictAbandonedNotification(null, 2) }
+    }
+
+    @Test
+    fun `PENDING_CREATE conflict abandoned after max cycles`() = runTest {
+        val testEvent = createTestEvent(id = 100L, title = "New Event").copy(
+            syncStatus = SyncStatus.PENDING_CREATE
+        )
+        val conflictOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_CREATE,  // CREATE operation
+            status = PendingOperation.STATUS_PENDING,
+            retryCount = 3,
+            lastError = "412: UID already exists"
+        )
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS) } returns ConflictResult.Error("Parse error")
+        coEvery { eventsDao.getById(100L) } returns testEvent
+        coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(1L) } just Runs
+        coEvery { pullStrategy.pull(testCalendar, false, any(), any(), any()) } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar)
+
+        assert(result is SyncResult.Success)
+
+        // Should abandon CREATE operations the same as UPDATE
+        coVerify { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) }
+        coVerify { pendingOperationsDao.deleteById(1L) }
+        coVerify { notificationManager.showConflictAbandonedNotification("New Event", 1) }
     }
 }

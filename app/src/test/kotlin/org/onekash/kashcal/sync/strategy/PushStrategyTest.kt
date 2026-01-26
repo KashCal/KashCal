@@ -14,12 +14,10 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
-import org.onekash.kashcal.sync.serializer.ICalSerializer
 
 class PushStrategyTest {
 
     private lateinit var client: CalDavClient
-    private lateinit var serializer: ICalSerializer
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
@@ -76,7 +74,6 @@ class PushStrategyTest {
     @Before
     fun setup() {
         client = mockk()
-        serializer = mockk()
         calendarsDao = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
@@ -88,7 +85,6 @@ class PushStrategyTest {
 
         pushStrategy = PushStrategy(
             client = client,
-            serializer = serializer,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
@@ -122,7 +118,6 @@ class PushStrategyTest {
             status = PendingOperation.STATUS_PENDING
         )
 
-        val icalData = "BEGIN:VCALENDAR\nVERSION:2.0\nEND:VCALENDAR"
         val serverUrl = "${testCalendar.caldavUrl}${testEvent.uid}.ics"
         val serverEtag = "etag-new-123"
 
@@ -131,8 +126,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(testEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.createEvent(testCalendar.caldavUrl, testEvent.uid, icalData) } returns
+        coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(testEvent.uid), any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, serverUrl, serverEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
@@ -166,8 +160,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(testEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.conflictError("Event exists")
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.conflictError("Event exists")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -196,15 +189,13 @@ class PushStrategyTest {
             status = PendingOperation.STATUS_PENDING
         )
 
-        val icalData = "BEGIN:VCALENDAR\nUPDATED\nEND:VCALENDAR"
         val newEtag = "etag-new-456"
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns icalData
-        coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, icalData, eventWithUrl.etag!!) } returns
+        coEvery { client.updateEvent(eq(eventWithUrl.caldavUrl!!), any(), eq(eventWithUrl.etag!!)) } returns
             CalDavResult.success(newEtag)
         coEvery { eventsDao.markSynced(eventWithUrl.id, newEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
@@ -238,8 +229,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified on server")
+                coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified on server")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -275,8 +265,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(eventNoUrl.id) } returns eventNoUrl
         coEvery { calendarsDao.getById(eventNoUrl.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair(serverUrl, serverEtag))
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
@@ -450,8 +439,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(102L) } returns eventDelete
         coEvery { calendarsDao.getById(any()) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.success("new-etag")
         coEvery { client.deleteEvent(any(), any()) } returns CalDavResult.success(Unit)
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
@@ -487,8 +475,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(testEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.networkError("Connection failed")
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.networkError("Connection failed")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -517,8 +504,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(testEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.networkError("Connection failed")
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.networkError("Connection failed")
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
 
         val result = pushStrategy.pushAll()
@@ -545,8 +531,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
         coEvery { calendarsDao.getById(testEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
-        coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.authError("Invalid credentials")
+                coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.authError("Invalid credentials")
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
 
         val result = pushStrategy.pushAll()
@@ -583,7 +568,6 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { calendarsDao.getById(masterEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exceptionEvent)
-        coEvery { serializer.serializeWithExceptions(masterEvent, listOf(exceptionEvent)) } returns "ical-with-exceptions"
         coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update exception etags
@@ -591,8 +575,6 @@ class PushStrategyTest {
 
         pushStrategy.pushAll()
 
-        // Verify serializeWithExceptions was called for recurring event
-        coVerify { serializer.serializeWithExceptions(masterEvent, listOf(exceptionEvent)) }
         // Verify exception etag was updated (v14.2.20)
         coVerify { eventsDao.markSynced(exceptionEvent.id, "etag", any()) }
     }
@@ -621,15 +603,13 @@ class PushStrategyTest {
 
         val result = pushStrategy.pushAll()
 
-        // Should succeed but NOT call any server methods or serialization
+        // Should succeed but NOT call any server methods
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
         // Counts as created since operation succeeded (no-op is success)
         assert(success.eventsCreated == 1)
 
-        // Verify NO serialization or server calls were made
-        coVerify(exactly = 0) { serializer.serialize(any()) }
-        coVerify(exactly = 0) { serializer.serializeWithExceptions(any(), any()) }
+        // Verify NO server calls were made
         coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
         coVerify(exactly = 0) { calendarsDao.getById(any()) }
     }
@@ -637,7 +617,7 @@ class PushStrategyTest {
     @Test
     fun `pushAll skips exception events for UPDATE operations`() = runTest {
         // Exception events should also be skipped for UPDATE operations.
-        // The master's UPDATE will include all exceptions via serializeWithExceptions().
+        // The master's UPDATE will include all exceptions via IcsPatcher.serializeWithExceptions().
         val exceptionEvent = testEvent.copy(
             originalEventId = 99L,
             originalInstanceTime = System.currentTimeMillis(),
@@ -666,8 +646,6 @@ class PushStrategyTest {
         assert(success.eventsUpdated == 1)
 
         // Verify NO server calls were made
-        coVerify(exactly = 0) { serializer.serialize(any()) }
-        coVerify(exactly = 0) { serializer.serializeWithExceptions(any(), any()) }
         coVerify(exactly = 0) { client.updateEvent(any(), any(), any()) }
     }
 
@@ -707,8 +685,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exception1, exception2)
-        coEvery { serializer.serializeWithExceptions(masterEvent, listOf(exception1, exception2)) } returns "ical-with-2-exceptions"
-        coEvery { client.updateEvent(masterEvent.caldavUrl!!, "ical-with-2-exceptions", masterEvent.etag!!) } returns CalDavResult.success("new-etag")
+        coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), masterEvent.etag!!) } returns CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update master and exception etags
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
@@ -718,9 +695,8 @@ class PushStrategyTest {
         val success = result as PushResult.Success
         assert(success.eventsUpdated == 1)
 
-        // Verify serializeWithExceptions was called with both exceptions
-        coVerify { serializer.serializeWithExceptions(masterEvent, listOf(exception1, exception2)) }
-        coVerify { client.updateEvent(masterEvent.caldavUrl!!, "ical-with-2-exceptions", masterEvent.etag!!) }
+        // Verify update was called with correct URL and etag
+        coVerify { client.updateEvent(masterEvent.caldavUrl!!, any(), masterEvent.etag!!) }
         // Verify master etag was updated
         coVerify { eventsDao.markSynced(masterEvent.id, "new-etag", any()) }
         // Verify exception etags were updated (v14.2.20)
@@ -753,7 +729,6 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
         coEvery { calendarsDao.getById(1L) } returns calendar1
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { serializer.serialize(any()) } returns "ical"
         coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
 

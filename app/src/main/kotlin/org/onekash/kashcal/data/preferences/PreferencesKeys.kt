@@ -141,4 +141,26 @@ object PreferencesKeys {
      * v1: Timezone fix - recalculate all-day reminder trigger times (v21.x)
      */
     val REMINDER_MIGRATION_VERSION = intPreferencesKey("reminder_migration_version")
+
+    // ========== App Version Tracking ==========
+
+    /**
+     * Last installed app version code.
+     * Used to detect upgrades and perform cleanup (e.g., cancel stale WorkManager jobs).
+     * v20.12.36 (281): Added to fix upgrade crashes from v20.11.7
+     */
+    val LAST_APP_VERSION_CODE = intPreferencesKey("last_app_version_code")
+
+    // ========== Parser Version (v20.12.39) ==========
+
+    /**
+     * Parser version for iCalendar data.
+     * When parsing logic changes (e.g., timezone handling), bump CURRENT_PARSER_VERSION
+     * in KashCalDataStore. On app start, if stored version < current, all event etags
+     * are cleared to force re-parsing on next sync.
+     *
+     * History:
+     * - v1: Initial (VALUE=DATE timezone fix - use UTC instead of local)
+     */
+    val PARSER_VERSION = intPreferencesKey("parser_version")
 }

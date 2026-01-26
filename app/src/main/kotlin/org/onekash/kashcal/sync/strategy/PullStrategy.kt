@@ -18,11 +18,14 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
-import org.onekash.kashcal.sync.parser.ICalParser
-import org.onekash.kashcal.sync.parser.ParsedEvent
+import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.icaldav.model.ICalEvent
+import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.parser.ICalParser
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 /**
@@ -47,13 +50,16 @@ import javax.inject.Inject
 class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
     private val client: CalDavClient,
-    private val parser: ICalParser,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     @Suppress("DEPRECATION") private val defaultQuirks: CalDavQuirks,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val syncSessionStore: org.onekash.kashcal.sync.session.SyncSessionStore
 ) {
+    // icaldav parser instance
+    private val icalParser = ICalParser()
+
     companion object {
         private const val TAG = "PullStrategy"
 
@@ -92,8 +98,6 @@ class PullStrategy @Inject constructor(
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
         val effectiveClient = clientOverride ?: client
-
-        Log.d(TAG, "Starting pull for calendar: ${calendar.displayName}")
 
         return try {
             // Step 1: Quick ctag check
@@ -148,6 +152,10 @@ class PullStrategy @Inject constructor(
                 message = "Network: ${e.message}",
                 isRetryable = true
             )
+        } catch (e: CancellationException) {
+            // Rethrow cancellation to properly handle coroutine cancellation
+            Log.d(TAG, "Pull cancelled")
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Pull failed: ${e.message}", e)
             PullResult.Error(
@@ -359,14 +367,10 @@ class PullStrategy @Inject constructor(
         clientToUse: CalDavClient,
         sessionBuilder: SyncSessionBuilder?
     ): PullResult {
-        Log.d(TAG, "Full sync for calendar: ${calendar.displayName}")
-
         // Clean up any duplicate master events before processing
-        // This handles edge cases where duplicates were created due to race conditions
-        // (e.g., iCloud returning same event from multiple servers with different caldavUrls)
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
         if (dedupedCount > 0) {
-            Log.w(TAG, "Cleaned up $dedupedCount duplicate master events")
+            Log.d(TAG, "Cleaned up $dedupedCount duplicate master events")
         }
 
         val now = System.currentTimeMillis()
@@ -642,26 +646,38 @@ class PullStrategy @Inject constructor(
         val exceptionEvents = mutableListOf<ParsedEventWithMeta>()
 
         for (serverEvent in serverEvents) {
-            val parseResult = parser.parse(serverEvent.icalData)
-            if (!parseResult.isSuccess() || parseResult.events.isEmpty()) {
-                // Log parse failure with reason for diagnosis
-                val reason = when {
-                    !parseResult.isSuccess() -> "parse error: ${parseResult.errors.firstOrNull()}"
-                    parseResult.events.isEmpty() -> "no VEVENT components found"
-                    else -> "unknown"
+            val parseResult = try {
+                icalParser.parseAllEvents(serverEvent.icalData)
+            } catch (e: Throwable) {
+                // Catch Throwable to catch Errors too (OutOfMemoryError, etc.)
+                Log.e(TAG, "Parse exception for ${serverEvent.url}: ${e.javaClass.name}: ${e.message}")
+                throw e
+            }
+
+            // Check for parse success
+            val parsedEvents = when (parseResult) {
+                is ParseResult.Success -> parseResult.value
+                is ParseResult.Error -> {
+                    Log.w(TAG, "Parse error for ${serverEvent.url}: ${parseResult.error.message}")
+                    sessionBuilder?.incrementSkipParseError()
+                    continue
                 }
-                Log.w(TAG, "Failed to parse event at ${serverEvent.url}: $reason")
+            }
+
+            if (parsedEvents.isEmpty()) {
+                Log.w(TAG, "Failed to parse event at ${serverEvent.url}: no VEVENT components found")
                 sessionBuilder?.incrementSkipParseError()
                 continue
             }
 
-            for (parsed in parseResult.events) {
+            for (parsed in parsedEvents) {
                 val meta = ParsedEventWithMeta(
                     parsed = parsed,
+                    rawIcal = serverEvent.icalData,
                     caldavUrl = serverEvent.url,
                     etag = serverEvent.etag
                 )
-                if (parsed.isException()) {
+                if (ICalEventMapper.isException(parsed)) {
                     exceptionEvents.add(meta)
                 } else {
                     masterEvents.add(meta)
@@ -698,15 +714,32 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            val event = EventMapper.toEntity(
-                parsed = meta.parsed,
+            // Map ICalEvent to Event entity using ICalEventMapper
+            var event = ICalEventMapper.toEntity(
+                icalEvent = meta.parsed,
+                rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
-                etag = meta.etag,
-                existingEvent = existingEvent,
-                defaultReminderMinutes = defaultReminderMinutes,
-                defaultAllDayReminderMinutes = defaultAllDayReminderMinutes
+                etag = meta.etag
             )
+
+            // Apply default reminders if server didn't provide any
+            if (event.reminders.isNullOrEmpty()) {
+                val defaultMinutes = if (event.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
+                if (defaultMinutes > 0) {
+                    val defaultReminder = minutesToIsoDuration(defaultMinutes)
+                    event = event.copy(reminders = listOf(defaultReminder))
+                }
+            }
+
+            // Preserve existing event ID and timestamps
+            if (existingEvent != null) {
+                event = event.copy(
+                    id = existingEvent.id,
+                    createdAt = existingEvent.createdAt,
+                    localModifiedAt = existingEvent.localModifiedAt
+                )
+            }
 
             // TRANSACTION: Upsert event and generate occurrences atomically
             // Prevents orphaned events (no occurrences) if crash occurs mid-operation
@@ -780,7 +813,7 @@ class PullStrategy @Inject constructor(
                 Log.w(TAG, """
                     |Orphaned exception event dropped:
                     |  UID: ${meta.parsed.uid}
-                    |  RECURRENCE-ID: ${meta.parsed.recurrenceId}
+                    |  RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp}
                     |  caldavUrl: ${meta.caldavUrl}
                     |  Title: ${meta.parsed.summary}
                     |  Possible causes: Master outside sync window, master deleted, or sync order issue.
@@ -789,10 +822,18 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            val existingException = findExistingException(
-                masterEventId = masterEvent.id,
-                originalInstanceTime = EventMapper.parseOriginalInstanceTime(meta.parsed.recurrenceId)
-            )
+            // Get original instance time from RECURRENCE-ID
+            val originalInstanceTime = meta.parsed.recurrenceId?.timestamp
+
+            // Find existing exception by UID + instance time (RFC 5545 compliant)
+            // Uses server-stable identifiers - doesn't break when master ID changes
+            val existingException = originalInstanceTime?.let {
+                eventsDao.getExceptionByUidAndInstanceTime(
+                    uid = meta.parsed.uid,
+                    calendarId = calendar.id,
+                    originalInstanceTime = it
+                )
+            }
 
             // LOCAL-FIRST: Skip exception events with pending local changes
             if (existingException != null && existingException.hasPendingChanges()) {
@@ -808,18 +849,38 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            val event = EventMapper.toEntity(
-                parsed = meta.parsed,
+            // Map ICalEvent to Event entity using ICalEventMapper
+            var event = ICalEventMapper.toEntity(
+                icalEvent = meta.parsed,
+                rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
-                etag = meta.etag,
-                existingEvent = existingException,
-                defaultReminderMinutes = defaultReminderMinutes,
-                defaultAllDayReminderMinutes = defaultAllDayReminderMinutes
-            ).copy(
+                etag = meta.etag
+            )
+
+            // Apply default reminders if server didn't provide any
+            if (event.reminders.isNullOrEmpty()) {
+                val defaultMinutes = if (event.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
+                if (defaultMinutes > 0) {
+                    val defaultReminder = minutesToIsoDuration(defaultMinutes)
+                    event = event.copy(reminders = listOf(defaultReminder))
+                }
+            }
+
+            // Link to master event
+            event = event.copy(
                 originalEventId = masterEvent.id,
                 originalSyncId = meta.parsed.uid
             )
+
+            // Preserve existing event ID and timestamps
+            if (existingException != null) {
+                event = event.copy(
+                    id = existingException.id,
+                    createdAt = existingException.createdAt,
+                    localModifiedAt = existingException.localModifiedAt
+                )
+            }
 
             // TRANSACTION: Upsert exception, generate occurrence, cancel original atomically
             // Prevents orphaned exception events (no occurrences) if crash occurs mid-operation
@@ -866,21 +927,36 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Find an existing exception event by master ID and instance time.
+     * Convert reminder minutes to ISO 8601 duration format.
+     * Positive minutes = before event (negative trigger in iCal).
      */
-    private suspend fun findExistingException(
-        masterEventId: Long,
-        originalInstanceTime: Long?
-    ): Event? {
-        if (originalInstanceTime == null) return null
-        return eventsDao.getExceptionForOccurrence(masterEventId, originalInstanceTime)
+    private fun minutesToIsoDuration(minutes: Int): String {
+        return when {
+            minutes <= 0 -> "PT0M"
+            minutes < 60 -> "-PT${minutes}M"
+            minutes < 1440 -> {
+                val hours = minutes / 60
+                val mins = minutes % 60
+                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
+            }
+            minutes < 10080 -> { // Less than 1 week
+                val days = minutes / 1440
+                val hours = (minutes % 1440) / 60
+                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
+            }
+            else -> {
+                val weeks = minutes / 10080
+                "-P${weeks}W"
+            }
+        }
     }
 
     /**
      * Helper class to hold parsed event with metadata.
      */
     private data class ParsedEventWithMeta(
-        val parsed: ParsedEvent,
+        val parsed: ICalEvent,
+        val rawIcal: String,
         val caldavUrl: String,
         val etag: String?
     )

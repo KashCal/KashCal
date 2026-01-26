@@ -330,6 +330,37 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
+     * Show notification when sync conflicts were abandoned after max retries.
+     * Alerts user that local changes were lost due to unresolvable conflicts.
+     *
+     * @param eventTitle Title of the event (shown when only 1 event abandoned)
+     * @param abandonedCount Number of events with abandoned conflicts
+     */
+    fun showConflictAbandonedNotification(eventTitle: String?, abandonedCount: Int) {
+        if (abandonedCount <= 0) return
+
+        val content = if (eventTitle != null && abandonedCount == 1) {
+            "Local changes to \"$eventTitle\" were lost due to sync conflict. Server version will be used."
+        } else {
+            val eventText = if (abandonedCount == 1) "1 event" else "$abandonedCount events"
+            "Local changes to $eventText were lost due to sync conflicts. Server versions will be used."
+        }
+
+        val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Sync conflict resolved")
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setContentIntent(createOpenAppIntent())
+            .build()
+
+        notify(SyncNotificationChannels.NOTIFICATION_ID_CONFLICT_ABANDONED, notification)
+    }
+
+    /**
      * Cancel progress notification.
      * Should be called when sync completes (success or failure).
      */

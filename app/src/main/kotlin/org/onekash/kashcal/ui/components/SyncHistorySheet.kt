@@ -6,10 +6,8 @@ import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
@@ -45,26 +42,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.onekash.kashcal.sync.session.SyncSession
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncStatus
-import org.onekash.kashcal.sync.session.SyncSummaryStats
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
- * Bottom sheet displaying sync session history.
- * Shows structured session cards with color-coded status indicators.
+ * Simplified bottom sheet displaying sync session history.
+ * Shows compact session cards with status icons and expandable details.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +83,7 @@ fun SyncHistorySheet(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         ) {
-            // Header
+            // Header row with title and actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -106,20 +100,25 @@ fun SyncHistorySheet(
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         clipboard.setPrimaryClip(ClipData.newPlainText("Sync History", text))
                     }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Export")
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy to clipboard")
                     }
                     IconButton(onClick = {
                         syncSessionStore.clear()
                     }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Clear")
+                        Icon(Icons.Default.Delete, contentDescription = "Clear history")
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Summary Header
-            SyncSummaryHeader(stats = stats)
+            // Summary line
+            SyncSummaryLine(
+                totalSyncs = stats.totalSyncs,
+                totalPushed = stats.totalPushed,
+                totalPulled = stats.totalPulled,
+                issueCount = stats.issueCount
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -150,109 +149,55 @@ fun SyncHistorySheet(
 }
 
 /**
- * Summary header showing aggregate stats.
+ * Summary line with colored background based on status.
+ * Format: "X syncs   ↑Y pushed   ↓Z pulled" or with issues
  */
 @Composable
-private fun SyncSummaryHeader(stats: SyncSummaryStats) {
+private fun SyncSummaryLine(
+    totalSyncs: Int,
+    totalPushed: Int,
+    totalPulled: Int,
+    issueCount: Int
+) {
+    val hasChanges = totalPushed > 0 || totalPulled > 0
+    val backgroundColor = when {
+        issueCount > 0 -> Color(0xFFFFA000).copy(alpha = 0.1f)  // Orange tint for issues
+        hasChanges -> Color(0xFF4CAF50).copy(alpha = 0.1f)      // Green tint for success with changes
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)  // Neutral for no changes
+    }
+
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        shape = RoundedCornerShape(8.dp),
+        color = backgroundColor
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = "LAST 48 HOURS",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = "${stats.totalSyncs} syncs  •  ${stats.totalEventsProcessed} events",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Status counts
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                StatusChip(
-                    color = Color(0xFF4CAF50),
-                    count = stats.successCount,
-                    label = "ok"
-                )
-                StatusChip(
-                    color = Color(0xFFFFA000),
-                    count = stats.partialCount,
-                    label = "partial"
-                )
-                StatusChip(
-                    color = Color(0xFFE53935),
-                    count = stats.failedCount,
-                    label = "failed"
-                )
-            }
-
-            // Background vs Foreground missing events banner
-            if (stats.backgroundMissingCount > 0 || stats.foregroundMissingCount > 0) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFFFA000).copy(alpha = 0.15f)
-                ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        if (stats.backgroundMissingCount > 0) {
-                            Text(
-                                text = "⚠️ Background: ${stats.backgroundMissingCount} missing events",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFFA000)
-                            )
-                        }
-                        if (stats.foregroundMissingCount > 0) {
-                            Text(
-                                text = "⚠️ Foreground: ${stats.foregroundMissingCount} missing events",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFFFFA000)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatusChip(color: Color, count: Int, label: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(color)
-        )
-        Spacer(modifier = Modifier.width(4.dp))
         Text(
-            text = "$count $label",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = buildString {
+                append("$totalSyncs syncs")
+                append("   ↑$totalPushed pushed")
+                append("   ↓$totalPulled pulled")
+                if (issueCount > 0) {
+                    append("   ⚠ $issueCount issues")
+                }
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(12.dp)
         )
     }
 }
 
 /**
- * Individual sync session card with expandable details.
+ * Simplified sync session card with expandable details.
  */
 @Composable
 private fun SyncSessionCard(session: SyncSession) {
     var expanded by remember { mutableStateOf(false) }
+
+    val statusIcon = when (session.status) {
+        SyncStatus.SUCCESS -> "✓"
+        SyncStatus.PARTIAL -> "⚠"
+        SyncStatus.FAILED -> "✗"
+    }
 
     val statusColor = when (session.status) {
         SyncStatus.SUCCESS -> Color(0xFF4CAF50)
@@ -271,21 +216,20 @@ private fun SyncSessionCard(session: SyncSession) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Header row
+            // Row 1: Status icon, calendar name, trigger+method, time
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    // Status indicator
-                    Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .clip(CircleShape)
-                            .background(statusColor)
+                    Text(
+                        text = statusIcon,
+                        color = statusColor,
+                        fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -296,14 +240,14 @@ private fun SyncSessionCard(session: SyncSession) {
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (session.hasIssues) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "⚠️",
-                            fontSize = 12.sp
-                        )
-                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "${session.triggerSource.icon} ${session.syncType.name.lowercase().replaceFirstChar { it.uppercase() }}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = formatRelativeTime(session.timestamp),
                     style = MaterialTheme.typography.bodySmall,
@@ -311,67 +255,19 @@ private fun SyncSessionCard(session: SyncSession) {
                 )
             }
 
-            // Trigger info
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "${session.triggerSource.icon} ${session.triggerSource.displayName}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = " • ${session.durationMs}ms",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            Spacer(modifier = Modifier.height(4.dp))
 
-            Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-            Spacer(modifier = Modifier.height(8.dp))
+            // Row 2: Fetched → changes summary
+            Text(
+                text = buildChangeSummary(session),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
 
-            // Pipeline numbers
-            if (session.errorType != null) {
+            // Row 3 (optional): Parse failure warning (fallback is now shown inline in buildChangeSummary)
+            if (session.hasParseFailures && !expanded) {
                 Text(
-                    text = "❌ ${session.errorType}${session.errorStage?.let { " at $it" } ?: ""}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFFE53935)
-                )
-                // Show error message if available
-                session.errorMessage?.let { message ->
-                    Text(
-                        text = message.take(100) + if (message.length > 100) "..." else "",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFFE53935).copy(alpha = 0.8f),
-                        maxLines = 2
-                    )
-                }
-            } else {
-                Text(
-                    text = "Server: ${session.hrefsReported}  →  Fetched: ${session.eventsFetched}  →  Written: ${session.eventsWritten}",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-
-            // Issue summary (collapsed)
-            if (session.fallbackUsed && !expanded) {
-                Text(
-                    text = "🔄 Fallback used${if (session.fetchFailedCount > 0) " (${session.fetchFailedCount} failed)" else ""}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFFFA000)
-                )
-            }
-            if (session.hasMissingEvents && !expanded) {
-                Text(
-                    text = "⚠️ ${session.missingCount} missing (will retry)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFFFA000)
-                )
-            }
-            if (session.totalSkipped > 0 && !expanded) {
-                Text(
-                    text = "⚠️ ${session.totalSkipped} skipped",
+                    text = "⚠ ${session.skippedParseError} failed to parse",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFFFA000)
                 )
@@ -387,68 +283,49 @@ private fun SyncSessionCard(session: SyncSession) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text(
-                        text = "DETAILS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    DetailRow("Duration", "${session.durationMs}ms")
 
-                    DetailRow("Sync type", session.syncType.name)
-                    DetailRow("Updated", session.eventsUpdated.toString())
-                    DetailRow("Deleted", session.eventsDeleted.toString())
-
-                    if (session.hasMissingEvents) {
+                    // Parse failure details
+                    if (session.hasParseFailures) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "MISSING EVENTS",
+                            text = "Parse Failures",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFA000)
                         )
-                        DetailRow("Missing count", session.missingCount.toString())
-                        DetailRow("Token advanced", if (session.tokenAdvanced) "Yes" else "No (will retry)")
+                        DetailRow("Events failed", session.skippedParseError.toString())
+                        if (session.abandonedParseErrors > 0) {
+                            DetailRow("Abandoned (max retries)", session.abandonedParseErrors.toString())
+                        }
                     }
 
-                    if (session.totalSkipped > 0) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "SKIPPED BREAKDOWN",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        if (session.skippedParseError > 0) DetailRow("Parse error", session.skippedParseError.toString())
-                        if (session.skippedOrphanedException > 0) DetailRow("No master found", session.skippedOrphanedException.toString())
-                        if (session.skippedPendingLocal > 0) DetailRow("Pending local", session.skippedPendingLocal.toString())
-                        if (session.skippedEtagUnchanged > 0) DetailRow("ETag unchanged", session.skippedEtagUnchanged.toString())
-                    }
-
-                    // Fetch fallback details (v16.8.0)
+                    // Fallback details
                     if (session.fallbackUsed) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "FETCH FALLBACK",
+                            text = "Fallback Mode",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFA000)
                         )
-                        DetailRow("Batch multiget", "Failed")
-                        DetailRow("Individual fallback", "Used")
+                        DetailRow("Batch fetch", "Failed → individual fallback")
                         if (session.fetchFailedCount > 0) {
                             DetailRow("Individual failures", session.fetchFailedCount.toString())
                         }
                     }
 
-                    // Error message details (v16.8.0)
+                    // Error details
                     if (session.errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "ERROR DETAILS",
+                            text = "Error",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFE53935)
                         )
                         Text(
                             text = session.errorMessage,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 3
                         )
                     }
                 }
@@ -466,6 +343,39 @@ private fun SyncSessionCard(session: SyncSession) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+/**
+ * Build the change summary line.
+ * Format: "↑N   ↓ +Y ~Z -W" or error message
+ */
+private fun buildChangeSummary(session: SyncSession): String {
+    return when {
+        session.status == SyncStatus.FAILED -> {
+            session.errorMessage ?: session.errorType?.name ?: "Failed"
+        }
+        !session.hasAnyChanges -> {
+            "↑ 0   ↓ 0"
+        }
+        else -> {
+            val parts = mutableListOf<String>()
+
+            // Push summary
+            parts.add("↑ ${session.totalPushed}")
+
+            // Pull summary with breakdown
+            val pullParts = mutableListOf<String>()
+            if (session.eventsWritten > 0) pullParts.add("+${session.eventsWritten}")
+            if (session.eventsUpdated > 0) pullParts.add("~${session.eventsUpdated}")
+            if (session.eventsDeleted > 0) pullParts.add("-${session.eventsDeleted}")
+
+            parts.add("↓ ${if (pullParts.isEmpty()) "0" else pullParts.joinToString(" ")}")
+
+            if (session.fallbackUsed) parts.add("⚡")
+
+            parts.joinToString("   ")
         }
     }
 }

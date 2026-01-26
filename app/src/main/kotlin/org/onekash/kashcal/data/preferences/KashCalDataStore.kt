@@ -514,6 +514,23 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.REMINDER_MIGRATION_VERSION, version)
     }
 
+    // ========== Parser Version (v20.12.39) ==========
+
+    /**
+     * Get the stored parser version.
+     * Returns 0 if never set (pre-v20.12.39 installations).
+     */
+    suspend fun getParserVersion(): Int {
+        return dataStore.data.first()[PreferencesKeys.PARSER_VERSION] ?: 0
+    }
+
+    /**
+     * Set the parser version after clearing etags.
+     */
+    suspend fun setParserVersion(version: Int) {
+        setPreference(PreferencesKeys.PARSER_VERSION, version)
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set
@@ -552,5 +569,15 @@ class KashCalDataStore(private val context: Context) {
         // First day of week values
         /** Special value for "follow system locale" */
         const val FIRST_DAY_SYSTEM = 0
+
+        // Parser version - bump when parsing logic changes to force re-parse
+        /**
+         * Current parser version. Bump this when iCalendar parsing logic changes.
+         *
+         * History:
+         * - v0: Pre-v20.12.39 (no version tracking)
+         * - v1: VALUE=DATE timezone fix (use UTC instead of local timezone)
+         */
+        const val CURRENT_PARSER_VERSION = 1
     }
 }

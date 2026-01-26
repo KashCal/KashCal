@@ -12,8 +12,6 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
-import org.onekash.kashcal.sync.parser.ICalParser
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import javax.inject.Singleton
@@ -23,7 +21,6 @@ import javax.inject.Singleton
  *
  * Binds interfaces to their implementations for:
  * - CalDAV HTTP client
- * - iCal parser
  * - ICS fetcher
  *
  * NOTE: CalDavQuirks and CredentialProvider bindings are deprecated.
@@ -72,13 +69,6 @@ abstract class SyncModule {
     @Binds
     @Singleton
     abstract fun bindCalDavClientFactory(impl: OkHttpCalDavClientFactory): CalDavClientFactory
-
-    /**
-     * Bind ICalParser interface to ical4j implementation.
-     */
-    @Binds
-    @Singleton
-    abstract fun bindICalParser(impl: Ical4jParser): ICalParser
 
     /**
      * Bind CalDavQuirks interface to iCloud implementation.

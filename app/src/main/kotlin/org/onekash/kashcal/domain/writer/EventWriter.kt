@@ -567,16 +567,20 @@ class EventWriter @Inject constructor(
 
     /**
      * Add a timestamp to EXDATE field.
-     * Format: YYYYMMDD (date only for simplicity)
+     * Format: Comma-separated millisecond timestamps.
      *
-     * @param isAllDay Pass true for all-day events to use UTC for date calculation
+     * Matches ICalEventMapper (server→DB) and IcsPatcher (DB→server) format.
+     * OccurrenceGenerator handles both milliseconds and legacy day codes for backward compat.
+     *
+     * @param timestampMs The occurrence start time in milliseconds to exclude
+     * @param isAllDay Unused - kept for API compatibility
      */
+    @Suppress("UNUSED_PARAMETER")
     private fun addToExdate(currentExdate: String?, timestampMs: Long, isAllDay: Boolean): String {
-        val dateCode = Occurrence.toDayFormat(timestampMs, isAllDay).toString()
         return if (currentExdate.isNullOrBlank()) {
-            dateCode
+            timestampMs.toString()
         } else {
-            "$currentExdate,$dateCode"
+            "$currentExdate,$timestampMs"
         }
     }
 

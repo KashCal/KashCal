@@ -29,6 +29,11 @@ data class SyncSession(
     val eventsUpdated: Int,        // Existing events updated
     val eventsDeleted: Int,        // Events deleted
 
+    // Push statistics (local → server)
+    val eventsPushedCreated: Int = 0,
+    val eventsPushedUpdated: Int = 0,
+    val eventsPushedDeleted: Int = 0,
+
     // Skip breakdown (categories only, no specific event info)
     val skippedParseError: Int = 0,
     val skippedPendingLocal: Int = 0,
@@ -55,26 +60,57 @@ data class SyncSession(
 ) {
     /**
      * Overall status derived from session data.
+     * - FAILED: sync error occurred
+     * - PARTIAL: parse failures (events couldn't be read)
+     * - SUCCESS: everything else (fallback is transparent)
      */
     val status: SyncStatus get() = when {
         errorType != null -> SyncStatus.FAILED
-        hasMissingEvents -> SyncStatus.PARTIAL
-        skippedParseError > 0 || skippedOrphanedException > 0 -> SyncStatus.PARTIAL
+        skippedParseError > 0 -> SyncStatus.PARTIAL
         else -> SyncStatus.SUCCESS
     }
 
     /**
-     * Total events skipped for any reason.
+     * Total events changed (for header summary).
      */
-    val totalSkipped: Int get() =
-        skippedParseError + skippedPendingLocal + skippedEtagUnchanged + skippedOrphanedException
+    val totalChanges: Int get() = eventsWritten + eventsUpdated + eventsDeleted
 
     /**
-     * Whether this session has any issues worth highlighting.
+     * Whether there are any changes to show.
      */
-    val hasIssues: Boolean get() =
-        hasMissingEvents || skippedParseError > 0 || skippedOrphanedException > 0 ||
-        abandonedParseErrors > 0 || errorType != null || fallbackUsed || fetchFailedCount > 0
+    val hasChanges: Boolean get() = totalChanges > 0
+
+    /**
+     * Whether this session has parse failures worth showing.
+     */
+    val hasParseFailures: Boolean get() = skippedParseError > 0
+
+    /**
+     * Total events pushed to server (local → server).
+     */
+    val totalPushed: Int get() = eventsPushedCreated + eventsPushedUpdated + eventsPushedDeleted
+
+    /**
+     * Whether there are any push changes.
+     */
+    val hasPushChanges: Boolean get() = totalPushed > 0
+
+    /**
+     * Alias for totalChanges (pull = server → local).
+     * Kept for clarity alongside push stats.
+     */
+    val totalPullChanges: Int get() = totalChanges
+
+    /**
+     * Alias for hasChanges (pull = server → local).
+     * Kept for clarity alongside push stats.
+     */
+    val hasPullChanges: Boolean get() = hasChanges
+
+    /**
+     * Whether there are any changes (push or pull).
+     */
+    val hasAnyChanges: Boolean get() = hasChanges || hasPushChanges
 }
 
 /**

@@ -5,7 +5,7 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.sync.serializer.ICalSerializer
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
  * Tests for IcsExporter - Event export to ICS files.
@@ -16,12 +16,10 @@ import org.onekash.kashcal.sync.serializer.ICalSerializer
 class IcsExporterTest {
 
     private lateinit var exporter: IcsExporter
-    private lateinit var serializer: ICalSerializer
 
     @Before
     fun setup() {
-        serializer = ICalSerializer()
-        exporter = IcsExporter(serializer)
+        exporter = IcsExporter()
     }
 
     // ========== Filename Generation Tests ==========
@@ -225,7 +223,7 @@ END:VCALENDAR
             description = "Test Description"
         )
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         // Basic validation - contains required fields
         assertTrue("Should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))

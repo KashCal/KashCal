@@ -166,7 +166,7 @@ class MainActivity : ComponentActivity() {
                                             set(java.util.Calendar.HOUR_OF_DAY, nextHour)
                                             set(java.util.Calendar.MINUTE, 0)
                                             set(java.util.Calendar.SECOND, 0)
-                                        }.timeInMillis / 1000
+                                        }.timeInMillis
                                     }
                                     editingEventId = null
                                     newEventStartTs = startTs
@@ -214,7 +214,7 @@ class MainActivity : ComponentActivity() {
                                     // Handle calendar intent from other apps (Gmail, Chrome, etc.)
                                     Log.d(TAG, "Processing calendar intent: title=${action.data.title}")
                                     editingEventId = null
-                                    newEventStartTs = action.data.startTimeMillis?.let { it / 1000 }
+                                    newEventStartTs = action.data.startTimeMillis
                                     eventOccurrenceTs = null
                                     calendarIntentData = action.data
                                     calendarIntentInvitees = action.invitees
@@ -315,14 +315,14 @@ class MainActivity : ComponentActivity() {
                         }
 
                         editingEventId = null
-                        newEventStartTs = eventTimestamp / 1000
+                        newEventStartTs = eventTimestamp
                         eventOccurrenceTs = null
                         showEventFormSheet = true
                     },
                     onCreateEventWithDateTime = { timestampMs ->
                         Log.d(TAG, "Create event with date/time: $timestampMs")
                         editingEventId = null
-                        newEventStartTs = timestampMs / 1000
+                        newEventStartTs = timestampMs
                         eventOccurrenceTs = null
                         showEventFormSheet = true
                     },

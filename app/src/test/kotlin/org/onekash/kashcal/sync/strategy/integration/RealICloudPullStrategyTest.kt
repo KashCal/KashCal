@@ -16,10 +16,10 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
-import org.onekash.kashcal.sync.parser.Ical4jParser
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import java.io.File
 
 /**
@@ -35,7 +35,6 @@ import java.io.File
 class RealICloudPullStrategyTest {
 
     private lateinit var client: OkHttpCalDavClient
-    private lateinit var parser: Ical4jParser
     private lateinit var pullStrategy: PullStrategy
 
     // Mocked DAOs
@@ -44,6 +43,7 @@ class RealICloudPullStrategyTest {
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var syncSessionStore: SyncSessionStore
 
     private var username: String? = null
     private var password: String? = null
@@ -58,7 +58,6 @@ class RealICloudPullStrategyTest {
 
         val quirks = ICloudQuirks()
         client = OkHttpCalDavClient(quirks)
-        parser = Ical4jParser()
 
         if (username != null && password != null) {
             client.setCredentials(username!!, password!!)
@@ -70,6 +69,7 @@ class RealICloudPullStrategyTest {
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        syncSessionStore = mockk(relaxed = true)
 
         // Mock database.runInTransaction to execute the block directly
         coEvery {
@@ -93,12 +93,12 @@ class RealICloudPullStrategyTest {
         pullStrategy = PullStrategy(
             database = database,
             client = client,
-            parser = parser,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
         )
     }
 

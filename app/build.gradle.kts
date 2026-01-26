@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kover)
+    alias(libs.plugins.dokka)
 }
 
 // Load version from version.properties
@@ -52,11 +53,11 @@ android {
     }
 
     signingConfigs {
-        // Release signing config - only configure if credentials are in local.properties
-        val keystorePath = localProps.getProperty("KEYSTORE_FILE")
-        val keystorePassword = localProps.getProperty("KEYSTORE_PASSWORD")
-        val keyAliasValue = localProps.getProperty("KEY_ALIAS")
-        val keyPasswordValue = localProps.getProperty("KEY_PASSWORD")
+        // Release signing config - check env vars (CI) first, then local.properties
+        val keystorePath = System.getenv("KEYSTORE_FILE") ?: localProps.getProperty("KEYSTORE_FILE")
+        val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProps.getProperty("KEYSTORE_PASSWORD")
+        val keyAliasValue = System.getenv("KEY_ALIAS") ?: localProps.getProperty("KEY_ALIAS")
+        val keyPasswordValue = System.getenv("KEY_PASSWORD") ?: localProps.getProperty("KEY_PASSWORD")
 
         if (keystorePath != null && keystorePassword != null &&
             keyAliasValue != null && keyPasswordValue != null &&
@@ -104,11 +105,16 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // ical4j brings duplicate service files
-            excludes += "/META-INF/services/*"
             excludes += "META-INF/DEPENDENCIES"
             excludes += "META-INF/LICENSE*"
             excludes += "META-INF/NOTICE*"
+            // ical4j brings duplicate service files - use pickFirst instead of excluding
+            // This preserves ServiceLoader functionality needed by ical4j 4.x
+            pickFirsts += "META-INF/services/net.fortuna.ical4j.model.ComponentFactory"
+            pickFirsts += "META-INF/services/net.fortuna.ical4j.model.PropertyFactory"
+            pickFirsts += "META-INF/services/net.fortuna.ical4j.model.ParameterFactory"
+            pickFirsts += "META-INF/services/net.fortuna.ical4j.validate.CalendarValidatorFactory"
+            pickFirsts += "META-INF/services/java.time.zone.ZoneRulesProvider"
         }
     }
 
@@ -143,9 +149,8 @@ dependencies {
     // Material (XML themes for edge-to-edge)
     implementation(libs.google.material)
 
-    // Room
+    // Room (room-ktx merged into room-runtime in 2.7.0)
     implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
 
     // Coroutines
@@ -166,12 +171,8 @@ dependencies {
     // RFC 5545 Recurrence
     implementation(libs.lib.recur)
 
-    // iCal Parsing (RFC 5545) - ical4j with Android-compatible config
-    implementation(libs.ical4j) {
-        // Exclude modules that conflict with Android
-        exclude(group = "javax.cache")
-        exclude(group = "org.codehaus.groovy")
-    }
+    // iCal Parsing (RFC 5545) - icaldav library (includes ical4j 4.2.2)
+    implementation(libs.icaldav.core)
 
     // HTTP Client
     implementation(libs.okhttp)

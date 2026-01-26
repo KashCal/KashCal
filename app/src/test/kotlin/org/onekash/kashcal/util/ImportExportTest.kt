@@ -21,7 +21,7 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
-import org.onekash.kashcal.sync.serializer.ICalSerializer
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -45,7 +45,6 @@ import org.robolectric.annotation.Config
 class ImportExportTest {
 
     private lateinit var database: KashCalDatabase
-    private lateinit var serializer: ICalSerializer
     private lateinit var exporter: IcsExporter
     private lateinit var eventWriter: EventWriter
     private lateinit var eventReader: EventReader
@@ -59,8 +58,7 @@ class ImportExportTest {
             .allowMainThreadQueries()
             .build()
 
-        serializer = ICalSerializer()
-        exporter = IcsExporter(serializer)
+        exporter = IcsExporter()
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         eventWriter = EventWriter(database, occurrenceGenerator)
         eventReader = EventReader(database)
@@ -112,7 +110,7 @@ class ImportExportTest {
     fun `export single event produces valid ICS structure`() = runTest {
         val event = eventWriter.createEvent(createTestEvent(title = "Meeting"), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         assertTrue("Should have VCALENDAR header", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should have VEVENT", ics.contains("BEGIN:VEVENT"))
@@ -129,7 +127,7 @@ class ImportExportTest {
             location = "Room 101"
         ), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         assertTrue("Should have UID", ics.contains("UID:${event.uid}"))
         assertTrue("Should have SUMMARY", ics.contains("SUMMARY:Important Meeting"))
@@ -146,7 +144,7 @@ class ImportExportTest {
             description = "Discuss Q4 goals"
         ), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         assertTrue("Should have DESCRIPTION", ics.contains("DESCRIPTION:"))
     }
@@ -158,7 +156,7 @@ class ImportExportTest {
             description = "Topics:\n1. First\n2. Second"
         ), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         // Semicolons should be escaped
         assertTrue("Should escape semicolons", ics.contains("\\;") || ics.contains("Team Meeting"))
@@ -173,7 +171,7 @@ class ImportExportTest {
             rrule = "FREQ=WEEKLY;BYDAY=MO,WE,FR"
         ), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         assertTrue("Should have RRULE", ics.contains("RRULE:FREQ=WEEKLY"))
         assertTrue("Should have BYDAY", ics.contains("BYDAY=MO,WE,FR"))
@@ -197,7 +195,7 @@ class ImportExportTest {
         )
 
         val exceptions = listOf(exception)
-        val ics = serializer.serializeWithExceptions(master, exceptions)
+        val ics = IcsPatcher.serializeWithExceptions(master, exceptions)
 
         // Count VEVENT blocks
         val veventCount = ics.split("BEGIN:VEVENT").size - 1
@@ -220,7 +218,7 @@ class ImportExportTest {
             master.copy(title = "Exception")
         )
 
-        val ics = serializer.serializeWithExceptions(master, listOf(exception))
+        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
 
         // Count UID occurrences - should all be the same
         val uidLines = ics.lines().filter { it.startsWith("UID:") }
@@ -237,7 +235,7 @@ class ImportExportTest {
         val event = createTestEvent(title = "Vacation").copy(isAllDay = true)
         val saved = eventWriter.createEvent(event, isLocal = true)
 
-        val ics = serializer.serialize(saved)
+        val ics = IcsPatcher.serialize(saved)
 
         // All-day events use VALUE=DATE or just YYYYMMDD format
         assertTrue(
@@ -332,7 +330,7 @@ class ImportExportTest {
         ), isLocal = true)
 
         // Export
-        val ics = serializer.serialize(original)
+        val ics = IcsPatcher.serialize(original)
 
         // Verify data is in ICS
         assertTrue(ics.contains("SUMMARY:Original Title"))
@@ -346,7 +344,7 @@ class ImportExportTest {
             rrule = "FREQ=WEEKLY;BYDAY=TU,TH;COUNT=10"
         ), isLocal = true)
 
-        val ics = serializer.serialize(original)
+        val ics = IcsPatcher.serialize(original)
 
         assertTrue("Should preserve FREQ", ics.contains("FREQ=WEEKLY"))
         assertTrue("Should preserve BYDAY", ics.contains("BYDAY=TU,TH"))
@@ -360,7 +358,7 @@ class ImportExportTest {
             location = "Conference Room A, Building 1"
         ), isLocal = true)
 
-        val ics = serializer.serialize(original)
+        val ics = IcsPatcher.serialize(original)
 
         assertTrue("Should contain location", ics.contains("Conference Room"))
     }
@@ -372,7 +370,7 @@ class ImportExportTest {
         val longTitle = "A".repeat(500)
         val event = eventWriter.createEvent(createTestEvent(title = longTitle), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         // ICS uses line folding for long lines
         assertTrue("Should have event content", ics.contains("SUMMARY:"))
@@ -385,7 +383,7 @@ class ImportExportTest {
             description = longDescription
         ), isLocal = true)
 
-        val ics = serializer.serialize(event)
+        val ics = IcsPatcher.serialize(event)
 
         assertTrue("Should have description", ics.contains("DESCRIPTION:"))
     }
@@ -397,7 +395,7 @@ class ImportExportTest {
         )
         val saved = eventWriter.createEvent(event, isLocal = true)
 
-        val ics = serializer.serialize(saved)
+        val ics = IcsPatcher.serialize(saved)
 
         // Check for VALARM (reminder) component
         if (saved.reminders?.isNotEmpty() == true) {
@@ -416,7 +414,7 @@ class ImportExportTest {
         )
         val saved = eventWriter.createEvent(event, isLocal = true)
 
-        val ics = serializer.serialize(saved)
+        val ics = IcsPatcher.serialize(saved)
 
         assertTrue("Should produce valid ICS", ics.contains("BEGIN:VEVENT"))
         assertTrue("Should have SUMMARY", ics.contains("SUMMARY:Minimal Event"))

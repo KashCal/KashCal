@@ -3,7 +3,9 @@ package org.onekash.kashcal.reminder.scheduler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onekash.kashcal.sync.parser.icaldav.RawIcsParser
 import java.time.ZoneId
 
 /**
@@ -566,5 +568,135 @@ class CalculateAllDayTriggerTimeTest {
 
         // Jan 5 09:00 IST = Jan 5 03:30 UTC
         assertEquals(1736047800000L, result)
+    }
+}
+
+/**
+ * Tests for alarmCount > 3 optimization in ReminderScheduler.
+ *
+ * When an event has more than 3 alarms, the scheduler should use RawIcsParser
+ * to extract all alarm triggers from rawIcal, rather than only using the first 3
+ * stored in event.reminders.
+ *
+ * This verifies the fix for the regression where events with 4+ alarms (synced from
+ * iCloud/Google) would only have the first 3 alarms scheduled.
+ */
+class AlarmCountOptimizationTest {
+
+    @Test
+    fun `RawIcsParser getAllAlarmTriggers returns all 5 triggers`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:five-alarms@test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with 5 alarms
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT30M
+            DESCRIPTION:30 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT2H
+            DESCRIPTION:2 hours before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1D
+            DESCRIPTION:1 day before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val triggers = RawIcsParser.getAllAlarmTriggers(ics)
+
+        assertEquals("Should extract all 5 alarm triggers", 5, triggers.size)
+        assertTrue("Should contain -PT15M", triggers.contains("-PT15M"))
+        assertTrue("Should contain -PT30M", triggers.contains("-PT30M"))
+        assertTrue("Should contain -PT1H", triggers.contains("-PT1H"))
+        assertTrue("Should contain -PT2H", triggers.contains("-PT2H"))
+        assertTrue("Should contain -P1D", triggers.contains("-P1D"))
+    }
+
+    @Test
+    fun `RawIcsParser getAllAlarmTriggers handles empty rawIcal`() {
+        val triggers = RawIcsParser.getAllAlarmTriggers(null)
+
+        assertTrue("Should return empty list for null", triggers.isEmpty())
+    }
+
+    @Test
+    fun `RawIcsParser getAllAlarmTriggers handles invalid rawIcal`() {
+        val triggers = RawIcsParser.getAllAlarmTriggers("not valid ics data")
+
+        assertTrue("Should return empty list for invalid ICS", triggers.isEmpty())
+    }
+
+    @Test
+    fun `all alarm triggers can be parsed to milliseconds`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:parseable-alarms@test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT30M
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT2H
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1D
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val triggers = RawIcsParser.getAllAlarmTriggers(ics)
+
+        // Verify all triggers can be parsed by the scheduler
+        for (trigger in triggers) {
+            val offsetMs = parseReminderOffset(trigger)
+            assertNotNull("Trigger '$trigger' should be parseable", offsetMs)
+        }
+
+        // Verify specific values
+        assertEquals(-15 * 60 * 1000L, parseReminderOffset("-PT15M"))
+        assertEquals(-30 * 60 * 1000L, parseReminderOffset("-PT30M"))
+        assertEquals(-60 * 60 * 1000L, parseReminderOffset("-PT1H"))
+        assertEquals(-2 * 60 * 60 * 1000L, parseReminderOffset("-PT2H"))
+        assertEquals(-24 * 60 * 60 * 1000L, parseReminderOffset("-P1D"))
     }
 }

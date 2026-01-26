@@ -36,11 +36,14 @@ import androidx.room.PrimaryKey
         Index(value = ["end_ts"]),
         Index(value = ["calendar_id", "start_ts"]),
         Index(value = ["uid"]),
+        Index(value = ["import_id"]),
+        Index(value = ["calendar_id", "import_id"]),
         Index(value = ["original_event_id"]),
         Index(value = ["original_event_id", "original_instance_time"], unique = true),
         Index(value = ["sync_status"]),
         Index(value = ["calendar_id", "sync_status"]),
-        Index(value = ["caldav_url"])
+        Index(value = ["caldav_url"]),
+        Index(value = ["calendar_id", "uid", "original_instance_time"])
     ]
 )
 data class Event(
@@ -52,9 +55,18 @@ data class Event(
     /**
      * RFC 5545 UID - globally unique identifier.
      * Format: UUID@domain or similar unique string.
+     * Note: Exception events share the same UID as their master.
      */
     @ColumnInfo(name = "uid")
     val uid: String,
+
+    /**
+     * Unique identifier for database lookup during sync.
+     * Format: "{uid}" for master events, "{uid}:RECID:{datetime}" for exceptions.
+     * This differentiates exception events that share the same UID.
+     */
+    @ColumnInfo(name = "import_id")
+    val importId: String? = null,
 
     /**
      * Parent calendar ID.
@@ -211,9 +223,17 @@ data class Event(
     /**
      * JSON array of reminder configurations.
      * Example: ["-PT15M", "-PT1H"] for 15 min and 1 hour before.
+     * Stores only first 3 alarms for compatibility; use alarmCount + rawIcal for more.
      */
     @ColumnInfo(name = "reminders")
     val reminders: List<String>? = null,
+
+    /**
+     * Total number of VALARM components in the original ICS.
+     * When alarmCount > 3, use RawIcsParser to extract all alarms from rawIcal.
+     */
+    @ColumnInfo(name = "alarm_count", defaultValue = "0")
+    val alarmCount: Int = 0,
 
     /**
      * JSON object for preserving unknown iCal properties.
@@ -221,6 +241,14 @@ data class Event(
      */
     @ColumnInfo(name = "extra_properties")
     val extraProperties: Map<String, String>? = null,
+
+    /**
+     * Original ICS data from server for round-trip preservation.
+     * Used by IcsPatcher to preserve alarms, attendees, and other properties
+     * that are not stored in entity columns.
+     */
+    @ColumnInfo(name = "raw_ical")
+    val rawIcal: String? = null,
 
     // ========== iCal Required ==========
 
@@ -285,6 +313,49 @@ data class Event(
      */
     @ColumnInfo(name = "server_modified_at")
     val serverModifiedAt: Long? = null,
+
+    // ========== RFC 5545/7986 Extended Properties ==========
+
+    /**
+     * RFC 5545 PRIORITY - event priority.
+     * Values: 0=undefined, 1=highest, 9=lowest.
+     */
+    @ColumnInfo(name = "priority", defaultValue = "0")
+    val priority: Int = 0,
+
+    /**
+     * RFC 5545 GEO latitude (WGS84 decimal degrees).
+     * Parsed from "latitude;longitude" format.
+     */
+    @ColumnInfo(name = "geo_lat")
+    val geoLat: Double? = null,
+
+    /**
+     * RFC 5545 GEO longitude (WGS84 decimal degrees).
+     * Parsed from "latitude;longitude" format.
+     */
+    @ColumnInfo(name = "geo_lon")
+    val geoLon: Double? = null,
+
+    /**
+     * RFC 7986 COLOR - per-event color override.
+     * Stored as ARGB integer. Overrides calendar color when set.
+     */
+    @ColumnInfo(name = "color")
+    val color: Int? = null,
+
+    /**
+     * RFC 5545 URL - link associated with the event.
+     */
+    @ColumnInfo(name = "url")
+    val url: String? = null,
+
+    /**
+     * RFC 5545 CATEGORIES - event tags/labels.
+     * Stored as JSON array via TypeConverter.
+     */
+    @ColumnInfo(name = "categories")
+    val categories: List<String>? = null,
 
     // ========== Timestamps ==========
 

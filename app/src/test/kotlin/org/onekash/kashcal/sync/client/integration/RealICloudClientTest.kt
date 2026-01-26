@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.client.integration
 import kotlinx.coroutines.runBlocking
 import org.junit.Assume.assumeTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
@@ -20,6 +21,7 @@ import java.io.File
  *   caldav.app_password=xxxx-xxxx-xxxx-xxxx
  *   caldav.server=https://caldav.icloud.com
  */
+@Ignore("Integration test - requires iCloud credentials in local.properties")
 class RealICloudClientTest {
 
     private lateinit var client: OkHttpCalDavClient
