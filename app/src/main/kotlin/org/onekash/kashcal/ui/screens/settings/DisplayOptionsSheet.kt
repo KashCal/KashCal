@@ -142,10 +142,10 @@ fun EventDurationSheet(
 @Composable
 private fun EmojiPreviewCard() {
     val examples = listOf(
-        "Coffee with Sarah",
-        "Mom's Birthday",
-        "Flight to NYC",
-        "Team standup"
+        "Coffee with Kash",
+        "Run in the park",
+        "Movie night",
+        "Mom's Birthday"
     )
 
     SettingsCard {

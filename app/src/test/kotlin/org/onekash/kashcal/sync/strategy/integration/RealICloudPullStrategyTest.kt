@@ -14,7 +14,9 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.strategy.PullResult
@@ -34,8 +36,9 @@ import java.io.File
  */
 class RealICloudPullStrategyTest {
 
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
     private lateinit var pullStrategy: PullStrategy
+    private val factory = OkHttpCalDavClientFactory()
 
     // Mocked DAOs
     private lateinit var database: KashCalDatabase
@@ -57,10 +60,21 @@ class RealICloudPullStrategyTest {
         loadCredentials()
 
         val quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
-
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = "https://caldav.icloud.com"
+            )
+            client = factory.createClient(credentials, quirks)
+        } else {
+            // Create a minimal client for tests that check credential availability
+            val credentials = Credentials(
+                username = "",
+                password = "",
+                serverUrl = "https://caldav.icloud.com"
+            )
+            client = factory.createClient(credentials, quirks)
         }
 
         // Mock DAOs
@@ -92,7 +106,6 @@ class RealICloudPullStrategyTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -182,7 +195,7 @@ class RealICloudPullStrategyTest {
         println("URL: ${calendar.caldavUrl}")
 
         // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         println("\n=== Pull Result ===")
         when (result) {
@@ -242,7 +255,7 @@ class RealICloudPullStrategyTest {
         println("Current ctag: $currentCtag")
 
         // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = false)
+        val result = pullStrategy.pull(calendar, forceFullSync = false, client = client)
 
         println("\n=== Pull Result ===")
         when (result) {
@@ -288,7 +301,7 @@ class RealICloudPullStrategyTest {
         println("=== Testing Event Data Capture ===")
 
         // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         if (result is PullResult.Success && capturedEvents.isNotEmpty()) {
             println("\n=== Captured Events (${capturedEvents.size}) ===")
@@ -372,7 +385,7 @@ class RealICloudPullStrategyTest {
         println("=== Testing Incremental Sync ===")
         println("Sync token: $syncToken")
 
-        val result = pullStrategy.pull(calendar, forceFullSync = false)
+        val result = pullStrategy.pull(calendar, forceFullSync = false, client = client)
 
         println("\n=== Incremental Pull Result ===")
         when (result) {
@@ -423,7 +436,7 @@ class RealICloudPullStrategyTest {
             sortOrder = 0
         )
 
-        pullStrategy.pull(calendar, forceFullSync = true)
+        pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         println("=== Occurrence Generation Calls ===")
         println("Recurring events processed: ${generatedEvents.size}")

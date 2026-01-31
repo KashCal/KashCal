@@ -1,6 +1,5 @@
 package org.onekash.kashcal.sync.provider
 
-import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -9,154 +8,182 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialProvider
+import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
+import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
  * Unit tests for ProviderRegistry.
  *
  * Tests verify:
- * - Provider lookup by ID
- * - Provider lookup for account
- * - Network/CalDAV provider filtering
+ * - getQuirks returns correct quirks for each provider
+ * - getQuirksForAccount returns correct quirks including DefaultQuirks for CALDAV
+ * - getCredentialProvider returns correct credentials for each provider
  */
 class ProviderRegistryTest {
 
-    private lateinit var icloudProvider: CalendarProvider
-    private lateinit var localProvider: CalendarProvider
+    private lateinit var icloudQuirks: ICloudQuirks
+    private lateinit var icloudCredentials: ICloudCredentialProvider
+    private lateinit var caldavCredentials: CalDavCredentialProvider
     private lateinit var registry: ProviderRegistry
 
     @Before
     fun setup() {
-        icloudProvider = mockk {
-            every { providerId } returns "icloud"
-            every { displayName } returns "iCloud"
-            every { requiresNetwork } returns true
-            every { capabilities } returns ProviderCapabilities(supportsCalDAV = true)
-            every { handlesAccount(any()) } answers {
-                (firstArg() as Account).provider == "icloud"
-            }
-        }
-
-        localProvider = mockk {
-            every { providerId } returns "local"
-            every { displayName } returns "Local"
-            every { requiresNetwork } returns false
-            every { capabilities } returns ProviderCapabilities(supportsCalDAV = false)
-            every { handlesAccount(any()) } answers {
-                (firstArg() as Account).provider == "local"
-            }
-        }
-
-        registry = ProviderRegistryImpl(setOf(icloudProvider, localProvider))
+        icloudQuirks = mockk(relaxed = true)
+        icloudCredentials = mockk(relaxed = true)
+        caldavCredentials = mockk(relaxed = true)
+        registry = ProviderRegistry(icloudQuirks, icloudCredentials, caldavCredentials)
     }
 
-    // ==================== getAllProviders Tests ====================
+    // ==================== getQuirks Tests ====================
 
     @Test
-    fun `getAllProviders returns all registered providers`() {
-        val providers = registry.getAllProviders()
+    fun `getQuirks returns ICloudQuirks for ICLOUD provider`() {
+        val quirks = registry.getQuirks(AccountProvider.ICLOUD)
 
-        assertEquals(2, providers.size)
-        assertTrue(providers.contains(icloudProvider))
-        assertTrue(providers.contains(localProvider))
-    }
-
-    // ==================== getProvider Tests ====================
-
-    @Test
-    fun `getProvider returns correct provider for icloud`() {
-        val provider = registry.getProvider("icloud")
-
-        assertNotNull(provider)
-        assertEquals("icloud", provider?.providerId)
+        assertNotNull(quirks)
+        assertEquals(icloudQuirks, quirks)
     }
 
     @Test
-    fun `getProvider returns correct provider for local`() {
-        val provider = registry.getProvider("local")
+    fun `getQuirks returns null for LOCAL provider`() {
+        val quirks = registry.getQuirks(AccountProvider.LOCAL)
 
-        assertNotNull(provider)
-        assertEquals("local", provider?.providerId)
+        assertNull(quirks)
     }
 
     @Test
-    fun `getProvider returns null for unknown provider`() {
-        val provider = registry.getProvider("google")
+    fun `getQuirks returns null for ICS provider`() {
+        val quirks = registry.getQuirks(AccountProvider.ICS)
 
-        assertNull(provider)
+        assertNull(quirks)
     }
 
-    // ==================== getProviderForAccount Tests ====================
+    @Test
+    fun `getQuirks returns null for CONTACTS provider`() {
+        val quirks = registry.getQuirks(AccountProvider.CONTACTS)
+
+        assertNull(quirks)
+    }
 
     @Test
-    fun `getProviderForAccount returns iCloud provider for iCloud account`() {
-        val account = Account(
+    fun `getQuirks returns null for CALDAV provider - use getQuirksForAccount instead`() {
+        // getQuirks returns null for CALDAV because DefaultQuirks needs server URL from Account
+        // Use getQuirksForAccount() instead
+        val quirks = registry.getQuirks(AccountProvider.CALDAV)
+
+        assertNull(quirks)
+    }
+
+    // ==================== getQuirksForAccount Tests ====================
+
+    @Test
+    fun `getQuirksForAccount returns ICloudQuirks for ICLOUD account`() {
+        val account = createAccount(provider = AccountProvider.ICLOUD)
+
+        val quirks = registry.getQuirksForAccount(account)
+
+        assertNotNull(quirks)
+        assertEquals(icloudQuirks, quirks)
+    }
+
+    @Test
+    fun `getQuirksForAccount returns DefaultQuirks for CALDAV account`() {
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            homeSetUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/"
+        )
+
+        val quirks = registry.getQuirksForAccount(account)
+
+        assertNotNull(quirks)
+        assertTrue(quirks is DefaultQuirks)
+        assertEquals("https://nextcloud.example.com/remote.php/dav/calendars/user/", quirks?.baseUrl)
+    }
+
+    @Test(expected = IllegalStateException::class)
+    fun `getQuirksForAccount throws for CALDAV account without homeSetUrl`() {
+        val account = createAccount(
+            provider = AccountProvider.CALDAV,
+            homeSetUrl = null
+        )
+
+        registry.getQuirksForAccount(account)  // Should throw
+    }
+
+    @Test
+    fun `getQuirksForAccount returns null for LOCAL account`() {
+        val account = createAccount(provider = AccountProvider.LOCAL)
+
+        val quirks = registry.getQuirksForAccount(account)
+
+        assertNull(quirks)
+    }
+
+    @Test
+    fun `getQuirksForAccount returns null for ICS account`() {
+        val account = createAccount(provider = AccountProvider.ICS)
+
+        val quirks = registry.getQuirksForAccount(account)
+
+        assertNull(quirks)
+    }
+
+    // ==================== getCredentialProvider Tests ====================
+
+    @Test
+    fun `getCredentialProvider returns ICloudCredentialProvider for ICLOUD provider`() {
+        val credentials = registry.getCredentialProvider(AccountProvider.ICLOUD)
+
+        assertNotNull(credentials)
+        assertEquals(icloudCredentials, credentials)
+    }
+
+    @Test
+    fun `getCredentialProvider returns null for LOCAL provider`() {
+        val credentials = registry.getCredentialProvider(AccountProvider.LOCAL)
+
+        assertNull(credentials)
+    }
+
+    @Test
+    fun `getCredentialProvider returns null for ICS provider`() {
+        val credentials = registry.getCredentialProvider(AccountProvider.ICS)
+
+        assertNull(credentials)
+    }
+
+    @Test
+    fun `getCredentialProvider returns null for CONTACTS provider`() {
+        val credentials = registry.getCredentialProvider(AccountProvider.CONTACTS)
+
+        assertNull(credentials)
+    }
+
+    @Test
+    fun `getCredentialProvider returns CalDavCredentialProvider for CALDAV provider`() {
+        val credentials = registry.getCredentialProvider(AccountProvider.CALDAV)
+
+        assertNotNull(credentials)
+        assertEquals(caldavCredentials, credentials)
+    }
+
+    // ==================== Helper Methods ====================
+
+    private fun createAccount(
+        provider: AccountProvider,
+        homeSetUrl: String? = null
+    ): Account {
+        return Account(
             id = 1L,
-            provider = "icloud",
-            email = "test@icloud.com"
+            provider = provider,
+            email = "test@example.com",
+            displayName = "Test Account",
+            principalUrl = null,
+            homeSetUrl = homeSetUrl,
+            isEnabled = true
         )
-
-        val provider = registry.getProviderForAccount(account)
-
-        assertNotNull(provider)
-        assertEquals("icloud", provider?.providerId)
-    }
-
-    @Test
-    fun `getProviderForAccount returns local provider for local account`() {
-        val account = Account(
-            id = 2L,
-            provider = "local",
-            email = "local@device"
-        )
-
-        val provider = registry.getProviderForAccount(account)
-
-        assertNotNull(provider)
-        assertEquals("local", provider?.providerId)
-    }
-
-    @Test
-    fun `getProviderForAccount returns null for unknown provider account`() {
-        val account = Account(
-            id = 3L,
-            provider = "google",
-            email = "test@gmail.com"
-        )
-
-        val provider = registry.getProviderForAccount(account)
-
-        assertNull(provider)
-    }
-
-    // ==================== getNetworkProviders Tests ====================
-
-    @Test
-    fun `getNetworkProviders returns only providers requiring network`() {
-        val networkProviders = registry.getNetworkProviders()
-
-        assertEquals(1, networkProviders.size)
-        assertEquals("icloud", networkProviders[0].providerId)
-    }
-
-    // ==================== getCalDavProviders Tests ====================
-
-    @Test
-    fun `getCalDavProviders returns only CalDAV providers`() {
-        val caldavProviders = registry.getCalDavProviders()
-
-        assertEquals(1, caldavProviders.size)
-        assertEquals("icloud", caldavProviders[0].providerId)
-    }
-
-    // ==================== Edge Cases ====================
-
-    @Test
-    fun `empty registry returns empty lists`() {
-        val emptyRegistry = ProviderRegistryImpl(emptySet())
-
-        assertTrue(emptyRegistry.getAllProviders().isEmpty())
-        assertNull(emptyRegistry.getProvider("icloud"))
-        assertTrue(emptyRegistry.getNetworkProviders().isEmpty())
-        assertTrue(emptyRegistry.getCalDavProviders().isEmpty())
     }
 }

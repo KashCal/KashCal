@@ -32,19 +32,21 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.ui.model.CalendarGroup
 
 /**
- * Calendar picker card with color dot and expandable list.
+ * Calendar picker card with color dot and expandable grouped list.
  *
- * Displays a list of available calendars with color indicators.
+ * Displays a list of available calendars grouped by account with color indicators.
  * Used in event form to select which calendar to save an event to.
  *
  * @param selectedCalendarId Currently selected calendar ID
  * @param selectedCalendarName Display name of selected calendar
  * @param selectedCalendarColor Color of selected calendar (nullable)
- * @param availableCalendars List of calendars to choose from
+ * @param calendarGroups Calendars grouped by account
  * @param isExpanded Whether the picker list is expanded
  * @param enabled When false, the picker cannot be expanded or changed.
  *                Used to disable calendar changes for single occurrence edits.
@@ -56,7 +58,7 @@ fun CalendarPickerCard(
     selectedCalendarId: Long?,
     selectedCalendarName: String,
     selectedCalendarColor: Int?,
-    availableCalendars: List<Calendar>,
+    calendarGroups: List<CalendarGroup>,
     isExpanded: Boolean,
     enabled: Boolean = true,
     onToggle: () -> Unit,
@@ -119,20 +121,37 @@ fun CalendarPickerCard(
                         .padding(bottom = 8.dp)
                 ) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                    availableCalendars.forEach { calendar ->
-                        CalendarItem(
-                            calendar = calendar,
-                            isSelected = selectedCalendarId == calendar.id,
-                            onClick = { onSelect(calendar.id, calendar.displayName, calendar.color) }
-                        )
-                    }
-                    if (availableCalendars.isEmpty()) {
+
+                    val allCalendars = calendarGroups.flatMap { it.calendars }
+                    if (allCalendars.isEmpty()) {
                         Text(
                             "No calendars available",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(12.dp)
                         )
+                    } else {
+                        calendarGroups.forEach { group ->
+                            // Account header
+                            Text(
+                                text = group.accountName,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                                    .padding(top = 4.dp)
+                            )
+                            // Calendars in group
+                            group.calendars.forEach { calendar ->
+                                CalendarItem(
+                                    calendar = calendar,
+                                    isSelected = selectedCalendarId == calendar.id,
+                                    onClick = { onSelect(calendar.id, calendar.displayName, calendar.color) }
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -160,7 +179,8 @@ private fun CalendarItem(
                     MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 else Color.Transparent
             )
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .padding(horizontal = 12.dp, vertical = 12.dp)
+            .padding(start = 8.dp), // Indent under account header
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -187,35 +207,51 @@ private fun CalendarItem(
 }
 
 /**
- * Simple calendar picker card without expansion state management.
+ * Simple calendar picker without expansion state management.
  * Use when you want to manage expansion state externally.
  *
- * @param calendars List of available calendars
+ * @param calendarGroups Calendars grouped by account
  * @param selectedCalendarId Currently selected calendar ID
  * @param onCalendarSelect Called with calendar ID when selection changes
  */
 @Composable
 fun SimpleCalendarPicker(
-    calendars: List<Calendar>,
+    calendarGroups: List<CalendarGroup>,
     selectedCalendarId: Long?,
     onCalendarSelect: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        calendars.forEach { calendar ->
-            CalendarItem(
-                calendar = calendar,
-                isSelected = selectedCalendarId == calendar.id,
-                onClick = { onCalendarSelect(calendar.id) }
-            )
-        }
-        if (calendars.isEmpty()) {
+        val allCalendars = calendarGroups.flatMap { it.calendars }
+        if (allCalendars.isEmpty()) {
             Text(
                 "No calendars available",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)
             )
+        } else {
+            calendarGroups.forEach { group ->
+                // Account header
+                Text(
+                    text = group.accountName,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(top = 4.dp)
+                )
+                // Calendars in group
+                group.calendars.forEach { calendar ->
+                    CalendarItem(
+                        calendar = calendar,
+                        isSelected = selectedCalendarId == calendar.id,
+                        onClick = { onCalendarSelect(calendar.id) }
+                    )
+                }
+            }
         }
     }
 }

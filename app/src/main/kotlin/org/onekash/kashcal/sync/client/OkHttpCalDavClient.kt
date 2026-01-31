@@ -15,9 +15,13 @@ import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.sync.client.model.*
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.sync.util.EtagUtils
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.net.ssl.SSLHandshakeException
@@ -78,6 +82,7 @@ class OkHttpCalDavClient : CalDavClient {
         private const val INITIAL_BACKOFF_MS = 500L
         private const val MAX_BACKOFF_MS = 2000L
         private const val BACKOFF_MULTIPLIER = 2.0
+        private const val DEFAULT_RETRY_AFTER_MS = 30_000L  // RFC 7231 fallback
 
         // Connection pool configuration
         private const val MAX_IDLE_CONNECTIONS = 5
@@ -85,6 +90,7 @@ class OkHttpCalDavClient : CalDavClient {
 
         // Response body size limit (10MB) - prevents OOM on malicious/malformed responses
         private const val MAX_RESPONSE_SIZE_BYTES = 10L * 1024 * 1024
+
     }
 
     /**
@@ -185,51 +191,120 @@ class OkHttpCalDavClient : CalDavClient {
             .build()
     }
 
-    /**
-     * Set credentials for authentication.
-     * Must be called before making any requests.
-     *
-     * @throws UnsupportedOperationException if client was created by factory (credentials immutable)
-     */
-    override fun setCredentials(username: String, password: String) {
-        if (preAuthenticatedClient != null) {
-            throw UnsupportedOperationException(
-                "Cannot set credentials on factory-created client. Credentials are immutable."
-            )
-        }
-        this.username = username
-        this.password = password
-    }
-
-    /**
-     * Check if credentials have been set.
-     *
-     * For factory-created clients, always returns true (credentials baked in).
-     */
-    override fun hasCredentials(): Boolean {
-        // Factory-created clients always have credentials baked in
-        if (preAuthenticatedClient != null) {
-            return true
-        }
-        return username.isNotEmpty() && password.isNotEmpty()
-    }
-
-    /**
-     * Clear stored credentials.
-     *
-     * @throws UnsupportedOperationException if client was created by factory (credentials immutable)
-     */
-    override fun clearCredentials() {
-        if (preAuthenticatedClient != null) {
-            throw UnsupportedOperationException(
-                "Cannot clear credentials on factory-created client. Credentials are immutable."
-            )
-        }
-        this.username = ""
-        this.password = ""
-    }
-
     // ========== Discovery ==========
+
+    /**
+     * Discover CalDAV endpoint via RFC 6764 well-known URL.
+     * Makes a PROPFIND request to /.well-known/caldav and follows redirects.
+     *
+     * @param serverUrl Base server URL (e.g., "https://nextcloud.example.com")
+     * @return The final URL after following redirects, or original URL if well-known not supported
+     */
+    override suspend fun discoverWellKnown(serverUrl: String): CalDavResult<String> =
+        withContext(Dispatchers.IO) {
+            // Construct well-known URL
+            val baseHost = extractBaseHost(serverUrl)
+            val wellKnownUrl = "$baseHost/.well-known/caldav"
+            Log.d(TAG, "Trying well-known discovery: $wellKnownUrl")
+
+            // Use PROPFIND (same as principal discovery) to trigger proper redirects
+            // Some servers require PROPFIND, not GET, for well-known
+            val body = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:propfind xmlns:d="DAV:">
+                    <d:prop>
+                        <d:current-user-principal/>
+                    </d:prop>
+                </d:propfind>
+            """.trimIndent()
+
+            val request = Request.Builder()
+                .url(wellKnownUrl)
+                .method("PROPFIND", body.toRequestBody(XML_MEDIA_TYPE))
+                .header("Depth", "0")
+                .build()
+
+            try {
+                val response = httpClient.newCall(request).execute()
+                val result: CalDavResult<String> = response.use { resp ->
+                    val finalUrl = resp.request.url.toString()
+                    Log.d(TAG, "Well-known response: ${resp.code}, final URL: $finalUrl")
+
+                    when {
+                        // Success or redirect was followed
+                        resp.isSuccessful || resp.code == 207 -> {
+                            // Return the final URL (after redirects) without the well-known part
+                            // If redirected, use that URL; otherwise fall back to original
+                            if (finalUrl != wellKnownUrl && !finalUrl.contains("/.well-known/")) {
+                                // Remove trailing path components to get base CalDAV URL
+                                val caldavUrl = extractCaldavBaseUrl(finalUrl)
+                                Log.i(TAG, "Well-known discovery successful: $caldavUrl")
+                                CalDavResult.Success(caldavUrl)
+                            } else {
+                                // No redirect, return original URL
+                                Log.d(TAG, "Well-known returned same URL, using original: $serverUrl")
+                                CalDavResult.Success(serverUrl)
+                            }
+                        }
+                        // 401/403 - auth required, but URL is valid
+                        resp.code == 401 || resp.code == 403 -> {
+                            Log.d(TAG, "Well-known requires auth, URL is valid: $finalUrl")
+                            if (finalUrl != wellKnownUrl && !finalUrl.contains("/.well-known/")) {
+                                CalDavResult.Success(extractCaldavBaseUrl(finalUrl))
+                            } else {
+                                CalDavResult.Success(serverUrl)
+                            }
+                        }
+                        // 404 - well-known not supported, use original URL
+                        resp.code == 404 -> {
+                            Log.d(TAG, "Well-known not supported, using original URL: $serverUrl")
+                            CalDavResult.Success(serverUrl)
+                        }
+                        // Other errors
+                        else -> {
+                            Log.w(TAG, "Well-known returned ${resp.code}, using original URL")
+                            CalDavResult.Success(serverUrl)
+                        }
+                    }
+                }
+                result
+            } catch (e: Exception) {
+                Log.w(TAG, "Well-known discovery failed: ${e.message}, using original URL")
+                // Fall back to original URL on any error
+                CalDavResult.Success(serverUrl)
+            }
+        }
+
+    /**
+     * Extract base CalDAV URL from a full URL path.
+     * For Nextcloud: https://cloud.example.com/remote.php/dav/principals/users/foo
+     *             -> https://cloud.example.com/remote.php/dav
+     */
+    private fun extractCaldavBaseUrl(url: String): String {
+        // Common CalDAV path patterns to preserve
+        val patterns = listOf(
+            "/remote.php/dav",  // Nextcloud
+            "/dav.php",         // Baikal
+            "/caldav.php",      // Some servers
+            "/cal.php",         // Some servers
+            "/dav"              // Generic
+        )
+
+        for (pattern in patterns) {
+            val index = url.indexOf(pattern)
+            if (index != -1) {
+                return url.substring(0, index + pattern.length)
+            }
+        }
+
+        // If no pattern matched, return the URL up to the path
+        return try {
+            val uri = java.net.URI(url)
+            "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
+        } catch (e: Exception) {
+            url
+        }
+    }
 
     override suspend fun discoverPrincipal(serverUrl: String): CalDavResult<String> =
         withContext(Dispatchers.IO) {
@@ -257,7 +332,9 @@ class OkHttpCalDavClient : CalDavClient {
                 val principalUrl = if (principalPath.startsWith("http")) {
                     principalPath
                 } else {
-                    "$serverUrl$principalPath"
+                    // Use base host to avoid double-path issues (e.g., /dav.php/ + /dav.php/principals/)
+                    val baseHost = extractBaseHost(serverUrl)
+                    "$baseHost$principalPath"
                 }
 
                 CalDavResult.success(principalUrl)
@@ -310,6 +387,7 @@ class OkHttpCalDavClient : CalDavClient {
                         <d:resourcetype/>
                         <ic:calendar-color/>
                         <cs:getctag/>
+                        <d:current-user-privilege-set/>
                     </d:prop>
                 </d:propfind>
             """.trimIndent()
@@ -392,6 +470,16 @@ class OkHttpCalDavClient : CalDavClient {
 
     // ========== Fetching ==========
 
+    /**
+     * Perform sync-collection REPORT (RFC 6578).
+     *
+     * Handles special cases:
+     * - 207 Multi-Status: Normal response with changes
+     * - 507 Insufficient Storage: Server truncated results (RFC 6578 Section 3.6)
+     *   - Response still contains partial results and new sync-token
+     *   - SyncReport.truncated will be true, client should continue with new token
+     * - 403/410: Sync token invalid/expired
+     */
     override suspend fun syncCollection(
         calendarUrl: String,
         syncToken: String?
@@ -419,34 +507,61 @@ class OkHttpCalDavClient : CalDavClient {
             .header("Depth", "1")
             .build()
 
-        executeRequest(request) { responseBody ->
-            // Check if sync-token is invalid
-            if (quirks.isSyncTokenInvalid(207, responseBody)) {
-                return@executeRequest CalDavResult.error(
-                    403, "Sync token invalid", isRetryable = false
-                )
+        try {
+            val response = httpClient.newCall(request).execute()
+            val responseBody = response.bodyWithLimit()
+            val responseCode = response.code
+
+            // RFC 6578 Section 3.6: 507 means server truncated results
+            // Response still contains partial results + new sync-token for continuation
+            val isTruncated = responseCode == 507
+
+            when {
+                responseCode == 207 || isTruncated -> {
+                    // Check if sync-token is invalid (only for 207, not 507)
+                    if (responseCode == 207 && quirks.isSyncTokenInvalid(207, responseBody)) {
+                        return@withContext CalDavResult.error(
+                            403, "Sync token invalid", isRetryable = false
+                        )
+                    }
+
+                    val newSyncToken = quirks.extractSyncToken(responseBody)
+
+                    // Parse changed items (hrefs + etags only)
+                    val changedItems = quirks.extractChangedItems(responseBody)
+                    val changed = changedItems.map { (href, etag) ->
+                        SyncItem(href = href, etag = etag, status = SyncItemStatus.OK)
+                    }
+
+                    // Parse deleted items from 404 responses
+                    val deleted = quirks.extractDeletedHrefs(responseBody)
+
+                    if (isTruncated) {
+                        Log.w(TAG, "sync-collection returned 507 (truncated). " +
+                            "Got ${changed.size} changed, ${deleted.size} deleted. " +
+                            "Continue with token: ${newSyncToken?.take(20)}...")
+                    }
+
+                    CalDavResult.success(SyncReport(
+                        syncToken = newSyncToken,
+                        changed = changed,
+                        deleted = deleted,
+                        truncated = isTruncated
+                    ))
+                }
+                responseCode == 401 -> CalDavResult.authError("Authentication failed")
+                responseCode == 403 || responseCode == 410 -> {
+                    // Check if it's specifically a sync-token error
+                    if (quirks.isSyncTokenInvalid(responseCode, responseBody)) {
+                        CalDavResult.error(responseCode, "Sync token invalid", isRetryable = false)
+                    } else {
+                        CalDavResult.error(responseCode, "Permission denied")
+                    }
+                }
+                else -> CalDavResult.error(responseCode, "sync-collection failed: $responseCode")
             }
-
-            val newSyncToken = quirks.extractSyncToken(responseBody)
-
-            // Parse changed items (hrefs + etags only, no calendar-data in sync-collection)
-            val changedItems = quirks.extractChangedItems(responseBody)
-            val changed = changedItems.map { (href, etag) ->
-                SyncItem(
-                    href = href,
-                    etag = etag,
-                    status = SyncItemStatus.OK
-                )
-            }
-
-            // Parse deleted items from 404 responses
-            val deleted = quirks.extractDeletedHrefs(responseBody)
-
-            CalDavResult.success(SyncReport(
-                syncToken = newSyncToken,
-                changed = changed,
-                deleted = deleted
-            ))
+        } catch (e: IOException) {
+            CalDavResult.networkError("Network error: ${e.message}")
         }
     }
 
@@ -595,7 +710,7 @@ class OkHttpCalDavClient : CalDavClient {
 
                 when {
                     response.isSuccessful -> {
-                        val etag = response.header("ETag")?.trim('"')
+                        val etag = EtagUtils.normalizeEtag(response.header("ETag"))
                         CalDavResult.success(CalDavEvent(
                             href = extractHref(eventUrl),
                             url = eventUrl,
@@ -611,6 +726,78 @@ class OkHttpCalDavClient : CalDavClient {
                 CalDavResult.networkError("Network error: ${e.message}")
             }
         }
+
+    /**
+     * Fetch only the ETag for an event URL using PROPFIND.
+     *
+     * This is a lightweight fallback when PUT response doesn't include ETag header.
+     * Uses PROPFIND with Depth: 0 to get only the getetag property.
+     */
+    override suspend fun fetchEtag(eventUrl: String): CalDavResult<String?> =
+        withContext(Dispatchers.IO) {
+            val propfindBody = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:propfind xmlns:d="DAV:">
+                    <d:prop>
+                        <d:getetag/>
+                    </d:prop>
+                </d:propfind>
+            """.trimIndent()
+
+            val request = Request.Builder()
+                .url(eventUrl)
+                .method("PROPFIND", propfindBody.toRequestBody(XML_MEDIA_TYPE))
+                .header("Depth", "0")
+                .build()
+
+            try {
+                val response = httpClient.newCall(request).execute()
+                val responseBody = response.bodyWithLimit()
+
+                when {
+                    response.isSuccessful -> {
+                        // Extract ETag from PROPFIND response XML
+                        val etag = extractEtagFromPropfind(responseBody)
+                        Log.d(TAG, "fetchEtag for $eventUrl: ${etag ?: "(not found)"}")
+                        CalDavResult.success(etag)
+                    }
+                    response.code == 404 -> {
+                        Log.w(TAG, "fetchEtag: Event not found at $eventUrl")
+                        CalDavResult.notFoundError("Event not found")
+                    }
+                    response.code == 401 -> CalDavResult.authError("Authentication failed")
+                    else -> {
+                        Log.w(TAG, "fetchEtag failed: ${response.code} for $eventUrl")
+                        CalDavResult.error(response.code, "Failed to fetch ETag: ${response.code}")
+                    }
+                }
+            } catch (e: IOException) {
+                Log.e(TAG, "fetchEtag network error for $eventUrl: ${e.message}")
+                CalDavResult.networkError("Network error: ${e.message}")
+            }
+        }
+
+    /**
+     * Extract ETag from PROPFIND response XML.
+     * Handles various namespace prefixes (d:, D:, DAV:, etc.) and XML entity encoding.
+     *
+     * Supports formats:
+     * - <d:getetag>"abc123"</d:getetag>
+     * - <D:getetag>"abc123"</D:getetag>
+     * - <d:getetag>&quot;abc123&quot;</d:getetag>
+     */
+    private fun extractEtagFromPropfind(xml: String): String? {
+        // Match getetag with any namespace prefix
+        val regex = Regex(
+            """<(?:[a-zA-Z0-9]+:)?getetag[^>]*>([^<]+)</""",
+            RegexOption.IGNORE_CASE
+        )
+        val match = regex.find(xml)?.groupValues?.get(1) ?: return null
+
+        // Decode XML entities, then normalize (strips W/ prefix and quotes)
+        val decoded = match.replace("&quot;", "\"").trim()
+        return EtagUtils.normalizeEtag(decoded)
+    }
 
     // ========== Mutations ==========
 
@@ -632,16 +819,72 @@ class OkHttpCalDavClient : CalDavClient {
 
             when {
                 response.code == 201 || response.code == 204 -> {
-                    val etag = response.header("ETag")?.trim('"') ?: ""
-                    CalDavResult.success(Pair(eventUrl, etag))
+                    // Try to get ETag from response header first (normalize handles W/ prefix)
+                    var etag = EtagUtils.normalizeEtag(response.header("ETag"))
+
+                    // RFC 4791 Section 5.3.4: Server SHOULD return ETag, but MAY not.
+                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud).
+                    if (etag.isNullOrEmpty()) {
+                        Log.d(TAG, "createEvent: No ETag in response header, fetching via PROPFIND")
+                        etag = fetchEtagFallback(eventUrl)
+                    }
+
+                    CalDavResult.success(Pair(eventUrl, etag ?: ""))
                 }
                 response.code == 412 -> CalDavResult.conflictError("Event already exists")
                 response.code == 401 -> CalDavResult.authError("Authentication failed")
-                response.code == 403 -> CalDavResult.error(403, "Permission denied")
+                response.code == 403 -> {
+                    // RFC 4791: UID conflict returns 403 with Location header pointing to existing event
+                    val existingUrl = response.header("Location")
+                    if (existingUrl != null) {
+                        CalDavResult.error(403, "UID conflict: event already exists at $existingUrl")
+                    } else {
+                        CalDavResult.error(403, "Permission denied")
+                    }
+                }
+                // RFC 4791: Server rejects if event exceeds max-resource-size
+                response.code == 413 -> CalDavResult.error(413, "Event too large for server")
                 else -> CalDavResult.error(response.code, "Failed to create event: ${response.code}")
             }
         } catch (e: IOException) {
             CalDavResult.networkError("Network error: ${e.message}")
+        }
+    }
+
+    /**
+     * Internal helper to fetch ETag via PROPFIND when PUT response lacks ETag header.
+     * This is a synchronous call meant to be used within withContext(Dispatchers.IO).
+     */
+    private fun fetchEtagFallback(eventUrl: String): String? {
+        val propfindBody = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:propfind xmlns:d="DAV:">
+                <d:prop>
+                    <d:getetag/>
+                </d:prop>
+            </d:propfind>
+        """.trimIndent()
+
+        val request = Request.Builder()
+            .url(eventUrl)
+            .method("PROPFIND", propfindBody.toRequestBody(XML_MEDIA_TYPE))
+            .header("Depth", "0")
+            .build()
+
+        return try {
+            val response = httpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val responseBody = response.bodyWithLimit()
+                val etag = extractEtagFromPropfind(responseBody)
+                Log.d(TAG, "fetchEtagFallback: Got ETag '$etag' for $eventUrl")
+                etag
+            } else {
+                Log.w(TAG, "fetchEtagFallback failed: ${response.code} for $eventUrl")
+                null
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "fetchEtagFallback network error: ${e.message}")
+            null
         }
     }
 
@@ -661,13 +904,23 @@ class OkHttpCalDavClient : CalDavClient {
 
             when {
                 response.code == 200 || response.code == 204 -> {
-                    val newEtag = response.header("ETag")?.trim('"') ?: etag
+                    // Try to get new ETag from response header first (normalize handles W/ prefix)
+                    var newEtag = EtagUtils.normalizeEtag(response.header("ETag"))
+
+                    // RFC 4791 Section 5.3.4: Server SHOULD return ETag, but MAY not.
+                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud).
+                    if (newEtag.isNullOrEmpty()) {
+                        Log.d(TAG, "updateEvent: No ETag in response header, fetching via PROPFIND")
+                        newEtag = fetchEtagFallback(eventUrl) ?: etag
+                    }
+
                     CalDavResult.success(newEtag)
                 }
                 response.code == 412 -> CalDavResult.conflictError("Event was modified on server")
                 response.code == 404 -> CalDavResult.notFoundError("Event not found")
                 response.code == 401 -> CalDavResult.authError("Authentication failed")
                 response.code == 403 -> CalDavResult.error(403, "Permission denied")
+                response.code == 413 -> CalDavResult.error(413, "Event too large for server")
                 else -> CalDavResult.error(response.code, "Failed to update event: ${response.code}")
             }
         } catch (e: IOException) {
@@ -703,8 +956,87 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
+    /**
+     * Move an event to a different calendar using WebDAV MOVE (RFC 4918).
+     *
+     * This is an atomic operation preferred over DELETE+CREATE for same-account moves
+     * because it avoids UID conflict race conditions on servers like iCloud.
+     *
+     * Returns the new event URL and etag on success.
+     */
+    override suspend fun moveEvent(
+        sourceUrl: String,
+        destinationCalendarUrl: String,
+        uid: String
+    ): CalDavResult<Pair<String, String>> = withContext(Dispatchers.IO) {
+        // Construct destination URL: calendar URL + uid.ics
+        val destinationUrl = "${destinationCalendarUrl.trimEnd('/')}/$uid.ics"
+
+        val request = Request.Builder()
+            .url(sourceUrl)
+            .method("MOVE", null)
+            .header("Destination", destinationUrl)
+            .header("Overwrite", "F")  // Don't overwrite if destination exists
+            .build()
+
+        try {
+            val response = httpClient.newCall(request).execute()
+
+            when (response.code) {
+                201, 204 -> {
+                    // Success - get etag from response header or fallback to PROPFIND
+                    var newEtag = EtagUtils.normalizeEtag(response.header("ETag"))
+
+                    if (newEtag.isNullOrEmpty()) {
+                        Log.d(TAG, "moveEvent: No ETag in response header, fetching via PROPFIND")
+                        val etagResult = fetchEtag(destinationUrl)
+                        if (etagResult.isSuccess()) {
+                            newEtag = etagResult.getOrNull()
+                        }
+                    }
+
+                    Log.d(TAG, "moveEvent: Success, new URL=$destinationUrl, etag=$newEtag")
+                    CalDavResult.success(destinationUrl to (newEtag ?: ""))
+                }
+                404 -> {
+                    Log.d(TAG, "moveEvent: Source not found (404)")
+                    CalDavResult.notFoundError("Source event not found")
+                }
+                412 -> {
+                    Log.w(TAG, "moveEvent: Destination already exists (412)")
+                    CalDavResult.conflictError("Destination event already exists")
+                }
+                403 -> {
+                    Log.w(TAG, "moveEvent: Forbidden (403) - may be cross-server move")
+                    CalDavResult.error(403, "MOVE forbidden (cross-server?)", false)
+                }
+                405 -> {
+                    Log.w(TAG, "moveEvent: Method not allowed (405) - server doesn't support MOVE")
+                    CalDavResult.error(405, "MOVE not supported by server", false)
+                }
+                401 -> CalDavResult.authError("Authentication failed")
+                else -> {
+                    val isRetryable = response.code >= 500
+                    Log.w(TAG, "moveEvent: Failed with code ${response.code}")
+                    CalDavResult.error(response.code, "MOVE failed: ${response.code}", isRetryable)
+                }
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "moveEvent: Network error", e)
+            CalDavResult.networkError("Network error: ${e.message}")
+        }
+    }
+
     // ========== Configuration ==========
 
+    /**
+     * Check if the server is reachable and supports CalDAV.
+     *
+     * Per RFC 4791, CalDAV servers MUST include "calendar-access" in the DAV header.
+     * This validates both connectivity and CalDAV capability.
+     *
+     * Includes retry logic for transient failures (429, 503, 5xx).
+     */
     override suspend fun checkConnection(serverUrl: String): CalDavResult<Unit> =
         withContext(Dispatchers.IO) {
             val request = Request.Builder()
@@ -712,17 +1044,68 @@ class OkHttpCalDavClient : CalDavClient {
                 .method("OPTIONS", null)
                 .build()
 
-            try {
-                val response = httpClient.newCall(request).execute()
+            var lastResult: CalDavResult<Unit>? = null
+            var currentBackoff = INITIAL_BACKOFF_MS
 
-                when {
-                    response.isSuccessful -> CalDavResult.success(Unit)
-                    response.code == 401 -> CalDavResult.authError("Invalid credentials")
-                    else -> CalDavResult.error(response.code, "Connection failed: ${response.code}")
+            repeat(MAX_RETRIES) { attempt ->
+                try {
+                    val response = httpClient.newCall(request).execute()
+
+                    // Handle 429 rate limiting with Retry-After
+                    if (response.code == 429 && attempt < MAX_RETRIES - 1) {
+                        val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
+                        Log.w(TAG, "Rate limited (429) on OPTIONS, waiting ${retryAfter}ms before retry")
+                        delay(retryAfter)
+                        return@repeat // Retry
+                    }
+
+                    // Handle 5xx server errors with retry
+                    if (response.code in 500..599 && attempt < MAX_RETRIES - 1) {
+                        val retryDelay = if (response.code == 503) {
+                            parseRetryAfterHeader(response) ?: currentBackoff
+                        } else {
+                            currentBackoff
+                        }
+                        Log.w(TAG, "Server error ${response.code} on OPTIONS, retry after ${retryDelay}ms")
+                        delay(retryDelay)
+                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
+                        return@repeat // Retry
+                    }
+
+                    return@withContext when {
+                        response.isSuccessful -> {
+                            // RFC 4791: CalDAV servers MUST advertise "calendar-access" in DAV header
+                            val davHeader = response.header("DAV") ?: ""
+                            if (!davHeader.contains("calendar-access", ignoreCase = true)) {
+                                Log.w(TAG, "Server does not advertise CalDAV support. DAV header: $davHeader")
+                                CalDavResult.error(
+                                    501,
+                                    "Server does not support CalDAV (missing calendar-access in DAV header)"
+                                )
+                            } else {
+                                Log.d(TAG, "CalDAV server validated. DAV: $davHeader")
+                                CalDavResult.success(Unit)
+                            }
+                        }
+                        response.code == 401 -> CalDavResult.authError("Invalid credentials")
+                        response.code == 429 -> CalDavResult.error(429, "Rate limited")
+                        response.code in 500..599 -> CalDavResult.error(response.code, "Server error: ${response.code}")
+                        else -> CalDavResult.error(response.code, "Connection failed: ${response.code}")
+                    }
+                } catch (e: IOException) {
+                    if (attempt < MAX_RETRIES - 1 && isRetryableError(e)) {
+                        Log.w(TAG, "Retryable error on OPTIONS, retry ${attempt + 1}: ${e.message}")
+                        delay(currentBackoff)
+                        currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
+                        lastResult = CalDavResult.networkError("Cannot reach server: ${e.message}")
+                        return@repeat // Retry
+                    }
+                    return@withContext CalDavResult.networkError("Cannot reach server: ${e.message}")
                 }
-            } catch (e: IOException) {
-                CalDavResult.networkError("Cannot reach server: ${e.message}")
             }
+
+            // All retries exhausted
+            lastResult ?: CalDavResult.networkError("Connection failed after $MAX_RETRIES attempts")
         }
 
     // ========== Private Helpers ==========
@@ -770,9 +1153,15 @@ class OkHttpCalDavClient : CalDavClient {
                 }
 
                 // Retry on server errors (5xx)
+                // RFC 7231: 503 Service Unavailable MAY include Retry-After
                 if (response.code in 500..599 && attempt < MAX_RETRIES - 1) {
-                    Log.w(TAG, "Server error ${response.code}, retry ${attempt + 1} after ${currentBackoff}ms")
-                    delay(currentBackoff) // Use delay() for proper coroutine suspension
+                    val retryDelay = if (response.code == 503) {
+                        parseRetryAfterHeader(response) ?: currentBackoff
+                    } else {
+                        currentBackoff
+                    }
+                    Log.w(TAG, "Server error ${response.code}, retry ${attempt + 1} after ${retryDelay}ms")
+                    delay(retryDelay)
                     currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
                     lastResult = result
                     return@repeat // Retry
@@ -854,17 +1243,29 @@ class OkHttpCalDavClient : CalDavClient {
 
     /**
      * Parse Retry-After header to get delay in milliseconds.
-     * Supports both seconds format and HTTP-date format.
+     * Supports both formats per RFC 7231 Section 7.1.3:
+     * - delay-seconds: "120" (wait 120 seconds)
+     * - HTTP-date: "Sun, 06 Nov 1994 08:49:37 GMT" (wait until this time)
      */
     private fun parseRetryAfterHeader(response: Response): Long? {
         val retryAfter = response.header("Retry-After") ?: return null
 
-        // Try parsing as seconds
+        // Try parsing as seconds (most common)
         retryAfter.toLongOrNull()?.let { return it * 1000 }
 
-        // Could add HTTP-date parsing here if needed
-        // For now, default to 30 seconds if we can't parse
-        return 30_000L
+        // Try parsing as HTTP-date (RFC 7231)
+        return try {
+            val httpDateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("GMT")
+            }
+            val targetTime = httpDateFormat.parse(retryAfter)?.time ?: return DEFAULT_RETRY_AFTER_MS
+            val delayMs = targetTime - System.currentTimeMillis()
+            // If date is in the past, retry immediately (0 delay)
+            delayMs.coerceAtLeast(0)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not parse Retry-After header: $retryAfter, using default")
+            DEFAULT_RETRY_AFTER_MS
+        }
     }
 
     /**

@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
@@ -111,7 +112,7 @@ class IcsSubscriptionRepositoryTest {
         // Default: ICS account exists
         coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns Account(
             id = 1L,
-            provider = "ics_subscription",
+            provider = AccountProvider.ICS,
             email = "subscriptions@local",
             isEnabled = true
         )
@@ -229,7 +230,7 @@ class IcsSubscriptionRepositoryTest {
 
         repository.addSubscription("https://example.com/cal.ics", "Test", 0)
 
-        coVerify { accountsDao.insert(match { it.provider == "ics" }) }
+        coVerify { accountsDao.insert(match { it.provider == AccountProvider.ICS }) }
     }
 
     @Test

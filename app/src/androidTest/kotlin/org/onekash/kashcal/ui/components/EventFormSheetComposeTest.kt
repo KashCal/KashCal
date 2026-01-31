@@ -81,7 +81,6 @@ class EventFormSheetComposeTest {
             location = "",
             description = "",
             rrule = null,
-            availableCalendars = testCalendars,
             isLoading = false,
             isSaving = false,
             error = null,

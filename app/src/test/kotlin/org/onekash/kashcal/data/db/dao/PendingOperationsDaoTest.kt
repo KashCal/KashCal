@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.TimeUnit
 import org.robolectric.annotation.Config
@@ -53,7 +54,7 @@ class PendingOperationsDaoTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(

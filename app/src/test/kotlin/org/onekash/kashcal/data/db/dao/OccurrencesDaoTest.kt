@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
@@ -60,7 +61,7 @@ class OccurrencesDaoTest {
 
         // Setup test data hierarchy
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         calendarId = database.calendarsDao().insert(
             Calendar(

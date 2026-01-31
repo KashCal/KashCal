@@ -17,7 +17,6 @@ import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
-import org.onekash.kashcal.sync.provider.CalendarProvider
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.ConflictStrategy
@@ -46,7 +45,6 @@ import javax.inject.Singleton
  * Usage:
  * - syncCalendar(calendar) - Sync a single calendar
  * - syncAccount(account) - Sync all calendars for an account
- * - syncAll() - Sync all enabled accounts
  */
 @Singleton
 class CalDavSyncEngine @Inject constructor(
@@ -79,8 +77,7 @@ class CalDavSyncEngine @Inject constructor(
      * @param forceFullSync If true, ignores sync token and fetches all events
      * @param conflictStrategy How to resolve conflicts (default: SERVER_WINS)
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
@@ -89,7 +86,7 @@ class CalDavSyncEngine @Inject constructor(
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null,
+        client: CalDavClient,
         trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         val startTime = System.currentTimeMillis()
@@ -113,10 +110,11 @@ class CalDavSyncEngine @Inject constructor(
         var conflictsResolved = 0
         val errors = mutableListOf<SyncError>()
         val changes = mutableListOf<SyncChange>()
+        var anyConflictsAbandoned = false
 
         try {
             // Step 1: Push local changes first
-            val pushResult = pushStrategy.pushForCalendar(calendar, clientOverride)
+            val pushResult = pushStrategy.pushForCalendar(calendar, client)
 
             when (pushResult) {
                 is PushResult.Success -> {
@@ -132,7 +130,7 @@ class CalDavSyncEngine @Inject constructor(
                         var lastAbandonedTitle: String? = null
 
                         for (op in conflictOps) {
-                            val resolved = conflictResolver.resolve(op, strategy = conflictStrategy)
+                            val resolved = conflictResolver.resolve(op, strategy = conflictStrategy, client = client)
                             if (resolved.isSuccess()) {
                                 conflictsResolved++
                             } else {
@@ -142,6 +140,7 @@ class CalDavSyncEngine @Inject constructor(
                                     if (abandonedCount == 0) lastAbandonedTitle = title
                                     abandonedCount++
                                     conflictsResolved++ // Count as resolved (abandoned)
+                                    anyConflictsAbandoned = true
                                 } else {
                                     errors.add(SyncError(
                                         phase = SyncPhase.CONFLICT_RESOLUTION,
@@ -184,7 +183,13 @@ class CalDavSyncEngine @Inject constructor(
             sessionBuilder.setPushStats(pushCreated, pushUpdated, pushDeleted)
 
             // Step 2: Pull server changes
-            val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride, sessionBuilder)
+            // Re-read calendar if conflicts were abandoned (ctag was cleared in DB)
+            val calendarForPull = if (anyConflictsAbandoned) {
+                calendarsDao.getById(calendar.id) ?: calendar
+            } else {
+                calendar
+            }
+            val pullResult = pullStrategy.pull(calendarForPull, forceFullSync, quirks, client, sessionBuilder)
 
             when (pullResult) {
                 is PullResult.Success -> {
@@ -306,8 +311,7 @@ class CalDavSyncEngine @Inject constructor(
      * @param forceFullSync If true, ignores sync tokens
      * @param conflictStrategy How to resolve conflicts
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
@@ -316,7 +320,7 @@ class CalDavSyncEngine @Inject constructor(
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null,
+        client: CalDavClient,
         trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         Log.i(TAG, "Starting sync for account: ${account.email.maskEmail()}")
@@ -359,7 +363,7 @@ class CalDavSyncEngine @Inject constructor(
                     syncType = syncType,
                     triggerSource = trigger
                 )
-                val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, clientOverride, sessionBuilder)
+                val pullResult = pullStrategy.pull(calendar, forceFullSync, quirks, client, sessionBuilder)
                 when (pullResult) {
                     is PullResult.Success -> {
                         totalPullAdded += pullResult.eventsAdded
@@ -410,7 +414,7 @@ class CalDavSyncEngine @Inject constructor(
                 }
             } else {
                 // Full sync for writable calendars
-                val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, clientOverride, trigger)
+                val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, client, trigger)
 
                 when (result) {
                     is SyncResult.Success -> {
@@ -489,135 +493,22 @@ class CalDavSyncEngine @Inject constructor(
      * Extracts quirks from the provider and passes to sync operations.
      *
      * @param account The account to sync
-     * @param provider The CalendarProvider for this account
+     * @param quirks Provider-specific quirks for parsing and handling server responses.
      * @param forceFullSync If true, ignores sync tokens
      * @param conflictStrategy How to resolve conflicts
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @param trigger The trigger source for this sync (for session tracking)
      * @return SyncResult with aggregated statistics
      */
-    suspend fun syncAccountWithProvider(
+    suspend fun syncAccountWithQuirks(
         account: Account,
-        provider: CalendarProvider,
+        quirks: CalDavQuirks?,
         forceFullSync: Boolean = false,
         conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
-        clientOverride: CalDavClient? = null,
+        client: CalDavClient,
         trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
-        val quirks = provider.getQuirks()
-        return syncAccount(account, forceFullSync, conflictStrategy, quirks, clientOverride, trigger)
-    }
-
-    /**
-     * Sync all enabled accounts.
-     *
-     * @param forceFullSync If true, ignores sync tokens
-     * @param conflictStrategy How to resolve conflicts
-     * @return SyncResult with aggregated statistics
-     */
-    suspend fun syncAll(
-        forceFullSync: Boolean = false,
-        conflictStrategy: ConflictStrategy = ConflictStrategy.SERVER_WINS
-    ): SyncResult {
-        Log.i(TAG, "Starting sync for all accounts")
-        val startTime = System.currentTimeMillis()
-
-        val accounts = accountsDao.getEnabledAccounts()
-        if (accounts.isEmpty()) {
-            Log.d(TAG, "No enabled accounts")
-            return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
-        }
-
-        // Aggregate results
-        var totalCalendars = 0
-        var totalPushCreated = 0
-        var totalPushUpdated = 0
-        var totalPushDeleted = 0
-        var totalPullAdded = 0
-        var totalPullUpdated = 0
-        var totalPullDeleted = 0
-        var totalConflicts = 0
-        val allErrors = mutableListOf<SyncError>()
-        val allChanges = mutableListOf<SyncChange>()
-
-        for (account in accounts) {
-            val result = syncAccount(account, forceFullSync, conflictStrategy)
-
-            when (result) {
-                is SyncResult.Success -> {
-                    totalCalendars += result.calendarsSynced
-                    totalPushCreated += result.eventsPushedCreated
-                    totalPushUpdated += result.eventsPushedUpdated
-                    totalPushDeleted += result.eventsPushedDeleted
-                    totalPullAdded += result.eventsPulledAdded
-                    totalPullUpdated += result.eventsPulledUpdated
-                    totalPullDeleted += result.eventsPulledDeleted
-                    totalConflicts += result.conflictsResolved
-                    allChanges.addAll(result.changes)
-                }
-                is SyncResult.PartialSuccess -> {
-                    totalCalendars += result.calendarsSynced
-                    totalPushCreated += result.eventsPushedCreated
-                    totalPushUpdated += result.eventsPushedUpdated
-                    totalPushDeleted += result.eventsPushedDeleted
-                    totalPullAdded += result.eventsPulledAdded
-                    totalPullUpdated += result.eventsPulledUpdated
-                    totalPullDeleted += result.eventsPulledDeleted
-                    totalConflicts += result.conflictsResolved
-                    allErrors.addAll(result.errors)
-                    allChanges.addAll(result.changes)
-                }
-                is SyncResult.AuthError -> {
-                    // Continue with other accounts, but record error
-                    allErrors.add(SyncError(
-                        phase = SyncPhase.AUTH,
-                        calendarId = result.calendarId,
-                        code = 401,
-                        message = result.message
-                    ))
-                }
-                is SyncResult.Error -> {
-                    allErrors.add(SyncError(
-                        phase = SyncPhase.SYNC,
-                        code = result.code,
-                        message = result.message
-                    ))
-                }
-            }
-        }
-
-        val duration = System.currentTimeMillis() - startTime
-        Log.i(TAG, "Full sync complete in ${duration}ms: ${accounts.size} accounts, $totalCalendars calendars")
-
-        return if (allErrors.isEmpty()) {
-            SyncResult.Success(
-                calendarsSynced = totalCalendars,
-                eventsPushedCreated = totalPushCreated,
-                eventsPushedUpdated = totalPushUpdated,
-                eventsPushedDeleted = totalPushDeleted,
-                eventsPulledAdded = totalPullAdded,
-                eventsPulledUpdated = totalPullUpdated,
-                eventsPulledDeleted = totalPullDeleted,
-                conflictsResolved = totalConflicts,
-                durationMs = duration,
-                changes = allChanges
-            )
-        } else {
-            SyncResult.PartialSuccess(
-                calendarsSynced = totalCalendars,
-                eventsPushedCreated = totalPushCreated,
-                eventsPushedUpdated = totalPushUpdated,
-                eventsPushedDeleted = totalPushDeleted,
-                eventsPulledAdded = totalPullAdded,
-                eventsPulledUpdated = totalPullUpdated,
-                eventsPulledDeleted = totalPullDeleted,
-                conflictsResolved = totalConflicts,
-                errors = allErrors,
-                durationMs = duration,
-                changes = allChanges
-            )
-        }
+        return syncAccount(account, forceFullSync, conflictStrategy, quirks, client, trigger)
     }
 
     /**
@@ -644,6 +535,10 @@ class CalDavSyncEngine @Inject constructor(
         // Reset event to SYNCED so pull can update it (if event still exists)
         if (event != null) {
             eventsDao.updateSyncStatus(op.eventId, SyncStatus.SYNCED, now)
+
+            // Clear calendar ctag to force pull to fetch server version
+            calendarsDao.updateCtag(event.calendarId, null)
+            Log.d(TAG, "Cleared ctag for calendar ${event.calendarId} to force server fetch")
         }
 
         // Always delete the stuck pending operation

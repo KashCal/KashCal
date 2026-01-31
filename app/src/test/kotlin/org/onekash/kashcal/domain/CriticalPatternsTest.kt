@@ -22,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -64,7 +65,7 @@ class CriticalPatternsTest {
 
         runTest {
             val iCloudAccountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             iCloudCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -84,7 +85,7 @@ class CriticalPatternsTest {
             )
 
             val localAccountId = database.accountsDao().insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             localCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -164,20 +165,22 @@ class CriticalPatternsTest {
         assertTrue("Should have multiple occurrences", occurrences.size >= 3)
 
         // Create three exceptions
+        // Must pass correct times for each occurrence (EventWriter is strict)
+        val duration = master.endTs - master.startTs
         val exception1 = eventWriter.editSingleOccurrence(
             master.id,
             occurrences[0].startTs,
-            master.copy(title = "Exception 1")
+            master.copy(title = "Exception 1", startTs = occurrences[0].startTs, endTs = occurrences[0].startTs + duration)
         )
         val exception2 = eventWriter.editSingleOccurrence(
             master.id,
             occurrences[1].startTs,
-            master.copy(title = "Exception 2")
+            master.copy(title = "Exception 2", startTs = occurrences[1].startTs, endTs = occurrences[1].startTs + duration)
         )
         val exception3 = eventWriter.editSingleOccurrence(
             master.id,
             occurrences[2].startTs,
-            master.copy(title = "Exception 3")
+            master.copy(title = "Exception 3", startTs = occurrences[2].startTs, endTs = occurrences[2].startTs + duration)
         )
 
         // All exceptions MUST have same UID
@@ -299,7 +302,7 @@ class CriticalPatternsTest {
         database.pendingOperationsDao().deleteAll()
 
         // Move to different calendar
-        eventWriter.moveEventToCalendar(syncedEvent.id, iCloudCalendar2Id, isLocal = false)
+        eventWriter.moveEventToCalendar(syncedEvent.id, iCloudCalendar2Id)
 
         // Get the pending operation
         val pendingOps = database.pendingOperationsDao().getAll()
@@ -330,7 +333,7 @@ class CriticalPatternsTest {
         database.eventsDao().update(syncedEvent)
         database.pendingOperationsDao().deleteAll()
 
-        eventWriter.moveEventToCalendar(syncedEvent.id, iCloudCalendar2Id, isLocal = false)
+        eventWriter.moveEventToCalendar(syncedEvent.id, iCloudCalendar2Id)
 
         val moveOp = database.pendingOperationsDao().getAll().first()
 
@@ -589,7 +592,7 @@ class CriticalPatternsTest {
     }
 
     @Test
-    fun `move from iCloud to local does not queue sync operation`() = runTest {
+    fun `move from iCloud to local queues DELETE operation`() = runTest {
         val event = eventWriter.createEvent(createSingleEvent(), isLocal = false)
 
         val synced = event.copy(
@@ -599,12 +602,13 @@ class CriticalPatternsTest {
         database.eventsDao().update(synced)
         database.pendingOperationsDao().deleteAll()
 
-        // Move to local calendar
-        eventWriter.moveEventToCalendar(synced.id, localCalendarId, isLocal = true)
+        // Move to local calendar (auto-detects synced→local)
+        eventWriter.moveEventToCalendar(synced.id, localCalendarId)
 
-        // Should not queue any sync operation (local calendars don't sync)
+        // Should queue DELETE operation with sourceCalendarId
         val pendingOps = database.pendingOperationsDao().getAll()
-        assertTrue("No sync operation for move to local", pendingOps.isEmpty())
+        assertEquals(1, pendingOps.size)
+        assertEquals(PendingOperation.OPERATION_DELETE, pendingOps[0].operation)
     }
 
     @Test
@@ -613,12 +617,89 @@ class CriticalPatternsTest {
         val created = eventWriter.createEvent(event, isLocal = true)
         database.pendingOperationsDao().deleteAll()
 
-        // Move from local to iCloud
-        eventWriter.moveEventToCalendar(created.id, iCloudCalendarId, isLocal = false)
+        // Move from local to iCloud (auto-detects local→synced)
+        eventWriter.moveEventToCalendar(created.id, iCloudCalendarId)
 
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
         // Should be CREATE (new to server), not MOVE
         assertEquals(PendingOperation.OPERATION_CREATE, pendingOps[0].operation)
+    }
+
+    // ==================== Exception Linking Bug Fix (v21.5.2) ====================
+
+    @Test
+    fun `moved exception should not duplicate after RRULE regeneration`() = runTest {
+        // This test verifies the fix for a bug where regenerating occurrences after
+        // an exception was moved to a different time caused both the original and
+        // modified occurrences to appear.
+
+        val master = eventWriter.createEvent(createRecurringEvent(), isLocal = true)
+        occurrenceGenerator.regenerateOccurrences(master)
+
+        val occurrencesBefore = database.occurrencesDao().getForEvent(master.id)
+        assertTrue("Should have multiple occurrences", occurrencesBefore.size >= 3)
+
+        // Get the second occurrence
+        val originalOccurrence = occurrencesBefore[1]
+        val originalTime = originalOccurrence.startTs
+
+        // Move this occurrence to a different time (2 hours later)
+        val newStartTime = originalTime + 2 * 60 * 60 * 1000  // +2 hours
+        val newEndTime = newStartTime + 60 * 60 * 1000  // 1 hour duration
+
+        val modifiedEvent = master.copy(
+            title = "Moved Meeting",
+            startTs = newStartTime,
+            endTs = newEndTime,
+            rrule = null
+        )
+
+        val exception = eventWriter.editSingleOccurrence(
+            master.id,
+            originalTime,
+            modifiedEvent
+        )
+
+        // Verify exception was created correctly
+        assertNotNull("Exception should be created", exception)
+        assertEquals("Exception should link to master", master.id, exception.originalEventId)
+        assertEquals("Exception should have originalInstanceTime", originalTime, exception.originalInstanceTime)
+
+        // Now simulate RRULE regeneration (e.g., master was updated from server)
+        occurrenceGenerator.regenerateOccurrences(master)
+
+        // Get occurrences after regeneration
+        val occurrencesAfter = database.occurrencesDao().getForEvent(master.id)
+
+        // Count occurrences at the original time (should be 0 - replaced by exception)
+        val atOriginalTime = occurrencesAfter.filter {
+            kotlin.math.abs(it.startTs - originalTime) < 60000
+        }
+
+        // Count occurrences at the new time (should be 1 - the exception)
+        val atNewTime = occurrencesAfter.filter {
+            kotlin.math.abs(it.startTs - newStartTime) < 60000
+        }
+
+        assertEquals(
+            "Should have NO occurrence at original time (replaced by exception)",
+            0, atOriginalTime.size
+        )
+        assertEquals(
+            "Should have exactly ONE occurrence at new time (the exception)",
+            1, atNewTime.size
+        )
+        assertEquals(
+            "Occurrence at new time should link to exception event",
+            exception.id, atNewTime[0].exceptionEventId
+        )
+
+        // Verify no duplicate start times overall
+        val uniqueStartTimes = occurrencesAfter.map { it.startTs }.toSet()
+        assertEquals(
+            "All occurrences should have unique start times",
+            occurrencesAfter.size, uniqueStartTimes.size
+        )
     }
 }

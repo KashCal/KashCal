@@ -16,6 +16,18 @@ sealed class DiscoveryResult {
     ) : DiscoveryResult()
 
     /**
+     * Calendars discovered but account not yet created.
+     * Used for two-phase flow where user selects which calendars to sync.
+     */
+    data class CalendarsFound(
+        val serverUrl: String,
+        val username: String,
+        val calendarHomeUrl: String,
+        val principalUrl: String,
+        val calendars: List<DiscoveredCalendar>
+    ) : DiscoveryResult()
+
+    /**
      * Authentication failed - invalid credentials.
      */
     data class AuthError(val message: String) : DiscoveryResult()
@@ -25,6 +37,18 @@ sealed class DiscoveryResult {
      */
     data class Error(val message: String) : DiscoveryResult()
 }
+
+/**
+ * Data model for discovered calendar before Room entity creation.
+ * Used in two-phase discovery flow.
+ */
+data class DiscoveredCalendar(
+    val href: String,
+    val displayName: String,
+    val color: Int,
+    val supportsEvents: Boolean = true,
+    val isReadOnly: Boolean = false
+)
 
 /**
  * Interface for account discovery services.

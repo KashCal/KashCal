@@ -66,15 +66,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Register as calendar app (for "Default calendar" picker) -->
-            <intent-filter>
+            <!-- Register as calendar app (for "Default calendar" picker and Android Auto) -->
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.APP_CALENDAR" />
             </intent-filter>
 
             <!-- Handle .ics file imports (MIME type) -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -82,7 +82,7 @@
             </intent-filter>
 
             <!-- Handle .ics file imports (content:// URI) -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -91,7 +91,7 @@
             </intent-filter>
 
             <!-- Handle .ics file imports (file:// URI by extension) -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -101,7 +101,7 @@
             </intent-filter>
 
             <!-- Handle .ics (application/ics - Gmail attachments, some email clients) -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
@@ -109,7 +109,7 @@
             </intent-filter>
 
             <!-- Handle .ics (text/x-vcalendar - legacy vCalendar format) -->
-            <intent-filter>
+            <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />

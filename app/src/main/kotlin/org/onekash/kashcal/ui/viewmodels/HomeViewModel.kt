@@ -43,6 +43,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
+import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
@@ -529,24 +530,28 @@ class HomeViewModel @Inject constructor(
     private fun observeCalendars() {
         viewModelScope.launch {
             try {
-                // Combine calendars with user's default calendar preference
+                // Combine calendars, accounts, and user preference
                 combine(
                     eventCoordinator.getAllCalendars(),
+                    eventCoordinator.getAllAccounts(),
                     dataStore.defaultCalendarId
-                ) { calendars, userPrefId ->
+                ) { calendars, accounts, userPrefId ->
                     // User preference takes priority, but validate it exists
                     val defaultCalId = userPrefId?.takeIf { id -> calendars.any { it.id == id } }
                         ?: calendars.find { it.isDefault }?.id  // Fallback to DB is_default
                         ?: calendars.firstOrNull()?.id          // Fallback to first calendar
-                    calendars to defaultCalId
-                }.collect { (calendars, defaultCalId) ->
+                    // Group calendars by account for UI display
+                    val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
+                    Triple(calendars, groups, defaultCalId)
+                }.collect { (calendars, groups, defaultCalId) ->
                     _uiState.update {
                         it.copy(
                             calendars = calendars.toPersistentList(),
+                            calendarGroups = groups.toPersistentList(),
                             defaultCalendarId = defaultCalId
                         )
                     }
-                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, default=$defaultCalId")
+                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, ${groups.size} groups, default=$defaultCalId")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error observing calendars", e)
@@ -561,22 +566,26 @@ class HomeViewModel @Inject constructor(
     private fun loadCalendars() {
         viewModelScope.launch {
             try {
-                val (calendars, defaultCalId) = withContext(ioDispatcher) {
+                val (calendars, groups, defaultCalId) = withContext(ioDispatcher) {
                     val cals = eventCoordinator.getAllCalendars().first()
+                    val accounts = eventCoordinator.getAllAccounts().first()
                     // User preference > DB is_default > first calendar
                     val userPrefId = dataStore.getDefaultCalendarId()
                     val defaultId = userPrefId?.takeIf { id -> cals.any { it.id == id } }
                         ?: cals.find { it.isDefault }?.id
                         ?: cals.firstOrNull()?.id
-                    cals to defaultId
+                    // Group calendars by account for UI
+                    val calGroups = CalendarGroup.fromCalendarsAndAccounts(cals, accounts)
+                    Triple(cals, calGroups, defaultId)
                 }
                 _uiState.update {
                     it.copy(
                         calendars = calendars.toPersistentList(),
+                        calendarGroups = groups.toPersistentList(),
                         defaultCalendarId = defaultCalId
                     )
                 }
-                Log.d(TAG, "Loaded ${calendars.size} calendars, default=$defaultCalId")
+                Log.d(TAG, "Loaded ${calendars.size} calendars, ${groups.size} groups, default=$defaultCalId")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading calendars", e)
             }
@@ -605,8 +614,9 @@ class HomeViewModel @Inject constructor(
             // Update DB (source of truth) - UI updates automatically via calendars Flow observation
             eventCoordinator.setCalendarVisibility(calendarId, newVisible)
 
-            // Rebuild dots with new visibility
-            reloadCurrentView()
+            // Only rebuild dots (one-shot query needs explicit refresh)
+            // Week/agenda/pager/day views are now reactive via combine() - they auto-update
+            buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
         }
     }
 
@@ -620,7 +630,9 @@ class HomeViewModel @Inject constructor(
             _uiState.value.calendars.forEach { calendar ->
                 eventCoordinator.setCalendarVisibility(calendar.id, true)
             }
-            reloadCurrentView()
+            // Only rebuild dots (one-shot query needs explicit refresh)
+            // Week/agenda/pager/day views are now reactive via combine() - they auto-update
+            buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
         }
     }
 
@@ -1079,19 +1091,9 @@ class HomeViewModel @Inject constructor(
 
         weekEventsJob = viewModelScope.launch {
             try {
-                eventReader.getOccurrencesWithEventsInRangeFlow(weekStartMs, weekEndMs)
-                    .distinctUntilChanged()
-                    .collect { occurrencesWithEvents ->
-                        // Filter by visible calendars
-                        val visibleCalendarIds = _uiState.value.calendars
-                            .filter { it.isVisible }
-                            .map { it.id }
-                            .toSet()
-
-                        val visible = occurrencesWithEvents.filter {
-                            it.occurrence.calendarId in visibleCalendarIds
-                        }
-
+                // Use reactive method that auto-filters by visibility via combine()
+                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(weekStartMs, weekEndMs)
+                    .collect { visible ->
                         // Separate timed and all-day events
                         val timedOccurrences = visible
                             .filter { !it.event.isAllDay }
@@ -1200,19 +1202,9 @@ class HomeViewModel @Inject constructor(
 
         weekEventsJob = viewModelScope.launch {
             try {
-                eventReader.getOccurrencesWithEventsInRangeFlow(startMs, endMs)
-                    .distinctUntilChanged()
-                    .collect { occurrencesWithEvents ->
-                        // Filter by visible calendars
-                        val visibleCalendarIds = _uiState.value.calendars
-                            .filter { it.isVisible }
-                            .map { it.id }
-                            .toSet()
-
-                        val visible = occurrencesWithEvents.filter {
-                            it.occurrence.calendarId in visibleCalendarIds
-                        }
-
+                // Use reactive method that auto-filters by visibility via combine()
+                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs)
+                    .collect { visible ->
                         // Separate timed and all-day events
                         val timedOccurrences = visible
                             .filter { !it.event.isAllDay }
@@ -1437,19 +1429,9 @@ class HomeViewModel @Inject constructor(
 
         dayEventsCacheJob = viewModelScope.launch {
             try {
-                eventReader.getOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd)
-                    .distinctUntilChanged()
-                    .collect { occurrencesWithEvents ->
-                        // Filter by visible calendars
-                        val visibleCalendarIds = _uiState.value.calendars
-                            .filter { it.isVisible }
-                            .map { it.id }
-                            .toSet()
-
-                        val visible = occurrencesWithEvents.filter {
-                            it.occurrence.calendarId in visibleCalendarIds
-                        }
-
+                // Use reactive method that auto-filters by visibility via combine()
+                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd)
+                    .collect { visible ->
                         // Group by dayCode for O(1) lookup
                         // Use pre-calculated startDay/endDay (already UTC-aware for all-day events)
                         // Expand multi-day events to all days they span
@@ -1772,20 +1754,11 @@ class HomeViewModel @Inject constructor(
         val oneMonthLater = now + (30L * 24 * 60 * 60 * 1000) // 30 days
 
         // Start observing agenda events (reactive - updates as sync progresses)
+        // Uses combine() so visibility changes also trigger updates
         agendaEventsJob = viewModelScope.launch {
             try {
-                eventReader.getOccurrencesWithEventsInRangeFlow(now, oneMonthLater)
-                    .distinctUntilChanged()
-                    .map { occurrencesWithEvents ->
-                        // Filter by visible calendars (using Calendar.isVisible as source of truth)
-                        val visibleCalendarIds = _uiState.value.calendars
-                            .filter { it.isVisible }
-                            .map { it.id }
-                            .toSet()
-                        occurrencesWithEvents
-                            .filter { it.occurrence.calendarId in visibleCalendarIds }
-                            .sortedBy { it.occurrence.startTs }
-                    }
+                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(now, oneMonthLater)
+                    .map { visible -> visible.sortedBy { it.occurrence.startTs } }
                     .collect { filteredOccurrences ->
                         _uiState.update {
                             it.copy(
@@ -2381,6 +2354,11 @@ class HomeViewModel @Inject constructor(
                 Log.d(TAG, "Error action: Dismiss")
                 clearError()
             }
+            is ErrorActionCallback.OpenUrl -> {
+                Log.d(TAG, "Error action: OpenUrl - ${callback.url}")
+                _uiState.update { it.copy(pendingUrlToOpen = callback.url) }
+                clearError()
+            }
             is ErrorActionCallback.Custom -> {
                 Log.d(TAG, "Error action: Custom")
                 callback.action()
@@ -2401,6 +2379,13 @@ class HomeViewModel @Inject constructor(
                 showErrorBanner = false
             )
         }
+    }
+
+    /**
+     * Clear pending URL after it has been opened.
+     */
+    fun clearPendingUrl() {
+        _uiState.update { it.copy(pendingUrlToOpen = null) }
     }
 
     /**

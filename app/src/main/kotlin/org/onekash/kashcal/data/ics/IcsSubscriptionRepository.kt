@@ -12,6 +12,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
@@ -229,7 +230,7 @@ class IcsSubscriptionRepository @Inject constructor(
 
                 is FetchResult.Success -> {
                     // Parse ICS content
-                    val events = RfcIcsParser.parseIcsContent(
+                    val events = IcsParserService.parseIcsContent(
                         content = fetchResult.content,
                         calendarId = subscription.calendarId,
                         subscriptionId = subscriptionId
@@ -303,7 +304,7 @@ class IcsSubscriptionRepository @Inject constructor(
      */
     private suspend fun ensureIcsAccountExists(): Long {
         val existing = accountsDao.getByProviderAndEmail(
-            IcsSubscription.PROVIDER_ICS,
+            AccountProvider.ICS,
             IcsSubscription.ACCOUNT_EMAIL
         )
 
@@ -313,7 +314,7 @@ class IcsSubscriptionRepository @Inject constructor(
 
         // Create ICS account
         val account = Account(
-            provider = IcsSubscription.PROVIDER_ICS,
+            provider = AccountProvider.ICS,
             email = IcsSubscription.ACCOUNT_EMAIL,
             displayName = "ICS Subscriptions",
             isEnabled = true
@@ -328,7 +329,7 @@ class IcsSubscriptionRepository @Inject constructor(
      * Fetch ICS content from URL with conditional request support.
      * Delegates to injected IcsFetcher for testability.
      */
-    private fun fetchIcsContent(subscription: IcsSubscription): FetchResult {
+    private suspend fun fetchIcsContent(subscription: IcsSubscription): FetchResult {
         return when (val result = icsFetcher.fetch(subscription)) {
             is IcsFetcher.FetchResult.Success -> FetchResult.Success(
                 content = result.content,

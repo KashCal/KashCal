@@ -36,7 +36,9 @@ import androidx.room.PrimaryKey
         Index(value = ["event_id"]),
         Index(value = ["calendar_id", "start_ts"]),
         Index(value = ["exception_event_id"]),
-        Index(value = ["is_cancelled"])
+        Index(value = ["is_cancelled"]),
+        // Unique constraint to prevent duplicate occurrences (e.g., concurrent syncs)
+        Index(value = ["event_id", "start_ts"], unique = true)
     ]
 )
 data class Occurrence(

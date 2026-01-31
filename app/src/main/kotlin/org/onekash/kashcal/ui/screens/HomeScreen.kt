@@ -72,6 +72,8 @@ import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
+import android.content.Intent
+import android.net.Uri
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
@@ -159,6 +161,8 @@ fun HomeScreen(
     onClearScrollAgendaToTop: () -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {},
+    // URL callback (for error actions that open URLs)
+    onClearPendingUrl: () -> Unit = {},
     // Day pager cache callbacks
     onLoadEventsForDayPagerRange: (Long) -> Unit = {},
     shouldRefreshDayPagerCache: (Long) -> Boolean = { true }
@@ -228,6 +232,15 @@ fun HomeScreen(
                 uiState.pendingSnackbarAction?.invoke()
             }
             onClearSnackbar()
+        }
+    }
+
+    // Handle pending URL to open (from error actions)
+    LaunchedEffect(uiState.pendingUrlToOpen) {
+        uiState.pendingUrlToOpen?.let { url ->
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            context.startActivity(intent)
+            onClearPendingUrl()
         }
     }
 
@@ -1057,7 +1070,7 @@ private fun DayEventsPage(
                     val event = occWithEvent.event
                     val occurrence = occWithEvent.occurrence
                     val eventColor = colorMap[event.calendarId] ?: defaultColor
-                    val isPast = occurrence.endTs < System.currentTimeMillis()
+                    val isPast = DateTimeUtils.isEventPast(occurrence.endTs, occurrence.endDay, event.isAllDay)
 
                     EventCard(
                         event = event,
@@ -1265,9 +1278,10 @@ private fun SearchContent(
                 ) { result ->
                     val event = result.event
                     val eventColor = colorMap[event.calendarId] ?: defaultColor
-                    // Use nextOccurrenceTs for isPast check if available
-                    val checkTs = result.nextOccurrenceTs ?: event.endTs
-                    val isPast = !event.isRecurring && !event.isException && checkTs < System.currentTimeMillis()
+                    // For non-recurring events, use event.endTs with timezone-aware isPast check
+                    val endDay = DateTimeUtils.eventTsToDayCode(event.endTs, event.isAllDay)
+                    val isPast = !event.isRecurring && !event.isException &&
+                        DateTimeUtils.isEventPast(event.endTs, endDay, event.isAllDay)
                     SearchResultCard(
                         event = event,
                         nextOccurrenceTs = result.nextOccurrenceTs,
@@ -1400,6 +1414,9 @@ private fun AgendaContent(
         }.filter { item ->
             // Only show items from today onwards
             item.displayDay >= todayDayCode
+        }.distinctBy { item ->
+            // Deduplicate by key to prevent LazyColumn crash (duplicate occurrences in DB)
+            "${item.occWithEvent.event.id}-${item.occWithEvent.occurrence.startTs}-${item.displayDay}"
         }.sortedWith(compareBy(
             { it.displayDay },  // Primary: by date
             { it.occWithEvent.occurrence.startTs }  // Secondary: by original start time

@@ -167,12 +167,6 @@ data class IcsSubscription(
 
     companion object {
         /**
-         * Account provider identifier for ICS subscriptions.
-         * Used when creating the parent Account.
-         */
-        const val PROVIDER_ICS = "ics"
-
-        /**
          * Default email for ICS subscription account.
          */
         const val ACCOUNT_EMAIL = "subscriptions"

@@ -9,7 +9,9 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.model.ParseResult
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
@@ -22,7 +24,8 @@ import java.util.Properties
 class ICalDavMigrationTest {
 
     private lateinit var parser: ICalParser
-    private lateinit var calDavClient: OkHttpCalDavClient
+    private lateinit var calDavClient: CalDavClient
+    private lateinit var clientFactory: OkHttpCalDavClientFactory
     private var username: String? = null
     private var password: String? = null
 
@@ -36,14 +39,31 @@ class ICalDavMigrationTest {
         every { Log.e(any(), any(), any()) } returns 0
 
         parser = ICalParser()
-        calDavClient = OkHttpCalDavClient(ICloudQuirks())
+        clientFactory = OkHttpCalDavClientFactory()
 
         loadCredentials()
+
+        // Create client using factory pattern (replaces setCredentials)
+        // Client is created after loadCredentials so we have the values
+        val quirks = ICloudQuirks()
+        val credentials = if (username != null && password != null) {
+            Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = "https://caldav.icloud.com"
+            )
+        } else {
+            Credentials(
+                username = "dummy",
+                password = "dummy",
+                serverUrl = "https://caldav.icloud.com"
+            )
+        }
+        calDavClient = clientFactory.createClient(credentials, quirks)
     }
 
     @After
     fun tearDown() {
-        calDavClient.clearCredentials()
         unmockkAll()
     }
 
@@ -233,7 +253,7 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(username!!, password!!)
+        // Client already created with credentials in setup()
 
         try {
             val homeUrl = discoverCalendarHome()
@@ -256,7 +276,7 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(username!!, password!!)
+        // Client already created with credentials in setup()
 
         try {
             // First discover home via principal
@@ -295,7 +315,7 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(username!!, password!!)
+        // Client already created with credentials in setup()
 
         try {
             // Discover and list calendars via principal

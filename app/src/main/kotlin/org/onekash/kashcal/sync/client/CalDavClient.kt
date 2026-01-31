@@ -15,6 +15,15 @@ interface CalDavClient {
     // ========== Discovery ==========
 
     /**
+     * Discover the CalDAV endpoint via RFC 6764 well-known URL.
+     * Makes a request to /.well-known/caldav and follows redirects.
+     *
+     * @param serverUrl Base server URL (e.g., "https://nextcloud.example.com")
+     * @return The final URL after following redirects, or original URL if well-known not supported
+     */
+    suspend fun discoverWellKnown(serverUrl: String): CalDavResult<String>
+
+    /**
      * Discover the user's principal URL from the server root.
      * Uses PROPFIND with current-user-principal property.
      *
@@ -127,6 +136,19 @@ interface CalDavClient {
      */
     suspend fun fetchEvent(eventUrl: String): CalDavResult<CalDavEvent>
 
+    /**
+     * Fetch only the ETag for an event URL using PROPFIND.
+     *
+     * This is a lightweight operation used as a fallback when PUT response
+     * doesn't include an ETag header (e.g., Nextcloud). Per RFC 4791 Section 5.3.4,
+     * servers SHOULD return ETag in PUT response but MAY not, in which case
+     * clients should fetch it via PROPFIND.
+     *
+     * @param eventUrl Full event URL
+     * @return ETag value (without quotes) or null if not found
+     */
+    suspend fun fetchEtag(eventUrl: String): CalDavResult<String?>
+
     // ========== Mutations ==========
 
     /**
@@ -172,29 +194,27 @@ interface CalDavClient {
         etag: String
     ): CalDavResult<Unit>
 
+    /**
+     * Move an event to a different calendar using WebDAV MOVE (RFC 4918).
+     *
+     * This is an atomic operation that relocates the event resource to a new
+     * calendar collection. Preferred over DELETE+CREATE for same-account moves
+     * because it's atomic and avoids UID conflicts.
+     *
+     * Only works for same-server moves. For cross-server moves, use DELETE+CREATE.
+     *
+     * @param sourceUrl Current full event URL
+     * @param destinationCalendarUrl Target calendar URL (collection, not event URL)
+     * @param uid Event UID for constructing destination filename
+     * @return Pair of (new event URL, new etag) on success
+     */
+    suspend fun moveEvent(
+        sourceUrl: String,
+        destinationCalendarUrl: String,
+        uid: String
+    ): CalDavResult<Pair<String, String>>
+
     // ========== Configuration ==========
-
-    /**
-     * Set authentication credentials.
-     * Must be called before making any requests.
-     *
-     * @param username Username (email for iCloud)
-     * @param password Password (app-specific password for iCloud)
-     */
-    fun setCredentials(username: String, password: String)
-
-    /**
-     * Check if credentials have been set.
-     *
-     * @return true if credentials are configured
-     */
-    fun hasCredentials(): Boolean
-
-    /**
-     * Clear stored credentials.
-     * Call when user logs out.
-     */
-    fun clearCredentials()
 
     /**
      * Check if the server is reachable and credentials are valid.

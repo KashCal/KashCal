@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,7 +13,7 @@ import javax.inject.Singleton
  *
  * KashCal is offline-first - users can always create events locally
  * without setting up any sync accounts. This initializer creates:
- * - A "local" account (provider = "local")
+ * - A local account (provider = AccountProvider.LOCAL)
  * - A "Local" calendar as default
  *
  * Called on app startup via Hilt.
@@ -22,7 +23,6 @@ class LocalCalendarInitializer @Inject constructor(
     private val database: KashCalDatabase
 ) {
     companion object {
-        const val LOCAL_PROVIDER = "local"
         const val LOCAL_EMAIL = "local"
         const val LOCAL_ACCOUNT_DISPLAY_NAME = "On This Device"
         const val LOCAL_CALENDAR_DISPLAY_NAME = "Local"
@@ -44,13 +44,13 @@ class LocalCalendarInitializer @Inject constructor(
             val calendarsDao = database.calendarsDao()
 
             // Check if local account exists
-            var localAccount = accountsDao.getByProviderAndEmail(LOCAL_PROVIDER, LOCAL_EMAIL)
+            var localAccount = accountsDao.getByProviderAndEmail(AccountProvider.LOCAL, LOCAL_EMAIL)
 
             if (localAccount == null) {
                 // Create local account
                 val accountId = accountsDao.insert(
                     Account(
-                        provider = LOCAL_PROVIDER,
+                        provider = AccountProvider.LOCAL,
                         email = LOCAL_EMAIL,
                         displayName = LOCAL_ACCOUNT_DISPLAY_NAME,
                         isEnabled = true
@@ -98,7 +98,7 @@ class LocalCalendarInitializer @Inject constructor(
      * Check if an account is the local account.
      */
     fun isLocalAccount(account: Account): Boolean {
-        return account.provider == LOCAL_PROVIDER && account.email == LOCAL_EMAIL
+        return account.provider == AccountProvider.LOCAL && account.email == LOCAL_EMAIL
     }
 
     /**

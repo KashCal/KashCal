@@ -84,7 +84,6 @@ class PushStrategyTest {
         coEvery { calendarsDao.getByIds(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
@@ -102,7 +101,7 @@ class PushStrategyTest {
     fun `pushAll returns NoPendingOperations when queue is empty`() = runTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns emptyList()
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.NoPendingOperations)
     }
@@ -131,7 +130,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, serverUrl, serverEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
@@ -164,7 +163,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
@@ -200,7 +199,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markSynced(eventWithUrl.id, newEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
@@ -233,7 +232,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
@@ -269,7 +268,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 
@@ -302,7 +301,7 @@ class PushStrategyTest {
         coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
@@ -330,7 +329,7 @@ class PushStrategyTest {
         coEvery { eventsDao.deleteById(eventNoUrl.id) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).eventsDeleted == 1)
@@ -363,7 +362,7 @@ class PushStrategyTest {
         coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Should succeed - 404 means already deleted
         assert(result is PushResult.Success)
@@ -386,7 +385,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(999L) } returns null
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Should succeed - nothing to do
         assert(result is PushResult.Success)
@@ -446,7 +445,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
         coEvery { eventsDao.deleteById(any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
@@ -479,7 +478,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
@@ -507,7 +506,7 @@ class PushStrategyTest {
                 coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.networkError("Connection failed")
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 
@@ -534,7 +533,7 @@ class PushStrategyTest {
                 coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.authError("Invalid credentials")
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Should mark as failed immediately (auth error is not retryable)
         coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
@@ -573,7 +572,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update exception etags
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        pushStrategy.pushAll()
+        pushStrategy.pushAll(client)
 
         // Verify exception etag was updated (v14.2.20)
         coVerify { eventsDao.markSynced(exceptionEvent.id, "etag", any()) }
@@ -601,7 +600,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(exceptionEvent.id) } returns exceptionEvent
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Should succeed but NOT call any server methods
         assert(result is PushResult.Success)
@@ -638,7 +637,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(exceptionEvent.id) } returns exceptionEvent
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Should succeed (no-op)
         assert(result is PushResult.Success)
@@ -689,7 +688,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update master and exception etags
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
@@ -733,7 +732,7 @@ class PushStrategyTest {
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
 
         // When
-        val result = pushStrategy.pushForCalendar(calendar1)
+        val result = pushStrategy.pushForCalendar(calendar1, client)
 
         // Then: getByIds called once (batch), getById NEVER called
         coVerify(exactly = 1) { eventsDao.getByIds(any()) }

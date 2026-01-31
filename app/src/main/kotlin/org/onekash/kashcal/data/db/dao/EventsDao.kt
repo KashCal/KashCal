@@ -51,6 +51,15 @@ data class EtagEntry(
 )
 
 /**
+ * Lightweight projection for URL migration.
+ * Used by iCloud URL normalization to efficiently update caldav_url column.
+ */
+data class EventUrlProjection(
+    @ColumnInfo(name = "id") val id: Long,
+    @ColumnInfo(name = "caldav_url") val caldavUrl: String?
+)
+
+/**
  * Data Access Object for Event operations.
  *
  * Provides comprehensive CRUD and sync operations for calendar events.
@@ -412,6 +421,27 @@ interface EventsDao {
         WHERE id = :id
     """)
     suspend fun recordSyncError(id: Long, error: String, now: Long)
+
+    /**
+     * Update calendar ID for all exception events linked to a master.
+     * Called within transaction when moving master recurring event.
+     *
+     * Exception events must stay with master (FK constraint via originalEventId).
+     * This ensures all exceptions move together with the master event.
+     *
+     * @param masterEventId The master event being moved
+     * @param newCalendarId The target calendar
+     * @param now Current timestamp for updated_at
+     * @return Number of exception events updated
+     */
+    @Query("""
+        UPDATE events
+        SET calendar_id = :newCalendarId,
+            updated_at = :now,
+            local_modified_at = :now
+        WHERE original_event_id = :masterEventId
+    """)
+    suspend fun updateCalendarIdForExceptions(masterEventId: Long, newCalendarId: Long, now: Long): Int
 
     /**
      * Clear sync error after user acknowledges.
@@ -781,4 +811,27 @@ interface EventsDao {
         )
     """)
     suspend fun deleteDuplicateMasterEvents(): Int
+
+    // ========== iCloud URL Migration ==========
+
+    /**
+     * Get all iCloud event URLs for migration.
+     * Joins with calendars and accounts to filter by iCloud provider.
+     * Returns lightweight projection to avoid loading full Event objects.
+     * Note: provider is stored as lowercase string via Converter.
+     */
+    @Query("""
+        SELECT e.id, e.caldav_url FROM events e
+        INNER JOIN calendars c ON e.calendar_id = c.id
+        INNER JOIN accounts a ON c.account_id = a.id
+        WHERE a.provider = 'icloud'
+        AND e.caldav_url IS NOT NULL
+    """)
+    suspend fun getICloudEventUrls(): List<EventUrlProjection>
+
+    /**
+     * Update CalDAV URL for a single event (for iCloud URL normalization migration).
+     */
+    @Query("UPDATE events SET caldav_url = :caldavUrl WHERE id = :id")
+    suspend fun updateCaldavUrl(id: Long, caldavUrl: String)
 }

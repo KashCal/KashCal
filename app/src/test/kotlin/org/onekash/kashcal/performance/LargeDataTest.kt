@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -61,7 +62,7 @@ class LargeDataTest {
         kotlinx.coroutines.runBlocking {
             testAccountId = database.accountsDao().insert(
                 Account(
-                    provider = "local",
+                    provider = AccountProvider.LOCAL,
                     email = "test@test.com",
                     displayName = "Test Account"
                 )

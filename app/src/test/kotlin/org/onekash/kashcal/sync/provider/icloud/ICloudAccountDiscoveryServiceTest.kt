@@ -20,7 +20,10 @@ import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
@@ -44,7 +47,10 @@ class ICloudAccountDiscoveryServiceTest {
     private val testDispatcher = StandardTestDispatcher()
 
     // Mocks
+    private lateinit var clientFactory: CalDavClientFactory
+    private lateinit var credentialProvider: ICloudCredentialProvider  // From same package
     private lateinit var calDavClient: CalDavClient
+    private lateinit var icloudQuirks: ICloudQuirks
     private lateinit var accountsDao: AccountsDao
     private lateinit var calendarsDao: CalendarsDao
 
@@ -75,7 +81,7 @@ class ICloudAccountDiscoveryServiceTest {
 
     private val testDbAccount = Account(
         id = 1L,
-        provider = "icloud",
+        provider = AccountProvider.ICLOUD,
         email = testAppleId,
         displayName = "iCloud",
         principalUrl = testPrincipalUrl,
@@ -86,9 +92,15 @@ class ICloudAccountDiscoveryServiceTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
+        clientFactory = mockk(relaxed = true)
+        credentialProvider = mockk(relaxed = true)
         calDavClient = mockk(relaxed = true)
+        icloudQuirks = ICloudQuirks()
         accountsDao = mockk(relaxed = true)
         calendarsDao = mockk(relaxed = true)
+
+        // Mock factory to return our mock client
+        every { clientFactory.createClient(any(), any()) } returns calDavClient
 
         // Default: no existing account
         coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
@@ -104,7 +116,9 @@ class ICloudAccountDiscoveryServiceTest {
 
     private fun createService(): ICloudAccountDiscoveryService {
         return ICloudAccountDiscoveryService(
-            calDavClient = calDavClient,
+            clientFactory = clientFactory,
+            credentialProvider = credentialProvider,
+            icloudQuirks = icloudQuirks,
             accountsDao = accountsDao,
             calendarsDao = calendarsDao
         )
@@ -135,7 +149,7 @@ class ICloudAccountDiscoveryServiceTest {
     }
 
     @Test
-    fun `discovery sets credentials on client before discovery`() = runTest {
+    fun `discovery creates client with credentials via factory`() = runTest {
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
         coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
@@ -143,8 +157,8 @@ class ICloudAccountDiscoveryServiceTest {
         val service = createService()
         service.discoverAndCreateAccount(testAppleId, testPassword)
 
-        // Verify credentials were set
-        coVerify { calDavClient.setCredentials(testAppleId, testPassword) }
+        // Verify client was created with credentials via factory
+        io.mockk.verify { clientFactory.createClient(match { it.username == testAppleId && it.password == testPassword }, any()) }
     }
 
     @Test
@@ -342,7 +356,7 @@ class ICloudAccountDiscoveryServiceTest {
 
     @Test
     fun `removeAccountByEmail deletes iCloud account by email`() = runTest {
-        coEvery { accountsDao.getByProviderAndEmail("icloud", testAppleId) } returns testDbAccount
+        coEvery { accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, testAppleId) } returns testDbAccount
 
         val service = createService()
         service.removeAccountByEmail(testAppleId)

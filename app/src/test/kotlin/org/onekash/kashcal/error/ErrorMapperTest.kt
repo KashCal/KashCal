@@ -278,4 +278,27 @@ class ErrorMapperTest {
         assertTrue(presentation.messageArgs.contains(3))
         assertTrue(presentation.messageArgs.contains(1))
     }
+
+    // ==================== Database Corruption ====================
+
+    @Test
+    fun `DatabaseCorruption maps to Dialog with OpenUrl to GitHub issues`() {
+        val error = CalendarError.Storage.DatabaseCorruption
+        val presentation = ErrorMapper.toPresentation(error)
+
+        assertTrue(presentation is ErrorPresentation.Dialog)
+        val dialog = presentation as ErrorPresentation.Dialog
+
+        // Should have OpenUrl callback pointing to GitHub issues
+        assertTrue(dialog.primaryAction.callback is ErrorActionCallback.OpenUrl)
+        val openUrl = dialog.primaryAction.callback as ErrorActionCallback.OpenUrl
+        assertEquals("https://github.com/KashCal/KashCal/issues", openUrl.url)
+
+        // Should be dismissible (user can close and reinstall/resync)
+        assertTrue(dialog.dismissible)
+
+        // Should have secondary Close button
+        assertNotNull(dialog.secondaryAction)
+        assertEquals(ErrorActionCallback.Dismiss, dialog.secondaryAction?.callback)
+    }
 }

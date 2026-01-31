@@ -31,6 +31,9 @@ sealed class ErrorActionCallback {
     /** Dismiss the error UI */
     data object Dismiss : ErrorActionCallback()
 
+    /** Open a URL in browser */
+    data class OpenUrl(val url: String) : ErrorActionCallback()
+
     /** Custom action with lambda */
     data class Custom(val action: () -> Unit) : ErrorActionCallback()
 }

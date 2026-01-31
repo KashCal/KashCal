@@ -1,0 +1,26 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//KashCal//Validation//EN
+BEGIN:VEVENT
+UID:v44_special_longtext-1769656511@kashcal.test
+DTSTAMP:20260129T110000Z
+DTSTART:20260302T090000
+DTEND:20260302T100000
+SUMMARY:Val Special Long Text Title That Goes On And On For Testing
+DESCRIPTION:This is a very long description that contains multiple sentences. It is designed to test how the calendar handles events with substantial text content. The description includes various details about the event, such as the agenda, participants, and expected outcomes. Additional text is included to ensure the description is sufficiently long for testing purposes.
+LOCATION:Conference Room B - Building 3 - Main Campus - City Center
+RRULE:FREQ=WEEKLY;COUNT=6
+SEQUENCE:0
+END:VEVENT
+BEGIN:VEVENT
+UID:v44_special_longtext-1769656511@kashcal.test
+DTSTAMP:20260129T110000Z
+RECURRENCE-ID:20260309T090000
+DTSTART:20260309T140000
+DTEND:20260309T150000
+SUMMARY:Val Special Long Text - Exception With Even Longer Title Here
+DESCRIPTION:This exception has an even longer description with more content. We want to ensure that exceptions can also handle substantial amounts of text without any issues. The system should properly preserve all text through sync cycles.
+LOCATION:Virtual Meeting Room - Zoom Link - Remote Access
+SEQUENCE:1
+END:VEVENT
+END:VCALENDAR

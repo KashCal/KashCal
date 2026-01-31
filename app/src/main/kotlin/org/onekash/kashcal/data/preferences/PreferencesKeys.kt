@@ -163,4 +163,14 @@ object PreferencesKeys {
      * - v1: Initial (VALUE=DATE timezone fix - use UTC instead of local)
      */
     val PARSER_VERSION = intPreferencesKey("parser_version")
+
+    // ========== iCloud URL Migration ==========
+
+    /**
+     * iCloud URL migration to canonical form completed.
+     * One-time migration that normalizes regional URLs (p180-caldav.icloud.com)
+     * to canonical form (caldav.icloud.com) for all accounts, calendars, events,
+     * and pending operations.
+     */
+    val ICLOUD_URL_MIGRATION_COMPLETED = booleanPreferencesKey("icloud_url_migration_completed")
 }

@@ -56,7 +56,10 @@ data class SyncSession(
 
     // Fetch fallback tracking (v16.8.0)
     val fallbackUsed: Boolean = false,  // True if batch multiget failed and we fell back
-    val fetchFailedCount: Int = 0       // Individual fetches that failed during fallback
+    val fetchFailedCount: Int = 0,      // Individual fetches that failed during fallback
+
+    // RFC 6578 Section 3.6: Server truncated results (507)
+    val truncated: Boolean = false      // True if server returned 507 (will continue on next sync)
 ) {
     /**
      * Overall status derived from session data.

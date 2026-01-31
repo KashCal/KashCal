@@ -251,6 +251,13 @@ interface OccurrencesDao {
     suspend fun insertAll(occurrences: List<Occurrence>)
 
     /**
+     * Delete a single occurrence by its ID.
+     * Used for conflict resolution when linking exceptions.
+     */
+    @Query("DELETE FROM occurrences WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
+    /**
      * Delete all occurrences for an event (before regeneration).
      */
     @Query("DELETE FROM occurrences WHERE event_id = :eventId")
@@ -332,6 +339,13 @@ interface OccurrencesDao {
         newStartDay: Int,
         newEndDay: Int
     ): Int
+
+    /**
+     * Get occurrence by event ID and exact start timestamp.
+     * Used to check for conflicts when linking exception events.
+     */
+    @Query("SELECT * FROM occurrences WHERE event_id = :eventId AND start_ts = :startTs LIMIT 1")
+    suspend fun getByEventIdAndStartTs(eventId: Long, startTs: Long): Occurrence?
 
     /**
      * Unlink exception from occurrence (when exception is deleted).

@@ -7,11 +7,11 @@ import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.ics.RfcIcsParser
+import org.onekash.kashcal.data.ics.IcsParserService
 import java.util.concurrent.TimeUnit
 
 /**
- * Integration tests for RfcIcsParser with real Thunderbird holiday calendars.
+ * Integration tests for IcsParserService with real Thunderbird holiday calendars.
  *
  * Tests the parser against 25+ real-world ICS feeds from:
  * https://www.thunderbird.net/en-US/calendar/holidays/
@@ -166,10 +166,10 @@ class RealIcsParserIntegrationTest {
                 val content = fetchIcsContent(url)
                 if (content == null) {
                     ParseResult.FetchFailed
-                } else if (!RfcIcsParser.isValidIcs(content)) {
+                } else if (!IcsParserService.isValidIcs(content)) {
                     ParseResult.InvalidFormat
                 } else {
-                    val events = RfcIcsParser.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
+                    val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
                     ParseResult.Success(events.size)
                 }
             } catch (e: Exception) {
@@ -213,7 +213,7 @@ class RealIcsParserIntegrationTest {
         val content = fetchIcsContent(THUNDERBIRD_CALENDARS.first { it.first == "USA" }.second)
             ?: return@runBlocking
 
-        val events = RfcIcsParser.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
+        val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
 
         assertTrue("Should have events", events.isNotEmpty())
 
@@ -243,7 +243,7 @@ class RealIcsParserIntegrationTest {
 
         for ((country, url) in calendarsWithNames) {
             val content = fetchIcsContent(url) ?: continue
-            val calendarName = RfcIcsParser.getCalendarName(content)
+            val calendarName = IcsParserService.getCalendarName(content)
 
             println("$country calendar name: $calendarName")
 
@@ -257,7 +257,7 @@ class RealIcsParserIntegrationTest {
         val content = fetchIcsContent(THUNDERBIRD_CALENDARS.first { it.first == "USA" }.second)
             ?: return@runBlocking
 
-        val events = RfcIcsParser.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
+        val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
         val uids = events.map { it.uid }
         val uniqueUids = uids.toSet()
 
@@ -275,7 +275,7 @@ class RealIcsParserIntegrationTest {
 
         for ((country, url) in THUNDERBIRD_CALENDARS.take(10)) {
             val content = fetchIcsContent(url) ?: continue
-            val events = RfcIcsParser.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
+            val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
 
             val recurringEvents = events.filter { it.rrule != null }
             if (recurringEvents.isNotEmpty()) {
@@ -300,9 +300,9 @@ class RealIcsParserIntegrationTest {
         val content = fetchIcsContent(url)
 
         assertNotNull("Failed to fetch $country calendar", content)
-        assertTrue("$country calendar should be valid ICS", RfcIcsParser.isValidIcs(content!!))
+        assertTrue("$country calendar should be valid ICS", IcsParserService.isValidIcs(content!!))
 
-        val events = RfcIcsParser.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
+        val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
 
         assertTrue("$country should have at least 1 event", events.isNotEmpty())
         println("$country: Parsed ${events.size} events")

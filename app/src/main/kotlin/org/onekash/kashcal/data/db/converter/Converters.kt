@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Room TypeConverters for complex types.
@@ -59,6 +60,26 @@ class Converters {
         } catch (e: IllegalArgumentException) {
             ReminderStatus.PENDING
         }
+    }
+
+    // ========== AccountProvider Enum ==========
+
+    /**
+     * Convert AccountProvider enum to String for storage.
+     * Stores lowercase value for database compatibility (e.g., "icloud", "local").
+     */
+    @TypeConverter
+    fun fromAccountProvider(provider: AccountProvider): String {
+        return provider.name.lowercase()
+    }
+
+    /**
+     * Convert String to AccountProvider enum.
+     * Throws IllegalArgumentException for unknown values (fail-fast on data corruption).
+     */
+    @TypeConverter
+    fun toAccountProvider(value: String): AccountProvider {
+        return AccountProvider.fromString(value)
     }
 
     // ========== List<String> (for reminders, categories, etc.) ==========

@@ -9,9 +9,11 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.OccurrenceWithEventData
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.model.AccountProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -174,6 +176,37 @@ class EventReader @Inject constructor(
      */
     fun getICloudCalendarCount(): Flow<Int> {
         return calendarsDao.getCalendarCountByProvider("icloud")
+    }
+
+    /**
+     * Get CalDAV account count.
+     * Returns Flow that updates when accounts change.
+     */
+    fun getCalDavAccountCount(): Flow<Int> {
+        return accountsDao.getAccountCountByProvider(AccountProvider.CALDAV)
+    }
+
+    /**
+     * Get CalDAV accounts as Flow.
+     * Returns accounts with provider = CALDAV.
+     */
+    fun getCalDavAccounts(): Flow<List<Account>> {
+        return accountsDao.getByProviderFlow(AccountProvider.CALDAV)
+    }
+
+    /**
+     * Get all accounts as Flow.
+     * Used for grouping calendars by account in UI.
+     */
+    fun getAllAccounts(): Flow<List<Account>> {
+        return accountsDao.getAll()
+    }
+
+    /**
+     * Get calendar count for an account.
+     */
+    suspend fun getCalendarCountForAccount(accountId: Long): Int {
+        return calendarsDao.getByAccountIdOnce(accountId).size
     }
 
     /**
@@ -376,6 +409,44 @@ class EventReader @Inject constructor(
                     )
                 }
             }
+    }
+
+    /**
+     * Get VISIBLE occurrences with event data for date range (reactive Flow).
+     *
+     * Uses combine() with getVisibleCalendars() so UI updates automatically
+     * when EITHER visibility changes OR events change. This fixes the bug where
+     * toggling calendar visibility didn't update week view, agenda, etc.
+     *
+     * Uses debounce(50) to batch rapid updates during bulk sync.
+     *
+     * @param startTs Start timestamp (inclusive)
+     * @param endTs End timestamp (inclusive)
+     * @return Flow of visible OccurrenceWithEvent list, auto-filtered by calendar visibility
+     */
+    @Suppress("OPT_IN_USAGE")
+    fun getVisibleOccurrencesWithEventsInRangeFlow(
+        startTs: Long,
+        endTs: Long
+    ): Flow<List<OccurrenceWithEvent>> {
+        return combine(
+            getVisibleCalendars(),
+            occurrencesDao.getOccurrencesWithEventsInRange(startTs, endTs)
+        ) { calendars, data ->
+            if (data.isEmpty()) return@combine emptyList()
+
+            val visibleCalendarIds = calendars.map { it.id }.toSet()
+            val calendarsMap = calendars.associateBy { it.id }
+
+            data.filter { it.calendarId in visibleCalendarIds }
+                .map { item ->
+                    OccurrenceWithEvent(
+                        occurrence = item.toOccurrence(),
+                        event = item.event,
+                        calendar = calendarsMap[item.calendarId]
+                    )
+                }
+        }.debounce(50)
     }
 
     /**
@@ -713,11 +784,11 @@ class EventReader @Inject constructor(
      * Get account by provider and email.
      * Used for reminder cleanup when signing out of an account.
      *
-     * @param provider Provider type (e.g., "icloud", "local")
+     * @param provider Provider type (e.g., AccountProvider.ICLOUD, AccountProvider.LOCAL)
      * @param email Account email/identifier
      * @return Account if found, null otherwise
      */
-    suspend fun getAccountByProviderAndEmail(provider: String, email: String): org.onekash.kashcal.data.db.entity.Account? {
+    suspend fun getAccountByProviderAndEmail(provider: AccountProvider, email: String): org.onekash.kashcal.data.db.entity.Account? {
         return accountsDao.getByProviderAndEmail(provider, email)
     }
 

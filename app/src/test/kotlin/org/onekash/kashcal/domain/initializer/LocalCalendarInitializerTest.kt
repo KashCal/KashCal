@@ -15,6 +15,7 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -68,7 +69,7 @@ class LocalCalendarInitializerTest {
         // Assert - account created
         val account = database.accountsDao().getById(calendar.accountId)
         assertNotNull(account)
-        assertEquals(LocalCalendarInitializer.LOCAL_PROVIDER, account!!.provider)
+        assertEquals(AccountProvider.LOCAL, account!!.provider)
         assertEquals(LocalCalendarInitializer.LOCAL_EMAIL, account.email)
         assertEquals(LocalCalendarInitializer.LOCAL_ACCOUNT_DISPLAY_NAME, account.displayName)
         assertTrue(account.isEnabled)
@@ -98,7 +99,7 @@ class LocalCalendarInitializerTest {
     fun `ensureLocalCalendarExists does not affect existing calendars`() = runTest {
         // Setup - create another account and calendar first
         val otherAccountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "test@example.com", displayName = "iCloud")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com", displayName = "iCloud")
         )
         val otherCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -161,7 +162,7 @@ class LocalCalendarInitializerTest {
         // Setup
         localCalendarInitializer.ensureLocalCalendarExists()
         val localAccount = database.accountsDao().getByProviderAndEmail(
-            LocalCalendarInitializer.LOCAL_PROVIDER,
+            AccountProvider.LOCAL,
             LocalCalendarInitializer.LOCAL_EMAIL
         )!!
 
@@ -173,7 +174,7 @@ class LocalCalendarInitializerTest {
     fun `isLocalAccount returns false for non-local account`() = runTest {
         // Setup
         val otherAccount = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "test@example.com",
             displayName = "iCloud"
         )
@@ -186,7 +187,7 @@ class LocalCalendarInitializerTest {
     fun `isLocalAccount returns false for account with same provider but different email`() {
         // Setup
         val account = Account(
-            provider = LocalCalendarInitializer.LOCAL_PROVIDER,
+            provider = AccountProvider.LOCAL,
             email = "different@example.com",
             displayName = "Different"
         )
@@ -199,7 +200,7 @@ class LocalCalendarInitializerTest {
     fun `isLocalAccount returns false for account with same email but different provider`() {
         // Setup
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = LocalCalendarInitializer.LOCAL_EMAIL,
             displayName = "Different"
         )
@@ -224,7 +225,7 @@ class LocalCalendarInitializerTest {
     fun `isLocalCalendar returns false for non-local calendar`() = runTest {
         // Setup
         val accountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val otherCalendar = Calendar(
             accountId = accountId,
@@ -257,7 +258,7 @@ class LocalCalendarInitializerTest {
         // Act
         localCalendarInitializer.ensureLocalCalendarExists()
         val account = database.accountsDao().getByProviderAndEmail(
-            LocalCalendarInitializer.LOCAL_PROVIDER,
+            AccountProvider.LOCAL,
             LocalCalendarInitializer.LOCAL_EMAIL
         )!!
 

@@ -42,6 +42,19 @@ sealed class ICloudConnectionState {
 }
 
 /**
+ * iCloud account UI model for AccountsScreen display.
+ *
+ * Provides a simplified view of the connected iCloud account
+ * for the accounts list, separate from the full ICloudConnectionState.
+ */
+data class ICloudAccountUiModel(
+    /** User's Apple ID (email) */
+    val email: String,
+    /** Number of calendars synced from this account */
+    val calendarCount: Int
+)
+
+/**
  * ICS Calendar subscription UI model.
  *
  * IMPORTANT: This is the UI model, NOT the database entity.

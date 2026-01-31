@@ -13,9 +13,11 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,12 +31,18 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.ics.RfcIcsParser
+import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.SyncHistorySheet
+import androidx.compose.runtime.saveable.rememberSaveable
+import org.onekash.kashcal.ui.components.CalDavSignInSheet
+import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.AccountSettingsScreen
+import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
+import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
+import org.onekash.kashcal.ui.screens.settings.AccountsScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
@@ -79,6 +87,7 @@ class SettingsActivity : ComponentActivity() {
             KashCalTheme {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val calendars by viewModel.calendars.collectAsStateWithLifecycle()
+                val calendarGroups by viewModel.calendarGroups.collectAsStateWithLifecycle()
                 val defaultCalendarId by viewModel.defaultCalendarId.collectAsStateWithLifecycle()
                 val syncIntervalMs by viewModel.syncIntervalMs.collectAsStateWithLifecycle()
                 val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
@@ -98,6 +107,9 @@ class SettingsActivity : ComponentActivity() {
                 val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
                 val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
 
+                // iCloud account for AccountsScreen
+                val iCloudAccount by viewModel.iCloudAccount.collectAsStateWithLifecycle()
+
                 // Contacts permission launcher
                 val contactsPermissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission()
@@ -112,8 +124,9 @@ class SettingsActivity : ComponentActivity() {
                 // Debug log sheet state
                 var showDebugLogSheet by remember { mutableStateOf(false) }
 
-                // Navigation state for detail screens
-                var showSubscriptionsScreen by remember { mutableStateOf(false) }
+                // Navigation state for detail screens (rememberSaveable for config change survival)
+                var showAccountsScreen by rememberSaveable { mutableStateOf(false) }
+                var showSubscriptionsScreen by rememberSaveable { mutableStateOf(false) }
 
                 // ICS import state
                 var showIcsImportSheet by remember { mutableStateOf(false) }
@@ -122,6 +135,10 @@ class SettingsActivity : ComponentActivity() {
 
                 // Snackbar state
                 val snackbarHostState = remember { SnackbarHostState() }
+
+                // Account connected success sheet state
+                @OptIn(ExperimentalMaterial3Api::class)
+                val accountConnectedSheetState = rememberModalBottomSheetState()
 
                 // Show snackbar when message is pending
                 LaunchedEffect(uiState.pendingSnackbarMessage) {
@@ -148,7 +165,7 @@ class SettingsActivity : ComponentActivity() {
                             icsFileReader.readIcsContent(selectedUri)
                                 .onSuccess { content ->
                                     try {
-                                        val events = RfcIcsParser.parseIcsContent(content, 0, 0)
+                                        val events = IcsParserService.parseIcsContent(content, 0, 0)
                                         if (events.isNotEmpty()) {
                                             icsImportEvents = events
                                             showIcsImportSheet = true
@@ -170,8 +187,20 @@ class SettingsActivity : ComponentActivity() {
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     // State-based navigation between settings and detail screens
-                    if (showSubscriptionsScreen) {
-                        SubscriptionsScreen(
+                    when {
+                        showAccountsScreen -> {
+                            AccountsScreen(
+                                iCloudAccount = iCloudAccount,
+                                calDavAccounts = uiState.calDavAccounts,
+                                onNavigateBack = { showAccountsScreen = false },
+                                onAddICloud = viewModel::showICloudSignInSheet,
+                                onICloudSignOut = viewModel::onSignOut,
+                                onAddCalDav = viewModel::showCalDavSignInSheet,
+                                onCalDavSignOut = viewModel::onCalDavSignOut
+                            )
+                        }
+                        showSubscriptionsScreen -> {
+                            SubscriptionsScreen(
                             subscriptions = subscriptions,
                             contactBirthdaysEnabled = contactBirthdaysEnabled,
                             contactBirthdaysColor = contactBirthdaysColor,
@@ -195,8 +224,9 @@ class SettingsActivity : ComponentActivity() {
                             onContactBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
                             onContactBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange
                         )
-                    } else {
-                        AccountSettingsScreen(
+                        }
+                        else -> {
+                            AccountSettingsScreen(
                             uiState = uiState,
                             onShowICloudSignIn = viewModel::showICloudSignInSheet,
                             onHideICloudSignIn = viewModel::hideICloudSignInSheet,
@@ -205,9 +235,20 @@ class SettingsActivity : ComponentActivity() {
                             onToggleHelp = viewModel::onToggleHelp,
                             onSignIn = viewModel::onSignIn,
                             onSignOut = viewModel::onSignOut,
+                            // CalDAV callbacks
+                            onShowCalDavSignIn = viewModel::showCalDavSignInSheet,
+                            onHideCalDavSignIn = viewModel::hideCalDavSignInSheet,
+                            onCalDavServerUrlChange = viewModel::onCalDavServerUrlChange,
+                            onCalDavDisplayNameChange = viewModel::onCalDavDisplayNameChange,
+                            onCalDavUsernameChange = viewModel::onCalDavUsernameChange,
+                            onCalDavPasswordChange = viewModel::onCalDavPasswordChange,
+                            onCalDavTrustInsecureChange = viewModel::onCalDavTrustInsecureChange,
+                            onCalDavDiscover = viewModel::onCalDavDiscover,
+                            onCalDavSignOut = viewModel::onCalDavSignOut,
                             onNavigateBack = { finish() },
                             // Calendar settings (visibility derived from Calendar.isVisible)
                             calendars = calendars,
+                            calendarGroups = calendarGroups,
                             onToggleCalendar = viewModel::onToggleCalendar,
                             onShowAllCalendars = viewModel::onShowAllCalendars,
                             onHideAllCalendars = viewModel::onHideAllCalendars,
@@ -285,6 +326,8 @@ class SettingsActivity : ComponentActivity() {
                             },
                             // Navigate to Subscriptions detail screen
                             onNavigateToSubscriptions = { showSubscriptionsScreen = true },
+                            // Contact birthdays (for subscription count)
+                            contactBirthdaysEnabled = contactBirthdaysEnabled,
                             // Display settings
                             showEventEmojis = showEventEmojis,
                             onShowEventEmojisChange = viewModel::setShowEventEmojis,
@@ -293,8 +336,11 @@ class SettingsActivity : ComponentActivity() {
                             firstDayOfWeek = firstDayOfWeek,
                             onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
                             // Version footer
-                            versionName = BuildConfig.VERSION_NAME
+                            versionName = BuildConfig.VERSION_NAME,
+                            // Navigate to Accounts detail screen
+                            onNavigateToAccounts = { showAccountsScreen = true }
                         )
+                        }
                     }
 
                     // Snackbar host for displaying messages
@@ -338,6 +384,52 @@ class SettingsActivity : ComponentActivity() {
                         SyncHistorySheet(
                             syncSessionStore = syncSessionStore,
                             onDismiss = { showDebugLogSheet = false }
+                        )
+                    }
+
+                    // iCloud Sign-In Sheet (at top level so it shows from any screen)
+                    if (uiState.showICloudSignInSheet) {
+                        val iCloudState = uiState.iCloudState
+                        val notConnectedState = iCloudState as? ICloudConnectionState.NotConnected
+                        ICloudSignInSheet(
+                            appleId = notConnectedState?.appleId ?: "",
+                            password = notConnectedState?.password ?: "",
+                            showHelp = notConnectedState?.showHelp ?: false,
+                            error = notConnectedState?.error,
+                            isConnecting = iCloudState is ICloudConnectionState.Connecting,
+                            onAppleIdChange = viewModel::onAppleIdChange,
+                            onPasswordChange = viewModel::onPasswordChange,
+                            onToggleHelp = viewModel::onToggleHelp,
+                            onSignIn = viewModel::onSignIn,
+                            onDismiss = viewModel::hideICloudSignInSheet
+                        )
+                    }
+
+                    // CalDAV Sign-In Sheet (at top level so it shows from any screen)
+                    if (uiState.showCalDavSignInSheet) {
+                        CalDavSignInSheet(
+                            state = uiState.calDavState,
+                            onServerUrlChange = viewModel::onCalDavServerUrlChange,
+                            onDisplayNameChange = viewModel::onCalDavDisplayNameChange,
+                            onUsernameChange = viewModel::onCalDavUsernameChange,
+                            onPasswordChange = viewModel::onCalDavPasswordChange,
+                            onTrustInsecureChange = viewModel::onCalDavTrustInsecureChange,
+                            onDiscover = viewModel::onCalDavDiscover,
+                            onDismiss = viewModel::hideCalDavSignInSheet
+                        )
+                    }
+
+                    // Account Connected Success Sheet (shown after iCloud or CalDAV connection)
+                    @OptIn(ExperimentalMaterial3Api::class)
+                    if (uiState.showAccountConnectedSheet) {
+                        AccountConnectedSheet(
+                            sheetState = accountConnectedSheetState,
+                            providerName = uiState.connectedProviderName,
+                            email = uiState.connectedEmail,
+                            calendarCount = uiState.connectedCalendarCount,
+                            onAddAnother = viewModel::hideAccountConnectedSheet,
+                            onDone = viewModel::onAccountConnectedDone,
+                            onDismiss = viewModel::hideAccountConnectedSheet
                         )
                     }
                 }

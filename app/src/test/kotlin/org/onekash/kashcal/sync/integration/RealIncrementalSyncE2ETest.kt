@@ -5,7 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials
+import okhttp3.Credentials as OkHttpCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,13 +22,15 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
-import org.onekash.kashcal.sync.session.SyncSessionStore
 import java.io.File
 import java.util.concurrent.TimeUnit
 
@@ -47,10 +49,11 @@ import java.util.concurrent.TimeUnit
  */
 class RealIncrementalSyncE2ETest {
 
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
     private lateinit var quirks: ICloudQuirks
     private lateinit var pullStrategy: PullStrategy
     private lateinit var rawHttpClient: OkHttpClient
+    private val factory = OkHttpCalDavClientFactory()
 
     // Mocked DAOs (we capture what gets saved)
     private lateinit var database: KashCalDatabase
@@ -72,10 +75,22 @@ class RealIncrementalSyncE2ETest {
         loadCredentials()
 
         quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
 
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+            client = factory.createClient(credentials, quirks)
+        } else {
+            // Create a minimal client for tests that check credential availability
+            val credentials = Credentials(
+                username = "",
+                password = "",
+                serverUrl = serverUrl
+            )
+            client = factory.createClient(credentials, quirks)
         }
 
         // Raw HTTP client for direct API calls
@@ -85,7 +100,7 @@ class RealIncrementalSyncE2ETest {
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 if (username != null && password != null) {
-                    requestBuilder.header("Authorization", Credentials.basic(username!!, password!!))
+                    requestBuilder.header("Authorization", OkHttpCredentials.basic(username!!, password!!))
                 }
                 requestBuilder.header("User-Agent", "KashCal/2.0 (Android)")
                 chain.proceed(requestBuilder.build())
@@ -122,7 +137,6 @@ class RealIncrementalSyncE2ETest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -212,7 +226,7 @@ class RealIncrementalSyncE2ETest {
         // Step 3: Do initial sync to establish baseline
         println("\nStep 3: Initial sync to establish baseline...")
         savedEvents.clear()
-        val initialResult = pullStrategy.pull(calendar, forceFullSync = false)
+        val initialResult = pullStrategy.pull(calendar, forceFullSync = false, client = client)
         println("  Initial sync result: $initialResult")
         when (initialResult) {
             is PullResult.Success -> {
@@ -259,7 +273,7 @@ class RealIncrementalSyncE2ETest {
         )
         savedEvents.clear()
 
-        val incrementalResult = pullStrategy.pull(calendarForIncremental, forceFullSync = false)
+        val incrementalResult = pullStrategy.pull(calendarForIncremental, forceFullSync = false, client = client)
         println("  Incremental sync result: $incrementalResult")
 
         var testEventFound = false

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Anonymized iCloud CalDAV response for reference -->
+<multistatus xmlns="DAV:">
+
+<response xmlns="DAV:">
+    <href>/123456789/principal/</href>
+        <propstat>
+    		 <prop>
+
+
+                        <calendar-home-set xmlns="urn:ietf:params:xml:ns:caldav"><href xmlns="DAV:">https://p180-caldav.icloud.com:443/123456789/calendars/</href></calendar-home-set>
+
+
+            </prop>
+                <status>HTTP/1.1 200 OK</status>
+        </propstat>
+
+</response>
+
+
+</multistatus>

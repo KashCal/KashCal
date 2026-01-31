@@ -28,7 +28,6 @@ import javax.inject.Inject
  * 4. Schedule retry on failure
  */
 class PushStrategy @Inject constructor(
-    private val client: CalDavClient,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao
@@ -40,12 +39,11 @@ class PushStrategy @Inject constructor(
     /**
      * Push all pending operations to the server.
      *
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @return PushResult with statistics and any errors
      */
-    suspend fun pushAll(clientOverride: CalDavClient? = null): PushResult {
-        val effectiveClient = clientOverride ?: client
+    suspend fun pushAll(client: CalDavClient): PushResult {
+        val effectiveClient = client
         val now = System.currentTimeMillis()
         val readyOperations = pendingOperationsDao.getReadyOperations(now)
 
@@ -132,14 +130,13 @@ class PushStrategy @Inject constructor(
      * Push operations for a specific calendar.
      *
      * @param calendar The calendar to push operations for
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      */
     suspend fun pushForCalendar(
         calendar: Calendar,
-        clientOverride: CalDavClient? = null
+        client: CalDavClient
     ): PushResult {
-        val effectiveClient = clientOverride ?: client
+        val effectiveClient = client
         val now = System.currentTimeMillis()
         val allReady = pendingOperationsDao.getReadyOperations(now)
 
@@ -147,9 +144,31 @@ class PushStrategy @Inject constructor(
         val eventIds = allReady.map { it.eventId }.distinct()
         val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
 
-        // Filter to events in this calendar using cached data
+        // Filter operations for this calendar using correct filtering logic:
+        // - DELETE: Use sourceCalendarId if present (from MOVE or cross-account), else event.calendarId
+        // - MOVE DELETE phase: Use sourceCalendarId
+        // - MOVE CREATE phase: Use targetCalendarId
+        // - Other operations: Use event.calendarId
         val calendarOperations = allReady.filter { op ->
-            eventsCache[op.eventId]?.calendarId == calendar.id
+            when {
+                // DELETE operation: Use sourceCalendarId if present (from synced→local or cross-account move)
+                op.operation == PendingOperation.OPERATION_DELETE ->
+                    op.sourceCalendarId?.let { it == calendar.id }
+                        ?: (eventsCache[op.eventId]?.calendarId == calendar.id)
+
+                // MOVE operation: Filter by phase
+                op.operation == PendingOperation.OPERATION_MOVE ->
+                    when (op.movePhase) {
+                        PendingOperation.MOVE_PHASE_DELETE ->
+                            op.sourceCalendarId?.let { it == calendar.id } ?: false
+                        PendingOperation.MOVE_PHASE_CREATE ->
+                            op.targetCalendarId == calendar.id
+                        else -> false
+                    }
+
+                // CREATE, UPDATE: Use event's current calendarId
+                else -> eventsCache[op.eventId]?.calendarId == calendar.id
+            }
         }
 
         if (calendarOperations.isEmpty()) {
@@ -220,7 +239,7 @@ class PushStrategy @Inject constructor(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
         calendarsCache: Map<Long, Calendar> = emptyMap(),
-        clientToUse: CalDavClient = client
+        clientToUse: CalDavClient
     ): SinglePushResult {
         return when (operation.operation) {
             PendingOperation.OPERATION_CREATE -> processCreate(operation, eventsCache, calendarsCache, clientToUse)
@@ -238,7 +257,7 @@ class PushStrategy @Inject constructor(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
         calendarsCache: Map<Long, Calendar> = emptyMap(),
-        clientToUse: CalDavClient = client
+        clientToUse: CalDavClient
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -307,7 +326,7 @@ class PushStrategy @Inject constructor(
     private suspend fun processUpdate(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
-        clientToUse: CalDavClient = client
+        clientToUse: CalDavClient
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -323,7 +342,7 @@ class PushStrategy @Inject constructor(
         if (event.caldavUrl == null) {
             // Event was never created on server - shouldn't happen
             Log.w(TAG, "Event has no caldavUrl, treating as CREATE")
-            return processCreate(operation)
+            return processCreate(operation, eventsCache, emptyMap(), clientToUse)
         }
 
         if (event.etag == null) {
@@ -334,13 +353,13 @@ class PushStrategy @Inject constructor(
         // Serialize event to iCal (captures exceptions at this point in time)
         val (icalData, serializedExceptions) = serializeEventWithExceptions(event)
 
-        Log.d(TAG, "Updating event on server: ${event.title}")
-
         // Safe access - we've already checked these aren't null above
         val caldavUrl = event.caldavUrl
             ?: return SinglePushResult.Error(-1, "Event has no CalDAV URL", false)
         val etag = event.etag
             ?: return SinglePushResult.Error(-1, "Event has no ETag", false)
+
+        Log.d(TAG, "Updating event on server: ${event.title} with etag='$etag'")
 
         // Update on server with If-Match
         val result = clientToUse.updateEvent(caldavUrl, icalData, etag)
@@ -387,7 +406,7 @@ class PushStrategy @Inject constructor(
     private suspend fun processDelete(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
-        clientToUse: CalDavClient = client
+        clientToUse: CalDavClient
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -409,10 +428,10 @@ class PushStrategy @Inject constructor(
             return SinglePushResult.Success()
         }
 
-        Log.d(TAG, "Deleting event from server: ${event?.title ?: "unknown"} at $caldavUrl")
-
         // Delete from server
         val etag = event?.etag ?: ""
+        Log.d(TAG, "Deleting event from server: ${event?.title ?: "unknown"} with etag='$etag'")
+
         val result = clientToUse.deleteEvent(caldavUrl, etag)
 
         return when {
@@ -442,24 +461,23 @@ class PushStrategy @Inject constructor(
     }
 
     /**
-     * Process MOVE operation - atomic DELETE from old calendar + CREATE in new calendar.
+     * Process MOVE operation - move event between calendars on same account.
      *
-     * This handles calendar moves where:
-     * 1. DELETE from old calendar using operation.targetUrl (stored at queue time)
-     * 2. CREATE in new calendar using operation.targetCalendarId
+     * Strategy (v21.6.0):
+     * 1. Try WebDAV MOVE first (atomic, avoids UID conflicts on iCloud)
+     * 2. If MOVE not supported (403/405), fall back to DELETE+CREATE
      *
-     * Phase-aware retry (C3 fix):
-     * - Phase 0 (DELETE): Execute DELETE, then advance to Phase 1 with fresh retry budget
-     * - Phase 1 (CREATE): Execute CREATE with independent 5-retry budget
+     * Phase-aware retry:
+     * - Phase 0 (MOVE/DELETE): Try MOVE, fallback to DELETE, then advance to Phase 1
+     * - Phase 1 (CREATE): Execute CREATE with independent retry budget
      *
-     * This prevents event loss when DELETE succeeds but CREATE fails repeatedly.
-     * Each phase gets its own 5 retries instead of sharing a single budget.
+     * Each phase gets its own retries to prevent event loss.
      */
     private suspend fun processMove(
         operation: PendingOperation,
         eventsCache: Map<Long, Event> = emptyMap(),
         calendarsCache: Map<Long, Calendar> = emptyMap(),
-        clientToUse: CalDavClient = client
+        clientToUse: CalDavClient
     ): SinglePushResult {
         val event = eventsCache[operation.eventId]
             ?: eventsDao.getById(operation.eventId)
@@ -472,54 +490,107 @@ class PushStrategy @Inject constructor(
             ?: calendarsDao.getById(targetCalendarId)
             ?: return SinglePushResult.Error(-1, "Target calendar not found for MOVE", false)
 
-        // Phase 0: DELETE from old calendar
+        // Phase 0: Try WebDAV MOVE first
         if (operation.movePhase == PendingOperation.MOVE_PHASE_DELETE) {
-            if (operation.targetUrl != null) {
-                Log.d(TAG, "MOVE Phase 0: Deleting from old calendar: ${operation.targetUrl}")
-                val deleteResult = clientToUse.deleteEvent(operation.targetUrl, "")
+            val sourceUrl = operation.targetUrl
+            if (sourceUrl == null) {
+                // No source URL - just advance to CREATE phase
+                Log.d(TAG, "MOVE Phase 0: No source URL, advancing to CREATE")
+                pendingOperationsDao.advanceToCreatePhase(operation.id, System.currentTimeMillis())
+                return SinglePushResult.PhaseAdvanced
+            }
 
-                // Ignore 404 (already deleted), but fail on other errors
-                if (!deleteResult.isSuccess() && !deleteResult.isNotFound()) {
-                    val error = deleteResult as? CalDavResult.Error
-                    Log.w(TAG, "MOVE Phase 0: Failed to delete from old calendar: ${error?.message}")
+            // Try WebDAV MOVE first (atomic operation)
+            Log.d(TAG, "MOVE Phase 0: Trying WebDAV MOVE from $sourceUrl to ${calendar.caldavUrl}")
+            val moveResult = clientToUse.moveEvent(sourceUrl, calendar.caldavUrl, event.uid)
+
+            when {
+                moveResult.isSuccess() -> {
+                    // MOVE succeeded - we're done! Skip CREATE phase entirely.
+                    val (newUrl, newEtag) = moveResult.getOrNull()
+                        ?: return SinglePushResult.Error(-1, "Null result from MOVE", false)
+
+                    eventsDao.markCreatedOnServer(event.id, newUrl, newEtag, System.currentTimeMillis())
+                    pendingOperationsDao.deleteById(operation.id)
+                    Log.d(TAG, "MOVE succeeded: Event moved atomically to $newUrl")
+                    return SinglePushResult.Success(newEtag = newEtag, newUrl = newUrl)
+                }
+
+                moveResult.isNotFound() -> {
+                    // Source already gone - advance to CREATE phase (no DELETE needed)
+                    Log.d(TAG, "MOVE Phase 0: Source not found (404), advancing to CREATE")
+                    pendingOperationsDao.advanceToCreatePhase(operation.id, System.currentTimeMillis())
+                    return SinglePushResult.PhaseAdvanced
+                }
+
+                else -> {
+                    val error = moveResult as? CalDavResult.Error
+                    val code = error?.code ?: -1
+
+                    // 403/405/412 = MOVE not supported or failed, fall back to CREATE+DELETE
+                    // - 403: Forbidden (cross-server move)
+                    // - 405: Method Not Allowed (server doesn't support MOVE)
+                    // - 412: Precondition Failed (iCloud returns this for MOVE)
+                    // Safety: CREATE first, DELETE second (ensures no data loss)
+                    if (code == 403 || code == 405 || code == 412) {
+                        Log.w(TAG, "MOVE failed ($code), falling back to CREATE+DELETE")
+                        // Just advance to CREATE phase - DELETE will happen after CREATE succeeds
+                        pendingOperationsDao.advanceToCreatePhase(operation.id, System.currentTimeMillis())
+                        return SinglePushResult.PhaseAdvanced
+                    }
+
+                    // Other error - retry MOVE
+                    Log.w(TAG, "MOVE Phase 0 failed: ${error?.message}")
                     return SinglePushResult.Error(
-                        error?.code ?: -1,
-                        "Failed to delete from old calendar: ${error?.message}",
+                        code,
+                        "MOVE failed: ${error?.message}",
                         error?.isRetryable ?: true
                     )
                 }
-                Log.d(TAG, "MOVE Phase 0: Deleted from old calendar (or already gone)")
             }
-
-            // DELETE succeeded - advance to CREATE phase with fresh retry budget
-            Log.d(TAG, "MOVE: Advancing to Phase 1 (CREATE) with fresh retry budget")
-            pendingOperationsDao.advanceToCreatePhase(operation.id, System.currentTimeMillis())
-            return SinglePushResult.PhaseAdvanced
         }
 
-        // Phase 1: CREATE in new calendar (has fresh 5-retry budget)
+        // Phase 1: CREATE first, then DELETE (safety: ensure event exists before deleting source)
         Log.d(TAG, "MOVE Phase 1: Creating in new calendar: ${calendar.displayName}")
 
-        // Note: Calendar change is disabled for recurring events in UI, so no exceptions to handle
         val (icalData, _) = serializeEventWithExceptions(event)
-
-        val result = clientToUse.createEvent(calendar.caldavUrl, event.uid, icalData)
+        val createResult = clientToUse.createEvent(calendar.caldavUrl, event.uid, icalData)
 
         return when {
-            result.isSuccess() -> {
-                val (url, etag) = result.getOrNull()
+            createResult.isSuccess() -> {
+                val (url, etag) = createResult.getOrNull()
                     ?: return SinglePushResult.Error(-1, "Null result from create", false)
 
                 eventsDao.markCreatedOnServer(event.id, url, etag, System.currentTimeMillis())
-                Log.d(TAG, "MOVE Phase 1: Event moved successfully to $url")
+                Log.d(TAG, "MOVE Phase 1: Event created successfully at $url")
+
+                // Now DELETE from source (after CREATE succeeded - safe order)
+                val sourceUrl = operation.targetUrl
+                if (sourceUrl != null) {
+                    Log.d(TAG, "MOVE Phase 1: Deleting from source: $sourceUrl")
+                    val deleteResult = clientToUse.deleteEvent(sourceUrl, "")
+                    when {
+                        deleteResult.isSuccess() || deleteResult.isNotFound() -> {
+                            Log.d(TAG, "MOVE complete: CREATE+DELETE succeeded")
+                        }
+                        else -> {
+                            // DELETE failed but CREATE succeeded - event is safe in target
+                            // Log warning but don't fail the operation (may leave orphan on source)
+                            val delError = deleteResult as? CalDavResult.Error
+                            Log.w(TAG, "MOVE: DELETE from source failed (${delError?.code}): ${delError?.message}")
+                            Log.w(TAG, "Event exists in target but may remain in source as orphan")
+                        }
+                    }
+                }
+
                 SinglePushResult.Success(newEtag = etag, newUrl = url)
             }
-            result.isConflict() -> {
+            createResult.isConflict() -> {
                 Log.w(TAG, "MOVE Phase 1: Conflict creating in new calendar (UID exists)")
                 SinglePushResult.Conflict()
             }
             else -> {
-                val error = result as? CalDavResult.Error
+                val error = createResult as? CalDavResult.Error
                 Log.e(TAG, "MOVE Phase 1: Failed to create in new calendar: ${error?.message}")
                 SinglePushResult.Error(
                     error?.code ?: -1,

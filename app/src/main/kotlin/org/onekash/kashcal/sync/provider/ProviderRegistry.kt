@@ -1,108 +1,89 @@
 package org.onekash.kashcal.sync.provider
 
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.auth.CredentialProvider
+import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialProvider
+import org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider
+import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Registry for calendar providers.
+ * Registry for provider-specific services (quirks, credentials).
  *
- * Single source of truth for provider lookup at runtime.
- * Following Android Data Layer Repository pattern:
- * - Provides unified access to all registered providers
- * - Handles provider-account matching
- * - Thread-safe via immutable collections
+ * Single lookup point for CalDAV quirks and credential providers based on AccountProvider.
+ * Replaces the old CalendarProvider interface with direct enum-based routing.
  *
- * @see CalendarProvider for provider interface
- */
-interface ProviderRegistry {
-
-    /**
-     * Get all registered calendar providers.
-     *
-     * @return List of all providers (immutable)
-     */
-    fun getAllProviders(): List<CalendarProvider>
-
-    /**
-     * Get a provider by its ID.
-     *
-     * @param providerId The provider identifier (e.g., "icloud", "local")
-     * @return The provider, or null if not found
-     */
-    fun getProvider(providerId: String): CalendarProvider?
-
-    /**
-     * Get the provider that handles a specific account.
-     *
-     * @param account The account to find a provider for
-     * @return The matching provider, or null if no provider handles this account
-     */
-    fun getProviderForAccount(account: Account): CalendarProvider?
-
-    /**
-     * Get providers that require network for sync.
-     * Used to filter which accounts to sync when online.
-     *
-     * @return List of network-requiring providers
-     */
-    fun getNetworkProviders(): List<CalendarProvider>
-
-    /**
-     * Get providers that support CalDAV protocol.
-     *
-     * @return List of CalDAV providers
-     */
-    fun getCalDavProviders(): List<CalendarProvider>
-}
-
-/**
- * Default implementation of ProviderRegistry.
+ * Usage:
+ * ```kotlin
+ * // For providers with known server URLs (iCloud)
+ * val quirks = providerRegistry.getQuirks(account.provider)
  *
- * Uses Hilt @IntoSet injection to collect all CalendarProvider implementations.
- * Providers are registered in ProviderModule.
+ * // For providers needing account-specific server URL (generic CalDAV)
+ * val quirks = providerRegistry.getQuirksForAccount(account)
  *
- * Thread safety:
- * - Provider set is immutable after construction
- * - providerMap is lazily initialized once
- * - All lookup methods are read-only
- *
- * @param providers Set of all registered CalendarProvider implementations (injected via @IntoSet)
+ * val credentials = providerRegistry.getCredentialProvider(account.provider)
+ * ```
  */
 @Singleton
-class ProviderRegistryImpl @Inject constructor(
-    private val providers: Set<@JvmSuppressWildcards CalendarProvider>
-) : ProviderRegistry {
+class ProviderRegistry @Inject constructor(
+    private val icloudQuirks: ICloudQuirks,
+    private val icloudCredentials: ICloudCredentialProvider,
+    private val caldavCredentials: CalDavCredentialProvider
+) {
+    /**
+     * Get CalDAV quirks for a provider.
+     *
+     * Note: For CALDAV provider, this returns null because DefaultQuirks requires
+     * the server URL from Account.homeSetUrl. Use [getQuirksForAccount] instead.
+     *
+     * @param provider The account provider
+     * @return CalDavQuirks for the provider, or null if provider doesn't use CalDAV
+     */
+    fun getQuirks(provider: AccountProvider): CalDavQuirks? = when (provider) {
+        AccountProvider.LOCAL -> null
+        AccountProvider.ICLOUD -> icloudQuirks
+        AccountProvider.ICS -> null
+        AccountProvider.CONTACTS -> null
+        AccountProvider.CALDAV -> null  // Use getQuirksForAccount() - needs server URL from Account
+    }
 
     /**
-     * Lazy-initialized map for O(1) provider lookup by ID.
-     * Thread-safe: lazy {} is synchronized by default.
+     * Get CalDAV quirks for a specific account.
+     *
+     * Required for CALDAV because DefaultQuirks needs the server URL from Account.homeSetUrl.
+     * For iCloud, uses the singleton ICloudQuirks which has a fixed base URL.
+     *
+     * @param account The account entity
+     * @return CalDavQuirks for the account, or null if account doesn't use CalDAV
+     * @throws IllegalStateException if CALDAV account is missing homeSetUrl
      */
-    private val providerMap: Map<String, CalendarProvider> by lazy {
-        providers.associateBy { it.providerId }
+    fun getQuirksForAccount(account: Account): CalDavQuirks? = when (account.provider) {
+        AccountProvider.LOCAL -> null
+        AccountProvider.ICLOUD -> icloudQuirks
+        AccountProvider.ICS -> null
+        AccountProvider.CONTACTS -> null
+        AccountProvider.CALDAV -> {
+            val serverUrl = account.homeSetUrl
+                ?: throw IllegalStateException("CALDAV account ${account.id} missing homeSetUrl")
+            DefaultQuirks(serverUrl)
+        }
     }
 
-    override fun getAllProviders(): List<CalendarProvider> {
-        return providers.toList()
-    }
-
-    override fun getProvider(providerId: String): CalendarProvider? {
-        return providerMap[providerId]
-    }
-
-    override fun getProviderForAccount(account: Account): CalendarProvider? {
-        // First try exact match via provider ID
-        providerMap[account.provider]?.let { return it }
-
-        // Fall back to handlesAccount() for custom matching
-        return providers.find { it.handlesAccount(account) }
-    }
-
-    override fun getNetworkProviders(): List<CalendarProvider> {
-        return providers.filter { it.requiresNetwork }
-    }
-
-    override fun getCalDavProviders(): List<CalendarProvider> {
-        return providers.filter { it.capabilities.supportsCalDAV }
+    /**
+     * Get credential provider for a provider.
+     *
+     * @param provider The account provider
+     * @return CredentialProvider for the provider, or null if provider doesn't need credentials
+     */
+    fun getCredentialProvider(provider: AccountProvider): CredentialProvider? = when (provider) {
+        AccountProvider.LOCAL -> null
+        AccountProvider.ICLOUD -> icloudCredentials
+        AccountProvider.ICS -> null
+        AccountProvider.CONTACTS -> null
+        AccountProvider.CALDAV -> caldavCredentials
     }
 }

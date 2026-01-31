@@ -5,7 +5,9 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Ignore
 import org.junit.Test
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
@@ -21,7 +23,8 @@ import java.io.File
 @Ignore("Integration test - requires iCloud credentials in local.properties")
 class ICloudEventualConsistencyTest {
 
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
+    private lateinit var clientFactory: OkHttpCalDavClientFactory
     private var username: String? = null
     private var password: String? = null
     private val serverUrl = "https://caldav.icloud.com"
@@ -29,11 +32,24 @@ class ICloudEventualConsistencyTest {
     @Before
     fun setup() {
         val quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
+        clientFactory = OkHttpCalDavClientFactory()
         loadCredentials()
-        if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+
+        // Create client using factory pattern (replaces setCredentials)
+        val credentials = if (username != null && password != null) {
+            Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+        } else {
+            Credentials(
+                username = "dummy",
+                password = "dummy",
+                serverUrl = serverUrl
+            )
         }
+        client = clientFactory.createClient(credentials, quirks)
     }
 
     private fun loadCredentials() {

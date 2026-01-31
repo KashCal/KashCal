@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -59,7 +60,7 @@ class PendingOperationIntegrityTest {
         eventWriter = EventWriter(database, occurrenceGenerator)
 
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(

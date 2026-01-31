@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/">
+    <!-- Single event -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/event1.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"abc123def456"</d:getetag>
+                <cal:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nextcloud//Calendar//EN
+BEGIN:VEVENT
+UID:event1@nextcloud.local
+DTSTAMP:20240115T120000Z
+DTSTART:20240120T090000Z
+DTEND:20240120T100000Z
+SUMMARY:Team Standup
+DESCRIPTION:Daily team sync meeting
+LOCATION:Conference Room A
+END:VEVENT
+END:VCALENDAR</cal:calendar-data>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Recurring event -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/event2.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"xyz789ghi012"</d:getetag>
+                <cal:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nextcloud//Calendar//EN
+BEGIN:VEVENT
+UID:event2@nextcloud.local
+DTSTAMP:20240115T120000Z
+DTSTART:20240115T140000Z
+DTEND:20240115T150000Z
+SUMMARY:Weekly Review
+RRULE:FREQ=WEEKLY;BYDAY=MO
+END:VEVENT
+END:VCALENDAR</cal:calendar-data>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- All-day event -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/event3.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"allday456789"</d:getetag>
+                <cal:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Nextcloud//Calendar//EN
+BEGIN:VEVENT
+UID:event3@nextcloud.local
+DTSTAMP:20240115T120000Z
+DTSTART;VALUE=DATE:20240125
+DTEND;VALUE=DATE:20240126
+SUMMARY:Company Holiday
+END:VEVENT
+END:VCALENDAR</cal:calendar-data>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+</d:multistatus>

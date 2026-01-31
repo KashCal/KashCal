@@ -16,8 +16,9 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.data.ics.RfcIcsParser
+import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.Instant
@@ -57,7 +58,7 @@ class DisplayBugRegressionTest {
 
         // Create test hierarchy
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -120,7 +121,7 @@ class DisplayBugRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        val events = RfcIcsParser.parseIcsContent(ics, testCalendarId, 1L)
+        val events = IcsParserService.parseIcsContent(ics, testCalendarId, 1L)
         val event = events[0]
         assertTrue("Event should be all-day", event.isAllDay)
 
@@ -178,7 +179,7 @@ class DisplayBugRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        val events = RfcIcsParser.parseIcsContent(ics, testCalendarId, 1L)
+        val events = IcsParserService.parseIcsContent(ics, testCalendarId, 1L)
         val event = events[0]
 
         val eventId = database.eventsDao().insert(event)
@@ -236,7 +237,7 @@ class DisplayBugRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        val events = RfcIcsParser.parseIcsContent(ics, testCalendarId, 1L)
+        val events = IcsParserService.parseIcsContent(ics, testCalendarId, 1L)
         val event = events[0]
 
         val eventId = database.eventsDao().insert(event)
@@ -383,7 +384,7 @@ class DisplayBugRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        val events = RfcIcsParser.parseIcsContent(ics, testCalendarId, 1L)
+        val events = IcsParserService.parseIcsContent(ics, testCalendarId, 1L)
         val event = events[0]
 
         val eventId = database.eventsDao().insert(event)

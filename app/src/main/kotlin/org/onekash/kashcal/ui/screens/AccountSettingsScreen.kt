@@ -12,10 +12,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
@@ -37,10 +39,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
+import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
+import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
@@ -52,11 +59,11 @@ import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
 import org.onekash.kashcal.ui.screens.settings.SettingsCard
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
-import org.onekash.kashcal.ui.screens.settings.SignOutConfirmationSheet
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
+import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatReminderShort
@@ -64,13 +71,20 @@ import org.onekash.kashcal.ui.shared.maskEmail
 
 /**
  * UI state for the account settings screen.
- * Now uses a unified state with separate iCloudState for sign-in flow.
- * This allows showing all settings sections regardless of iCloud connection status.
+ * Now uses a unified state with separate iCloudState and calDavState for sign-in flows.
+ * This allows showing all settings sections regardless of account connection status.
  */
 data class AccountSettingsUiState(
     val isLoading: Boolean = false,
     val iCloudState: ICloudConnectionState = ICloudConnectionState.NotConnected(),
     val showICloudSignInSheet: Boolean = false,
+    /** CalDAV connection state for generic CalDAV servers */
+    val calDavState: CalDavConnectionState = CalDavConnectionState.NotConnected(),
+    val showCalDavSignInSheet: Boolean = false,
+    /** Number of connected CalDAV accounts */
+    val calDavAccountCount: Int = 0,
+    /** List of connected CalDAV accounts for display */
+    val calDavAccounts: List<CalDavAccountUiModel> = emptyList(),
     /** Show add subscription dialog (controlled by ViewModel for external intents) */
     val showAddSubscriptionDialog: Boolean = false,
     /** Pre-fill URL for subscription dialog (from webcal:// intent) */
@@ -78,7 +92,15 @@ data class AccountSettingsUiState(
     /** Pending snackbar message to display */
     val pendingSnackbarMessage: String? = null,
     /** Signal to finish Activity after successful initial iCloud setup */
-    val pendingFinishActivity: Boolean = false
+    val pendingFinishActivity: Boolean = false,
+    /** Show success sheet after account connection */
+    val showAccountConnectedSheet: Boolean = false,
+    /** Provider name for success sheet (e.g., "iCloud", "Nextcloud") */
+    val connectedProviderName: String = "",
+    /** Email for success sheet */
+    val connectedEmail: String = "",
+    /** Calendar count for success sheet */
+    val connectedCalendarCount: Int = 0
 )
 
 /**
@@ -98,9 +120,20 @@ fun AccountSettingsScreen(
     onToggleHelp: () -> Unit = {},
     onSignIn: () -> Unit = {},
     onSignOut: () -> Unit = {},
+    // CalDAV callbacks
+    onShowCalDavSignIn: () -> Unit = {},
+    onHideCalDavSignIn: () -> Unit = {},
+    onCalDavServerUrlChange: (String) -> Unit = {},
+    onCalDavDisplayNameChange: (String) -> Unit = {},
+    onCalDavUsernameChange: (String) -> Unit = {},
+    onCalDavPasswordChange: (String) -> Unit = {},
+    onCalDavTrustInsecureChange: (Boolean) -> Unit = {},
+    onCalDavDiscover: () -> Unit = {},
+    onCalDavSignOut: (Long) -> Unit = {},
     onNavigateBack: () -> Unit = {},
     // Calendar settings (visibility derived from Calendar.isVisible)
     calendars: List<Calendar> = emptyList(),
+    calendarGroups: List<CalendarGroup> = emptyList(),
     onToggleCalendar: (Long, Boolean) -> Unit = { _, _ -> },
     // Hidden from UI but preserved for future use
     onShowAllCalendars: () -> Unit = {},
@@ -138,7 +171,10 @@ fun AccountSettingsScreen(
     onImportCalendarFile: () -> Unit = {},
     onExportCalendar: (Long) -> Unit = {},
     // Navigation to detail screens
+    onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
+    // Contact birthdays (for subscription count)
+    contactBirthdaysEnabled: Boolean = false,
     // Display settings
     showEventEmojis: Boolean = true,
     onShowEventEmojisChange: (Boolean) -> Unit = {},
@@ -171,9 +207,10 @@ fun AccountSettingsScreen(
             } else {
                 FlatSettingsContent(
                     iCloudState = uiState.iCloudState,
-                    onShowICloudSignIn = onShowICloudSignIn,
-                    onSignOut = onSignOut,
+                    calDavAccounts = uiState.calDavAccounts,
+                    onNavigateToAccounts = onNavigateToAccounts,
                     calendars = calendars,
+                    calendarGroups = calendarGroups,
                     onToggleCalendar = onToggleCalendar,
                     onShowAllCalendars = onShowAllCalendars,
                     onHideAllCalendars = onHideAllCalendars,
@@ -202,6 +239,7 @@ fun AccountSettingsScreen(
                     onImportCalendarFile = onImportCalendarFile,
                     onExportCalendar = onExportCalendar,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
+                    contactBirthdaysEnabled = contactBirthdaysEnabled,
                     showEventEmojis = showEventEmojis,
                     onShowEventEmojisChange = onShowEventEmojisChange,
                     timeFormat = timeFormat,
@@ -231,6 +269,20 @@ fun AccountSettingsScreen(
                 onToggleHelp = onToggleHelp,
                 onSignIn = onSignIn,
                 onDismiss = onHideICloudSignIn
+            )
+        }
+
+        // CalDAV Sign-In Sheet
+        if (uiState.showCalDavSignInSheet) {
+            CalDavSignInSheet(
+                state = uiState.calDavState,
+                onServerUrlChange = onCalDavServerUrlChange,
+                onDisplayNameChange = onCalDavDisplayNameChange,
+                onUsernameChange = onCalDavUsernameChange,
+                onPasswordChange = onCalDavPasswordChange,
+                onTrustInsecureChange = onCalDavTrustInsecureChange,
+                onDiscover = onCalDavDiscover,
+                onDismiss = onHideCalDavSignIn
             )
         }
     }
@@ -263,9 +315,10 @@ private fun LoadingContent() {
 @Composable
 private fun FlatSettingsContent(
     iCloudState: ICloudConnectionState,
-    onShowICloudSignIn: () -> Unit,
-    onSignOut: () -> Unit,
+    calDavAccounts: List<CalDavAccountUiModel>,
+    onNavigateToAccounts: () -> Unit,
     calendars: List<Calendar>,
+    calendarGroups: List<CalendarGroup>,
     onToggleCalendar: (Long, Boolean) -> Unit,
     onShowAllCalendars: () -> Unit,
     onHideAllCalendars: () -> Unit,
@@ -294,6 +347,7 @@ private fun FlatSettingsContent(
     onImportCalendarFile: () -> Unit,
     onExportCalendar: (Long) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
+    contactBirthdaysEnabled: Boolean,
     showEventEmojis: Boolean,
     onShowEventEmojisChange: (Boolean) -> Unit,
     timeFormat: String,
@@ -317,7 +371,6 @@ private fun FlatSettingsContent(
     var showEventDurationSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
-    var showSignOutConfirmation by remember { mutableStateOf(false) }
 
     val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
@@ -327,12 +380,9 @@ private fun FlatSettingsContent(
     val firstDayOfWeekSheetState = rememberModalBottomSheetState()
     val eventDurationSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
-    val signOutSheetState = rememberModalBottomSheetState()
 
     // Derived values
     val isConnected = iCloudState is ICloudConnectionState.Connected
-    val connectedState = iCloudState as? ICloudConnectionState.Connected
-    val iCloudCalendarCount = connectedState?.calendarCount ?: 0
 
     // Memoized: only recompute when calendars list changes
     val visibleCalendarCount = remember(calendars) {
@@ -343,11 +393,6 @@ private fun FlatSettingsContent(
     // Memoized: recompute when calendars OR defaultCalendarId changes
     val defaultCalendar = remember(calendars, defaultCalendarId) {
         calendars.find { it.id == defaultCalendarId }
-    }
-
-    // Memoized: only recompute when appleId changes
-    val maskedEmail = remember(connectedState?.appleId) {
-        maskEmail(connectedState?.appleId)
     }
 
     // Memoized: find local calendar for export
@@ -376,65 +421,42 @@ private fun FlatSettingsContent(
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        // ==================== ACCOUNT Section ====================
-        SectionHeader("Account")
+        // ==================== MY CALENDARS Section ====================
+        SectionHeader(stringResource(R.string.settings_section_my_calendars))
         SettingsCard {
+            // Accounts row
+            val accountCount = (if (isConnected) 1 else 0) + calDavAccounts.size
+
             SettingsRow(
-                icon = Icons.Default.Cloud,
-                label = "iCloud",
-                subtitle = if (isConnected) {
-                    "$maskedEmail · $iCloudCalendarCount calendars"
-                } else {
-                    "Tap to connect"
+                icon = Icons.Default.Person,
+                label = stringResource(R.string.accounts_row_label),
+                subtitle = when (accountCount) {
+                    0 -> null
+                    1 -> stringResource(R.string.accounts_count_one)
+                    else -> stringResource(R.string.accounts_count_other, accountCount)
                 },
-                onClick = {
-                    if (isConnected) {
-                        showSignOutConfirmation = true
-                    } else {
-                        onShowICloudSignIn()
-                    }
+                onClick = onNavigateToAccounts
+            )
+
+            // Subscriptions row
+            val subscriptionCount = subscriptions.size + (if (contactBirthdaysEnabled) 1 else 0)
+
+            SettingsRow(
+                icon = Icons.Default.Link,
+                label = stringResource(R.string.subscriptions_row_label),
+                subtitle = when (subscriptionCount) {
+                    0 -> null
+                    1 -> stringResource(R.string.subscriptions_count_one)
+                    else -> stringResource(R.string.subscriptions_count_other, subscriptionCount)
                 },
-                showDivider = false  // Last item in card
+                onClick = onNavigateToSubscriptions,
+                showDivider = false
             )
         }
 
-        // ==================== CALENDARS Section ====================
-        SectionHeader("Calendars")
+        // ==================== DISPLAY Section ====================
+        SectionHeader(stringResource(R.string.settings_section_display))
         SettingsCard {
-            // Subscriptions Row - always navigates to detail screen
-            // (Contact Birthdays is in the detail screen regardless of ICS subscriptions)
-            SettingsRow(
-                icon = Icons.Default.Link,
-                label = "Subscriptions",
-                value = if (subscriptions.isNotEmpty()) "(${subscriptions.size})" else null,
-                subtitle = if (subscriptions.isNotEmpty()) {
-                    subscriptions.take(2).joinToString(", ") { it.name }
-                } else {
-                    "ICS feeds & Contact Birthdays"
-                },
-                onClick = onNavigateToSubscriptions
-            )
-
-            // Import from File Row
-            SettingsRow(
-                icon = Icons.Default.FileDownload,
-                label = "Import from File",
-                subtitle = "Import .ics file",
-                onClick = onImportCalendarFile,
-                showDivider = localCalendar != null || calendars.isNotEmpty()
-            )
-
-            // Export Local Calendar Row (conditional)
-            localCalendar?.let { local ->
-                SettingsRow(
-                    icon = Icons.Default.FileUpload,
-                    label = "Export Local Calendar",
-                    subtitle = "Backup to .ics file",
-                    onClick = { onExportCalendar(local.id) },
-                    showDivider = calendars.isNotEmpty()
-                )
-            }
-
             // Visible Calendars Row (conditional)
             if (calendars.isNotEmpty()) {
                 SettingsRow(
@@ -449,15 +471,9 @@ private fun FlatSettingsContent(
                     icon = Icons.Default.Star,
                     label = "Default Calendar",
                     subtitle = defaultCalendar?.displayName ?: "Not set",
-                    onClick = { showDefaultCalendarSheet = true },
-                    showDivider = false  // Last item in card
+                    onClick = { showDefaultCalendarSheet = true }
                 )
             }
-        }
-
-        // ==================== DISPLAY Section ====================
-        SectionHeader("Display")
-        SettingsCard {
             SettingsRow(
                 icon = Icons.Default.SentimentSatisfied,
                 label = "Event Emojis",
@@ -490,12 +506,12 @@ private fun FlatSettingsContent(
                 label = "Default Event Length",
                 subtitle = formatDuration(defaultEventDuration),
                 onClick = { showEventDurationSheet = true },
-                showDivider = false
+                showDivider = false  // Last item in card
             )
         }
 
         // ==================== NOTIFICATIONS Section ====================
-        SectionHeader("Notifications")
+        SectionHeader(stringResource(R.string.settings_section_notifications))
         SettingsCard {
             // Default Alerts Row (only if calendars exist)
             if (calendars.isNotEmpty()) {
@@ -532,6 +548,30 @@ private fun FlatSettingsContent(
             )
         }
 
+        // ==================== DATA Section ====================
+        SectionHeader(stringResource(R.string.settings_section_data))
+        SettingsCard {
+            // Import from File Row
+            SettingsRow(
+                icon = Icons.Default.FileDownload,
+                label = "Import from File",
+                subtitle = "Import .ics file",
+                onClick = onImportCalendarFile,
+                showDivider = localCalendar != null  // Show divider if Export follows
+            )
+
+            // Export Local Calendar Row (conditional)
+            localCalendar?.let { local ->
+                SettingsRow(
+                    icon = Icons.Default.FileUpload,
+                    label = "Export Local Calendar",
+                    subtitle = "Backup to .ics file",
+                    onClick = { onExportCalendar(local.id) },
+                    showDivider = false  // Last item in card
+                )
+            }
+        }
+
         // ==================== Version Footer ====================
         if (versionName.isNotEmpty()) {
             VersionFooter(
@@ -547,7 +587,7 @@ private fun FlatSettingsContent(
     if (showVisibleCalendarsSheet) {
         VisibleCalendarsSheet(
             sheetState = visibleCalendarsSheetState,
-            calendars = calendars,
+            calendarGroups = calendarGroups,
             onToggleCalendar = onToggleCalendar,
             // Hidden from main UI but functionality preserved for future use
             onShowAllCalendars = onShowAllCalendars,
@@ -558,9 +598,18 @@ private fun FlatSettingsContent(
 
     // Default Calendar Sheet (exclude read-only calendars like ICS subscriptions)
     if (showDefaultCalendarSheet) {
+        // Filter out read-only calendars from groups
+        val writableGroups = remember(calendarGroups) {
+            calendarGroups.mapNotNull { group: CalendarGroup ->
+                val writableCals = group.calendars.filter { cal -> !cal.isReadOnly }
+                if (writableCals.isNotEmpty()) {
+                    group.copy(calendars = writableCals)
+                } else null
+            }
+        }
         DefaultCalendarSheet(
             sheetState = defaultCalendarSheetState,
-            calendars = calendars.filter { !it.isReadOnly },
+            calendarGroups = writableGroups,
             currentDefaultId = defaultCalendarId,
             onSelectDefault = onDefaultCalendarSelect,
             onDismiss = { showDefaultCalendarSheet = false }
@@ -628,19 +677,6 @@ private fun FlatSettingsContent(
             onForceFullSync = onForceFullSync,
             onShowSyncLogs = onShowSyncLogs,
             onDismiss = { showDebugMenu = false }
-        )
-    }
-
-    // Sign Out Confirmation Sheet
-    if (showSignOutConfirmation) {
-        // Reuse memoized maskedEmail with fallback
-        val displayEmail = maskedEmail.ifEmpty { "iCloud" }
-
-        SignOutConfirmationSheet(
-            sheetState = signOutSheetState,
-            email = displayEmail,
-            onConfirm = onSignOut,
-            onDismiss = { showSignOutConfirmation = false }
         )
     }
 }

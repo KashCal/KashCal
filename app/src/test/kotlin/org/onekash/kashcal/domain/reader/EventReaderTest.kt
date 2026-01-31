@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
@@ -60,7 +61,7 @@ class EventReaderTest {
 
         runTest {
             val iCloudAccountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             iCloudCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -82,7 +83,7 @@ class EventReaderTest {
             )
 
             val localAccountId = database.accountsDao().insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             localCalendarId = database.calendarsDao().insert(
                 Calendar(

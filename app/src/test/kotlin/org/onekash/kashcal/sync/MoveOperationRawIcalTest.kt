@@ -17,6 +17,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.robolectric.RobolectricTestRunner
@@ -107,7 +108,7 @@ class MoveOperationRawIcalTest {
         parser = ICalParser()
 
         testAccountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "test@icloud.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
 
         calendarAId = database.calendarsDao().insert(
@@ -130,11 +131,15 @@ class MoveOperationRawIcalTest {
             )
         )
 
+        // Create a true local account for testing synced→local moves
+        val localAccountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.LOCAL, email = "local")
+        )
         localCalendarId = database.calendarsDao().insert(
             Calendar(
-                accountId = testAccountId,  // Same account (simulating local-like calendar)
-                caldavUrl = "https://caldav.icloud.com/local-calendar/",
-                displayName = "Local-Like Calendar",
+                accountId = localAccountId,  // True LOCAL account
+                caldavUrl = "local://default",
+                displayName = "Local Calendar",
                 color = 0xFFFF5722.toInt(),
                 isReadOnly = false
             )
@@ -409,19 +414,31 @@ class MoveOperationRawIcalTest {
     }
 
     @Test
-    fun `MOVE to local calendar sets isLocal flag`() = runTest {
-        val event = createEventWithRawIcal(richServerIcs, calendarAId)
+    fun `MOVE to local calendar auto-detects local target`() = runTest {
+        // Create event with caldavUrl so it's considered "synced"
+        val event = createEventWithRawIcal(richServerIcs, calendarAId).let {
+            val synced = it.copy(
+                caldavUrl = "https://caldav.icloud.com/calendar-a/event.ics",
+                etag = "\"v1\"",
+                syncStatus = SyncStatus.SYNCED
+            )
+            database.eventsDao().update(synced)
+            database.eventsDao().getById(it.id)!!
+        }
 
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        // Auto-detects local target from AccountProvider
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
 
         assertEquals("Should be in local calendar", localCalendarId, movedEvent.calendarId)
         assertEquals("Should be SYNCED (local)", SyncStatus.SYNCED, movedEvent.syncStatus)
 
-        // No pending operations for local
+        // Should queue DELETE for the synced source
         val ops = database.pendingOperationsDao().getForEvent(event.id)
-        assertTrue("Should have no pending ops for local move", ops.isEmpty())
+        assertEquals("Should have DELETE op for source", 1, ops.size)
+        assertEquals(PendingOperation.OPERATION_DELETE, ops[0].operation)
+        assertEquals("DELETE should have sourceCalendarId", calendarAId, ops[0].sourceCalendarId)
     }
 
     @Test

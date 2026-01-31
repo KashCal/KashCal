@@ -22,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.error.CalendarError
@@ -67,7 +68,7 @@ class BugRegressionTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -339,8 +340,8 @@ class BugRegressionTest {
         // Clear existing ops
         database.pendingOperationsDao().deleteAll()
 
-        // Move event
-        eventWriter.moveEventToCalendar(synced.id, calendar2Id, isLocal = false)
+        // Move event (auto-detects both calendars are iCloud/synced)
+        eventWriter.moveEventToCalendar(synced.id, calendar2Id)
 
         // Verify pending operation has all context
         val pendingOps = database.pendingOperationsDao().getAll()

@@ -1,1 +1,1 @@
-Privacy-focused calendar with iCloud sync. Offline-first. No tracking.
+Modern Android calendar. iCloud & CalDAV finally done right. Private. Open.

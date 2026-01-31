@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.database.sqlite.SQLiteConstraintException
+import android.database.sqlite.SQLiteException
 import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -49,7 +50,6 @@ import javax.inject.Inject
  */
 class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
-    private val client: CalDavClient,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
@@ -76,6 +76,43 @@ class PullStrategy @Inject constructor(
         // Multiget fallback: retry delay and batch size for individual fetches (v16.8.0)
         private const val MULTIGET_RETRY_DELAY_MS = 2000L
         private const val INDIVIDUAL_FETCH_BATCH_SIZE = 10
+
+        // DB retry configuration
+        private const val MAX_DB_RETRIES = 3
+        private const val INITIAL_DB_RETRY_DELAY_MS = 100L
+    }
+
+    /**
+     * Retry database operations on lock errors only.
+     *
+     * Room sets SQLite's busy_timeout, but if that expires we get "database is locked".
+     * This provides a safety net for extreme contention during sync.
+     *
+     * Does NOT retry on:
+     * - SQLiteConstraintException (handled separately)
+     * - Other SQLite errors (likely bugs, should propagate)
+     */
+    private suspend inline fun <T> withDbRetry(block: () -> T): T {
+        var lastException: SQLiteException? = null
+        repeat(MAX_DB_RETRIES) { attempt ->
+            try {
+                return block()
+            } catch (e: SQLiteException) {
+                // ONLY retry on lock errors - let other SQLite errors propagate
+                if (e.message?.contains("database is locked", ignoreCase = true) == true) {
+                    lastException = e
+                    Log.w(TAG, "DB locked (attempt ${attempt + 1}/$MAX_DB_RETRIES), retrying...")
+                    if (attempt < MAX_DB_RETRIES - 1) {
+                        // Bounded bit-shift per CLAUDE.md pattern 10
+                        val backoff = INITIAL_DB_RETRY_DELAY_MS * (1L shl attempt.coerceIn(0, 4))
+                        delay(backoff)
+                    }
+                } else {
+                    throw e  // Not a lock error - don't retry
+                }
+            }
+        }
+        throw lastException!!
     }
 
     /**
@@ -84,8 +121,7 @@ class PullStrategy @Inject constructor(
      * @param calendar The calendar to sync
      * @param forceFullSync If true, ignores sync token and fetches all events
      * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param clientOverride Optional CalDavClient to use instead of the injected one.
-     *                       Used by CalDavSyncWorker to provide isolated per-account clients.
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @param sessionBuilder Optional builder for tracking sync session stats.
      * @return PullResult indicating success/failure and statistics
      */
@@ -93,11 +129,11 @@ class PullStrategy @Inject constructor(
         calendar: Calendar,
         forceFullSync: Boolean = false,
         quirks: CalDavQuirks? = null,
-        clientOverride: CalDavClient? = null,
+        client: CalDavClient,
         sessionBuilder: SyncSessionBuilder? = null
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
-        val effectiveClient = clientOverride ?: client
+        val effectiveClient = client
 
         return try {
             // Step 1: Quick ctag check
@@ -198,6 +234,13 @@ class PullStrategy @Inject constructor(
 
         val syncReport = (reportResult as CalDavResult.Success).data
         Log.d(TAG, "syncCollection: ${syncReport.changed.size} changed, ${syncReport.deleted.size} deleted")
+
+        // RFC 6578 Section 3.6: 507 means server truncated results
+        // Results are still valid - save the new token and next sync will continue
+        if (syncReport.truncated) {
+            Log.w(TAG, "Server returned truncated results (507). Will continue on next sync.")
+            sessionBuilder?.setTruncated(true)
+        }
 
         // Handle deletions (respecting pending local changes)
         var deleted = 0
@@ -743,25 +786,28 @@ class PullStrategy @Inject constructor(
 
             // TRANSACTION: Upsert event and generate occurrences atomically
             // Prevents orphaned events (no occurrences) if crash occurs mid-operation
+            // Wrapped in withDbRetry for resilience against database lock errors
             val savedEvent = try {
-                database.runInTransaction {
-                    val eventId = eventsDao.upsert(event)
-                    val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+                withDbRetry {
+                    database.runInTransaction {
+                        val eventId = eventsDao.upsert(event)
+                        val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
 
-                    // Regenerate occurrences for recurring events
-                    if (saved.rrule != null) {
-                        val now = System.currentTimeMillis()
-                        occurrenceGenerator.generateOccurrences(
-                            event = saved,
-                            rangeStartMs = now - PAST_WINDOW_MS,
-                            rangeEndMs = now + OCCURRENCE_EXPANSION_MS
-                        )
-                    } else {
-                        // Non-recurring: generate single occurrence
-                        occurrenceGenerator.regenerateOccurrences(saved)
+                        // Regenerate occurrences for recurring events
+                        if (saved.rrule != null) {
+                            val now = System.currentTimeMillis()
+                            occurrenceGenerator.generateOccurrences(
+                                event = saved,
+                                rangeStartMs = now - PAST_WINDOW_MS,
+                                rangeEndMs = now + OCCURRENCE_EXPANSION_MS
+                            )
+                        } else {
+                            // Non-recurring: generate single occurrence
+                            occurrenceGenerator.regenerateOccurrences(saved)
+                        }
+
+                        saved // Return from transaction
                     }
-
-                    saved // Return from transaction
                 }
             } catch (e: SQLiteConstraintException) {
                 // Duplicate UID detected - fetch existing event and use that
@@ -784,9 +830,11 @@ class PullStrategy @Inject constructor(
             if (existingEvent == null) {
                 added++
                 sessionBuilder?.incrementWritten()
+                Log.d(TAG, "Pulled new event: ${savedEvent.title} with etag='${savedEvent.etag}'")
             } else {
                 updated++
                 sessionBuilder?.incrementUpdated()
+                Log.d(TAG, "Updated event: ${savedEvent.title} with etag='${savedEvent.etag}'")
             }
 
             changes.add(SyncChange(
@@ -882,23 +930,27 @@ class PullStrategy @Inject constructor(
                 )
             }
 
-            // TRANSACTION: Upsert exception, generate occurrence, cancel original atomically
-            // Prevents orphaned exception events (no occurrences) if crash occurs mid-operation
-            val savedExceptionEvent = database.runInTransaction {
-                val eventId = eventsDao.upsert(event)
-                val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+            // TRANSACTION: Upsert exception, link to master's occurrence atomically
+            // Uses Model B (linked occurrence) consistently to prevent duplicates.
+            // linkException handles: delete Model A occurrence (if exists), update/create Model B.
+            // Wrapped in withDbRetry for resilience against database lock errors
+            val savedExceptionEvent = withDbRetry {
+                database.runInTransaction {
+                    val eventId = eventsDao.upsert(event)
+                    val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
 
-                // Generate occurrence for exception event (uses exception's DTSTART/DTEND)
-                // This creates the occurrence for the NEW date (e.g., Jan 4 for a moved event)
-                occurrenceGenerator.regenerateOccurrences(saved)
+                    // Link exception to master's occurrence (Model B)
+                    // This normalizes any existing Model A to Model B, preventing duplicates
+                    val originalTime = event.originalInstanceTime
+                    if (originalTime != null) {
+                        occurrenceGenerator.linkException(masterEvent.id, originalTime, saved)
+                    } else {
+                        // Fallback: no original time means standalone occurrence
+                        occurrenceGenerator.regenerateOccurrences(saved)
+                    }
 
-                // Mark original occurrence as cancelled (it's been moved/modified)
-                val originalTime = event.originalInstanceTime
-                if (originalTime != null) {
-                    occurrenceGenerator.cancelOccurrence(masterEvent.id, originalTime)
+                    saved // Return from transaction
                 }
-
-                saved // Return from transaction
             }
 
             // Track change for UI notification (exception events are shown like regular events)

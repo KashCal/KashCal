@@ -15,6 +15,7 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.sync.auth.CredentialProvider
@@ -22,8 +23,9 @@ import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
-import org.onekash.kashcal.sync.provider.CalendarProvider
 import org.onekash.kashcal.sync.provider.ProviderRegistry
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.engine.SyncError
 import org.onekash.kashcal.sync.engine.SyncPhase
 import org.onekash.kashcal.sync.engine.SyncResult
@@ -35,7 +37,10 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.sync.session.SyncSessionStore
+import org.onekash.kashcal.sync.provider.icloud.ICloudUrlMigration
+import java.util.concurrent.TimeUnit
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -60,7 +65,7 @@ class CalDavSyncWorkerTest {
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var notificationManager: SyncNotificationManager
     private lateinit var providerRegistry: ProviderRegistry
-    private lateinit var mockICloudProvider: CalendarProvider
+    private lateinit var mockQuirks: CalDavQuirks
     private lateinit var mockCredentialProvider: CredentialProvider
     private lateinit var calDavClient: CalDavClient
     private lateinit var calDavClientFactory: CalDavClientFactory
@@ -70,6 +75,8 @@ class CalDavSyncWorkerTest {
     private lateinit var eventReader: EventReader
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var syncSessionStore: SyncSessionStore
+    private lateinit var syncLogsDao: SyncLogsDao
+    private lateinit var iCloudUrlMigration: ICloudUrlMigration
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -88,7 +95,7 @@ class CalDavSyncWorkerTest {
         calendarsDao = mockk(relaxed = true)
         notificationManager = mockk(relaxed = true)
         providerRegistry = mockk(relaxed = true)
-        mockICloudProvider = mockk(relaxed = true)
+        mockQuirks = mockk(relaxed = true)
         mockCredentialProvider = mockk(relaxed = true)
         calDavClient = mockk(relaxed = true)
         calDavClientFactory = mockk(relaxed = true)
@@ -98,6 +105,11 @@ class CalDavSyncWorkerTest {
         eventReader = mockk(relaxed = true)
         pendingOperationsDao = mockk(relaxed = true)
         syncSessionStore = mockk(relaxed = true)
+        syncLogsDao = mockk(relaxed = true)
+        iCloudUrlMigration = mockk(relaxed = true)
+
+        // Default: iCloud URL migration returns false (already completed)
+        coEvery { iCloudUrlMigration.migrateIfNeeded() } returns false
 
         // Default: return empty input data
         every { workerParams.inputData } returns Data.EMPTY
@@ -108,19 +120,15 @@ class CalDavSyncWorkerTest {
         every { notificationManager.createForegroundInfo(any(), any()) } throws
             IllegalStateException("Test: foreground not available")
 
-        // Default: setup iCloud provider mock
-        every { mockICloudProvider.requiresNetwork } returns true
-        every { mockICloudProvider.getCredentialProvider() } returns mockCredentialProvider
-        every { providerRegistry.getProviderForAccount(any()) } returns mockICloudProvider
+        // Default: setup provider registry mocks (new API)
+        every { providerRegistry.getQuirks(any()) } returns mockQuirks
+        every { providerRegistry.getCredentialProvider(any()) } returns mockCredentialProvider
 
         // Default: return test credentials
         coEvery { mockCredentialProvider.getCredentials(any()) } returns Credentials(
             username = "test@icloud.com",
             password = "test-password"
         )
-
-        // Default: mock quirks for provider
-        every { mockICloudProvider.getQuirks() } returns mockk(relaxed = true)
 
         // Default: factory returns isolated client (the main calDavClient mock)
         every { calDavClientFactory.createClient(any(), any()) } returns calDavClient
@@ -141,14 +149,15 @@ class CalDavSyncWorkerTest {
             calendarsDao = calendarsDao,
             notificationManager = notificationManager,
             providerRegistry = providerRegistry,
-            calDavClient = calDavClient,
             calDavClientFactory = calDavClientFactory,
             syncScheduler = syncScheduler,
             widgetUpdateManager = widgetUpdateManager,
             reminderScheduler = reminderScheduler,
             eventReader = eventReader,
             pendingOperationsDao = pendingOperationsDao,
-            syncSessionStore = syncSessionStore
+            syncSessionStore = syncSessionStore,
+            syncLogsDao = syncLogsDao,
+            iCloudUrlMigration = iCloudUrlMigration
         )
     }
 
@@ -173,14 +182,14 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
 
         // When
         val result = worker.doWork()
 
         // Then
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-        coVerify { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), calDavClient, any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) }
     }
 
     @Test
@@ -191,14 +200,14 @@ class CalDavSyncWorkerTest {
         val testAccount = createTestAccount()
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, true, any(), any(), any()) } returns
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), true, any(), any(), any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
         // When
         worker.doWork()
 
         // Then
-        coVerify { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, true, any(), calDavClient, any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(testAccount, any(), true, any(), calDavClient, any()) }
     }
 
     @Test
@@ -214,7 +223,7 @@ class CalDavSyncWorkerTest {
 
         // Then
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-        coVerify(exactly = 0) { syncEngine.syncAccountWithProvider(any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
     }
 
     // ==================== Calendar Sync Tests ====================
@@ -275,7 +284,7 @@ class CalDavSyncWorkerTest {
     // ==================== Account Sync Tests ====================
 
     @Test
-    fun `account sync routes to syncAccount`() = runTest {
+    fun `account sync routes to syncAccountWithQuirks`() = runTest {
         // Given
         val accountId = 7L
         val inputData = CalDavSyncWorker.createAccountSyncInput(accountId)
@@ -283,7 +292,8 @@ class CalDavSyncWorkerTest {
         val account = createTestAccount(accountId)
 
         coEvery { accountsDao.getById(accountId) } returns account
-        coEvery { syncEngine.syncAccount(account, false, any(), any(), any(), any()) } returns SyncResult.Success(
+        // Account sync uses same ProviderRegistry pattern as syncAll for consistency
+        coEvery { syncEngine.syncAccountWithQuirks(account, any(), false, any(), calDavClient, any()) } returns SyncResult.Success(
             calendarsSynced = 3,
             durationMs = 800
         )
@@ -293,7 +303,7 @@ class CalDavSyncWorkerTest {
 
         // Then
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-        coVerify { syncEngine.syncAccount(account, false, any(), any(), any(), any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(account, any(), false, any(), calDavClient, any()) }
     }
 
     @Test
@@ -348,7 +358,7 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, any(), any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
         val result = worker.doWork()
@@ -380,7 +390,7 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, any(), any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
         val result = worker.doWork()
@@ -400,7 +410,7 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, any(), any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
         val result = worker.doWork()
@@ -423,7 +433,7 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, any(), any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
         val result = worker.doWork()
@@ -489,7 +499,7 @@ class CalDavSyncWorkerTest {
         val testAccount = createTestAccount()
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, any(), any(), any(), any()) } throws
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
             RuntimeException("Unexpected error")
 
         // When
@@ -551,7 +561,7 @@ class CalDavSyncWorkerTest {
 
         // Then - Returns success but skips account with no credentials
         assertTrue(result is ListenableWorker.Result.Success)
-        coVerify(exactly = 0) { syncEngine.syncAccountWithProvider(any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
         verify(exactly = 0) { calDavClientFactory.createClient(any(), any()) }
     }
 
@@ -568,7 +578,7 @@ class CalDavSyncWorkerTest {
 
         val testAccount = createTestAccount()
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), calDavClient, any()) } returns
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
         // When
@@ -576,7 +586,7 @@ class CalDavSyncWorkerTest {
 
         // Then - Factory creates client with credentials (instead of mutating singleton)
         verify { calDavClientFactory.createClient(testCredentials, any()) }
-        coVerify { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), calDavClient, any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) }
     }
 
     @Test
@@ -593,7 +603,7 @@ class CalDavSyncWorkerTest {
 
         val testAccount = createTestAccount()
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), calDavClient, any()) } returns
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
         // When
@@ -628,7 +638,7 @@ class CalDavSyncWorkerTest {
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
         coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
@@ -663,7 +673,7 @@ class CalDavSyncWorkerTest {
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
         coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
@@ -693,7 +703,7 @@ class CalDavSyncWorkerTest {
         )
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
 
         // When
         worker.doWork()
@@ -724,7 +734,7 @@ class CalDavSyncWorkerTest {
         val testEvent = createTestEvent(eventId, calendarId, reminders = null)
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
 
         // When
@@ -764,7 +774,7 @@ class CalDavSyncWorkerTest {
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
         coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
-        coEvery { syncEngine.syncAccountWithProvider(testAccount, mockICloudProvider, false, any(), any(), any()) } returns syncResult
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
         coEvery { eventReader.getOccurrenceByExceptionEventId(eventId) } returns testOccurrence
@@ -836,12 +846,121 @@ class CalDavSyncWorkerTest {
         )
     }
 
+    // ==================== Retry Lifecycle Sequence Tests ====================
+
+    @Test
+    fun `doWork abandons operations exceeding 30-day lifetime and shows notification`() = runTest {
+        // Given - an operation that has exceeded 30-day lifetime
+        val expiredOp = PendingOperation(
+            id = 1L,
+            eventId = 100L,
+            operation = PendingOperation.OPERATION_CREATE,
+            lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
+        )
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
+        coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - operation abandoned and user notified
+        coVerify { pendingOperationsDao.abandonOperation(1L, any(), any()) }
+        verify { notificationManager.showOperationExpiredNotification(1) }
+    }
+
+    @Test
+    fun `doWork auto-resets old failed operations on every sync`() = runTest {
+        // Given - no expired ops, auto-reset returns 3
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 3
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - auto-reset was called
+        coVerify { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) }
+    }
+
+    @Test
+    fun `doWork force full sync resets all failed with fresh lifetime before expiry check`() = runTest {
+        // Given - force sync enabled
+        coEvery { pendingOperationsDao.resetAllFailed(any()) } returns 5
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = true)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - A runs before D (reset before expiry check)
+        coVerifyOrder {
+            pendingOperationsDao.resetAllFailed(any())
+            pendingOperationsDao.getExpiredOperations(any())
+        }
+    }
+
+    @Test
+    fun `doWork does not reset all failed on normal sync`() = runTest {
+        // Given - normal sync (not force)
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - resetAllFailed not called
+        coVerify(exactly = 0) { pendingOperationsDao.resetAllFailed(any()) }
+    }
+
+    @Test
+    fun `doWork executes retry lifecycle in correct order A then D then B`() = runTest {
+        // Given - force sync with operations to process
+        coEvery { pendingOperationsDao.resetAllFailed(any()) } returns 1
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 2
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
+        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = true)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - Full A→D→B sequence verified
+        coVerifyOrder {
+            pendingOperationsDao.resetAllFailed(any())           // A: Force reset
+            pendingOperationsDao.getExpiredOperations(any())     // D: Expiry check
+            pendingOperationsDao.autoResetOldFailed(any(), any(), any()) // B: 24h auto-reset
+        }
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createTestAccount(id: Long = 1L): Account {
         return Account(
             id = id,
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "test@icloud.com",
             displayName = "Test Account",
             principalUrl = "https://caldav.icloud.com/123/principal",

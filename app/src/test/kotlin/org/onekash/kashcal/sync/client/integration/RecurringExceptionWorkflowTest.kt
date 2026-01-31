@@ -5,7 +5,9 @@ import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
@@ -30,7 +32,7 @@ import java.util.UUID
  */
 class RecurringExceptionWorkflowTest {
 
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
     private var username: String? = null
     private var password: String? = null
     private var serverUrl: String = "https://caldav.icloud.com"
@@ -49,11 +51,25 @@ class RecurringExceptionWorkflowTest {
     @Before
     fun setup() {
         val quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
         loadCredentials()
 
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+            val factory = OkHttpCalDavClientFactory()
+            client = factory.createClient(credentials, quirks)
+        } else {
+            // Create a client with dummy credentials for tests that will be skipped
+            val dummyCredentials = Credentials(
+                username = "test@example.com",
+                password = "test-password",
+                serverUrl = serverUrl
+            )
+            val factory = OkHttpCalDavClientFactory()
+            client = factory.createClient(dummyCredentials, quirks)
         }
     }
 

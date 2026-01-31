@@ -8,6 +8,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Integration tests for AccountsDao.
@@ -19,7 +20,7 @@ class AccountsDaoTest : BaseDaoTest() {
     private val accountsDao by lazy { database.accountsDao() }
 
     private fun createAccount(
-        provider: String = "icloud",
+        provider: AccountProvider = AccountProvider.ICLOUD,
         email: String = "test@example.com"
     ) = Account(
         provider = provider,
@@ -43,7 +44,7 @@ class AccountsDaoTest : BaseDaoTest() {
 
         val retrieved = accountsDao.getById(id)
         assertNotNull(retrieved)
-        assertEquals("icloud", retrieved!!.provider)
+        assertEquals(AccountProvider.ICLOUD, retrieved!!.provider)
         assertEquals("test@example.com", retrieved.email)
     }
 
@@ -51,7 +52,7 @@ class AccountsDaoTest : BaseDaoTest() {
     fun `insert multiple accounts`() = runTest {
         accountsDao.insert(createAccount(email = "user1@example.com"))
         accountsDao.insert(createAccount(email = "user2@example.com"))
-        accountsDao.insert(createAccount(provider = "fastmail", email = "user3@example.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.CALDAV, email = "user3@example.com"))
 
         val accounts = accountsDao.getAllOnce()
         assertEquals(3, accounts.size)
@@ -67,18 +68,18 @@ class AccountsDaoTest : BaseDaoTest() {
 
     @Test
     fun `getByProviderAndEmail finds account`() = runTest {
-        accountsDao.insert(createAccount(provider = "icloud", email = "test@icloud.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "test@icloud.com"))
 
-        val result = accountsDao.getByProviderAndEmail("icloud", "test@icloud.com")
+        val result = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com")
         assertNotNull(result)
-        assertEquals("icloud", result!!.provider)
+        assertEquals(AccountProvider.ICLOUD, result!!.provider)
     }
 
     @Test
     fun `getByProviderAndEmail returns null for no match`() = runTest {
         accountsDao.insert(createAccount())
 
-        val result = accountsDao.getByProviderAndEmail("google", "other@gmail.com")
+        val result = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "other@gmail.com")
         assertNull(result)
     }
 
@@ -220,14 +221,14 @@ class AccountsDaoTest : BaseDaoTest() {
 
     @Test(expected = android.database.sqlite.SQLiteConstraintException::class)
     fun `insert duplicate provider-email throws`() = runTest {
-        accountsDao.insert(createAccount(provider = "icloud", email = "dup@test.com"))
-        accountsDao.insert(createAccount(provider = "icloud", email = "dup@test.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com"))
     }
 
     @Test
     fun `same email different provider allowed`() = runTest {
-        accountsDao.insert(createAccount(provider = "icloud", email = "same@test.com"))
-        accountsDao.insert(createAccount(provider = "fastmail", email = "same@test.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "same@test.com"))
+        accountsDao.insert(createAccount(provider = AccountProvider.CALDAV, email = "same@test.com"))
 
         assertEquals(2, accountsDao.getAllOnce().size)
     }

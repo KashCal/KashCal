@@ -15,6 +15,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.SyncLog
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -47,7 +48,7 @@ class SyncLogsDaoTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -171,7 +172,7 @@ class SyncLogsDaoTest {
     fun `getLogsForCalendar returns logs for specific calendar`() = runTest {
         // Create second calendar
         val accountId = database.accountsDao().insert(
-            Account(provider = "local", email = "local")
+            Account(provider = AccountProvider.LOCAL, email = "local")
         )
         val calendar2Id = database.calendarsDao().insert(
             Calendar(
@@ -317,7 +318,7 @@ class SyncLogsDaoTest {
     fun `deleteLogsForCalendar removes all logs for calendar`() = runTest {
         // Create second calendar
         val accountId = database.accountsDao().insert(
-            Account(provider = "local", email = "local")
+            Account(provider = AccountProvider.LOCAL, email = "local")
         )
         val calendar2Id = database.calendarsDao().insert(
             Calendar(
@@ -496,7 +497,7 @@ class SyncLogsDaoTest {
     fun `multiple calendars have independent log counts`() = runTest {
         // Create multiple calendars
         val accountId = database.accountsDao().insert(
-            Account(provider = "local", email = "local")
+            Account(provider = AccountProvider.LOCAL, email = "local")
         )
         val cal2 = database.calendarsDao().insert(
             Calendar(accountId = accountId, caldavUrl = "local://2", displayName = "Cal 2", color = 0xFF000000.toInt())

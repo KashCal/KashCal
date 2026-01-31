@@ -129,8 +129,12 @@ class OccurrenceGenerator @Inject constructor(
         // Fetch exception event to get its current times
         val exceptionEvent = eventsDao.getById(linkData.exceptionEventId)
         if (exceptionEvent != null) {
-            // Use new method that updates both link AND times
-            linkException(eventId, originalStartTs, exceptionEvent)
+            // CRITICAL: Use originalInstanceTime (RECURRENCE-ID) to find the RRULE-generated occurrence.
+            // The originalStartTs parameter is the occurrence's CURRENT startTs (after previous linking),
+            // which is the exception's modified time. We need the ORIGINAL time from RECURRENCE-ID
+            // to find the newly regenerated occurrence at the rule's time.
+            val recurrenceIdTime = exceptionEvent.originalInstanceTime ?: originalStartTs
+            linkException(eventId, recurrenceIdTime, exceptionEvent)
             // Restore cancelled status using exception's time (occurrence now has exception times)
             if (linkData.isCancelled) {
                 occurrencesDao.markCancelled(eventId, exceptionEvent.startTs)
@@ -250,9 +254,23 @@ class OccurrenceGenerator @Inject constructor(
             // This normalizes Model A to Model B (single linked occurrence)
             occurrencesDao.deleteForEvent(exceptionEvent.id)
 
-            // Step 2: Update master's occurrence with exception link and times
             val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)
             val newEndDay = Occurrence.toDayFormat(exceptionEvent.endTs, exceptionEvent.isAllDay)
+
+            // Step 2: Check if exception's new time conflicts with another occurrence
+            // (e.g., user moves Jan 6 occurrence to Jan 13, but Jan 13 already exists)
+            if (exceptionEvent.startTs != occurrenceTimeMs) {
+                val conflictingOccurrence = occurrencesDao.getByEventIdAndStartTs(
+                    masterEventId,
+                    exceptionEvent.startTs
+                )
+                if (conflictingOccurrence != null) {
+                    // Delete the conflicting occurrence - it will be replaced by the moved exception
+                    occurrencesDao.deleteById(conflictingOccurrence.id)
+                }
+            }
+
+            // Step 3: Update master's occurrence with exception link and times
             val rowsUpdated = occurrencesDao.updateOccurrenceForException(
                 masterEventId,
                 occurrenceTimeMs,
@@ -263,7 +281,7 @@ class OccurrenceGenerator @Inject constructor(
                 newEndDay
             )
 
-            // Step 3: Fallback - if no master occurrence existed, create one
+            // Step 4: Fallback - if no master occurrence existed, create one
             // This handles edge case where exception is outside sync window
             if (rowsUpdated == 0) {
                 occurrencesDao.insert(Occurrence(

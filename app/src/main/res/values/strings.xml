@@ -2,21 +2,171 @@
 <resources>
     <string name="app_name">KashCal</string>
 
-    <!-- Widget -->
+    <!-- ==================== Widget ==================== -->
     <string name="widget_name">Today\'s Agenda</string>
     <string name="widget_description">Shows today\'s calendar events</string>
     <string name="week_widget_name">Week View</string>
     <string name="week_widget_description">Shows calendar events for the next 7 days</string>
     <string name="date_widget_name">Date</string>
     <string name="date_widget_description">Shows today\'s date like an app icon</string>
+    <!-- Widget content -->
+    <string name="widget_no_events_today">No events today</string>
+    <string name="widget_add_event">+ Add event</string>
+    <!-- %1$d = number of additional events -->
+    <string name="widget_more_count">+ %1$d more</string>
+    <string name="widget_no_events">No events</string>
+    <!-- %1$d = number of events -->
+    <string name="widget_event_count">%1$d event</string>
+    <string name="widget_events_count">%1$d events</string>
+    <string name="widget_this_week">This Week</string>
 
-    <!-- App Shortcuts -->
+    <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">New Event</string>
     <string name="shortcut_new_event_long">Create new event</string>
     <string name="shortcut_today">Today</string>
     <string name="shortcut_today_long">Go to today</string>
     <string name="shortcut_search">Search</string>
     <string name="shortcut_search_long">Search events</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Retry</string>
+    <string name="action_try_again">Try Again</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Not Now</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="action_sign_out">Sign Out</string>
+    <string name="action_learn_more">Learn More</string>
+    <string name="action_open_apple_id">Open Apple ID</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_force_sync">Force Sync</string>
+    <string name="action_sync_now">Sync Now</string>
+    <string name="action_details">Details</string>
+    <string name="action_set_up">Set Up</string>
+    <string name="action_contact_support">Contact Support</string>
+    <string name="action_report_issue">Report Issue</string>
+    <string name="action_view">View</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_done">Done</string>
+    <string name="action_save">Save</string>
+    <string name="action_add">Add</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="action_discard">Discard</string>
+    <string name="action_dismiss">Dismiss</string>
+    <string name="action_show_all">Show All</string>
+    <string name="action_connect">Connect</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_share">Share</string>
+    <string name="action_export_ics">Export as .ics</string>
+    <string name="action_go_to_today">Go to Today</string>
+    <string name="action_confirm_delete">Confirm Delete</string>
+    <string name="action_delete_event">Delete Event</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Just this one</string>
+    <string name="recurring_this_and_future">This and all future</string>
+    <string name="recurring_just_occurrence">Just this occurrence</string>
+    <string name="recurring_all_occurrences">All occurrences</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Event title</string>
+    <string name="label_location">Location</string>
+    <string name="label_location_hint">Address, room, or meeting link</string>
+    <string name="label_notes">Notes</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">App-Specific Password</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_email" translatable="false">email@icloud.com</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_password" translatable="false">xxxx-xxxx-xxxx-xxxx</string>
+    <string name="label_password_hint">16 characters, dashes optional</string>
+    <string name="label_calendar_url">Calendar URL</string>
+    <!-- Placeholder for URL input -->
+    <string name="placeholder_url" translatable="false">https://...</string>
+    <string name="label_calendar_name">Calendar Name</string>
+    <string name="label_name">Name</string>
+    <string name="label_search">Search…</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">All</string>
+    <string name="view_week">Week</string>
+    <string name="view_month">Month</string>
+    <string name="label_all_day">All day</string>
+    <string name="label_today">Today</string>
+    <string name="label_go_to_date">Go to date</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_time_format">Time Format</string>
+    <string name="settings_start_week_on">Start Week On</string>
+    <string name="settings_event_emojis">Event Emojis</string>
+    <string name="settings_emoji_subtitle">Show emojis based on event titles</string>
+    <string name="settings_force_sync">Force Full Sync</string>
+    <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
+    <string name="settings_sync_history">Sync History</string>
+    <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
+    <string name="settings_subscriptions">Subscriptions</string>
+    <string name="settings_import">Import</string>
+    <string name="settings_import_subtitle">Import .ics file</string>
+    <string name="settings_export">Export</string>
+    <string name="settings_export_subtitle">Backup to .ics file</string>
+    <string name="settings_birthday_reminder">Birthday Reminder</string>
+    <string name="settings_use_device_timezone">Use device timezone</string>
+    <!-- Settings Screen Section Headers -->
+    <string name="settings_section_my_calendars">My Calendars</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_data">Data</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">We\'ve got you.</string>
+    <string name="onboarding_connect_prompt">Connect iCloud to see your events here</string>
+    <string name="onboarding_connect_icloud">Connect iCloud</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_force_sync_title">Force Full Sync?</string>
+    <string name="dialog_force_sync_message">This will re-download all calendar data from the server. Local changes will be preserved.</string>
+    <string name="dialog_enable_notifications">Enable Notifications?</string>
+    <!-- %1$s = event title -->
+    <string name="dialog_delete_title">Delete \"%1$s\"</string>
+    <!-- %1$s = event title -->
+    <string name="dialog_edit_title">Edit \"%1$s\"</string>
+    <string name="dialog_action_required">This action is required to continue.</string>
+    <string name="dialog_add_to_calendar">Add to calendar</string>
+    <string name="dialog_select_calendar">Select calendar</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">No events this week</string>
+    <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
+    <string name="status_no_writable_calendars">No writable calendars available</string>
+    <!-- %1$d = number of additional items -->
+    <string name="status_and_more">…and %1$d more</string>
+    <!-- %1$d = number of events -->
+    <string name="status_events_count">%1$d Events</string>
+    <string name="status_sync_changes">Sync Changes</string>
+    <string name="status_sync_history">Sync History</string>
+    <string name="status_parse_failures">Parse Failures</string>
+    <string name="status_fallback_mode">Fallback Mode</string>
+    <string name="status_error">Error</string>
+    <!-- %1$d = number of failed parses -->
+    <string name="status_failed_to_parse">⚠ %1$d failed to parse</string>
+    <string name="status_built_with_love">Built with Love</string>
+    <string name="status_in_austin">in Austin</string>
+    <!-- %1$s = version number -->
+    <string name="status_version">v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Sync complete</string>
+    <string name="success_event_saved">Event saved</string>
+    <string name="success_event_deleted">Event deleted</string>
+    <!-- %1$d = number of imported events -->
+    <string name="success_import_complete">Imported %1$d events</string>
+    <string name="success_export_complete">Calendar exported</string>
+    <string name="success_changes_saved_offline">Changes saved. Will sync when online.</string>
 
     <!-- ==================== Error Messages ==================== -->
 
@@ -42,19 +192,28 @@
     <string name="error_server_not_found">The requested item was not found on the server.</string>
     <string name="error_conflict_title">Sync Conflict</string>
     <string name="error_conflict_generic">This event was modified on another device. Force sync to get the latest version.</string>
+    <!-- %1$s = event title -->
     <string name="error_conflict_with_event">\"%1$s\" was modified on another device. Force sync to get the latest version.</string>
     <string name="error_sync_token_expired">Sync data expired. Performing full sync…</string>
 
     <!-- Event Errors -->
     <string name="error_event_not_found">Event not found.</string>
     <string name="error_calendar_not_found">Calendar not found.</string>
+    <!-- %1$s = calendar name -->
     <string name="error_calendar_read_only">Cannot modify events in \"%1$s\" (read-only calendar).</string>
     <string name="error_event_invalid_data">Invalid event data. Please check start and end times.</string>
     <string name="error_event_invalid_recurrence">Invalid repeat pattern.</string>
+    <!-- %1$s = error message -->
+    <string name="error_delete_failed">Failed to delete: %1$s</string>
+
+    <!-- Account Errors -->
+    <!-- %1$s = display name -->
+    <string name="error_display_name_exists">An account named \"%1$s\" already exists.</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
+    <!-- %1$d = successful imports, %2$d = failed imports -->
     <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
     <string name="error_export_failed">Failed to export events.</string>
     <string name="error_export_no_events">No events to export.</string>
@@ -76,35 +235,181 @@
 
     <!-- Sync Errors -->
     <string name="error_sync_no_accounts">No iCloud account configured. Set up iCloud to sync your calendars.</string>
+    <!-- %1$d = successful syncs, %2$d = failed syncs -->
     <string name="error_sync_partial">Synced %1$d calendars, %2$d failed.</string>
 
     <!-- Generic -->
     <string name="error_unknown">Something went wrong. Please try again.</string>
 
-    <!-- ==================== Action Labels ==================== -->
-    <string name="action_retry">Retry</string>
-    <string name="action_try_again">Try Again</string>
-    <string name="action_cancel">Cancel</string>
-    <string name="action_close">Close</string>
-    <string name="action_ok">OK</string>
-    <string name="action_not_now">Not Now</string>
-    <string name="action_sign_in">Sign In</string>
-    <string name="action_learn_more">Learn More</string>
-    <string name="action_open_apple_id">Open Apple ID</string>
-    <string name="action_open_settings">Open Settings</string>
-    <string name="action_force_sync">Force Sync</string>
-    <string name="action_sync_now">Sync Now</string>
-    <string name="action_details">Details</string>
-    <string name="action_set_up">Set Up</string>
-    <string name="action_contact_support">Contact Support</string>
-    <string name="action_view">View</string>
-    <string name="action_enable">Enable</string>
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Selected</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_create_event">Create event</string>
+    <string name="cd_agenda">Agenda</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_today">Today</string>
+    <string name="cd_previous_week">Previous week</string>
+    <string name="cd_next_week">Next week</string>
+    <string name="cd_previous_year">Previous year</string>
+    <string name="cd_next_year">Next year</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_refresh">Refresh</string>
+    <string name="cd_add_subscription">Add subscription</string>
+    <string name="cd_more_options">More options</string>
+    <string name="cd_duplicate">Duplicate</string>
+    <string name="cd_share">Share</string>
+    <string name="cd_export_ics">Export as ICS</string>
+    <string name="cd_open_maps">Open in maps</string>
+    <string name="cd_copy_clipboard">Copy to clipboard</string>
+    <string name="cd_clear_history">Clear history</string>
+    <string name="cd_recurring">Recurring</string>
+    <string name="cd_enabled">Enabled</string>
+    <string name="cd_sync_error">Sync error</string>
+    <string name="cd_change_timezone">Change timezone</string>
+    <string name="cd_select_option">Select option</string>
+    <string name="cd_year_picker">Year picker overlay</string>
+    <!-- %1$s = month name -->
+    <string name="cd_month_selector">%1$s month selector</string>
+    <!-- %1$s = label name (e.g., "date", "time") -->
+    <string name="cd_select_label">Select %1$s</string>
+    <!-- %1$d = number of options -->
+    <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
+    <!-- %1$s = version name -->
+    <string name="cd_version_info">KashCal version %1$s. Long press for debug options.</string>
 
-    <!-- ==================== Success Messages ==================== -->
-    <string name="success_sync_complete">Sync complete</string>
-    <string name="success_event_saved">Event saved</string>
-    <string name="success_event_deleted">Event deleted</string>
-    <string name="success_import_complete">Imported %1$d events</string>
-    <string name="success_export_complete">Calendar exported</string>
-    <string name="success_changes_saved_offline">Changes saved. Will sync when online.</string>
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Calendar</string>
+    <string name="label_color">Color:</string>
+    <string name="label_repeat">Repeat</string>
+    <string name="label_sync_interval">Sync Interval:</string>
+    <string name="label_first_alert">First Alert</string>
+    <string name="label_second_alert">Second Alert</string>
+    <string name="label_scheduled_events">Scheduled Events</string>
+    <string name="label_all_day_events">All-Day Events</string>
+    <!-- CalDAV -->
+    <string name="label_server_url">Server URL</string>
+    <string name="label_username">Username</string>
+    <string name="label_password">Password</string>
+    <string name="label_display_name_optional">Display Name (optional)</string>
+
+    <!-- ==================== Placeholders (Additional) ==================== -->
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_server_url" translatable="false">nextcloud.example.com</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_username" translatable="false">user@example.com</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_display_name" translatable="false">My CalDAV Account</string>
+    <string name="placeholder_search_events">Search events…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_added_automatically">https:// added automatically</string>
+    <string name="hint_name_shown_in_settings">Name shown in settings</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">After</string>
+    <string name="label_recurrence_occurrences">occurrences</string>
+    <string name="label_recurrence_on_date">On date</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Visible Calendars</string>
+    <string name="settings_default_calendar">Default Calendar</string>
+    <string name="settings_default_event_length">Default Event Length</string>
+    <string name="settings_default_alerts">Default Alerts</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_new_events">New events</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">System default</string>
+    <string name="option_12_hour">12-hour</string>
+    <string name="option_24_hour">24-hour</string>
+    <string name="option_sunday">Sunday</string>
+    <string name="option_monday">Monday</string>
+    <string name="option_saturday">Saturday</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">No events found</string>
+    <string name="empty_no_upcoming_events">No upcoming events</string>
+    <string name="empty_no_calendars">No calendars available</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_fetching">Fetching…</string>
+    <string name="status_discovering">Discovering…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Fetch Calendar</string>
+    <string name="action_discover_calendars">Discover Calendars</string>
+    <string name="action_import_from_file">Import from File</string>
+    <string name="action_export_local_calendar">Export Local Calendar</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <!-- iCloud App-Specific Password -->
+    <string name="help_app_password_description">App-specific passwords let you sign in to third-party apps without sharing your main Apple ID password.</string>
+    <string name="help_app_password_steps_header">To create one:</string>
+    <string name="help_app_password_step_1">1. Go to appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Sign in with your Apple ID</string>
+    <string name="help_app_password_step_3">3. Go to Sign-In and Security</string>
+    <string name="help_app_password_step_4">4. Click App-Specific Passwords</string>
+    <string name="help_app_password_step_5">5. Click Generate and copy here</string>
+    <!-- CalDAV -->
+    <string name="help_caldav_description">CalDAV is an open standard for syncing calendars. Many services support it:</string>
+    <string name="help_caldav_instructions">Enter your server URL and credentials to discover your calendars.</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal needs notification permission to remind you about upcoming events.</string>
+    <string name="dialog_notification_permission_settings_hint">You can change this later in Settings.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Accounts</string>
+    <string name="accounts_section_connected">Connected</string>
+    <string name="accounts_section_add">Add Account</string>
+    <string name="accounts_count_zero">Accounts</string>
+    <string name="accounts_count_one">1 account</string>
+    <string name="accounts_count_other">%1$d accounts</string>
+    <string name="accounts_empty_title">No accounts connected</string>
+    <string name="accounts_empty_subtitle">Add an account to sync your calendars across devices</string>
+    <string name="accounts_tap_to_add">Tap to add iCloud or CalDAV</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; More</string>
+    <string name="accounts_add_icloud">Add iCloud</string>
+    <string name="accounts_add_caldav">Add CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; More</string>
+    <string name="accounts_caldav_help_title">What is CalDAV?</string>
+    <string name="accounts_caldav_help_description">CalDAV is an open standard for syncing calendars. Supported by:</string>
+    <string name="accounts_caldav_help_more">&amp; more</string>
+    <string name="accounts_calendars_syncing">Syncing…</string>
+    <string name="accounts_calendar_count_one">%1$s · 1 calendar</string>
+    <string name="accounts_calendar_count_other">%1$s · %2$d calendars</string>
+    <!-- Content descriptions -->
+    <string name="accounts_cd_icloud_icon">iCloud account</string>
+    <string name="accounts_cd_caldav_icon">CalDAV account</string>
+    <string name="accounts_cd_back">Navigate back</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Subscriptions</string>
+    <string name="subscriptions_section_contact_birthdays">Contact Birthdays</string>
+    <string name="subscriptions_section_ics_calendars">ICS Calendars</string>
+    <string name="subscriptions_section_add">Add</string>
+    <string name="subscriptions_empty_ics">No ICS subscriptions</string>
+    <string name="subscriptions_empty_ics_hint">Add a calendar feed to see events</string>
+    <string name="subscriptions_add_ics">Add ICS Calendar</string>
+    <string name="subscriptions_add_birthdays">Contact Birthdays</string>
+    <string name="subscriptions_birthdays_enabled">Enabled</string>
+    <string name="subscriptions_birthdays_disabled">Disabled</string>
+    <string name="subscriptions_count_zero">Subscriptions</string>
+    <string name="subscriptions_count_one">1 subscription</string>
+    <string name="subscriptions_count_other">%1$d subscriptions</string>
+    <!-- Summary row for Settings screen -->
+    <string name="subscriptions_row_label">Birthdays, Holidays &amp; More</string>
+    <string name="subscriptions_summary_birthdays_only">Contact Birthdays</string>
+    <!-- Content descriptions -->
+    <string name="subscriptions_cd_back">Navigate back</string>
+    <string name="subscriptions_cd_add">Add subscription</string>
+    <string name="subscriptions_cd_birthdays_icon">Contact Birthdays</string>
+    <string name="subscriptions_cd_refresh">Refresh subscription</string>
+    <string name="subscriptions_cd_delete">Delete subscription</string>
 </resources>

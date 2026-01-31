@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -45,7 +46,7 @@ class DeepLinkAdversarialTest {
             .build()
 
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(

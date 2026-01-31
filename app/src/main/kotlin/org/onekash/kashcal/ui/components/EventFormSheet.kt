@@ -85,6 +85,7 @@ import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
+import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
@@ -142,7 +143,7 @@ data class EventFormState(
     val timezone: String? = null,  // null = device default
 
     // UI state
-    val availableCalendars: List<Calendar> = emptyList(),
+    val calendarGroups: List<CalendarGroup> = emptyList(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
@@ -185,6 +186,7 @@ fun EventFormSheet(
     calendarIntentData: CalendarIntentData? = null,
     calendarIntentInvitees: List<String> = emptyList(),
     calendars: List<Calendar>,
+    calendarGroups: List<CalendarGroup>,
     defaultCalendarId: Long?,
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
@@ -277,13 +279,17 @@ fun EventFormSheet(
     LaunchedEffect(eventId) {
         // Filter out read-only calendars (ICS subscriptions) for event creation/editing
         val writableCalendars = calendars.filter { !it.isReadOnly }
+        val writableGroups = calendarGroups.mapNotNull { group ->
+            val writableCals = group.calendars.filter { !it.isReadOnly }
+            if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
+        }
 
         // Default calendar: prefer user's choice, fall back to first writable calendar
         val defaultCalendar = writableCalendars.find { it.id == defaultCalendarId }
             ?: writableCalendars.firstOrNull()
 
         var newState = state.copy(
-            availableCalendars = writableCalendars,
+            calendarGroups = writableGroups,
             isLoading = false
         )
 
@@ -738,7 +744,7 @@ fun EventFormSheet(
                         selectedCalendarId = state.selectedCalendarId,
                         selectedCalendarName = state.selectedCalendarName,
                         selectedCalendarColor = state.selectedCalendarColor,
-                        availableCalendars = state.availableCalendars,
+                        calendarGroups = state.calendarGroups,
                         isExpanded = expandedPicker == "calendar",
                         enabled = !(state.isEditMode && state.editingOccurrenceTs != null),
                         onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },

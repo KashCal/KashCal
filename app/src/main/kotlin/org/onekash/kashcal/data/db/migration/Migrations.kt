@@ -358,6 +358,194 @@ object Migrations {
     }
 
     /**
+     * Migration from version 9 to 10.
+     *
+     * Adds unique constraint on occurrences (event_id, start_ts) to prevent
+     * duplicate occurrences from concurrent sync operations (e.g., birthday sync).
+     *
+     * Before creating the index, removes any existing duplicates by keeping
+     * only the occurrence with the lowest id for each (event_id, start_ts) pair.
+     */
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+        private val INDEX_NAME = "index_occurrences_event_id_start_ts_unique"
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Check if index already exists (idempotent migration)
+            if (indexExists(db, INDEX_NAME)) {
+                Log.d(TAG, "Index $INDEX_NAME already exists, skipping")
+                return
+            }
+
+            try {
+                // Count duplicates before deletion for logging
+                val duplicateCount = db.query("""
+                    SELECT COUNT(*) FROM occurrences
+                    WHERE id NOT IN (
+                        SELECT MIN(id)
+                        FROM occurrences
+                        GROUP BY event_id, start_ts
+                    )
+                """.trimIndent()).use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                }
+
+                if (duplicateCount > 0) {
+                    Log.i(TAG, "Found $duplicateCount duplicate occurrences to remove")
+
+                    // Delete duplicate occurrences (keep the one with lowest id)
+                    // This is required before creating the unique index
+                    db.execSQL("""
+                        DELETE FROM occurrences
+                        WHERE id NOT IN (
+                            SELECT MIN(id)
+                            FROM occurrences
+                            GROUP BY event_id, start_ts
+                        )
+                    """.trimIndent())
+                    Log.i(TAG, "Removed $duplicateCount duplicate occurrences")
+                } else {
+                    Log.d(TAG, "No duplicate occurrences found")
+                }
+
+                // Create unique index to prevent future duplicates
+                db.execSQL("""
+                    CREATE UNIQUE INDEX $INDEX_NAME
+                    ON occurrences (event_id, start_ts)
+                """.trimIndent())
+                Log.i(TAG, "Created unique index $INDEX_NAME")
+
+                // Verify index was created
+                if (indexExists(db, INDEX_NAME)) {
+                    Log.d(TAG, "Verified index $INDEX_NAME exists")
+                } else {
+                    Log.w(TAG, "Index $INDEX_NAME not found after creation - this may cause issues")
+                }
+            } catch (e: Exception) {
+                // Log error but don't fail migration - app can still work
+                // The distinctBy in HomeScreen prevents crashes even without the index
+                Log.e(TAG, "Error in migration 9->10: ${e.message}", e)
+                // Re-throw to fail migration properly - Room will handle it
+                throw e
+            }
+        }
+    }
+
+    /**
+     * Migration from version 10 to 11.
+     *
+     * Adds retry lifecycle tracking to pending_operations:
+     * - lifetime_reset_at: When user last interacted with event (30-day lifetime cap)
+     * - failed_at: When operation entered FAILED status (24h auto-reset)
+     *
+     * Existing operations get lifetime_reset_at initialized from created_at.
+     */
+    val MIGRATION_10_11 = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                // Track when operation lifetime was last reset (user interaction)
+                // Default 0 allows us to identify rows needing initialization
+                addColumnIfNotExists(
+                    db, "pending_operations", "lifetime_reset_at",
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+
+                // Initialize lifetime_reset_at from created_at for existing operations
+                // Only update rows where lifetime_reset_at is still 0 (idempotent)
+                val updatedCount = db.compileStatement("""
+                    UPDATE pending_operations
+                    SET lifetime_reset_at = created_at
+                    WHERE lifetime_reset_at = 0
+                """.trimIndent()).executeUpdateDelete()
+
+                if (updatedCount > 0) {
+                    Log.i(TAG, "Initialized lifetime_reset_at for $updatedCount existing operations")
+                }
+
+                // Track when operation entered FAILED status (for 24h auto-reset)
+                // Nullable - only set when operation is in FAILED status
+                addColumnIfNotExists(
+                    db, "pending_operations", "failed_at",
+                    "INTEGER"
+                )
+
+                // Verify columns exist
+                if (columnExists(db, "pending_operations", "lifetime_reset_at") &&
+                    columnExists(db, "pending_operations", "failed_at")) {
+                    Log.d(TAG, "Migration 10->11 completed: retry lifecycle columns added")
+                } else {
+                    Log.w(TAG, "Migration 10->11: column verification failed")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in migration 10->11: ${e.message}", e)
+                throw e  // Let Room handle the failure
+            }
+        }
+    }
+
+    /**
+     * Migration from version 11 to 12.
+     *
+     * Adds sourceCalendarId to pending_operations for cross-account calendar moves.
+     * This field preserves "where to delete from" after event.calendarId changes.
+     *
+     * IMPORTANT: In-flight MOVE operations at phase 0 (DELETE) are marked FAILED
+     * because their sourceCalendarId cannot be reliably inferred - the event's
+     * calendarId has already been updated to the target calendar.
+     *
+     * These operations will be retried via 24h auto-reset or Force Sync.
+     */
+    val MIGRATION_11_12 = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                // Step 1: Add source_calendar_id column (idempotent)
+                addColumnIfNotExists(
+                    db, "pending_operations", "source_calendar_id",
+                    "INTEGER DEFAULT NULL"
+                )
+
+                // Step 2: Handle in-flight MOVE operations at DELETE phase
+                //
+                // CRITICAL: We CANNOT backfill sourceCalendarId from event.calendarId!
+                // Timeline: User moves A→B → event.calendarId = B → queue MOVE(phase 0)
+                // At migration time, event.calendarId is ALREADY B (target), not A (source)
+                //
+                // Solution: Mark as FAILED for user retry (low volume edge case)
+                // The 24h auto-reset (MIGRATION_10_11) will pick these up automatically
+                val inFlightMoves = db.compileStatement("""
+                    UPDATE pending_operations
+                    SET status = 'FAILED',
+                        last_error = 'Migration 11->12: MOVE requires retry after upgrade',
+                        failed_at = ${System.currentTimeMillis()}
+                    WHERE operation = 'MOVE'
+                    AND move_phase = 0
+                    AND source_calendar_id IS NULL
+                    AND status != 'FAILED'
+                """.trimIndent()).executeUpdateDelete()
+
+                if (inFlightMoves > 0) {
+                    Log.w(TAG, "Marked $inFlightMoves in-flight MOVE operations as FAILED for retry")
+                } else {
+                    Log.d(TAG, "No in-flight MOVE operations to migrate")
+                }
+
+                // Step 3: Phase 1 (CREATE) MOVEs don't need sourceCalendarId
+                // They filter by targetCalendarId which is already set correctly
+
+                // Step 4: Verify column exists
+                if (columnExists(db, "pending_operations", "source_calendar_id")) {
+                    Log.d(TAG, "Migration 11->12 completed: source_calendar_id column added")
+                } else {
+                    Log.w(TAG, "Migration 11->12: column verification FAILED")
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in migration 11->12: ${e.message}", e)
+                throw e  // Let Room handle the failure
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -368,6 +556,9 @@ object Migrations {
         MIGRATION_5_6,
         MIGRATION_6_7,
         MIGRATION_7_8,
-        MIGRATION_8_9
+        MIGRATION_8_9,
+        MIGRATION_9_10,
+        MIGRATION_10_11,
+        MIGRATION_11_12
     )
 }

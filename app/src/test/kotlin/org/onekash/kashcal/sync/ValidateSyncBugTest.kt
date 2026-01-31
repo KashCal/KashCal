@@ -3,7 +3,7 @@ package org.onekash.kashcal.sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials
+import okhttp3.Credentials as OkHttpCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -11,7 +11,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -39,10 +41,24 @@ class ValidateSyncBugTest {
     fun setup() {
         loadCredentials()
         quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
 
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+            val factory = OkHttpCalDavClientFactory()
+            client = factory.createClient(credentials, quirks) as OkHttpCalDavClient
+        } else {
+            // Create a client with dummy credentials for tests that will be skipped
+            val dummyCredentials = Credentials(
+                username = "test@example.com",
+                password = "test-password",
+                serverUrl = serverUrl
+            )
+            val factory = OkHttpCalDavClientFactory()
+            client = factory.createClient(dummyCredentials, quirks) as OkHttpCalDavClient
         }
 
         // Raw HTTP client for direct XML inspection
@@ -52,7 +68,7 @@ class ValidateSyncBugTest {
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 if (username != null && password != null) {
-                    requestBuilder.header("Authorization", Credentials.basic(username!!, password!!))
+                    requestBuilder.header("Authorization", OkHttpCredentials.basic(username!!, password!!))
                 }
                 requestBuilder.header("User-Agent", "KashCal/2.0 (Android)")
                 chain.proceed(requestBuilder.build())

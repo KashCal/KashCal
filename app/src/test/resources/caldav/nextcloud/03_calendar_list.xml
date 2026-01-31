@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns">
+    <!-- Root calendar collection (NOT a calendar) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:displayname>testuser</d:displayname>
+                <d:resourcetype>
+                    <d:collection/>
+                </d:resourcetype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+        <d:propstat>
+            <d:prop>
+                <cal:supported-calendar-component-set/>
+                <cs:getctag/>
+                <x1:calendar-color xmlns:x1="http://apple.com/ns/ical/"/>
+                <d:current-user-privilege-set/>
+            </d:prop>
+            <d:status>HTTP/1.1 404 Not Found</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Personal calendar (IS a calendar) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:displayname>Personal</d:displayname>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:calendar/>
+                </d:resourcetype>
+                <cal:supported-calendar-component-set>
+                    <cal:comp name="VEVENT"/>
+                    <cal:comp name="VTODO"/>
+                </cal:supported-calendar-component-set>
+                <cs:getctag>"63845d9c2a3f8"</cs:getctag>
+                <x1:calendar-color xmlns:x1="http://apple.com/ns/ical/">#0082C9FF</x1:calendar-color>
+                <d:current-user-privilege-set>
+                    <d:privilege><d:read/></d:privilege>
+                    <d:privilege><d:write/></d:privilege>
+                    <d:privilege><d:write-properties/></d:privilege>
+                    <d:privilege><d:write-content/></d:privilege>
+                    <d:privilege><d:bind/></d:privilege>
+                    <d:privilege><d:unbind/></d:privilege>
+                    <d:privilege><cal:read-free-busy/></d:privilege>
+                </d:current-user-privilege-set>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Work calendar (IS a calendar) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/work/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:displayname>Work</d:displayname>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:calendar/>
+                </d:resourcetype>
+                <cal:supported-calendar-component-set>
+                    <cal:comp name="VEVENT"/>
+                </cal:supported-calendar-component-set>
+                <cs:getctag>"63845d9c2b4e7"</cs:getctag>
+                <x1:calendar-color xmlns:x1="http://apple.com/ns/ical/">#FF6B6BFF</x1:calendar-color>
+                <d:current-user-privilege-set>
+                    <d:privilege><d:read/></d:privilege>
+                    <d:privilege><d:write/></d:privilege>
+                </d:current-user-privilege-set>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Shared read-only calendar -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/shared-holidays/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:displayname>Company Holidays</d:displayname>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:calendar/>
+                </d:resourcetype>
+                <cal:supported-calendar-component-set>
+                    <cal:comp name="VEVENT"/>
+                </cal:supported-calendar-component-set>
+                <cs:getctag>"63845d9c2c5f9"</cs:getctag>
+                <x1:calendar-color xmlns:x1="http://apple.com/ns/ical/">#4CAF50FF</x1:calendar-color>
+                <d:current-user-privilege-set>
+                    <d:privilege><d:read/></d:privilege>
+                    <d:privilege><cal:read-free-busy/></d:privilege>
+                </d:current-user-privilege-set>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Tasks calendar (should be skipped) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/tasks/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:displayname>Tasks</d:displayname>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:calendar/>
+                </d:resourcetype>
+                <cal:supported-calendar-component-set>
+                    <cal:comp name="VTODO"/>
+                </cal:supported-calendar-component-set>
+                <cs:getctag>"63845d9c2d6a1"</cs:getctag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Inbox (should be skipped) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/inbox/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:schedule-inbox/>
+                </d:resourcetype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Outbox (should be skipped) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/outbox/</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:resourcetype>
+                    <d:collection/>
+                    <cal:schedule-outbox/>
+                </d:resourcetype>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+</d:multistatus>

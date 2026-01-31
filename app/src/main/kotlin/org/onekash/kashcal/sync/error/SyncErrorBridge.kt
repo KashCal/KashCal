@@ -16,7 +16,7 @@ import org.onekash.kashcal.sync.strategy.SinglePushResult
  *
  * Usage:
  * ```
- * val syncResult = syncEngine.syncAll()
+ * val syncResult = syncEngine.syncAccountWithQuirks(account, quirks, client = client)
  * if (syncResult is SyncResult.Error) {
  *     val calendarError = SyncErrorBridge.fromSyncResult(syncResult)
  *     viewModel.showError(calendarError)

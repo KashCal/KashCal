@@ -10,6 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Integration tests for CalendarsDao.
@@ -29,7 +30,7 @@ class CalendarsDaoTest : BaseDaoTest() {
         // Create a parent account for FK tests
         runTest {
             testAccountId = accountsDao.insert(
-                Account(provider = "icloud", email = "test@example.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
             )
         }
     }
@@ -95,7 +96,7 @@ class CalendarsDaoTest : BaseDaoTest() {
     fun `getByAccountId returns calendars for account`() = runTest {
         // Create second account
         val account2Id = accountsDao.insert(
-            Account(provider = "fastmail", email = "other@example.com")
+            Account(provider = AccountProvider.CALDAV, email = "other@example.com")
         )
 
         // Add calendars to both accounts
@@ -261,7 +262,7 @@ class CalendarsDaoTest : BaseDaoTest() {
     fun `getCalendarsByProvider returns only matching provider`() = runTest {
         // Create a local account
         val localAccountId = accountsDao.insert(
-            Account(provider = "local", email = "local@device")
+            Account(provider = AccountProvider.LOCAL, email = "local@device")
         )
 
         // Create calendars for both providers
@@ -282,7 +283,7 @@ class CalendarsDaoTest : BaseDaoTest() {
     fun `getCalendarCountByProvider returns correct count`() = runTest {
         // Create a local account
         val localAccountId = accountsDao.insert(
-            Account(provider = "local", email = "local@device")
+            Account(provider = AccountProvider.LOCAL, email = "local@device")
         )
 
         // Create calendars for both providers

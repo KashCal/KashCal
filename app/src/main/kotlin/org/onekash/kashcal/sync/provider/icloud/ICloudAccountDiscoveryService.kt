@@ -11,10 +11,12 @@ import javax.net.ssl.SSLHandshakeException
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.domain.model.AccountProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,7 +32,9 @@ import javax.inject.Singleton
  */
 @Singleton
 class ICloudAccountDiscoveryService @Inject constructor(
-    private val calDavClient: CalDavClient,
+    private val clientFactory: CalDavClientFactory,
+    private val credentialProvider: ICloudCredentialProvider,
+    private val icloudQuirks: ICloudQuirks,
     private val accountsDao: AccountsDao,
     private val calendarsDao: CalendarsDao
 ) : AccountDiscoveryService {
@@ -67,15 +71,20 @@ class ICloudAccountDiscoveryService @Inject constructor(
     ): DiscoveryResult = withContext(Dispatchers.IO) {
         val appleId = username
         val appSpecificPassword = password
-        Log.i(TAG, "Starting discovery for: $appleId")
+        Log.i(TAG, "Starting discovery for: ${appleId.take(3)}***")
 
-        // Set credentials on client
-        calDavClient.setCredentials(appleId, appSpecificPassword)
+        // Create isolated client with credentials (no mutable singleton state)
+        val credentials = Credentials(
+            username = appleId,
+            password = appSpecificPassword,
+            serverUrl = ICLOUD_SERVER
+        )
+        val client = clientFactory.createClient(credentials, icloudQuirks)
 
         try {
             // Step 1: Discover principal URL (this validates credentials)
             Log.d(TAG, "Step 1: Discovering principal...")
-            val principalResult = calDavClient.discoverPrincipal(ICLOUD_SERVER)
+            val principalResult = client.discoverPrincipal(ICLOUD_SERVER)
 
             if (principalResult.isAuthError()) {
                 Log.e(TAG, "Authentication failed")
@@ -92,12 +101,14 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            val principalUrl = (principalResult as CalDavResult.Success).data
+            val principalUrl = ICloudUrlNormalizer.normalize(
+                (principalResult as CalDavResult.Success).data
+            ) ?: (principalResult as CalDavResult.Success).data
             Log.d(TAG, "Principal URL: $principalUrl")
 
             // Step 2: Discover calendar home
             Log.d(TAG, "Step 2: Discovering calendar home...")
-            val homeResult = calDavClient.discoverCalendarHome(principalUrl)
+            val homeResult = client.discoverCalendarHome(principalUrl)
 
             if (homeResult.isError()) {
                 val error = homeResult as CalDavResult.Error
@@ -107,12 +118,14 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            val calendarHomeUrl = (homeResult as CalDavResult.Success).data
+            val calendarHomeUrl = ICloudUrlNormalizer.normalize(
+                (homeResult as CalDavResult.Success).data
+            ) ?: (homeResult as CalDavResult.Success).data
             Log.d(TAG, "Calendar home URL: $calendarHomeUrl")
 
             // Step 3: List calendars
             Log.d(TAG, "Step 3: Listing calendars...")
-            val calendarsResult = calDavClient.listCalendars(calendarHomeUrl)
+            val calendarsResult = client.listCalendars(calendarHomeUrl)
 
             if (calendarsResult.isError()) {
                 val error = calendarsResult as CalDavResult.Error
@@ -126,7 +139,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars")
 
             // Step 4: Create or update Account in Room
-            val existingAccount = accountsDao.getByProviderAndEmail(PROVIDER_ICLOUD, appleId)
+            val existingAccount = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, appleId)
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
@@ -139,7 +152,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             } else {
                 Log.d(TAG, "Creating new account")
                 val newAccount = Account(
-                    provider = PROVIDER_ICLOUD,
+                    provider = AccountProvider.ICLOUD,
                     email = appleId,
                     displayName = "iCloud",
                     principalUrl = principalUrl,
@@ -162,7 +175,11 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     continue
                 }
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(calDavCalendar.url)
+                // Normalize calendar URL to canonical form before storage/lookup
+                val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
+                    ?: calDavCalendar.url
+
+                val existingCalendar = calendarsDao.getByCaldavUrl(normalizedCalendarUrl)
                 val calendar = if (existingCalendar != null) {
                     Log.d(TAG, "Updating calendar: ${calDavCalendar.displayName}")
                     val updated = existingCalendar.copy(
@@ -177,7 +194,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     Log.d(TAG, "Creating calendar: ${calDavCalendar.displayName}")
                     val newCalendar = Calendar(
                         accountId = account.id,
-                        caldavUrl = calDavCalendar.url,
+                        caldavUrl = normalizedCalendarUrl,
                         displayName = calDavCalendar.displayName,
                         color = parseColor(calDavCalendar.color, index),
                         ctag = null,  // Don't store ctag - first sync must fetch events
@@ -269,8 +286,17 @@ class ICloudAccountDiscoveryService @Inject constructor(
             return@withContext DiscoveryResult.Error("Calendar home URL not configured")
         }
 
+        // Load credentials from encrypted storage
+        val credentials = credentialProvider.getCredentials(accountId)
+        if (credentials == null) {
+            return@withContext DiscoveryResult.AuthError("Credentials not found. Please sign in again.")
+        }
+
+        // Create isolated client with credentials
+        val client = clientFactory.createClient(credentials, icloudQuirks)
+
         try {
-            val calendarsResult = calDavClient.listCalendars(calendarHomeUrl)
+            val calendarsResult = client.listCalendars(calendarHomeUrl)
 
             if (calendarsResult.isError()) {
                 val error = calendarsResult as CalDavResult.Error
@@ -283,7 +309,10 @@ class ICloudAccountDiscoveryService @Inject constructor(
 
             val discoveredCalendars = (calendarsResult as CalDavResult.Success).data
             val existingCalendars = calendarsDao.getByAccountIdOnce(accountId)
-            val discoveredUrls = discoveredCalendars.map { it.url }.toSet()
+            // Normalize discovered URLs for comparison (server returns regional, DB has canonical)
+            val discoveredUrls = discoveredCalendars.map {
+                ICloudUrlNormalizer.normalize(it.url) ?: it.url
+            }.toSet()
 
             // Remove calendars no longer on server
             for (existing in existingCalendars) {
@@ -301,7 +330,11 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     continue
                 }
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(calDavCalendar.url)
+                // Normalize calendar URL to canonical form before storage/lookup
+                val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
+                    ?: calDavCalendar.url
+
+                val existingCalendar = calendarsDao.getByCaldavUrl(normalizedCalendarUrl)
                 val calendar = if (existingCalendar != null) {
                     val updated = existingCalendar.copy(
                         displayName = calDavCalendar.displayName,
@@ -313,7 +346,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 } else {
                     val newCalendar = Calendar(
                         accountId = accountId,
-                        caldavUrl = calDavCalendar.url,
+                        caldavUrl = normalizedCalendarUrl,
                         displayName = calDavCalendar.displayName,
                         color = parseColor(calDavCalendar.color, index),
                         ctag = calDavCalendar.ctag,
@@ -351,7 +384,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
      */
     override suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing iCloud account: $email")
-        val account = accountsDao.getByProviderAndEmail(PROVIDER_ICLOUD, email)
+        val account = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, email)
         if (account != null) {
             accountsDao.delete(account)
         }

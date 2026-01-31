@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.TimeZone
@@ -51,7 +52,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "test", email = "edge-case@test.com")
+                Account(provider = AccountProvider.LOCAL, email = "edge-case@test.com")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(

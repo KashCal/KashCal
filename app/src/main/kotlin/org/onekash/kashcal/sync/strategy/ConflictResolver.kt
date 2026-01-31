@@ -30,7 +30,6 @@ import javax.inject.Inject
  * that coordinates between data sources without exposing implementation details.
  */
 class ConflictResolver @Inject constructor(
-    private val client: CalDavClient,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
@@ -49,12 +48,14 @@ class ConflictResolver @Inject constructor(
      * @param operation The pending operation that caused the conflict
      * @param expectedCalendarId Optional calendar ID to validate against (prevents cross-calendar conflicts)
      * @param strategy Resolution strategy to use
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      * @return ConflictResult indicating outcome
      */
     suspend fun resolve(
         operation: PendingOperation,
         expectedCalendarId: Long? = null,
-        strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS
+        strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
+        client: CalDavClient
     ): ConflictResult {
         val event = eventsDao.getById(operation.eventId)
             ?: return ConflictResult.EventNotFound
@@ -65,29 +66,35 @@ class ConflictResolver @Inject constructor(
             return ConflictResult.CalendarMismatch
         }
 
+        val effectiveClient = client
         return when (strategy) {
-            ConflictStrategy.SERVER_WINS -> resolveServerWins(event, operation)
-            ConflictStrategy.LOCAL_WINS -> resolveLocalWins(event, operation)
-            ConflictStrategy.NEWEST_WINS -> resolveNewestWins(event, operation)
+            ConflictStrategy.SERVER_WINS -> resolveServerWins(event, operation, effectiveClient)
+            ConflictStrategy.LOCAL_WINS -> resolveLocalWins(event, operation, effectiveClient)
+            ConflictStrategy.NEWEST_WINS -> resolveNewestWins(event, operation, effectiveClient)
             ConflictStrategy.MANUAL -> resolveManual(event, operation)
         }
     }
 
     /**
      * Resolve multiple conflicts at once.
+     *
+     * @param operations The pending operations that caused conflicts
+     * @param strategy Resolution strategy to use
+     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
      */
     suspend fun resolveAll(
         operations: List<PendingOperation>,
-        strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS
+        strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
+        client: CalDavClient
     ): List<ConflictResult> {
-        return operations.map { resolve(it, strategy = strategy) }
+        return operations.map { resolve(it, strategy = strategy, client = client) }
     }
 
     /**
      * SERVER_WINS: Fetch server version and overwrite local.
      * This is the safest option for shared calendars.
      */
-    private suspend fun resolveServerWins(event: Event, operation: PendingOperation): ConflictResult {
+    private suspend fun resolveServerWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with SERVER_WINS for event: ${event.title}")
 
         // For DELETE operations, just delete locally
@@ -198,7 +205,7 @@ class ConflictResolver @Inject constructor(
      * LOCAL_WINS: Force push local version, ignoring server ETag.
      * Use with caution - can overwrite other users' changes.
      */
-    private suspend fun resolveLocalWins(event: Event, operation: PendingOperation): ConflictResult {
+    private suspend fun resolveLocalWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with LOCAL_WINS for event: ${event.title}")
 
         // For DELETE operations, force delete
@@ -232,7 +239,7 @@ class ConflictResolver @Inject constructor(
      * NEWEST_WINS: Compare sequence numbers and timestamps.
      * Keep whichever version has higher sequence or more recent modification.
      */
-    private suspend fun resolveNewestWins(event: Event, operation: PendingOperation): ConflictResult {
+    private suspend fun resolveNewestWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with NEWEST_WINS for event: ${event.title}")
 
         val caldavUrl = event.caldavUrl
@@ -281,7 +288,7 @@ class ConflictResolver @Inject constructor(
 
         return if (serverWins) {
             Log.d(TAG, "Server version is newer (seq: $serverSequence vs $localSequence)")
-            resolveServerWins(event, operation)
+            resolveServerWins(event, operation, client)
         } else {
             Log.d(TAG, "Local version is newer (seq: $localSequence vs $serverSequence)")
             // Delete old operation and create a fresh one for immediate retry

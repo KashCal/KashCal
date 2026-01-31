@@ -18,7 +18,9 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
@@ -47,8 +49,9 @@ import java.util.UUID
 class RealICloudSyncEngineTest {
 
     // Real components
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
     private lateinit var quirks: ICloudQuirks
+    private lateinit var clientFactory: OkHttpCalDavClientFactory
 
     // Strategies
     private lateinit var pullStrategy: PullStrategy
@@ -81,10 +84,24 @@ class RealICloudSyncEngineTest {
         loadCredentials()
 
         quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
+        clientFactory = OkHttpCalDavClientFactory()
 
+        // Create client using factory pattern (replaces setCredentials)
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+            client = clientFactory.createClient(credentials, quirks)
+        } else {
+            // Create a dummy client for cases where credentials aren't available
+            val dummyCredentials = Credentials(
+                username = "dummy",
+                password = "dummy",
+                serverUrl = serverUrl
+            )
+            client = clientFactory.createClient(dummyCredentials, quirks)
         }
 
         setupMockedDaos()
@@ -145,7 +162,6 @@ class RealICloudSyncEngineTest {
     private fun setupStrategies() {
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -155,14 +171,12 @@ class RealICloudSyncEngineTest {
         )
 
         pushStrategy = PushStrategy(
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
         )
 
         conflictResolver = ConflictResolver(
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
@@ -257,7 +271,7 @@ class RealICloudSyncEngineTest {
         println("Calendar: ${calendar.displayName}")
         println("URL: ${calendar.caldavUrl}")
 
-        val result = syncEngine.syncCalendar(calendar, forceFullSync = true)
+        val result = syncEngine.syncCalendar(calendar, forceFullSync = true, client = client)
 
         println("\n=== Sync Result ===")
         when (result) {
@@ -376,7 +390,7 @@ class RealICloudSyncEngineTest {
         println("Event: ${testEvent.title}")
         println("UID: ${testEvent.uid}")
 
-        val result = syncEngine.syncCalendar(calendar)
+        val result = syncEngine.syncCalendar(calendar, client = client)
 
         println("\n=== Sync Result ===")
         when (result) {
@@ -480,7 +494,7 @@ class RealICloudSyncEngineTest {
         println("Event: ${recurringEvent.title}")
         println("RRULE: ${recurringEvent.rrule}")
 
-        val result = syncEngine.syncCalendar(calendar)
+        val result = syncEngine.syncCalendar(calendar, client = client)
 
         println("\n=== Sync Result ===")
         when (result) {
@@ -575,7 +589,7 @@ class RealICloudSyncEngineTest {
         }
 
         println("=== Round-Trip Test: PUSH Phase ===")
-        val pushResult = syncEngine.syncCalendar(calendar)
+        val pushResult = syncEngine.syncCalendar(calendar, client = client)
 
         if (pushResult !is SyncResult.Success && pushResult !is SyncResult.PartialSuccess) {
             println("Push failed: $pushResult")
@@ -591,7 +605,7 @@ class RealICloudSyncEngineTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
 
         println("\n=== Round-Trip Test: PULL Phase ===")
-        val pullResult = syncEngine.syncCalendar(calendar, forceFullSync = true)
+        val pullResult = syncEngine.syncCalendar(calendar, forceFullSync = true, client = client)
 
         println("\n=== Round-Trip Result ===")
         when (pullResult) {
@@ -654,7 +668,7 @@ class RealICloudSyncEngineTest {
         // No pending operations
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns emptyList()
 
-        val result = syncEngine.syncCalendar(calendar)
+        val result = syncEngine.syncCalendar(calendar, client = client)
 
         println("\n=== Result ===")
         when (result) {

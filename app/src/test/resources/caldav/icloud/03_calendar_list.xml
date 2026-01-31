@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<multistatus xmlns="DAV:">
+
+    
+    
+    <response xmlns="DAV:">
+        <href>/123456789/calendars/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                                <displayname xmlns="DAV:">Test User</displayname>
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/><comp name='VTODO' xmlns='urn:ietf:params:xml:ns:caldav'/><comp name='VFREEBUSY' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqWpb9lNQABAAAYAhgAIhYIt46JvtzZupTJARDc2cSJq73/k6wBKABIAA==</getctag>
+                            
+                        
+                            
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><write/></privilege><privilege><write-properties/></privilege><privilege><write-content/></privilege><privilege><bind/></privilege><privilege><unbind/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+                    <propstat>
+                        <prop>
+                            
+                                
+                            
+                                
+                            
+                                
+                            
+                                
+                            
+                                
+                                    <calendar-color xmlns="http://apple.com/ns/ical/"/>
+                                
+                            
+                                
+                            
+                        </prop>
+                        <status>HTTP/1.1 404 Not Found</status>
+                    </propstat>
+                
+            
+    </response>
+    
+    
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/4D24D1CF-D573-4130-BFB7-F9E0B616E6FE/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                                <displayname xmlns="DAV:">Personal Calendar</displayname>
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/><shared-owner xmlns="http://calendarserver.org/ns/"/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqWpb2npgAAAAAYAhgAIhYIjpChtN2F0ZLeARDhoILd36yp4bYBKABIAA==</getctag>
+                            
+                        
+                            
+                                <calendar-color xmlns="http://apple.com/ns/ical/">#1E4C63FF</calendar-color>
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><write/></privilege><privilege><write-properties/></privilege><privilege><write-content/></privilege><privilege><bind/></privilege><privilege><unbind/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+            
+        </response>
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/inbox/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><schedule-inbox xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAABRXSnH4wAAAAAAYARgAIhYIlJWJuJ/wxPK+ARDw/7qy0qHOx4MBKABIAA==</getctag>
+                            
+                        
+                            
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><write/></privilege><privilege><write-properties/></privilege><privilege><write-content/></privilege><privilege><bind/></privilege><privilege><unbind/></privilege><privilege><schedule-deliver xmlns="urn:ietf:params:xml:ns:caldav"/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+                    <propstat>
+                        <prop>
+                            
+                                
+                                    <displayname xmlns="DAV:"/>
+                                
+                            
+                                
+                            
+                                
+                            
+                                
+                            
+                                
+                                    <calendar-color xmlns="http://apple.com/ns/ical/"/>
+                                
+                            
+                                
+                            
+                        </prop>
+                        <status>HTTP/1.1 404 Not Found</status>
+                    </propstat>
+                
+            
+        </response>
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/notification/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><notification xmlns="http://calendarserver.org/ns/"/></resourcetype>
+                            
+                        
+                            
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqNw1w2WgAAAAAYAhgAIhUIt5GR7uTxvKpVEKS8i8Kl0o6dmQEoAEgA</getctag>
+                            
+                        
+                            
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><unbind/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+                    <propstat>
+                        <prop>
+                            
+                                
+                                    <displayname xmlns="DAV:"/>
+                                
+                            
+                                
+                            
+                                
+                                    <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"/>
+                                
+                            
+                                
+                            
+                                
+                                    <calendar-color xmlns="http://apple.com/ns/ical/"/>
+                                
+                            
+                                
+                            
+                        </prop>
+                        <status>HTTP/1.1 404 Not Found</status>
+                    </propstat>
+                
+            
+        </response>
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/tasks/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                                <displayname xmlns="DAV:">Reminders</displayname>
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VTODO' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAAAAAAAAAAAAAAAAYARgAIhUI/ZvV18PdzLUkEI2hhsOx+eSrlgEoAEgA</getctag>
+                            
+                        
+                            
+                                <calendar-color xmlns="http://apple.com/ns/ical/">#FF9500FF</calendar-color>
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><write/></privilege><privilege><write-properties/></privilege><privilege><write-content/></privilege><privilege><bind/></privilege><privilege><unbind/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+            
+        </response>
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/work/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                                <displayname xmlns="DAV:">Work Calendar</displayname>
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                                <getctag xmlns="http://calendarserver.org/ns/">HwoQEgwAADqPgF7KFwACAAEYAhgAIhYIt4O1qdSq7tvJARDlm7Souo26948BKABIAA==</getctag>
+                            
+                        
+                            
+                                <calendar-color xmlns="http://apple.com/ns/ical/">#FFFFFFFF</calendar-color>
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><write/></privilege><privilege><write-properties/></privilege><privilege><write-content/></privilege><privilege><bind/></privilege><privilege><unbind/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+            
+        </response>
+        
+        <response xmlns="DAV:">
+            <href>/123456789/calendars/outbox/</href>
+            
+                <propstat>
+                    <prop>
+                        
+                            
+                            
+                        
+                            
+                                <resourcetype xmlns="DAV:"><collection/><schedule-outbox xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            
+                        
+                            
+                                <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav"><comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/><comp name='VTODO' xmlns='urn:ietf:params:xml:ns:caldav'/></supported-calendar-component-set>
+                            
+                        
+                            
+                            
+                        
+                            
+                            
+                        
+                            
+                                <current-user-privilege-set xmlns="DAV:"><privilege><read/></privilege><privilege><read-free-busy xmlns="urn:ietf:params:xml:ns:caldav"/></privilege><privilege><read-current-user-privilege-set/></privilege><privilege><schedule-send xmlns="urn:ietf:params:xml:ns:caldav"/></privilege></current-user-privilege-set>
+                            
+                        
+                    </prop>
+                    <status>HTTP/1.1 200 OK</status>
+                </propstat>
+                
+                    <propstat>
+                        <prop>
+                            
+                                
+                                    <displayname xmlns="DAV:"/>
+                                
+                            
+                                
+                            
+                                
+                            
+                                
+                                    <getctag xmlns="http://calendarserver.org/ns/"/>
+                                
+                            
+                                
+                                    <calendar-color xmlns="http://apple.com/ns/ical/"/>
+                                
+                            
+                                
+                            
+                        </prop>
+                        <status>HTTP/1.1 404 Not Found</status>
+                    </propstat>
+                
+            
+        </response>
+        
+    
+    
+    
+    
+
+
+</multistatus>

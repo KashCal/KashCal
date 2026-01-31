@@ -134,9 +134,9 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        // Should match exact format: Credentials(username=masked, password=****)
+        // Should match exact format: Credentials(username=masked, password=****, trustInsecure=false)
         assertEquals(
-            "Credentials(username=joh***@***.com, password=****)",
+            "Credentials(username=joh***@***.com, password=****, trustInsecure=false)",
             safeString
         )
     }

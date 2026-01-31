@@ -549,4 +549,39 @@ object DateTimeUtils {
         val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
         return localTime.format(formatter)
     }
+
+    // ==================== Event Past Check ====================
+
+    /**
+     * Determine if an event/occurrence has passed.
+     *
+     * For all-day events: Uses day code comparison (local calendar date).
+     * This fixes the bug where all-day events were grayed out at 6 PM for UTC-6 users
+     * because endTs (UTC midnight) < current UTC time, even though locally it's still "today".
+     *
+     * For timed events: Uses timestamp comparison (actual moment in time).
+     *
+     * @param endTs End timestamp of the occurrence in milliseconds
+     * @param endDay End day code (YYYYMMDD) of the occurrence
+     * @param isAllDay Whether this is an all-day event
+     * @param nowMs Current time in milliseconds (injectable for testing)
+     * @param todayDayCode Today's day code in local timezone (injectable for testing)
+     * @return true if the event has passed, false otherwise
+     */
+    fun isEventPast(
+        endTs: Long,
+        endDay: Int,
+        isAllDay: Boolean,
+        nowMs: Long = System.currentTimeMillis(),
+        todayDayCode: Int = eventTsToDayCode(System.currentTimeMillis(), isAllDay = false)
+    ): Boolean {
+        return if (isAllDay) {
+            // All-day events: compare calendar dates (endDay is already in correct format)
+            // Event is past only when local calendar date has moved past the event's end date
+            endDay < todayDayCode
+        } else {
+            // Timed events: compare exact timestamps
+            endTs < nowMs
+        }
+    }
 }

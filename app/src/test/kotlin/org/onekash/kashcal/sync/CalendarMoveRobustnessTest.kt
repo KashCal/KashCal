@@ -20,7 +20,9 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -62,8 +64,9 @@ class CalendarMoveRobustnessTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
+        // Use ICLOUD provider to test CalDAV sync behavior
         testAccountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
 
         sourceCalendarId = database.calendarsDao().insert(
@@ -207,11 +210,9 @@ class CalendarMoveRobustnessTest {
     }
 
     @Test
-    fun `move recurring event with exceptions does not automatically move exceptions`() = runTest {
-        // Note: EventWriter.moveEventToCalendar does NOT move exceptions with master.
-        // This documents actual behavior. RFC 5545 says exceptions share UID with master,
-        // so they would typically be bundled together, but the move implementation
-        // only updates the master event's calendarId.
+    fun `move recurring event with exceptions automatically moves exceptions`() = runTest {
+        // v21.6.0: EventWriter.moveEventToCalendar NOW moves exceptions with master.
+        // RFC 5545 says exceptions share UID with master and must stay together.
         val master = createAndInsertRecurringEvent("Recurring with Exceptions", sourceCalendarId)
         occurrenceGenerator.regenerateOccurrences(master)
 
@@ -231,16 +232,15 @@ class CalendarMoveRobustnessTest {
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(targetCalendarId, movedMaster.calendarId)
 
-        // Exception remains in source calendar (implementation does not cascade move)
-        val unchangedException = database.eventsDao().getById(exception.id)!!
-        assertEquals(sourceCalendarId, unchangedException.calendarId)
+        // v21.6.0: Exception should ALSO be in target calendar (cascaded with master)
+        val movedException = database.eventsDao().getById(exception.id)!!
+        assertEquals(targetCalendarId, movedException.calendarId)
     }
 
     @Test
-    fun `move exception event directly is allowed by EventWriter`() = runTest {
-        // Note: EventWriter.moveEventToCalendar does NOT check if event is an exception.
-        // This documents actual behavior. EventCoordinator has guards to reject this
-        // (see CLAUDE.md pattern 11), but EventWriter does not.
+    fun `move exception event directly throws error`() = runTest {
+        // v21.6.0: EventWriter.moveEventToCalendar now rejects moving exceptions directly.
+        // Per CLAUDE.md pattern #11, exceptions must stay with their master.
         val master = createAndInsertRecurringEvent("Master for Exception", sourceCalendarId)
         occurrenceGenerator.regenerateOccurrences(master)
 
@@ -253,20 +253,21 @@ class CalendarMoveRobustnessTest {
             modifiedEvent = master.copy(title = "Direct Move Exception")
         )
 
-        // EventWriter allows moving exception directly (no guard)
-        eventWriter.moveEventToCalendar(exception.id, targetCalendarId)
-
-        // Exception should be moved
-        val movedEvent = database.eventsDao().getById(exception.id)!!
-        assertEquals(targetCalendarId, movedEvent.calendarId)
+        // v21.6.0: EventWriter now throws for exception events
+        try {
+            eventWriter.moveEventToCalendar(exception.id, targetCalendarId)
+            fail("Should throw IllegalArgumentException for exception events")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("Cannot move exception event"))
+        }
     }
 
     // ==================== Performance Tests ====================
 
     @Test
     fun `move recurring event with 30 exceptions should complete quickly`() = runTest {
-        // Note: EventWriter.moveEventToCalendar does NOT move exceptions.
-        // This test documents the performance of moving the master event only.
+        // v21.6.0: EventWriter.moveEventToCalendar now cascades to exceptions.
+        // This test verifies performance with the cascading behavior.
         val master = createAndInsertRecurringEvent("Large Exception Set", sourceCalendarId)
             .let {
                 // Update to have more occurrences
@@ -284,7 +285,7 @@ class CalendarMoveRobustnessTest {
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
                 occurrenceTimeMs = occurrences[i].startTs,
-                modifiedEvent = master.copy(title = "Exception $i")
+                modifiedEvent = master.copy(title = "Exception $i").withOccurrenceTime(occurrences[i])
             )
         }
 
@@ -303,9 +304,10 @@ class CalendarMoveRobustnessTest {
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(targetCalendarId, movedMaster.calendarId)
 
-        // Exceptions remain in source calendar (implementation does not cascade)
+        // v21.6.0: Exceptions should ALSO be moved to target calendar (cascaded)
         val exceptionsAfter = database.eventsDao().getExceptionsForMaster(master.id)
-        assertTrue(exceptionsAfter.all { it.calendarId == sourceCalendarId })
+        assertTrue("All exceptions should be in target calendar",
+            exceptionsAfter.all { it.calendarId == targetCalendarId })
     }
 
     // ==================== Cross-Account Move Tests ====================
@@ -314,7 +316,7 @@ class CalendarMoveRobustnessTest {
     fun `move to calendar in different account should work`() = runTest {
         // Create second account
         val secondAccountId = database.accountsDao().insert(
-            Account(provider = "test2", email = "test2@test.com")
+            Account(provider = AccountProvider.CALDAV, email = "test2@test.com")
         )
         val otherAccountCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -450,5 +452,17 @@ class CalendarMoveRobustnessTest {
         )
         val id = database.eventsDao().insert(event)
         return event.copy(id = id)
+    }
+
+    /**
+     * Create a modified event with correct times for the given occurrence.
+     * EventWriter requires correct startTs/endTs matching the occurrence being edited.
+     */
+    private fun Event.withOccurrenceTime(occurrence: Occurrence): Event {
+        val duration = this.endTs - this.startTs
+        return this.copy(
+            startTs = occurrence.startTs,
+            endTs = occurrence.startTs + duration
+        )
     }
 }

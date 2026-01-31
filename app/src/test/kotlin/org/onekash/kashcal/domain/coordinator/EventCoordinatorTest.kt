@@ -17,6 +17,7 @@ import org.junit.Test
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -73,6 +74,15 @@ class EventCoordinatorTest {
         displayName = "Personal",
         color = 0xFF2196F3.toInt()
     )
+    private val readOnlyCalendarId = 3L
+    private val readOnlyCalendar = Calendar(
+        id = readOnlyCalendarId,
+        accountId = 3L,
+        caldavUrl = "https://example.com/ics/holidays.ics",
+        displayName = "Holidays (Read-Only)",
+        color = 0xFFFF5722.toInt(),
+        isReadOnly = true  // ICS subscription calendars are read-only
+    )
     private val testEvent = Event(
         id = 100L,
         uid = "test-event@kashcal.test",
@@ -116,6 +126,7 @@ class EventCoordinatorTest {
         // Default calendar lookups
         coEvery { eventReader.getCalendarById(localCalendarId) } returns localCalendar
         coEvery { eventReader.getCalendarById(iCloudCalendarId) } returns iCloudCalendar
+        coEvery { eventReader.getCalendarById(readOnlyCalendarId) } returns readOnlyCalendar
 
         coordinator = EventCoordinator(
             eventWriter = eventWriter,
@@ -221,6 +232,22 @@ class EventCoordinatorTest {
         coordinator.createEvent(eventWithReminders, localCalendarId)
 
         coVerify { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `createEvent throws for read-only calendar`() = runTest {
+        // Attempt to create event on a read-only calendar (e.g., ICS subscription)
+        val newEvent = testEvent.copy(id = 0L, calendarId = readOnlyCalendarId)
+
+        try {
+            coordinator.createEvent(newEvent, readOnlyCalendarId)
+            assertTrue("Should throw IllegalArgumentException", false)
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("read-only"))
+        }
+
+        // Verify eventWriter.createEvent was NOT called
+        coVerify(exactly = 0) { eventWriter.createEvent(any(), any()) }
     }
 
     // ==================== Create Recurring Event Tests ====================
@@ -439,7 +466,7 @@ class EventCoordinatorTest {
 
         coordinator.moveEventToCalendar(testEvent.id, iCloudCalendarId)
 
-        coVerify { eventWriter.moveEventToCalendar(testEvent.id, iCloudCalendarId, false) }
+        coVerify { eventWriter.moveEventToCalendar(testEvent.id, iCloudCalendarId) }
         verify { syncScheduler.requestExpeditedSync(forceFullSync = false) }
     }
 
@@ -669,10 +696,11 @@ class EventCoordinatorTest {
 
     @Test
     fun `moveEventToCalendar throws for exception event`() = runTest {
-        // Setup: Return exception event when queried
-        coEvery { eventReader.getEventById(exceptionEvent.id) } returns exceptionEvent
+        // EventWriter now handles validation and throws
+        coEvery { eventWriter.moveEventToCalendar(exceptionEvent.id, localCalendarId) } throws
+            IllegalArgumentException("Cannot move exception event directly. Move the master event instead")
 
-        // Act & Assert: Should throw IllegalArgumentException
+        // Act & Assert: Should throw IllegalArgumentException from EventWriter
         try {
             coordinator.moveEventToCalendar(exceptionEvent.id, localCalendarId)
             assertTrue("Should throw IllegalArgumentException", false)
@@ -680,9 +708,6 @@ class EventCoordinatorTest {
             assertTrue(e.message!!.contains("Cannot move exception event"))
             assertTrue(e.message!!.contains("master event"))
         }
-
-        // Verify eventWriter.moveEventToCalendar was NOT called
-        coVerify(exactly = 0) { eventWriter.moveEventToCalendar(any(), any(), any()) }
     }
 
     @Test
@@ -694,15 +719,16 @@ class EventCoordinatorTest {
         coordinator.moveEventToCalendar(recurringEvent.id, localCalendarId)
 
         // Assert: eventWriter.moveEventToCalendar WAS called
-        coVerify { eventWriter.moveEventToCalendar(recurringEvent.id, localCalendarId, true) }
+        coVerify { eventWriter.moveEventToCalendar(recurringEvent.id, localCalendarId) }
     }
 
     @Test
     fun `moveEventToCalendar throws for non-existent event`() = runTest {
-        // Setup: Return null for non-existent event
-        coEvery { eventReader.getEventById(999L) } returns null
+        // EventWriter now handles validation and throws
+        coEvery { eventWriter.moveEventToCalendar(999L, localCalendarId) } throws
+            IllegalArgumentException("Event not found: 999")
 
-        // Act & Assert: Should throw IllegalArgumentException
+        // Act & Assert: Should throw IllegalArgumentException from EventWriter
         try {
             coordinator.moveEventToCalendar(999L, localCalendarId)
             assertTrue("Should throw IllegalArgumentException", false)
@@ -896,7 +922,7 @@ class EventCoordinatorTest {
         // Setup: Create test account with two calendars and events
         val testAccount = Account(
             id = 10L,
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "test@icloud.com",
             displayName = "Test Account",
             isEnabled = true
@@ -906,7 +932,7 @@ class EventCoordinatorTest {
         val event1 = testEvent.copy(id = 200L, calendarId = calendar1.id)
         val event2 = testEvent.copy(id = 201L, calendarId = calendar2.id)
 
-        coEvery { eventReader.getAccountByProviderAndEmail("icloud", "test@icloud.com") } returns testAccount
+        coEvery { eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com") } returns testAccount
         coEvery { eventReader.getCalendarsByAccountIdOnce(testAccount.id) } returns listOf(calendar1, calendar2)
         coEvery { eventReader.getEventsForCalendar(calendar1.id) } returns listOf(event1)
         coEvery { eventReader.getEventsForCalendar(calendar2.id) } returns listOf(event2)
@@ -922,7 +948,7 @@ class EventCoordinatorTest {
     @Test
     fun `cancelRemindersForAccount handles non-existent account gracefully`() = runTest {
         // Setup: No account found
-        coEvery { eventReader.getAccountByProviderAndEmail("icloud", "nonexistent@test.com") } returns null
+        coEvery { eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "nonexistent@test.com") } returns null
 
         // Act: Should not throw
         coordinator.cancelRemindersForAccount("nonexistent@test.com")
@@ -944,15 +970,17 @@ class EventCoordinatorTest {
         val targetCalendar = iCloudCalendar.copy(color = 0xFFFF0000.toInt()) // Different color
         val movedEvent = eventWithReminders.copy(calendarId = targetCalendar.id)
 
-        coEvery { eventReader.getEventById(eventWithReminders.id) } returns eventWithReminders andThen movedEvent
+        // First call returns event (for any pre-check), second call returns movedEvent
+        coEvery { eventReader.getEventById(eventWithReminders.id) } returns movedEvent
         coEvery { eventReader.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) } returns Unit
 
         // Act
         coordinator.moveEventToCalendar(eventWithReminders.id, targetCalendar.id)
 
         // Assert: Move was executed
-        coVerify { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id, false) }
+        coVerify { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) }
 
         // Assert: Reminders were rescheduled (cancel + schedule)
         coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }

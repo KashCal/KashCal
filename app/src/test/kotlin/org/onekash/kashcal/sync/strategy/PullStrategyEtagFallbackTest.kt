@@ -78,7 +78,6 @@ class PullStrategyEtagFallbackTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -122,7 +121,7 @@ class PullStrategyEtagFallbackTest {
         // Get sync token for result
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Verify etag fallback was used (fetchEtagsInRange called)
@@ -148,7 +147,7 @@ class PullStrategyEtagFallbackTest {
             CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
@@ -173,7 +172,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Verify etag fallback tried but fell through
@@ -207,7 +206,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
@@ -251,7 +250,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.upsert(any()) } returns 100L
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
@@ -299,7 +298,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.upsert(any()) } returns 200L
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
@@ -329,7 +328,7 @@ class PullStrategyEtagFallbackTest {
 
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
@@ -363,7 +362,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getByCaldavUrl(deletedUrl) } returns deletedEvent
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
@@ -395,7 +394,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getByCaldavUrl(pendingUrl) } returns pendingEvent
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
@@ -407,14 +406,15 @@ class PullStrategyEtagFallbackTest {
 
     @Test
     fun `handles URL normalization for hostname changes`() = runTest {
-        // iCloud can return different hostnames (p180 vs p181) for the same calendar
+        // After iCloud URL migration, all URLs are canonical (caldav.icloud.com)
+        // This test verifies etag comparison works with canonical URLs
         val calendar = createCalendar(
             ctag = "old-ctag",
             syncToken = "expired-token",
-            caldavUrl = "https://p180-caldav.icloud.com:443/123/calendars/home/"
+            caldavUrl = "https://caldav.icloud.com/123/calendars/home/"
         )
-        // Local event stored with p180 hostname
-        val localUrl = "https://p180-caldav.icloud.com:443/123/calendars/home/event1.ics"
+        // Local event stored with canonical URL (after migration)
+        val localUrl = "https://caldav.icloud.com/123/calendars/home/event1.ics"
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
@@ -424,7 +424,7 @@ class PullStrategyEtagFallbackTest {
             EtagEntry(localUrl, "same-etag")
         )
 
-        // Server returns href (relative path) that will be normalized
+        // Server returns href (relative path) that will be normalized to canonical form
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair("/123/calendars/home/event1.ics", "same-etag")
@@ -432,10 +432,10 @@ class PullStrategyEtagFallbackTest {
 
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should match despite URL being relative in server response
+        // Should match - both local and server URLs are canonical
         assertEquals(0, (result as PullResult.Success).eventsAdded)
         assertEquals(0, result.eventsUpdated)
         assertEquals(0, result.eventsDeleted)

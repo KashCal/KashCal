@@ -361,6 +361,33 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
+     * Show notification when operations were abandoned due to 30-day lifetime expiry.
+     * Alerts user that some local changes couldn't be synced.
+     *
+     * @param expiredCount Number of operations that were abandoned
+     */
+    fun showOperationExpiredNotification(expiredCount: Int) {
+        if (expiredCount <= 0) return
+
+        val eventText = if (expiredCount == 1) "1 event" else "$expiredCount events"
+        val content = "$eventText couldn't be synced after 30 days. " +
+            "The server version will be used. Force Sync to retry."
+
+        val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Sync changes expired")
+            .setContentText(content)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setContentIntent(createOpenAppIntent())
+            .build()
+
+        notify(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED, notification)
+    }
+
+    /**
      * Cancel progress notification.
      * Should be called when sync completes (success or failure).
      */

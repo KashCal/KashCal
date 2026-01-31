@@ -17,6 +17,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
@@ -65,7 +66,7 @@ class ImportExportTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(

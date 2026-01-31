@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/">
+    <!-- Sync token at top level -->
+    <d:sync-token>http://sabre.io/ns/sync/63845d9c3a7b9</d:sync-token>
+
+    <!-- Changed event -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/event1.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"abc123def456-v2"</d:getetag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- New event -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/event4.ics</d:href>
+        <d:propstat>
+            <d:prop>
+                <d:getetag>"new123event"</d:getetag>
+            </d:prop>
+            <d:status>HTTP/1.1 200 OK</d:status>
+        </d:propstat>
+    </d:response>
+
+    <!-- Deleted event (404 status) -->
+    <d:response>
+        <d:href>/remote.php/dav/calendars/testuser/personal/deleted-event.ics</d:href>
+        <d:status>HTTP/1.1 404 Not Found</d:status>
+    </d:response>
+</d:multistatus>

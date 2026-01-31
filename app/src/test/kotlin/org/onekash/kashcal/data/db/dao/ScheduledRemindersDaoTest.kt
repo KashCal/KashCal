@@ -18,6 +18,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -51,7 +52,7 @@ class ScheduledRemindersDaoTest {
 
         runTest {
             val accountId = database.accountsDao().insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(

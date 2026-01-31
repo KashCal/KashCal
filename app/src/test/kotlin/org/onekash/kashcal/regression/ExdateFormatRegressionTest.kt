@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -67,7 +68,7 @@ class ExdateFormatRegressionTest {
 
         // Setup test calendar
         val accountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "test@icloud.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(

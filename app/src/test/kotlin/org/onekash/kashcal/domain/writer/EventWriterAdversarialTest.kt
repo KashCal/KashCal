@@ -24,6 +24,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -60,9 +61,9 @@ class EventWriterAdversarialTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
-        // Setup test calendars
+        // Setup test calendars with ICLOUD provider for CalDAV sync behavior tests
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -178,8 +179,7 @@ class EventWriterAdversarialTest {
         try {
             eventWriter.moveEventToCalendar(
                 eventId = 999999L,
-                newCalendarId = secondCalendarId,
-                isLocal = false
+                newCalendarId = secondCalendarId
             )
             fail("Should throw for non-existent event")
         } catch (e: IllegalArgumentException) {
@@ -264,7 +264,7 @@ class EventWriterAdversarialTest {
         val event = eventWriter.createEvent(createTestEvent("Same Cal"), isLocal = false)
         val originalCalendarId = event.calendarId
 
-        eventWriter.moveEventToCalendar(event.id, originalCalendarId, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, originalCalendarId)
 
         val afterMove = database.eventsDao().getById(event.id)!!
         assertEquals(originalCalendarId, afterMove.calendarId)
@@ -627,7 +627,7 @@ class EventWriterAdversarialTest {
         val event = eventWriter.createEvent(createTestEvent("To Move"), isLocal = false)
         assertEquals(testCalendarId, event.calendarId)
 
-        eventWriter.moveEventToCalendar(event.id, secondCalendarId, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, secondCalendarId)
 
         val moved = database.eventsDao().getById(event.id)!!
         assertEquals(secondCalendarId, moved.calendarId)
@@ -638,7 +638,7 @@ class EventWriterAdversarialTest {
         val recurringEvent = createTestEvent("Recurring Move").copy(rrule = "FREQ=DAILY;COUNT=5")
         val event = eventWriter.createEvent(recurringEvent, isLocal = false)
 
-        eventWriter.moveEventToCalendar(event.id, secondCalendarId, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, secondCalendarId)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         occurrences.forEach { occ ->
@@ -653,7 +653,7 @@ class EventWriterAdversarialTest {
             etag = "\"abc123\""
         ), isLocal = false)
 
-        eventWriter.moveEventToCalendar(event.id, secondCalendarId, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, secondCalendarId)
 
         val moved = database.eventsDao().getById(event.id)!!
         assertNull("caldavUrl should be cleared", moved.caldavUrl)
@@ -672,7 +672,7 @@ class EventWriterAdversarialTest {
         database.eventsDao().update(synced)
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        eventWriter.moveEventToCalendar(event.id, secondCalendarId, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, secondCalendarId)
 
         val pending = database.pendingOperationsDao().getForEvent(event.id)
         val moveOp = pending.find { it.operation == PendingOperation.OPERATION_MOVE }

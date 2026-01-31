@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -80,7 +81,7 @@ class DataIntegrityAdversarialTest {
     fun `deleting calendar cascades to events`() = runTest {
         // Create account -> calendar -> event hierarchy
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -134,7 +135,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `deleting account cascades to calendars and events`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -168,7 +169,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `exception event with non-existent originalEventId fails FK constraint`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -201,7 +202,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `deleting master event cascades to exceptions`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -255,7 +256,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `occurrence with non-existent eventId fails FK constraint`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -286,7 +287,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `deleting event cascades to occurrences`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -337,7 +338,7 @@ class DataIntegrityAdversarialTest {
         // RFC 5545: UID is unique globally, but we use it with originalEventId
         // for exceptions which share the same UID as master
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -385,7 +386,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `exception unique constraint - same originalEventId and originalInstanceTime`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -461,7 +462,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `multiple pendingOperations for same event are allowed`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -499,7 +500,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `event with null optional fields is valid`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -549,7 +550,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `occurrence calendarId should match event calendarId`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendar1Id = database.calendarsDao().insert(
             Calendar(
@@ -604,7 +605,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `all SyncStatus values can be stored and retrieved`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -638,7 +639,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `event with very long title is stored`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(
@@ -668,7 +669,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `event with very long description is stored`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         val calendarId = database.calendarsDao().insert(
             Calendar(

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Anonymized iCloud CalDAV response for reference -->
+<multistatus xmlns="DAV:">
+
+
+    <response xmlns="DAV:">
+        <href>/</href>
+            <propstat>
+                <prop>
+
+
+                            <current-user-principal xmlns="DAV:"><href xmlns="DAV:">/123456789/principal/</href></current-user-principal>
+
+
+                </prop>
+                <status>HTTP/1.1 200 OK</status>
+            </propstat>
+
+    </response>
+
+
+
+
+
+
+
+
+</multistatus>

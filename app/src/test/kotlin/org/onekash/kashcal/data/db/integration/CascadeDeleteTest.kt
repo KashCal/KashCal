@@ -16,6 +16,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -57,7 +58,7 @@ class CascadeDeleteTest {
     fun `delete account cascades to calendars`() = runTest {
         // Setup
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val cal1Id = calendarsDao.insert(createCalendar(accountId, "Cal 1"))
         val cal2Id = calendarsDao.insert(createCalendar(accountId, "Cal 2"))
@@ -77,7 +78,7 @@ class CascadeDeleteTest {
     fun `delete calendar cascades to events`() = runTest {
         // Setup
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val calendarId = calendarsDao.insert(createCalendar(accountId))
         val event1Id = eventsDao.insert(createEvent(calendarId, "Event 1"))
@@ -97,7 +98,7 @@ class CascadeDeleteTest {
     fun `delete event cascades to occurrences`() = runTest {
         // Setup
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val calendarId = calendarsDao.insert(createCalendar(accountId))
         val eventId = eventsDao.insert(createEvent(calendarId, rrule = "FREQ=DAILY"))
@@ -124,7 +125,7 @@ class CascadeDeleteTest {
     fun `delete master event cascades to exception events`() = runTest {
         // Setup
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val calendarId = calendarsDao.insert(createCalendar(accountId))
 
@@ -165,7 +166,7 @@ class CascadeDeleteTest {
     fun `delete account cascades through entire chain`() = runTest {
         // Setup full hierarchy
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val calendarId = calendarsDao.insert(createCalendar(accountId))
         val masterEventId = eventsDao.insert(
@@ -205,7 +206,7 @@ class CascadeDeleteTest {
     fun `delete exception event sets occurrence link to null`() = runTest {
         // Setup
         val accountId = accountsDao.insert(
-            Account(provider = "icloud", email = "test@example.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
         )
         val calendarId = calendarsDao.insert(createCalendar(accountId))
         val masterEventId = eventsDao.insert(

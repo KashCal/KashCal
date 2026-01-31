@@ -18,6 +18,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -65,7 +66,7 @@ class PerformanceBaselineTest {
         eventReader = EventReader(database)
 
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(

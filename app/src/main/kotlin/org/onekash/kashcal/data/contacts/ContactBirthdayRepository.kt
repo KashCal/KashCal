@@ -13,6 +13,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.reader.EventReader
@@ -57,7 +58,6 @@ class ContactBirthdayRepository @Inject constructor(
 ) {
 
     companion object {
-        const val PROVIDER = "contacts"
         const val ACCOUNT_EMAIL = "contact_birthdays"
         const val CALENDAR_DISPLAY_NAME = "Contact Birthdays"
         const val SOURCE_PREFIX = "contact_birthday"
@@ -72,7 +72,7 @@ class ContactBirthdayRepository @Inject constructor(
      * Check if the birthday calendar exists.
      */
     suspend fun birthdayCalendarExists(): Boolean = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(PROVIDER, ACCOUNT_EMAIL)
+        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
         account != null && calendarsDao.getByAccountIdOnce(account.id).isNotEmpty()
     }
 
@@ -80,7 +80,7 @@ class ContactBirthdayRepository @Inject constructor(
      * Get the birthday calendar ID, or null if not created.
      */
     suspend fun getBirthdayCalendarId(): Long? = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(PROVIDER, ACCOUNT_EMAIL)
+        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
             ?: return@withContext null
         calendarsDao.getByAccountIdOnce(account.id).firstOrNull()?.id
     }
@@ -93,11 +93,11 @@ class ContactBirthdayRepository @Inject constructor(
      */
     suspend fun ensureCalendarExists(color: Int = SubscriptionColors.Purple): Long = withContext(Dispatchers.IO) {
         // Check if account exists
-        var account = accountsDao.getByProviderAndEmail(PROVIDER, ACCOUNT_EMAIL)
+        var account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
         if (account == null) {
             // Create contacts account
             account = Account(
-                provider = PROVIDER,
+                provider = AccountProvider.CONTACTS,
                 email = ACCOUNT_EMAIL,
                 displayName = "Contact Birthdays"
             )
@@ -150,7 +150,7 @@ class ContactBirthdayRepository @Inject constructor(
      * IMPORTANT: Cancels reminders BEFORE cascade delete to prevent orphaned alarms.
      */
     suspend fun removeCalendar() = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(PROVIDER, ACCOUNT_EMAIL)
+        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
             ?: return@withContext
 
         // Get all events and cancel their reminders

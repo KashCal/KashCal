@@ -133,11 +133,17 @@ class PendingOperationTest {
     }
 
     @Test
-    fun `calculateRetryDelay caps at 2^10 multiplier`() {
-        // 30s * 2^10 = 30s * 1024 = 30,720s = 512 minutes
+    fun `calculateRetryDelay caps at MAX_BACKOFF_MS (5 hours)`() {
+        // Retry 9 = 30s * 2^9 = 30s * 512 = 15,360s = 256m = 4h 16m (NOT capped)
+        val delayAt9 = PendingOperation.calculateRetryDelay(9)
+        assertTrue(delayAt9 < PendingOperation.MAX_BACKOFF_MS)
+        assertEquals(256L * 60 * 1000, delayAt9)  // 256 minutes
+
+        // Retry 10+ = would be 512m+ but capped to 5 hours
         val delayAt10 = PendingOperation.calculateRetryDelay(10)
         val delayAt15 = PendingOperation.calculateRetryDelay(15)
-        assertEquals(delayAt10, delayAt15) // Both should be capped
+        assertEquals(PendingOperation.MAX_BACKOFF_MS, delayAt10)
+        assertEquals(PendingOperation.MAX_BACKOFF_MS, delayAt15)
     }
 
     @Test
@@ -185,8 +191,32 @@ class PendingOperationTest {
         assertEquals(0L, op.id)
         assertEquals(PendingOperation.STATUS_PENDING, op.status)
         assertEquals(0, op.retryCount)
-        assertEquals(5, op.maxRetries)
+        assertEquals(10, op.maxRetries)  // Changed from 5 to 10 in v21.5.3
         assertEquals(0L, op.nextRetryAt)
         assertEquals(null, op.lastError)
+        assertEquals(null, op.failedAt)
+        assertTrue(op.lifetimeResetAt > 0)  // Should be set to current time
+    }
+
+    // ========== Retry Lifecycle Constants Tests (v21.5.3) ==========
+
+    @Test
+    fun `MAX_BACKOFF_MS equals 5 hours`() {
+        assertEquals(5L * 60 * 60 * 1000, PendingOperation.MAX_BACKOFF_MS)
+    }
+
+    @Test
+    fun `OPERATION_LIFETIME_MS equals 30 days`() {
+        assertEquals(30L * 24 * 60 * 60 * 1000, PendingOperation.OPERATION_LIFETIME_MS)
+    }
+
+    @Test
+    fun `AUTO_RESET_FAILED_MS equals 24 hours`() {
+        assertEquals(24L * 60 * 60 * 1000, PendingOperation.AUTO_RESET_FAILED_MS)
+    }
+
+    @Test
+    fun `BASE_DELAY_MS equals 30 seconds`() {
+        assertEquals(30_000L, PendingOperation.BASE_DELAY_MS)
     }
 }

@@ -8,7 +8,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.sync.auth.Credentials
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
@@ -27,7 +28,8 @@ import java.util.Properties
  */
 class ICloudCredentialIntegrationTest {
 
-    private lateinit var calDavClient: OkHttpCalDavClient
+    private lateinit var calDavClient: CalDavClient
+    private lateinit var clientFactory: OkHttpCalDavClientFactory
     private var credentials: Credentials? = null
 
     companion object {
@@ -43,15 +45,23 @@ class ICloudCredentialIntegrationTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        calDavClient = OkHttpCalDavClient(ICloudQuirks())
+        clientFactory = OkHttpCalDavClientFactory()
 
         // Try to load credentials from properties file
         credentials = loadCredentialsFromProperties()
+
+        // Create client using factory pattern (replaces setCredentials)
+        val quirks = ICloudQuirks()
+        val creds = credentials ?: Credentials(
+            username = "dummy",
+            password = "dummy",
+            serverUrl = Credentials.DEFAULT_ICLOUD_SERVER
+        )
+        calDavClient = clientFactory.createClient(creds, quirks)
     }
 
     @After
     fun tearDown() {
-        calDavClient.clearCredentials()
         unmockkAll()
     }
 
@@ -111,25 +121,23 @@ class ICloudCredentialIntegrationTest {
         return try {
             println("DEBUG: Loading from ${file.absolutePath}")
 
-            // Parse properties file manually (Java Properties has issues with spaces in keys)
-            var username: String? = null
-            var password: String? = null
+            // Load using standard Java Properties
+            val props = Properties()
+            file.inputStream().use { props.load(it) }
 
-            file.readLines().forEach { line ->
-                if (line.startsWith("icloud username")) {
-                    username = line.substringAfter("=").trim()
-                } else if (line.startsWith("icloud app password")) {
-                    password = line.substringAfter("=").trim()
-                }
-            }
+            // Try uppercase format first (ICLOUD_USERNAME), then lowercase (icloud username)
+            val username = props.getProperty("ICLOUD_USERNAME")
+                ?: props.getProperty("icloud username")
+            val password = props.getProperty("ICLOUD_APP_PASSWORD")
+                ?: props.getProperty("icloud app password")
 
             println("DEBUG: username=${username != null}, password=${password != null}")
 
             if (username != null && password != null) {
                 println("DEBUG: Credentials loaded successfully!")
                 Credentials(
-                    username = username!!,
-                    password = password!!,
+                    username = username,
+                    password = password,
                     serverUrl = Credentials.DEFAULT_ICLOUD_SERVER
                 )
             } else {
@@ -196,52 +204,53 @@ class ICloudCredentialIntegrationTest {
 
         val safeString = credentials!!.toSafeString()
 
-        // Should contain username
-        assertTrue(safeString.contains(credentials!!.username))
+        // Should NOT contain full username (email is masked)
+        assertFalse(safeString.contains(credentials!!.username))
 
         // Should NOT contain full password
         assertFalse(safeString.contains(credentials!!.password))
 
-        // Should contain masked password
+        // Should contain masked password pattern
         assertTrue(safeString.contains("****"))
+
+        // Should contain "Credentials(" prefix indicating it's a safe representation
+        assertTrue(safeString.contains("Credentials("))
     }
 
     // ==================== CalDavClient Configuration Tests ====================
+    // NOTE: The following tests for setCredentials/hasCredentials/clearCredentials
+    // have been removed because CalDavClient no longer uses the singleton pattern
+    // with mutable credentials. Instead, use OkHttpCalDavClientFactory to create
+    // immutable clients with credentials baked in.
 
     @Test
-    fun `CalDavClient initially has no credentials`() {
-        val client = OkHttpCalDavClient(ICloudQuirks())
+    fun `CalDavClient factory creates client with credentials`() {
+        // Factory pattern replaces setCredentials/hasCredentials/clearCredentials
+        val factory = OkHttpCalDavClientFactory()
+        val testCredentials = Credentials(
+            username = "test@example.com",
+            password = "password",
+            serverUrl = Credentials.DEFAULT_ICLOUD_SERVER
+        )
+        val client = factory.createClient(testCredentials, ICloudQuirks())
 
-        assertFalse(client.hasCredentials())
+        // Client is created successfully with credentials baked in
+        assertNotNull(client)
     }
 
     @Test
-    fun `CalDavClient setCredentials works`() {
-        calDavClient.setCredentials("test@example.com", "password")
-
-        assertTrue(calDavClient.hasCredentials())
-    }
-
-    @Test
-    fun `CalDavClient clearCredentials works`() {
-        calDavClient.setCredentials("test@example.com", "password")
-        assertTrue(calDavClient.hasCredentials())
-
-        calDavClient.clearCredentials()
-
-        assertFalse(calDavClient.hasCredentials())
-    }
-
-    @Test
-    fun `CalDavClient can be configured with real credentials`() {
+    fun `CalDavClient can be configured with real credentials via factory`() {
         if (credentials == null) {
             println("SKIPPED: No credentials available")
             return
         }
 
-        calDavClient.setCredentials(credentials!!.username, credentials!!.password)
+        // Factory pattern creates immutable client with credentials
+        val factory = OkHttpCalDavClientFactory()
+        val client = factory.createClient(credentials!!, ICloudQuirks())
 
-        assertTrue(calDavClient.hasCredentials())
+        // Client is created successfully
+        assertNotNull(client)
     }
 
     // ==================== Network Integration Tests ====================
@@ -254,7 +263,7 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(credentials!!.username, credentials!!.password)
+        // Client already created with credentials in setup()
 
         // Try to discover calendar home
         val result = try {
@@ -288,7 +297,7 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(credentials!!.username, credentials!!.password)
+        // Client already created with credentials in setup()
 
         try {
             // First discover calendar home
@@ -336,7 +345,7 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(credentials!!.username, credentials!!.password)
+        // Client already created with credentials in setup()
 
         try {
             val result = calDavClient.checkConnection(credentials!!.serverUrl)
@@ -365,7 +374,7 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        calDavClient.setCredentials(credentials!!.username, credentials!!.password)
+        // Client already created with credentials in setup()
 
         try {
             // Step 1: Discover calendars

@@ -1,5 +1,8 @@
 package org.onekash.kashcal.ui.components
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,21 +16,23 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * App info bottom sheet showing version and custom message.
- * Elegant typography with "Built in Austin with Love"
+ * App info bottom sheet showing origin message and website link.
+ * "Built with Love in Austin" with clickable website link.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppInfoSheet(
-    version: String,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
+    val context = LocalContext.current
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -62,13 +67,18 @@ fun AppInfoSheet(
                 fontSize = 32.sp
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Version at bottom
+            // Clickable link
             Text(
-                text = "v$version",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                text = "kashcal.github.io",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+                textDecoration = TextDecoration.Underline,
+                modifier = Modifier.clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.github.io"))
+                    context.startActivity(intent)
+                }
             )
         }
     }

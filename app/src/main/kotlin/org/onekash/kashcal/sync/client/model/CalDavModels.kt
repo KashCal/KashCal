@@ -25,11 +25,15 @@ data class CalDavEvent(
 /**
  * Result of a sync-collection REPORT.
  * Contains changed/deleted items and new sync token.
+ *
+ * @param truncated If true (507 response), server truncated results due to storage constraints.
+ *                  Client MUST continue syncing with the new syncToken (RFC 6578 Section 3.6).
  */
 data class SyncReport(
     val syncToken: String?,
     val changed: List<SyncItem>,
-    val deleted: List<String>
+    val deleted: List<String>,
+    val truncated: Boolean = false
 )
 
 /**

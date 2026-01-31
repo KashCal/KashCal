@@ -243,10 +243,15 @@ object ErrorMapper {
             titleResId = R.string.error_database_corruption_title,
             messageResId = R.string.error_database_corruption,
             primaryAction = DialogAction(
-                labelResId = R.string.action_contact_support,
-                callback = ErrorActionCallback.Custom { /* TODO: Open email */ }
+                labelResId = R.string.action_report_issue,
+                callback = ErrorActionCallback.OpenUrl("https://github.com/KashCal/KashCal/issues")
             ),
-            dismissible = false
+            secondaryAction = DialogAction(
+                labelResId = R.string.action_close,
+                callback = ErrorActionCallback.Dismiss,
+                isDismissAction = true
+            ),
+            dismissible = true
         )
 
         is CalendarError.Storage.MigrationFailed -> ErrorPresentation.Dialog(

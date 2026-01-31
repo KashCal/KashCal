@@ -15,6 +15,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -54,7 +55,7 @@ class CalendarMoveAdversarialTest {
 
         // Setup test account and calendars
         testAccountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "test@icloud.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
         sourceCalendarId = database.calendarsDao().insert(
             Calendar(

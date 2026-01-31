@@ -531,6 +531,34 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.PARSER_VERSION, version)
     }
 
+    // ========== iCloud URL Migration ==========
+
+    /**
+     * Check if iCloud URL migration has been completed.
+     */
+    val icloudUrlMigrationCompleted: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED, false)
+
+    /**
+     * Get migration status synchronously.
+     */
+    suspend fun getICloudUrlMigrationCompleted(): Boolean = icloudUrlMigrationCompleted.first()
+
+    /**
+     * Mark iCloud URL migration as completed.
+     */
+    suspend fun setICloudUrlMigrationCompleted(completed: Boolean) {
+        setPreference(PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED, completed)
+    }
+
+    /**
+     * Reset iCloud URL migration status (for debugging/testing).
+     * Allows re-running the migration on next sync.
+     */
+    suspend fun resetICloudUrlMigration() {
+        setICloudUrlMigrationCompleted(false)
+    }
+
     companion object {
         // Reminder constants
         const val REMINDER_OFF = -1  // Sentinel: no reminder set

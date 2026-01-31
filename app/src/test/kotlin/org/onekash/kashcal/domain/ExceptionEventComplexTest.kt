@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -60,7 +61,7 @@ class ExceptionEventComplexTest {
         eventWriter = EventWriter(database, occurrenceGenerator)
 
         val accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -124,20 +125,21 @@ class ExceptionEventComplexTest {
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        val targetOccurrenceTs = occurrences[1].startTs
+        val targetOccurrence = occurrences[1]
+        val targetOccurrenceTs = targetOccurrence.startTs
 
         // First edit
         val exception1 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = targetOccurrenceTs,
-            modifiedEvent = master.copy(title = "First Edit")
+            modifiedEvent = master.copy(title = "First Edit").withOccurrenceTime(targetOccurrence)
         )
 
         // Second edit on same occurrence
         val exception2 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = targetOccurrenceTs,
-            modifiedEvent = master.copy(title = "Second Edit")
+            modifiedEvent = master.copy(title = "Second Edit").withOccurrenceTime(targetOccurrence)
         )
 
         // Should be same exception event
@@ -165,12 +167,12 @@ class ExceptionEventComplexTest {
         val exception1 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[0].startTs,
-            modifiedEvent = master.copy(title = "Exception 1")
+            modifiedEvent = master.copy(title = "Exception 1").withOccurrenceTime(occurrences[0])
         )
         val exception2 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[1].startTs,
-            modifiedEvent = master.copy(title = "Exception 2")
+            modifiedEvent = master.copy(title = "Exception 2").withOccurrenceTime(occurrences[1])
         )
 
         // Add pending operations for exceptions
@@ -209,7 +211,7 @@ class ExceptionEventComplexTest {
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
                 occurrenceTimeMs = occurrences[i].startTs,
-                modifiedEvent = master.copy(title = "Exception ${i + 1}")
+                modifiedEvent = master.copy(title = "Exception ${i + 1}").withOccurrenceTime(occurrences[i])
             )
         }
 
@@ -239,7 +241,7 @@ class ExceptionEventComplexTest {
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
                 occurrenceTimeMs = occurrences[i].startTs,
-                modifiedEvent = master.copy(title = "Exception ${i + 1}")
+                modifiedEvent = master.copy(title = "Exception ${i + 1}").withOccurrenceTime(occurrences[i])
             )
         }
 
@@ -254,9 +256,8 @@ class ExceptionEventComplexTest {
 
     @Test
     fun `move recurring event with many exceptions should complete reasonably`() = runTest {
-        // Note: EventWriter.moveEventToCalendar does NOT move exceptions.
-        // This test documents that the master move completes quickly even when
-        // many exceptions exist.
+        // v21.6.0: EventWriter.moveEventToCalendar NOW cascades move to exceptions.
+        // This test verifies performance when many exceptions exist.
         val master = createAndInsertRecurringEvent("Movable Event", "FREQ=DAILY;COUNT=30")
         occurrenceGenerator.regenerateOccurrences(master)
 
@@ -267,11 +268,11 @@ class ExceptionEventComplexTest {
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
                 occurrenceTimeMs = occurrences[i].startTs,
-                modifiedEvent = master.copy(title = "Exception ${i + 1}")
+                modifiedEvent = master.copy(title = "Exception ${i + 1}").withOccurrenceTime(occurrences[i])
             )
         }
 
-        // Move should complete quickly
+        // Move should complete quickly (single UPDATE query for exceptions)
         val moveTime = measureTimeMillis {
             eventWriter.moveEventToCalendar(master.id, secondCalendarId)
         }
@@ -282,9 +283,10 @@ class ExceptionEventComplexTest {
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(secondCalendarId, movedMaster.calendarId)
 
-        // Exceptions remain in original calendar (implementation does not cascade move)
+        // v21.6.0: Exceptions should ALSO be moved (cascaded with master)
         val exceptions = database.eventsDao().getExceptionsForMaster(master.id)
-        assertTrue(exceptions.all { it.calendarId == testCalendarId })
+        assertTrue("All exceptions should move with master",
+            exceptions.all { it.calendarId == secondCalendarId })
     }
 
     // ==================== Exception Linking After RRULE Regeneration Tests ====================
@@ -295,13 +297,14 @@ class ExceptionEventComplexTest {
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        val exceptionTs = occurrences[1].startTs
+        val targetOccurrence = occurrences[1]
+        val exceptionTs = targetOccurrence.startTs
 
         // Create exception
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = exceptionTs,
-            modifiedEvent = master.copy(title = "Important Exception")
+            modifiedEvent = master.copy(title = "Important Exception").withOccurrenceTime(targetOccurrence)
         )
 
         // Update RRULE to have more occurrences
@@ -323,13 +326,14 @@ class ExceptionEventComplexTest {
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        val exceptionTs = occurrences[2].startTs
+        val targetOccurrence = occurrences[2]
+        val exceptionTs = targetOccurrence.startTs
 
         // Create exception
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = exceptionTs,
-            modifiedEvent = master.copy(title = "Preserved Exception")
+            modifiedEvent = master.copy(title = "Preserved Exception").withOccurrenceTime(targetOccurrence)
         )
 
         // Change frequency (regenerates occurrences)
@@ -427,5 +431,17 @@ class ExceptionEventComplexTest {
         )
         val id = database.eventsDao().insert(event)
         return event.copy(id = id)
+    }
+
+    /**
+     * Create a modified event with correct times for the given occurrence.
+     * EventWriter requires correct startTs/endTs matching the occurrence being edited.
+     */
+    private fun Event.withOccurrenceTime(occurrence: Occurrence): Event {
+        val duration = this.endTs - this.startTs
+        return this.copy(
+            startTs = occurrence.startTs,
+            endTs = occurrence.startTs + duration
+        )
     }
 }

@@ -13,6 +13,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
 import org.onekash.kashcal.error.ErrorPresentation
+import org.onekash.kashcal.ui.model.CalendarGroup
 import android.net.Uri
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.util.CalendarIntentData
@@ -82,6 +83,8 @@ data class HomeUiState(
     // === CALENDARS ===
     /** All available calendars (visibility determined by Calendar.isVisible) */
     val calendars: ImmutableList<Calendar> = persistentListOf(),
+    /** Calendars grouped by account for UI display */
+    val calendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
     /** Default calendar ID for new events */
     val defaultCalendarId: Long? = null,
     /** Show calendar visibility sheet */
@@ -211,6 +214,8 @@ data class HomeUiState(
     val showErrorDialog: Boolean = false,
     /** Show error banner (when currentError is Banner type) */
     val showErrorBanner: Boolean = false,
+    /** URL to open in browser (set by error actions) */
+    val pendingUrlToOpen: String? = null,
 
     // === DISPLAY PREFERENCES ===
     /** Show auto-detected emojis in event titles */

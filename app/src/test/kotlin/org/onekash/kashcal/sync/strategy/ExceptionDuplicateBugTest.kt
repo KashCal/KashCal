@@ -90,7 +90,6 @@ class ExceptionDuplicateBugTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -279,7 +278,7 @@ class ExceptionDuplicateBugTest {
         }
 
         // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         // Verify: Should update existing exception, NOT create duplicate
         assertTrue("Pull should succeed", result is PullResult.Success)
@@ -389,7 +388,7 @@ class ExceptionDuplicateBugTest {
         } returns existingException
 
         // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         println("=== Upserted Events (With importId Fallback) ===")
         upsertedEvents.forEach { event ->

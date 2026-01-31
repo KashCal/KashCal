@@ -20,11 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
-import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
-import org.onekash.kashcal.data.ics.RfcIcsParser
+import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalendarVisibilitySheet
 import org.onekash.kashcal.ui.components.EventFormSheet
@@ -188,7 +187,7 @@ class MainActivity : ComponentActivity() {
                                     val result = icsFileReader.readIcsContent(action.uri)
                                     result.onSuccess { content ->
                                         try {
-                                            val events = RfcIcsParser.parseIcsContent(
+                                            val events = IcsParserService.parseIcsContent(
                                                 content = content,
                                                 calendarId = 0, // Will be set during import
                                                 subscriptionId = 0 // Not a subscription
@@ -371,6 +370,8 @@ class MainActivity : ComponentActivity() {
                     onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() },
+                    // URL callback (for error actions)
+                    onClearPendingUrl = { homeViewModel.clearPendingUrl() },
                     // Day pager cache callbacks
                     onLoadEventsForDayPagerRange = { centerDateMs -> homeViewModel.loadEventsForDayPagerRange(centerDateMs) },
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) }
@@ -379,7 +380,7 @@ class MainActivity : ComponentActivity() {
                 // Calendar Visibility Sheet
                 if (showCalendarVisibilitySheet) {
                     CalendarVisibilitySheet(
-                        calendars = uiState.calendars,
+                        calendarGroups = uiState.calendarGroups,
                         onToggleCalendar = { calendarId, _ ->
                             homeViewModel.toggleCalendarVisibility(calendarId)
                         },
@@ -569,6 +570,7 @@ class MainActivity : ComponentActivity() {
                         calendarIntentData = calendarIntentData,
                         calendarIntentInvitees = calendarIntentInvitees,
                         calendars = uiState.calendars,
+                        calendarGroups = uiState.calendarGroups,
                         defaultCalendarId = uiState.defaultCalendarId ?: uiState.calendars.firstOrNull()?.id,
                         onDismiss = {
                             showEventFormSheet = false
@@ -625,7 +627,6 @@ class MainActivity : ComponentActivity() {
                 // App Info Sheet
                 if (uiState.showAppInfoSheet) {
                     AppInfoSheet(
-                        version = BuildConfig.VERSION_NAME,
                         onDismiss = { homeViewModel.toggleAppInfoSheet() }
                     )
                 }

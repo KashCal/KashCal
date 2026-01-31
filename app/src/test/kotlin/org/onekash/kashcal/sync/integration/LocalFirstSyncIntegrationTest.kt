@@ -16,14 +16,15 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
-import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -73,7 +74,6 @@ class LocalFirstSyncIntegrationTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = database.calendarsDao(),
             eventsDao = database.eventsDao(),
             occurrenceGenerator = occurrenceGenerator,
@@ -85,7 +85,7 @@ class LocalFirstSyncIntegrationTest {
         // Create test account and calendar
         runTest {
             testAccountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             val calendarId = database.calendarsDao().insert(
                 Calendar(
@@ -133,7 +133,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When - pull from server
-        val result = pullStrategy.pull(testCalendar)
+        val result = pullStrategy.pull(testCalendar, client = client)
 
         // Then - local event should be preserved (not overwritten)
         assertTrue(result is PullResult.Success)
@@ -169,7 +169,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When
-        val result = pullStrategy.pull(testCalendar)
+        val result = pullStrategy.pull(testCalendar, client = client)
 
         // Then - local changes preserved
         assertTrue(result is PullResult.Success)
@@ -193,7 +193,7 @@ class LocalFirstSyncIntegrationTest {
         mockFullSyncResponse(ctag = "new-ctag", events = emptyList())
 
         // When
-        val result = pullStrategy.pull(testCalendar)
+        val result = pullStrategy.pull(testCalendar, client = client)
 
         // Then - local event is NOT deleted (our delete needs to push first)
         assertTrue(result is PullResult.Success)
@@ -233,7 +233,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When
-        val result = pullStrategy.pull(calendarWithToken)
+        val result = pullStrategy.pull(calendarWithToken, client = client)
 
         // Then - event should NOT be deleted
         assertTrue(result is PullResult.Success)
@@ -311,7 +311,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When
-        val result = pullStrategy.pull(testCalendar)
+        val result = pullStrategy.pull(testCalendar, client = client)
 
         // Then - local exception with pending changes should be preserved
         assertTrue(result is PullResult.Success)
@@ -376,7 +376,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When
-        pullStrategy.pull(testCalendar)
+        pullStrategy.pull(testCalendar, client = client)
 
         // Then - exception links should still be preserved after regeneration
         // v15.0.6: Find by exceptionEventId since regeneration now updates occurrence times to exception's times
@@ -441,7 +441,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // When
-        val result = pullStrategy.pull(testCalendar)
+        val result = pullStrategy.pull(testCalendar, client = client)
 
         // Then
         assertTrue(result is PullResult.Success)

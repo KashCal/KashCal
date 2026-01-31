@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generic RFC-compliant CalDAV response without specific server prefixes -->
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/">
+    <response>
+        <href>/calendars/user/default/</href>
+        <propstat>
+            <prop>
+                <displayname>My Calendar</displayname>
+                <resourcetype>
+                    <collection/>
+                    <C:calendar/>
+                </resourcetype>
+                <C:supported-calendar-component-set>
+                    <C:comp name="VEVENT"/>
+                </C:supported-calendar-component-set>
+                <CS:getctag>ctag-value-12345</CS:getctag>
+                <calendar-color xmlns="http://apple.com/ns/ical/">#FF5733FF</calendar-color>
+                <current-user-privilege-set>
+                    <privilege><read/></privilege>
+                    <privilege><write/></privilege>
+                </current-user-privilege-set>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+
+    <response>
+        <href>/calendars/user/default/meeting.ics</href>
+        <propstat>
+            <prop>
+                <getetag>"etag-meeting-v1"</getetag>
+                <C:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Generic CalDAV//EN
+BEGIN:VEVENT
+UID:meeting-123@example.com
+DTSTAMP:20240115T100000Z
+DTSTART:20240120T140000Z
+DTEND:20240120T150000Z
+SUMMARY:Project Meeting
+END:VEVENT
+END:VCALENDAR</C:calendar-data>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>

@@ -119,7 +119,6 @@ class PushStrategyExceptionRaceTest {
         coEvery { calendarsDao.getByIds(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
@@ -169,7 +168,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Verify success
         assert(result is PushResult.Success)
@@ -222,7 +221,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         // Verify success
         assert(result is PushResult.Success)
@@ -267,7 +266,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 
@@ -322,7 +321,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
-        val result = pushStrategy.pushAll()
+        val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 

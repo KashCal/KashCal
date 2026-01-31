@@ -73,7 +73,6 @@ class PullStrategyTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            client = client,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -95,7 +94,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = "ctag-123")
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-123")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.NoChanges)
         coVerify(exactly = 0) { client.syncCollection(any(), any()) }
@@ -111,7 +110,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) }
@@ -126,7 +125,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
     }
@@ -144,7 +143,7 @@ class PullStrategyTest {
                 deleted = emptyList()
             ))
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify { client.syncCollection(calendar.caldavUrl, "sync-token-123") }
         coVerify(exactly = 0) { client.fetchEventsInRange(any(), any(), any()) }
@@ -161,7 +160,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify { client.fetchEventsInRange(any(), any(), any()) }
@@ -182,7 +181,7 @@ class PullStrategyTest {
             ))
         coEvery { eventsDao.getByCaldavUrl(any()) } returns createEvent(caldavUrl = deletedUrl)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
@@ -213,7 +212,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
@@ -261,7 +260,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         // Verify: Both events added successfully
         assertTrue(result is PullResult.Success)
@@ -286,7 +285,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-sync-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) }
     }
@@ -304,7 +303,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(orphanEvent)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
@@ -331,7 +330,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
@@ -363,7 +362,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
@@ -381,7 +380,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify(exactly = 0) { client.syncCollection(any(), any()) }
@@ -397,7 +396,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        val result = pullStrategy.pull(calendar, forceFullSync = true)
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         // Should NOT return NoChanges
         assertTrue(result is PullResult.Success)
@@ -410,7 +409,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.error(401, "Unauthorized", false)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(401, (result as PullResult.Error).code)
@@ -424,7 +423,7 @@ class PullStrategyTest {
         coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.error(500, "Server error", true)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(500, (result as PullResult.Error).code)
@@ -436,7 +435,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.networkError("Connection timeout")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(0, (result as PullResult.Error).code)
@@ -479,7 +478,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
     }
@@ -504,7 +503,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify { occurrenceGenerator.regenerateOccurrences(any()) }
     }
@@ -555,15 +554,14 @@ class PullStrategyTest {
         coEvery { eventsDao.getExceptionByUidAndInstanceTime(any(), any(), any()) } returns null
         coEvery { eventsDao.upsert(any()) } returnsMany listOf(1L, 2L)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Should have added both master and exception
         assertEquals(2, (result as PullResult.Success).eventsAdded)
-        // Exception events now use regenerateOccurrences + cancelOccurrence (changed in afbdd5a)
+        // Exception events use linkException to normalize to Model B (prevents duplicates)
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
-        coVerify { occurrenceGenerator.regenerateOccurrences(any()) }
-        coVerify { occurrenceGenerator.cancelOccurrence(any(), any()) }
+        coVerify { occurrenceGenerator.linkException(any<Long>(), any<Long>(), any<Event>()) }
     }
 
     // ========== Metadata Update Tests ==========
@@ -579,7 +577,7 @@ class PullStrategyTest {
                 deleted = emptyList()
             ))
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify {
             calendarsDao.updateSyncToken(
@@ -597,7 +595,7 @@ class PullStrategyTest {
         coEvery { client.fetchEventsInRange(any(), any(), any()) } returns
             CalDavResult.error(500, "Server error")
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         coVerify(exactly = 0) { calendarsDao.updateSyncToken(any(), any(), any()) }
     }
@@ -628,7 +626,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Should NOT have updated because event has pending local changes
@@ -662,7 +660,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Event with PENDING_UPDATE should be skipped
@@ -685,7 +683,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(pendingDeleteEvent)
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Should NOT delete events with pending local changes
@@ -713,7 +711,7 @@ class PullStrategyTest {
             ))
         coEvery { eventsDao.getByCaldavUrl(any()) } returns pendingEvent
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Should NOT delete because event has pending local changes
@@ -777,7 +775,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, any()) } returns existingException
         coEvery { eventsDao.upsert(any()) } returns 500L
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         // Exception event with PENDING_UPDATE should NOT have been upserted
         // Only the master event should be upserted
@@ -819,7 +817,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Event should be skipped because etag matches - no upsert called
@@ -854,7 +852,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Event should be updated because etag differs
@@ -883,7 +881,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null  // No existing event
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
@@ -947,7 +945,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, any()) } returns existingException
         coEvery { eventsDao.upsert(any()) } returns 500L
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         // Exception event should be skipped due to etag match
         // Master event update depends on master's etag check
@@ -986,7 +984,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
 
-        pullStrategy.pull(calendar)
+        pullStrategy.pull(calendar, client = client)
 
         // Should call dedup at start of pullFull
         coVerify { eventsDao.deleteDuplicateMasterEvents() }
@@ -1002,7 +1000,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 3 // Found 3 duplicates
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         coVerify { eventsDao.deleteDuplicateMasterEvents() }
@@ -1028,7 +1026,7 @@ class PullStrategyTest {
         coEvery { eventsDao.upsert(any()) } returns 1L
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 2 // Found 2 duplicates
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Verify dedup was called during incremental sync
@@ -1048,7 +1046,7 @@ class PullStrategyTest {
             ))
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0 // No duplicates
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Dedup should still be called even when no events changed
@@ -1082,7 +1080,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getMasterByUidAndCalendar("existing-uid", calendar.id) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         // Should have updated (not added) because UID lookup found the event
@@ -1120,7 +1118,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
@@ -1148,7 +1146,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         val success = result as PullResult.Success
@@ -1220,7 +1218,7 @@ class PullStrategyTest {
         val capturedEvent = slot<Event>()
         coEvery { eventsDao.upsert(capture(capturedEvent)) } returns 1L
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
@@ -1240,7 +1238,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws java.net.SocketTimeoutException("Read timed out")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(-408, (result as PullResult.Error).code)
@@ -1253,7 +1251,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws java.io.IOException("Connection reset")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(0, (result as PullResult.Error).code)
@@ -1266,7 +1264,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws IllegalStateException("Unexpected state")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(-1, (result as PullResult.Error).code)
@@ -1279,7 +1277,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws java.net.SocketTimeoutException("Connect timed out")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(-408, (result as PullResult.Error).code)
@@ -1291,7 +1289,7 @@ class PullStrategyTest {
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws java.net.UnknownHostException("caldav.icloud.com")
 
-        val result = pullStrategy.pull(calendar)
+        val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Error)
         assertEquals(0, (result as PullResult.Error).code)

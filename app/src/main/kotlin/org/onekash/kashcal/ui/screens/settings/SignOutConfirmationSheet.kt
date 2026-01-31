@@ -35,6 +35,33 @@ fun SignOutConfirmationSheet(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    GenericSignOutConfirmationSheet(
+        sheetState = sheetState,
+        providerName = "iCloud",
+        email = email,
+        onConfirm = onConfirm,
+        onDismiss = onDismiss
+    )
+}
+
+/**
+ * Generic sign-out confirmation sheet that works for any provider.
+ *
+ * @param sheetState Material3 sheet state
+ * @param providerName Display name of the provider (e.g., "iCloud", "Nextcloud")
+ * @param email Masked email to display
+ * @param onConfirm Callback when user confirms sign out
+ * @param onDismiss Callback when sheet is dismissed
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GenericSignOutConfirmationSheet(
+    sheetState: SheetState,
+    providerName: String,
+    email: String,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
@@ -48,7 +75,7 @@ fun SignOutConfirmationSheet(
         ) {
             // Title
             Text(
-                "Sign Out of iCloud?",
+                "Sign Out of $providerName?",
                 style = MaterialTheme.typography.titleLarge
             )
 

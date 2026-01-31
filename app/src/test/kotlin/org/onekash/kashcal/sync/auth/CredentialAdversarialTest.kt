@@ -12,6 +12,7 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -50,14 +51,14 @@ class CredentialAdversarialTest {
     @Test
     fun `create account with minimal fields`() = runTest {
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "test@icloud.com"
         )
         val accountId = database.accountsDao().insert(account)
 
         val saved = database.accountsDao().getById(accountId)
         assertNotNull(saved)
-        assertEquals("icloud", saved?.provider)
+        assertEquals(AccountProvider.ICLOUD, saved?.provider)
         assertEquals("test@icloud.com", saved?.email)
         assertNull("Credential key should be null by default", saved?.credentialKey)
     }
@@ -65,7 +66,7 @@ class CredentialAdversarialTest {
     @Test
     fun `create account with all fields`() = runTest {
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "full@icloud.com",
             credentialKey = "keystore_alias_123",
             principalUrl = "https://caldav.icloud.com/123456/principal/",
@@ -84,11 +85,11 @@ class CredentialAdversarialTest {
     @Test
     fun `duplicate provider-email rejected`() = runTest {
         // First account succeeds
-        val account1 = Account(provider = "icloud", email = "same@icloud.com")
+        val account1 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com")
         database.accountsDao().insert(account1)
 
         // Second with same provider+email should fail due to unique index
-        val account2 = Account(provider = "icloud", email = "same@icloud.com")
+        val account2 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com")
         try {
             database.accountsDao().insert(account2)
             fail("Should throw on duplicate provider+email")
@@ -100,8 +101,8 @@ class CredentialAdversarialTest {
 
     @Test
     fun `same email different provider allowed`() = runTest {
-        val account1 = Account(provider = "icloud", email = "multi@test.com")
-        val account2 = Account(provider = "google", email = "multi@test.com")
+        val account1 = Account(provider = AccountProvider.ICLOUD, email = "multi@test.com")
+        val account2 = Account(provider = AccountProvider.CALDAV, email = "multi@test.com")
 
         val id1 = database.accountsDao().insert(account1)
         val id2 = database.accountsDao().insert(account2)
@@ -117,7 +118,7 @@ class CredentialAdversarialTest {
     @Test
     fun `delete account removes associated calendars`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "delete@icloud.com")
+            Account(provider = AccountProvider.ICLOUD, email = "delete@icloud.com")
         )
 
         // Add calendars
@@ -165,7 +166,7 @@ class CredentialAdversarialTest {
     @Test
     fun `track consecutive sync failures`() = runTest {
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "failures@icloud.com",
             consecutiveSyncFailures = 0
         )
@@ -183,7 +184,7 @@ class CredentialAdversarialTest {
     @Test
     fun `reset failure count on successful sync`() = runTest {
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "reset@icloud.com",
             consecutiveSyncFailures = 10
         )
@@ -201,7 +202,7 @@ class CredentialAdversarialTest {
     fun `last sync timestamp tracking`() = runTest {
         val now = System.currentTimeMillis()
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "timestamp@icloud.com"
         )
         val accountId = database.accountsDao().insert(account)
@@ -222,10 +223,10 @@ class CredentialAdversarialTest {
     @Test
     fun `email with special characters`() = runTest {
         val specialEmails = listOf(
-            "test+tag@icloud.com" to "icloud",
-            "test.name@example.com" to "caldav",
-            "test_name@gmail.com" to "google",
-            "TEST@ICLOUD.COM" to "icloud2"
+            "test+tag@icloud.com" to AccountProvider.ICLOUD,
+            "test.name@example.com" to AccountProvider.CALDAV,
+            "test_name@gmail.com" to AccountProvider.LOCAL,
+            "TEST@ICLOUD.COM" to AccountProvider.ICS
         )
 
         specialEmails.forEach { (email, provider) ->
@@ -241,7 +242,7 @@ class CredentialAdversarialTest {
     fun `very long email address`() = runTest {
         val longEmail = "a".repeat(200) + "@icloud.com"
         val accountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = longEmail)
+            Account(provider = AccountProvider.ICLOUD, email = longEmail)
         )
 
         val saved = database.accountsDao().getById(accountId)
@@ -251,12 +252,12 @@ class CredentialAdversarialTest {
     @Test
     fun `empty credential key vs null`() = runTest {
         val accountWithEmpty = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "empty@icloud.com",
             credentialKey = ""
         )
         val accountWithNull = Account(
-            provider = "icloud2",
+            provider = AccountProvider.CALDAV,
             email = "null@icloud.com",
             credentialKey = null
         )
@@ -275,11 +276,11 @@ class CredentialAdversarialTest {
 
     @Test
     fun `different providers supported`() = runTest {
-        val providers = listOf("icloud", "google", "caldav", "local")
+        val providers = listOf(AccountProvider.ICLOUD, AccountProvider.CALDAV, AccountProvider.LOCAL, AccountProvider.ICS)
 
         providers.forEachIndexed { index, provider ->
             val accountId = database.accountsDao().insert(
-                Account(provider = provider, email = "$provider$index@test.com")
+                Account(provider = provider, email = "${provider.name.lowercase()}$index@test.com")
             )
             val saved = database.accountsDao().getById(accountId)
             assertEquals(provider, saved?.provider)
@@ -288,9 +289,9 @@ class CredentialAdversarialTest {
 
     @Test
     fun `filter enabled accounts`() = runTest {
-        database.accountsDao().insert(Account(provider = "icloud", email = "enabled1@test.com", isEnabled = true))
-        database.accountsDao().insert(Account(provider = "icloud2", email = "disabled@test.com", isEnabled = false))
-        database.accountsDao().insert(Account(provider = "google", email = "enabled2@test.com", isEnabled = true))
+        database.accountsDao().insert(Account(provider = AccountProvider.ICLOUD, email = "enabled1@test.com", isEnabled = true))
+        database.accountsDao().insert(Account(provider = AccountProvider.CALDAV, email = "disabled@test.com", isEnabled = false))
+        database.accountsDao().insert(Account(provider = AccountProvider.LOCAL, email = "enabled2@test.com", isEnabled = true))
 
         val enabledAccounts = database.accountsDao().getEnabledAccounts()
         assertEquals(2, enabledAccounts.size)
@@ -302,7 +303,7 @@ class CredentialAdversarialTest {
     @Test
     fun `CalDAV URLs with trailing slashes`() = runTest {
         val account = Account(
-            provider = "icloud",
+            provider = AccountProvider.ICLOUD,
             email = "urls@icloud.com",
             principalUrl = "https://caldav.icloud.com/123/principal/",
             homeSetUrl = "https://caldav.icloud.com/123/calendars/"
@@ -317,7 +318,7 @@ class CredentialAdversarialTest {
     @Test
     fun `CalDAV URLs without trailing slashes`() = runTest {
         val account = Account(
-            provider = "caldav",
+            provider = AccountProvider.CALDAV,
             email = "noslash@test.com",
             principalUrl = "https://caldav.example.com/principal",
             homeSetUrl = "https://caldav.example.com/calendars"
@@ -333,7 +334,7 @@ class CredentialAdversarialTest {
     @Test
     fun `toggle account enabled state`() = runTest {
         val accountId = database.accountsDao().insert(
-            Account(provider = "icloud", email = "toggle@icloud.com", isEnabled = true)
+            Account(provider = AccountProvider.ICLOUD, email = "toggle@icloud.com", isEnabled = true)
         )
 
         // Disable
@@ -351,24 +352,24 @@ class CredentialAdversarialTest {
 
     @Test
     fun `find account by provider and email`() = runTest {
-        database.accountsDao().insert(Account(provider = "icloud", email = "lookup@icloud.com"))
-        database.accountsDao().insert(Account(provider = "google", email = "lookup@google.com"))
+        database.accountsDao().insert(Account(provider = AccountProvider.ICLOUD, email = "lookup@icloud.com"))
+        database.accountsDao().insert(Account(provider = AccountProvider.CALDAV, email = "lookup@google.com"))
 
-        val found = database.accountsDao().getByProviderAndEmail("icloud", "lookup@icloud.com")
+        val found = database.accountsDao().getByProviderAndEmail(AccountProvider.ICLOUD, "lookup@icloud.com")
         assertNotNull(found)
-        assertEquals("icloud", found?.provider)
+        assertEquals(AccountProvider.ICLOUD, found?.provider)
 
-        val notFound = database.accountsDao().getByProviderAndEmail("icloud", "notexist@icloud.com")
+        val notFound = database.accountsDao().getByProviderAndEmail(AccountProvider.ICLOUD, "notexist@icloud.com")
         assertNull(notFound)
     }
 
     @Test
     fun `get accounts with sync errors`() = runTest {
         val id1 = database.accountsDao().insert(
-            Account(provider = "icloud", email = "noerror@test.com")
+            Account(provider = AccountProvider.ICLOUD, email = "noerror@test.com")
         )
         val id2 = database.accountsDao().insert(
-            Account(provider = "google", email = "haserror@test.com")
+            Account(provider = AccountProvider.CALDAV, email = "haserror@test.com")
         )
 
         // Simulate failure on second account

@@ -81,11 +81,13 @@ interface CredentialProvider {
  * @property username The username (typically email for iCloud)
  * @property password The password (app-specific password for iCloud)
  * @property serverUrl Optional server URL override
+ * @property trustInsecure Whether to trust self-signed certificates (for self-hosted servers)
  */
 data class Credentials(
     val username: String,
     val password: String,
-    val serverUrl: String = DEFAULT_ICLOUD_SERVER
+    val serverUrl: String = DEFAULT_ICLOUD_SERVER,
+    val trustInsecure: Boolean = false
 ) {
     companion object {
         const val DEFAULT_ICLOUD_SERVER = "https://caldav.icloud.com"
@@ -96,6 +98,6 @@ data class Credentials(
      * Never shows any password characters. Username is masked using maskEmail().
      */
     fun toSafeString(): String {
-        return "Credentials(username=${username.maskEmail()}, password=****)"
+        return "Credentials(username=${username.maskEmail()}, password=****, trustInsecure=$trustInsecure)"
     }
 }

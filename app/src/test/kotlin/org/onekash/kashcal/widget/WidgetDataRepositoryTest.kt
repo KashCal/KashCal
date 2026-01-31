@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -17,6 +18,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.util.DateTimeUtils
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -55,7 +57,7 @@ class WidgetDataRepositoryTest {
 
         // Setup test data hierarchy
         accountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         calendarId = database.calendarsDao().insert(
             Calendar(
@@ -208,6 +210,43 @@ class WidgetDataRepositoryTest {
 
         assertTrue("Past event should be marked as past", pastEvent?.isPast == true)
         assertFalse("Future event should not be marked as past", futureEvent?.isPast == true)
+    }
+
+    @Test
+    fun `getTodayEvents all-day event today is NOT past even late in day`() = runTest {
+        // Regression test for timezone bug: all-day events were grayed out at 6 PM for UTC-6 users
+        // because endTs (UTC midnight) < current UTC time, even though locally it's still "today"
+
+        val todayCode = DateTimeUtils.eventTsToDayCode(System.currentTimeMillis(), false)
+
+        // All-day event for today - endTs is end of day in UTC
+        // (simulates how all-day events are stored: UTC midnight = 23:59:59.999 UTC)
+        val todayStart = java.time.LocalDate.now()
+            .atStartOfDay(java.time.ZoneOffset.UTC)
+            .toInstant()
+            .toEpochMilli()
+        val todayEnd = todayStart + 24 * 3600 * 1000 - 1  // 23:59:59.999 UTC
+
+        val allDayEventId = createEvent("All-Day Today", todayStart, todayEnd, isAllDay = true)
+        database.occurrencesDao().insert(
+            Occurrence(
+                eventId = allDayEventId,
+                calendarId = calendarId,
+                startTs = todayStart,
+                endTs = todayEnd,
+                startDay = todayCode,
+                endDay = todayCode  // Same day
+            )
+        )
+
+        val events = repository.getTodayEvents()
+        val allDayEvent = events.find { it.title == "All-Day Today" }
+
+        assertNotNull("All-day event should be found", allDayEvent)
+        assertFalse(
+            "All-day event for today should NOT be marked as past (timezone-aware check)",
+            allDayEvent?.isPast == true
+        )
     }
 
     // ========== Calendar Visibility Tests ==========

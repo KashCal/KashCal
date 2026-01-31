@@ -33,9 +33,12 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
+import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialManager
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
@@ -74,6 +77,8 @@ class AccountSettingsViewModelTest {
     private lateinit var userPreferences: UserPreferencesRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var discoveryService: AccountDiscoveryService
+    private lateinit var calDavDiscoveryService: CalDavAccountDiscoveryService
+    private lateinit var calDavCredentialManager: CalDavCredentialManager
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactBirthdayManager: ContactBirthdayManager
@@ -82,6 +87,7 @@ class AccountSettingsViewModelTest {
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
     private lateinit var iCloudCalendarCountFlow: MutableStateFlow<Int>
+    private lateinit var calDavAccountCountFlow: MutableStateFlow<Int>
     private lateinit var defaultCalendarIdFlow: MutableStateFlow<Long?>
     private lateinit var syncIntervalFlow: MutableStateFlow<Long>
     private lateinit var defaultReminderTimedFlow: MutableStateFlow<Int>
@@ -123,7 +129,7 @@ class AccountSettingsViewModelTest {
 
     private val testDbAccount = Account(
         id = 1L,
-        provider = "icloud",
+        provider = AccountProvider.ICLOUD,
         email = "test@icloud.com",
         displayName = "iCloud",
         principalUrl = "https://caldav.icloud.com/123/principal",
@@ -140,6 +146,8 @@ class AccountSettingsViewModelTest {
         userPreferences = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         discoveryService = mockk(relaxed = true)
+        calDavDiscoveryService = mockk(relaxed = true)
+        calDavCredentialManager = mockk(relaxed = true)
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
         contactBirthdayManager = mockk(relaxed = true)
@@ -148,6 +156,7 @@ class AccountSettingsViewModelTest {
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
         iCloudCalendarCountFlow = MutableStateFlow(0)
+        calDavAccountCountFlow = MutableStateFlow(0)
         defaultCalendarIdFlow = MutableStateFlow(null)
         syncIntervalFlow = MutableStateFlow(24 * 60 * 60 * 1000L) // 24 hours
         defaultReminderTimedFlow = MutableStateFlow(15)
@@ -158,8 +167,11 @@ class AccountSettingsViewModelTest {
         defaultEventDurationFlow = MutableStateFlow(60) // Default 60 minutes
 
         // Setup default behaviors - EventCoordinator for calendars (architecture compliant)
+        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendarId
         every { eventCoordinator.getAllCalendars() } returns calendarsFlow
+        every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { eventCoordinator.getICloudCalendarCount() } returns iCloudCalendarCountFlow
+        every { eventCoordinator.getCalDavAccountCount() } returns calDavAccountCountFlow
         every { userPreferences.defaultCalendarId } returns defaultCalendarIdFlow
         every { userPreferences.syncIntervalMs } returns syncIntervalFlow
         every { userPreferences.defaultReminderTimed } returns defaultReminderTimedFlow
@@ -195,6 +207,8 @@ class AccountSettingsViewModelTest {
             userPreferences = userPreferences,
             syncScheduler = syncScheduler,
             discoveryService = discoveryService,
+            calDavDiscoveryService = calDavDiscoveryService,
+            calDavCredentialManager = calDavCredentialManager,
             eventCoordinator = eventCoordinator,
             syncLogReader = syncLogReader,
             contactBirthdayManager = contactBirthdayManager,
@@ -1432,6 +1446,111 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    // ==================== Account Connected Sheet Tests ====================
+
+    @Test
+    fun `showAccountConnectedSheet sets state correctly`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.showAccountConnectedSheet("iCloud", "test@icloud.com", 5)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.showAccountConnectedSheet)
+        assertEquals("iCloud", state.connectedProviderName)
+        assertEquals("test@icloud.com", state.connectedEmail)
+        assertEquals(5, state.connectedCalendarCount)
+    }
+
+    @Test
+    fun `hideAccountConnectedSheet clears state`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.showAccountConnectedSheet("iCloud", "test@icloud.com", 5)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.showAccountConnectedSheet)
+
+        viewModel.hideAccountConnectedSheet()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(false, state.showAccountConnectedSheet)
+        assertEquals("", state.connectedProviderName)
+        assertEquals("", state.connectedEmail)
+        assertEquals(0, state.connectedCalendarCount)
+    }
+
+    @Test
+    fun `onAccountConnectedDone sets pendingFinishActivity`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.showAccountConnectedSheet("iCloud", "test@icloud.com", 5)
+        advanceUntilIdle()
+
+        viewModel.onAccountConnectedDone()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(false, state.showAccountConnectedSheet)
+        assertTrue(state.pendingFinishActivity)
+    }
+
+    @Test
+    fun `onSignIn shows success sheet when not in initial setup`() = runTest {
+        // Mock successful discovery
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
+            account = testDbAccount,
+            calendars = testCalendars
+        )
+        every { authManager.saveAccount(any()) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // NOT in initial setup mode (default)
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        advanceUntilIdle()
+
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.showAccountConnectedSheet)
+        assertEquals("iCloud", state.connectedProviderName)
+        assertEquals(3, state.connectedCalendarCount)
+        assertEquals(false, state.pendingFinishActivity)
+    }
+
+    @Test
+    fun `onSignIn skips success sheet in initial setup mode`() = runTest {
+        // Mock successful discovery
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
+            account = testDbAccount,
+            calendars = testCalendars
+        )
+        every { authManager.saveAccount(any()) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Set initial setup mode
+        viewModel.setInitialSetupMode(true)
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        advanceUntilIdle()
+
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(false, state.showAccountConnectedSheet)
+        assertTrue(state.pendingFinishActivity)
     }
 
     // ==================== Edge Cases ====================

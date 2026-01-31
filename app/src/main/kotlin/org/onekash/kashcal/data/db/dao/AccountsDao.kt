@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Data Access Object for Account operations.
@@ -41,9 +42,24 @@ interface AccountsDao {
 
     /**
      * Get account by provider and email (unique constraint).
+     * Room TypeConverter handles AccountProvider → String conversion.
      */
     @Query("SELECT * FROM accounts WHERE provider = :provider AND email = :email")
-    suspend fun getByProviderAndEmail(provider: String, email: String): Account?
+    suspend fun getByProviderAndEmail(provider: AccountProvider, email: String): Account?
+
+    /**
+     * Get accounts by provider type.
+     * Used to list all CalDAV accounts, all iCloud accounts, etc.
+     */
+    @Query("SELECT * FROM accounts WHERE provider = :provider ORDER BY created_at ASC")
+    suspend fun getByProvider(provider: AccountProvider): List<Account>
+
+    /**
+     * Get count of accounts by provider type as Flow.
+     * Used for Settings UI to show account count badges.
+     */
+    @Query("SELECT COUNT(*) FROM accounts WHERE provider = :provider")
+    fun getAccountCountByProvider(provider: AccountProvider): Flow<Int>
 
     /**
      * Get all enabled accounts for sync.
@@ -56,6 +72,21 @@ interface AccountsDao {
      */
     @Query("SELECT * FROM accounts WHERE consecutive_sync_failures > 0")
     suspend fun getAccountsWithSyncErrors(): List<Account>
+
+    /**
+     * Count accounts with matching display name (case-insensitive).
+     * Used for uniqueness validation when creating/editing accounts.
+     *
+     * @param displayName Display name to check
+     * @param excludeAccountId Account ID to exclude (for edit mode, null for new accounts)
+     * @return Number of accounts with matching display name
+     */
+    @Query("""
+        SELECT COUNT(*) FROM accounts
+        WHERE LOWER(display_name) = LOWER(:displayName)
+        AND (:excludeAccountId IS NULL OR id != :excludeAccountId)
+    """)
+    suspend fun countByDisplayName(displayName: String, excludeAccountId: Long? = null): Int
 
     // ========== Write Operations ==========
 
@@ -131,4 +162,11 @@ interface AccountsDao {
      */
     @Query("UPDATE accounts SET is_enabled = :enabled WHERE id = :id")
     suspend fun setEnabled(id: Long, enabled: Boolean)
+
+    /**
+     * Get accounts by provider as reactive Flow.
+     * Emits new list when accounts change.
+     */
+    @Query("SELECT * FROM accounts WHERE provider = :provider ORDER BY created_at ASC")
+    fun getByProviderFlow(provider: AccountProvider): Flow<List<Account>>
 }

@@ -134,13 +134,13 @@ class SyncConflictAdversarialTest {
     }
 
     @Test
-    fun `calculateRetryDelay - caps at 2^10 multiplier`() {
+    fun `calculateRetryDelay - caps at MAX_BACKOFF_MS (5 hours)`() {
         val delay10 = PendingOperation.calculateRetryDelay(10)
         val delay15 = PendingOperation.calculateRetryDelay(15)
         val delay100 = PendingOperation.calculateRetryDelay(100)
 
-        // All should be capped at 30s * 2^10 = 30720s
-        assertEquals(30_000L * 1024, delay10)
+        // All should be capped at 5 hours (MAX_BACKOFF_MS) per v21.5.3
+        assertEquals(PendingOperation.MAX_BACKOFF_MS, delay10)
         assertEquals(delay10, delay15)
         assertEquals(delay10, delay100)
     }
@@ -154,10 +154,10 @@ class SyncConflictAdversarialTest {
     }
 
     @Test
-    fun `calculateRetryDelay - maximum delay is approximately 8 hours`() {
+    fun `calculateRetryDelay - maximum delay is 5 hours`() {
         val maxDelay = PendingOperation.calculateRetryDelay(10)
-        // 30s * 1024 = 30720s = 512 minutes = 8.53 hours
-        assertEquals(30_720_000L, maxDelay)
+        // v21.5.3: Cap at 5 hours (Android WorkManager standard)
+        assertEquals(5L * 60 * 60 * 1000, maxDelay)
     }
 
     // ==================== Operation Type Tests ====================

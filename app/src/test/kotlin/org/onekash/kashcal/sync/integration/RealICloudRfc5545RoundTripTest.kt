@@ -8,7 +8,9 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import org.onekash.icaldav.parser.ICalParser
-import org.onekash.kashcal.sync.client.OkHttpCalDavClient
+import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
@@ -34,11 +36,12 @@ import java.util.UUID
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class RealICloudRfc5545RoundTripTest {
 
-    private lateinit var client: OkHttpCalDavClient
+    private lateinit var client: CalDavClient
     private lateinit var parser: ICalParser
     private var username: String? = null
     private var password: String? = null
     private val serverUrl = "https://caldav.icloud.com"
+    private val factory = OkHttpCalDavClientFactory()
 
     // Test event state
     companion object {
@@ -68,12 +71,24 @@ class RealICloudRfc5545RoundTripTest {
     @Before
     fun setup() {
         val quirks = ICloudQuirks()
-        client = OkHttpCalDavClient(quirks)
         parser = ICalParser()
         loadCredentials()
 
         if (username != null && password != null) {
-            client.setCredentials(username!!, password!!)
+            val credentials = Credentials(
+                username = username!!,
+                password = password!!,
+                serverUrl = serverUrl
+            )
+            client = factory.createClient(credentials, quirks)
+        } else {
+            // Create a minimal client for tests that check credential availability
+            val credentials = Credentials(
+                username = "",
+                password = "",
+                serverUrl = serverUrl
+            )
+            client = factory.createClient(credentials, quirks)
         }
     }
 

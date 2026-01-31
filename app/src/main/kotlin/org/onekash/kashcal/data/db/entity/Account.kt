@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * CalDAV account entity.
@@ -23,10 +24,11 @@ data class Account(
     val id: Long = 0,
 
     /**
-     * Provider identifier: "icloud", "local", "google", etc.
+     * Provider type for this account.
+     * Stored as lowercase string in database (e.g., "icloud", "local").
      */
     @ColumnInfo(name = "provider")
-    val provider: String,
+    val provider: AccountProvider,
 
     /**
      * User email associated with this account.

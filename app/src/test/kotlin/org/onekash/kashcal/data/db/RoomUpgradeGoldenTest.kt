@@ -15,6 +15,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.UUID
@@ -53,7 +54,7 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
         super.setup()
         runTest {
             testAccountId = accountsDao.insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             testCalendarId = calendarsDao.insert(
                 Calendar(

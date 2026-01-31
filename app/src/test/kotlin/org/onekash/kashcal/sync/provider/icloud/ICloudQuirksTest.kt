@@ -391,8 +391,9 @@ END:VCALENDAR</calendar-data>
 
     @Test
     fun `build calendar url from relative href`() {
+        // Regional URLs are normalized to canonical form
         val url = quirks.buildCalendarUrl("/123/calendars/work/", "https://p180-caldav.icloud.com:443")
-        assertEquals("https://p180-caldav.icloud.com:443/123/calendars/work/", url)
+        assertEquals("https://caldav.icloud.com/123/calendars/work/", url)
     }
 
     @Test
@@ -403,8 +404,9 @@ END:VCALENDAR</calendar-data>
 
     @Test
     fun `build event url from relative href`() {
+        // Regional URLs are normalized to canonical form
         val url = quirks.buildEventUrl("/123/calendars/work/event.ics", "https://p180-caldav.icloud.com:443/123/calendars/work/")
-        assertEquals("https://p180-caldav.icloud.com:443/123/calendars/work/event.ics", url)
+        assertEquals("https://caldav.icloud.com/123/calendars/work/event.ics", url)
     }
 
     // Date formatting tests
@@ -729,6 +731,28 @@ END:VCALENDAR</calendar-data>
     fun `extractChangedItems returns empty for empty response`() {
         val items = quirks.extractChangedItems("")
         assertTrue(items.isEmpty())
+    }
+
+    @Test
+    fun `extractChangedItems handles XML entity encoded etags`() {
+        // Some servers return &quot; instead of literal quotes in getetag
+        val response = """
+            <multistatus xmlns="DAV:">
+                <response>
+                    <href>/calendars/home/event.ics</href>
+                    <propstat>
+                        <prop><getetag>&quot;abc123def456&quot;</getetag></prop>
+                        <status>HTTP/1.1 200 OK</status>
+                    </propstat>
+                </response>
+            </multistatus>
+        """.trimIndent()
+
+        val items = quirks.extractChangedItems(response)
+
+        assertEquals(1, items.size)
+        // Should decode &quot; and strip quotes
+        assertEquals("abc123def456", items[0].second)
     }
 
     @Test

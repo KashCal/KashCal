@@ -183,8 +183,11 @@ class HomeViewModelTest {
         every { syncScheduler.lastSyncChanges } returns MutableStateFlow(emptyList())
         every { syncScheduler.clearSyncChanges() } returns Unit
 
-        // Setup default mock behavior - EventCoordinator provides calendars via Flow
+        // Setup default mock behavior - EventCoordinator provides calendars and accounts via Flow
+        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendarId
+        // All three flows must emit for combine() to emit
         every { eventCoordinator.getAllCalendars() } returns flowOf(testCalendars)
+        every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         coEvery { dataStore.defaultCalendarId } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
@@ -629,7 +632,7 @@ class HomeViewModelTest {
                 calendar = testCalendars[1]
             )
         )
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -655,7 +658,7 @@ class HomeViewModelTest {
                 calendar = testCalendars[0]
             )
         )
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -673,13 +676,13 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.showAgendaPanel)
-        // Should NOT have called getOccurrencesWithEventsInRangeFlow when closing
-        verify(exactly = 0) { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) }
+        // Should NOT have called getVisibleOccurrencesWithEventsInRangeFlow when closing
+        verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) }
     }
 
     @Test
     fun `agenda loads 30 days of events`() = runTest {
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -689,7 +692,7 @@ class HomeViewModelTest {
 
         // Verify the Flow-based range query was called
         verify {
-            eventReader.getOccurrencesWithEventsInRangeFlow(any(), any())
+            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any())
         }
     }
 
@@ -720,7 +723,7 @@ class HomeViewModelTest {
             EventReader.OccurrenceWithEvent(laterOccurrence, laterEvent, testCalendars[0]),
             EventReader.OccurrenceWithEvent(testOccurrences[0], testEvents[0], testCalendars[0])
         )
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(unsortedOccurrences)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(unsortedOccurrences)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -740,7 +743,7 @@ class HomeViewModelTest {
     fun `agenda shows loading state while fetching`() = runTest {
         // Track loading state during the fetch
         var loadingStateDuringFetch = false
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } answers {
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } answers {
             // This captures that isLoadingAgenda was true when we started fetching
             loadingStateDuringFetch = true
             flowOf(emptyList())
@@ -2553,7 +2556,7 @@ class HomeViewModelTest {
                 calendar = testCalendars[0]
             )
         )
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2585,7 +2588,7 @@ class HomeViewModelTest {
                 calendar = testCalendars[0]
             )
         )
-        every { eventReader.getOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()

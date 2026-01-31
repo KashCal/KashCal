@@ -156,7 +156,9 @@ class FlowTestingPatternsTest {
         bannerFlagFlow = MutableStateFlow(false)
 
         // Setup mock behavior
+        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendarId
         every { eventCoordinator.getAllCalendars() } returns calendarsFlow
+        every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { networkMonitor.isOnline } returns networkStateFlow
         every { networkMonitor.isMetered } returns MutableStateFlow(false)
         every { syncScheduler.observeImmediateSyncStatus() } returns syncStatusFlow

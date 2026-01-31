@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.coordinator
 
 import android.util.Log
 import kotlinx.coroutines.flow.Flow
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
@@ -12,6 +13,7 @@ import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
 import org.onekash.kashcal.domain.writer.EventWriter
@@ -124,13 +126,27 @@ class EventCoordinator @Inject constructor(
      * @param accountEmail The account email (e.g., Apple ID for iCloud)
      */
     suspend fun cancelRemindersForAccount(accountEmail: String) {
-        val account = eventReader.getAccountByProviderAndEmail("icloud", accountEmail) ?: return
+        val account = eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, accountEmail) ?: return
         val calendars = eventReader.getCalendarsByAccountIdOnce(account.id)
 
         for (calendar in calendars) {
             cancelRemindersForCalendar(calendar.id)
         }
         Log.i(TAG, "Cancelled reminders for account: ${accountEmail.take(3)}***")
+    }
+
+    /**
+     * Cancel all reminders for a CalDAV account's calendars.
+     * Call BEFORE cascade-deleting account to prevent orphaned AlarmManager alarms.
+     *
+     * @param accountId The CalDAV account ID
+     */
+    suspend fun cancelRemindersForCalDavAccount(accountId: Long) {
+        val calendars = eventReader.getCalendarsByAccountIdOnce(accountId)
+        for (calendar in calendars) {
+            cancelRemindersForCalendar(calendar.id)
+        }
+        Log.i(TAG, "Cancelled reminders for CalDAV account: $accountId")
     }
 
     /**
@@ -201,10 +217,15 @@ class EventCoordinator @Inject constructor(
         }
 
         val targetCalendarId = calendarId ?: getLocalCalendarId()
+        val calendar = eventReader.getCalendarById(targetCalendarId)
+
+        // Validate calendar is writable (defense-in-depth - UI also filters read-only calendars)
+        require(calendar?.isReadOnly != true) {
+            "Cannot create event on read-only calendar"
+        }
+
         val eventWithCalendar = event.copy(calendarId = targetCalendarId)
-        val isLocal = eventReader.getCalendarById(targetCalendarId)?.let {
-            isLocalCalendar(it)
-        } ?: false
+        val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
 
         val result = eventWriter.createEvent(eventWithCalendar, isLocal)
         triggerImmediatePushIfNeeded(isLocal)
@@ -438,22 +459,12 @@ class EventCoordinator @Inject constructor(
      * @throws IllegalArgumentException if trying to move an exception event
      */
     suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long) {
-        val event = requireNotNull(eventReader.getEventById(eventId)) {
-            "Event not found: $eventId"
-        }
+        // EventWriter now handles all validation and account detection
+        eventWriter.moveEventToCalendar(eventId, newCalendarId)
 
-        // Prevent moving exception events - would break master-exception relationship
-        // Exception events must stay in the same calendar as their master
-        require(event.originalEventId == null) {
-            "Cannot move exception event. Move the master event (ID: ${event.originalEventId}) instead."
-        }
-
+        // Determine if target is local for immediate push decision
         val calendar = eventReader.getCalendarById(newCalendarId)
-        require(calendar?.isReadOnly != true) {
-            "Cannot move event to read-only calendar"
-        }
         val isLocal = calendar?.let { isLocalCalendar(it) } ?: false
-        eventWriter.moveEventToCalendar(eventId, newCalendarId, isLocal)
         triggerImmediatePushIfNeeded(isLocal)
 
         // Reschedule reminders with new calendar color
@@ -489,6 +500,37 @@ class EventCoordinator @Inject constructor(
      */
     fun getICloudCalendarCount(): Flow<Int> {
         return eventReader.getICloudCalendarCount()
+    }
+
+    /**
+     * Get CalDAV account count.
+     * Returns Flow that updates when accounts change.
+     */
+    fun getCalDavAccountCount(): Flow<Int> {
+        return eventReader.getCalDavAccountCount()
+    }
+
+    /**
+     * Get CalDAV accounts as Flow.
+     * Returns accounts with provider = CALDAV.
+     */
+    fun getCalDavAccounts(): Flow<List<Account>> {
+        return eventReader.getCalDavAccounts()
+    }
+
+    /**
+     * Get all accounts as Flow.
+     * Used for grouping calendars by account in UI.
+     */
+    fun getAllAccounts(): Flow<List<Account>> {
+        return eventReader.getAllAccounts()
+    }
+
+    /**
+     * Get calendar count for an account.
+     */
+    suspend fun getCalendarCountForAccount(accountId: Long): Int {
+        return eventReader.getCalendarCountForAccount(accountId)
     }
 
     /**

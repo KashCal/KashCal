@@ -1,0 +1,10 @@
+v21.5.5
+
+What's New:
+- CalDAV Support: Sync with Nextcloud, Radicale, Baikal, and more
+- Contact Birthdays: Auto-generate birthday calendar
+- More Widgets: Agenda, week view, and date widgets
+- Travel Friendly: Set timezone per event
+- Fort Knox Mode: Other apps have no access to your events
+
+Plus many bug fixes and performance improvements.

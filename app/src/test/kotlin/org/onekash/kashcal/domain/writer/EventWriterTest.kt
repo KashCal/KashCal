@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.TimeZone
@@ -60,7 +61,7 @@ class EventWriterTest {
         // Create test accounts and calendars
         runTest {
             val testAccountId = database.accountsDao().insert(
-                Account(provider = "icloud", email = "test@icloud.com")
+                Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
             )
             testCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -80,7 +81,7 @@ class EventWriterTest {
             )
 
             val localAccountId = database.accountsDao().insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             localCalendarId = database.calendarsDao().insert(
                 Calendar(
@@ -669,7 +670,7 @@ class EventWriterTest {
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = true)
         assertEquals(testCalendarId, event.calendarId)
 
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val moved = database.eventsDao().getById(event.id)
         assertEquals(localCalendarId, moved?.calendarId)
@@ -682,7 +683,7 @@ class EventWriterTest {
             isLocal = true
         )
 
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertTrue(occurrences.all { it.calendarId == localCalendarId })
@@ -697,7 +698,7 @@ class EventWriterTest {
         val originalCount = database.occurrencesDao().getForEvent(event.id).size
         assertEquals(5, originalCount)
 
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val afterMoveCount = database.occurrencesDao().getForEvent(event.id).size
         assertEquals(originalCount, afterMoveCount)
@@ -711,7 +712,7 @@ class EventWriterTest {
         )
         val originalIds = database.occurrencesDao().getForEvent(event.id).map { it.id }.sorted()
 
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val afterMoveIds = database.occurrencesDao().getForEvent(event.id).map { it.id }.sorted()
         assertEquals(originalIds, afterMoveIds)
@@ -731,8 +732,8 @@ class EventWriterTest {
         // Clear any pending CREATE from initial create
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Move to different iCloud calendar
-        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id, isLocal = false)
+        // Move to different iCloud calendar (auto-detects both are CalDAV)
+        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
         // Verify MOVE operation queued with correct data
         val ops = database.pendingOperationsDao().getForEvent(event.id)
@@ -749,8 +750,8 @@ class EventWriterTest {
             calendarId = localCalendarId
         ), isLocal = true)
 
-        // Move to iCloud calendar
-        eventWriter.moveEventToCalendar(event.id, testCalendarId, isLocal = false)
+        // Move to iCloud calendar (auto-detects local→synced)
+        eventWriter.moveEventToCalendar(event.id, testCalendarId)
 
         // Verify CREATE operation queued (no MOVE since no old URL)
         val ops = database.pendingOperationsDao().getForEvent(event.id)
@@ -760,7 +761,7 @@ class EventWriterTest {
     }
 
     @Test
-    fun `moveEventToCalendar iCloud to local does not queue`() = runTest {
+    fun `moveEventToCalendar iCloud to local queues DELETE`() = runTest {
         // Create synced event with caldavUrl
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
         database.eventsDao().markCreatedOnServer(
@@ -771,12 +772,14 @@ class EventWriterTest {
         )
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Move to local calendar
-        eventWriter.moveEventToCalendar(event.id, localCalendarId, isLocal = true)
+        // Move to local calendar (auto-detects synced→local, queues DELETE)
+        eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
-        // Verify no sync operations queued
+        // Verify DELETE operation queued with sourceCalendarId
         val ops = database.pendingOperationsDao().getForEvent(event.id)
-        assertEquals(0, ops.size)
+        assertEquals(1, ops.size)
+        assertEquals(PendingOperation.OPERATION_DELETE, ops[0].operation)
+        assertEquals(testCalendarId, ops[0].sourceCalendarId)
     }
 
     @Test
@@ -791,7 +794,7 @@ class EventWriterTest {
         )
 
         // Move to different calendar
-        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
         // Verify old UPDATE is gone, replaced with CREATE or MOVE
         val ops = database.pendingOperationsDao().getForEvent(event.id)
@@ -810,7 +813,7 @@ class EventWriterTest {
             System.currentTimeMillis()
         )
 
-        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
         val moved = database.eventsDao().getById(event.id)
         assertNull(moved?.caldavUrl)
@@ -825,7 +828,7 @@ class EventWriterTest {
         database.eventsDao().markCreatedOnServer(event.id, oldUrl, "etag", System.currentTimeMillis())
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id, isLocal = false)
+        eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
         // Verify the old URL is stored in the operation for DELETE
         val ops = database.pendingOperationsDao().getForEvent(event.id)

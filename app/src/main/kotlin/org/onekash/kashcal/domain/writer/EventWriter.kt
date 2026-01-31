@@ -461,74 +461,160 @@ class EventWriter @Inject constructor(
     /**
      * Move event to a different calendar.
      *
-     * For CalDAV sync, this uses OPERATION_MOVE which atomically:
-     * 1. DELETEs from old calendar (using stored targetUrl)
-     * 2. CREATEs in new calendar
+     * Hybrid approach based on source/target account types:
+     * - Same account: MOVE operation (WebDAV MOVE or DELETE+CREATE fallback)
+     * - Cross account: Separate CREATE + DELETE operations (different sync cycles)
+     * - Synced → Local: DELETE only (remove from server)
+     * - Local → Synced: CREATE only (add to server)
+     * - Local → Local: No-op for sync
      *
-     * This fixes the bug where caldavUrl was cleared before DELETE processed,
-     * causing the event to disappear without proper server sync.
+     * Key fix (v21.6.0): Uses sourceCalendarId for DELETE filtering since
+     * event.calendarId is updated to target before push completes.
      *
      * @param eventId The event to move
      * @param newCalendarId The destination calendar ID
-     * @param isLocal True if destination is a local calendar (no sync needed)
      */
     suspend fun moveEventToCalendar(
         eventId: Long,
-        newCalendarId: Long,
-        isLocal: Boolean = false
+        newCalendarId: Long
     ) {
         database.withTransaction {
             val event = requireNotNull(eventsDao.getById(eventId)) {
                 "Event not found: $eventId"
             }
 
+            // Guard: Exception events cannot be moved directly (CLAUDE.md #11)
+            require(event.originalEventId == null) {
+                "Cannot move exception event directly. Move the master event instead (originalEventId: ${event.originalEventId})"
+            }
+
             if (event.calendarId == newCalendarId) {
                 return@withTransaction // No-op
             }
 
+            val calendarsDao = database.calendarsDao()
+            val accountsDao = database.accountsDao()
+
+            // Detect source and target context
+            val sourceCalendar = calendarsDao.getById(event.calendarId)
+            val targetCalendar = requireNotNull(calendarsDao.getById(newCalendarId)) {
+                "Target calendar not found: $newCalendarId"
+            }
+
             // Check target calendar isn't read-only (defense in depth - UI also filters these)
-            val targetCalendar = database.calendarsDao().getById(newCalendarId)
-            require(targetCalendar?.isReadOnly != true) {
+            require(!targetCalendar.isReadOnly) {
                 "Cannot move event to read-only calendar"
             }
 
+            val sourceAccountId = sourceCalendar?.accountId
+            val targetAccountId = targetCalendar.accountId
+
+            val sourceAccount = sourceAccountId?.let { accountsDao.getById(it) }
+            val targetAccount = accountsDao.getById(targetAccountId)
+
+            // Determine local status from AccountProvider (not isLocal parameter)
+            val sourceIsLocal = sourceAccount?.provider?.requiresSync == false
+            val targetIsLocal = targetAccount?.provider?.requiresSync == false
+            val isSameAccount = sourceAccountId == targetAccountId && sourceAccountId != null
+
             // Capture old URL BEFORE clearing (critical for sync)
             val oldCaldavUrl = event.caldavUrl
-            val wasSynced = event.syncStatus == SyncStatus.SYNCED
+            val wasSynced = event.syncStatus == SyncStatus.SYNCED && oldCaldavUrl != null
             val now = System.currentTimeMillis()
 
-            // Update event with new calendar
+            // Determine new sync status based on target
+            val newSyncStatus = when {
+                targetIsLocal -> SyncStatus.SYNCED
+                wasSynced -> SyncStatus.PENDING_CREATE // Will need CREATE on server
+                else -> SyncStatus.PENDING_CREATE
+            }
+
+            // Update master event
             val movedEvent = event.copy(
                 calendarId = newCalendarId,
                 caldavUrl = null, // Will get new URL on sync
                 etag = null,
-                syncStatus = if (isLocal) SyncStatus.SYNCED else SyncStatus.PENDING_CREATE,
+                syncStatus = newSyncStatus,
                 updatedAt = now,
                 localModifiedAt = now
             )
             eventsDao.update(movedEvent)
 
-            // Update occurrences with new calendar ID (single UPDATE query, not N inserts)
+            // Update exception events (cascade within transaction)
+            if (event.rrule != null) {
+                eventsDao.updateCalendarIdForExceptions(eventId, newCalendarId, now)
+            }
+
+            // Update occurrences with new calendar ID (single UPDATE query)
             occurrencesDao.updateCalendarIdForEvent(eventId, newCalendarId)
 
-            // Queue sync operation (only if not moving to local calendar)
-            if (!isLocal) {
-                // Cancel any existing pending operations (they're for old calendar)
-                pendingOpsDao.deleteForEvent(eventId)
+            // Cancel any existing pending operations (they're for old calendar)
+            pendingOpsDao.deleteForEvent(eventId)
 
-                if (wasSynced && oldCaldavUrl != null) {
-                    // MOVE: DELETE from old + CREATE in new (atomic operation)
-                    // Stores targetUrl so processMove knows where to delete from
+            // Queue sync operations based on scenario
+            when {
+                // Local → Local: No sync needed
+                sourceIsLocal && targetIsLocal -> {
+                    // No-op for sync
+                }
+
+                // Local → Synced: CREATE only
+                sourceIsLocal && !targetIsLocal -> {
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_CREATE
+                        )
+                    )
+                }
+
+                // Synced → Local: DELETE only (with sourceCalendarId for filtering)
+                !sourceIsLocal && targetIsLocal && wasSynced -> {
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_DELETE,
+                            targetUrl = oldCaldavUrl,
+                            sourceCalendarId = event.calendarId // Source for filtering
+                        )
+                    )
+                }
+
+                // Same account (synced): MOVE operation
+                !sourceIsLocal && !targetIsLocal && isSameAccount && wasSynced -> {
                     pendingOpsDao.insert(
                         PendingOperation(
                             eventId = eventId,
                             operation = PendingOperation.OPERATION_MOVE,
                             targetUrl = oldCaldavUrl,
-                            targetCalendarId = newCalendarId
+                            targetCalendarId = newCalendarId,
+                            sourceCalendarId = event.calendarId // Source for DELETE phase filtering
                         )
                     )
-                } else {
-                    // Just CREATE (event was never on server or is new)
+                }
+
+                // Cross account (synced): CREATE + DELETE as independent operations
+                !sourceIsLocal && !targetIsLocal && !isSameAccount && wasSynced -> {
+                    // DELETE runs on source account's sync cycle
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_DELETE,
+                            targetUrl = oldCaldavUrl,
+                            sourceCalendarId = event.calendarId // Source for filtering
+                        )
+                    )
+                    // CREATE runs on target account's sync cycle
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_CREATE
+                        )
+                    )
+                }
+
+                // Synced → Synced but never uploaded (PENDING_CREATE): Just CREATE
+                !sourceIsLocal && !targetIsLocal && !wasSynced -> {
                     pendingOpsDao.insert(
                         PendingOperation(
                             eventId = eventId,
@@ -547,10 +633,15 @@ class EventWriter @Inject constructor(
     }
 
     private suspend fun queueOperation(eventId: Long, operation: String) {
+        val now = System.currentTimeMillis()
+
         // Check if operation already pending for this event
         val existingList = pendingOpsDao.getForEvent(eventId)
         val existing = existingList.firstOrNull { it.status == PendingOperation.STATUS_PENDING }
         if (existing != null) {
+            // Refresh lifetime - user still cares about this event (v21.5.3)
+            pendingOpsDao.refreshOperationLifetime(eventId, now)
+
             // Update existing operation if upgrading (e.g., UPDATE -> DELETE)
             if (operation == PendingOperation.OPERATION_DELETE) {
                 pendingOpsDao.update(existing.copy(operation = operation))
@@ -558,6 +649,7 @@ class EventWriter @Inject constructor(
             return
         }
 
+        // Insert new operation (lifetimeResetAt defaults to now via entity default)
         val pendingOp = PendingOperation(
             eventId = eventId,
             operation = operation

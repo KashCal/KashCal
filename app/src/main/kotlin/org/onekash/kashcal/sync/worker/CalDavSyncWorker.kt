@@ -13,6 +13,8 @@ import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.dao.SyncLogsDao
+import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.model.ChangeType
@@ -22,12 +24,12 @@ import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncType
 import org.onekash.kashcal.sync.session.ErrorType
 import org.onekash.kashcal.sync.model.SyncChange
-import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.provider.ProviderRegistry
+import org.onekash.kashcal.sync.provider.icloud.ICloudUrlMigration
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.util.maskEmail
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -62,14 +64,15 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val calendarsDao: CalendarsDao,
     private val notificationManager: SyncNotificationManager,
     private val providerRegistry: ProviderRegistry,
-    @Suppress("DEPRECATION") private val calDavClient: CalDavClient,
     private val calDavClientFactory: CalDavClientFactory,
     private val syncScheduler: SyncScheduler,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val reminderScheduler: ReminderScheduler,
     private val eventReader: EventReader,
     private val pendingOperationsDao: PendingOperationsDao,
-    private val syncSessionStore: SyncSessionStore
+    private val syncSessionStore: SyncSessionStore,
+    private val syncLogsDao: SyncLogsDao,
+    private val iCloudUrlMigration: ICloudUrlMigration
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -95,6 +98,9 @@ class CalDavSyncWorker @AssistedInject constructor(
         const val SYNC_TYPE_FULL = "full"
         const val SYNC_TYPE_CALENDAR = "calendar"
         const val SYNC_TYPE_ACCOUNT = "account"
+
+        // Sync log retention (7 days)
+        private const val SYNC_LOG_RETENTION_DAYS = 7
 
         /**
          * Create input data for full sync (all accounts).
@@ -183,6 +189,52 @@ class CalDavSyncWorker @AssistedInject constructor(
                 Log.w(TAG, "Recovered $staleCount stuck IN_PROGRESS operations from previous sync")
             }
 
+            // === iCloud URL Migration (one-time) ===
+            // Normalizes regional URLs (p180-caldav.icloud.com) to canonical form (caldav.icloud.com)
+            // to handle Apple server rotation gracefully
+            val migrated = iCloudUrlMigration.migrateIfNeeded()
+            if (migrated) {
+                Log.i(TAG, "iCloud URLs normalized to canonical form")
+            }
+
+            // === Retry Lifecycle Management (v21.5.3) ===
+            val now = System.currentTimeMillis()
+            val thirtyDaysAgo = now - PendingOperation.OPERATION_LIFETIME_MS
+
+            // A: Force full sync resets ALL failed operations (runs FIRST)
+            // Also resets lifetime_reset_at so they get a fresh 30-day window
+            if (forceFullSync) {
+                val failedResetCount = pendingOperationsDao.resetAllFailed(now)
+                if (failedResetCount > 0) {
+                    Log.i(TAG, "Reset $failedResetCount failed operations for retry (force full sync)")
+                }
+            }
+
+            // D: Abandon operations exceeding 30-day lifetime (skipped if force sync just reset them)
+            val expiredOps = pendingOperationsDao.getExpiredOperations(thirtyDaysAgo)
+            for (op in expiredOps) {
+                pendingOperationsDao.abandonOperation(
+                    op.id,
+                    "Operation exceeded 30-day lifetime without user interaction",
+                    now
+                )
+            }
+            if (expiredOps.isNotEmpty()) {
+                Log.w(TAG, "Abandoned ${expiredOps.size} operations exceeding 30-day lifetime")
+                notificationManager.showOperationExpiredNotification(expiredOps.size)
+            }
+
+            // B: Auto-retry failed operations older than 24 hours (excludes expired)
+            val twentyFourHoursAgo = now - PendingOperation.AUTO_RESET_FAILED_MS
+            val oldFailedResetCount = pendingOperationsDao.autoResetOldFailed(
+                failedBefore = twentyFourHoursAgo,
+                lifetimeCutoff = thirtyDaysAgo,
+                now = now
+            )
+            if (oldFailedResetCount > 0) {
+                Log.i(TAG, "Auto-reset $oldFailedResetCount failed operations older than 24h for retry")
+            }
+
             val syncResult = when (syncType) {
                 SYNC_TYPE_CALENDAR -> {
                     val calendarId = inputData.getLong(KEY_CALENDAR_ID, -1)
@@ -231,6 +283,18 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
             if (changes.isNotEmpty()) {
                 scheduleRemindersForSyncedEvents(changes)
+            }
+
+            // Cleanup old sync logs (7 day retention)
+            // Best-effort - don't fail sync if cleanup throws
+            try {
+                val cutoff = System.currentTimeMillis() - (SYNC_LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000L)
+                val deleted = syncLogsDao.deleteOldLogs(cutoff)
+                if (deleted > 0) {
+                    Log.d(TAG, "Cleaned up $deleted old sync logs")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Sync log cleanup failed, continuing", e)
             }
 
             handleSyncResult(syncResult)
@@ -292,16 +356,56 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.Error(-1, "Calendar not found", false)
         }
 
+        // Load account for this calendar
+        val account = accountsDao.getById(calendar.accountId)
+        if (account == null) {
+            Log.w(TAG, "Account ${calendar.accountId} not found for calendar")
+            return SyncResult.Error(-1, "Account not found", false)
+        }
+
+        // Get credential provider from registry
+        val credProvider = providerRegistry.getCredentialProvider(account.provider)
+        if (credProvider == null) {
+            Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}")
+            return SyncResult.Error(-1, "No credential provider for ${account.provider}", false)
+        }
+
+        // Load credentials for this account
+        val credentials = credProvider.getCredentials(account.id)
+        if (credentials == null) {
+            Log.w(TAG, "No credentials for account ${account.email.maskEmail()}")
+            return SyncResult.AuthError("Credentials not found")
+        }
+
+        // Get quirks for this provider
+        val quirks = providerRegistry.getQuirksForAccount(account)
+        if (quirks == null) {
+            Log.w(TAG, "No quirks for account ${account.email.maskEmail()}")
+            return SyncResult.Error(-1, "No quirks for ${account.provider}", false)
+        }
+
+        // Create isolated client for this account
+        val client = calDavClientFactory.createClient(credentials, quirks)
+
         Log.d(TAG, "Syncing calendar: ${calendar.displayName}")
         return syncEngine.syncCalendar(
             calendar = calendar,
             forceFullSync = forceFullSync,
+            quirks = quirks,
+            client = client,
             trigger = trigger
         )
     }
 
     /**
-     * Sync all calendars for an account.
+     * Sync all calendars for an account using provider registry.
+     *
+     * Uses same pattern as syncAll() for consistency:
+     * 1. Get provider from AccountProvider enum
+     * 2. Skip if doesn't support CalDAV
+     * 3. Load credentials from provider's credential provider
+     * 4. Create isolated client for this account
+     * 5. Sync using provider-specific quirks
      */
     private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val account = accountsDao.getById(accountId)
@@ -311,9 +415,68 @@ class CalDavSyncWorker @AssistedInject constructor(
         }
 
         Log.d(TAG, "Syncing account: ${account.email.maskEmail()}")
-        return syncEngine.syncAccount(
+
+        // Skip accounts that don't support CalDAV
+        if (!account.provider.supportsCalDAV) {
+            Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
+            return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
+        }
+
+        // Get credential provider from registry
+        val credProvider = providerRegistry.getCredentialProvider(account.provider)
+        if (credProvider == null) {
+            Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}")
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = -1L,
+                calendarName = "Account: ${account.email.maskEmail()}",
+                syncType = SyncType.FULL,
+                triggerSource = trigger
+            )
+            sessionBuilder.setError(ErrorType.AUTH, "no_cred_provider", "Credential provider not found for ${account.provider}")
+            syncSessionStore.add(sessionBuilder.build())
+            return SyncResult.Error(-1, "No credential provider for ${account.provider}", false)
+        }
+
+        // Load credentials for this account
+        val credentials = credProvider.getCredentials(account.id)
+        if (credentials == null) {
+            Log.w(TAG, "No credentials for account ${account.email.maskEmail()}")
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = -1L,
+                calendarName = "Account: ${account.email.maskEmail()}",
+                syncType = SyncType.FULL,
+                triggerSource = trigger
+            )
+            sessionBuilder.setError(ErrorType.AUTH, "no_credentials", "Credentials not found for account")
+            syncSessionStore.add(sessionBuilder.build())
+            return SyncResult.AuthError("Credentials not found")
+        }
+
+        // Get quirks for this provider
+        val quirks = providerRegistry.getQuirksForAccount(account)
+        if (quirks == null) {
+            Log.w(TAG, "No quirks for account ${account.email.maskEmail()}")
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = -1L,
+                calendarName = "Account: ${account.email.maskEmail()}",
+                syncType = SyncType.FULL,
+                triggerSource = trigger
+            )
+            sessionBuilder.setError(ErrorType.SERVER, "no_quirks", "Provider quirks not found for ${account.provider}")
+            syncSessionStore.add(sessionBuilder.build())
+            return SyncResult.Error(-1, "No quirks for ${account.provider}", false)
+        }
+
+        // Create isolated client for this account (prevents credential race condition)
+        val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
+        Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
+
+        // Sync this account with its quirks and isolated client
+        return syncEngine.syncAccountWithQuirks(
             account = account,
+            quirks = quirks,
             forceFullSync = forceFullSync,
+            client = isolatedClient,
             trigger = trigger
         )
     }
@@ -348,10 +511,9 @@ class CalDavSyncWorker @AssistedInject constructor(
             )
         }
 
-        // Filter to accounts with network providers
+        // Filter to accounts with network providers (using AccountProvider enum)
         val networkAccounts = accounts.filter { account ->
-            val provider = providerRegistry.getProviderForAccount(account)
-            provider?.requiresNetwork == true
+            account.provider.requiresNetwork
         }
 
         if (networkAccounts.isEmpty()) {
@@ -384,20 +546,14 @@ class CalDavSyncWorker @AssistedInject constructor(
         val allChanges = mutableListOf<org.onekash.kashcal.sync.model.SyncChange>()
 
         for ((index, account) in networkAccounts.withIndex()) {
-            val provider = providerRegistry.getProviderForAccount(account)
-            if (provider == null) {
-                Log.w(TAG, "No provider for account ${account.email.maskEmail()}, skipping")
-                val sessionBuilder = SyncSessionBuilder(
-                    calendarId = -1L,
-                    calendarName = "Account: ${account.email.maskEmail()}",
-                    syncType = SyncType.FULL,
-                    triggerSource = trigger
-                )
-                sessionBuilder.setError(ErrorType.SERVER, "no_provider", "Provider not found for account: ${account.provider}")
-                syncSessionStore.add(sessionBuilder.build())
+            // Skip accounts that don't support CalDAV
+            if (!account.provider.supportsCalDAV) {
+                Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
                 continue
             }
-            val credProvider = provider.getCredentialProvider()
+
+            // Get credential provider from registry
+            val credProvider = providerRegistry.getCredentialProvider(account.provider)
             if (credProvider == null) {
                 Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}, skipping")
                 val sessionBuilder = SyncSessionBuilder(
@@ -406,7 +562,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                     syncType = SyncType.FULL,
                     triggerSource = trigger
                 )
-                sessionBuilder.setError(ErrorType.AUTH, "no_cred_provider", "Credential provider not found")
+                sessionBuilder.setError(ErrorType.AUTH, "no_cred_provider", "Credential provider not found for ${account.provider}")
                 syncSessionStore.add(sessionBuilder.build())
                 continue
             }
@@ -427,8 +583,8 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Create isolated client for this account (prevents credential race condition)
-            val quirks = provider.getQuirks()
+            // Get quirks for this provider
+            val quirks = providerRegistry.getQuirksForAccount(account)
             if (quirks == null) {
                 Log.w(TAG, "No quirks for account ${account.email.maskEmail()}, skipping")
                 // Record session for debugging
@@ -438,20 +594,22 @@ class CalDavSyncWorker @AssistedInject constructor(
                     syncType = SyncType.FULL,
                     triggerSource = trigger
                 )
-                sessionBuilder.setError(ErrorType.SERVER, "no_quirks", "Provider quirks not found")
+                sessionBuilder.setError(ErrorType.SERVER, "no_quirks", "Provider quirks not found for ${account.provider}")
                 syncSessionStore.add(sessionBuilder.build())
                 continue
             }
+
+            // Create isolated client for this account (prevents credential race condition)
             val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
             Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
-            // Sync this account with its provider's quirks and isolated client
+            // Sync this account with its quirks and isolated client
             val result = try {
-                syncEngine.syncAccountWithProvider(
+                syncEngine.syncAccountWithQuirks(
                     account = account,
-                    provider = provider,
+                    quirks = quirks,
                     forceFullSync = forceFullSync,
-                    clientOverride = isolatedClient,
+                    client = isolatedClient,
                     trigger = trigger
                 )
             } catch (e: kotlinx.coroutines.CancellationException) {

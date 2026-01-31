@@ -373,10 +373,9 @@ class EventCoordinatorImmediatePushTest {
     @Test
     fun `moveEventToCalendar to CalDAV calendar triggers expedited sync`() = runTest {
         // Given
-        coEvery { eventReader.getEventById(1) } returns createTestEvent(1)  // v14.2.23: exception guard check
         coEvery { eventReader.getCalendarById(1) } returns caldavCalendar
         coEvery { localCalendarInitializer.isLocalCalendar(caldavCalendar) } returns false
-        coJustRun { eventWriter.moveEventToCalendar(1, 1, false) }
+        coJustRun { eventWriter.moveEventToCalendar(1, 1) }
 
         // When
         coordinator.moveEventToCalendar(eventId = 1, newCalendarId = 1)
@@ -388,10 +387,9 @@ class EventCoordinatorImmediatePushTest {
     @Test
     fun `moveEventToCalendar to local calendar does NOT trigger sync`() = runTest {
         // Given
-        coEvery { eventReader.getEventById(1) } returns createTestEvent(1)  // v14.2.23: exception guard check
         coEvery { eventReader.getCalendarById(2) } returns localCalendar
         coEvery { localCalendarInitializer.isLocalCalendar(localCalendar) } returns true
-        coJustRun { eventWriter.moveEventToCalendar(1, 2, true) }
+        coJustRun { eventWriter.moveEventToCalendar(1, 2) }
 
         // When
         coordinator.moveEventToCalendar(eventId = 1, newCalendarId = 2)

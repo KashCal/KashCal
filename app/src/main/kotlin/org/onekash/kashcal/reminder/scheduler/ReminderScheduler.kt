@@ -27,6 +27,13 @@ import javax.inject.Singleton
 
 private const val TAG_PARSE = "ReminderParse"
 
+// Pre-compiled regex patterns for ISO 8601 duration parsing (avoids recompilation on every call)
+private val WEEKS_REGEX = Regex("(\\d+)W")
+private val DAYS_REGEX = Regex("(\\d+)D")
+private val HOURS_REGEX = Regex("(\\d+)H")
+private val MINUTES_REGEX = Regex("(\\d+)M")
+private val SECONDS_REGEX = Regex("(\\d+)S")
+
 /**
  * Parse iCal reminder offset to milliseconds.
  *
@@ -88,23 +95,23 @@ internal fun parseIsoDuration(duration: String): Long? {
 
     // Parse date part: weeks (W), days (D)
     if (datePart.isNotEmpty()) {
-        Regex("(\\d+)W").find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+        WEEKS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
             totalMillis += it * 7 * 24 * 60 * 60 * 1000
         }
-        Regex("(\\d+)D").find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+        DAYS_REGEX.find(datePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
             totalMillis += it * 24 * 60 * 60 * 1000
         }
     }
 
     // Parse time part: hours (H), minutes (M), seconds (S)
     if (timePart.isNotEmpty()) {
-        Regex("(\\d+)H").find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+        HOURS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
             totalMillis += it * 60 * 60 * 1000
         }
-        Regex("(\\d+)M").find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+        MINUTES_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
             totalMillis += it * 60 * 1000
         }
-        Regex("(\\d+)S").find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
+        SECONDS_REGEX.find(timePart)?.groupValues?.get(1)?.toLongOrNull()?.let {
             totalMillis += it * 1000
         }
     }
@@ -463,26 +470,55 @@ class ReminderScheduler @Inject constructor(
     /**
      * Schedule an alarm via AlarmManager.
      *
+     * Uses exact alarm if possible, falls back to inexact alarm if permission denied
+     * or SecurityException thrown. Inexact alarms may drift 5-15 minutes on some devices.
+     *
      * @param reminderId The reminder ID
      * @param triggerTime When to trigger (millis since epoch)
      */
     fun scheduleAlarm(reminderId: Long, triggerTime: Long) {
-        if (!canScheduleExactAlarms()) {
-            Log.w(TAG, "Cannot schedule exact alarms - permission not granted")
-            return
-        }
-
         val pendingIntent = createAlarmPendingIntent(reminderId)
 
-        // Use setExactAndAllowWhileIdle for calendar reminders
-        // This works in Doze mode and triggers at exact time
-        alarmManager.setExactAndAllowWhileIdle(
+        try {
+            if (canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTime,
+                    pendingIntent
+                )
+                Log.d(TAG, "Scheduled exact alarm for reminder $reminderId at $triggerTime")
+            } else {
+                scheduleInexactAlarm(reminderId, triggerTime, pendingIntent)
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Exact alarm failed, trying inexact", e)
+            try {
+                scheduleInexactAlarm(reminderId, triggerTime, pendingIntent)
+            } catch (e2: SecurityException) {
+                Log.e(TAG, "Cannot schedule any alarm for reminder $reminderId", e2)
+                // Silent fail - user will miss reminder but app won't crash
+            }
+        }
+    }
+
+    /**
+     * Schedule an inexact alarm as fallback.
+     *
+     * Uses setAndAllowWhileIdle which works in Doze mode but may drift 5-15 minutes
+     * due to alarm batching. This is acceptable as a fallback when exact alarms
+     * are not available.
+     */
+    private fun scheduleInexactAlarm(
+        reminderId: Long,
+        triggerTime: Long,
+        pendingIntent: PendingIntent
+    ) {
+        alarmManager.setAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             triggerTime,
             pendingIntent
         )
-
-        Log.d(TAG, "Scheduled alarm for reminder $reminderId at $triggerTime")
+        Log.d(TAG, "Scheduled inexact alarm for reminder $reminderId (may drift 5-15 min)")
     }
 
     /**

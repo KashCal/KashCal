@@ -26,6 +26,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -68,7 +69,7 @@ class ConcurrencyRaceConditionTest {
         eventWriter = EventWriter(database, occurrenceGenerator)
 
         testAccountId = database.accountsDao().insert(
-            Account(provider = "test", email = "test@test.com")
+            Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
         testCalendarId = database.calendarsDao().insert(
             Calendar(
@@ -250,7 +251,7 @@ class ConcurrencyRaceConditionTest {
     fun `concurrent operations on different accounts should not interfere`() = runTest {
         // Create second account
         val secondAccountId = database.accountsDao().insert(
-            Account(provider = "test2", email = "test2@test.com")
+            Account(provider = AccountProvider.CALDAV, email = "test2@test.com")
         )
         val account2CalendarId = database.calendarsDao().insert(
             Calendar(

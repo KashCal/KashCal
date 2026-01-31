@@ -10,6 +10,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.AccountProvider
 import java.util.UUID
 
 /**
@@ -37,7 +38,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         super.setup()
         runTest {
             val accountId = accountsDao.insert(
-                Account(provider = "local", email = "local")
+                Account(provider = AccountProvider.LOCAL, email = "local")
             )
             testCalendarId = calendarsDao.insert(
                 Calendar(
@@ -280,7 +281,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
     fun `search finds events across different calendars`() = runTest {
         // Create second calendar
         val account2Id = accountsDao.insert(
-            Account(provider = "icloud", email = "test@icloud.com")
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
         val calendar2Id = calendarsDao.insert(
             Calendar(

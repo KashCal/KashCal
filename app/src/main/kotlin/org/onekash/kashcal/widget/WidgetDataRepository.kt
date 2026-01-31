@@ -81,7 +81,7 @@ class WidgetDataRepository @Inject constructor(
                 endTs = occ.endTs,
                 isAllDay = event.isAllDay,
                 calendarColor = calendar?.color ?: DEFAULT_CALENDAR_COLOR,
-                isPast = occ.endTs < now
+                isPast = DateTimeUtils.isEventPast(occ.endTs, occ.endDay, event.isAllDay)
             )
         }.sortedWith(
             // Sort: timed events by start time first, all-day events at the end
@@ -169,7 +169,7 @@ class WidgetDataRepository @Inject constructor(
                             endTs = occ.endTs,
                             isAllDay = event.isAllDay,
                             calendarColor = calendar?.color ?: DEFAULT_CALENDAR_COLOR,
-                            isPast = occ.endTs < now
+                            isPast = DateTimeUtils.isEventPast(occ.endTs, occ.endDay, event.isAllDay)
                         )
                     )
                 }

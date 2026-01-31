@@ -18,6 +18,7 @@ import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.IcsSubscription
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -55,7 +56,7 @@ class IcsSubscriptionsDaoTest {
             // Create ICS account (required for calendars)
             testAccountId = database.accountsDao().insert(
                 Account(
-                    provider = IcsSubscription.PROVIDER_ICS,
+                    provider = AccountProvider.ICS,
                     email = IcsSubscription.ACCOUNT_EMAIL
                 )
             )

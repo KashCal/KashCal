@@ -171,6 +171,12 @@ interface CalendarsDao {
     @Query("UPDATE calendars SET sort_order = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
 
+    /**
+     * Update CalDAV URL (for iCloud URL normalization migration).
+     */
+    @Query("UPDATE calendars SET caldav_url = :caldavUrl WHERE id = :id")
+    suspend fun updateCaldavUrl(id: Long, caldavUrl: String)
+
     // ========== Provider-based Queries ==========
 
     /**

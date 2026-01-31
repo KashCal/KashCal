@@ -38,6 +38,12 @@ interface PendingOperationsDao {
     suspend fun getAll(): List<PendingOperation>
 
     /**
+     * Alias for getAll (consistent naming with other DAOs).
+     */
+    @Query("SELECT * FROM pending_operations ORDER BY created_at ASC")
+    suspend fun getAllOnce(): List<PendingOperation>
+
+    /**
      * Get pending operations for an event.
      */
     @Query("SELECT * FROM pending_operations WHERE event_id = :eventId ORDER BY created_at ASC")
@@ -140,11 +146,13 @@ interface PendingOperationsDao {
 
     /**
      * Mark operation as permanently failed.
+     * Sets failed_at for 24h auto-reset tracking (v21.5.3).
      */
     @Query("""
         UPDATE pending_operations
         SET status = 'FAILED',
             last_error = :error,
+            failed_at = :now,
             updated_at = :now
         WHERE id = :id
     """)
@@ -165,7 +173,10 @@ interface PendingOperationsDao {
     suspend fun resetToPending(id: Long, now: Long)
 
     /**
-     * Reset all failed operations (for "retry all" action).
+     * Reset all failed operations (for Force Full Sync).
+     * Also resets lifetime_reset_at to give fresh 30-day window (v21.5.3).
+     *
+     * @return Number of operations reset
      */
     @Query("""
         UPDATE pending_operations
@@ -173,10 +184,12 @@ interface PendingOperationsDao {
             retry_count = 0,
             next_retry_at = 0,
             last_error = NULL,
+            failed_at = NULL,
+            lifetime_reset_at = :now,
             updated_at = :now
         WHERE status = 'FAILED'
     """)
-    suspend fun resetAllFailed(now: Long)
+    suspend fun resetAllFailed(now: Long): Int
 
     /**
      * Reset operations stuck in IN_PROGRESS state back to PENDING.
@@ -260,4 +273,88 @@ interface PendingOperationsDao {
         ORDER BY created_at ASC
     """)
     suspend fun getConflictOperations(): List<PendingOperation>
+
+    // ========== Retry Lifecycle Methods (v21.5.3) ==========
+
+    /**
+     * Auto-reset FAILED operations older than 24 hours.
+     * Uses failed_at column to measure time since failure, not updated_at.
+     * Excludes operations that have exceeded 30-day lifetime.
+     *
+     * @param failedBefore Reset ops that failed before this timestamp
+     * @param lifetimeCutoff Exclude ops with lifetime_reset_at before this (expired)
+     * @param now Current timestamp for updated_at
+     * @return Number of operations reset
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET status = 'PENDING',
+            retry_count = 0,
+            next_retry_at = 0,
+            last_error = NULL,
+            failed_at = NULL,
+            updated_at = :now
+        WHERE status = 'FAILED'
+        AND failed_at IS NOT NULL
+        AND failed_at < :failedBefore
+        AND lifetime_reset_at > :lifetimeCutoff
+    """)
+    suspend fun autoResetOldFailed(failedBefore: Long, lifetimeCutoff: Long, now: Long): Int
+
+    /**
+     * Find operations that have exceeded 30-day lifetime.
+     * These should be abandoned to prevent infinite retry loops.
+     *
+     * @param cutoff Operations with lifetime_reset_at before this are expired
+     * @return List of expired operations to abandon
+     */
+    @Query("""
+        SELECT * FROM pending_operations
+        WHERE status IN ('PENDING', 'FAILED')
+        AND lifetime_reset_at < :cutoff
+        ORDER BY lifetime_reset_at ASC
+    """)
+    suspend fun getExpiredOperations(cutoff: Long): List<PendingOperation>
+
+    /**
+     * Abandon an expired operation permanently.
+     * Sets status to FAILED with a reason explaining why.
+     *
+     * @param id Operation ID to abandon
+     * @param reason Human-readable reason for abandonment
+     * @param now Current timestamp for updated_at
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET status = 'FAILED',
+            last_error = :reason,
+            updated_at = :now
+        WHERE id = :id
+    """)
+    suspend fun abandonOperation(id: Long, reason: String, now: Long)
+
+    /**
+     * Refresh lifetime clock when user interacts with event.
+     * Extends the 30-day retry window from this moment.
+     *
+     * Only refreshes non-FAILED operations (FAILED ops need explicit reset).
+     *
+     * @param eventId Event ID whose operations should be refreshed
+     * @param now Current timestamp to set as new lifetime_reset_at
+     */
+    @Query("""
+        UPDATE pending_operations
+        SET lifetime_reset_at = :now
+        WHERE event_id = :eventId
+        AND status != 'FAILED'
+    """)
+    suspend fun refreshOperationLifetime(eventId: Long, now: Long)
+
+    // ========== iCloud URL Migration ==========
+
+    /**
+     * Update target URL for a pending operation (for iCloud URL normalization migration).
+     */
+    @Query("UPDATE pending_operations SET target_url = :targetUrl WHERE id = :id")
+    suspend fun updateTargetUrl(id: Long, targetUrl: String)
 }
