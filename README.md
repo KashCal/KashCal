@@ -2,7 +2,7 @@
 
 <img src="images/kashcal-app.png" width="120" alt="KashCal">
 
-# KashCal
+# KashCal™
 
 **Your calendar. Your device. Your rules.**
 
@@ -13,6 +13,8 @@ A modern, privacy-first calendar with iCloud and CalDAV sync — finally done ri
 
 [<img src="https://img.shields.io/github/v/release/KashCal/KashCal?logo=github&label=GitHub&style=for-the-badge" height="36">](https://github.com/KashCal/KashCal/releases)
 [<img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" height="36">](LICENSE)
+
+> **Official Repository:** This is the only official KashCal™ source. Only download from [F-Droid](https://f-droid.org/packages/org.onekash.kashcal), [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal), or [GitHub Releases](https://github.com/KashCal/KashCal/releases). Beware of copies distributing APKs from other sources.
 
 ---
 
