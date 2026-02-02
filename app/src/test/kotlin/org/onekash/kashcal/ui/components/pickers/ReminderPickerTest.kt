@@ -66,7 +66,7 @@ class ReminderPickerTest {
     }
 
     // ==================== TIMED EVENT OPTIONS ====================
-    // Reduced options: None, 15m, 1h, 1d
+    // Options: None, 15m, 30m, 1h, 4h, 1d, 1w
 
     @Test
     fun `timed event has No reminder option`() {
@@ -87,9 +87,21 @@ class ReminderPickerTest {
     }
 
     @Test
+    fun `timed event has 4 hours before option`() {
+        val options = getReminderOptionsForEventType(isAllDay = false)
+        assertTrue(options.any { it.minutes == 240 })
+    }
+
+    @Test
     fun `timed event has 1 day before option`() {
         val options = getReminderOptionsForEventType(isAllDay = false)
         assertTrue(options.any { it.minutes == 1440 })
+    }
+
+    @Test
+    fun `timed event has 1 week before option`() {
+        val options = getReminderOptionsForEventType(isAllDay = false)
+        assertTrue(options.any { it.minutes == 10080 })
     }
 
     @Test
@@ -167,6 +179,12 @@ class ReminderPickerTest {
         // Both should have No reminder as first option
         assertEquals(REMINDER_OFF, timedOptions.first().minutes)
         assertEquals(REMINDER_OFF, allDayOptions.first().minutes)
+    }
+
+    @Test
+    fun `timed reminder options are in ascending order by minutes`() {
+        val options = TIMED_REMINDER_OPTIONS.filter { it.minutes != REMINDER_OFF }
+        assertEquals(options, options.sortedBy { it.minutes })
     }
 
     // ==================== EDGE CASES ====================

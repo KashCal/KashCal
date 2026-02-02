@@ -7,7 +7,7 @@ import org.junit.Test
 
 /**
  * Unit tests for SharedComponents.
- * Tests SectionHeader, SettingsCard, ColorDot, and ColorPicker.
+ * Tests SectionHeader, SettingsCard, and related utility functions.
  *
  * Note: Composable UI tests require AndroidX Compose testing which runs as
  * instrumented tests. These unit tests verify the supporting logic and data.

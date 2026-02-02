@@ -286,7 +286,9 @@ class ICalEventMapperTest {
     }
 
     @Test
-    fun `maps multiple alarms - only first 3`() {
+    fun `maps multiple alarms - only closest 3 by duration`() {
+        // Alarms happen to be in sorted order here (15m, 30m, 1h, 1d, 1w)
+        // Result: keeps 15m, 30m, 1h (closest 3)
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -334,9 +336,13 @@ class ICalEventMapperTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
 
-        // Entity only stores first 3 in reminders field
+        // Entity stores closest 3 reminders (sorted by duration)
         assertNotNull("Should have reminders", entity.reminders)
-        assertEquals("Should store only first 3 reminders", 3, entity.reminders!!.size)
+        assertEquals("Should store only 3 reminders", 3, entity.reminders!!.size)
+        // Verify sorted order: 15m, 30m, 1h (smallest durations)
+        assertEquals("-PT15M", entity.reminders!![0])
+        assertEquals("-PT30M", entity.reminders!![1])
+        assertEquals("-PT1H", entity.reminders!![2])
     }
 
     @Test
@@ -372,6 +378,185 @@ class ICalEventMapperTest {
         assertNotNull(entity.reminders)
         assertEquals("Should have only 1 reminder (RELATED=END skipped)", 1, entity.reminders!!.size)
         assertEquals("-PT15M", entity.reminders!!.first())
+    }
+
+    // ========== Alarm Sorting Tests ==========
+
+    @Test
+    fun `alarms are sorted ascending by absolute duration`() {
+        // Server sends alarms in arbitrary order: 1 day, 15 min, 1 hour
+        // Expected: sorted by duration → 15 min, 1 hour, 1 day
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-sort@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with Unsorted Alarms
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1D
+            DESCRIPTION:1 day before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Should have 3 reminders", 3, entity.reminders!!.size)
+        // Verify sorted order: smallest duration first
+        assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
+        assertEquals("Second should be 1 hour", "-PT1H", entity.reminders!![1])
+        assertEquals("Third should be 1 day", "-P1D", entity.reminders!![2])
+    }
+
+    @Test
+    fun `positive triggers sorted after negative triggers`() {
+        // Positive trigger (after event start) should sort to end
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-positive@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with Positive Trigger
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:PT30M
+            DESCRIPTION:30 min after start
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Should have 3 reminders", 3, entity.reminders!!.size)
+        // Sorted by abs(): 15m, 30m, 1h
+        assertEquals("First should be 15 min before", "-PT15M", entity.reminders!![0])
+        assertEquals("Second should be 30 min after", "PT30M", entity.reminders!![1])
+        assertEquals("Third should be 1 hour before", "-PT1H", entity.reminders!![2])
+    }
+
+    @Test
+    fun `single alarm remains unchanged`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-single@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with Single Alarm
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Should have 1 reminder", 1, entity.reminders!!.size)
+        assertEquals("-PT15M", entity.reminders!![0])
+    }
+
+    @Test
+    fun `alarms beyond limit 3 are excluded after sorting - keeps smallest`() {
+        // 5 alarms: 1 week, 1 day, 15 min, 1 hour, 30 min
+        // After sorting: 15 min, 30 min, 1 hour, 1 day, 1 week
+        // Take 3: 15 min, 30 min, 1 hour (smallest 3)
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-limit@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with 5 Alarms
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1W
+            DESCRIPTION:1 week before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1D
+            DESCRIPTION:1 day before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT30M
+            DESCRIPTION:30 min before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val icalEvent = events.first()
+
+        // icaldav parses all 5 alarms
+        assertEquals("icaldav should parse all 5 alarms", 5, icalEvent.alarms.size)
+
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+
+        // Entity stores only closest 3 (by duration)
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Should store only 3 reminders", 3, entity.reminders!!.size)
+        // Verify it's the smallest 3: 15 min, 30 min, 1 hour
+        assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
+        assertEquals("Second should be 30 min", "-PT30M", entity.reminders!![1])
+        assertEquals("Third should be 1 hour", "-PT1H", entity.reminders!![2])
     }
 
     // ========== Status and Transparency Tests ==========

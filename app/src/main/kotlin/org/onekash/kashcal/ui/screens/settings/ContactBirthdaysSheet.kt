@@ -4,15 +4,20 @@ import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -29,8 +34,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
+import org.onekash.kashcal.ui.components.pickers.argbToHex
 import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.formatReminderOption
 
@@ -69,6 +77,8 @@ fun ContactBirthdaysSheet(
 ) {
     var selectedColor by remember(calendarColor) { mutableIntStateOf(calendarColor) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -123,7 +133,7 @@ fun ContactBirthdaysSheet(
                 )
             }
 
-            // Color Picker (only visible when enabled)
+            // Color Picker trigger (only visible when enabled)
             AnimatedVisibility(
                 visible = isEnabled,
                 enter = expandVertically(),
@@ -138,13 +148,32 @@ fun ContactBirthdaysSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    ColorPicker(
-                        selectedColor = selectedColor,
-                        onColorSelected = { color ->
-                            selectedColor = color
-                            onColorChange(color)
-                        }
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showColorPicker = true }
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(Color(selectedColor))
+                                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        )
+                        Text(
+                            "#${argbToHex(selectedColor)}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            "Change",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
             }
 
@@ -238,6 +267,20 @@ fun ContactBirthdaysSheet(
                 showReminderPicker = false
             },
             onDismiss = { showReminderPicker = false }
+        )
+    }
+
+    // Color picker sheet
+    if (showColorPicker) {
+        ColorPickerSheet(
+            sheetState = colorPickerSheetState,
+            currentColor = selectedColor,
+            onColorSelected = { color ->
+                selectedColor = color
+                onColorChange(color)
+                showColorPicker = false
+            },
+            onDismiss = { showColorPicker = false }
         )
     }
 }

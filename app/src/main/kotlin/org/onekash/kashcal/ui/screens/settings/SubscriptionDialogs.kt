@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -50,6 +53,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
+import org.onekash.kashcal.ui.components.pickers.argbToHex
 
 /**
  * Bottom sheet for adding a new ICS calendar subscription.
@@ -77,7 +82,9 @@ fun AddSubscriptionDialog(
     var name by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(SubscriptionColors.default) }
     var fetchState by remember { mutableStateOf<FetchCalendarState>(FetchCalendarState.Idle) }
+    var showColorPicker by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Dismiss protection state
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -183,16 +190,26 @@ fun AddSubscriptionDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Color Picker (inline)
+            // Color Picker trigger
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showColorPicker = true },
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Color:", style = MaterialTheme.typography.bodySmall)
-                SubscriptionColorPicker(
-                    selectedColor = selectedColor,
-                    onColorSelected = { selectedColor = it }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color(selectedColor))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                )
+                Text(
+                    "#${argbToHex(selectedColor)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -232,6 +249,19 @@ fun AddSubscriptionDialog(
             }
         }
     }
+
+    // Color Picker Sheet
+    if (showColorPicker) {
+        ColorPickerSheet(
+            sheetState = colorPickerSheetState,
+            currentColor = selectedColor,
+            onColorSelected = { color ->
+                selectedColor = color
+                showColorPicker = false
+            },
+            onDismiss = { showColorPicker = false }
+        )
+    }
 }
 
 /**
@@ -257,6 +287,8 @@ fun EditSubscriptionDialog(
     var selectedColor by remember { mutableStateOf(subscription.color) }
     var selectedInterval by remember { mutableStateOf(subscription.syncIntervalHours) }
     var showIntervalPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Dismiss protection state
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -321,16 +353,26 @@ fun EditSubscriptionDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Color Picker (inline)
+            // Color Picker trigger
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showColorPicker = true },
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Color:", style = MaterialTheme.typography.bodySmall)
-                SubscriptionColorPicker(
-                    selectedColor = selectedColor,
-                    onColorSelected = { selectedColor = it }
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(Color(selectedColor))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                )
+                Text(
+                    "#${argbToHex(selectedColor)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -381,6 +423,19 @@ fun EditSubscriptionDialog(
             }
         }
     }
+
+    // Color Picker Sheet
+    if (showColorPicker) {
+        ColorPickerSheet(
+            sheetState = colorPickerSheetState,
+            currentColor = selectedColor,
+            onColorSelected = { color ->
+                selectedColor = color
+                showColorPicker = false
+            },
+            onDismiss = { showColorPicker = false }
+        )
+    }
 }
 
 /**
@@ -426,22 +481,6 @@ private fun FetchResultFeedback(fetchState: FetchCalendarState) {
             }
         }
         else -> {}
-    }
-}
-
-/**
- * Color picker for subscription calendars.
- * Displays 5 colors in a single row.
- */
-@Composable
-private fun SubscriptionColorPicker(
-    selectedColor: Int,
-    onColorSelected: (Int) -> Unit
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        SubscriptionColors.all.forEach { color ->
-            ColorDot(color, selectedColor == color) { onColorSelected(color) }
-        }
     }
 }
 

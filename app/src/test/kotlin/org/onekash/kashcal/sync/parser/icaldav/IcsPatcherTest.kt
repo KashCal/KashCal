@@ -1053,6 +1053,126 @@ class IcsPatcherTest {
         )
     }
 
+    // ========== Sorted Reminders Round-Trip Tests ==========
+    // ICalEventMapper now sorts reminders by duration (v21.5.6)
+    // These tests verify IcsPatcher handles sorted reminders correctly
+
+    @Test
+    fun `patch applies sorted reminders to unsorted rawIcal alarms`() {
+        // Server originally sent alarms in order: 1 day, 1 hour, 15 min
+        // ICalEventMapper sorted them to: 15 min, 1 hour, 1 day
+        // When patching, triggers should be updated in original positions
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:sorted-roundtrip@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with Unsorted Alarms
+            BEGIN:VALARM
+            ACTION:AUDIO
+            TRIGGER:-P1D
+            DESCRIPTION:1 day before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:EMAIL
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // Entity has sorted reminders (as stored by ICalEventMapper)
+        val entity = createTestEvent(
+            uid = "sorted-roundtrip@kashcal.test",
+            title = "Event with Unsorted Alarms",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L,
+            reminders = listOf("-PT15M", "-PT1H", "-P1D")  // Sorted order from pull
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
+        val patchedEvent = patchedEvents.first()
+
+        // Should have 3 alarms
+        assertEquals("Should have 3 alarms", 3, patchedEvent.alarms.size)
+
+        // Extract triggers in minutes for verification
+        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.toMinutes() }
+
+        // The triggers should now be in sorted order (from entity.reminders)
+        // Note: IcsPatcher merges reminders[i] with originalAlarms[i] by position
+        // So: reminders[0]=-PT15M → originalAlarms[0] (was -P1D), etc.
+        assertEquals("First trigger should be 15 min", -15L, triggers[0])
+        assertEquals("Second trigger should be 1 hour", -60L, triggers[1])
+        assertEquals("Third trigger should be 1 day", -1440L, triggers[2])
+    }
+
+    @Test
+    fun `patch preserves ACTION types from original alarms with sorted reminders`() {
+        // Verify ACTION types (AUDIO, EMAIL, DISPLAY) are preserved from original
+        // even when triggers are reordered by sorting
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:action-preserve@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event
+            BEGIN:VALARM
+            ACTION:AUDIO
+            TRIGGER:-P1D
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:EMAIL
+            TRIGGER:-PT1H
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // Sorted reminders: 15 min comes before 1 day
+        // But we only have 2 in entity (typical case)
+        val entity = createTestEvent(
+            uid = "action-preserve@kashcal.test",
+            title = "Event",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L,
+            reminders = listOf("-PT15M", "-P1D")  // Sorted: 15m before 1d
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
+        val patchedEvent = patchedEvents.first()
+
+        assertEquals("Should have 2 alarms", 2, patchedEvent.alarms.size)
+
+        // ACTION types come from original alarms by position
+        // reminders[0] (-PT15M) → originalAlarms[0] (AUDIO)
+        // reminders[1] (-P1D) → originalAlarms[1] (EMAIL)
+        val actions = patchedEvent.alarms.map { it.action.name }
+        assertEquals("First alarm should preserve AUDIO action", "AUDIO", actions[0])
+        assertEquals("Second alarm should preserve EMAIL action", "EMAIL", actions[1])
+
+        // But triggers should be from entity.reminders
+        val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.toMinutes() }
+        assertEquals("First trigger from sorted reminders", -15L, triggers[0])
+        assertEquals("Second trigger from sorted reminders", -1440L, triggers[1])
+    }
+
     // ========== RFC 5545/7986 Extended Properties Tests ==========
 
     @Test

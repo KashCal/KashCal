@@ -36,7 +36,9 @@ val TIMED_REMINDER_OPTIONS = listOf(
     ReminderOption("15 minutes before", 15),
     ReminderOption("30 minutes before", 30),
     ReminderOption("1 hour before", 60),
-    ReminderOption("1 day before", 1440)
+    ReminderOption("4 hours before", 240),
+    ReminderOption("1 day before", 1440),
+    ReminderOption("1 week before", 10080)
 )
 
 /**

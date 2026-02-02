@@ -787,6 +787,7 @@ class DateTimeUtilsTest {
     @Test
     fun `formatReminderShort handles arbitrary hour values from external calendars`() {
         // iCloud can set reminders like -PT15H (15 hours = 900 minutes)
+        assertEquals("4h", DateTimeUtils.formatReminderShort(240))   // 4 hours (new UI option)
         assertEquals("15h", DateTimeUtils.formatReminderShort(900))
         assertEquals("2h", DateTimeUtils.formatReminderShort(120))
         assertEquals("12h", DateTimeUtils.formatReminderShort(720))
