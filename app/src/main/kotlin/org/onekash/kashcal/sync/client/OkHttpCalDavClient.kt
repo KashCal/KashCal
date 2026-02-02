@@ -279,31 +279,49 @@ class OkHttpCalDavClient : CalDavClient {
      * Extract base CalDAV URL from a full URL path.
      * For Nextcloud: https://cloud.example.com/remote.php/dav/principals/users/foo
      *             -> https://cloud.example.com/remote.php/dav
+     *
+     * Uses java.net.URI for robust parsing (handles IPv6, userinfo, ports).
+     *
+     * Bug fix: https://github.com/KashCal/KashCal/issues/38
+     * Previously matched "/dav" anywhere in URL, including hostname "dav.mailbox.org".
+     * Now searches patterns only in URI path component.
      */
     private fun extractCaldavBaseUrl(url: String): String {
-        // Common CalDAV path patterns to preserve
+        // Strip query parameters and fragments (some redirects include them)
+        val cleanUrl = url.substringBefore("?").substringBefore("#")
+
+        // Parse URL using stdlib - handles IPv6 [::1], userinfo, ports correctly
+        val uri = try {
+            java.net.URI(cleanUrl)
+        } catch (e: Exception) {
+            Log.w(TAG, "extractCaldavBaseUrl: invalid URL '$url', returning as-is")
+            return url
+        }
+
+        val path = uri.path ?: ""
+        val baseUrl = "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
+
+        // Common CalDAV path patterns - order matters (longer/more specific first)
         val patterns = listOf(
             "/remote.php/dav",  // Nextcloud
             "/dav.php",         // Baikal
             "/caldav.php",      // Some servers
+            "/caldav",          // Open-Xchange (mailbox.org)
             "/cal.php",         // Some servers
-            "/dav"              // Generic
+            "/dav"              // Generic (safe - only matches path now)
         )
 
         for (pattern in patterns) {
-            val index = url.indexOf(pattern)
+            val index = path.indexOf(pattern)
             if (index != -1) {
-                return url.substring(0, index + pattern.length)
+                Log.d(TAG, "extractCaldavBaseUrl: matched '$pattern' in path")
+                return baseUrl + path.substring(0, index + pattern.length)
             }
         }
 
-        // If no pattern matched, return the URL up to the path
-        return try {
-            val uri = java.net.URI(url)
-            "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
-        } catch (e: Exception) {
-            url
-        }
+        // No pattern matched - return base URL only
+        Log.d(TAG, "extractCaldavBaseUrl: no pattern matched, returning base: $baseUrl")
+        return baseUrl
     }
 
     override suspend fun discoverPrincipal(serverUrl: String): CalDavResult<String> =

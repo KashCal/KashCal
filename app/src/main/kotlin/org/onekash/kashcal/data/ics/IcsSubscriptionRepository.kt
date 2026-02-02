@@ -4,6 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -37,6 +38,7 @@ private const val TAG = "IcsSubscriptionRepo"
  */
 @Singleton
 class IcsSubscriptionRepository @Inject constructor(
+    private val database: KashCalDatabase,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
     private val accountsDao: AccountsDao,
     private val calendarsDao: CalendarsDao,
@@ -342,14 +344,18 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Sync parsed events to database.
+     * Sync parsed events to database with atomic transaction.
      *
-     * Strategy:
-     * 1. Get existing event UIDs for this subscription
-     * 2. Upsert all parsed events (add new, update existing)
-     * 3. Delete events that no longer exist in feed (orphaned)
-     * 4. Regenerate occurrences for all events
-     * 5. Schedule reminders for events with reminders configured
+     * Uses two-pass processing to properly handle recurring event exceptions:
+     * - Pass 1: Process master events (with RRULE, no RECURRENCE-ID)
+     * - Pass 2: Process exception events (with RECURRENCE-ID), linking to masters
+     *
+     * Per RFC 5545, exception events share the same UID as their master
+     * but differ by RECURRENCE-ID. We use importId (which includes RECURRENCE-ID)
+     * for unique identification.
+     *
+     * CLAUDE.md Pattern #1: @Transaction for multi-step operations.
+     * CLAUDE.md Pattern #13: Model B occurrence linking via linkException().
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,
@@ -361,59 +367,103 @@ class IcsSubscriptionRepository @Inject constructor(
         var updated = 0
         var deleted = 0
 
-        // Get existing events for this subscription (by caldavUrl source identifier)
-        val sourcePrefix = "${IcsSubscription.SOURCE_PREFIX}:${subscriptionId}:"
-        val existingEvents = eventsDao.getByCalendarIdInRange(
-            calendarId = calendarId,
-            startTs = Long.MIN_VALUE,
-            endTs = Long.MAX_VALUE
-        ).filter { it.caldavUrl?.startsWith(sourcePrefix) == true }
+        database.runInTransaction {
+            val sourcePrefix = "${IcsSubscription.SOURCE_PREFIX}:${subscriptionId}:"
+            val existingEvents = eventsDao.getByCalendarIdInRange(
+                calendarId = calendarId,
+                startTs = Long.MIN_VALUE,
+                endTs = Long.MAX_VALUE
+            ).filter { it.caldavUrl?.startsWith(sourcePrefix) == true }
 
-        val existingUids = existingEvents.map { extractUidFromSource(it.caldavUrl) }.toSet()
-        val newUids = events.map { it.uid }.toSet()
+            // Match by importId (unique per event, includes RECURRENCE-ID for exceptions)
+            val existingByImportId = existingEvents.associateBy { extractImportIdFromSource(it.caldavUrl) }
+            val newImportIds = events.map { it.importId }.toSet()
 
-        // Delete orphaned events (in feed before but not now)
-        val orphanedUids = existingUids - newUids
-        for (existingEvent in existingEvents) {
-            val uid = extractUidFromSource(existingEvent.caldavUrl)
-            if (uid in orphanedUids) {
+            // Delete orphaned events (cancel reminders first!)
+            val orphanedImportIds = existingByImportId.keys - newImportIds
+            for (importId in orphanedImportIds) {
+                val existingEvent = existingByImportId[importId] ?: continue
+                reminderScheduler.cancelRemindersForEvent(existingEvent.id)
                 eventsDao.deleteById(existingEvent.id)
                 deleted++
             }
-        }
 
-        // Upsert events
-        for (event in events) {
-            val existingEvent = existingEvents.find {
-                extractUidFromSource(it.caldavUrl) == event.uid
+            // Separate masters and exceptions
+            val masters = events.filter { it.originalInstanceTime == null }
+            val exceptions = events.filter { it.originalInstanceTime != null }
+
+            // Track master IDs for exception linking
+            val masterIdByUid = mutableMapOf<String, Long>()
+
+            // PASS 1: Process masters
+            for (event in masters) {
+                try {
+                    val existingEvent = existingByImportId[event.importId]
+                    val (eventId, isNew) = upsertEvent(event, existingEvent)
+                    masterIdByUid[event.uid] = eventId
+
+                    val savedEvent = event.copy(id = eventId)
+                    occurrenceGenerator.regenerateOccurrences(savedEvent)
+                    scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
+
+                    if (isNew) added++ else updated++
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to process master event ${event.uid}: ${e.message}")
+                }
             }
 
-            if (existingEvent != null) {
-                // Update existing event (preserve local ID)
-                val updatedEvent = event.copy(id = existingEvent.id)
-                eventsDao.update(updatedEvent)
-                updated++
+            // Also include existing masters for exceptions referencing pre-existing masters
+            for (existingEvent in existingEvents) {
+                if (existingEvent.rrule != null && existingEvent.originalEventId == null) {
+                    masterIdByUid.putIfAbsent(existingEvent.uid, existingEvent.id)
+                }
+            }
 
-                // Regenerate occurrences
-                occurrenceGenerator.regenerateOccurrences(updatedEvent)
+            // PASS 2: Process exceptions with master linkage
+            for (event in exceptions) {
+                try {
+                    val masterId = masterIdByUid[event.uid]
+                    if (masterId == null) {
+                        Log.w(TAG, "Skipping exception for missing master: uid=${event.uid}, importId=${event.importId}")
+                        continue
+                    }
 
-                // Reschedule reminders (cancel old, schedule new) for modified events
-                scheduleRemindersForEvent(updatedEvent, calendarColor, isModified = true)
-            } else {
-                // Insert new event
-                val eventId = eventsDao.insert(event)
-                added++
+                    // Link exception to master
+                    val linkedEvent = event.copy(originalEventId = masterId)
+                    val existingEvent = existingByImportId[event.importId]
+                    val (eventId, isNew) = upsertEvent(linkedEvent, existingEvent)
 
-                // Generate occurrences for new event
-                val insertedEvent = event.copy(id = eventId)
-                occurrenceGenerator.regenerateOccurrences(insertedEvent)
+                    val savedEvent = linkedEvent.copy(id = eventId)
 
-                // Schedule reminders for new event
-                scheduleRemindersForEvent(insertedEvent, calendarColor, isModified = false)
+                    // Use linkException for Model B occurrence handling
+                    val originalTime = savedEvent.originalInstanceTime
+                    if (originalTime != null) {
+                        occurrenceGenerator.linkException(masterId, originalTime, savedEvent)
+                    }
+
+                    scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
+                    if (isNew) added++ else updated++
+                } catch (e: Exception) {
+                    Log.e(TAG, "Failed to process exception event ${event.uid}: ${e.message}")
+                }
             }
         }
 
         return SyncCount(added, updated, deleted)
+    }
+
+    /**
+     * Insert or update an event.
+     *
+     * @return Pair of (event ID, isNew)
+     */
+    private suspend fun upsertEvent(event: Event, existingEvent: Event?): Pair<Long, Boolean> {
+        return if (existingEvent != null) {
+            eventsDao.update(event.copy(id = existingEvent.id))
+            Pair(existingEvent.id, false)
+        } else {
+            Pair(eventsDao.insert(event), true)
+        }
     }
 
     /**
@@ -460,13 +510,17 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Extract UID from source identifier.
-     * Source format: "ics_subscription:{subscriptionId}:{uid}"
+     * Extract importId from caldavUrl.
+     *
+     * Format: "ics_subscription:{subscriptionId}:{importId}"
+     * ImportId format: "{uid}" or "{uid}:RECID:{timestamp}"
+     *
+     * Uses limit=3 to preserve colons within the importId itself.
      */
-    private fun extractUidFromSource(source: String?): String? {
+    private fun extractImportIdFromSource(source: String?): String? {
         if (source == null) return null
-        val parts = source.split(":")
-        return if (parts.size >= 3) parts.drop(2).joinToString(":") else null
+        val parts = source.split(":", limit = 3)
+        return if (parts.size >= 3) parts[2] else null
     }
 
     /**

@@ -11,6 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -41,6 +42,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 class IcsSubscriptionRepositoryTest {
 
     // Mocks
+    private lateinit var database: KashCalDatabase
     private lateinit var icsSubscriptionsDao: IcsSubscriptionsDao
     private lateinit var accountsDao: AccountsDao
     private lateinit var calendarsDao: CalendarsDao
@@ -89,6 +91,7 @@ class IcsSubscriptionRepositoryTest {
 
     @Before
     fun setup() {
+        database = mockk(relaxed = true)
         icsSubscriptionsDao = mockk(relaxed = true)
         accountsDao = mockk(relaxed = true)
         calendarsDao = mockk(relaxed = true)
@@ -98,7 +101,14 @@ class IcsSubscriptionRepositoryTest {
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
 
+        // Mock database.runInTransaction to just execute the block
+        coEvery { database.runInTransaction(any<suspend () -> Any>()) } coAnswers {
+            val block = firstArg<suspend () -> Any>()
+            block()
+        }
+
         repository = IcsSubscriptionRepository(
+            database = database,
             icsSubscriptionsDao = icsSubscriptionsDao,
             accountsDao = accountsDao,
             calendarsDao = calendarsDao,
