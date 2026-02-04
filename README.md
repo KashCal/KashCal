@@ -80,12 +80,14 @@ Your calendar reveals your life: doctor appointments, job interviews, who you me
 
 ## Tested CalDAV Providers
 
-| Provider | Status |
-|----------|--------|
-| iCloud | ✓ |
-| Nextcloud | ✓ |
-| Baïkal | ✓ |
-| Radicale | ✓ |
+| Provider | Status | Tested By |
+|----------|--------|-----------|
+| iCloud | ✓ | @one-kash |
+| Nextcloud | ✓ | @one-kash @dev-inside |
+| Baïkal | ✓ | @one-kash |
+| Radicale | ✓ | @one-kash |
+| mailbox.org | ✓ | @h1nnak |
+| Infomaniak | ✓ | @dirko-madrileno |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!
 

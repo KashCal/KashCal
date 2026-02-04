@@ -184,6 +184,10 @@ class CalDavXmlParser {
             var statusOk = true  // Default to OK - only set false if we see a non-200 status
             var hasWritePrivilege = false
             var isReadOnly = false
+            // Per-propstat tracking for RFC 4918 multi-propstat support (Stalwart, Radicale)
+            var currentPropstatHasResourceType = false
+            var currentPropstatStatus: String? = null
+            var resourceTypeStatusOk = true  // Status for propstat containing resourcetype
 
             while (parser.eventType != XmlPullParser.END_DOCUMENT) {
                 when (parser.eventType) {
@@ -199,9 +203,21 @@ class CalDavXmlParser {
                                 statusOk = true  // Default to OK - only set false if we see a non-200 status
                                 hasWritePrivilege = false
                                 isReadOnly = false
+                                // Reset per-propstat tracking for this response
+                                resourceTypeStatusOk = true
+                                currentPropstatHasResourceType = false
+                                currentPropstatStatus = null
                             }
-                            "propstat" -> inPropstat = true
-                            "resourcetype" -> inResourceType = true
+                            "propstat" -> {
+                                inPropstat = true
+                                // Reset per-propstat tracking
+                                currentPropstatHasResourceType = false
+                                currentPropstatStatus = null
+                            }
+                            "resourcetype" -> {
+                                inResourceType = true
+                                currentPropstatHasResourceType = true  // Mark this propstat contains resourcetype
+                            }
                             "current-user-privilege-set" -> inPrivilegeSet = true
                             "calendar" -> if (inResourceType) isCalendar = true
                             "write", "write-content" -> if (inPrivilegeSet) hasWritePrivilege = true
@@ -220,7 +236,8 @@ class CalDavXmlParser {
                             }
                             "status" -> {
                                 val statusText = readText(parser)
-                                // If status is explicitly not 200/201, mark as not OK
+                                currentPropstatStatus = statusText  // Store for per-propstat check
+                                // Keep existing global check for backward compat
                                 if (statusText != null && !statusText.contains("200") && !statusText.contains("201")) {
                                     statusOk = false
                                 }
@@ -230,7 +247,8 @@ class CalDavXmlParser {
                     XmlPullParser.END_TAG -> {
                         when (parser.name) {
                             "response" -> {
-                                if (isCalendar && currentHref != null && statusOk) {
+                                // Use resourceTypeStatusOk for calendar inclusion (RFC 4918 multi-propstat support)
+                                if (isCalendar && currentHref != null && resourceTypeStatusOk) {
                                     val href = currentHref!!
                                     val name = currentDisplayName ?: "Unnamed"
                                     calendars.add(
@@ -245,7 +263,16 @@ class CalDavXmlParser {
                                 }
                                 inResponse = false
                             }
-                            "propstat" -> inPropstat = false
+                            "propstat" -> {
+                                // Only update resourceTypeStatusOk if this propstat contained resourcetype
+                                if (currentPropstatHasResourceType) {
+                                    val status = currentPropstatStatus
+                                    resourceTypeStatusOk = status == null ||  // No status = OK (RFC 4918 default)
+                                        status.contains("200") ||
+                                        status.contains("201")
+                                }
+                                inPropstat = false
+                            }
                             "resourcetype" -> inResourceType = false
                             "current-user-privilege-set" -> inPrivilegeSet = false
                         }

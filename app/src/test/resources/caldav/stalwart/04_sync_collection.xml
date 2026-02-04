@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Stalwart sync-collection response (RFC 6578) -->
+<!-- Request: REPORT with sync-collection on calendar URL -->
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <!-- Changed event -->
+    <D:response>
+        <D:href>/dav/cal/admin/test-calendar/event-changed.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"stalwart-etag-changed-abc123"</D:getetag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+    <!-- New event -->
+    <D:response>
+        <D:href>/dav/cal/admin/test-calendar/event-new.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"stalwart-etag-new-def456"</D:getetag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+    <!-- Deleted event (404 status) -->
+    <D:response>
+        <D:href>/dav/cal/admin/test-calendar/event-deleted.ics</D:href>
+        <D:status>HTTP/1.1 404 Not Found</D:status>
+    </D:response>
+    <!-- New sync token -->
+    <D:sync-token>http://stalwart.example.com/ns/sync/new-token-789</D:sync-token>
+</D:multistatus>

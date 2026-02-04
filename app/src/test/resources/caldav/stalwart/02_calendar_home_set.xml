@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Stalwart calendar home set discovery response -->
+<!-- Request: PROPFIND /dav/principal/admin/ with calendar-home-set property -->
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/principal/admin/</D:href>
+        <D:propstat>
+            <D:prop>
+                <C:calendar-home-set>
+                    <D:href>/dav/cal/admin/</D:href>
+                </C:calendar-home-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

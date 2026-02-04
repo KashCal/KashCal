@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- RFC 4918 §9.2.1: propstat without explicit status element defaults to 200 OK -->
+<!-- Some servers omit status when all properties are found successfully -->
+<D:multistatus xmlns:D="DAV:" xmlns:A="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/cal/admin/no-status-calendar/</D:href>
+        <!-- Propstat without explicit status element - RFC default is 200 OK -->
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <C:calendar/>
+                </D:resourcetype>
+                <D:displayname>No Status Calendar</D:displayname>
+                <A:calendar-color>#FF5733FF</A:calendar-color>
+                <cs:getctag>stalwart-ctag-nostatus-111</cs:getctag>
+            </D:prop>
+            <!-- No <D:status> element - should default to 200 OK per RFC 4918 -->
+        </D:propstat>
+    </D:response>
+</D:multistatus>

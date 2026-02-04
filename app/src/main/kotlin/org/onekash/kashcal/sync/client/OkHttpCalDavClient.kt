@@ -308,6 +308,7 @@ class OkHttpCalDavClient : CalDavClient {
             "/caldav.php",      // Some servers
             "/caldav",          // Open-Xchange (mailbox.org)
             "/cal.php",         // Some servers
+            "/dav/cal",         // Stalwart
             "/dav"              // Generic (safe - only matches path now)
         )
 

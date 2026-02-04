@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- BUG CASE: Multiple propstat - 404 for optional properties, 200 for resourcetype -->
+<!-- Based on GitHub Issue stalwartlabs/mail-server#1591 -->
+<!-- This is valid RFC 4918 behavior but breaks KashCal parser -->
+<D:multistatus xmlns:D="DAV:" xmlns:A="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/cal/admin/test-calendar/</D:href>
+        <!-- First propstat: Missing optional properties -->
+        <D:propstat>
+            <D:prop>
+                <A:calendar-color/>
+                <A:calendar-description/>
+                <A:calendar-timezone/>
+                <A:calendar-timezone-id/>
+            </D:prop>
+            <D:status>HTTP/1.1 404 Not Found</D:status>
+        </D:propstat>
+        <!-- Second propstat: Core properties including resourcetype -->
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <C:calendar/>
+                </D:resourcetype>
+                <D:displayname>Test Calendar</D:displayname>
+                <cs:getctag>stalwart-ctag-multi-456</cs:getctag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Open-Xchange (mailbox.org) sync-collection response -->
+<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/event-123.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"ox-etag-abc123"</D:getetag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/event-456.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"ox-etag-def456"</D:getetag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/deleted-event.ics</D:href>
+        <D:status>HTTP/1.1 404 Not Found</D:status>
+    </D:response>
+    <D:sync-token>http://www.open-xchange.com/sync/1706889999</D:sync-token>
+</D:multistatus>

@@ -36,6 +36,10 @@
     <string name="action_ok">OK</string>
     <string name="action_not_now">Not Now</string>
     <string name="action_sign_in">Sign In</string>
+    <string name="action_select">Select</string>
+    <string name="action_import">Import</string>
+    <string name="action_show_password">Show password</string>
+    <string name="action_hide_password">Hide password</string>
     <string name="action_sign_out">Sign Out</string>
     <string name="action_learn_more">Learn More</string>
     <string name="action_open_apple_id">Open Apple ID</string>
@@ -89,6 +93,8 @@
     <string name="label_calendar_name">Calendar Name</string>
     <string name="label_name">Name</string>
     <string name="label_search">Search…</string>
+    <string name="label_hex_color">Hex Color</string>
+    <string name="label_enter_hex">Enter 6 hex characters (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
     <string name="view_all">All</string>
@@ -127,6 +133,15 @@
     <string name="onboarding_connect_prompt">Connect iCloud to see your events here</string>
     <string name="onboarding_connect_icloud">Connect iCloud</string>
 
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Connect iCloud</string>
+    <string name="signin_caldav_title">Add CalDAV Account</string>
+    <string name="signin_auto_generated">Auto-generated from server</string>
+    <!-- %1$s = provider name (e.g., "iCloud", "Nextcloud") -->
+    <string name="signin_connected_to">Connected to %1$s</string>
+    <!-- %1$d = calendar count, %2$s = email -->
+    <string name="signin_found_calendars">Found %1$d calendar(s) for %2$s. Syncing…</string>
+
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_force_sync_title">Force Full Sync?</string>
     <string name="dialog_force_sync_message">This will re-download all calendar data from the server. Local changes will be preserved.</string>
@@ -138,9 +153,17 @@
     <string name="dialog_action_required">This action is required to continue.</string>
     <string name="dialog_add_to_calendar">Add to calendar</string>
     <string name="dialog_select_calendar">Select calendar</string>
+    <string name="dialog_choose_color">Choose Color</string>
+    <string name="dialog_add_event">Add Event</string>
+    <!-- %1$d = number of events -->
+    <string name="dialog_import_events">Import %1$d Events</string>
+    <string name="dialog_add_subscription">Add Subscription</string>
+    <string name="dialog_edit_subscription">Edit Subscription</string>
 
     <!-- ==================== Status Messages ==================== -->
     <string name="status_no_events_week">No events this week</string>
+    <!-- %1$d = number of additional events (for week view overflow) -->
+    <string name="status_more_events">+%1$d more</string>
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
     <!-- %1$d = number of additional items -->
@@ -278,6 +301,10 @@
     <string name="cd_wheel_picker">Wheel picker with %1$d options</string>
     <!-- %1$s = version name -->
     <string name="cd_version_info">KashCal version %1$s. Long press for debug options.</string>
+    <!-- %1$s = color name (e.g., "Red", "Blue") -->
+    <string name="cd_color_slider">Color slider, currently %1$s</string>
+    <!-- %1$s = color name, %2$d = hue degrees -->
+    <string name="cd_color_slider_state">%1$s, %2$d degrees</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
     <string name="label_calendar">Calendar</string>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Open-Xchange (mailbox.org) calendar-multiget response -->
+<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/event-123.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"ox-etag-abc123"</D:getetag>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Open-Xchange//OX Calendar//EN
+BEGIN:VEVENT
+UID:event-123@mailbox.org
+DTSTAMP:20260201T100000Z
+DTSTART:20260215T100000Z
+DTEND:20260215T110000Z
+SUMMARY:Team Meeting
+DESCRIPTION:Weekly standup with the team
+END:VEVENT
+END:VCALENDAR</CAL:calendar-data>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/recurring-456.ics</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:getetag>"ox-etag-def456"</D:getetag>
+                <CAL:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Open-Xchange//OX Calendar//EN
+BEGIN:VEVENT
+UID:recurring-456@mailbox.org
+DTSTAMP:20260201T100000Z
+DTSTART:20260210T090000Z
+DTEND:20260210T100000Z
+RRULE:FREQ=WEEKLY;COUNT=10
+SUMMARY:Weekly Review
+END:VEVENT
+BEGIN:VEVENT
+UID:recurring-456@mailbox.org
+RECURRENCE-ID:20260217T090000Z
+DTSTAMP:20260201T100000Z
+DTSTART:20260217T140000Z
+DTEND:20260217T150000Z
+SUMMARY:Weekly Review (Rescheduled)
+END:VEVENT
+END:VCALENDAR</CAL:calendar-data>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

@@ -48,10 +48,12 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import kotlin.math.absoluteValue
+import org.onekash.kashcal.R
 
 // ============================================================================
 // Color Utility Functions
@@ -200,7 +202,7 @@ fun ColorPickerSheetContent(
     ) {
         // Header
         Text(
-            "Choose Color",
+            stringResource(R.string.dialog_choose_color),
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .align(Alignment.Start)
@@ -251,14 +253,14 @@ fun ColorPickerSheetContent(
             horizontalArrangement = Arrangement.End
         ) {
             TextButton(onClick = onCancel) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
             Spacer(Modifier.width(8.dp))
             Button(
                 onClick = { onColorSelected(previewColor) },
                 enabled = isHexValid && hexInput.length == 6
             ) {
-                Text("Select")
+                Text(stringResource(R.string.action_select))
             }
         }
     }
@@ -304,6 +306,10 @@ private fun HueSlider(
 
     val colorName = hueToColorName(hue)
 
+    // Accessibility strings (captured outside semantics block since it's not @Composable)
+    val sliderDescription = stringResource(R.string.cd_color_slider, colorName)
+    val sliderState = stringResource(R.string.cd_color_slider_state, colorName, hue.toInt())
+
     // Rainbow gradient colors
     val rainbowColors = remember {
         listOf(
@@ -332,9 +338,9 @@ private fun HueSlider(
     Box(
         modifier = modifier
             .height(48.dp)
-            .semantics {
-                contentDescription = "Color slider, currently $colorName"
-                stateDescription = "$colorName, ${hue.toInt()} degrees"
+            .semantics(mergeDescendants = true) {
+                contentDescription = sliderDescription
+                stateDescription = sliderState
             }
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
@@ -415,11 +421,11 @@ private fun HexInputField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier,
-        label = { Text("Hex Color") },
+        label = { Text(stringResource(R.string.label_hex_color)) },
         prefix = { Text("#") },
         isError = isError,
         supportingText = if (isError) {
-            { Text("Enter 6 hex characters (0-9, A-F)") }
+            { Text(stringResource(R.string.label_enter_hex)) }
         } else null,
         singleLine = true,
         keyboardOptions = KeyboardOptions(

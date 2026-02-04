@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Open-Xchange (mailbox.org) calendar list response -->
+<!-- Note: OX uses uppercase namespace prefixes and may include task calendars -->
+<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:APPLE="http://apple.com/ns/ical/">
+    <!-- Calendar home (parent) - should NOT be detected as calendar -->
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                </D:resourcetype>
+                <D:displayname>testuser@mailbox.org</D:displayname>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+
+    <!-- Personal calendar - valid calendar -->
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Kalender/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <CAL:calendar/>
+                </D:resourcetype>
+                <D:displayname>Kalender</D:displayname>
+                <APPLE:calendar-color>#0E61B9FF</APPLE:calendar-color>
+                <CS:getctag>1706889600</CS:getctag>
+                <D:current-user-privilege-set>
+                    <D:privilege><D:read/></D:privilege>
+                    <D:privilege><D:write/></D:privilege>
+                    <D:privilege><D:write-content/></D:privilege>
+                </D:current-user-privilege-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+
+    <!-- Work calendar - valid calendar -->
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/Arbeit/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <CAL:calendar/>
+                </D:resourcetype>
+                <D:displayname>Arbeit</D:displayname>
+                <APPLE:calendar-color>#CC0000FF</APPLE:calendar-color>
+                <CS:getctag>1706889601</CS:getctag>
+                <D:current-user-privilege-set>
+                    <D:privilege><D:read/></D:privilege>
+                    <D:privilege><D:write/></D:privilege>
+                </D:current-user-privilege-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+
+    <!-- Shared calendar - read-only -->
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/shared-holidays/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <CAL:calendar/>
+                </D:resourcetype>
+                <D:displayname>German Holidays</D:displayname>
+                <APPLE:calendar-color>#00AA00FF</APPLE:calendar-color>
+                <CS:getctag>1706889602</CS:getctag>
+                <D:current-user-privilege-set>
+                    <D:privilege><D:read/></D:privilege>
+                </D:current-user-privilege-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

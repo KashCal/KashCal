@@ -44,6 +44,7 @@ class OkHttpCalDavClientUrlExtractionTest {
             "/caldav.php",      // Some servers
             "/caldav",          // Open-Xchange (mailbox.org)
             "/cal.php",         // Some servers
+            "/dav/cal",         // Stalwart
             "/dav"              // Generic (safe - only matches path now)
         )
 
@@ -221,5 +222,25 @@ class OkHttpCalDavClientUrlExtractionTest {
         val url = "https://server.com/apps/calendar/dav/users/"
         val result = extractCaldavBaseUrl(url)
         assertEquals("https://server.com/apps/calendar/dav", result)
+    }
+
+    // ========================================================================
+    // Stalwart Tests (v21.5.8)
+    // ========================================================================
+
+    @Test
+    fun `Stalwart - extracts dav-cal pattern`() {
+        val url = "http://localhost:8085/dav/cal/user/calendar/"
+        val result = extractCaldavBaseUrl(url)
+        assertEquals("http://localhost:8085/dav/cal", result)
+    }
+
+    @Test
+    fun `substring match - davey matches dav pattern (indexOf behavior)`() {
+        // Documents expected behavior: indexOf() matches substrings
+        // "/davey" contains "/dav" so it matches the /dav pattern
+        val url = "https://server.com/davey/calendar/"
+        val result = extractCaldavBaseUrl(url)
+        assertEquals("https://server.com/dav", result)
     }
 }

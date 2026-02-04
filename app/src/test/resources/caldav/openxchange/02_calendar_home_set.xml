@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Open-Xchange (mailbox.org) calendar home set response -->
+<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
+    <D:response>
+        <D:href>/caldav/testuser@mailbox.org/</D:href>
+        <D:propstat>
+            <D:prop>
+                <CAL:calendar-home-set>
+                    <D:href>/caldav/testuser@mailbox.org/</D:href>
+                </CAL:calendar-home-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

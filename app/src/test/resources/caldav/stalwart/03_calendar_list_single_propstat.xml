@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Baseline: Single propstat with all properties - works with current parser -->
+<D:multistatus xmlns:D="DAV:" xmlns:A="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/cal/admin/test-calendar/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <C:calendar/>
+                </D:resourcetype>
+                <D:displayname>Test Calendar</D:displayname>
+                <A:calendar-color>#0082C9FF</A:calendar-color>
+                <cs:getctag>stalwart-ctag-single-123</cs:getctag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

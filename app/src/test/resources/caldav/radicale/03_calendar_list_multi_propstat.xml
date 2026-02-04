@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Radicale returns 404 for calendar-color in separate propstat -->
+<!-- This is the same bug pattern as Stalwart (GitHub Issue #1591) -->
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:ICAL="http://apple.com/ns/ical/">
+    <D:response>
+        <D:href>/testuser/personal/</D:href>
+        <!-- First propstat: Core properties with 200 OK -->
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <C:calendar/>
+                    <D:collection/>
+                </D:resourcetype>
+                <D:displayname>Personal</D:displayname>
+                <CS:getctag>8ab8def1234567890</CS:getctag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+        <!-- Second propstat: Optional properties with 404 -->
+        <D:propstat>
+            <D:prop>
+                <ICAL:calendar-color/>
+            </D:prop>
+            <D:status>HTTP/1.1 404 Not Found</D:status>
+        </D:propstat>
+    </D:response>
+    <!-- Work calendar - same pattern -->
+    <D:response>
+        <D:href>/testuser/work/</D:href>
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <C:calendar/>
+                    <D:collection/>
+                </D:resourcetype>
+                <D:displayname>Work</D:displayname>
+                <CS:getctag>9bc9abc0987654321</CS:getctag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+        <D:propstat>
+            <D:prop>
+                <ICAL:calendar-color/>
+                <ICAL:calendar-description/>
+            </D:prop>
+            <D:status>HTTP/1.1 404 Not Found</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

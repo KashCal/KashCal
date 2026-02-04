@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- All 6 optional properties from GitHub Issue #1591 return 404 -->
+<D:multistatus xmlns:D="DAV:" xmlns:A="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/cal/admin/minimal-calendar/</D:href>
+        <!-- All optional properties missing -->
+        <D:propstat>
+            <D:prop>
+                <A:calendar-color/>
+                <A:calendar-description/>
+                <A:calendar-timezone/>
+                <A:calendar-timezone-id/>
+                <transports/>
+                <topic/>
+            </D:prop>
+            <D:status>HTTP/1.1 404 Not Found</D:status>
+        </D:propstat>
+        <!-- Only core properties present -->
+        <D:propstat>
+            <D:prop>
+                <D:resourcetype>
+                    <D:collection/>
+                    <C:calendar/>
+                </D:resourcetype>
+                <D:displayname>Minimal Calendar</D:displayname>
+                <cs:getctag>stalwart-ctag-minimal-789</cs:getctag>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>
