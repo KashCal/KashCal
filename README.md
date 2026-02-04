@@ -82,12 +82,13 @@ Your calendar reveals your life: doctor appointments, job interviews, who you me
 
 | Provider | Status | Tested By |
 |----------|--------|-----------|
-| iCloud | ✓ | @one-kash |
-| Nextcloud | ✓ | @one-kash @dev-inside |
-| Baïkal | ✓ | @one-kash |
-| Radicale | ✓ | @one-kash |
-| mailbox.org | ✓ | @h1nnak |
-| Infomaniak | ✓ | @dirko-madrileno |
+| iCloud | ✓ | [@one-kash](https://github.com/one-kash) |
+| Nextcloud | ✓ | [@one-kash](https://github.com/one-kash) [@dev-inside](https://github.com/dev-inside) |
+| Baïkal | ✓ | [@one-kash](https://github.com/one-kash) |
+| Radicale | ✓ | [@one-kash](https://github.com/one-kash) |
+| mailbox.org | ✓ | [@h1nnak](https://github.com/h1nnak) |
+| Infomaniak | ✓ | [@dirko-madrileno](https://github.com/dirko-madrileno) |
+| Stalwart | ✓ | [@OneCreek](https://github.com/OneCreek) |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!
 
