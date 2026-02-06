@@ -48,6 +48,7 @@ import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
+import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.onekash.kashcal.ui.model.CalendarGroup
 import javax.inject.Inject
 import org.onekash.kashcal.data.db.entity.IcsSubscription as IcsSubscriptionEntity
@@ -111,7 +112,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val eventCoordinator: EventCoordinator,
     private val syncLogReader: SyncLogReader,
     private val contactBirthdayManager: ContactBirthdayManager,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val widgetUpdateManager: WidgetUpdateManager
 ) : AndroidViewModel(application) {
 
     // Account connection state
@@ -446,10 +448,12 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Update the time format preference.
+     * Also triggers widget refresh since widgets display times.
      */
     fun setTimeFormat(format: String) {
         viewModelScope.launch {
             dataStore.setTimeFormat(format)
+            widgetUpdateManager.updateAllWidgets("time_format_changed")
         }
     }
 

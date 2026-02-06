@@ -600,4 +600,81 @@ class WeekViewUtilsTest {
 
         assertEquals("Feb 1", result)
     }
+
+    // ==================== 24-Hour Format Tests ====================
+
+    @Test
+    fun `formatTimeRange with 24h pattern shows 24h format`() {
+        // 2:00 PM - 3:30 PM UTC
+        val startTs = 1767657600000L + (14 * 60 * 60 * 1000)  // Jan 6, 2026 14:00 UTC
+        val endTs = startTs + (90 * 60 * 1000)  // +90 minutes
+
+        val result = WeekViewUtils.formatTimeRange(startTs, endTs, "HH:mm")
+
+        assertTrue("Expected 24h format with 14:00, got: $result", result.contains("14:00"))
+        assertTrue("Expected 24h format with 15:30, got: $result", result.contains("15:30"))
+    }
+
+    @Test
+    fun `formatTimeRange with 12h pattern shows 12h format`() {
+        // Same times as above, but with 12h pattern
+        val startTs = 1767657600000L + (14 * 60 * 60 * 1000)
+        val endTs = startTs + (90 * 60 * 1000)
+
+        val result = WeekViewUtils.formatTimeRange(startTs, endTs, "h:mma")
+
+        assertTrue("Expected 12h format with 2:00, got: $result", result.contains("2:00"))
+        assertTrue("Expected 12h format with pm, got: $result", result.lowercase().contains("pm"))
+    }
+
+    @Test
+    fun `formatOverflowTime with 24h pattern shows 24h format`() {
+        // 5:00 AM UTC
+        val fiveAm = 1767657600000L + (5 * 60 * 60 * 1000)
+
+        val result = WeekViewUtils.formatOverflowTime(fiveAm, "HH:mm")
+
+        assertEquals("05:00", result)
+    }
+
+    @Test
+    fun `formatOverflowTime with 12h pattern shows 12h format`() {
+        val fiveAm = 1767657600000L + (5 * 60 * 60 * 1000)
+
+        val result = WeekViewUtils.formatOverflowTime(fiveAm, "h:mma")
+
+        assertEquals("5:00am", result)
+    }
+
+    @Test
+    fun `formatClampIndicatorTime 24h format midnight`() {
+        val result = WeekViewUtils.formatClampIndicatorTime(0, is24Hour = true)
+        assertEquals("00:00", result)
+    }
+
+    @Test
+    fun `formatClampIndicatorTime 24h format noon`() {
+        val result = WeekViewUtils.formatClampIndicatorTime(12 * 60, is24Hour = true)
+        assertEquals("12:00", result)
+    }
+
+    @Test
+    fun `formatClampIndicatorTime 24h format 5am`() {
+        val result = WeekViewUtils.formatClampIndicatorTime(5 * 60, is24Hour = true)
+        assertEquals("05:00", result)
+    }
+
+    @Test
+    fun `formatClampIndicatorTime 24h format 11_45pm`() {
+        val result = WeekViewUtils.formatClampIndicatorTime(23 * 60 + 45, is24Hour = true)
+        assertEquals("23:45", result)
+    }
+
+    @Test
+    fun `formatClampIndicatorTime 12h format preserves existing behavior`() {
+        // Verify backward compatibility - default (is24Hour=false) unchanged
+        assertEquals("5am", WeekViewUtils.formatClampIndicatorTime(5 * 60, is24Hour = false))
+        assertEquals("12am", WeekViewUtils.formatClampIndicatorTime(0, is24Hour = false))
+        assertEquals("12pm", WeekViewUtils.formatClampIndicatorTime(12 * 60, is24Hour = false))
+    }
 }

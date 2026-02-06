@@ -50,12 +50,14 @@ import java.time.format.DateTimeFormatter
  * @param events List of events to display
  * @param currentDate Formatted current date for header
  * @param showEventEmojis Whether to show auto-detected emojis in event titles
+ * @param timePattern Time format pattern (e.g., "h:mm a" for 12h, "HH:mm" for 24h)
  */
 @Composable
 fun AgendaWidgetContent(
     events: List<WidgetDataRepository.WidgetEvent>,
     currentDate: String,
-    showEventEmojis: Boolean = true
+    showEventEmojis: Boolean = true,
+    timePattern: String = "h:mm a"
 ) {
     Column(
         modifier = GlanceModifier
@@ -70,7 +72,7 @@ fun AgendaWidgetContent(
         if (events.isEmpty()) {
             EmptyState()
         } else {
-            EventList(events, showEventEmojis)
+            EventList(events, showEventEmojis, timePattern)
         }
     }
 }
@@ -119,7 +121,8 @@ private fun WidgetHeader(date: String) {
 @Composable
 private fun EventList(
     events: List<WidgetDataRepository.WidgetEvent>,
-    showEventEmojis: Boolean
+    showEventEmojis: Boolean,
+    timePattern: String
 ) {
     val visibleEvents = events.take(MAX_VISIBLE_EVENTS)
     val overflowCount = events.size - MAX_VISIBLE_EVENTS
@@ -130,7 +133,7 @@ private fun EventList(
             .padding(vertical = 4.dp)
     ) {
         visibleEvents.forEach { event ->
-            EventRow(event, showEventEmojis)
+            EventRow(event, showEventEmojis, timePattern)
         }
 
         if (overflowCount > 0) {
@@ -146,7 +149,8 @@ private fun EventList(
 @Composable
 private fun EventRow(
     event: WidgetDataRepository.WidgetEvent,
-    showEventEmojis: Boolean
+    showEventEmojis: Boolean,
+    timePattern: String
 ) {
     // Format title with optional emoji prefix
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
@@ -168,7 +172,7 @@ private fun EventRow(
     ) {
         // Time column
         Text(
-            text = formatEventTime(event),
+            text = formatEventTime(event, timePattern),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
                 fontSize = 12.sp,
@@ -277,11 +281,11 @@ private fun OverflowIndicator(count: Int) {
 /**
  * Format event time for display.
  */
-private fun formatEventTime(event: WidgetDataRepository.WidgetEvent): String {
+private fun formatEventTime(event: WidgetDataRepository.WidgetEvent, timePattern: String): String {
     return if (event.isAllDay) {
         "All day"
     } else {
-        val formatter = DateTimeFormatter.ofPattern("h:mm a")
+        val formatter = DateTimeFormatter.ofPattern(timePattern, java.util.Locale.getDefault())
         Instant.ofEpochMilli(event.startTs)
             .atZone(ZoneId.systemDefault())
             .format(formatter)

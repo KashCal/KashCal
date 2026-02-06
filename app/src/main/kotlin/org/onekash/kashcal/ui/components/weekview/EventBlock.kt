@@ -42,6 +42,8 @@ import org.onekash.kashcal.domain.EmojiMatcher
  * @param clampedEnd True if event ends after visible range
  * @param originalStartMinutes Original start time in minutes (for clamp indicator)
  * @param originalEndMinutes Original end time in minutes (for clamp indicator)
+ * @param timePattern DateTimeFormatter pattern for time range (e.g., "h:mma" for 12h, "HH:mm" for 24h)
+ * @param is24Hour True for 24-hour format in clamp indicators
  * @param onClick Called when event is tapped
  * @param modifier Modifier for the container
  */
@@ -56,6 +58,8 @@ fun EventBlock(
     originalStartMinutes: Int = 0,
     originalEndMinutes: Int = 0,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
+    is24Hour: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -85,7 +89,7 @@ fun EventBlock(
             // Clamp indicator (start) - shown above title
             if (clampedStart) {
                 Text(
-                    text = "\u2191 ${WeekViewUtils.formatClampIndicatorTime(originalStartMinutes)}",
+                    text = "\u2191 ${WeekViewUtils.formatClampIndicatorTime(originalStartMinutes, is24Hour)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.8f),
                     maxLines = 1
@@ -105,7 +109,7 @@ fun EventBlock(
             // Time (if height >= 36dp)
             if (showTime) {
                 Text(
-                    text = WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs),
+                    text = WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs, timePattern),
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.7f),
                     maxLines = 1,
@@ -127,7 +131,7 @@ fun EventBlock(
             // Clamp indicator (end) - shown at bottom
             if (clampedEnd) {
                 Text(
-                    text = "\u2193 ${WeekViewUtils.formatClampIndicatorTime(originalEndMinutes)}",
+                    text = "\u2193 ${WeekViewUtils.formatClampIndicatorTime(originalEndMinutes, is24Hour)}",
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.8f),
                     maxLines = 1
@@ -141,6 +145,8 @@ fun EventBlock(
  * Compact event block for overflow display ("+N more" list).
  * Shows only title and time in a single line.
  * Solid fill with contrasting text.
+ *
+ * @param timePattern DateTimeFormatter pattern for time range (e.g., "h:mma" for 12h, "HH:mm" for 24h)
  */
 @Composable
 fun CompactEventBlock(
@@ -149,6 +155,7 @@ fun CompactEventBlock(
     color: Int,
     onClick: () -> Unit,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     modifier: Modifier = Modifier
 ) {
     val backgroundColor = Color(color)
@@ -165,7 +172,7 @@ fun CompactEventBlock(
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
-            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs)}",
+            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs, timePattern)}",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
             maxLines = 1,

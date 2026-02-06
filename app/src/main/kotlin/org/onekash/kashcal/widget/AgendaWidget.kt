@@ -50,6 +50,11 @@ class AgendaWidget : GlanceAppWidget() {
         val dataStore = KashCalDataStore(context)
         val showEventEmojis = dataStore.showEventEmojis.first()
 
+        // Get time format preference
+        val timeFormatPref = dataStore.getTimeFormat()
+        val is24HourDevice = android.text.format.DateFormat.is24HourFormat(context)
+        val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24HourDevice)
+
         // Format current date
         val currentDate = formatCurrentDate()
 
@@ -58,7 +63,8 @@ class AgendaWidget : GlanceAppWidget() {
                 AgendaWidgetContent(
                     events = events,
                     currentDate = currentDate,
-                    showEventEmojis = showEventEmojis
+                    showEventEmojis = showEventEmojis,
+                    timePattern = timePattern
                 )
             }
         }

@@ -47,6 +47,7 @@ import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.contacts.ContactBirthdayManager
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.widget.WidgetUpdateManager
 import kotlinx.coroutines.delay
 
 /**
@@ -81,6 +82,7 @@ class AccountSettingsViewModelTest {
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactBirthdayManager: ContactBirthdayManager
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var widgetUpdateManager: WidgetUpdateManager
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -144,6 +146,7 @@ class AccountSettingsViewModelTest {
         syncLogReader = mockk(relaxed = true)
         contactBirthdayManager = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        widgetUpdateManager = mockk(relaxed = true)
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -203,7 +206,8 @@ class AccountSettingsViewModelTest {
             eventCoordinator = eventCoordinator,
             syncLogReader = syncLogReader,
             contactBirthdayManager = contactBirthdayManager,
-            dataStore = dataStore
+            dataStore = dataStore,
+            widgetUpdateManager = widgetUpdateManager
         )
     }
 

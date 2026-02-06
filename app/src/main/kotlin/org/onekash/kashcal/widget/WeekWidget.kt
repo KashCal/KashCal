@@ -9,6 +9,7 @@ import androidx.glance.appwidget.provideContent
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Week View widget showing events for the next 7 days (today + 6 days).
@@ -49,11 +50,17 @@ class WeekWidget : GlanceAppWidget() {
         val dataStore = KashCalDataStore(context)
         val showEventEmojis = dataStore.showEventEmojis.first()
 
+        // Get time format preference
+        val timeFormatPref = dataStore.getTimeFormat()
+        val is24HourDevice = android.text.format.DateFormat.is24HourFormat(context)
+        val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24HourDevice)
+
         provideContent {
             GlanceTheme {
                 WeekWidgetContent(
                     weekEvents = weekEvents,
-                    showEventEmojis = showEventEmojis
+                    showEventEmojis = showEventEmojis,
+                    timePattern = timePattern
                 )
             }
         }

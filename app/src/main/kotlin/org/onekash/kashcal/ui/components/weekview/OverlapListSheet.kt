@@ -36,6 +36,7 @@ fun OverlapListSheet(
     events: List<Pair<Event, Occurrence>>,
     calendarColors: Map<Long, Int>,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     onDismiss: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit
 ) {
@@ -77,6 +78,7 @@ fun OverlapListSheet(
                             onDismiss()
                         },
                         showEventEmojis = showEventEmojis,
+                        timePattern = timePattern,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)

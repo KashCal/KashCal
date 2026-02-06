@@ -165,21 +165,18 @@ object WeekViewUtils {
     }
 
     /**
-     * Format time for overflow row display (e.g., "5:30am").
+     * Format time for overflow row display (e.g., "5:30am" or "05:30").
+     *
+     * @param timestampMs Event start timestamp
+     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
      */
-    fun formatOverflowTime(timestampMs: Long): String {
-        val time = Instant.ofEpochMilli(timestampMs)
+    fun formatOverflowTime(timestampMs: Long, timePattern: String = "h:mma"): String {
+        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+        return Instant.ofEpochMilli(timestampMs)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()
-        val hour = time.hour
-        val minute = time.minute
-        val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
-        val amPm = if (hour < 12) "am" else "pm"
-        return if (minute == 0) {
-            "$hour12$amPm"
-        } else {
-            "$hour12:${minute.toString().padStart(2, '0')}$amPm"
-        }
+            .format(formatter)
+            .lowercase(Locale.getDefault())
     }
 
     // ==================== Week Calculations ====================
@@ -403,20 +400,46 @@ object WeekViewUtils {
     }
 
     /**
-     * Format time for clamped indicator (e.g., "5:30am").
+     * Format hour for time grid labels (e.g., "6a", "12p" or "06", "12").
+     *
+     * @param hour Hour (0-23)
+     * @param is24Hour True for 24-hour format (e.g., "06"), false for 12-hour (e.g., "6a")
+     * @return Formatted hour string
+     */
+    fun formatHourLabel(hour: Int, is24Hour: Boolean = false): String {
+        return if (is24Hour) {
+            String.format(Locale.getDefault(), "%02d", hour)
+        } else {
+            when {
+                hour == 0 -> "12a"
+                hour < 12 -> "${hour}a"
+                hour == 12 -> "12p"
+                else -> "${hour - 12}p"
+            }
+        }
+    }
+
+    /**
+     * Format time for clamped indicator (e.g., "5:30am" or "05:30").
      *
      * @param minutes Time in minutes from midnight
+     * @param is24Hour True for 24-hour format (e.g., "05:30"), false for 12-hour (e.g., "5:30am")
      * @return Formatted time string
      */
-    fun formatClampIndicatorTime(minutes: Int): String {
+    fun formatClampIndicatorTime(minutes: Int, is24Hour: Boolean = false): String {
         val hour = minutes / MINUTES_PER_HOUR
         val minute = minutes % MINUTES_PER_HOUR
-        val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
-        val amPm = if (hour < 12) "am" else "pm"
-        return if (minute == 0) {
-            "$hour12$amPm"
+
+        return if (is24Hour) {
+            String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
         } else {
-            "$hour12:${minute.toString().padStart(2, '0')}$amPm"
+            val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
+            val amPm = if (hour < 12) "am" else "pm"
+            if (minute == 0) {
+                "$hour12$amPm"
+            } else {
+                "$hour12:${minute.toString().padStart(2, '0')}$amPm"
+            }
         }
     }
 
@@ -658,14 +681,15 @@ object WeekViewUtils {
     // ==================== Time Formatting ====================
 
     /**
-     * Format a time range for display (e.g., "9:00am - 10:30am").
+     * Format a time range for display (e.g., "9:00am - 10:30am" or "09:00 - 10:30").
      *
      * @param startTs Start timestamp in milliseconds
      * @param endTs End timestamp in milliseconds
+     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
      * @return Formatted time range string
      */
-    fun formatTimeRange(startTs: Long, endTs: Long): String {
-        val formatter = DateTimeFormatter.ofPattern("h:mma", Locale.getDefault())
+    fun formatTimeRange(startTs: Long, endTs: Long, timePattern: String = "h:mma"): String {
+        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
         val startTime = Instant.ofEpochMilli(startTs)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()

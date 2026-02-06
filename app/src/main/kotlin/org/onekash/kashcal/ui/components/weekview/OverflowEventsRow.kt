@@ -61,6 +61,7 @@ fun OverflowEventsRow(
     calendarColors: Map<Long, Int>,
     visibleDays: Int = 3,
     timeColumnWidth: Dp = 48.dp,
+    timePattern: String = "h:mma",
     onEventClick: (Event, Occurrence) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -101,6 +102,7 @@ fun OverflowEventsRow(
                             events = dayEvents,
                             calendarColors = calendarColors,
                             expanded = expanded,
+                            timePattern = timePattern,
                             onExpand = { expanded = true },
                             onEventClick = onEventClick,
                             modifier = Modifier.weight(1f)
@@ -129,6 +131,7 @@ private fun OverflowColumn(
     events: List<Pair<Event, Occurrence>>,
     calendarColors: Map<Long, Int>,
     expanded: Boolean,
+    timePattern: String,
     onExpand: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit,
     modifier: Modifier = Modifier
@@ -161,6 +164,7 @@ private fun OverflowColumn(
                 event = event,
                 occurrence = occurrence,
                 color = color,
+                timePattern = timePattern,
                 onClick = { onEventClick(event, occurrence) }
             )
         }
@@ -187,6 +191,7 @@ private fun OverflowEventChip(
     event: Event,
     occurrence: Occurrence,
     color: Int,
+    timePattern: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -195,7 +200,7 @@ private fun OverflowEventChip(
     val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
     val textColor = if (luminance > 0.5f) Color.Black else Color.White
 
-    val timeText = WeekViewUtils.formatOverflowTime(occurrence.startTs)
+    val timeText = WeekViewUtils.formatOverflowTime(occurrence.startTs, timePattern)
 
     Box(
         modifier = modifier

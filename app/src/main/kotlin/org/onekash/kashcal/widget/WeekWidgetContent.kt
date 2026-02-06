@@ -44,11 +44,16 @@ private const val MAX_EVENTS_PER_DAY = 5
 /**
  * Main content composable for the week widget.
  * Shows 7 days (today + 6) in a scrollable list with events for each day.
+ *
+ * @param weekEvents Map of day code to events for that day
+ * @param showEventEmojis Whether to show auto-detected emojis in event titles
+ * @param timePattern Time format pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
  */
 @Composable
 fun WeekWidgetContent(
     weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
-    showEventEmojis: Boolean
+    showEventEmojis: Boolean,
+    timePattern: String = "h:mma"
 ) {
     Column(
         modifier = GlanceModifier
@@ -71,6 +76,7 @@ fun WeekWidgetContent(
                     dayCode = dayCode,
                     events = events,
                     showEventEmojis = showEventEmojis,
+                    timePattern = timePattern,
                     isToday = isToday(dayCode)
                 )
             }
@@ -134,6 +140,7 @@ private fun DaySection(
     dayCode: Int,
     events: List<WidgetDataRepository.WidgetEvent>,
     showEventEmojis: Boolean,
+    timePattern: String,
     isToday: Boolean
 ) {
     Column(
@@ -147,7 +154,7 @@ private fun DaySection(
         } else {
             val visibleEvents = events.take(MAX_EVENTS_PER_DAY)
             visibleEvents.forEach { event ->
-                CompactEventRow(event, showEventEmojis)
+                CompactEventRow(event, showEventEmojis, timePattern)
             }
             if (events.size > MAX_EVENTS_PER_DAY) {
                 OverflowRow(dayCode, events.size - MAX_EVENTS_PER_DAY)
@@ -258,7 +265,8 @@ private fun EmptyDayRow(dayCode: Int) {
 @Composable
 private fun CompactEventRow(
     event: WidgetDataRepository.WidgetEvent,
-    showEventEmojis: Boolean
+    showEventEmojis: Boolean,
+    timePattern: String
 ) {
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
     val calendarColor = Color(event.calendarColor)
@@ -290,7 +298,7 @@ private fun CompactEventRow(
 
         // Time
         Text(
-            text = formatCompactTime(event),
+            text = formatCompactTime(event, timePattern),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
                 fontSize = 11.sp,
@@ -347,15 +355,15 @@ private fun OverflowRow(dayCode: Int, count: Int) {
 }
 
 /** Format event time compactly (e.g., "9:00a" or "All day") */
-private fun formatCompactTime(event: WidgetDataRepository.WidgetEvent): String {
+private fun formatCompactTime(event: WidgetDataRepository.WidgetEvent, timePattern: String): String {
     return if (event.isAllDay) {
         "All day"
     } else {
-        val formatter = DateTimeFormatter.ofPattern("h:mma", Locale.US)
+        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
         Instant.ofEpochMilli(event.startTs)
             .atZone(ZoneId.systemDefault())
             .format(formatter)
-            .lowercase(Locale.US)
+            .lowercase(Locale.getDefault())
     }
 }
 

@@ -96,6 +96,7 @@ fun WeekViewContent(
     error: String?,
     scrollPosition: Int,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     onDatePickerRequest: () -> Unit,
     onEventClick: (Event, Occurrence) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -105,6 +106,8 @@ fun WeekViewContent(
     onNavigationConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    // Compute is24Hour flag for clamp indicators
+    val is24Hour = timePattern.startsWith("H")
     // Infinite day pager: CENTER_DAY_PAGE = today
     val pagerState = rememberPagerState(
         initialPage = WeekViewUtils.CENTER_DAY_PAGE,
@@ -196,6 +199,8 @@ fun WeekViewContent(
                 calendarColors = calendarColors,
                 scrollState = scrollState,
                 showEventEmojis = showEventEmojis,
+                timePattern = timePattern,
+                is24Hour = is24Hour,
                 onEventClick = onEventClick,
                 onOverflowClick = { events -> overflowEvents = events },
                 onLongPress = onLongPress,
@@ -211,6 +216,7 @@ fun WeekViewContent(
             events = events,
             calendarColors = calendarColors,
             showEventEmojis = showEventEmojis,
+            timePattern = timePattern,
             onDismiss = { overflowEvents = null },
             onEventClick = onEventClick
         )
@@ -232,6 +238,8 @@ private fun UnifiedTimeGrid(
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     scrollState: ScrollState = rememberScrollState(),
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
+    is24Hour: Boolean = false,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -298,6 +306,7 @@ private fun UnifiedTimeGrid(
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
             showEventEmojis = showEventEmojis,
+            timePattern = timePattern,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -312,7 +321,7 @@ private fun UnifiedTimeGrid(
                     .height(totalHeight)
             ) {
                 for (hour in WeekViewUtils.START_HOUR until WeekViewUtils.END_HOUR) {
-                    TimeLabel(hour = hour, height = hourHeight)
+                    TimeLabel(hour = hour, height = hourHeight, is24Hour = is24Hour)
                 }
             }
 
@@ -354,6 +363,8 @@ private fun UnifiedTimeGrid(
                                 hourHeight = hourHeight,
                                 isToday = date == today,
                                 showEventEmojis = showEventEmojis,
+                                timePattern = timePattern,
+                                is24Hour = is24Hour,
                                 onEventClick = onEventClick,
                                 onOverflowClick = onOverflowClick,
                                 onLongPress = onLongPress,
@@ -379,6 +390,7 @@ private fun UnifiedTimeGrid(
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
             showEventEmojis = showEventEmojis,
+            timePattern = timePattern,
             onEventClick = onEventClick,
             onOverflowClick = onOverflowClick
         )
@@ -518,6 +530,7 @@ private fun OverflowEventsPagerRow(
     calendarColors: Map<Long, Int>,
     timeColumnWidth: Dp,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
@@ -560,6 +573,7 @@ private fun OverflowEventsPagerRow(
                     calendarColors = calendarColors,
                     showTime = true,
                     showEventEmojis = showEventEmojis,
+                    timePattern = timePattern,
                     onEventClick = onEventClick,
                     onOverflowClick = onOverflowClick,
                     modifier = Modifier
@@ -581,6 +595,7 @@ private fun CompactEventCell(
     calendarColors: Map<Long, Int>,
     showTime: Boolean,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     modifier: Modifier = Modifier
@@ -601,7 +616,8 @@ private fun CompactEventCell(
             color = color,
             onClick = { onEventClick(firstEvent, firstOccurrence) },
             showTime = showTime,
-            showEventEmojis = showEventEmojis
+            showEventEmojis = showEventEmojis,
+            timePattern = timePattern
         )
 
         // Show "+N more" if there are more events
@@ -631,11 +647,12 @@ private fun CompactEventChip(
     onClick: () -> Unit,
     showTime: Boolean = false,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
     modifier: Modifier = Modifier
 ) {
     val formattedTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
     val displayText = if (showTime) {
-        "${WeekViewUtils.formatOverflowTime(occurrence.startTs)} $formattedTitle"
+        "${WeekViewUtils.formatOverflowTime(occurrence.startTs, timePattern)} $formattedTitle"
     } else {
         formattedTitle
     }
@@ -672,6 +689,7 @@ private fun CompactEventChip(
 private fun TimeLabel(
     hour: Int,
     height: Dp,
+    is24Hour: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -681,20 +699,11 @@ private fun TimeLabel(
         contentAlignment = Alignment.TopEnd
     ) {
         Text(
-            text = formatHour(hour),
+            text = WeekViewUtils.formatHourLabel(hour, is24Hour),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(end = 8.dp, top = 0.dp)
         )
-    }
-}
-
-private fun formatHour(hour: Int): String {
-    return when {
-        hour == 0 -> "12a"
-        hour < 12 -> "${hour}a"
-        hour == 12 -> "12p"
-        else -> "${hour - 12}p"
     }
 }
 

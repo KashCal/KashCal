@@ -417,6 +417,7 @@ fun HomeScreen(
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
                                             showEventEmojis = uiState.showEventEmojis,
+                                            timePattern = timePattern,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { event, occurrence ->
                                                 onEventClick(event, occurrence.startTs)
@@ -454,6 +455,7 @@ fun HomeScreen(
                                         error = uiState.weekViewError,
                                         scrollPosition = uiState.weekViewScrollPosition,
                                         showEventEmojis = uiState.showEventEmojis,
+                                        timePattern = timePattern,
                                         onDatePickerRequest = onWeekDatePickerRequest,
                                         onEventClick = { event, occurrence ->
                                             onEventClick(event, occurrence.startTs)

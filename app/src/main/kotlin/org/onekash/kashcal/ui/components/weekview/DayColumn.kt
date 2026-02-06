@@ -50,6 +50,8 @@ fun DayColumn(
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     isToday: Boolean = false,
     showEventEmojis: Boolean = true,
+    timePattern: String = "h:mma",
+    is24Hour: Boolean = false,
     onEventClick: (Event, Occurrence) -> Unit,
     onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
@@ -125,6 +127,8 @@ fun DayColumn(
                     originalStartMinutes = positioned.originalStartMinutes,
                     originalEndMinutes = positioned.originalEndMinutes,
                     showEventEmojis = showEventEmojis,
+                    timePattern = timePattern,
+                    is24Hour = is24Hour,
                     onClick = { onEventClick(positioned.event, positioned.occurrence) },
                     modifier = Modifier
                         .offset(x = eventLeft, y = positioned.topOffset)

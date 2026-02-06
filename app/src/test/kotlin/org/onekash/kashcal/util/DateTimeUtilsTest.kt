@@ -977,4 +977,55 @@ class DateTimeUtilsTest {
         // Saturday is the first day (offset = 0) when Saturday is first
         assertEquals(0, offset)
     }
+
+    // ==================== Time Format Preference Tests ====================
+
+    @Test
+    fun `getTimePattern TWELVE_HOUR returns 12h pattern regardless of device`() {
+        // User explicitly chose 12-hour format - ignore device setting
+        val result = DateTimeUtils.getTimePattern(
+            DateTimeUtils.TimeFormatPreference.TWELVE_HOUR,
+            is24HourDevice = true  // Device is 24h, but user chose 12h
+        )
+        assertEquals("h:mm a", result)
+    }
+
+    @Test
+    fun `getTimePattern TWENTY_FOUR_HOUR returns 24h pattern regardless of device`() {
+        // User explicitly chose 24-hour format - ignore device setting
+        val result = DateTimeUtils.getTimePattern(
+            DateTimeUtils.TimeFormatPreference.TWENTY_FOUR_HOUR,
+            is24HourDevice = false  // Device is 12h, but user chose 24h
+        )
+        assertEquals("HH:mm", result)
+    }
+
+    @Test
+    fun `getTimePattern SYSTEM follows device when 24h`() {
+        val result = DateTimeUtils.getTimePattern(
+            DateTimeUtils.TimeFormatPreference.SYSTEM,
+            is24HourDevice = true
+        )
+        assertEquals("HH:mm", result)
+    }
+
+    @Test
+    fun `getTimePattern SYSTEM follows device when 12h`() {
+        val result = DateTimeUtils.getTimePattern(
+            DateTimeUtils.TimeFormatPreference.SYSTEM,
+            is24HourDevice = false
+        )
+        assertEquals("h:mm a", result)
+    }
+
+    @Test
+    fun `getTimePattern string overload works correctly`() {
+        // 24h preference string
+        assertEquals("HH:mm", DateTimeUtils.getTimePattern("24h", is24HourDevice = false))
+        // 12h preference string
+        assertEquals("h:mm a", DateTimeUtils.getTimePattern("12h", is24HourDevice = true))
+        // System preference string follows device
+        assertEquals("HH:mm", DateTimeUtils.getTimePattern("system", is24HourDevice = true))
+        assertEquals("h:mm a", DateTimeUtils.getTimePattern("system", is24HourDevice = false))
+    }
 }
