@@ -1,0 +1,9 @@
+v22.1.4
+
+What's New:
+- Quick View: Tap events to see details with clickable links
+- Smart Links: URLs, meeting links, phone numbers auto-detected
+- Time Format: 24h preference now honored in all views
+- Repository Refactor: Cleaner account/calendar management
+
+Plus bug fixes and performance improvements.

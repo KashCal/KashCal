@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,16 +12,20 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Launch
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.automirrored.filled.Launch
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Share
@@ -30,6 +35,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -45,19 +51,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
-import org.onekash.kashcal.util.location.looksLikeAddress
-import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
-import android.text.format.DateFormat
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.location.looksLikeAddress
+import org.onekash.kashcal.util.location.openInMaps
+import org.onekash.kashcal.util.text.containsUrl
+import org.onekash.kashcal.util.text.formatRemindersForDisplay
+import org.onekash.kashcal.util.text.isValidUrl
+import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
  * Lightweight preview sheet for quick event viewing.
@@ -97,7 +108,16 @@ fun EventQuickViewSheet(
     onExportIcs: () -> Unit = {},
     timeFormat: String = "system"
 ) {
-    val sheetState = rememberModalBottomSheetState()
+    // Compute expandable content FIRST - determines sheet behavior
+    val hasExpandableContent = remember(event.description, event.url) {
+        !event.description.isNullOrBlank() || !event.url.isNullOrBlank()
+    }
+
+    // Skip partial view and open expanded directly if there's content to show
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = hasExpandableContent
+    )
+
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var deleteAllFuture by remember { mutableStateOf(false) }
     var showEditConfirmation by remember { mutableStateOf(false) }
@@ -117,6 +137,14 @@ fun EventQuickViewSheet(
     // Format title with age for birthday events and optional emoji
     val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
         formatEventTitle(event, occurrenceTs, showEventEmojis)
+    }
+
+    // Cache URL validation
+    val validEventUrl = remember(event.url) {
+        event.url?.takeIf { isValidUrl(it) }
+    }
+    val formattedReminders = remember(event.reminders) {
+        formatRemindersForDisplay(event.reminders)
     }
 
     ModalBottomSheet(
@@ -175,24 +203,34 @@ fun EventQuickViewSheet(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    // Location - clickable if looks like address
+                    // Location - clickable if looks like address or contains URL
                     if (!event.location.isNullOrEmpty()) {
-                        val context = LocalContext.current
+                        val locationContext = LocalContext.current
+                        val uriHandler = LocalUriHandler.current
                         val isAddress = remember(event.location) { looksLikeAddress(event.location) }
+                        val hasUrl = remember(event.location) { !isAddress && containsUrl(event.location) }
 
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = if (isAddress) {
-                                Modifier.clickable { openInMaps(context, event.location) }
-                            } else {
-                                Modifier
+                            modifier = when {
+                                isAddress -> Modifier.clickable { openInMaps(locationContext, event.location) }
+                                hasUrl -> Modifier.clickable {
+                                    // Extract first URL from location and open it
+                                    val urls = org.onekash.kashcal.util.text.extractUrls(event.location, limit = 1)
+                                    urls.firstOrNull()?.let { detected ->
+                                        if (shouldOpenExternally(detected.url)) {
+                                            try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                                        }
+                                    }
+                                }
+                                else -> Modifier
                             }
                         ) {
                             Icon(
-                                Icons.Default.Place,
+                                imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
-                                tint = if (isAddress) {
+                                tint = if (isAddress || hasUrl) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -202,18 +240,20 @@ fun EventQuickViewSheet(
                             Text(
                                 text = event.location,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = if (isAddress) {
+                                color = if (isAddress || hasUrl) {
                                     MaterialTheme.colorScheme.primary
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
                                 },
-                                textDecoration = if (isAddress) TextDecoration.Underline else null
+                                textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
-                            if (isAddress) {
+                            if (isAddress || hasUrl) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = "Open in maps",
+                                    contentDescription = if (isAddress) "Open in maps" else "Open link",
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -256,6 +296,16 @@ fun EventQuickViewSheet(
                         )
                     }
                 }
+            }
+
+            // Expanded content section - shown immediately when sheet opens expanded
+            if (hasExpandableContent) {
+                ExpandedContentSection(
+                    event = event,
+                    validEventUrl = validEventUrl,
+                    formattedReminders = formattedReminders,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -632,4 +682,106 @@ private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Bool
 
     // Apply emoji formatting if enabled
     return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
+}
+
+/**
+ * Expanded content section showing URL, notes, and reminders.
+ */
+@Composable
+private fun ExpandedContentSection(
+    event: Event,
+    validEventUrl: String?,
+    formattedReminders: String?,
+    modifier: Modifier = Modifier
+) {
+    val uriHandler = LocalUriHandler.current
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(max = 300.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.padding(vertical = 4.dp)
+        )
+
+        // URL field (if event has a valid URL)
+        if (validEventUrl != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        if (shouldOpenExternally(validEventUrl)) {
+                            try { uriHandler.openUri(validEventUrl) } catch (_: Exception) {}
+                        }
+                    }
+            ) {
+                Icon(
+                    Icons.Default.Link,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = validEventUrl,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    Icons.AutoMirrored.Filled.Launch,
+                    contentDescription = "Open link",
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+
+        // Notes section (with linkified text)
+        if (!event.description.isNullOrBlank()) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Notes",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LinkifiedText(
+                    text = event.description,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+        }
+
+        // Reminders section
+        if (formattedReminders != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "\uD83D\uDD14",  // Bell emoji
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = formattedReminders,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
 }

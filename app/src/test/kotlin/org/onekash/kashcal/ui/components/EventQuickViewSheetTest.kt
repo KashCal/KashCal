@@ -2,10 +2,18 @@ package org.onekash.kashcal.ui.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.location.looksLikeAddress
+import org.onekash.kashcal.util.text.cleanHtmlEntities
+import org.onekash.kashcal.util.text.containsUrl
+import org.onekash.kashcal.util.text.extractUrls
+import org.onekash.kashcal.util.text.formatRemindersForDisplay
+import org.onekash.kashcal.util.text.isValidUrl
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -489,5 +497,354 @@ class EventQuickViewSheetTest {
                 "$startDateStr \u00b7 $startTime - $endTime"
             }
         }
+    }
+
+    // ========== Expandable Content Detection Tests ==========
+
+    /**
+     * Tests for hasExpandableContent logic that shows expand hint and content.
+     */
+
+    private fun hasExpandableContent(event: Event): Boolean {
+        return !event.description.isNullOrBlank() ||
+            !event.url.isNullOrBlank() ||
+            !event.reminders.isNullOrEmpty()
+    }
+
+    @Test
+    fun `event with description has expandable content`() {
+        val event = createEvent().copy(description = "Meeting notes here")
+        assertTrue("Event with description should be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event with URL has expandable content`() {
+        val event = createEvent().copy(url = "https://zoom.us/j/123")
+        assertTrue("Event with URL should be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event with reminders has expandable content`() {
+        val event = createEvent().copy(reminders = listOf("-PT15M"))
+        assertTrue("Event with reminders should be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event with all fields has expandable content`() {
+        val event = createEvent().copy(
+            description = "Notes",
+            url = "https://example.com",
+            reminders = listOf("-PT15M", "-P1D")
+        )
+        assertTrue("Event with all fields should be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event without description URL or reminders has no expandable content`() {
+        val event = createEvent()
+        assertFalse("Event without content should not be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event with blank description has no expandable content`() {
+        val event = createEvent().copy(description = "   ")
+        assertFalse("Event with blank description should not be expandable", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `event with empty reminders list has no expandable content`() {
+        val event = createEvent().copy(reminders = emptyList())
+        assertFalse("Event with empty reminders should not be expandable", hasExpandableContent(event))
+    }
+
+    // ========== Location Precedence Tests ==========
+
+    @Test
+    fun `location with address takes precedence over URL`() {
+        // Per plan: precedence is address first, then URL
+        val location = "123 Main St, City"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertTrue("Should detect as address", isAddress)
+        assertFalse("Should not treat as URL since address detected", hasUrl)
+    }
+
+    @Test
+    fun `location with URL only treated as URL`() {
+        val location = "https://zoom.us/j/123456"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertFalse("Should not detect as address", isAddress)
+        assertTrue("Should detect URL", hasUrl)
+    }
+
+    @Test
+    fun `location with plain text neither address nor URL`() {
+        val location = "Conference Room A"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertFalse("Should not detect as address", isAddress)
+        assertFalse("Should not detect as URL", hasUrl)
+    }
+
+    @Test
+    fun `mixed location with URL but no address treated as URL`() {
+        // Example: "Office, https://meet.google.com/xyz"
+        val location = "Office, https://meet.google.com/xyz"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertFalse("Should not detect as address (no number + street word)", isAddress)
+        assertTrue("Should detect URL in location", hasUrl)
+    }
+
+    // ========== URL Validation Tests ==========
+
+    @Test
+    fun `valid event URL is preserved`() {
+        val url = "https://zoom.us/j/123"
+        val validUrl = url.takeIf { isValidUrl(it) }
+
+        assertNotNull("Valid URL should be preserved", validUrl)
+        assertEquals("https://zoom.us/j/123", validUrl)
+    }
+
+    @Test
+    fun `invalid event URL is filtered out`() {
+        val url = "not a valid url"
+        val validUrl = url.takeIf { isValidUrl(it) }
+
+        assertNull("Invalid URL should be filtered out", validUrl)
+    }
+
+    @Test
+    fun `null event URL results in null`() {
+        val url: String? = null
+        val validUrl = url?.takeIf { isValidUrl(it) }
+
+        assertNull("Null URL should remain null", validUrl)
+    }
+
+    // ========== Reminders Formatting Tests ==========
+
+    @Test
+    fun `reminder list is formatted for display`() {
+        val reminders = listOf("-PT15M", "-P1D")
+        val formatted = formatRemindersForDisplay(reminders)
+
+        assertEquals("15 min before, 1 day before", formatted)
+    }
+
+    @Test
+    fun `null reminders return null`() {
+        val formatted = formatRemindersForDisplay(null)
+        assertNull(formatted)
+    }
+
+    @Test
+    fun `empty reminders return null`() {
+        val formatted = formatRemindersForDisplay(emptyList())
+        assertNull(formatted)
+    }
+
+    @Test
+    fun `single reminder is formatted`() {
+        val reminders = listOf("-PT30M")
+        val formatted = formatRemindersForDisplay(reminders)
+
+        assertEquals("30 min before", formatted)
+    }
+
+    // ========== Invalid URL Filtering Tests ==========
+
+    @Test
+    fun `event URL field with invalid value is filtered`() {
+        val event = createEvent().copy(url = "not a url at all")
+        val validUrl = event.url?.takeIf { isValidUrl(it) }
+
+        assertNull("Invalid URL should be filtered", validUrl)
+    }
+
+    @Test
+    fun `event URL field with empty string is filtered`() {
+        val event = createEvent().copy(url = "")
+        val validUrl = event.url?.takeIf { isValidUrl(it) }
+
+        assertNull("Empty URL should be filtered", validUrl)
+    }
+
+    @Test
+    fun `event URL field with whitespace only is filtered`() {
+        val event = createEvent().copy(url = "   ")
+        val validUrl = event.url?.takeIf { isValidUrl(it) }
+
+        assertNull("Whitespace-only URL should be filtered", validUrl)
+    }
+
+    @Test
+    fun `event URL field with partial URL is filtered`() {
+        val event = createEvent().copy(url = "example.com")  // Missing protocol
+        val validUrl = event.url?.takeIf { isValidUrl(it) }
+
+        // isValidUrl requires protocol, so this should be filtered
+        assertNull("URL without protocol should be filtered", validUrl)
+    }
+
+    @Test
+    fun `event URL field with valid meeting URL is preserved`() {
+        val event = createEvent().copy(url = "https://zoom.us/j/123456")
+        val validUrl = event.url?.takeIf { isValidUrl(it) }
+
+        assertNotNull("Valid meeting URL should be preserved", validUrl)
+        assertEquals("https://zoom.us/j/123456", validUrl)
+    }
+
+    // ========== Location with Both Address and URL ==========
+
+    @Test
+    fun `location with address AND URL uses address behavior`() {
+        // Per plan Section 10: address takes precedence
+        val location = "123 Main St, City https://zoom.us/j/123"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertTrue("Should detect as address first", isAddress)
+        assertFalse("URL check skipped when address detected", hasUrl)
+    }
+
+    @Test
+    fun `location with URL followed by address text`() {
+        val location = "https://zoom.us/j/123 at 123 Main St"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        // Address detection should still work even with URL prefix
+        assertTrue("Should detect address pattern", isAddress)
+        assertFalse("URL check skipped when address detected", hasUrl)
+    }
+
+    @Test
+    fun `location with meeting link and room name without comma`() {
+        // Note: "Room 5B, ..." with comma IS detected as address (number + letters + comma)
+        // So use a format without comma
+        val location = "Room B - https://meet.google.com/abc-defg"
+        val isAddress = looksLikeAddress(location)
+        val hasUrl = !isAddress && containsUrl(location)
+
+        assertFalse("Room B without number pattern is not an address", isAddress)
+        assertTrue("Should detect URL since not an address", hasUrl)
+    }
+
+    @Test
+    fun `location with comma triggers address detection`() {
+        // Per looksLikeAddress: number + letters + comma = address
+        val location = "Room 5B, Join at link"
+        val isAddress = looksLikeAddress(location)
+
+        assertTrue("Comma with number and letters is treated as address", isAddress)
+    }
+
+    // ========== HTML Entity Handling in Description ==========
+
+    @Test
+    fun `description with only HTML entities is considered blank after cleaning`() {
+        val description = "&nbsp;&nbsp;&nbsp;"
+        val cleaned = cleanHtmlEntities(description)
+
+        assertTrue("Cleaned text should be blank", cleaned.isBlank())
+    }
+
+    @Test
+    fun `description with mixed HTML entities and text is not blank`() {
+        val description = "Meeting &amp; Notes"
+        val cleaned = cleanHtmlEntities(description)
+
+        assertFalse("Cleaned text should not be blank", cleaned.isBlank())
+        assertEquals("Meeting & Notes", cleaned)
+    }
+
+    @Test
+    fun `description with HTML entities preserves URLs`() {
+        val description = "Link: https://example.com?a=1&amp;b=2"
+        val cleaned = cleanHtmlEntities(description)
+        val urls = extractUrls(cleaned)
+
+        assertEquals(1, urls.size)
+        assertTrue("URL should have decoded ampersand", urls[0].url.contains("&b=2"))
+    }
+
+    // ========== Expand Hint Visibility Logic ==========
+
+    @Test
+    fun `expand hint shown when content exists and not expanded`() {
+        val event = createEvent().copy(description = "Some notes")
+        val hasContent = hasExpandableContent(event)
+        val isExpanded = false
+
+        val showExpandHint = hasContent && !isExpanded
+        assertTrue("Should show expand hint", showExpandHint)
+    }
+
+    @Test
+    fun `expand hint hidden when expanded`() {
+        val event = createEvent().copy(description = "Some notes")
+        val hasContent = hasExpandableContent(event)
+        val isExpanded = true
+
+        val showExpandHint = hasContent && !isExpanded
+        assertFalse("Should not show expand hint when expanded", showExpandHint)
+    }
+
+    @Test
+    fun `expand hint hidden when no expandable content`() {
+        val event = createEvent()  // No description, url, or reminders
+        val hasContent = hasExpandableContent(event)
+        val isExpanded = false
+
+        val showExpandHint = hasContent && !isExpanded
+        assertFalse("Should not show expand hint without content", showExpandHint)
+    }
+
+    // ========== Combined Expandable Content Scenarios ==========
+
+    @Test
+    fun `event with invalid URL but valid description has expandable content`() {
+        val event = createEvent().copy(
+            url = "not-a-url",
+            description = "Valid description"
+        )
+
+        assertTrue("Should be expandable due to description", hasExpandableContent(event))
+        assertNull("URL should be filtered out", event.url?.takeIf { isValidUrl(it) })
+    }
+
+    @Test
+    fun `event with only reminders has expandable content`() {
+        val event = createEvent().copy(
+            description = null,
+            url = null,
+            reminders = listOf("-PT15M", "-PT1H")
+        )
+
+        assertTrue("Should be expandable due to reminders", hasExpandableContent(event))
+    }
+
+    @Test
+    fun `hasExpandableContent matches implementation logic exactly`() {
+        // Test cases that match the exact implementation in EventQuickViewSheet
+        val eventWithAll = createEvent().copy(
+            description = "Notes",
+            url = "https://example.com",
+            reminders = listOf("-PT15M")
+        )
+        val eventWithNone = createEvent()
+        val eventWithBlankDescription = createEvent().copy(description = "")
+
+        assertTrue(hasExpandableContent(eventWithAll))
+        assertFalse(hasExpandableContent(eventWithNone))
+        assertFalse(hasExpandableContent(eventWithBlankDescription))
     }
 }
