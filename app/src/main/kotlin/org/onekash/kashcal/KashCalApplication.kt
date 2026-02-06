@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.contacts.ContactBirthdayManager
+import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.network.NetworkMonitor
@@ -69,6 +70,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var eventsDao: EventsDao
 
+    @Inject
+    lateinit var credentialMigration: CredentialMigration
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
@@ -76,6 +80,9 @@ class KashCalApplication : Application(), Configuration.Provider {
 
         // Handle app upgrade - cancel stale sync work to prevent crashes
         handleAppUpgrade()
+
+        // Migrate credentials from old format to unified format (one-time)
+        migrateCredentialsIfNeeded()
 
         // Check if parser version changed - clear etags to force re-parse
         checkParserVersionAndClearEtags()
@@ -143,6 +150,38 @@ class KashCalApplication : Application(), Configuration.Provider {
         if (lastVersion != currentVersion) {
             prefs.edit().putInt(KEY_LAST_VERSION, currentVersion).apply()
             Log.d(TAG, "Stored version code: $currentVersion")
+        }
+    }
+
+    /**
+     * Migrate credentials from old format to unified format.
+     *
+     * This is a one-time migration that runs on app launch. It migrates:
+     * - iCloud: Single-key format → account-keyed format
+     * - CalDAV: Old caldav_credentials → unified_credentials
+     *
+     * The migration is idempotent (DataStore flag) and non-destructive
+     * (old credentials preserved until explicitly deleted).
+     */
+    private fun migrateCredentialsIfNeeded() {
+        applicationScope.launch {
+            try {
+                val result = credentialMigration.migrateIfNeeded()
+                when (result) {
+                    is CredentialMigration.MigrationResult.Success ->
+                        Log.i(TAG, "Credential migration completed")
+                    is CredentialMigration.MigrationResult.AlreadyMigrated ->
+                        Log.d(TAG, "Credentials already migrated")
+                    is CredentialMigration.MigrationResult.NoCredentialsToMigrate ->
+                        Log.d(TAG, "No credentials to migrate (fresh install)")
+                    is CredentialMigration.MigrationResult.PartialSuccess ->
+                        Log.w(TAG, "Partial credential migration: iCloud=${result.icloudSuccess}, CalDAV=${result.caldavSuccess}")
+                    is CredentialMigration.MigrationResult.Failed ->
+                        Log.e(TAG, "Credential migration failed: ${result.error}")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Credential migration error: ${e.message}", e)
+            }
         }
     }
 

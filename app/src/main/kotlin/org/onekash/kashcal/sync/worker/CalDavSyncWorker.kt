@@ -10,8 +10,8 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.PendingOperation
@@ -60,8 +60,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val syncEngine: CalDavSyncEngine,
-    private val accountsDao: AccountsDao,
-    private val calendarsDao: CalendarsDao,
+    private val accountRepository: AccountRepository,
+    private val calendarRepository: CalendarRepository,
     private val notificationManager: SyncNotificationManager,
     private val providerRegistry: ProviderRegistry,
     private val calDavClientFactory: CalDavClientFactory,
@@ -350,14 +350,14 @@ class CalDavSyncWorker @AssistedInject constructor(
      * Sync a specific calendar.
      */
     private suspend fun syncCalendar(calendarId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
-        val calendar = calendarsDao.getById(calendarId)
+        val calendar = calendarRepository.getCalendarById(calendarId)
         if (calendar == null) {
             Log.w(TAG, "Calendar $calendarId not found")
             return SyncResult.Error(-1, "Calendar not found", false)
         }
 
         // Load account for this calendar
-        val account = accountsDao.getById(calendar.accountId)
+        val account = accountRepository.getAccountById(calendar.accountId)
         if (account == null) {
             Log.w(TAG, "Account ${calendar.accountId} not found for calendar")
             return SyncResult.Error(-1, "Account not found", false)
@@ -408,7 +408,7 @@ class CalDavSyncWorker @AssistedInject constructor(
      * 5. Sync using provider-specific quirks
      */
     private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
-        val account = accountsDao.getById(accountId)
+        val account = accountRepository.getAccountById(accountId)
         if (account == null) {
             Log.w(TAG, "Account $accountId not found")
             return SyncResult.Error(-1, "Account not found", false)
@@ -491,7 +491,7 @@ class CalDavSyncWorker @AssistedInject constructor(
      * 4. Sync using provider-specific quirks
      */
     private suspend fun syncAll(forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
-        val accounts = accountsDao.getEnabledAccounts()
+        val accounts = accountRepository.getEnabledAccounts()
         Log.d(TAG, "syncAll() found ${accounts.size} enabled accounts")
 
         if (accounts.isEmpty()) {

@@ -6,8 +6,8 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -36,7 +36,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 class PushStrategyExceptionRaceTest {
 
     private lateinit var client: CalDavClient
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var pushStrategy: PushStrategy
@@ -110,16 +110,16 @@ class PushStrategyExceptionRaceTest {
     @Before
     fun setup() {
         client = mockk()
-        calendarsDao = mockk()
+        calendarRepository = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
 
         // Default batch query mocks
         coEvery { eventsDao.getByIds(any()) } returns emptyList()
-        coEvery { calendarsDao.getByIds(any()) } returns emptyList()
+        coEvery { calendarRepository.getCalendarsByIds(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
         )
@@ -155,7 +155,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
-        coEvery { calendarsDao.getById(masterEvent.calendarId) } returns testCalendar
+        coEvery { calendarRepository.getCalendarById(masterEvent.calendarId) } returns testCalendar
 
         // KEY: getExceptionsForMaster returns only A and B at serialization time
         // (exceptionC doesn't exist yet in this snapshot)
@@ -210,7 +210,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEventWithUrl.id) } returns masterEventWithUrl
-        coEvery { calendarsDao.getById(masterEventWithUrl.calendarId) } returns testCalendar
+        coEvery { calendarRepository.getCalendarById(masterEventWithUrl.calendarId) } returns testCalendar
 
         // KEY: getExceptionsForMaster returns only A and B at serialization time
         coEvery { eventsDao.getExceptionsForMaster(masterEventWithUrl.id) } returns listOf(exceptionA, exceptionB)
@@ -258,7 +258,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
-        coEvery { calendarsDao.getById(masterEvent.calendarId) } returns testCalendar
+        coEvery { calendarRepository.getCalendarById(masterEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns emptyList()
         // Note: Even with empty exceptions, recurring events use serializeWithExceptions
                 coEvery { client.createEvent(testCalendar.caldavUrl, masterEvent.uid, any()) } returns
@@ -305,7 +305,7 @@ class PushStrategyExceptionRaceTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEventWithUrl.id) } returns masterEventWithUrl
-        coEvery { calendarsDao.getById(masterEventWithUrl.calendarId) } returns testCalendar
+        coEvery { calendarRepository.getCalendarById(masterEventWithUrl.calendarId) } returns testCalendar
 
         // Return only exceptionA at serialization time
         coEvery { eventsDao.getExceptionsForMaster(masterEventWithUrl.id) } answers {

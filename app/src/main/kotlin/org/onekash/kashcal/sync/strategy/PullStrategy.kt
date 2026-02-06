@@ -6,7 +6,7 @@ import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -50,7 +50,7 @@ import javax.inject.Inject
  */
 class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
-    private val calendarsDao: CalendarsDao,
+    private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     @Suppress("DEPRECATION") private val defaultQuirks: CalDavQuirks,
@@ -166,8 +166,8 @@ class PullStrategy @Inject constructor(
 
             // Step 3: Update calendar metadata on success
             if (result is PullResult.Success) {
-                calendarsDao.updateSyncToken(
-                    id = calendar.id,
+                calendarRepository.updateSyncToken(
+                    calendarId = calendar.id,
                     syncToken = result.newSyncToken ?: calendar.syncToken,
                     ctag = result.newCtag ?: serverCtag
                 )

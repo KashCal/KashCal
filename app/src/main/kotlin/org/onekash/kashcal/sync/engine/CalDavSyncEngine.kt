@@ -1,8 +1,7 @@
 package org.onekash.kashcal.sync.engine
 
 import android.util.Log
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
@@ -51,8 +50,7 @@ class CalDavSyncEngine @Inject constructor(
     private val pullStrategy: PullStrategy,
     private val pushStrategy: PushStrategy,
     private val conflictResolver: ConflictResolver,
-    private val accountsDao: AccountsDao,
-    private val calendarsDao: CalendarsDao,
+    private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val syncLogsDao: SyncLogsDao,
@@ -185,7 +183,7 @@ class CalDavSyncEngine @Inject constructor(
             // Step 2: Pull server changes
             // Re-read calendar if conflicts were abandoned (ctag was cleared in DB)
             val calendarForPull = if (anyConflictsAbandoned) {
-                calendarsDao.getById(calendar.id) ?: calendar
+                calendarRepository.getCalendarById(calendar.id) ?: calendar
             } else {
                 calendar
             }
@@ -326,7 +324,7 @@ class CalDavSyncEngine @Inject constructor(
         Log.i(TAG, "Starting sync for account: ${account.email.maskEmail()}")
         val startTime = System.currentTimeMillis()
 
-        val calendars = calendarsDao.getByAccountIdOnce(account.id)
+        val calendars = calendarRepository.getCalendarsForAccountOnce(account.id)
         if (calendars.isEmpty()) {
             Log.d(TAG, "No calendars for account")
             // Record session for debugging
@@ -537,7 +535,7 @@ class CalDavSyncEngine @Inject constructor(
             eventsDao.updateSyncStatus(op.eventId, SyncStatus.SYNCED, now)
 
             // Clear calendar ctag to force pull to fetch server version
-            calendarsDao.updateCtag(event.calendarId, null)
+            calendarRepository.updateCtag(event.calendarId, null)
             Log.d(TAG, "Cleared ctag for calendar ${event.calendarId} to force server fetch")
         }
 

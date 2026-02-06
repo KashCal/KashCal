@@ -5,9 +5,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -33,8 +32,7 @@ class CalDavSyncEngineTest {
     private lateinit var pullStrategy: PullStrategy
     private lateinit var pushStrategy: PushStrategy
     private lateinit var conflictResolver: ConflictResolver
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var syncLogsDao: SyncLogsDao
@@ -81,8 +79,7 @@ class CalDavSyncEngineTest {
         pullStrategy = mockk()
         pushStrategy = mockk()
         conflictResolver = mockk()
-        accountsDao = mockk()
-        calendarsDao = mockk()
+        calendarRepository = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
         syncLogsDao = mockk()
@@ -94,8 +91,7 @@ class CalDavSyncEngineTest {
             pullStrategy = pullStrategy,
             pushStrategy = pushStrategy,
             conflictResolver = conflictResolver,
-            accountsDao = accountsDao,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
@@ -281,7 +277,7 @@ class CalDavSyncEngineTest {
     fun `syncAccount syncs all calendars`() = runTest {
         val calendar2 = testCalendar.copy(id = 2L, displayName = "Calendar 2")
 
-        coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
+        coEvery { calendarRepository.getCalendarsForAccountOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
         coEvery { pushStrategy.pushForCalendar(any(), client) } returns PushResult.NoPendingOperations
         coEvery { pullStrategy.pull(any(), any(), any(), client, any()) } returns PullResult.Success(
             eventsAdded = 1,
@@ -301,7 +297,7 @@ class CalDavSyncEngineTest {
 
     @Test
     fun `syncAccount handles read-only calendars (pull only)`() = runTest {
-        coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(readOnlyCalendar)
+        coEvery { calendarRepository.getCalendarsForAccountOnce(testAccount.id) } returns listOf(readOnlyCalendar)
         coEvery { pullStrategy.pull(readOnlyCalendar, false, any(), client, any()) } returns PullResult.Success(
             eventsAdded = 5,
             eventsUpdated = 0,
@@ -322,7 +318,7 @@ class CalDavSyncEngineTest {
 
     @Test
     fun `syncAccount returns empty success when no calendars`() = runTest {
-        coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns emptyList()
+        coEvery { calendarRepository.getCalendarsForAccountOnce(testAccount.id) } returns emptyList()
 
         val result = syncEngine.syncAccount(testAccount, client = client)
 
@@ -335,7 +331,7 @@ class CalDavSyncEngineTest {
     fun `syncAccount stops on auth error`() = runTest {
         val calendar2 = testCalendar.copy(id = 2L, displayName = "Calendar 2")
 
-        coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
+        coEvery { calendarRepository.getCalendarsForAccountOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
         coEvery { pushStrategy.pushForCalendar(testCalendar, client) } returns PushResult.Error(
             code = 401,
             message = "Unauthorized",
@@ -354,7 +350,7 @@ class CalDavSyncEngineTest {
     fun `syncAccount aggregates errors from multiple calendars`() = runTest {
         val calendar2 = testCalendar.copy(id = 2L, displayName = "Calendar 2")
 
-        coEvery { calendarsDao.getByAccountIdOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
+        coEvery { calendarRepository.getCalendarsForAccountOnce(testAccount.id) } returns listOf(testCalendar, calendar2)
         coEvery { pushStrategy.pushForCalendar(testCalendar, client) } returns PushResult.Success(
             eventsCreated = 1, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 0
@@ -705,8 +701,8 @@ class CalDavSyncEngineTest {
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
-        coEvery { calendarsDao.updateCtag(1L, null) } just Runs
-        coEvery { calendarsDao.getById(1L) } returns refreshedCalendar
+        coEvery { calendarRepository.updateCtag(1L, null) } just Runs
+        coEvery { calendarRepository.getCalendarById(1L) } returns refreshedCalendar
         coEvery { pendingOperationsDao.deleteById(1L) } just Runs
         coEvery { pullStrategy.pull(refreshedCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -719,7 +715,7 @@ class CalDavSyncEngineTest {
 
         // Verify abandonment
         coVerify { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) }
-        coVerify { calendarsDao.updateCtag(1L, null) }
+        coVerify { calendarRepository.updateCtag(1L, null) }
         coVerify { pendingOperationsDao.deleteById(1L) }
         coVerify { notificationManager.showConflictAbandonedNotification("My Meeting", 1) }
     }
@@ -742,7 +738,7 @@ class CalDavSyncEngineTest {
         coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns null  // Event was deleted
-        coEvery { calendarsDao.getById(1L) } returns testCalendar  // No ctag cleared (event null)
+        coEvery { calendarRepository.getCalendarById(1L) } returns testCalendar  // No ctag cleared (event null)
         coEvery { pendingOperationsDao.deleteById(1L) } just Runs
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -753,7 +749,7 @@ class CalDavSyncEngineTest {
         // Should NOT call updateSyncStatus (event doesn't exist)
         coVerify(exactly = 0) { eventsDao.updateSyncStatus(any(), any(), any()) }
         // Should NOT call updateCtag (event doesn't exist)
-        coVerify(exactly = 0) { calendarsDao.updateCtag(any(), any()) }
+        coVerify(exactly = 0) { calendarRepository.updateCtag(any(), any()) }
         // Should still delete the operation
         coVerify { pendingOperationsDao.deleteById(1L) }
         // Should still show notification (with null title)
@@ -785,8 +781,8 @@ class CalDavSyncEngineTest {
         coEvery { eventsDao.getById(100L) } returns testEvent1
         coEvery { eventsDao.getById(101L) } returns testEvent2
         coEvery { eventsDao.updateSyncStatus(any(), SyncStatus.SYNCED, any()) } just Runs
-        coEvery { calendarsDao.updateCtag(1L, null) } just Runs
-        coEvery { calendarsDao.getById(1L) } returns refreshedCalendar
+        coEvery { calendarRepository.updateCtag(1L, null) } just Runs
+        coEvery { calendarRepository.getCalendarById(1L) } returns refreshedCalendar
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
         coEvery { pullStrategy.pull(refreshedCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -819,8 +815,8 @@ class CalDavSyncEngineTest {
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Parse error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
-        coEvery { calendarsDao.updateCtag(1L, null) } just Runs
-        coEvery { calendarsDao.getById(1L) } returns refreshedCalendar
+        coEvery { calendarRepository.updateCtag(1L, null) } just Runs
+        coEvery { calendarRepository.getCalendarById(1L) } returns refreshedCalendar
         coEvery { pendingOperationsDao.deleteById(1L) } just Runs
         coEvery { pullStrategy.pull(refreshedCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -830,7 +826,7 @@ class CalDavSyncEngineTest {
 
         // Should abandon CREATE operations the same as UPDATE
         coVerify { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) }
-        coVerify { calendarsDao.updateCtag(1L, null) }
+        coVerify { calendarRepository.updateCtag(1L, null) }
         coVerify { pendingOperationsDao.deleteById(1L) }
         coVerify { notificationManager.showConflictAbandonedNotification("New Event", 1) }
     }
@@ -858,8 +854,8 @@ class CalDavSyncEngineTest {
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
-        coEvery { calendarsDao.updateCtag(1L, null) } just Runs
-        coEvery { calendarsDao.getById(1L) } returns refreshedCalendar  // Returns calendar with ctag=null
+        coEvery { calendarRepository.updateCtag(1L, null) } just Runs
+        coEvery { calendarRepository.getCalendarById(1L) } returns refreshedCalendar  // Returns calendar with ctag=null
         coEvery { pendingOperationsDao.deleteById(1L) } just Runs
         coEvery { pullStrategy.pull(refreshedCalendar, false, any(), client, any()) } returns PullResult.Success(
             eventsAdded = 0, eventsUpdated = 1, eventsDeleted = 0,
@@ -869,9 +865,9 @@ class CalDavSyncEngineTest {
         syncEngine.syncCalendar(testCalendar, client = client)
 
         // Verify ctag cleared in DB
-        coVerify { calendarsDao.updateCtag(1L, null) }
+        coVerify { calendarRepository.updateCtag(1L, null) }
         // Verify calendar re-read from DB
-        coVerify { calendarsDao.getById(1L) }
+        coVerify { calendarRepository.getCalendarById(1L) }
         // Verify pull called with refreshed calendar (ctag=null), not original
         coVerify { pullStrategy.pull(refreshedCalendar, false, any(), client, any()) }
     }
@@ -898,7 +894,7 @@ class CalDavSyncEngineTest {
         syncEngine.syncCalendar(testCalendar, client = client)
 
         // Should NOT re-read calendar (no abandonment occurred)
-        coVerify(exactly = 0) { calendarsDao.getById(any()) }
+        coVerify(exactly = 0) { calendarRepository.getCalendarById(any()) }
         // Should use original calendar
         coVerify { pullStrategy.pull(testCalendar, false, any(), client, any()) }
     }

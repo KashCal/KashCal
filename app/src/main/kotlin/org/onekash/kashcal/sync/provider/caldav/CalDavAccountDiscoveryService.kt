@@ -4,8 +4,9 @@ import android.graphics.Color
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -29,7 +30,7 @@ import javax.net.ssl.SSLHandshakeException
  * - Accepts user-provided server URL
  * - Creates isolated clients via CalDavClientFactory for each discovery
  * - Supports self-signed certificates via trustInsecure flag
- * - Saves credentials per-account via CalDavCredentialManager
+ * - Saves credentials per-account via AccountRepository.saveCredentials()
  *
  * Discovery flow:
  * 1. Normalize and validate server URL
@@ -43,9 +44,8 @@ import javax.net.ssl.SSLHandshakeException
 @Singleton
 class CalDavAccountDiscoveryService @Inject constructor(
     private val calDavClientFactory: CalDavClientFactory,
-    private val credentialManager: CalDavCredentialManager,
-    private val accountsDao: AccountsDao,
-    private val calendarsDao: CalendarsDao
+    private val accountRepository: AccountRepository,
+    private val calendarRepository: CalendarRepository
 ) {
     companion object {
         private const val TAG = "CalDavAccountDiscovery"
@@ -175,7 +175,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             // Step 4: Create or update Account in Room
-            val existingAccount = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, username)
+            val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, username)
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
@@ -183,7 +183,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
-                accountsDao.update(updated)
+                accountRepository.updateAccount(updated)
                 updated
             } else {
                 Log.d(TAG, "Creating new account")
@@ -196,18 +196,20 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
-                val accountId = accountsDao.insert(newAccount)
+                val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
             }
 
             // Step 5: Save credentials to encrypted storage
-            val caldavCredentials = CalDavCredentials(
-                serverUrl = normalizedUrl,
+            val accountCredentials = AccountCredentials(
                 username = username,
                 password = password,
-                trustInsecure = trustInsecure
+                serverUrl = normalizedUrl,
+                trustInsecure = trustInsecure,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
             )
-            val credentialsSaved = credentialManager.saveCredentials(account.id, caldavCredentials)
+            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
             if (!credentialsSaved) {
                 Log.w(TAG, "Failed to save credentials - encryption may be unavailable")
                 // Continue anyway - credentials can be re-entered
@@ -225,7 +227,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     continue
                 }
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(calDavCalendar.url)
+                val existingCalendar = calendarRepository.getCalendarByUrl(calDavCalendar.url)
                 val calendar = if (existingCalendar != null) {
                     Log.d(TAG, "Updating calendar: ${calDavCalendar.displayName}")
                     val updated = existingCalendar.copy(
@@ -234,7 +236,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
-                    calendarsDao.update(updated)
+                    calendarRepository.updateCalendar(updated)
                     updated
                 } else {
                     Log.d(TAG, "Creating calendar: ${calDavCalendar.displayName}")
@@ -248,7 +250,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         isDefault = isFirst, // First calendar is default
                         isVisible = true
                     )
-                    val calendarId = calendarsDao.insert(newCalendar)
+                    val calendarId = calendarRepository.createCalendar(newCalendar)
                     isFirst = false
                     newCalendar.copy(id = calendarId)
                 }
@@ -277,7 +279,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
     suspend fun refreshCalendars(accountId: Long): DiscoveryResult = withContext(Dispatchers.IO) {
         Log.i(TAG, "Refreshing calendars for account: $accountId")
 
-        val account = accountsDao.getById(accountId)
+        val account = accountRepository.getAccountById(accountId)
         if (account == null) {
             return@withContext DiscoveryResult.Error("Account not found")
         }
@@ -288,18 +290,18 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
 
         // Load credentials for this account
-        val caldavCredentials = credentialManager.getCredentials(accountId)
-        if (caldavCredentials == null) {
+        val accountCredentials = accountRepository.getCredentials(accountId)
+        if (accountCredentials == null) {
             return@withContext DiscoveryResult.AuthError(
                 "Credentials not found. Please sign in again."
             )
         }
 
         val credentials = Credentials(
-            username = caldavCredentials.username,
-            password = caldavCredentials.password,
-            serverUrl = caldavCredentials.serverUrl,
-            trustInsecure = caldavCredentials.trustInsecure
+            username = accountCredentials.username,
+            password = accountCredentials.password,
+            serverUrl = accountCredentials.serverUrl,
+            trustInsecure = accountCredentials.trustInsecure
         )
 
         // Create isolated client
@@ -319,14 +321,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             val discoveredCalendars = (calendarsResult as CalDavResult.Success).data
-            val existingCalendars = calendarsDao.getByAccountIdOnce(accountId)
+            val existingCalendars = calendarRepository.getCalendarsForAccountOnce(accountId)
             val discoveredUrls = discoveredCalendars.map { it.url }.toSet()
 
             // Remove calendars no longer on server
             for (existing in existingCalendars) {
                 if (existing.caldavUrl !in discoveredUrls) {
                     Log.d(TAG, "Removing deleted calendar: ${existing.displayName}")
-                    calendarsDao.delete(existing)
+                    calendarRepository.deleteCalendar(existing.id)
                 }
             }
 
@@ -338,14 +340,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     continue
                 }
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(calDavCalendar.url)
+                val existingCalendar = calendarRepository.getCalendarByUrl(calDavCalendar.url)
                 val calendar = if (existingCalendar != null) {
                     val updated = existingCalendar.copy(
                         displayName = calDavCalendar.displayName,
                         ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
-                    calendarsDao.update(updated)
+                    calendarRepository.updateCalendar(updated)
                     updated
                 } else {
                     val newCalendar = Calendar(
@@ -358,7 +360,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         isDefault = false,
                         isVisible = true
                     )
-                    val calendarId = calendarsDao.insert(newCalendar)
+                    val calendarId = calendarRepository.createCalendar(newCalendar)
                     newCalendar.copy(id = calendarId)
                 }
                 createdCalendars.add(calendar)
@@ -373,21 +375,19 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
     /**
      * Remove all data for an account (used during sign-out).
-     * IMPORTANT: Deletes credentials first, then account (Room cascade handles calendars/events).
+     *
+     * Uses AccountRepository.deleteAccount() which properly cleans up:
+     * - WorkManager sync jobs
+     * - Scheduled reminders
+     * - Pending operations
+     * - Encrypted credentials
+     * - Cascade deletes calendars/events
      *
      * @param accountId The account ID to remove
      */
     suspend fun removeAccount(accountId: Long) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing account: $accountId")
-
-        // Delete credentials FIRST (before Room cascade deletes account)
-        credentialManager.deleteCredentials(accountId)
-
-        val account = accountsDao.getById(accountId)
-        if (account != null) {
-            // Calendars and events will cascade delete
-            accountsDao.delete(account)
-        }
+        accountRepository.deleteAccount(accountId)
     }
 
     /**
@@ -397,11 +397,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
      */
     suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing CalDAV account: $email")
-        val account = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, email)
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, email)
         if (account != null) {
-            // Delete credentials first
-            credentialManager.deleteCredentials(account.id)
-            accountsDao.delete(account)
+            accountRepository.deleteAccount(account.id)
         }
     }
 
@@ -416,7 +414,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
      * @return true if name is available, false if already in use
      */
     suspend fun isDisplayNameAvailable(displayName: String, excludeAccountId: Long? = null): Boolean {
-        return accountsDao.countByDisplayName(displayName, excludeAccountId) == 0
+        return accountRepository.countByDisplayName(displayName, excludeAccountId) == 0
     }
 
     // ==================== Two-Phase Discovery ====================
@@ -613,7 +611,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
         try {
             // Step 1: Create or update Account in Room
-            val existingAccount = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, username)
+            val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, username)
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
@@ -621,7 +619,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
-                accountsDao.update(updated)
+                accountRepository.updateAccount(updated)
                 updated
             } else {
                 Log.d(TAG, "Creating new account")
@@ -636,18 +634,20 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
-                val accountId = accountsDao.insert(newAccount)
+                val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
             }
 
             // Step 2: Save credentials to encrypted storage
-            val caldavCredentials = CalDavCredentials(
-                serverUrl = serverUrl,
+            val accountCredentials = AccountCredentials(
                 username = username,
                 password = password,
-                trustInsecure = trustInsecure
+                serverUrl = serverUrl,
+                trustInsecure = trustInsecure,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
             )
-            val credentialsSaved = credentialManager.saveCredentials(account.id, caldavCredentials)
+            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
             if (!credentialsSaved) {
                 Log.w(TAG, "Failed to save credentials - encryption may be unavailable")
             }
@@ -657,7 +657,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             var isFirst = true
 
             for (discoveredCalendar in selectedCalendars) {
-                val existingCalendar = calendarsDao.getByCaldavUrl(discoveredCalendar.href)
+                val existingCalendar = calendarRepository.getCalendarByUrl(discoveredCalendar.href)
                 val calendar = if (existingCalendar != null) {
                     Log.d(TAG, "Updating calendar: ${discoveredCalendar.displayName}")
                     val updated = existingCalendar.copy(
@@ -665,7 +665,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         color = discoveredCalendar.color,
                         isReadOnly = discoveredCalendar.isReadOnly
                     )
-                    calendarsDao.update(updated)
+                    calendarRepository.updateCalendar(updated)
                     updated
                 } else {
                     Log.d(TAG, "Creating calendar: ${discoveredCalendar.displayName}")
@@ -679,7 +679,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         isDefault = isFirst,
                         isVisible = true
                     )
-                    val calendarId = calendarsDao.insert(newCalendar)
+                    val calendarId = calendarRepository.createCalendar(newCalendar)
                     isFirst = false
                     newCalendar.copy(id = calendarId)
                 }

@@ -20,9 +20,10 @@
         EXCLUDE: EncryptedSharedPreferences
         Reason: Uses Android Keystore master key which is device-specific.
         Restoring to a new device will fail decryption.
-        File: icloud_credentials.xml
     -->
     <exclude domain="sharedpref" path="icloud_credentials.xml" />
+    <exclude domain="sharedpref" path="caldav_credentials.xml" />
+    <exclude domain="sharedpref" path="unified_credentials.xml" />
 
     <!-- Note: cache/ is automatically excluded by Android backup system -->
 </full-backup-content>

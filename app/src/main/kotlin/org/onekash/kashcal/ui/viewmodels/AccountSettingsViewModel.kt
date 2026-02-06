@@ -22,8 +22,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.R
-import org.onekash.kashcal.sync.provider.icloud.ICloudAccount
-import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.data.db.entity.SyncLog
@@ -40,7 +40,6 @@ import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
-import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialManager
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
@@ -95,7 +94,7 @@ private suspend fun <T> withRetryOnTimeout(
  * Manages account connection, calendar settings, and user preferences.
  *
  * Wires UI components to backend services:
- * - ICloudAuthManager for credential storage
+ * - AccountRepository for account and credential operations
  * - EventCoordinator for calendar data (follows architecture pattern)
  * - UserPreferencesRepository for user settings
  * - SyncScheduler for sync scheduling
@@ -104,12 +103,11 @@ private suspend fun <T> withRetryOnTimeout(
 @HiltViewModel
 class AccountSettingsViewModel @Inject constructor(
     application: Application,
-    private val authManager: ICloudAuthManager,
+    private val accountRepository: AccountRepository,
     private val userPreferences: UserPreferencesRepository,
     private val syncScheduler: SyncScheduler,
     private val discoveryService: AccountDiscoveryService,
     private val calDavDiscoveryService: CalDavAccountDiscoveryService,
-    private val calDavCredentialManager: CalDavCredentialManager,
     private val eventCoordinator: EventCoordinator,
     private val syncLogReader: SyncLogReader,
     private val contactBirthdayManager: ContactBirthdayManager,
@@ -236,15 +234,17 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AccountSettingsUiState(isLoading = true)
 
-            // Check if we have saved credentials
-            val account = authManager.loadAccount()
-            if (account != null && account.hasCredentials()) {
-                val lastSync = authManager.getLastSyncTime()
+            // Check if we have an iCloud account with credentials
+            val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
+            val account = icloudAccounts.firstOrNull()
+
+            if (account != null && accountRepository.hasCredentials(account.id)) {
+                val lastSync = account.lastSuccessfulSyncAt
                 _uiState.value = AccountSettingsUiState(
                     isLoading = false,
                     iCloudState = ICloudConnectionState.Connected(
-                        appleId = account.appleId,
-                        lastSyncTime = if (lastSync > 0) lastSync else null,
+                        appleId = account.email,
+                        lastSyncTime = if (lastSync != null && lastSync > 0) lastSync else null,
                         calendarCount = 0 // Will be updated by calendar observer
                     )
                 )
@@ -597,12 +597,14 @@ class AccountSettingsViewModel @Inject constructor(
                     Log.i(TAG, "Discovery successful: ${result.calendars.size} calendars")
 
                     // Save credentials to secure storage AFTER successful validation
-                    val icloudAccount = ICloudAccount(
-                        appleId = appleIdInput.trim(),
-                        appSpecificPassword = passwordInput.trim(),
-                        calendarHomeUrl = result.account.homeSetUrl
+                    val credentials = AccountCredentials(
+                        username = appleIdInput.trim(),
+                        password = passwordInput.trim(),
+                        serverUrl = AccountCredentials.ICLOUD_DEFAULT_SERVER_URL,
+                        principalUrl = result.account.principalUrl,
+                        calendarHomeSet = result.account.homeSetUrl
                     )
-                    val saved = authManager.saveAccount(icloudAccount)
+                    val saved = accountRepository.saveCredentials(result.account.id, credentials)
                     if (!saved) {
                         Log.e(TAG, "Failed to save credentials securely")
                     }
@@ -684,22 +686,19 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Signing out from iCloud")
 
             // Get current account email before clearing
-            val account = authManager.loadAccount()
-            val accountEmail = account?.appleId
-
-            // Cancel reminders BEFORE cascade delete to prevent orphaned AlarmManager alarms
-            // Android best practice: AlarmManager.cancel() is safe on non-existent alarms (no-op)
-            if (accountEmail != null) {
-                eventCoordinator.cancelRemindersForAccount(accountEmail)
-            }
-
-            // Clear credentials from secure storage
-            authManager.clearAccount()
+            val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
+            val account = icloudAccounts.firstOrNull()
+            val accountEmail = account?.email
 
             // Cancel scheduled syncs
             syncScheduler.cancelPeriodicSync()
 
-            // Remove Account and Calendar entities from Room (cascades to events)
+            // Remove Account, Calendar, and Event entities from Room
+            // AccountRepository.deleteAccount() handles:
+            // - WorkManager job cancellation
+            // - Reminder cancellation
+            // - Credentials deletion
+            // - Cascade delete account → calendars → events
             if (accountEmail != null) {
                 discoveryService.removeAccountByEmail(accountEmail)
             }

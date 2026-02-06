@@ -8,9 +8,9 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EtagEntry
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -40,7 +40,7 @@ class PullStrategyEtagFallbackTest {
     private lateinit var client: CalDavClient
 
     @MockK
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
 
     @MockK
     private lateinit var eventsDao: EventsDao
@@ -78,7 +78,7 @@ class PullStrategyEtagFallbackTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,

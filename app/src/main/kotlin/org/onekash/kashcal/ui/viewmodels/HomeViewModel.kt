@@ -27,7 +27,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.sync.scheduler.SyncStatus
-import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -77,7 +78,7 @@ class HomeViewModel @Inject constructor(
     private val eventCoordinator: EventCoordinator,
     private val eventReader: EventReader,
     private val dataStore: KashCalDataStore,
-    private val authManager: ICloudAuthManager,
+    private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val networkMonitor: NetworkMonitor,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
@@ -233,18 +234,22 @@ class HomeViewModel @Inject constructor(
      * Check if iCloud is configured and update state.
      */
     private suspend fun checkICloudStatus() {
-        val account = withContext(ioDispatcher) {
-            authManager.loadAccount()
+        val icloudAccounts = withContext(ioDispatcher) {
+            accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
         }
+        val account = icloudAccounts.firstOrNull()
+        val hasCredentials = account?.let {
+            withContext(ioDispatcher) { accountRepository.hasCredentials(it.id) }
+        } ?: false
 
-        if (account != null && account.hasCredentials()) {
+        if (account != null && hasCredentials) {
             _uiState.update {
                 it.copy(
                     isConfigured = true,
                     isICloudConnected = account.isEnabled
                 )
             }
-            Log.d(TAG, "iCloud configured: ${account.appleId}")
+            Log.d(TAG, "iCloud configured: ${account.email.take(3)}***")
         } else {
             _uiState.update {
                 it.copy(

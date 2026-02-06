@@ -1,186 +1,144 @@
 package org.onekash.kashcal.sync.provider.icloud
 
 import android.util.Log
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.credential.CredentialManager
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.CredentialProvider
 import org.onekash.kashcal.sync.auth.Credentials
-import org.onekash.kashcal.data.db.dao.AccountsDao
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * CredentialProvider implementation using ICloudAuthManager.
+ * CredentialProvider implementation for iCloud accounts.
  *
- * Provides credentials from encrypted storage for CalDAV sync operations.
- * Currently supports single iCloud account; multi-account support planned.
+ * Delegates to unified CredentialManager for encrypted storage.
+ * Supports multiple iCloud accounts via account-keyed credentials.
  *
  * Architecture:
  * ```
  * CalDavSyncWorker
  *       |
- * ICloudCredentialProvider
+ * ICloudCredentialProvider (this class)
  *       |
- * ICloudAuthManager (EncryptedSharedPreferences)
+ * CredentialManager (UnifiedCredentialManager)
  *       |
- * Android Keystore (AES-256-GCM)
+ * EncryptedSharedPreferences → Android Keystore (AES-256-GCM)
  * ```
  *
  * Security:
  * - Credentials encrypted at rest using AES-256-GCM
  * - Master key stored in Android Keystore
- * - No credentials logged (uses toSafeString())
+ * - Account-keyed storage format: account_{id}_{field}
  */
 @Singleton
 class ICloudCredentialProvider @Inject constructor(
-    private val authManager: ICloudAuthManager,
-    private val accountsDao: AccountsDao
+    private val credentialManager: CredentialManager,
+    private val accountRepository: AccountRepository
 ) : CredentialProvider {
 
     companion object {
         private const val TAG = "ICloudCredentialProvider"
-
-        // Currently we only support a single iCloud account
-        // This ID is used as a placeholder for the primary account
-        const val PRIMARY_ACCOUNT_ID = 1L
     }
 
     override suspend fun getCredentials(accountId: Long): Credentials? {
-        // For now, we only support the primary iCloud account
-        // Multi-account support will require mapping accountId to credential keys
-        return getPrimaryCredentials()
-    }
-
-    override suspend fun getPrimaryCredentials(): Credentials? {
-        if (!authManager.isEncryptionAvailable()) {
-            Log.w(TAG, "Encryption not available: ${authManager.getEncryptionError()}")
+        if (!credentialManager.isEncryptionAvailable()) {
+            Log.w(TAG, "Encryption not available")
             return null
         }
 
-        val account = authManager.loadAccount() ?: return null
+        val accountCredentials = credentialManager.getCredentials(accountId) ?: return null
 
-        if (!account.hasCredentials()) {
-            Log.d(TAG, "No credentials configured")
-            return null
-        }
-
-        Log.d(TAG, "Loaded credentials for: ${account.appleId}")
+        Log.d(TAG, "Loaded credentials for account $accountId: ${accountCredentials.username.take(3)}***")
 
         return Credentials(
-            username = account.appleId,
-            password = account.appSpecificPassword,
-            serverUrl = account.serverUrl
+            username = accountCredentials.username,
+            password = accountCredentials.password,
+            serverUrl = accountCredentials.serverUrl
         )
     }
 
+    override suspend fun getPrimaryCredentials(): Credentials? {
+        // Find first enabled iCloud account
+        val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
+        val enabledAccount = icloudAccounts.firstOrNull { it.isEnabled }
+
+        return if (enabledAccount != null) {
+            getCredentials(enabledAccount.id)
+        } else {
+            null
+        }
+    }
+
     override suspend fun hasCredentials(accountId: Long): Boolean {
-        return getPrimaryCredentials() != null
+        return credentialManager.hasCredentials(accountId)
     }
 
     override suspend fun hasAnyCredentials(): Boolean {
-        return authManager.isConfigured()
+        val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
+        return icloudAccounts.any { credentialManager.hasCredentials(it.id) }
     }
 
     override suspend fun saveCredentials(accountId: Long, credentials: Credentials): Boolean {
-        if (!authManager.isEncryptionAvailable()) {
+        if (!credentialManager.isEncryptionAvailable()) {
             Log.e(TAG, "Cannot save credentials: encryption not available")
             return false
         }
 
-        val account = ICloudAccount(
-            appleId = credentials.username,
-            appSpecificPassword = credentials.password,
+        val accountCredentials = AccountCredentials(
+            username = credentials.username,
+            password = credentials.password,
             serverUrl = credentials.serverUrl,
-            isEnabled = true
+            trustInsecure = false  // iCloud never uses self-signed certs
         )
 
-        val saved = authManager.saveAccount(account)
+        val saved = credentialManager.saveCredentials(accountId, accountCredentials)
         if (saved) {
-            Log.i(TAG, "Saved credentials for: ${credentials.username}")
-
-            // Also update the database account with credential reference
-            updateAccountCredentialKey(accountId, credentials.username)
+            Log.i(TAG, "Saved credentials for account $accountId: ${credentials.username.take(3)}***")
         }
 
         return saved
     }
 
     override suspend fun deleteCredentials(accountId: Long): Boolean {
-        authManager.clearAccount()
-        Log.i(TAG, "Deleted credentials for account: $accountId")
-
-        // Clear credential key from database account
-        clearAccountCredentialKey(accountId)
-
+        credentialManager.deleteCredentials(accountId)
+        Log.i(TAG, "Deleted credentials for account $accountId")
         return true
     }
 
     override suspend fun clearAllCredentials() {
-        authManager.clearAccount()
+        credentialManager.clearAllCredentials()
         Log.i(TAG, "Cleared all credentials")
     }
 
     /**
-     * Update the credential_key field in the Account entity.
-     * This links the database account to the encrypted credential storage.
-     */
-    private suspend fun updateAccountCredentialKey(accountId: Long, credentialKey: String) {
-        try {
-            val account = accountsDao.getById(accountId)
-            if (account != null) {
-                accountsDao.update(account.copy(credentialKey = credentialKey))
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to update account credential key: ${e.message}")
-        }
-    }
-
-    /**
-     * Clear the credential_key field in the Account entity.
-     */
-    private suspend fun clearAccountCredentialKey(accountId: Long) {
-        try {
-            val account = accountsDao.getById(accountId)
-            if (account != null) {
-                accountsDao.update(account.copy(credentialKey = null))
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to clear account credential key: ${e.message}")
-        }
-    }
-
-    /**
-     * Get discovered URLs from the stored account.
+     * Get discovered URLs from the stored credentials.
      * Used after initial discovery to avoid re-discovering.
      */
-    fun getDiscoveredUrls(): DiscoveredUrls? {
-        val account = authManager.loadAccount() ?: return null
-        if (!account.hasDiscoveredCalendarHome()) return null
+    suspend fun getDiscoveredUrls(accountId: Long): DiscoveredUrls? {
+        val creds = credentialManager.getCredentials(accountId) ?: return null
+        if (creds.calendarHomeSet == null) return null
 
         return DiscoveredUrls(
-            principalUrl = account.principalUrl,
-            calendarHomeUrl = account.calendarHomeUrl
+            principalUrl = creds.principalUrl,
+            calendarHomeUrl = creds.calendarHomeSet
         )
     }
 
     /**
      * Save discovered URLs after successful PROPFIND discovery.
      */
-    fun saveDiscoveredUrls(principalUrl: String?, calendarHomeUrl: String) {
-        authManager.updateCalendarHomeUrl(calendarHomeUrl, principalUrl)
-        Log.d(TAG, "Saved discovered URLs: home=$calendarHomeUrl")
-    }
-
-    /**
-     * Get the sync token for incremental sync.
-     */
-    fun getSyncToken(): String? {
-        return authManager.loadAccount()?.syncToken
-    }
-
-    /**
-     * Update sync token after successful sync.
-     */
-    fun updateSyncToken(token: String?) {
-        authManager.updateSyncToken(token)
+    suspend fun saveDiscoveredUrls(accountId: Long, principalUrl: String?, calendarHomeUrl: String) {
+        val existingCreds = credentialManager.getCredentials(accountId)
+        if (existingCreds != null) {
+            val updated = existingCreds.copy(
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
+            )
+            credentialManager.saveCredentials(accountId, updated)
+            Log.d(TAG, "Saved discovered URLs for account $accountId: home=$calendarHomeUrl")
+        }
     }
 }
 

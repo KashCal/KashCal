@@ -8,8 +8,9 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -36,9 +37,8 @@ import org.onekash.kashcal.sync.quirks.CalDavQuirks
 class CalDavAccountDiscoveryServiceTest {
 
     private lateinit var calDavClientFactory: CalDavClientFactory
-    private lateinit var credentialManager: CalDavCredentialManager
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var accountRepository: AccountRepository
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var mockClient: CalDavClient
     private lateinit var discoveryService: CalDavAccountDiscoveryService
 
@@ -60,9 +60,8 @@ class CalDavAccountDiscoveryServiceTest {
         }
 
         calDavClientFactory = mockk(relaxed = true)
-        credentialManager = mockk(relaxed = true)
-        accountsDao = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
         mockClient = mockk(relaxed = true)
 
         // Factory returns our mock client
@@ -70,9 +69,8 @@ class CalDavAccountDiscoveryServiceTest {
 
         discoveryService = CalDavAccountDiscoveryService(
             calDavClientFactory,
-            credentialManager,
-            accountsDao,
-            calendarsDao
+            accountRepository,
+            calendarRepository
         )
     }
 
@@ -168,10 +166,10 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount creates account and calendars on success`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://nextcloud.example.com",
@@ -187,7 +185,7 @@ class CalDavAccountDiscoveryServiceTest {
         assertEquals(2, success.calendars.size)
 
         // Verify credentials were saved
-        verify { credentialManager.saveCredentials(1L, any()) }
+        coVerify { accountRepository.saveCredentials(1L, any()) }
     }
 
     @Test
@@ -203,9 +201,9 @@ class CalDavAccountDiscoveryServiceTest {
             homeSetUrl = "old-home",
             isEnabled = false
         )
-        coEvery { accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "user") } returns existingAccount
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns existingAccount
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://nextcloud.example.com",
@@ -218,17 +216,17 @@ class CalDavAccountDiscoveryServiceTest {
         assertEquals(5L, success.account.id)
         assertTrue(success.account.isEnabled)
 
-        coVerify { accountsDao.update(match { it.id == 5L && it.isEnabled }) }
+        coVerify { accountRepository.updateAccount(match { it.id == 5L && it.isEnabled }) }
     }
 
     @Test
     fun `discoverAndCreateAccount sets homeSetUrl for DefaultQuirks`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://nextcloud.example.com",
@@ -248,10 +246,10 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount passes trustInsecure to credentials`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         discoveryService.discoverAndCreateAccount(
             serverUrl = "https://self-signed.local",
@@ -269,8 +267,8 @@ class CalDavAccountDiscoveryServiceTest {
         }
 
         // Verify credentials saved with trustInsecure
-        verify {
-            credentialManager.saveCredentials(1L, match<CalDavCredentials> { it.trustInsecure })
+        coVerify {
+            accountRepository.saveCredentials(1L, match<AccountCredentials> { it.trustInsecure })
         }
     }
 
@@ -311,10 +309,10 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://nextcloud.example.com",
@@ -439,14 +437,14 @@ class CalDavAccountDiscoveryServiceTest {
         val account = createAccount(1L)
         val existingCalendar = createCalendar(1L, account.id, "https://server/cal1/")
 
-        coEvery { accountsDao.getById(1L) } returns account
-        coEvery { credentialManager.getCredentials(1L) } returns CalDavCredentials(
-            serverUrl = "https://server",
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
             username = "user",
-            password = "pass"
+            password = "pass",
+            serverUrl = "https://server"
         )
-        coEvery { calendarsDao.getByAccountIdOnce(1L) } returns listOf(existingCalendar)
-        coEvery { calendarsDao.getByCaldavUrl("https://server/cal1/") } returns existingCalendar
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl("https://server/cal1/") } returns existingCalendar
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
                 CalDavCalendar(
@@ -463,7 +461,7 @@ class CalDavAccountDiscoveryServiceTest {
         val result = discoveryService.refreshCalendars(1L)
 
         assertTrue(result is DiscoveryResult.Success)
-        coVerify { calendarsDao.update(match { it.displayName == "Updated Name" }) }
+        coVerify { calendarRepository.updateCalendar(match { it.displayName == "Updated Name" }) }
     }
 
     @Test
@@ -471,27 +469,27 @@ class CalDavAccountDiscoveryServiceTest {
         val account = createAccount(1L)
         val existingCalendar = createCalendar(1L, account.id, "https://server/deleted/")
 
-        coEvery { accountsDao.getById(1L) } returns account
-        coEvery { credentialManager.getCredentials(1L) } returns CalDavCredentials(
-            serverUrl = "https://server",
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
             username = "user",
-            password = "pass"
+            password = "pass",
+            serverUrl = "https://server"
         )
-        coEvery { calendarsDao.getByAccountIdOnce(1L) } returns listOf(existingCalendar)
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
 
         discoveryService.refreshCalendars(1L)
 
-        coVerify { calendarsDao.delete(existingCalendar) }
+        coVerify { calendarRepository.deleteCalendar(existingCalendar.id) }
     }
 
     @Test
     fun `refreshCalendars returns AuthError when credentials missing`() = runTest {
         val account = createAccount(1L)
 
-        coEvery { accountsDao.getById(1L) } returns account
-        coEvery { credentialManager.getCredentials(1L) } returns null
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns null
 
         val result = discoveryService.refreshCalendars(1L)
 
@@ -501,7 +499,7 @@ class CalDavAccountDiscoveryServiceTest {
 
     @Test
     fun `refreshCalendars returns Error when account not found`() = runTest {
-        coEvery { accountsDao.getById(99L) } returns null
+        coEvery { accountRepository.getAccountById(99L) } returns null
 
         val result = discoveryService.refreshCalendars(99L)
 
@@ -512,28 +510,21 @@ class CalDavAccountDiscoveryServiceTest {
     // ==================== Account Removal Tests ====================
 
     @Test
-    fun `removeAccount deletes credentials before account`() = runTest {
-        val account = createAccount(1L)
-        coEvery { accountsDao.getById(1L) } returns account
-
+    fun `removeAccount calls deleteAccount on repository`() = runTest {
         discoveryService.removeAccount(1L)
 
-        // Verify order: credentials deleted before account
-        coVerifyOrder {
-            credentialManager.deleteCredentials(1L)
-            accountsDao.delete(account)
-        }
+        // Repository handles all cleanup internally (credentials, reminders, pending ops)
+        coVerify { accountRepository.deleteAccount(1L) }
     }
 
     @Test
     fun `removeAccountByEmail finds and deletes account`() = runTest {
         val account = createAccount(1L)
-        coEvery { accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "user@example.com") } returns account
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user@example.com") } returns account
 
         discoveryService.removeAccountByEmail("user@example.com")
 
-        coVerify { credentialManager.deleteCredentials(1L) }
-        coVerify { accountsDao.delete(account) }
+        coVerify { accountRepository.deleteAccount(1L) }
     }
 
     // ==================== Server Display Name Tests ====================
@@ -542,10 +533,10 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount extracts FastMail display name`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "https://caldav.fastmail.com")
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         discoveryService.discoverAndCreateAccount(
             serverUrl = "https://caldav.fastmail.com",
@@ -554,7 +545,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         coVerify {
-            accountsDao.insert(match<Account> { it.displayName == "FastMail" })
+            accountRepository.createAccount(match<Account> { it.displayName == "FastMail" })
         }
     }
 
@@ -562,10 +553,10 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount uses hostname for unknown servers`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "https://caldav.myserver.org")
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         discoveryService.discoverAndCreateAccount(
             serverUrl = "https://caldav.myserver.org",
@@ -574,7 +565,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         coVerify {
-            accountsDao.insert(match<Account> { it.displayName == "caldav.myserver.org" })
+            accountRepository.createAccount(match<Account> { it.displayName == "caldav.myserver.org" })
         }
     }
 
@@ -601,10 +592,10 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://server",
@@ -638,10 +629,10 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
         val result = discoveryService.discoverAndCreateAccount(
             serverUrl = "https://server",

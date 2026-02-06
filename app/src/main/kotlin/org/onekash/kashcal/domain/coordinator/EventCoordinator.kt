@@ -11,6 +11,7 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import java.util.UUID
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -56,6 +57,7 @@ class EventCoordinator @Inject constructor(
     private val localCalendarInitializer: LocalCalendarInitializer,
     private val icsSubscriptionRepository: IcsSubscriptionRepository,
     private val contactBirthdayRepository: ContactBirthdayRepository,
+    private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val reminderScheduler: ReminderScheduler,
     private val widgetUpdateManager: WidgetUpdateManager
@@ -126,7 +128,7 @@ class EventCoordinator @Inject constructor(
      * @param accountEmail The account email (e.g., Apple ID for iCloud)
      */
     suspend fun cancelRemindersForAccount(accountEmail: String) {
-        val account = eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, accountEmail) ?: return
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, accountEmail) ?: return
         val calendars = eventReader.getCalendarsByAccountIdOnce(account.id)
 
         for (calendar in calendars) {
@@ -507,7 +509,7 @@ class EventCoordinator @Inject constructor(
      * Returns Flow that updates when accounts change.
      */
     fun getCalDavAccountCount(): Flow<Int> {
-        return eventReader.getCalDavAccountCount()
+        return accountRepository.getAccountCountByProviderFlow(AccountProvider.CALDAV)
     }
 
     /**
@@ -515,7 +517,7 @@ class EventCoordinator @Inject constructor(
      * Returns accounts with provider = CALDAV.
      */
     fun getCalDavAccounts(): Flow<List<Account>> {
-        return eventReader.getCalDavAccounts()
+        return accountRepository.getAccountsByProviderFlow(AccountProvider.CALDAV)
     }
 
     /**
@@ -523,7 +525,7 @@ class EventCoordinator @Inject constructor(
      * Used for grouping calendars by account in UI.
      */
     fun getAllAccounts(): Flow<List<Account>> {
-        return eventReader.getAllAccounts()
+        return accountRepository.getAllAccountsFlow()
     }
 
     /**

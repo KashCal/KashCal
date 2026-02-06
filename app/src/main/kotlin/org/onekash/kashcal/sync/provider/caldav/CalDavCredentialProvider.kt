@@ -1,7 +1,9 @@
 package org.onekash.kashcal.sync.provider.caldav
 
 import android.util.Log
-import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.credential.CredentialManager
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.CredentialProvider
 import org.onekash.kashcal.sync.auth.Credentials
@@ -11,9 +13,8 @@ import javax.inject.Singleton
 /**
  * CredentialProvider implementation for generic CalDAV accounts.
  *
- * Unlike ICloudCredentialProvider which uses a single set of credentials,
- * this provider supports multiple CalDAV accounts with independent credentials.
- * Each account's credentials are keyed by accountId in encrypted storage.
+ * Delegates to unified CredentialManager for encrypted storage.
+ * Supports multiple CalDAV accounts with independent credentials.
  *
  * Architecture:
  * ```
@@ -21,9 +22,9 @@ import javax.inject.Singleton
  *       |
  * CalDavCredentialProvider (this class)
  *       |
- * CalDavCredentialManager (EncryptedSharedPreferences)
+ * CredentialManager (UnifiedCredentialManager)
  *       |
- * Android Keystore (AES-256-GCM)
+ * EncryptedSharedPreferences → Android Keystore (AES-256-GCM)
  * ```
  *
  * Usage:
@@ -43,8 +44,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class CalDavCredentialProvider @Inject constructor(
-    private val credentialManager: CalDavCredentialManager,
-    private val accountsDao: AccountsDao
+    private val credentialManager: CredentialManager,
+    private val accountRepository: AccountRepository
 ) : CredentialProvider {
 
     companion object {
@@ -59,23 +60,23 @@ class CalDavCredentialProvider @Inject constructor(
      */
     override suspend fun getCredentials(accountId: Long): Credentials? {
         if (!credentialManager.isEncryptionAvailable()) {
-            Log.w(TAG, "Encryption not available: ${credentialManager.getEncryptionError()}")
+            Log.w(TAG, "Encryption not available")
             return null
         }
 
-        val caldavCredentials = credentialManager.getCredentials(accountId)
-        if (caldavCredentials == null) {
+        val accountCredentials = credentialManager.getCredentials(accountId)
+        if (accountCredentials == null) {
             Log.d(TAG, "No credentials for account $accountId")
             return null
         }
 
-        Log.d(TAG, "Loaded credentials for account $accountId: ${caldavCredentials.username.take(3)}***")
+        Log.d(TAG, "Loaded credentials for account $accountId: ${accountCredentials.username.take(3)}***")
 
         return Credentials(
-            username = caldavCredentials.username,
-            password = caldavCredentials.password,
-            serverUrl = caldavCredentials.serverUrl,
-            trustInsecure = caldavCredentials.trustInsecure
+            username = accountCredentials.username,
+            password = accountCredentials.password,
+            serverUrl = accountCredentials.serverUrl,
+            trustInsecure = accountCredentials.trustInsecure
         )
     }
 
@@ -90,7 +91,7 @@ class CalDavCredentialProvider @Inject constructor(
      */
     override suspend fun getPrimaryCredentials(): Credentials? {
         // Find first enabled CalDAV account
-        val caldavAccounts = accountsDao.getByProvider(AccountProvider.CALDAV)
+        val caldavAccounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
         val enabledAccount = caldavAccounts.firstOrNull { account -> account.isEnabled }
 
         return if (enabledAccount != null) {
@@ -116,7 +117,8 @@ class CalDavCredentialProvider @Inject constructor(
      * @return true if at least one CalDAV account has credentials
      */
     override suspend fun hasAnyCredentials(): Boolean {
-        return credentialManager.getAllAccountIds().isNotEmpty()
+        val caldavAccounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
+        return caldavAccounts.any { credentialManager.hasCredentials(it.id) }
     }
 
     /**
@@ -132,19 +134,16 @@ class CalDavCredentialProvider @Inject constructor(
             return false
         }
 
-        val caldavCredentials = CalDavCredentials(
-            serverUrl = credentials.serverUrl,
+        val accountCredentials = AccountCredentials(
             username = credentials.username,
             password = credentials.password,
-            trustInsecure = false // Default to secure, update via setTrustInsecure()
+            serverUrl = credentials.serverUrl,
+            trustInsecure = credentials.trustInsecure
         )
 
-        val saved = credentialManager.saveCredentials(accountId, caldavCredentials)
+        val saved = credentialManager.saveCredentials(accountId, accountCredentials)
         if (saved) {
             Log.i(TAG, "Saved credentials for account $accountId: ${credentials.username.take(3)}***")
-
-            // Update account credential key
-            updateAccountCredentialKey(accountId, credentials.username)
         }
 
         return saved
@@ -168,17 +167,16 @@ class CalDavCredentialProvider @Inject constructor(
             return false
         }
 
-        val caldavCredentials = CalDavCredentials(
-            serverUrl = credentials.serverUrl,
+        val accountCredentials = AccountCredentials(
             username = credentials.username,
             password = credentials.password,
+            serverUrl = credentials.serverUrl,
             trustInsecure = trustInsecure
         )
 
-        val saved = credentialManager.saveCredentials(accountId, caldavCredentials)
+        val saved = credentialManager.saveCredentials(accountId, accountCredentials)
         if (saved) {
             Log.i(TAG, "Saved credentials for account $accountId with trustInsecure=$trustInsecure")
-            updateAccountCredentialKey(accountId, credentials.username)
         }
 
         return saved
@@ -186,7 +184,6 @@ class CalDavCredentialProvider @Inject constructor(
 
     /**
      * Delete credentials for a CalDAV account.
-     * IMPORTANT: Call this BEFORE deleting the account from Room.
      *
      * @param accountId The database account ID
      * @return true if deleted (or didn't exist)
@@ -194,10 +191,6 @@ class CalDavCredentialProvider @Inject constructor(
     override suspend fun deleteCredentials(accountId: Long): Boolean {
         credentialManager.deleteCredentials(accountId)
         Log.i(TAG, "Deleted credentials for account $accountId")
-
-        // Clear credential key from database account
-        clearAccountCredentialKey(accountId)
-
         return true
     }
 
@@ -216,7 +209,7 @@ class CalDavCredentialProvider @Inject constructor(
      * @param accountId The database account ID
      * @return true if trustInsecure is enabled, false otherwise
      */
-    fun getTrustInsecure(accountId: Long): Boolean {
+    suspend fun getTrustInsecure(accountId: Long): Boolean {
         val credentials = credentialManager.getCredentials(accountId)
         return credentials?.trustInsecure ?: false
     }
@@ -228,48 +221,19 @@ class CalDavCredentialProvider @Inject constructor(
      * @param trustInsecure Whether to trust self-signed certificates
      * @return true if updated successfully
      */
-    fun setTrustInsecure(accountId: Long, trustInsecure: Boolean): Boolean {
+    suspend fun setTrustInsecure(accountId: Long, trustInsecure: Boolean): Boolean {
         val credentials = credentialManager.getCredentials(accountId) ?: return false
         return credentialManager.saveCredentials(accountId, credentials.copy(trustInsecure = trustInsecure))
     }
 
     /**
-     * Get the raw CalDavCredentials with all fields including trustInsecure.
+     * Get the raw AccountCredentials with all fields including trustInsecure.
      * Used by CalDavClientFactory to configure SSL trust.
      *
      * @param accountId The database account ID
-     * @return CalDavCredentials or null if not found
+     * @return AccountCredentials or null if not found
      */
-    fun getCalDavCredentials(accountId: Long): CalDavCredentials? {
+    suspend fun getAccountCredentials(accountId: Long): AccountCredentials? {
         return credentialManager.getCredentials(accountId)
-    }
-
-    /**
-     * Update the credential_key field in the Account entity.
-     * This links the database account to the encrypted credential storage.
-     */
-    private suspend fun updateAccountCredentialKey(accountId: Long, credentialKey: String) {
-        try {
-            val account = accountsDao.getById(accountId)
-            if (account != null) {
-                accountsDao.update(account.copy(credentialKey = credentialKey))
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to update account credential key: ${e.message}")
-        }
-    }
-
-    /**
-     * Clear the credential_key field in the Account entity.
-     */
-    private suspend fun clearAccountCredentialKey(accountId: Long) {
-        try {
-            val account = accountsDao.getById(accountId)
-            if (account != null) {
-                accountsDao.update(account.copy(credentialKey = null))
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to clear account credential key: ${e.message}")
-        }
     }
 }

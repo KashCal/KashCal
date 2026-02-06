@@ -20,7 +20,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -53,7 +54,7 @@ class HomeViewModelErrorHandlingTest {
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var eventReader: EventReader
     private lateinit var dataStore: KashCalDataStore
-    private lateinit var authManager: ICloudAuthManager
+    private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var networkMonitor: NetworkMonitor
 
@@ -78,7 +79,7 @@ class HomeViewModelErrorHandlingTest {
         eventCoordinator = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
-        authManager = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
 
@@ -101,7 +102,8 @@ class HomeViewModelErrorHandlingTest {
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
         coEvery { dataStore.onboardingDismissed } returns flowOf(true)
-        coEvery { authManager.loadAccount() } returns null
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        coEvery { accountRepository.hasCredentials(any()) } returns false
         coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(emptyList())
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(emptyList())
         every { eventReader.getVisibleOccurrencesWithEventsForDay(any()) } returns flowOf(emptyList())
@@ -117,7 +119,7 @@ class HomeViewModelErrorHandlingTest {
             eventCoordinator = eventCoordinator,
             eventReader = eventReader,
             dataStore = dataStore,
-            authManager = authManager,
+            accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
             ioDispatcher = testDispatcher

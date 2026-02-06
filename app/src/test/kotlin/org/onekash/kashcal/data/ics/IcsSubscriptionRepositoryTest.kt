@@ -12,8 +12,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -44,7 +44,7 @@ class IcsSubscriptionRepositoryTest {
     // Mocks
     private lateinit var database: KashCalDatabase
     private lateinit var icsSubscriptionsDao: IcsSubscriptionsDao
-    private lateinit var accountsDao: AccountsDao
+    private lateinit var accountRepository: AccountRepository
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
@@ -93,7 +93,7 @@ class IcsSubscriptionRepositoryTest {
     fun setup() {
         database = mockk(relaxed = true)
         icsSubscriptionsDao = mockk(relaxed = true)
-        accountsDao = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         calendarsDao = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
@@ -110,7 +110,7 @@ class IcsSubscriptionRepositoryTest {
         repository = IcsSubscriptionRepository(
             database = database,
             icsSubscriptionsDao = icsSubscriptionsDao,
-            accountsDao = accountsDao,
+            accountRepository = accountRepository,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -120,7 +120,7 @@ class IcsSubscriptionRepositoryTest {
         )
 
         // Default: ICS account exists
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns Account(
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns Account(
             id = 1L,
             provider = AccountProvider.ICS,
             email = "subscriptions@local",
@@ -226,8 +226,8 @@ class IcsSubscriptionRepositoryTest {
 
     @Test
     fun `addSubscription creates ICS account if not exists`() = runTest {
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { icsSubscriptionsDao.urlExists(any()) } returns false
         coEvery { calendarsDao.insert(any()) } returns 100L
         coEvery { icsSubscriptionsDao.insert(any()) } returns 1L
@@ -240,7 +240,7 @@ class IcsSubscriptionRepositoryTest {
 
         repository.addSubscription("https://example.com/cal.ics", "Test", 0)
 
-        coVerify { accountsDao.insert(match { it.provider == AccountProvider.ICS }) }
+        coVerify { accountRepository.createAccount(match { it.provider == AccountProvider.ICS }) }
     }
 
     @Test

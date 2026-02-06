@@ -5,8 +5,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -40,7 +40,7 @@ private const val TAG = "IcsSubscriptionRepo"
 class IcsSubscriptionRepository @Inject constructor(
     private val database: KashCalDatabase,
     private val icsSubscriptionsDao: IcsSubscriptionsDao,
-    private val accountsDao: AccountsDao,
+    private val accountRepository: AccountRepository,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
@@ -305,7 +305,7 @@ class IcsSubscriptionRepository @Inject constructor(
      * Returns the account ID.
      */
     private suspend fun ensureIcsAccountExists(): Long {
-        val existing = accountsDao.getByProviderAndEmail(
+        val existing = accountRepository.getAccountByProviderAndEmail(
             AccountProvider.ICS,
             IcsSubscription.ACCOUNT_EMAIL
         )
@@ -322,7 +322,7 @@ class IcsSubscriptionRepository @Inject constructor(
             isEnabled = true
         )
 
-        val accountId = accountsDao.insert(account)
+        val accountId = accountRepository.createAccount(account)
         Log.i(TAG, "Created ICS account with ID: $accountId")
         return accountId
     }

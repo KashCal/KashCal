@@ -16,8 +16,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -51,8 +51,8 @@ class ICloudAccountDiscoveryServiceTest {
     private lateinit var credentialProvider: ICloudCredentialProvider  // From same package
     private lateinit var calDavClient: CalDavClient
     private lateinit var icloudQuirks: ICloudQuirks
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var accountRepository: AccountRepository
+    private lateinit var calendarRepository: CalendarRepository
 
     // Test data
     private val testAppleId = "test@icloud.com"
@@ -96,17 +96,17 @@ class ICloudAccountDiscoveryServiceTest {
         credentialProvider = mockk(relaxed = true)
         calDavClient = mockk(relaxed = true)
         icloudQuirks = ICloudQuirks()
-        accountsDao = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
 
         // Mock factory to return our mock client
         every { clientFactory.createClient(any(), any()) } returns calDavClient
 
         // Default: no existing account
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns null
-        coEvery { accountsDao.insert(any()) } returns 1L
-        coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
-        coEvery { calendarsDao.insert(any()) } returns 1L
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
     }
 
     @After
@@ -119,8 +119,8 @@ class ICloudAccountDiscoveryServiceTest {
             clientFactory = clientFactory,
             credentialProvider = credentialProvider,
             icloudQuirks = icloudQuirks,
-            accountsDao = accountsDao,
-            calendarsDao = calendarsDao
+            accountRepository = accountRepository,
+            calendarRepository = calendarRepository
         )
     }
 
@@ -142,10 +142,10 @@ class ICloudAccountDiscoveryServiceTest {
         assertEquals(2, success.calendars.size)
 
         // Verify account was created
-        coVerify { accountsDao.insert(match { it.email == testAppleId }) }
+        coVerify { accountRepository.createAccount(match { it.email == testAppleId }) }
 
         // Verify calendars were created
-        coVerify(exactly = 2) { calendarsDao.insert(any()) }
+        coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
     }
 
     @Test
@@ -164,7 +164,7 @@ class ICloudAccountDiscoveryServiceTest {
     @Test
     fun `discovery updates existing account if found`() = runTest {
         // Setup existing account
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns testDbAccount
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns testDbAccount
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
         coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
@@ -176,8 +176,8 @@ class ICloudAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Success)
 
         // Verify update was called instead of insert
-        coVerify { accountsDao.update(any()) }
-        coVerify(exactly = 0) { accountsDao.insert(any()) }
+        coVerify { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
     }
 
     @Test
@@ -200,7 +200,7 @@ class ICloudAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
         // Only 2 calendars should be created (reminders skipped)
-        coVerify(exactly = 2) { calendarsDao.insert(any()) }
+        coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
     }
 
     // ==================== Authentication Error Tests ====================
@@ -314,7 +314,7 @@ class ICloudAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
         // Calendar should be created with parsed color
-        coVerify { calendarsDao.insert(any()) }
+        coVerify { calendarRepository.createCalendar(any()) }
     }
 
     @Test
@@ -339,29 +339,27 @@ class ICloudAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
         // Should still succeed with default color
-        coVerify { calendarsDao.insert(any()) }
+        coVerify { calendarRepository.createCalendar(any()) }
     }
 
     // ==================== Account Removal Tests ====================
 
     @Test
-    fun `removeAccount deletes account from database`() = runTest {
-        coEvery { accountsDao.getById(1L) } returns testDbAccount
-
+    fun `removeAccount calls deleteAccount on repository`() = runTest {
         val service = createService()
         service.removeAccount(1L)
 
-        coVerify { accountsDao.delete(testDbAccount) }
+        coVerify { accountRepository.deleteAccount(1L) }
     }
 
     @Test
     fun `removeAccountByEmail deletes iCloud account by email`() = runTest {
-        coEvery { accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, testAppleId) } returns testDbAccount
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, testAppleId) } returns testDbAccount
 
         val service = createService()
         service.removeAccountByEmail(testAppleId)
 
-        coVerify { accountsDao.delete(testDbAccount) }
+        coVerify { accountRepository.deleteAccount(testDbAccount.id) }
     }
 
     // ==================== Rate Limiting Tests ====================

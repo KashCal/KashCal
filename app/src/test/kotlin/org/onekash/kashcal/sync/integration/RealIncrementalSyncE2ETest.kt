@@ -16,8 +16,8 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -57,7 +57,7 @@ class RealIncrementalSyncE2ETest {
 
     // Mocked DAOs (we capture what gets saved)
     private lateinit var database: KashCalDatabase
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var dataStore: KashCalDataStore
@@ -109,7 +109,7 @@ class RealIncrementalSyncE2ETest {
 
         // Mock DAOs to capture what gets saved
         database = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
@@ -137,7 +137,7 @@ class RealIncrementalSyncE2ETest {
 
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,

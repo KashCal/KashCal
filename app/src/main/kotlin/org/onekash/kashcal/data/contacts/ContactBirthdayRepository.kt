@@ -6,8 +6,8 @@ import android.provider.ContactsContract
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -47,7 +47,7 @@ data class ContactBirthday(
  */
 @Singleton
 class ContactBirthdayRepository @Inject constructor(
-    private val accountsDao: AccountsDao,
+    private val accountRepository: AccountRepository,
     private val calendarsDao: CalendarsDao,
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
@@ -72,7 +72,7 @@ class ContactBirthdayRepository @Inject constructor(
      * Check if the birthday calendar exists.
      */
     suspend fun birthdayCalendarExists(): Boolean = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
         account != null && calendarsDao.getByAccountIdOnce(account.id).isNotEmpty()
     }
 
@@ -80,7 +80,7 @@ class ContactBirthdayRepository @Inject constructor(
      * Get the birthday calendar ID, or null if not created.
      */
     suspend fun getBirthdayCalendarId(): Long? = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
             ?: return@withContext null
         calendarsDao.getByAccountIdOnce(account.id).firstOrNull()?.id
     }
@@ -93,7 +93,7 @@ class ContactBirthdayRepository @Inject constructor(
      */
     suspend fun ensureCalendarExists(color: Int = SubscriptionColors.Purple): Long = withContext(Dispatchers.IO) {
         // Check if account exists
-        var account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
+        var account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
         if (account == null) {
             // Create contacts account
             account = Account(
@@ -101,7 +101,7 @@ class ContactBirthdayRepository @Inject constructor(
                 email = ACCOUNT_EMAIL,
                 displayName = "Contact Birthdays"
             )
-            val accountId = accountsDao.insert(account)
+            val accountId = accountRepository.createAccount(account)
             account = account.copy(id = accountId)
             Log.i(TAG, "Created contacts account: $accountId")
         }
@@ -147,24 +147,18 @@ class ContactBirthdayRepository @Inject constructor(
     /**
      * Remove the birthday calendar and all its events.
      *
-     * IMPORTANT: Cancels reminders BEFORE cascade delete to prevent orphaned alarms.
+     * Uses AccountRepository.deleteAccount() which handles:
+     * - Cancelling WorkManager jobs
+     * - Cancelling reminders for all events
+     * - Deleting credentials (none for CONTACTS)
+     * - Cascade delete account → calendars → events → occurrences
      */
     suspend fun removeCalendar() = withContext(Dispatchers.IO) {
-        val account = accountsDao.getByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ACCOUNT_EMAIL)
             ?: return@withContext
 
-        // Get all events and cancel their reminders
-        val calendars = calendarsDao.getByAccountIdOnce(account.id)
-        for (calendar in calendars) {
-            val events = eventsDao.getAllMasterEventsForCalendar(calendar.id)
-            for (event in events) {
-                reminderScheduler.cancelRemindersForEvent(event.id)
-            }
-            Log.i(TAG, "Cancelled reminders for ${events.size} birthday events")
-        }
-
-        // Delete account (cascades to calendars → events → occurrences)
-        accountsDao.delete(account)
+        // Delete account with full cleanup
+        accountRepository.deleteAccount(account.id)
         Log.i(TAG, "Removed birthday calendar and account")
     }
 

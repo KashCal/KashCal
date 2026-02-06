@@ -26,6 +26,8 @@
             Master key is device-bound, won't work after restore.
         -->
         <exclude domain="sharedpref" path="icloud_credentials.xml" />
+        <exclude domain="sharedpref" path="caldav_credentials.xml" />
+        <exclude domain="sharedpref" path="unified_credentials.xml" />
 
         <!-- Note: cache/ is automatically excluded by Android backup system -->
     </cloud-backup>
@@ -40,6 +42,8 @@
         <include domain="file" path="datastore/" />
         <include domain="sharedpref" path="." />
         <exclude domain="sharedpref" path="icloud_credentials.xml" />
+        <exclude domain="sharedpref" path="caldav_credentials.xml" />
+        <exclude domain="sharedpref" path="unified_credentials.xml" />
         <!-- Note: cache/ is automatically excluded by Android backup system -->
     </device-transfer>
 </data-extraction-rules>

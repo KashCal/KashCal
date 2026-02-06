@@ -17,6 +17,7 @@ import org.junit.Test
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -50,6 +51,7 @@ class EventCoordinatorTest {
     private lateinit var localCalendarInitializer: LocalCalendarInitializer
     private lateinit var icsSubscriptionRepository: IcsSubscriptionRepository
     private lateinit var contactBirthdayRepository: ContactBirthdayRepository
+    private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var widgetUpdateManager: org.onekash.kashcal.widget.WidgetUpdateManager
@@ -113,6 +115,7 @@ class EventCoordinatorTest {
         localCalendarInitializer = mockk(relaxed = true)
         icsSubscriptionRepository = mockk(relaxed = true)
         contactBirthdayRepository = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
@@ -135,6 +138,7 @@ class EventCoordinatorTest {
             localCalendarInitializer = localCalendarInitializer,
             icsSubscriptionRepository = icsSubscriptionRepository,
             contactBirthdayRepository = contactBirthdayRepository,
+            accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             reminderScheduler = reminderScheduler,
             widgetUpdateManager = widgetUpdateManager
@@ -932,7 +936,7 @@ class EventCoordinatorTest {
         val event1 = testEvent.copy(id = 200L, calendarId = calendar1.id)
         val event2 = testEvent.copy(id = 201L, calendarId = calendar2.id)
 
-        coEvery { eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com") } returns testAccount
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com") } returns testAccount
         coEvery { eventReader.getCalendarsByAccountIdOnce(testAccount.id) } returns listOf(calendar1, calendar2)
         coEvery { eventReader.getEventsForCalendar(calendar1.id) } returns listOf(event1)
         coEvery { eventReader.getEventsForCalendar(calendar2.id) } returns listOf(event2)
@@ -948,7 +952,7 @@ class EventCoordinatorTest {
     @Test
     fun `cancelRemindersForAccount handles non-existent account gracefully`() = runTest {
         // Setup: No account found
-        coEvery { eventReader.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "nonexistent@test.com") } returns null
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "nonexistent@test.com") } returns null
 
         // Act: Should not throw
         coordinator.cancelRemindersForAccount("nonexistent@test.com")

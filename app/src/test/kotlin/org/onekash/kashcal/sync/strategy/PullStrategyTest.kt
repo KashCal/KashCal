@@ -8,8 +8,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
@@ -35,7 +35,7 @@ class PullStrategyTest {
     private lateinit var client: CalDavClient
 
     @MockK
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
 
     @MockK
     private lateinit var eventsDao: EventsDao
@@ -73,7 +73,7 @@ class PullStrategyTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
@@ -580,8 +580,8 @@ class PullStrategyTest {
         pullStrategy.pull(calendar, client = client)
 
         coVerify {
-            calendarsDao.updateSyncToken(
-                id = calendar.id,
+            calendarRepository.updateSyncToken(
+                calendarId = calendar.id,
                 syncToken = "new-token",
                 ctag = "new-ctag"
             )
@@ -597,7 +597,7 @@ class PullStrategyTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        coVerify(exactly = 0) { calendarsDao.updateSyncToken(any(), any(), any()) }
+        coVerify(exactly = 0) { calendarRepository.updateSyncToken(any(), any(), any()) }
     }
 
     // ========== LOCAL-FIRST: Pending Changes Protection Tests ==========

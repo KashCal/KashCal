@@ -1,7 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -28,7 +28,7 @@ import javax.inject.Inject
  * 4. Schedule retry on failure
  */
 class PushStrategy @Inject constructor(
-    private val calendarsDao: CalendarsDao,
+    private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao
 ) {
@@ -59,7 +59,7 @@ class PushStrategy @Inject constructor(
         val eventsCache = eventsDao.getByIds(eventIds).associateBy { it.id }
 
         val calendarIds = eventsCache.values.map { it.calendarId }.distinct()
-        val calendarsCache = calendarsDao.getByIds(calendarIds).associateBy { it.id }
+        val calendarsCache = calendarRepository.getCalendarsByIds(calendarIds).associateBy { it.id }
 
         Log.d(TAG, "Batch loaded ${eventsCache.size} events, ${calendarsCache.size} calendars")
 
@@ -271,7 +271,7 @@ class PushStrategy @Inject constructor(
         }
 
         val calendar = calendarsCache[event.calendarId]
-            ?: calendarsDao.getById(event.calendarId)
+            ?: calendarRepository.getCalendarById(event.calendarId)
             ?: return SinglePushResult.Error(-1, "Calendar not found", false)
 
         // Serialize event to iCal (captures exceptions at this point in time)
@@ -487,7 +487,7 @@ class PushStrategy @Inject constructor(
             ?: return SinglePushResult.Error(-1, "No target calendar for MOVE", false)
 
         val calendar = calendarsCache[targetCalendarId]
-            ?: calendarsDao.getById(targetCalendarId)
+            ?: calendarRepository.getCalendarById(targetCalendarId)
             ?: return SinglePushResult.Error(-1, "Target calendar not found for MOVE", false)
 
         // Phase 0: Try WebDAV MOVE first

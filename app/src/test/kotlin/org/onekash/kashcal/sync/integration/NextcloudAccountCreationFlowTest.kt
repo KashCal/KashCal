@@ -12,15 +12,14 @@ import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
-import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialManager
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -37,9 +36,8 @@ class NextcloudAccountCreationFlowTest {
 
     private lateinit var discoveryService: CalDavAccountDiscoveryService
     private lateinit var clientFactory: OkHttpCalDavClientFactory
-    private lateinit var credentialManager: CalDavCredentialManager
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var accountRepository: AccountRepository
+    private lateinit var calendarRepository: CalendarRepository
 
     // Track accounts created in mock database
     private val accountsInDb = CopyOnWriteArrayList<Account>()
@@ -116,19 +114,15 @@ class NextcloudAccountCreationFlowTest {
         // Create real client factory
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Mock credential manager (we don't need real encryption for this test)
-        credentialManager = io.mockk.mockk(relaxed = true)
-        every { credentialManager.saveCredentials(any(), any()) } returns true
-
-        // Create mock DAOs that simulate real database behavior
-        accountsDao = createMockAccountsDao()
-        calendarsDao = createMockCalendarsDao()
+        // Create mock repositories that simulate real database behavior
+        // AccountRepository handles credential storage internally
+        accountRepository = createMockAccountRepository()
+        calendarRepository = createMockCalendarRepository()
 
         discoveryService = CalDavAccountDiscoveryService(
             clientFactory,
-            credentialManager,
-            accountsDao,
-            calendarsDao
+            accountRepository,
+            calendarRepository
         )
     }
 
@@ -168,82 +162,115 @@ class NextcloudAccountCreationFlowTest {
         )
     }
 
-    private fun createMockAccountsDao(): AccountsDao {
+    private fun createMockAccountRepository(): AccountRepository {
         return io.mockk.mockk {
-            // getByProviderAndEmail - find existing account
+            // getAccountByProviderAndEmail - find existing account
             every {
-                runBlocking { getByProviderAndEmail(any(), any()) }
+                runBlocking { getAccountByProviderAndEmail(any(), any()) }
             } answers {
                 val provider = firstArg<AccountProvider>()
                 val email = secondArg<String>()
                 val found = accountsInDb.find { it.provider == provider && it.email == email }
-                println("  [DB] getByProviderAndEmail($provider, $email) -> ${found?.id ?: "null"}")
+                println("  [DB] getAccountByProviderAndEmail($provider, $email) -> ${found?.id ?: "null"}")
                 found
             }
 
-            // insert - add new account
+            // createAccount - add new account
             val accountSlot = slot<Account>()
             every {
-                runBlocking { insert(capture(accountSlot)) }
+                runBlocking { createAccount(capture(accountSlot)) }
             } answers {
                 val account = accountSlot.captured
                 val newId = nextAccountId++
                 val savedAccount = account.copy(id = newId)
                 accountsInDb.add(savedAccount)
-                println("  [DB] insert(Account email=${account.email}) -> id=$newId")
+                println("  [DB] createAccount(Account email=${account.email}) -> id=$newId")
                 newId
             }
 
-            // update - update existing account
+            // updateAccount - update existing account
             every {
-                runBlocking { update(capture(accountSlot)) }
+                runBlocking { updateAccount(capture(accountSlot)) }
             } answers {
                 val account = accountSlot.captured
                 val index = accountsInDb.indexOfFirst { it.id == account.id }
                 if (index >= 0) {
                     accountsInDb[index] = account
-                    println("  [DB] update(Account id=${account.id}, email=${account.email})")
+                    println("  [DB] updateAccount(Account id=${account.id}, email=${account.email})")
                 }
                 Unit
             }
+
+            // deleteAccount
+            every {
+                runBlocking { deleteAccount(any()) }
+            } answers {
+                val accountId = firstArg<Long>()
+                accountsInDb.removeIf { it.id == accountId }
+                println("  [DB] deleteAccount(accountId=$accountId)")
+                Unit
+            }
+
+            // countByDisplayName
+            every {
+                runBlocking { countByDisplayName(any(), any()) }
+            } returns 0
         }
     }
 
-    private fun createMockCalendarsDao(): CalendarsDao {
+    private fun createMockCalendarRepository(): CalendarRepository {
         return io.mockk.mockk {
-            // getByCaldavUrl - find existing calendar
+            // getCalendarByUrl - find existing calendar
             every {
-                runBlocking { getByCaldavUrl(any()) }
+                runBlocking { getCalendarByUrl(any()) }
             } answers {
                 val url = firstArg<String>()
                 val found = calendarsInDb.find { it.caldavUrl == url }
-                println("  [DB] getByCaldavUrl($url) -> ${found?.id ?: "null"}")
+                println("  [DB] getCalendarByUrl($url) -> ${found?.id ?: "null"}")
                 found
             }
 
-            // insert - add new calendar
+            // createCalendar - add new calendar
             val calendarSlot = slot<Calendar>()
             every {
-                runBlocking { insert(capture(calendarSlot)) }
+                runBlocking { createCalendar(capture(calendarSlot)) }
             } answers {
                 val calendar = calendarSlot.captured
                 val newId = nextCalendarId++
                 val savedCalendar = calendar.copy(id = newId)
                 calendarsInDb.add(savedCalendar)
-                println("  [DB] insert(Calendar url=${calendar.caldavUrl}) -> id=$newId")
+                println("  [DB] createCalendar(Calendar url=${calendar.caldavUrl}) -> id=$newId")
                 newId
             }
 
-            // update - update existing calendar
+            // updateCalendar - update existing calendar
             every {
-                runBlocking { update(capture(calendarSlot)) }
+                runBlocking { updateCalendar(capture(calendarSlot)) }
             } answers {
                 val calendar = calendarSlot.captured
                 val index = calendarsInDb.indexOfFirst { it.id == calendar.id }
                 if (index >= 0) {
                     calendarsInDb[index] = calendar
-                    println("  [DB] update(Calendar id=${calendar.id})")
+                    println("  [DB] updateCalendar(Calendar id=${calendar.id})")
                 }
+                Unit
+            }
+
+            // getCalendarsForAccountOnce
+            every {
+                runBlocking { getCalendarsForAccountOnce(any()) }
+            } answers {
+                val accountId = firstArg<Long>()
+                calendarsInDb.filter { it.accountId == accountId }
+            }
+
+            // deleteCalendar
+            every {
+                runBlocking { deleteCalendar(any()) }
+            } answers {
+                val calendarId = firstArg<Long>()
+                calendarsInDb.removeIf { it.id == calendarId }
+                println("  [DB] deleteCalendar(calendarId=$calendarId)")
                 Unit
             }
         }

@@ -4,11 +4,11 @@ import android.graphics.Color
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.sync.auth.Credentials
@@ -35,8 +35,8 @@ class ICloudAccountDiscoveryService @Inject constructor(
     private val clientFactory: CalDavClientFactory,
     private val credentialProvider: ICloudCredentialProvider,
     private val icloudQuirks: ICloudQuirks,
-    private val accountsDao: AccountsDao,
-    private val calendarsDao: CalendarsDao
+    private val accountRepository: AccountRepository,
+    private val calendarRepository: CalendarRepository
 ) : AccountDiscoveryService {
     companion object {
         private const val TAG = "ICloudAccountDiscovery"
@@ -139,7 +139,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars")
 
             // Step 4: Create or update Account in Room
-            val existingAccount = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, appleId)
+            val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, appleId)
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
@@ -147,7 +147,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,
                     isEnabled = true
                 )
-                accountsDao.update(updated)
+                accountRepository.updateAccount(updated)
                 updated
             } else {
                 Log.d(TAG, "Creating new account")
@@ -159,7 +159,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     homeSetUrl = calendarHomeUrl,
                     isEnabled = true
                 )
-                val accountId = accountsDao.insert(newAccount)
+                val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
             }
 
@@ -179,7 +179,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
                     ?: calDavCalendar.url
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(normalizedCalendarUrl)
+                val existingCalendar = calendarRepository.getCalendarByUrl(normalizedCalendarUrl)
                 val calendar = if (existingCalendar != null) {
                     Log.d(TAG, "Updating calendar: ${calDavCalendar.displayName}")
                     val updated = existingCalendar.copy(
@@ -188,7 +188,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                         ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
-                    calendarsDao.update(updated)
+                    calendarRepository.updateCalendar(updated)
                     updated
                 } else {
                     Log.d(TAG, "Creating calendar: ${calDavCalendar.displayName}")
@@ -202,7 +202,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                         isDefault = isFirst, // First calendar is default
                         isVisible = true
                     )
-                    val calendarId = calendarsDao.insert(newCalendar)
+                    val calendarId = calendarRepository.createCalendar(newCalendar)
                     isFirst = false
                     newCalendar.copy(id = calendarId)
                 }
@@ -276,7 +276,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
     override suspend fun refreshCalendars(accountId: Long): DiscoveryResult = withContext(Dispatchers.IO) {
         Log.i(TAG, "Refreshing calendars for account: $accountId")
 
-        val account = accountsDao.getById(accountId)
+        val account = accountRepository.getAccountById(accountId)
         if (account == null) {
             return@withContext DiscoveryResult.Error("Account not found")
         }
@@ -308,7 +308,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             }
 
             val discoveredCalendars = (calendarsResult as CalDavResult.Success).data
-            val existingCalendars = calendarsDao.getByAccountIdOnce(accountId)
+            val existingCalendars = calendarRepository.getCalendarsForAccountOnce(accountId)
             // Normalize discovered URLs for comparison (server returns regional, DB has canonical)
             val discoveredUrls = discoveredCalendars.map {
                 ICloudUrlNormalizer.normalize(it.url) ?: it.url
@@ -318,7 +318,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             for (existing in existingCalendars) {
                 if (existing.caldavUrl !in discoveredUrls) {
                     Log.d(TAG, "Removing deleted calendar: ${existing.displayName}")
-                    calendarsDao.delete(existing)
+                    calendarRepository.deleteCalendar(existing.id)
                 }
             }
 
@@ -334,14 +334,14 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
                     ?: calDavCalendar.url
 
-                val existingCalendar = calendarsDao.getByCaldavUrl(normalizedCalendarUrl)
+                val existingCalendar = calendarRepository.getCalendarByUrl(normalizedCalendarUrl)
                 val calendar = if (existingCalendar != null) {
                     val updated = existingCalendar.copy(
                         displayName = calDavCalendar.displayName,
                         ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )
-                    calendarsDao.update(updated)
+                    calendarRepository.updateCalendar(updated)
                     updated
                 } else {
                     val newCalendar = Calendar(
@@ -354,7 +354,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                         isDefault = false,
                         isVisible = true
                     )
-                    val calendarId = calendarsDao.insert(newCalendar)
+                    val calendarId = calendarRepository.createCalendar(newCalendar)
                     newCalendar.copy(id = calendarId)
                 }
                 createdCalendars.add(calendar)
@@ -369,14 +369,17 @@ class ICloudAccountDiscoveryService @Inject constructor(
 
     /**
      * Remove all data for an account (used during sign-out).
+     *
+     * Uses AccountRepository.deleteAccount() which properly cleans up:
+     * - WorkManager sync jobs
+     * - Scheduled reminders
+     * - Pending operations
+     * - Encrypted credentials
+     * - Cascade deletes calendars/events
      */
     override suspend fun removeAccount(accountId: Long) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing account: $accountId")
-        val account = accountsDao.getById(accountId)
-        if (account != null) {
-            // Calendars and events will cascade delete
-            accountsDao.delete(account)
-        }
+        accountRepository.deleteAccount(accountId)
     }
 
     /**
@@ -384,9 +387,9 @@ class ICloudAccountDiscoveryService @Inject constructor(
      */
     override suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing iCloud account: $email")
-        val account = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, email)
+        val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, email)
         if (account != null) {
-            accountsDao.delete(account)
+            accountRepository.deleteAccount(account.id)
         }
     }
 

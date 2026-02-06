@@ -25,6 +25,7 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
+import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -74,7 +75,7 @@ class LocalFirstSyncIntegrationTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = database.calendarsDao(),
+            calendarRepository = CalendarRepositoryImpl(database.calendarsDao()),
             eventsDao = database.eventsDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,

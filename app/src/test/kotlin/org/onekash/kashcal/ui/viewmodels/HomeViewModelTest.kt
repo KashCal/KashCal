@@ -23,8 +23,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.provider.icloud.ICloudAccount
-import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -61,7 +62,7 @@ class HomeViewModelTest {
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var eventReader: EventReader
     private lateinit var dataStore: KashCalDataStore
-    private lateinit var authManager: ICloudAuthManager
+    private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var networkMonitor: NetworkMonitor
 
@@ -151,6 +152,14 @@ class HomeViewModelTest {
         }
     }
 
+    private val testICloudAccount = Account(
+        id = 1L,
+        provider = AccountProvider.ICLOUD,
+        email = "test@icloud.com",
+        displayName = "iCloud",
+        isEnabled = true
+    )
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
@@ -159,7 +168,7 @@ class HomeViewModelTest {
         eventCoordinator = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
-        authManager = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         networkMonitor = mockk(relaxed = true)
 
@@ -191,7 +200,8 @@ class HomeViewModelTest {
         coEvery { dataStore.defaultCalendarId } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
-        coEvery { authManager.loadAccount() } returns null
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        coEvery { accountRepository.hasCredentials(any()) } returns false
         coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(testOccurrences)
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(testOccurrences)
         every { eventReader.getVisibleOccurrencesWithEventsForDay(any()) } returns flowOf(testOccurrencesWithEvents)
@@ -220,7 +230,7 @@ class HomeViewModelTest {
             eventCoordinator = eventCoordinator,
             eventReader = eventReader,
             dataStore = dataStore,
-            authManager = authManager,
+            accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
             ioDispatcher = testDispatcher
@@ -294,12 +304,8 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync sets iCloud connected when configured`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -782,12 +788,8 @@ class HomeViewModelTest {
 
     @Test
     fun `triggerStartupSync requests sync when configured`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -802,12 +804,8 @@ class HomeViewModelTest {
 
     @Test
     fun `triggerStartupSync only runs once`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -822,12 +820,8 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync requests full sync`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -840,12 +834,8 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not start if already syncing`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -871,12 +861,8 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync shows banner when Running`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -896,12 +882,8 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync shows Sync complete on Success`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -926,12 +908,8 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not show banner when Running`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -951,12 +929,8 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not show banner on Success`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -978,12 +952,8 @@ class HomeViewModelTest {
 
     @Test
     fun `sync failure always shows banner regardless of sync type`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1010,12 +980,8 @@ class HomeViewModelTest {
 
     @Test
     fun `sync banner hidden when status is Idle`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1038,12 +1004,8 @@ class HomeViewModelTest {
 
     @Test
     fun `sync banner hidden when status is Cancelled`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1492,12 +1454,8 @@ class HomeViewModelTest {
 
     @Test
     fun `performSync sets isSyncing true immediately`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1517,12 +1475,8 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync full flow updates UI correctly through status changes`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1567,12 +1521,8 @@ class HomeViewModelTest {
 
     @Test
     fun `reloadCurrentView is triggered when SyncStatus becomes Succeeded`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1603,12 +1553,8 @@ class HomeViewModelTest {
 
     @Test
     fun `concurrent refreshSync calls are blocked when isSyncing is true`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1631,12 +1577,8 @@ class HomeViewModelTest {
 
     @Test
     fun `sync failure does not leave stale isSyncing state`() = runTest {
-        val account = ICloudAccount(
-            appleId = "test@icloud.com",
-            appSpecificPassword = "test-password",
-            isEnabled = true
-        )
-        coEvery { authManager.loadAccount() } returns account
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()

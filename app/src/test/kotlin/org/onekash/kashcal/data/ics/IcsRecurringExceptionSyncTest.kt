@@ -12,8 +12,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -49,7 +49,7 @@ class IcsRecurringExceptionSyncTest {
     // Mocks
     private lateinit var database: KashCalDatabase
     private lateinit var icsSubscriptionsDao: IcsSubscriptionsDao
-    private lateinit var accountsDao: AccountsDao
+    private lateinit var accountRepository: AccountRepository
     private lateinit var calendarsDao: CalendarsDao
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
@@ -208,7 +208,7 @@ class IcsRecurringExceptionSyncTest {
     fun setup() {
         database = mockk(relaxed = true)
         icsSubscriptionsDao = mockk(relaxed = true)
-        accountsDao = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         calendarsDao = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
@@ -228,7 +228,7 @@ class IcsRecurringExceptionSyncTest {
         repository = IcsSubscriptionRepository(
             database = database,
             icsSubscriptionsDao = icsSubscriptionsDao,
-            accountsDao = accountsDao,
+            accountRepository = accountRepository,
             calendarsDao = calendarsDao,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -238,7 +238,7 @@ class IcsRecurringExceptionSyncTest {
         )
 
         // Default: ICS account exists
-        coEvery { accountsDao.getByProviderAndEmail(any(), any()) } returns Account(
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns Account(
             id = 1L,
             provider = AccountProvider.ICS,
             email = "subscriptions@local",

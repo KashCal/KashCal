@@ -7,11 +7,10 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -61,8 +60,7 @@ class RealICloudSyncEngineTest {
 
     // Mocked DAOs (we verify interactions)
     private lateinit var database: KashCalDatabase
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var syncLogsDao: SyncLogsDao
@@ -126,8 +124,7 @@ class RealICloudSyncEngineTest {
 
     private fun setupMockedDaos() {
         database = mockk(relaxed = true)
-        accountsDao = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         pendingOperationsDao = mockk(relaxed = true)
         syncLogsDao = mockk(relaxed = true)
@@ -162,7 +159,7 @@ class RealICloudSyncEngineTest {
     private fun setupStrategies() {
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
@@ -171,13 +168,13 @@ class RealICloudSyncEngineTest {
         )
 
         pushStrategy = PushStrategy(
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
         )
 
         conflictResolver = ConflictResolver(
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator,
@@ -188,8 +185,7 @@ class RealICloudSyncEngineTest {
             pullStrategy = pullStrategy,
             pushStrategy = pushStrategy,
             conflictResolver = conflictResolver,
-            accountsDao = accountsDao,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
             syncLogsDao = syncLogsDao,
@@ -378,7 +374,7 @@ class RealICloudSyncEngineTest {
         // Setup mocks for push
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(1L) } returns calendar
+        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
             // Track the URL for cleanup
             val url = arg<String>(1)
@@ -485,7 +481,7 @@ class RealICloudSyncEngineTest {
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
         coEvery { eventsDao.getById(recurringEvent.id) } returns recurringEvent
-        coEvery { calendarsDao.getById(1L) } returns calendar
+        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
             createdEventUrls.add(arg<String>(1))
         }
@@ -582,7 +578,7 @@ class RealICloudSyncEngineTest {
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(1L) } returns calendar
+        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
             createdUrl = arg<String>(1)
             createdEventUrls.add(createdUrl!!)

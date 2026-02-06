@@ -7,7 +7,7 @@ import org.onekash.kashcal.util.maskEmail
  *
  * This interface abstracts credential loading from the sync layer,
  * enabling:
- * - Production: Load from EncryptedSharedPreferences (ICloudAuthManager)
+ * - Production: Load from EncryptedSharedPreferences (CredentialManager)
  * - Testing: Load from properties files or mocks
  *
  * Usage in sync layer:

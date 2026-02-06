@@ -7,8 +7,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -33,7 +33,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 class PushStrategyMoveOperationTest {
 
     private lateinit var client: CalDavClient
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var pushStrategy: PushStrategy
@@ -71,16 +71,16 @@ class PushStrategyMoveOperationTest {
     @Before
     fun setup() {
         client = mockk()
-        calendarsDao = mockk()
+        calendarRepository = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
 
         // Default batch query mocks - return empty so fallback to getById is used
         coEvery { eventsDao.getByIds(any()) } returns emptyList()
-        coEvery { calendarsDao.getByIds(any()) } returns emptyList()
+        coEvery { calendarRepository.getCalendarsByIds(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao
         )
@@ -112,7 +112,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // WebDAV MOVE succeeds
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.success(Pair(newUrl, newEtag))
@@ -152,7 +152,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // MOVE returns 404 - source not found
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.notFoundError("Not found")
@@ -184,7 +184,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // MOVE returns 412 (iCloud behavior)
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.conflictError("Precondition failed")
@@ -218,7 +218,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // MOVE returns 403 (forbidden - cross-server)
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.Error(403, "Forbidden", false)
@@ -247,7 +247,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // MOVE returns 405 (method not allowed)
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.Error(405, "Method not allowed", false)
@@ -276,7 +276,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // MOVE returns 500 (server error - should retry)
         coEvery { client.moveEvent(oldUrl, targetCalendar.caldavUrl, testEvent.uid) } returns
             CalDavResult.Error(500, "Server error", true)
@@ -309,7 +309,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { pendingOperationsDao.advanceToCreatePhase(moveOperation.id, any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -344,7 +344,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         // CREATE succeeds
         coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) } returns
@@ -389,7 +389,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         // CREATE succeeds
         coEvery { client.createEvent(targetCalendar.caldavUrl, testEvent.uid, any()) } returns
@@ -429,7 +429,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair(newUrl, "\"etag\""))
@@ -461,7 +461,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         // CREATE conflicts - UID already exists
         coEvery { client.createEvent(any(), any(), any()) } returns
@@ -513,7 +513,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(recurringEvent.id) } returns recurringEvent
-        coEvery { calendarsDao.getById(targetCalendar.id) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(targetCalendar.id) } returns targetCalendar
         // Should fetch exceptions for master
         coEvery { eventsDao.getExceptionsForMaster(recurringEvent.id) } returns listOf(exception)
         coEvery { client.createEvent(targetCalendar.caldavUrl, recurringEvent.uid, any()) } returns
@@ -569,7 +569,7 @@ class PushStrategyMoveOperationTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(moveOperation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarsDao.getById(999L) } returns null
+        coEvery { calendarRepository.getCalendarById(999L) } returns null
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -643,7 +643,7 @@ class PushStrategyMoveOperationTest {
             processOrder.add(firstArg())
         }
         coEvery { eventsDao.getById(any()) } returns testEvent
-        coEvery { calendarsDao.getById(any()) } returns targetCalendar
+        coEvery { calendarRepository.getCalendarById(any()) } returns targetCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair("https://new.ics", "\"etag\""))

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -192,5 +193,17 @@ object DatabaseModule {
         @ApplicationContext context: Context
     ): ContentResolver {
         return context.contentResolver
+    }
+
+    /**
+     * Provide WorkManager for sync job cancellation.
+     * Used by AccountRepository.deleteAccount() to cancel sync jobs when account is deleted.
+     */
+    @Provides
+    @Singleton
+    fun provideWorkManager(
+        @ApplicationContext context: Context
+    ): WorkManager {
+        return WorkManager.getInstance(context)
     }
 }

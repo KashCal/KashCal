@@ -179,30 +179,6 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get CalDAV account count.
-     * Returns Flow that updates when accounts change.
-     */
-    fun getCalDavAccountCount(): Flow<Int> {
-        return accountsDao.getAccountCountByProvider(AccountProvider.CALDAV)
-    }
-
-    /**
-     * Get CalDAV accounts as Flow.
-     * Returns accounts with provider = CALDAV.
-     */
-    fun getCalDavAccounts(): Flow<List<Account>> {
-        return accountsDao.getByProviderFlow(AccountProvider.CALDAV)
-    }
-
-    /**
-     * Get all accounts as Flow.
-     * Used for grouping calendars by account in UI.
-     */
-    fun getAllAccounts(): Flow<List<Account>> {
-        return accountsDao.getAll()
-    }
-
-    /**
      * Get calendar count for an account.
      */
     suspend fun getCalendarCountForAccount(accountId: Long): Int {
@@ -778,19 +754,7 @@ class EventReader @Inject constructor(
         return occurrencesDao.getByExceptionEventId(exceptionEventId)
     }
 
-    // ========== Account and Calendar Lookups for Reminder Cleanup ==========
-
-    /**
-     * Get account by provider and email.
-     * Used for reminder cleanup when signing out of an account.
-     *
-     * @param provider Provider type (e.g., AccountProvider.ICLOUD, AccountProvider.LOCAL)
-     * @param email Account email/identifier
-     * @return Account if found, null otherwise
-     */
-    suspend fun getAccountByProviderAndEmail(provider: AccountProvider, email: String): org.onekash.kashcal.data.db.entity.Account? {
-        return accountsDao.getByProviderAndEmail(provider, email)
-    }
+    // ========== Calendar Lookups for Reminder Cleanup ==========
 
     /**
      * Get calendars for an account (one-shot).

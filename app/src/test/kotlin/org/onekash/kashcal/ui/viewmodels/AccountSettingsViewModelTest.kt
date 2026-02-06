@@ -27,8 +27,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.provider.icloud.ICloudAccount
-import org.onekash.kashcal.sync.provider.icloud.ICloudAuthManager
+import org.onekash.kashcal.data.credential.AccountCredentials
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.data.db.entity.SyncLog
@@ -38,7 +38,6 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
-import org.onekash.kashcal.sync.provider.caldav.CalDavCredentialManager
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
@@ -73,12 +72,11 @@ class AccountSettingsViewModelTest {
 
     // Mocks
     private lateinit var application: Application
-    private lateinit var authManager: ICloudAuthManager
+    private lateinit var accountRepository: AccountRepository
     private lateinit var userPreferences: UserPreferencesRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var discoveryService: AccountDiscoveryService
     private lateinit var calDavDiscoveryService: CalDavAccountDiscoveryService
-    private lateinit var calDavCredentialManager: CalDavCredentialManager
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactBirthdayManager: ContactBirthdayManager
@@ -122,11 +120,6 @@ class AccountSettingsViewModelTest {
         )
     )
 
-    private val testICloudAccount = ICloudAccount(
-        appleId = "test@icloud.com",
-        appSpecificPassword = "xxxx-xxxx-xxxx-xxxx"
-    )
-
     private val testDbAccount = Account(
         id = 1L,
         provider = AccountProvider.ICLOUD,
@@ -142,12 +135,11 @@ class AccountSettingsViewModelTest {
 
         // Initialize mocks
         application = mockk(relaxed = true)
-        authManager = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
         userPreferences = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         discoveryService = mockk(relaxed = true)
         calDavDiscoveryService = mockk(relaxed = true)
-        calDavCredentialManager = mockk(relaxed = true)
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
         contactBirthdayManager = mockk(relaxed = true)
@@ -179,9 +171,9 @@ class AccountSettingsViewModelTest {
         every { userPreferences.defaultEventDuration } returns defaultEventDurationFlow
         every { syncLogReader.getRecentLogs(any()) } returns syncLogsFlow
 
-        // Default: no account configured
-        every { authManager.loadAccount() } returns null
-        every { authManager.getLastSyncTime() } returns 0L
+        // Default: no iCloud account configured
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        coEvery { accountRepository.hasCredentials(any()) } returns false
 
         // Mock application context for notification permission check
         every { application.checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
@@ -203,12 +195,11 @@ class AccountSettingsViewModelTest {
     private fun createViewModel(): AccountSettingsViewModel {
         return AccountSettingsViewModel(
             application = application,
-            authManager = authManager,
+            accountRepository = accountRepository,
             userPreferences = userPreferences,
             syncScheduler = syncScheduler,
             discoveryService = discoveryService,
             calDavDiscoveryService = calDavDiscoveryService,
-            calDavCredentialManager = calDavCredentialManager,
             eventCoordinator = eventCoordinator,
             syncLogReader = syncLogReader,
             contactBirthdayManager = contactBirthdayManager,
@@ -228,7 +219,7 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `shows NotConnected when no credentials saved`() = runTest {
-        every { authManager.loadAccount() } returns null
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -241,9 +232,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `shows Connected when credentials exist`() = runTest {
-        val account = testICloudAccount.copy()
-        every { authManager.loadAccount() } returns account
-        every { authManager.getLastSyncTime() } returns System.currentTimeMillis()
+        val account = testDbAccount.copy(lastSuccessfulSyncAt = System.currentTimeMillis())
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(account)
+        coEvery { accountRepository.hasCredentials(account.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -258,7 +249,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `loads calendars on init`() = runTest {
-        every { authManager.loadAccount() } returns testICloudAccount
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
         calendarsFlow.value = testCalendars
 
         val viewModel = createViewModel()
@@ -273,7 +265,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `updates calendar count in Connected state`() = runTest {
-        every { authManager.loadAccount() } returns testICloudAccount
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
         calendarsFlow.value = testCalendars
         iCloudCalendarCountFlow.value = 3  // Checkpoint 2: Now uses iCloud-only count
 
@@ -358,7 +351,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -399,7 +392,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -417,7 +410,7 @@ class AccountSettingsViewModelTest {
             assertEquals("test@icloud.com", (state.iCloudState as ICloudConnectionState.Connected).appleId)
         }
 
-        verify { authManager.saveAccount(any()) }
+        coVerify { accountRepository.saveCredentials(testDbAccount.id, any()) }
     }
 
     @Test
@@ -427,7 +420,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -525,7 +518,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignOut clears credentials and shows NotConnected`() = runTest {
-        every { authManager.loadAccount() } returns testICloudAccount
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -541,12 +535,14 @@ class AccountSettingsViewModelTest {
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
         }
 
-        verify { authManager.clearAccount() }
+        // Verify account removal was called (which handles credential cleanup)
+        coVerify { discoveryService.removeAccountByEmail(testDbAccount.email) }
     }
 
     @Test
     fun `onSignOut cancels periodic sync`() = runTest {
-        every { authManager.loadAccount() } returns testICloudAccount
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
+        coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1507,7 +1503,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1534,7 +1530,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1586,7 +1582,7 @@ class AccountSettingsViewModelTest {
             account = testDbAccount,
             calendars = testCalendars
         )
-        every { authManager.saveAccount(any()) } returns true
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()

@@ -12,9 +12,9 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -61,8 +61,8 @@ class CalDavSyncWorkerTest {
     private lateinit var context: Context
     private lateinit var workerParams: WorkerParameters
     private lateinit var syncEngine: CalDavSyncEngine
-    private lateinit var accountsDao: AccountsDao
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var accountRepository: AccountRepository
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var notificationManager: SyncNotificationManager
     private lateinit var providerRegistry: ProviderRegistry
     private lateinit var mockQuirks: CalDavQuirks
@@ -91,8 +91,8 @@ class CalDavSyncWorkerTest {
         context = mockk(relaxed = true)
         workerParams = mockk(relaxed = true)
         syncEngine = mockk(relaxed = true)
-        accountsDao = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        accountRepository = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
         notificationManager = mockk(relaxed = true)
         providerRegistry = mockk(relaxed = true)
         mockQuirks = mockk(relaxed = true)
@@ -145,8 +145,8 @@ class CalDavSyncWorkerTest {
             context = context,
             params = workerParams,
             syncEngine = syncEngine,
-            accountsDao = accountsDao,
-            calendarsDao = calendarsDao,
+            accountRepository = accountRepository,
+            calendarRepository = calendarRepository,
             notificationManager = notificationManager,
             providerRegistry = providerRegistry,
             calDavClientFactory = calDavClientFactory,
@@ -181,7 +181,7 @@ class CalDavSyncWorkerTest {
             durationMs = 1500
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
 
         // When
@@ -199,7 +199,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), true, any(), any(), any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
@@ -216,7 +216,7 @@ class CalDavSyncWorkerTest {
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         // When
         val result = worker.doWork()
@@ -236,7 +236,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
         val calendar = createTestCalendar(calendarId)
 
-        coEvery { calendarsDao.getById(calendarId) } returns calendar
+        coEvery { calendarRepository.getCalendarById(calendarId) } returns calendar
         coEvery { syncEngine.syncCalendar(calendar, false, any(), any(), any(), any()) } returns SyncResult.Success(
             calendarsSynced = 1,
             durationMs = 500
@@ -272,7 +272,7 @@ class CalDavSyncWorkerTest {
         val inputData = CalDavSyncWorker.createCalendarSyncInput(calendarId)
         val worker = createWorker(inputData)
 
-        coEvery { calendarsDao.getById(calendarId) } returns null
+        coEvery { calendarRepository.getCalendarById(calendarId) } returns null
 
         // When
         val result = worker.doWork()
@@ -291,7 +291,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
         val account = createTestAccount(accountId)
 
-        coEvery { accountsDao.getById(accountId) } returns account
+        coEvery { accountRepository.getAccountById(accountId) } returns account
         // Account sync uses same ProviderRegistry pattern as syncAll for consistency
         coEvery { syncEngine.syncAccountWithQuirks(account, any(), false, any(), calDavClient, any()) } returns SyncResult.Success(
             calendarsSynced = 3,
@@ -328,7 +328,7 @@ class CalDavSyncWorkerTest {
         val inputData = CalDavSyncWorker.createAccountSyncInput(accountId)
         val worker = createWorker(inputData)
 
-        coEvery { accountsDao.getById(accountId) } returns null
+        coEvery { accountRepository.getAccountById(accountId) } returns null
 
         // When
         val result = worker.doWork()
@@ -357,7 +357,7 @@ class CalDavSyncWorkerTest {
             durationMs = 2000
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -389,7 +389,7 @@ class CalDavSyncWorkerTest {
             )
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -409,7 +409,7 @@ class CalDavSyncWorkerTest {
             message = "Invalid credentials"
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -432,7 +432,7 @@ class CalDavSyncWorkerTest {
             isRetryable = true
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -455,7 +455,7 @@ class CalDavSyncWorkerTest {
             isRetryable = true
         )
 
-        coEvery { calendarsDao.getById(calendarId) } returns calendar
+        coEvery { calendarRepository.getCalendarById(calendarId) } returns calendar
         coEvery { syncEngine.syncCalendar(calendar, false, any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -479,7 +479,7 @@ class CalDavSyncWorkerTest {
             isRetryable = true
         )
 
-        coEvery { calendarsDao.getById(calendarId) } returns calendar
+        coEvery { calendarRepository.getCalendarById(calendarId) } returns calendar
         coEvery { syncEngine.syncCalendar(calendar, false, any(), any(), any(), any()) } returns syncResult
 
         // When
@@ -498,7 +498,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
             RuntimeException("Unexpected error")
 
@@ -554,7 +554,7 @@ class CalDavSyncWorkerTest {
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(createTestAccount())
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(createTestAccount())
 
         // When
         val result = worker.doWork()
@@ -577,7 +577,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
 
         val testAccount = createTestAccount()
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
@@ -602,7 +602,7 @@ class CalDavSyncWorkerTest {
         val worker = createWorker(inputData)
 
         val testAccount = createTestAccount()
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) } returns
             SyncResult.Success(calendarsSynced = 1, durationMs = 100)
 
@@ -637,7 +637,7 @@ class CalDavSyncWorkerTest {
         val testCalendar = createTestCalendar(calendarId)
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
@@ -672,7 +672,7 @@ class CalDavSyncWorkerTest {
         val testCalendar = createTestCalendar(calendarId)
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
@@ -702,7 +702,7 @@ class CalDavSyncWorkerTest {
             changes = listOf(syncChange)
         )
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
 
         // When
@@ -733,7 +733,7 @@ class CalDavSyncWorkerTest {
         // Event with no reminders
         val testEvent = createTestEvent(eventId, calendarId, reminders = null)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
 
@@ -773,7 +773,7 @@ class CalDavSyncWorkerTest {
         val testCalendar = createTestCalendar(calendarId)
         val testOccurrence = createTestOccurrence(eventId, calendarId)
 
-        coEvery { accountsDao.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
@@ -861,7 +861,7 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
         val worker = createWorker(inputData)
@@ -880,7 +880,7 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 3
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
         val worker = createWorker(inputData)
@@ -899,7 +899,7 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = true)
         val worker = createWorker(inputData)
@@ -920,7 +920,7 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
         val worker = createWorker(inputData)
@@ -939,7 +939,7 @@ class CalDavSyncWorkerTest {
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 2
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        coEvery { accountsDao.getEnabledAccounts() } returns emptyList()
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
 
         val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = true)
         val worker = createWorker(inputData)

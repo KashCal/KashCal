@@ -8,8 +8,8 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -42,7 +42,7 @@ class RealICloudPullStrategyTest {
 
     // Mocked DAOs
     private lateinit var database: KashCalDatabase
-    private lateinit var calendarsDao: CalendarsDao
+    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var dataStore: KashCalDataStore
@@ -79,7 +79,7 @@ class RealICloudPullStrategyTest {
 
         // Mock DAOs
         database = mockk(relaxed = true)
-        calendarsDao = mockk(relaxed = true)
+        calendarRepository = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         occurrenceGenerator = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
@@ -106,7 +106,7 @@ class RealICloudPullStrategyTest {
 
         pullStrategy = PullStrategy(
             database = database,
-            calendarsDao = calendarsDao,
+            calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
@@ -210,7 +210,7 @@ class RealICloudPullStrategyTest {
                 coVerify(atLeast = 0) { eventsDao.upsert(any()) }
 
                 // Verify calendarsDao was updated with new sync token
-                coVerify { calendarsDao.updateSyncToken(eq(1L), any(), any()) }
+                coVerify { calendarRepository.updateSyncToken(eq(1L), any(), any()) }
             }
             is PullResult.NoChanges -> {
                 println("No changes detected")

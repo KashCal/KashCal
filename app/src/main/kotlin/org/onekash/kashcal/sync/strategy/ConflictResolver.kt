@@ -2,7 +2,7 @@ package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
 import kotlinx.coroutines.flow.first
-import org.onekash.kashcal.data.db.dao.CalendarsDao
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Event
@@ -30,7 +30,7 @@ import javax.inject.Inject
  * that coordinates between data sources without exposing implementation details.
  */
 class ConflictResolver @Inject constructor(
-    private val calendarsDao: CalendarsDao,
+    private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
@@ -143,7 +143,7 @@ class ConflictResolver @Inject constructor(
         val parsedEvent = parsedEvents.first()
 
         // Validate calendar still exists (prevents FK violation if deleted mid-sync)
-        val calendar = calendarsDao.getById(event.calendarId)
+        val calendar = calendarRepository.getCalendarById(event.calendarId)
         if (calendar == null) {
             Log.w(TAG, "Calendar ${event.calendarId} deleted during conflict resolution")
             eventsDao.deleteById(event.id)
