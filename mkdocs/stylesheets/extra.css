@@ -1,0 +1,9 @@
+/* Black top header bar */
+.md-header {
+  background-color: #000000;
+}
+
+/* Keep tabs/navigation consistent */
+.md-tabs {
+  background-color: #000000;
+}

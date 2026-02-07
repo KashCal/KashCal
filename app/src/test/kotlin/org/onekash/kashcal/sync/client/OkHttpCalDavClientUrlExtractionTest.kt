@@ -17,13 +17,15 @@ class OkHttpCalDavClientUrlExtractionTest {
     /**
      * Mirrors OkHttpCalDavClient.extractCaldavBaseUrl() for testing.
      *
-     * SYNC WITH: app/src/main/kotlin/org/onekash/kashcal/sync/client/OkHttpCalDavClient.kt:283
+     * SYNC WITH: app/src/main/kotlin/org/onekash/kashcal/sync/client/OkHttpCalDavClient.kt:297
      *
      * If this test fails after production changes, update this copy to match.
      * This duplication is intentional - allows testing private method without
      * exposing internal API surface.
+     *
+     * Issue #49: Added originalScheme parameter to preserve HTTPS through reverse proxy.
      */
-    private fun extractCaldavBaseUrl(url: String): String {
+    private fun extractCaldavBaseUrl(url: String, originalScheme: String? = null): String {
         // Strip query parameters and fragments (some redirects include them)
         val cleanUrl = url.substringBefore("?").substringBefore("#")
 
@@ -35,7 +37,9 @@ class OkHttpCalDavClientUrlExtractionTest {
         }
 
         val path = uri.path ?: ""
-        val baseUrl = "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
+        // Issue #49: Preserve original scheme when provided (reverse proxy scenario)
+        val effectiveScheme = originalScheme ?: uri.scheme
+        val baseUrl = "$effectiveScheme://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
 
         // Common CalDAV path patterns - order matters (longer/more specific first)
         val patterns = listOf(
@@ -242,5 +246,105 @@ class OkHttpCalDavClientUrlExtractionTest {
         val url = "https://server.com/davey/calendar/"
         val result = extractCaldavBaseUrl(url)
         assertEquals("https://server.com/dav", result)
+    }
+
+    // ========================================================================
+    // Issue #49: Scheme Preservation Tests (Baikal reverse proxy)
+    // ========================================================================
+    //
+    // Fixed: When Baikal behind reverse proxy with SSL termination:
+    //   1. User connects: https://domain/.well-known/caldav
+    //   2. nginx terminates SSL, forwards to Baikal as HTTP
+    //   3. Baikal redirects to: http://domain/dav.php (HTTP!)
+    //   4. extractCaldavBaseUrl(url, originalScheme) now preserves HTTPS
+    //
+    // The fix adds an optional `originalScheme` parameter. When provided,
+    // it overrides the scheme from the redirected URL.
+
+    /**
+     * Backward compatibility: Without originalScheme, URL's scheme is used.
+     * This ensures existing callers (without the new parameter) work unchanged.
+     */
+    @Test
+    fun `Issue49 - backward compat - uses URL scheme when no originalScheme`() {
+        val redirectedUrl = "http://baikal.example.com/dav.php/calendars/user/"
+
+        // No originalScheme = use URL's scheme (backward compatible)
+        val result = extractCaldavBaseUrl(redirectedUrl)
+
+        assertEquals("http://baikal.example.com/dav.php", result)
+    }
+
+    /**
+     * Issue #49 fix: Preserves HTTPS when redirect is HTTP.
+     *
+     * Scenario: Baikal behind nginx with SSL termination
+     * - User enters: https://baikal.example.com
+     * - nginx terminates SSL, forwards to Baikal as HTTP
+     * - Baikal redirects to: http://baikal.example.com/dav.php
+     * - Expected: https://baikal.example.com/dav.php (preserve HTTPS)
+     */
+    @Test
+    fun `Issue49 - preserves HTTPS when redirect is HTTP`() {
+        val originalScheme = "https"  // User's original connection
+        val redirectedUrl = "http://baikal.example.com/dav.php/calendars/user/"
+
+        val result = extractCaldavBaseUrl(redirectedUrl, originalScheme)
+
+        // Preserves HTTPS from original request
+        assertEquals("https://baikal.example.com/dav.php", result)
+    }
+
+    /**
+     * Issue #49: HTTP stays HTTP when originalScheme is explicitly HTTP.
+     */
+    @Test
+    fun `Issue49 - HTTP stays HTTP when originalScheme is HTTP`() {
+        val redirectedUrl = "http://localhost:8081/dav.php/calendars/user/"
+
+        val result = extractCaldavBaseUrl(redirectedUrl, "http")
+
+        assertEquals("http://localhost:8081/dav.php", result)
+    }
+
+    /**
+     * Issue #49: Port preserved with scheme override.
+     */
+    @Test
+    fun `Issue49 - preserves port with scheme override`() {
+        val originalScheme = "https"
+        val redirectedUrl = "http://baikal.example.com:8080/dav.php/calendars/"
+
+        val result = extractCaldavBaseUrl(redirectedUrl, originalScheme)
+
+        assertEquals("https://baikal.example.com:8080/dav.php", result)
+    }
+
+    /**
+     * Issue #49: HTTPS redirect stays HTTPS (no change needed).
+     */
+    @Test
+    fun `Issue49 - HTTPS redirect stays HTTPS`() {
+        val originalScheme = "https"
+        val redirectedUrl = "https://baikal.example.com/dav.php/calendars/"
+
+        val result = extractCaldavBaseUrl(redirectedUrl, originalScheme)
+
+        assertEquals("https://baikal.example.com/dav.php", result)
+    }
+
+    /**
+     * Edge case: What if user enters HTTP but server upgrades to HTTPS?
+     * Behavior: preserves original (HTTP). This matches user's explicit choice.
+     */
+    @Test
+    fun `Issue49 - HTTP original with HTTPS redirect preserves HTTP`() {
+        val originalScheme = "http"  // User explicitly entered HTTP
+        val redirectedUrl = "https://baikal.example.com/dav.php/calendars/"  // Server upgraded
+
+        val result = extractCaldavBaseUrl(redirectedUrl, originalScheme)
+
+        // Preserves HTTP - respects user's explicit choice
+        assertEquals("http://baikal.example.com/dav.php", result)
     }
 }

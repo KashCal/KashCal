@@ -87,8 +87,9 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
     }
 
     override fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean {
-        // 403 or specific error message indicates invalid sync token
-        return responseCode == 403 ||
+        // 410 Gone or specific DAV error body indicates expired sync token.
+        // A bare 403 is "permission denied", not sync-token expiry (Issue #51).
+        return responseCode == 410 ||
             responseBody.contains("valid-sync-token", ignoreCase = true)
     }
 

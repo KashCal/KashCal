@@ -92,16 +92,20 @@ fun <T> VerticalWheelPicker(
     isCircular: Boolean = false,
     itemContent: @Composable (item: T, isSelected: Boolean) -> Unit
 ) {
-    // Disable circular for tiny lists
-    val effectiveCircular = isCircular && items.size >= 3
+    // Disable circular for single-item lists only
+    val effectiveCircular = isCircular && items.size >= 2
 
     // Virtual list sizing
     val virtualCount = if (effectiveCircular) items.size * CIRCULAR_MULTIPLIER else items.size
     val middleOffset = if (effectiveCircular) (CIRCULAR_MULTIPLIER / 2) * items.size else 0
 
-    // Initial scroll position (start in middle for circular)
+    // Offset scroll targets so the selected item appears at viewport center.
+    // contentPadding cannot center items in the middle of a large virtual list.
+    val centeringOffset = if (effectiveCircular) visibleItems / 2 else 0
+
+    // Initial scroll position (start in middle for circular, offset to center)
     val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
-    val initialIndex = middleOffset + selectedIndex
+    val initialIndex = middleOffset + selectedIndex - centeringOffset
 
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
@@ -111,30 +115,27 @@ fun <T> VerticalWheelPicker(
     // Track previous actual index for wrap detection
     var previousActualIndex by remember { mutableIntStateOf(selectedIndex) }
 
-    // Calculate center index based on scroll position using derivedStateOf
+    // Calculate center index based on actual pixel position in viewport.
+    // This finds the item whose center is closest to the viewport's center pixel,
+    // which is accurate regardless of contentPadding or scroll position.
     val centerIndex by remember {
         derivedStateOf {
-            val firstVisible = listState.firstVisibleItemIndex
-            val offset = listState.firstVisibleItemScrollOffset
-            val itemHeightPx = if (listState.layoutInfo.visibleItemsInfo.isNotEmpty()) {
-                listState.layoutInfo.visibleItemsInfo.first().size
-            } else {
-                itemHeight.value.toInt()
-            }
+            val layoutInfo = listState.layoutInfo
+            val viewportCenterPx = layoutInfo.viewportSize.height / 2
 
-            // Determine center item - if scrolled more than half, next item is center
-            if (offset > itemHeightPx / 2) {
-                firstVisible + 1
-            } else {
-                firstVisible
-            }
+            // Find the item whose center is closest to viewport center
+            layoutInfo.visibleItemsInfo.minByOrNull { itemInfo ->
+                val itemCenterPx = itemInfo.offset + itemInfo.size / 2
+                abs(itemCenterPx - viewportCenterPx)
+            }?.index ?: (listState.firstVisibleItemIndex + centeringOffset)
         }
     }
 
     // Detect when scrolling settles and notify selection + handle recentering
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
-            val centerVirtualIndex = listState.firstVisibleItemIndex
+            // Use pixel-based centerIndex for accurate selection
+            val centerVirtualIndex = centerIndex
             val actualIndex = virtualToActualIndex(centerVirtualIndex, items.size, effectiveCircular)
 
             // 1. Selection callback with wrap-aware haptic
@@ -155,7 +156,7 @@ fun <T> VerticalWheelPicker(
             if (effectiveCircular) {
                 val middleStart = (CIRCULAR_MULTIPLIER / 2) * items.size
                 if (abs(centerVirtualIndex - middleStart) > (CIRCULAR_MULTIPLIER / 4) * items.size) {
-                    listState.scrollToItem(middleStart + actualIndex)
+                    listState.scrollToItem(middleStart + actualIndex - centeringOffset)
                 }
             }
         }
@@ -165,13 +166,16 @@ fun <T> VerticalWheelPicker(
     LaunchedEffect(selectedItem) {
         val targetActualIndex = items.indexOf(selectedItem)
         if (targetActualIndex >= 0) {
-            val currentVirtualIndex = listState.firstVisibleItemIndex
-            val targetVirtualIndex = actualToNearestVirtualIndex(
-                targetActualIndex, currentVirtualIndex, items.size, effectiveCircular
-            )
-            if (targetVirtualIndex != currentVirtualIndex) {
+            // Compare against pixel-based centerIndex to avoid unnecessary scroll
+            // when the target item is already at center
+            val currentCenterActual = virtualToActualIndex(centerIndex, items.size, effectiveCircular)
+            if (targetActualIndex != currentCenterActual) {
+                val currentVirtualIndex = listState.firstVisibleItemIndex
+                val targetVirtualIndex = actualToNearestVirtualIndex(
+                    targetActualIndex, currentVirtualIndex, items.size, effectiveCircular
+                )
                 coroutineScope.launch {
-                    listState.animateScrollToItem(targetVirtualIndex)
+                    listState.animateScrollToItem(targetVirtualIndex - centeringOffset)
                 }
             }
         }
@@ -191,7 +195,8 @@ fun <T> VerticalWheelPicker(
         LazyColumn(
             state = listState,
             flingBehavior = flingBehavior,
-            contentPadding = PaddingValues(vertical = itemHeight * (visibleItems / 2)),
+            contentPadding = if (effectiveCircular) PaddingValues(0.dp)
+                else PaddingValues(vertical = itemHeight * (visibleItems / 2)),
             modifier = Modifier.fillMaxSize()
         ) {
             items(
@@ -466,7 +471,7 @@ fun WheelTimePicker(
                     )
                 }
 
-                // AM/PM wheel - NOT CIRCULAR (only 2 items)
+                // AM/PM wheel - CIRCULAR (consistent centering with other wheels)
                 VerticalWheelPicker(
                     items = amPmOptions,
                     selectedItem = if (currentIsPM) amPmOptions[1] else amPmOptions[0],
@@ -477,7 +482,7 @@ fun WheelTimePicker(
                     modifier = Modifier.weight(0.8f),
                     visibleItems = visibleItems,
                     itemHeight = itemHeight,
-                    isCircular = false
+                    isCircular = true
                 ) { amPm, isSelected ->
                     Text(
                         text = amPm,

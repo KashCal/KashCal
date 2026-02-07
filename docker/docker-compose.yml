@@ -1,0 +1,91 @@
+# CalDAV Test Servers for KashCal Integration Tests
+# Usage: docker compose -f docker/docker-compose.yml up -d
+# All servers use test credentials defined in local.properties
+
+services:
+  # ============================================
+  # Nextcloud - Full-featured CalDAV server
+  # ============================================
+  nextcloud:
+    image: nextcloud:29-apache
+    container_name: kashcal-nextcloud
+    ports:
+      - "8080:80"
+    environment:
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=adminpass
+      - SQLITE_DATABASE=nextcloud
+    volumes:
+      - nextcloud_data:/var/www/html
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/status.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # Radicale - Lightweight CalDAV/CardDAV server
+  # ============================================
+  radicale:
+    image: tomsquest/docker-radicale:latest
+    container_name: kashcal-radicale
+    ports:
+      - "5232:5232"
+    volumes:
+      - radicale_data:/data
+      - ./radicale/config:/config:ro
+      - ./radicale/users:/etc/radicale/users:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5232/.web/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Baikal - Lightweight CalDAV/CardDAV server
+  # ============================================
+  baikal:
+    image: ckulka/baikal:nginx
+    container_name: kashcal-baikal
+    ports:
+      - "8081:80"
+    volumes:
+      - baikal_data:/var/www/baikal/Specific
+      - baikal_config:/var/www/baikal/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Stalwart - Modern mail server with CalDAV
+  # NOTE: CalDAV autoconfig requires v0.14+ which is not yet on Docker Hub.
+  #       Docker Hub only has up to v0.11.8 as of Feb 2026.
+  #       CalDAV endpoints return 404 in v0.11.x.
+  #       See: https://stalw.art/docs/collaboration/calendar/
+  # ============================================
+  stalwart:
+    image: stalwartlabs/mail-server:v0.11
+    container_name: kashcal-stalwart
+    ports:
+      - "8082:8080"  # HTTP/JMAP/CalDAV
+      - "1143:143"   # IMAP (optional)
+      - "1025:25"    # SMTP (optional)
+    environment:
+      - STALWART_ADMIN_USER=admin
+      - STALWART_ADMIN_PASSWORD=adminpass
+    volumes:
+      - stalwart_data:/opt/stalwart-mail
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  nextcloud_data:
+  radicale_data:
+  baikal_data:
+  baikal_config:
+  stalwart_data:

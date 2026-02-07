@@ -47,6 +47,9 @@ test-output/
 *.jks
 *.keystore
 
+# Release APKs (built locally for testing)
+releases/
+
 # Android Studio Navigation editor temp files
 .navigation/
 
@@ -69,3 +72,4 @@ CLAUDE.md
 
 # Claude Code local state
 .claude/
+site/

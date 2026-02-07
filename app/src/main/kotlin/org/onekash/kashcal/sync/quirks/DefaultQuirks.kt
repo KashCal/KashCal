@@ -94,9 +94,9 @@ class DefaultQuirks(
     }
 
     override fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean {
-        // Standard CalDAV sync-token expiry indicators
-        return responseCode == 403 ||
-            responseCode == 410 ||  // 410 Gone is also used by some servers
+        // 410 Gone or specific DAV error body indicates expired sync token.
+        // A bare 403 is "permission denied", not sync-token expiry (Issue #51).
+        return responseCode == 410 ||
             responseBody.contains("valid-sync-token", ignoreCase = true)
     }
 

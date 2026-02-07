@@ -66,12 +66,17 @@ fun LinkifiedText(
     }
 
     val uriHandler = LocalUriHandler.current
+
+    // Cache colors to prevent unnecessary recomposition
     val linkColor = MaterialTheme.colorScheme.primary
-    val textColor = style.color.takeIf { it != androidx.compose.ui.graphics.Color.Unspecified }
-        ?: MaterialTheme.colorScheme.onSurface
+    val defaultTextColor = MaterialTheme.colorScheme.onSurface
+    val textColor = remember(style.color, defaultTextColor) {
+        style.color.takeIf { it != androidx.compose.ui.graphics.Color.Unspecified }
+            ?: defaultTextColor
+    }
 
     // Build annotated string with link spans
-    val annotatedString = remember(cleanedText, detectedUrls, linkColor) {
+    val annotatedString = remember(cleanedText, detectedUrls, linkColor, textColor) {
         buildAnnotatedString {
             var lastIndex = 0
 

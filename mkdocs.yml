@@ -1,0 +1,103 @@
+site_name: KashCal Documentation
+site_description: Workflow-first calendar app with offline-first architecture and CalDAV sync
+site_url: https://kashcal.github.io/docs
+repo_url: https://github.com/KashCal/KashCal
+repo_name: KashCal/KashCal
+docs_dir: mkdocs
+
+theme:
+  name: material
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - toc.follow
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - def_list
+  - toc:
+      permalink: true
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/KashCal/KashCal
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Overview: getting-started/overview.md
+    - Installation: getting-started/installation.md
+    - Adding Accounts: getting-started/accounts.md
+  - Architecture:
+    - Overview: architecture/overview.md
+    - Data Layer: architecture/data-layer.md
+    - Domain Layer: architecture/domain-layer.md
+    - Sync Layer: architecture/sync-layer.md
+    - UI Layer: architecture/ui-layer.md
+  - CalDAV Sync:
+    - How It Works: caldav/how-it-works.md
+    - Supported Providers: caldav/providers.md
+    - Troubleshooting: caldav/troubleshooting.md
+  - Features:
+    - Recurring Events: features/recurring-events.md
+    - Reminders: features/reminders.md
+    - Widgets: features/widgets.md
+    - Search: features/search.md
+  - Development:
+    - Build Guide: development/build.md
+    - Testing: development/testing.md
+    - Contributing: development/contributing.md
+  - Reference:
+    - Database Schema: reference/database.md
+    - Critical Patterns: reference/patterns.md

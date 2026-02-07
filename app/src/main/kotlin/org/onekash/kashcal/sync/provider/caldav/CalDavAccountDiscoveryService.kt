@@ -829,6 +829,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 "Too many requests. Please wait a moment and try again."
             error.code == 404 ->
                 "CalDAV service not found at this URL. Please check the server address."
+            error.code == 403 ->
+                "Permission denied. Please check your credentials and server URL."
             message.contains("network") || message.contains("timeout") ->
                 "Network error. Please check your internet connection."
             message.contains("ssl") || message.contains("certificate") ->

@@ -41,9 +41,11 @@ class ParseFailureRetryDataStoreTest {
 
     @After
     fun teardown() = runTest {
-        Dispatchers.resetMain()
-        // Clear DataStore to avoid state leakage between tests
+        // Clear DataStore BEFORE resetting Main — pending DataStore coroutines
+        // use Main, so resetting first causes uncaught exceptions that leak
+        // into the next test's runTest scope.
         dataStore.dataStore.edit { it.clear() }
+        Dispatchers.resetMain()
     }
 
     // ==================== incrementParseFailureRetry Tests ====================

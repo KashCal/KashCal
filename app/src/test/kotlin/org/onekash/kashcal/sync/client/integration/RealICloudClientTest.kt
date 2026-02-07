@@ -76,11 +76,14 @@ class RealICloudClientTest {
                 propsFile.readLines().forEach { line ->
                     val parts = line.split("=").map { it.trim() }
                     if (parts.size == 2) {
-                        when {
-                            parts[0].contains("username", ignoreCase = true) -> username = parts[1]
-                            parts[0].contains("password", ignoreCase = true) &&
-                                !parts[0].contains("keystore", ignoreCase = true) -> password = parts[1]
-                            parts[0].contains("server", ignoreCase = true) -> serverUrl = parts[1]
+                        when (parts[0]) {
+                            // iCloud-specific credentials
+                            "ICLOUD_USERNAME" -> username = parts[1]
+                            "ICLOUD_APP_PASSWORD" -> password = parts[1]
+                            // Legacy format
+                            "caldav.username" -> if (username == null) username = parts[1]
+                            "caldav.app_password" -> if (password == null) password = parts[1]
+                            "caldav.server" -> serverUrl = parts[1]
                         }
                     }
                 }

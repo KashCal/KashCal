@@ -178,7 +178,8 @@ class OkHttpCalDavClient : CalDavClient {
 
                 // Add authentication if credentials set
                 if (username.isNotEmpty() && password.isNotEmpty()) {
-                    requestBuilder.header("Authorization", Credentials.basic(username, password))
+                    // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
+                    requestBuilder.header("Authorization", Credentials.basic(username, password, Charsets.UTF_8))
                 }
 
                 // Add provider-specific headers
@@ -205,6 +206,8 @@ class OkHttpCalDavClient : CalDavClient {
             // Construct well-known URL
             val baseHost = extractBaseHost(serverUrl)
             val wellKnownUrl = "$baseHost/.well-known/caldav"
+            // Issue #49: Capture original scheme before redirect (reverse proxy may change it)
+            val originalScheme = baseHost.substringBefore("://")
             Log.d(TAG, "Trying well-known discovery: $wellKnownUrl")
 
             // Use PROPFIND (same as principal discovery) to trigger proper redirects
@@ -236,8 +239,10 @@ class OkHttpCalDavClient : CalDavClient {
                             // Return the final URL (after redirects) without the well-known part
                             // If redirected, use that URL; otherwise fall back to original
                             if (finalUrl != wellKnownUrl && !finalUrl.contains("/.well-known/")) {
-                                // Remove trailing path components to get base CalDAV URL
-                                val caldavUrl = extractCaldavBaseUrl(finalUrl)
+                                // Issue #51: Use the redirect URL as-is (strip query/fragment only).
+                                // The well-known redirect target IS the CalDAV endpoint by RFC 6764.
+                                // Issue #49: Preserve original scheme through reverse proxy.
+                                val caldavUrl = cleanRedirectUrl(finalUrl, originalScheme)
                                 Log.i(TAG, "Well-known discovery successful: $caldavUrl")
                                 CalDavResult.Success(caldavUrl)
                             } else {
@@ -250,7 +255,8 @@ class OkHttpCalDavClient : CalDavClient {
                         resp.code == 401 || resp.code == 403 -> {
                             Log.d(TAG, "Well-known requires auth, URL is valid: $finalUrl")
                             if (finalUrl != wellKnownUrl && !finalUrl.contains("/.well-known/")) {
-                                CalDavResult.Success(extractCaldavBaseUrl(finalUrl))
+                                // Issue #51: Preserve full redirect URL; Issue #49: preserve scheme
+                                CalDavResult.Success(cleanRedirectUrl(finalUrl, originalScheme))
                             } else {
                                 CalDavResult.Success(serverUrl)
                             }
@@ -276,6 +282,24 @@ class OkHttpCalDavClient : CalDavClient {
         }
 
     /**
+     * Clean a well-known redirect URL for use as the CalDAV endpoint.
+     *
+     * Unlike [extractCaldavBaseUrl], this preserves the full path — the well-known
+     * redirect target IS the CalDAV service endpoint by RFC 6764. Stripping path
+     * components breaks providers like Fastmail (Issue #51).
+     *
+     * Only strips query parameters, fragments, and trailing slashes.
+     * Preserves original scheme when provided (Issue #49 reverse proxy fix).
+     */
+    private fun cleanRedirectUrl(url: String, originalScheme: String? = null): String {
+        val cleanUrl = url.substringBefore("?").substringBefore("#").trimEnd('/')
+        if (originalScheme == null) return cleanUrl
+        val uri = try { java.net.URI(cleanUrl) } catch (e: Exception) { return cleanUrl }
+        if (uri.scheme == originalScheme) return cleanUrl
+        return cleanUrl.replaceFirst(Regex("^\\w+://"), "$originalScheme://")
+    }
+
+    /**
      * Extract base CalDAV URL from a full URL path.
      * For Nextcloud: https://cloud.example.com/remote.php/dav/principals/users/foo
      *             -> https://cloud.example.com/remote.php/dav
@@ -285,8 +309,17 @@ class OkHttpCalDavClient : CalDavClient {
      * Bug fix: https://github.com/KashCal/KashCal/issues/38
      * Previously matched "/dav" anywhere in URL, including hostname "dav.mailbox.org".
      * Now searches patterns only in URI path component.
+     *
+     * Bug fix: https://github.com/KashCal/KashCal/issues/49
+     * When Baikal is behind a reverse proxy with SSL termination, the redirect URL
+     * may have HTTP scheme while user connected via HTTPS. Pass originalScheme to
+     * preserve the user's original connection scheme.
+     *
+     * @param url The URL to extract base CalDAV URL from
+     * @param originalScheme The original scheme from user's connection (e.g., "https").
+     *                       If provided, overrides the scheme from the URL.
      */
-    private fun extractCaldavBaseUrl(url: String): String {
+    private fun extractCaldavBaseUrl(url: String, originalScheme: String? = null): String {
         // Strip query parameters and fragments (some redirects include them)
         val cleanUrl = url.substringBefore("?").substringBefore("#")
 
@@ -299,7 +332,9 @@ class OkHttpCalDavClient : CalDavClient {
         }
 
         val path = uri.path ?: ""
-        val baseUrl = "${uri.scheme}://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
+        // Issue #49: Preserve original scheme when provided (reverse proxy scenario)
+        val effectiveScheme = originalScheme ?: uri.scheme
+        val baseUrl = "$effectiveScheme://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
 
         // Common CalDAV path patterns - order matters (longer/more specific first)
         val patterns = listOf(
@@ -570,12 +605,11 @@ class OkHttpCalDavClient : CalDavClient {
                 }
                 responseCode == 401 -> CalDavResult.authError("Authentication failed")
                 responseCode == 403 || responseCode == 410 -> {
-                    // Check if it's specifically a sync-token error
-                    if (quirks.isSyncTokenInvalid(responseCode, responseBody)) {
-                        CalDavResult.error(responseCode, "Sync token invalid", isRetryable = false)
-                    } else {
-                        CalDavResult.error(responseCode, "Permission denied")
-                    }
+                    // In sync-collection context, 403/410 always means expired sync token.
+                    // Some servers (e.g., iCloud) return bare 403 without valid-sync-token
+                    // error element. Unlike processResponse (generic handler), we don't need
+                    // to distinguish permission-denied vs sync-token here.
+                    CalDavResult.error(responseCode, "Sync token invalid", isRetryable = false)
                 }
                 else -> CalDavResult.error(responseCode, "sync-collection failed: $responseCode")
             }

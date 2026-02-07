@@ -449,8 +449,14 @@ END:VCALENDAR</calendar-data>
     // Sync token invalid tests
 
     @Test
-    fun `sync token is invalid on 403 response`() {
-        assertTrue(quirks.isSyncTokenInvalid(403, ""))
+    fun `sync token is not invalid on bare 403 response`() {
+        // Issue #51: bare 403 is "permission denied", not sync-token expiry
+        assertFalse(quirks.isSyncTokenInvalid(403, ""))
+    }
+
+    @Test
+    fun `sync token is invalid on 403 with valid-sync-token in body`() {
+        assertTrue(quirks.isSyncTokenInvalid(403, "<error><valid-sync-token/></error>"))
     }
 
     @Test

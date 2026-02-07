@@ -123,9 +123,10 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
                 val requestBuilder = chain.request().newBuilder()
 
                 // Add authentication - credentials are captured in this lambda (immutable)
+                // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
                 requestBuilder.header(
                     "Authorization",
-                    OkHttpCredentials.basic(credentials.username, credentials.password)
+                    OkHttpCredentials.basic(credentials.username, credentials.password, Charsets.UTF_8)
                 )
 
                 // Add provider-specific headers
