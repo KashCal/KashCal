@@ -95,8 +95,8 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display AM
-        composeTestRule.onNodeWithText("AM").assertIsDisplayed()
+        // Should display AM (circular AM/PM may show multiple instances)
+        composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
     }
 
     @Test
@@ -112,8 +112,8 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display PM
-        composeTestRule.onNodeWithText("PM").assertIsDisplayed()
+        // Should display PM (circular AM/PM may show multiple instances)
+        composeTestRule.onAllNodesWithText("PM")[0].assertIsDisplayed()
     }
 
     @Test
@@ -350,9 +350,9 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Midnight should display as 12 AM
+        // Midnight should display as 12 AM (circular AM/PM may show multiple instances)
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
-        composeTestRule.onNodeWithText("AM").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
     }
 
     @Test
@@ -368,9 +368,9 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Noon should display as 12 PM
+        // Noon should display as 12 PM (circular AM/PM may show multiple instances)
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
-        composeTestRule.onNodeWithText("PM").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("PM")[0].assertIsDisplayed()
     }
 
     @Test
