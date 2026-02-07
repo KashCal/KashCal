@@ -41,6 +41,7 @@ import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.AccountSettingsScreen
 import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
+import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.AccountsScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
@@ -107,8 +108,12 @@ class SettingsActivity : ComponentActivity() {
                 val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
                 val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
 
-                // iCloud account for AccountsScreen
-                val iCloudAccount by viewModel.iCloudAccount.collectAsStateWithLifecycle()
+                // iCloud account for AccountsScreen — derived from uiState (single source of truth)
+                val iCloudAccount = remember(uiState.iCloudState) {
+                    (uiState.iCloudState as? ICloudConnectionState.Connected)?.let {
+                        ICloudAccountUiModel(email = it.appleId, calendarCount = it.calendarCount)
+                    }
+                }
 
                 // Contacts permission launcher
                 val contactsPermissionLauncher = rememberLauncherForActivityResult(
@@ -191,6 +196,7 @@ class SettingsActivity : ComponentActivity() {
                         showAccountsScreen -> {
                             AccountsScreen(
                                 iCloudAccount = iCloudAccount,
+                                showAddICloud = uiState.iCloudState is ICloudConnectionState.NotConnected,
                                 calDavAccounts = uiState.calDavAccounts,
                                 onNavigateBack = { showAccountsScreen = false },
                                 onAddICloud = viewModel::showICloudSignInSheet,

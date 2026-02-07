@@ -21,6 +21,8 @@ import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
+import org.onekash.icaldav.model.ICalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -77,6 +79,14 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Set Windows timezone resolver using Android ICU (CLDR-maintained).
+        // Primary resolver for names like "Eastern Standard Time" → America/New_York.
+        // Properties file in icaldav library serves as fallback for JVM/non-Android.
+        ICalDateTime.customTimezoneResolver = { tzid ->
+            android.icu.util.TimeZone.getIDForWindowsID(tzid, null)
+                ?.let { try { ZoneId.of(it) } catch (_: Exception) { null } }
+        }
 
         // Handle app upgrade - cancel stale sync work to prevent crashes
         handleAppUpgrade()

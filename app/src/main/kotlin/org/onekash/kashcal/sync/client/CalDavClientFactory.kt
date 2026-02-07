@@ -119,15 +119,24 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
         // Create new OkHttpClient with credentials baked into network interceptor
         // This is thread-safe because OkHttpClient.newBuilder() creates independent copy
         val clientBuilder = baseHttpClient.newBuilder()
+            // Digest auth: handle 401 Digest challenges via RFC 2617/7616
+            // If server requires Digest, the interceptor's Basic auth is rejected with 401,
+            // then this Authenticator computes Digest credentials and OkHttp auto-retries.
+            .authenticator(DigestAuthenticator(credentials.username, credentials.password))
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
 
-                // Add authentication - credentials are captured in this lambda (immutable)
-                // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
-                requestBuilder.header(
-                    "Authorization",
-                    OkHttpCredentials.basic(credentials.username, credentials.password, Charsets.UTF_8)
-                )
+                // Add Basic auth preemptively — but only if no Authorization header
+                // already present. When DigestAuthenticator handles a 401 challenge,
+                // OkHttp retries with a Digest Authorization header. We must not
+                // overwrite it with Basic (that would cause an infinite 401 loop).
+                if (chain.request().header("Authorization") == null) {
+                    // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
+                    requestBuilder.header(
+                        "Authorization",
+                        OkHttpCredentials.basic(credentials.username, credentials.password, Charsets.UTF_8)
+                    )
+                }
 
                 // Add provider-specific headers
                 quirks.getAdditionalHeaders().forEach { (key, value) ->

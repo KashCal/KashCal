@@ -36,6 +36,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
+import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
@@ -418,7 +419,7 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `onSignIn triggers immediate sync`() = runTest {
+    fun `onSignIn triggers account-scoped sync`() = runTest {
         // Mock successful discovery
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
@@ -436,7 +437,7 @@ class AccountSettingsViewModelTest {
         viewModel.onSignIn()
         advanceUntilIdle()
 
-        verify { syncScheduler.requestImmediateSync(forceFullSync = true) }
+        verify { syncScheduler.syncAccount(testDbAccount.id, forceFullSync = true) }
     }
 
     @Test
@@ -1605,5 +1606,207 @@ class AccountSettingsViewModelTest {
                 "xxxx-xxxx-xxxx-xxxx"
             )
         }
+    }
+
+    // ==================== Account-Scoped Sync Tests (Bug 1 regression) ====================
+
+    @Test
+    fun `iCloud sign-in syncs only new account not all accounts`() = runTest {
+        val iCloudAccount = testDbAccount.copy(id = 7L)
+        coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
+            account = iCloudAccount,
+            calendars = testCalendars
+        )
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAppleIdChange("test@icloud.com")
+        viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
+        advanceUntilIdle()
+
+        viewModel.onSignIn()
+        advanceUntilIdle()
+
+        // Should sync only the new account
+        verify { syncScheduler.syncAccount(7L, forceFullSync = true) }
+        // Should NOT trigger a global sync of all accounts
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any()) }
+    }
+
+    @Test
+    fun `CalDAV account creation syncs only new account not all accounts`() = runTest {
+        val calDavAccount = Account(
+            id = 42L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            principalUrl = "https://nextcloud.example.com/remote.php/dav/principals/users/user/",
+            homeSetUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/"
+        )
+        val discoveredCalendars = listOf(
+            DiscoveredCalendar(
+                href = "/remote.php/dav/calendars/user/personal/",
+                displayName = "Personal",
+                color = 0xFF2196F3.toInt()
+            )
+        )
+
+        // Mock display name available
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
+
+        // Mock discovery phase
+        coEvery {
+            calDavDiscoveryService.discoverCalendars(any(), any(), any(), any())
+        } returns DiscoveryResult.CalendarsFound(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            calendarHomeUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/",
+            principalUrl = "https://nextcloud.example.com/remote.php/dav/principals/users/user/",
+            calendars = discoveredCalendars
+        )
+
+        // Mock account creation phase
+        coEvery {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(
+                any(), any(), any(), any(), any(), any(), any(), any()
+            )
+        } returns DiscoveryResult.Success(
+            account = calDavAccount,
+            calendars = listOf(
+                Calendar(
+                    id = 10L,
+                    accountId = 42L,
+                    caldavUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = 0xFF2196F3.toInt()
+                )
+            )
+        )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Set CalDAV inputs
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        viewModel.onCalDavDisplayNameChange("Nextcloud")
+        viewModel.onCalDavUsernameChange("user")
+        viewModel.onCalDavPasswordChange("password123")
+        advanceUntilIdle()
+
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        // Should sync only the new CalDAV account
+        verify { syncScheduler.syncAccount(42L, forceFullSync = true) }
+        // Should NOT trigger a global sync of all accounts
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any()) }
+    }
+
+    // ==================== iCloud Race Condition Tests (Bug 2 regression) ====================
+
+    @Test
+    fun `iCloud account visible in uiState after CalDAV creation`() = runTest {
+        // Set up iCloud account as already connected
+        val iCloudAccount = testDbAccount.copy(lastSuccessfulSyncAt = System.currentTimeMillis())
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(iCloudAccount)
+        coEvery { accountRepository.hasCredentials(iCloudAccount.id) } returns true
+        iCloudCalendarCountFlow.value = 2
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Verify iCloud is Connected
+        val stateBeforeCalDav = viewModel.uiState.value.iCloudState
+        assertTrue(
+            "Expected Connected but was $stateBeforeCalDav",
+            stateBeforeCalDav is ICloudConnectionState.Connected
+        )
+
+        // Now create a CalDAV account
+        val calDavAccount = Account(
+            id = 42L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            principalUrl = "https://nextcloud.example.com/remote.php/dav/principals/users/user/",
+            homeSetUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/"
+        )
+        val discoveredCalendars = listOf(
+            DiscoveredCalendar(
+                href = "/remote.php/dav/calendars/user/personal/",
+                displayName = "Personal",
+                color = 0xFF2196F3.toInt()
+            )
+        )
+
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
+        coEvery {
+            calDavDiscoveryService.discoverCalendars(any(), any(), any(), any())
+        } returns DiscoveryResult.CalendarsFound(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            calendarHomeUrl = "https://nextcloud.example.com/remote.php/dav/calendars/user/",
+            principalUrl = "https://nextcloud.example.com/remote.php/dav/principals/users/user/",
+            calendars = discoveredCalendars
+        )
+        coEvery {
+            calDavDiscoveryService.createAccountWithSelectedCalendars(
+                any(), any(), any(), any(), any(), any(), any(), any()
+            )
+        } returns DiscoveryResult.Success(
+            account = calDavAccount,
+            calendars = emptyList()
+        )
+
+        viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
+        viewModel.onCalDavDisplayNameChange("Nextcloud")
+        viewModel.onCalDavUsernameChange("user")
+        viewModel.onCalDavPasswordChange("password123")
+        advanceUntilIdle()
+
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        // iCloud should STILL be Connected after CalDAV creation
+        val stateAfterCalDav = viewModel.uiState.value.iCloudState
+        assertTrue(
+            "Expected Connected but was $stateAfterCalDav",
+            stateAfterCalDav is ICloudConnectionState.Connected
+        )
+        assertEquals(
+            "test@icloud.com",
+            (stateAfterCalDav as ICloudConnectionState.Connected).appleId
+        )
+    }
+
+    @Test
+    fun `iCloudState Connected survives early calendar count emission`() = runTest {
+        // Set up: iCloud account exists with credentials
+        val iCloudAccount = testDbAccount.copy(lastSuccessfulSyncAt = System.currentTimeMillis())
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(iCloudAccount)
+        coEvery { accountRepository.hasCredentials(iCloudAccount.id) } returns true
+
+        // Calendar count flow starts with non-zero value (emits immediately)
+        iCloudCalendarCountFlow.value = 3
+
+        // Create ViewModel — init launches both loadInitialState() and observeICloudCalendarCount()
+        val viewModel = createViewModel()
+
+        // Advance one step: Flow collector runs, reads NotConnected (loadInitialState hasn't completed),
+        // but the removed else-branch means no side effect of setting _iCloudAccount = null
+        testDispatcher.scheduler.advanceTimeBy(0)
+
+        // Now let everything complete — loadInitialState() finishes, sets Connected
+        advanceUntilIdle()
+
+        // iCloudState should be Connected with the calendar count
+        val state = viewModel.uiState.value.iCloudState
+        assertTrue(
+            "Expected Connected but was $state",
+            state is ICloudConnectionState.Connected
+        )
+        assertEquals(3, (state as ICloudConnectionState.Connected).calendarCount)
     }
 }

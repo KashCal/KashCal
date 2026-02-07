@@ -44,7 +44,6 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
-import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
@@ -184,14 +183,6 @@ class AccountSettingsViewModel @Inject constructor(
     private val _syncLogs = MutableStateFlow<List<SyncLog>>(emptyList())
     val syncLogs: StateFlow<List<SyncLog>> = _syncLogs.asStateFlow()
 
-    // iCloud calendar count (separate from total calendars - see Checkpoint 2 fix)
-    private val _iCloudCalendarCount = MutableStateFlow(0)
-    val iCloudCalendarCount: StateFlow<Int> = _iCloudCalendarCount.asStateFlow()
-
-    // iCloud account UI model for AccountsScreen
-    private val _iCloudAccount = MutableStateFlow<ICloudAccountUiModel?>(null)
-    val iCloudAccount: StateFlow<ICloudAccountUiModel?> = _iCloudAccount.asStateFlow()
-
     // Contact Birthdays
     private val _contactBirthdaysEnabled = MutableStateFlow(false)
     val contactBirthdaysEnabled: StateFlow<Boolean> = _contactBirthdaysEnabled.asStateFlow()
@@ -242,24 +233,29 @@ class AccountSettingsViewModel @Inject constructor(
 
             if (account != null && accountRepository.hasCredentials(account.id)) {
                 val lastSync = account.lastSuccessfulSyncAt
-                _uiState.value = AccountSettingsUiState(
-                    isLoading = false,
-                    iCloudState = ICloudConnectionState.Connected(
-                        appleId = account.email,
-                        lastSyncTime = if (lastSync != null && lastSync > 0) lastSync else null,
-                        calendarCount = 0 // Will be updated by calendar observer
+                val calendarCount = eventCoordinator.getICloudCalendarCount().first()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        iCloudState = ICloudConnectionState.Connected(
+                            appleId = account.email,
+                            lastSyncTime = if (lastSync != null && lastSync > 0) lastSync else null,
+                            calendarCount = calendarCount
+                        )
                     )
-                )
+                }
             } else {
-                _uiState.value = AccountSettingsUiState(
-                    isLoading = false,
-                    iCloudState = ICloudConnectionState.NotConnected(
-                        appleId = appleIdInput,
-                        password = passwordInput,
-                        showHelp = showHelpState,
-                        error = errorMessage
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        iCloudState = ICloudConnectionState.NotConnected(
+                            appleId = appleIdInput,
+                            password = passwordInput,
+                            showHelp = showHelpState,
+                            error = errorMessage
+                        )
                     )
-                )
+                }
             }
         }
     }
@@ -288,22 +284,13 @@ class AccountSettingsViewModel @Inject constructor(
     private fun observeICloudCalendarCount() {
         viewModelScope.launch {
             eventCoordinator.getICloudCalendarCount().collect { count ->
-                _iCloudCalendarCount.value = count
-
-                // Update calendar count in Connected state and iCloudAccount UI model
+                // Update calendar count in Connected state
                 val currentState = _uiState.value
                 val iCloudState = currentState.iCloudState
                 if (iCloudState is ICloudConnectionState.Connected) {
                     _uiState.update {
                         it.copy(iCloudState = iCloudState.copy(calendarCount = count))
                     }
-                    // Update iCloudAccount UI model for AccountsScreen
-                    _iCloudAccount.value = ICloudAccountUiModel(
-                        email = iCloudState.appleId,
-                        calendarCount = count
-                    )
-                } else {
-                    _iCloudAccount.value = null
                 }
             }
         }
@@ -635,8 +622,8 @@ class AccountSettingsViewModel @Inject constructor(
                         )
                     }
 
-                    // Trigger initial event sync for discovered calendars
-                    syncScheduler.requestImmediateSync(forceFullSync = true)
+                    // Trigger initial sync for the new account only (not all accounts)
+                    syncScheduler.syncAccount(result.account.id, forceFullSync = true)
 
                     // Schedule periodic background sync with user's configured interval
                     val intervalMinutes = userPreferences.syncIntervalMs.first() / (60 * 1000L)
@@ -899,7 +886,7 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Starting CalDAV discovery for: ${calDavUsername.take(3)}***")
 
             // Validate inputs
-            if (calDavServerUrl.isBlank() || calDavUsername.isBlank() || calDavPassword.isBlank()) {
+            if (calDavServerUrl.isBlank() || calDavDisplayName.isBlank() || calDavUsername.isBlank() || calDavPassword.isBlank()) {
                 _uiState.update {
                     it.copy(
                         calDavState = CalDavConnectionState.NotConnected(
@@ -908,7 +895,9 @@ class AccountSettingsViewModel @Inject constructor(
                             username = calDavUsername,
                             password = calDavPassword,
                             trustInsecure = calDavTrustInsecure,
-                            error = "Server URL, username, and password are required"
+                            error = if (calDavDisplayName.isBlank()) "Display name is required"
+                                    else "Server URL, username, and password are required",
+                            errorField = if (calDavDisplayName.isBlank()) CalDavConnectionState.ErrorField.DISPLAY_NAME else null
                         )
                     )
                 }
@@ -1047,8 +1036,8 @@ class AccountSettingsViewModel @Inject constructor(
                             calDavDiscoveredCalendarHomeUrl = null
                             calDavDiscoveredCalendars = emptyList()
 
-                            // Trigger initial sync for the new account
-                            syncScheduler.requestImmediateSync(forceFullSync = true)
+                            // Trigger initial sync for the new account only (not all accounts)
+                            syncScheduler.syncAccount(createResult.account.id, forceFullSync = true)
 
                             // Schedule periodic sync
                             val intervalMinutes = userPreferences.syncIntervalMs.first() / (60 * 1000L)

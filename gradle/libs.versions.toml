@@ -35,7 +35,7 @@ gson = "2.11.0"
 libRecur = "0.17.1"
 
 # iCal/CalDAV library (includes ical4j 4.2.2) - from GitHub Packages
-icaldav = "2.8.0"
+icaldav = "3.1.0"
 
 # HTTP Client
 okhttp = "4.12.0"

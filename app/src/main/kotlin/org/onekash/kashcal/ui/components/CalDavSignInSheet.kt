@@ -249,8 +249,7 @@ private fun NotConnectedContent(
         OutlinedTextField(
             value = state.displayName,
             onValueChange = onDisplayNameChange,
-            label = { Text("Display Name (optional)") },
-            placeholder = { Text("Auto-generated from server") },
+            label = { Text("Display Name") },
             supportingText = if (displayNameHasError && state.error != null) {
                 { Text(state.error, color = MaterialTheme.colorScheme.error) }
             } else {

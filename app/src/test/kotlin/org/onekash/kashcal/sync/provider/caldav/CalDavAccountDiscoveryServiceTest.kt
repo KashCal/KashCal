@@ -357,7 +357,8 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Error)
-        assertTrue((result as DiscoveryResult.Error).message.contains("Network error"))
+        // After Issue #54: probing runs on network errors, all probes fail with same error
+        assertTrue((result as DiscoveryResult.Error).message.contains("CalDAV service not found"))
     }
 
     @Test
@@ -407,7 +408,8 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Error)
-        assertTrue((result as DiscoveryResult.Error).message.contains("temporarily unavailable"))
+        // After Issue #54: probing runs on 500 errors, all probes fail with same error
+        assertTrue((result as DiscoveryResult.Error).message.contains("CalDAV service not found"))
     }
 
     @Test
@@ -708,5 +710,285 @@ class CalDavAccountDiscoveryServiceTest {
             isDefault = false,
             isVisible = true
         )
+    }
+
+    // ==================== Path Probing Tests (Issue #54) ====================
+
+    @Test
+    fun `discoverAndCreateAccount probes paths when root returns 404`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com") } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
+            CalDavResult.Success("https://davis.example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://davis.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+    }
+
+    @Test
+    fun `discoverAndCreateAccount probes paths when root returns HTML`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com") } returns
+            CalDavResult.Error(500, "Principal URL not found in response")
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
+            CalDavResult.Success("https://davis.example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://davis.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+    }
+
+    @Test
+    fun `discoverAndCreateAccount finds Nextcloud on later probe`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://nc.example.com") } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://nc.example.com/dav/") } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://nc.example.com/remote.php/dav/") } returns
+            CalDavResult.Success("https://nc.example.com/remote.php/dav/principals/users/admin/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://nc.example.com/remote.php/dav/calendars/admin/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/remote.php/dav/calendars/admin/personal/", "https://nc.example.com/remote.php/dav/calendars/admin/personal/", "Personal", "#0082C9", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nc.example.com",
+            username = "admin",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+    }
+
+    @Test
+    fun `discoverAndCreateAccount returns error when all probes fail`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns
+            CalDavResult.Error(404, "Not found")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://unknown.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        val error = result as DiscoveryResult.Error
+        assertTrue(
+            "Error message should mention tried paths but got: ${error.message}",
+            error.message.contains("Tried common server paths")
+        )
+    }
+
+    @Test
+    fun `discoverAndCreateAccount does not probe when URL has known path`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://baikal.example.com/dav.php/") } returns
+            CalDavResult.Error(500, "Internal server error")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://baikal.example.com/dav.php/",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        assertFalse(
+            "Should not probe when URL already has known path, but got: ${(result as DiscoveryResult.Error).message}",
+            result.message.contains("Tried common server paths")
+        )
+        coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount does not probe when URL has known path without trailing slash`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav") } returns
+            CalDavResult.Error(404, "Not found")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://davis.example.com/dav",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        assertFalse(
+            "Should not probe when URL has known path (without trailing slash), but got: ${(result as DiscoveryResult.Error).message}",
+            result.message.contains("Tried common server paths")
+        )
+        coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount stops probing on auth error`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://server.example.com") } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://server.example.com/dav/") } returns
+            CalDavResult.authError("Authentication failed")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "wrong"
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        coVerify(exactly = 2) { mockClient.discoverPrincipal(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount continues probing past 500 error`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://server.example.com") } returns
+            CalDavResult.Error(500, "Internal server error")
+        coEvery { mockClient.discoverPrincipal("https://server.example.com/dav/") } returns
+            CalDavResult.Error(500, "Internal server error")
+        coEvery { mockClient.discoverPrincipal("https://server.example.com/remote.php/dav/") } returns
+            CalDavResult.Success("https://server.example.com/remote.php/dav/principals/users/admin/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://server.example.com/remote.php/dav/calendars/admin/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/remote.php/dav/calendars/admin/personal/", "https://server.example.com/remote.php/dav/calendars/admin/personal/", "Personal", "#0082C9", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "admin",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+        coVerify { mockClient.discoverPrincipal("https://server.example.com/dav/") }
+        coVerify { mockClient.discoverPrincipal("https://server.example.com/remote.php/dav/") }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount probes correctly with port number`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://localhost:8080") } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://localhost:8080/dav/") } returns
+            CalDavResult.Success("https://localhost:8080/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://localhost:8080/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://localhost:8080/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://localhost:8080",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+        coVerify { mockClient.discoverPrincipal("https://localhost:8080/dav/") }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount does not probe on auth error from root`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://server.example.com") } returns
+            CalDavResult.authError("Authentication failed")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "wrong"
+        )
+
+        assertTrue(result is DiscoveryResult.AuthError)
+        coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount does not probe on SSL error from root`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://self-signed.local") } returns
+            CalDavResult.Error(0, "SSL certificate verification failed")
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://self-signed.local",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        assertTrue((result as DiscoveryResult.Error).message.contains("Trust insecure"))
+        coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
+    }
+
+    // ==================== normalizeServerUrl Tests (Issue #54) ====================
+
+    @Test
+    fun `normalizeServerUrl preserves trailing slash on path`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://example.com/dav/") } returns
+            CalDavResult.Success("https://example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://example.com/dav/",
+            username = "user",
+            password = "pass"
+        )
+
+        coVerify { mockClient.discoverPrincipal("https://example.com/dav/") }
+    }
+
+    @Test
+    fun `normalizeServerUrl trims trailing slash on root`() = runTest {
+        coEvery { mockClient.discoverPrincipal("https://example.com") } returns
+            CalDavResult.Success("https://example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://example.com/",
+            username = "user",
+            password = "pass"
+        )
+
+        coVerify { mockClient.discoverPrincipal("https://example.com") }
     }
 }

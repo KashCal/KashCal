@@ -605,7 +605,8 @@ class KashCalDataStore(private val context: Context) {
          * History:
          * - v0: Pre-v20.12.39 (no version tracking)
          * - v1: VALUE=DATE timezone fix (use UTC instead of local timezone)
+         * - v2: Windows timezone name resolution (Issue #45)
          */
-        const val CURRENT_PARSER_VERSION = 1
+        const val CURRENT_PARSER_VERSION = 2
     }
 }

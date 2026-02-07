@@ -170,14 +170,18 @@ class OkHttpCalDavClient : CalDavClient {
             .connectionPool(ConnectionPool(MAX_IDLE_CONNECTIONS, KEEP_ALIVE_DURATION_MINUTES, TimeUnit.MINUTES))
             // HTTP logging (debug builds only)
             .addInterceptor(loggingInterceptor)
+            // Digest auth: handle 401 Digest challenges via RFC 2617/7616
+            .authenticator(DigestAuthenticator(username, password))
             // Use NetworkInterceptor instead of Interceptor to ensure auth headers
             // survive redirects. iCloud often redirects requests, and application
             // interceptors only run on the initial request.
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
 
-                // Add authentication if credentials set
-                if (username.isNotEmpty() && password.isNotEmpty()) {
+                // Add Basic auth preemptively — but only if no Authorization header
+                // already present. DigestAuthenticator may have set Digest on retry.
+                if (username.isNotEmpty() && password.isNotEmpty() &&
+                    chain.request().header("Authorization") == null) {
                     // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
                     requestBuilder.header("Authorization", Credentials.basic(username, password, Charsets.UTF_8))
                 }
@@ -284,80 +288,20 @@ class OkHttpCalDavClient : CalDavClient {
     /**
      * Clean a well-known redirect URL for use as the CalDAV endpoint.
      *
-     * Unlike [extractCaldavBaseUrl], this preserves the full path — the well-known
+     * This preserves the full path — the well-known
      * redirect target IS the CalDAV service endpoint by RFC 6764. Stripping path
      * components breaks providers like Fastmail (Issue #51).
      *
-     * Only strips query parameters, fragments, and trailing slashes.
+     * Only strips query parameters and fragments. Trailing slashes are preserved
+     * because some servers (e.g., Davis/Symfony) require them (Issue #54).
      * Preserves original scheme when provided (Issue #49 reverse proxy fix).
      */
     private fun cleanRedirectUrl(url: String, originalScheme: String? = null): String {
-        val cleanUrl = url.substringBefore("?").substringBefore("#").trimEnd('/')
+        val cleanUrl = url.substringBefore("?").substringBefore("#")
         if (originalScheme == null) return cleanUrl
         val uri = try { java.net.URI(cleanUrl) } catch (e: Exception) { return cleanUrl }
         if (uri.scheme == originalScheme) return cleanUrl
         return cleanUrl.replaceFirst(Regex("^\\w+://"), "$originalScheme://")
-    }
-
-    /**
-     * Extract base CalDAV URL from a full URL path.
-     * For Nextcloud: https://cloud.example.com/remote.php/dav/principals/users/foo
-     *             -> https://cloud.example.com/remote.php/dav
-     *
-     * Uses java.net.URI for robust parsing (handles IPv6, userinfo, ports).
-     *
-     * Bug fix: https://github.com/KashCal/KashCal/issues/38
-     * Previously matched "/dav" anywhere in URL, including hostname "dav.mailbox.org".
-     * Now searches patterns only in URI path component.
-     *
-     * Bug fix: https://github.com/KashCal/KashCal/issues/49
-     * When Baikal is behind a reverse proxy with SSL termination, the redirect URL
-     * may have HTTP scheme while user connected via HTTPS. Pass originalScheme to
-     * preserve the user's original connection scheme.
-     *
-     * @param url The URL to extract base CalDAV URL from
-     * @param originalScheme The original scheme from user's connection (e.g., "https").
-     *                       If provided, overrides the scheme from the URL.
-     */
-    private fun extractCaldavBaseUrl(url: String, originalScheme: String? = null): String {
-        // Strip query parameters and fragments (some redirects include them)
-        val cleanUrl = url.substringBefore("?").substringBefore("#")
-
-        // Parse URL using stdlib - handles IPv6 [::1], userinfo, ports correctly
-        val uri = try {
-            java.net.URI(cleanUrl)
-        } catch (e: Exception) {
-            Log.w(TAG, "extractCaldavBaseUrl: invalid URL '$url', returning as-is")
-            return url
-        }
-
-        val path = uri.path ?: ""
-        // Issue #49: Preserve original scheme when provided (reverse proxy scenario)
-        val effectiveScheme = originalScheme ?: uri.scheme
-        val baseUrl = "$effectiveScheme://${uri.host}${if (uri.port != -1) ":${uri.port}" else ""}"
-
-        // Common CalDAV path patterns - order matters (longer/more specific first)
-        val patterns = listOf(
-            "/remote.php/dav",  // Nextcloud
-            "/dav.php",         // Baikal
-            "/caldav.php",      // Some servers
-            "/caldav",          // Open-Xchange (mailbox.org)
-            "/cal.php",         // Some servers
-            "/dav/cal",         // Stalwart
-            "/dav"              // Generic (safe - only matches path now)
-        )
-
-        for (pattern in patterns) {
-            val index = path.indexOf(pattern)
-            if (index != -1) {
-                Log.d(TAG, "extractCaldavBaseUrl: matched '$pattern' in path")
-                return baseUrl + path.substring(0, index + pattern.length)
-            }
-        }
-
-        // No pattern matched - return base URL only
-        Log.d(TAG, "extractCaldavBaseUrl: no pattern matched, returning base: $baseUrl")
-        return baseUrl
     }
 
     override suspend fun discoverPrincipal(serverUrl: String): CalDavResult<String> =

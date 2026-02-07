@@ -368,6 +368,90 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         )
     }
 
+    // ==================== Trailing Slash + Probing Tests (Issue #54) ====================
+
+    @Test
+    fun `discoverCalendars - well-known redirect preserves trailing slash`() = runTest {
+        // Davis well-known redirects to /dav/ — trailing slash must be preserved
+        val principalUrl = "https://davis.example.com/dav/principals/user/"
+        val calendarHomeUrl = "https://davis.example.com/dav/calendars/user/"
+
+        coEvery { mockClient.discoverWellKnown(any()) } returns
+            CalDavResult.Success("https://davis.example.com/dav/")
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
+            CalDavResult.Success(principalUrl)
+        coEvery { mockClient.discoverCalendarHome(principalUrl) } returns
+            CalDavResult.Success(calendarHomeUrl)
+        coEvery { mockClient.listCalendars(calendarHomeUrl) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://davis.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound but got $result", result is DiscoveryResult.CalendarsFound)
+        // Verify trailing slash was preserved in the discoverPrincipal call
+        coVerify { mockClient.discoverPrincipal("https://davis.example.com/dav/") }
+    }
+
+    @Test
+    fun `discoverCalendars - probes paths when well-known and root fail`() = runTest {
+        // Well-known returns error, fallback to root also fails (HTML), probing finds /dav/
+        coEvery { mockClient.discoverWellKnown(any()) } returns
+            CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com") } returns
+            CalDavResult.Error(500, "Principal URL not found in response")
+        coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
+            CalDavResult.Success("https://davis.example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://davis.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound but got $result", result is DiscoveryResult.CalendarsFound)
+    }
+
+    @Test
+    fun `discoverCalendars - probes use original URL not well-known redirect URL as base`() = runTest {
+        // Well-known redirects to a different host which then fails.
+        // Probing should use original host, not the redirect host.
+        coEvery { mockClient.discoverWellKnown("https://myserver.example.com") } returns
+            CalDavResult.Success("https://other-host.example.com/dav/")
+        coEvery { mockClient.discoverPrincipal("https://other-host.example.com/dav/") } returns
+            CalDavResult.Error(500, "Server error")
+        // Probing uses original host (myserver.example.com), not other-host
+        coEvery { mockClient.discoverPrincipal("https://myserver.example.com/dav/") } returns
+            CalDavResult.Success("https://myserver.example.com/dav/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://myserver.example.com/dav/calendars/user/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/dav/calendars/user/default/", "https://myserver.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
+            ))
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://myserver.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound but got $result", result is DiscoveryResult.CalendarsFound)
+        // Verify probing used original host, not redirect host
+        coVerify { mockClient.discoverPrincipal("https://myserver.example.com/dav/") }
+    }
+
     // ==================== Helper Methods ====================
 
     private fun setupSuccessfulDiscovery(

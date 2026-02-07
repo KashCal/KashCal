@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.provider.caldav
 import android.graphics.Color
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.credential.AccountCredentials
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -11,6 +12,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
@@ -50,6 +52,21 @@ class CalDavAccountDiscoveryService @Inject constructor(
     companion object {
         private const val TAG = "CalDavAccountDiscovery"
         private const val PROVIDER_CALDAV = "caldav"
+
+        // Delay between path probes to avoid rate limiting (Issue #54)
+        private const val PROBE_DELAY_MS = 150L
+
+        // Known CalDAV server paths for fallback probing (Issue #54).
+        // Trailing slashes required by Davis/Symfony, harmless for others.
+        private val KNOWN_CALDAV_PATHS = listOf(
+            "/dav/",              // Davis, generic sabre/dav
+            "/remote.php/dav/",   // Nextcloud
+            "/dav.php/",          // Baikal
+            "/caldav/",           // Open-Xchange (mailbox.org)
+            "/dav/cal/",          // Stalwart
+            "/caldav.php/",       // Some servers
+            "/cal.php/"           // Some servers
+        )
 
         // Default calendar colors if server doesn't provide one
         private val DEFAULT_COLORS = listOf(
@@ -118,24 +135,41 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            if (principalResult.isError()) {
+            var principalUrl: String? = null
+
+            if (principalResult.isSuccess()) {
+                principalUrl = (principalResult as CalDavResult.Success).data
+            } else {
                 val error = principalResult as CalDavResult.Error
                 Log.e(TAG, "Principal discovery failed: ${error.message}")
 
-                // Check for SSL errors specifically
-                if (error.message.contains("ssl", ignoreCase = true) ||
-                    error.message.contains("certificate", ignoreCase = true)) {
+                // Check for SSL errors specifically — no probing will help
+                if (isSSLError(error)) {
                     return@withContext DiscoveryResult.Error(
                         "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                     )
                 }
 
-                return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "connect to server")
-                )
+                // Probe known CalDAV paths if URL doesn't already contain one (Issue #54)
+                if (!urlContainsKnownCaldavPath(normalizedUrl)) {
+                    Log.i(TAG, "Probing known CalDAV paths...")
+                    val probeResult = probeCaldavPaths(client, normalizedUrl, normalizedUrl)
+                    if (probeResult != null) {
+                        principalUrl = probeResult.second
+                    }
+                }
+
+                if (principalUrl == null) {
+                    return@withContext DiscoveryResult.Error(
+                        if (urlContainsKnownCaldavPath(normalizedUrl)) {
+                            getErrorMessageForCalDavError(error, "connect to server")
+                        } else {
+                            "CalDAV service not found. Tried common server paths (/dav/, /remote.php/dav/, etc.). Please check the server address."
+                        }
+                    )
+                }
             }
 
-            val principalUrl = (principalResult as CalDavResult.Success).data
             Log.d(TAG, "Principal URL: $principalUrl")
 
             // Step 2: Discover calendar home
@@ -485,23 +519,47 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            if (principalResult.isError()) {
+            var principalUrl: String? = null
+
+            if (principalResult.isSuccess()) {
+                principalUrl = (principalResult as CalDavResult.Success).data
+            } else {
                 val error = principalResult as CalDavResult.Error
                 Log.e(TAG, "Principal discovery failed: ${error.message}")
 
-                if (error.message.contains("ssl", ignoreCase = true) ||
-                    error.message.contains("certificate", ignoreCase = true)) {
+                // Check for SSL errors specifically — no probing will help
+                if (isSSLError(error)) {
                     return@withContext DiscoveryResult.Error(
                         "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                     )
                 }
 
-                return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "connect to server")
-                )
+                // Probe known CalDAV paths (Issue #54).
+                // Use original user URL as base, not well-known redirect URL.
+                // Skip probing only if the user's original URL already has a known CalDAV path
+                // AND wasn't redirected somewhere else via well-known.
+                val wasRedirected = caldavUrl.trimEnd('/') != normalizedUrl.trimEnd('/')
+                val shouldProbe = wasRedirected || !urlContainsKnownCaldavPath(normalizedUrl)
+
+                if (shouldProbe) {
+                    Log.i(TAG, "Probing known CalDAV paths...")
+                    val probeResult = probeCaldavPaths(client, normalizedUrl, caldavUrl)
+                    if (probeResult != null) {
+                        principalUrl = probeResult.second
+                    }
+                }
+
+                if (principalUrl == null) {
+                    return@withContext DiscoveryResult.Error(
+                        if (!shouldProbe) {
+                            getErrorMessageForCalDavError(error, "connect to server")
+                        } else {
+                            "CalDAV service not found. Tried common server paths (/dav/, /remote.php/dav/, etc.). Please check the server address."
+                        }
+                    )
+                }
             }
 
-            val principalUrl = (principalResult as CalDavResult.Success).data
             Log.d(TAG, "Principal URL: $principalUrl")
 
             // Step 2: Discover calendar home
@@ -703,7 +761,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
     /**
      * Normalize server URL to standard format.
      * - Adds https:// if missing
-     * - Removes trailing slash
+     * - Removes trailing slash on root-only URLs (preserves on paths for Issue #54)
      * - Validates URL structure
      */
     private fun normalizeServerUrl(serverUrl: String): String {
@@ -714,8 +772,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
             url = "https://$url"
         }
 
-        // Remove trailing slash
-        url = url.trimEnd('/')
+        // Remove trailing slash only on root URLs.
+        // Preserve trailing slashes on paths (e.g., /dav/) because some servers
+        // like Davis/Symfony require them (Issue #54).
+        val parsed = URI(url)
+        if (parsed.path.isNullOrBlank() || parsed.path == "/") {
+            url = url.trimEnd('/')
+        }
 
         // Validate URL
         val uri = URI(url)
@@ -724,6 +787,87 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
 
         return url
+    }
+
+    /**
+     * Extract base host (scheme://host:port) from a URL.
+     * E.g., "https://example.com:8080/dav/" -> "https://example.com:8080"
+     */
+    private fun extractBaseHost(url: String): String {
+        val uri = URI(url)
+        val port = if (uri.port != -1) ":${uri.port}" else ""
+        return "${uri.scheme}://${uri.host}$port"
+    }
+
+    /**
+     * Check if the URL path already contains a known CalDAV path.
+     * Uses slash-insensitive comparison so both "/dav" and "/dav/" match.
+     */
+    private fun urlContainsKnownCaldavPath(url: String): Boolean {
+        val uri = URI(url)
+        val path = uri.path?.trimEnd('/') ?: return false
+        return KNOWN_CALDAV_PATHS.any { knownPath ->
+            path == knownPath.trimEnd('/') || path.startsWith(knownPath.trimEnd('/') + "/")
+        }
+    }
+
+    /**
+     * Check if a CalDavResult error is SSL-related.
+     */
+    private fun isSSLError(error: CalDavResult.Error): Boolean {
+        return error.message.contains("SSL", ignoreCase = true) ||
+            error.message.contains("certificate", ignoreCase = true) ||
+            error.message.contains("TLS", ignoreCase = true)
+    }
+
+    /**
+     * Probe known CalDAV paths to discover the server endpoint (Issue #54).
+     *
+     * When well-known discovery fails and the user entered a root URL, tries
+     * common CalDAV paths (/dav/, /remote.php/dav/, /dav.php/, etc.).
+     *
+     * @param client CalDAV client with credentials
+     * @param baseUrl URL to extract host from for probing
+     * @param triedUrl URL already tried (skipped during probing)
+     * @return Pair of (probed URL, principal URL) on success, null if all fail
+     */
+    private suspend fun probeCaldavPaths(
+        client: CalDavClient,
+        baseUrl: String,
+        triedUrl: String
+    ): Pair<String, String>? {
+        val baseHost = extractBaseHost(baseUrl)
+        val triedNormalized = triedUrl.trimEnd('/')
+
+        for ((index, path) in KNOWN_CALDAV_PATHS.withIndex()) {
+            val probeUrl = "$baseHost$path"
+
+            // Skip if same as already-tried URL (slash-insensitive)
+            if (probeUrl.trimEnd('/') == triedNormalized) continue
+
+            if (index > 0) {
+                delay(PROBE_DELAY_MS)
+            }
+
+            Log.d(TAG, "Probing CalDAV path: $probeUrl")
+            val result = client.discoverPrincipal(probeUrl)
+
+            if (result.isSuccess()) {
+                val principalUrl = (result as CalDavResult.Success).data
+                Log.i(TAG, "Found CalDAV service at $probeUrl (principal: $principalUrl)")
+                return Pair(probeUrl, principalUrl)
+            }
+
+            // Stop probing on auth errors — systemic, won't succeed on other paths
+            if (result is CalDavResult.Error && result.isAuthError()) {
+                Log.d(TAG, "Auth error during probing, stopping: ${result.message}")
+                return null
+            }
+
+            Log.d(TAG, "Probe failed for $probeUrl: ${(result as? CalDavResult.Error)?.message}")
+        }
+
+        return null
     }
 
     /**

@@ -80,6 +80,7 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
 @Composable
 fun AccountsScreen(
     iCloudAccount: ICloudAccountUiModel?,
+    showAddICloud: Boolean,
     calDavAccounts: List<CalDavAccountUiModel>,
     onNavigateBack: () -> Unit,
     onAddICloud: () -> Unit,
@@ -170,7 +171,7 @@ fun AccountsScreen(
 
                 item {
                     AddAccountButtons(
-                        showAddICloud = iCloudAccount == null,  // Hide when already connected
+                        showAddICloud = showAddICloud,
                         onAddICloud = onAddICloud,
                         onAddCalDav = onAddCalDav,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
@@ -456,6 +457,7 @@ private fun AccountsScreenPreview() {
                 email = "john@icloud.com",
                 calendarCount = 5
             ),
+            showAddICloud = false,
             calDavAccounts = listOf(
                 CalDavAccountUiModel(
                     id = 1,
@@ -485,6 +487,7 @@ private fun AccountsScreenEmptyPreview() {
     KashCalTheme {
         AccountsScreen(
             iCloudAccount = null,
+            showAddICloud = true,
             calDavAccounts = emptyList(),
             onNavigateBack = {},
             onAddICloud = {},
@@ -504,6 +507,7 @@ private fun AccountsScreenICloudOnlyPreview() {
                 email = "jane@icloud.com",
                 calendarCount = 0  // Syncing state
             ),
+            showAddICloud = false,
             calDavAccounts = emptyList(),
             onNavigateBack = {},
             onAddICloud = {},
@@ -520,6 +524,7 @@ private fun AccountsScreenSameDisplayNamePreview() {
     KashCalTheme {
         AccountsScreen(
             iCloudAccount = null,
+            showAddICloud = true,
             calDavAccounts = listOf(
                 CalDavAccountUiModel(
                     id = 1,

@@ -66,6 +66,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.ui.util.MonthPagerUtils
 import androidx.compose.foundation.pager.PagerState
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
@@ -167,9 +168,9 @@ fun HomeScreen(
     onLoadEventsForDayPagerRange: (Long) -> Unit = {},
     shouldRefreshDayPagerCache: (Long) -> Boolean = { true }
 ) {
-    // HorizontalPager for smooth month swiping (1200 pages = ~100 years, centered at 600)
-    val initialPage = 600
-    val pagerState = rememberPagerState(initialPage = initialPage) { 1200 }
+    // HorizontalPager for smooth month swiping (~100 years each direction)
+    val initialPage = MonthPagerUtils.INITIAL_PAGE
+    val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
     val coroutineScope = rememberCoroutineScope()
 
     // Time format pattern based on user preference and device setting
