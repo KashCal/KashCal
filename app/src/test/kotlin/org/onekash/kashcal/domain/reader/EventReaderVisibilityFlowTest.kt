@@ -242,11 +242,15 @@ class EventReaderVisibilityFlowTest {
             val initial = awaitItem()
             assertEquals("Initial emission should have 1 event", 1, initial.size)
 
-            // Add another event
+            // Add another event (insert + generateOccurrences are two DB writes,
+            // so Room Flow may emit an intermediate state between them)
             createEvent(calendarId = calendar2Id, title = "Event 2", startTs = now + 1800000)
 
-            // Should re-emit with new event
-            val afterAdd = awaitItem()
+            // Skip intermediate emissions until we see the final state
+            var afterAdd = awaitItem()
+            while (afterAdd.size < 2) {
+                afterAdd = awaitItem()
+            }
             assertEquals("After adding event, should have 2 events", 2, afterAdd.size)
 
             cancelAndIgnoreRemainingEvents()
