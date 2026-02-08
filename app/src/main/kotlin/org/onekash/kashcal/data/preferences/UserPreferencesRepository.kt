@@ -129,16 +129,6 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     /**
-     * Selected calendar view: "day", "week", "month", "agenda".
-     */
-    val calendarView: Flow<String>
-        get() = dataStore.calendarView
-
-    suspend fun setCalendarView(view: String) {
-        dataStore.setCalendarView(view)
-    }
-
-    /**
      * First day of week (Calendar.SUNDAY = 1, Calendar.MONDAY = 2, etc.).
      */
     val firstDayOfWeek: Flow<Int>
