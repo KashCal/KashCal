@@ -90,6 +90,7 @@ Your calendar reveals your life: doctor appointments, job interviews, who you me
 | mailbox.org | ✓ | [@h1nnak](https://github.com/h1nnak) |
 | Infomaniak | ✓ | [@dirko-madrileno](https://github.com/dirko-madrileno) |
 | Stalwart | ✓ | [@OneCreek](https://github.com/OneCreek) |
+| [Davis](https://github.com/tchapi/davis) | ✓ | [@Ivan-Roger](https://github.com/Ivan-Roger) |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!
 
