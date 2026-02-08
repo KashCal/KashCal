@@ -279,45 +279,19 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a compact date range given timestamps and pager position.
+     * Format the month and year for the 3-day view header (e.g., "February 2026").
+     * Always includes year for clarity.
      *
-     * @param weekStartMs Start of the week in milliseconds
-     * @param pagerPosition Current pager position (0-6, index of first visible day)
-     * @param visibleDays Number of visible days (default: 3)
-     * @return Formatted header string
-     */
-    fun formatHeaderRange(weekStartMs: Long, pagerPosition: Int, visibleDays: Int = 3): String {
-        val weekStart = Instant.ofEpochMilli(weekStartMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-        val startDate = weekStart.plusDays(pagerPosition.toLong())
-        val endDate = startDate.plusDays((visibleDays - 1).toLong())
-        return formatCompactRange(startDate, endDate)
-    }
-
-    /**
-     * Format just the month and year for the header (e.g., "January 2025").
-     * Shows year only if different from current year.
+     * Uses pageToDate() to convert the absolute infinite pager page to a date,
+     * which correctly handles the CENTER_DAY_PAGE offset.
      *
-     * @param weekStartMs Start of the week in milliseconds
-     * @param pagerPosition Current pager position (0-6, index of first visible day)
+     * @param pagerPosition Current pager page (absolute index in infinite pager)
      * @return Formatted month/year string
      */
-    fun formatMonthYear(weekStartMs: Long, pagerPosition: Int): String {
-        val weekStart = Instant.ofEpochMilli(weekStartMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-        val centerDate = weekStart.plusDays(pagerPosition.toLong() + 1) // Center of 3-day view
-        val now = LocalDate.now()
-
-        val monthFormatter = DateTimeFormatter.ofPattern("MMMM", Locale.getDefault())
-        val month = centerDate.format(monthFormatter)
-
-        return if (centerDate.year != now.year) {
-            "$month ${centerDate.year}"
-        } else {
-            month
-        }
+    fun formatMonthYear(pagerPosition: Int): String {
+        val centerDate = pageToDate(pagerPosition + 1) // center of 3-day window
+        val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
+        return centerDate.format(formatter)
     }
 
     // ==================== Time Snapping ====================

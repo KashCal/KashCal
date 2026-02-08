@@ -1,0 +1,9 @@
+v22.3.2
+
+What's New:
+- View picker bottom sheet (replaces agenda toggle)
+- 3 Days view: navigation arrows and always-visible month/year header
+- 3 Days view: smoother initial load and scroll performance
+- Missing ProGuard rules for repository and credential packages
+
+Plus bug fixes and performance improvements.

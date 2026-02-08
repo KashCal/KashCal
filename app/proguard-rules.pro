@@ -286,6 +286,12 @@
 # KashCal Auth
 -keep class org.onekash.kashcal.data.auth.** { *; }
 
+# KashCal Repository layer (v22.0.0)
+-keep class org.onekash.kashcal.data.repository.** { *; }
+
+# KashCal Credential management (v22.0.0)
+-keep class org.onekash.kashcal.data.credential.** { *; }
+
 # ----------------------------------------------------------------------------
 # Kotlinx Immutable Collections
 # ----------------------------------------------------------------------------

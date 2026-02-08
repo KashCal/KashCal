@@ -27,12 +27,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -164,16 +164,10 @@ fun WeekViewContent(
     // State for overflow sheet
     var overflowEvents by remember { mutableStateOf<List<Pair<Event, Occurrence>>?>(null) }
 
-    // Main content
+    // Main content — always render the grid immediately so the structure
+    // (time labels, grid lines, headers) appears without a spinner flash.
+    // Events populate when the Flow emits. Empty columns are fine during load.
     when {
-        isLoading -> {
-            Box(
-                modifier = modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
         error != null -> {
             Box(
                 modifier = modifier
@@ -260,27 +254,32 @@ private fun UnifiedTimeGrid(
             }
     }
 
+    // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
+    // Avoids ~15 separate pageToDate() calls across 5 composables per page change.
+    val visibleDates by remember {
+        derivedStateOf {
+            val page = pagerState.currentPage
+            List(3) { offset -> WeekViewUtils.pageToDate(page + offset) }
+        }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         // Header row with pager (scrolls horizontally with content)
         Row(modifier = Modifier.fillMaxWidth()) {
             // Empty spacer for time column alignment
             Box(modifier = Modifier.width(timeColumnWidth))
 
-            // Day headers - render 3 columns directly based on currentPage
+            // Day headers - render 3 columns directly from derived visibleDates
             // (No HorizontalPager to avoid lag with other direct-rendered rows)
             BoxWithConstraints(modifier = Modifier.weight(1f)) {
                 val columnWidth = maxWidth / 3
 
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    repeat(3) { offset ->
-                        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
-                        val isToday = date == today
-                        val isWeekend = WeekViewUtils.isWeekend(date)
-
+                    visibleDates.forEach { date ->
                         DayHeaderCell(
                             date = date,
-                            isToday = isToday,
-                            isWeekend = isWeekend,
+                            isToday = date == today,
+                            isWeekend = WeekViewUtils.isWeekend(date),
                             modifier = Modifier.width(columnWidth)
                         )
                     }
@@ -288,9 +287,9 @@ private fun UnifiedTimeGrid(
             }
         }
 
-        // All-day events row with pager
+        // All-day events row
         AllDayEventsPagerRow(
-            pagerState = pagerState,
+            visibleDates = visibleDates,
             allDayEventsByDate = allDayEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
@@ -299,9 +298,9 @@ private fun UnifiedTimeGrid(
             onOverflowClick = onOverflowClick
         )
 
-        // Early events row (before 6am) with pager
+        // Early events row (before 6am)
         OverflowEventsPagerRow(
-            pagerState = pagerState,
+            visibleDates = visibleDates,
             overflowEventsByDate = earlyEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
@@ -375,7 +374,7 @@ private fun UnifiedTimeGrid(
                         // Current time indicator
                         CurrentTimeIndicator(
                             hourHeight = hourHeight,
-                            pagerState = pagerState,
+                            currentPage = pagerState.currentPage,
                             columnWidth = columnWidth
                         )
                     }
@@ -383,9 +382,9 @@ private fun UnifiedTimeGrid(
             }
         }
 
-        // Late events row (after 11pm) with pager
+        // Late events row (after 11pm)
         OverflowEventsPagerRow(
-            pagerState = pagerState,
+            visibleDates = visibleDates,
             overflowEventsByDate = lateEventsByDate,
             calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
@@ -461,7 +460,7 @@ private fun DayHeaderCell(
  */
 @Composable
 private fun AllDayEventsPagerRow(
-    pagerState: PagerState,
+    visibleDates: List<LocalDate>,
     allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
     timeColumnWidth: Dp,
@@ -471,8 +470,7 @@ private fun AllDayEventsPagerRow(
     modifier: Modifier = Modifier
 ) {
     // Check if any visible day has all-day events
-    val hasAnyEvents = (0 until 3).any { offset ->
-        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+    val hasAnyEvents = visibleDates.any { date ->
         allDayEventsByDate[date]?.isNotEmpty() == true
     }
 
@@ -496,11 +494,10 @@ private fun AllDayEventsPagerRow(
             )
         }
 
-        // All-day events - render 3 columns directly based on currentPage
+        // All-day events - render 3 columns from derived visibleDates
         // (No HorizontalPager to avoid gesture conflicts with main time grid)
         Row(modifier = Modifier.weight(1f)) {
-            repeat(3) { offset ->
-                val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+            visibleDates.forEach { date ->
                 val dayEvents = allDayEventsByDate[date] ?: emptyList()
 
                 CompactEventCell(
@@ -525,7 +522,7 @@ private fun AllDayEventsPagerRow(
  */
 @Composable
 private fun OverflowEventsPagerRow(
-    pagerState: PagerState,
+    visibleDates: List<LocalDate>,
     overflowEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
     calendarColors: Map<Long, Int>,
     timeColumnWidth: Dp,
@@ -536,8 +533,7 @@ private fun OverflowEventsPagerRow(
     modifier: Modifier = Modifier
 ) {
     // Check if any visible day has overflow events
-    val hasAnyEvents = (0 until 3).any { offset ->
-        val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+    val hasAnyEvents = visibleDates.any { date ->
         overflowEventsByDate[date]?.isNotEmpty() == true
     }
 
@@ -561,11 +557,10 @@ private fun OverflowEventsPagerRow(
             )
         }
 
-        // Overflow events - render 3 columns directly based on currentPage
+        // Overflow events - render 3 columns from derived visibleDates
         // (No HorizontalPager to avoid gesture conflicts with main time grid)
         Row(modifier = Modifier.weight(1f)) {
-            repeat(3) { offset ->
-                val date = WeekViewUtils.pageToDate(pagerState.currentPage + offset)
+            visibleDates.forEach { date ->
                 val dayEvents = overflowEventsByDate[date] ?: emptyList()
 
                 CompactEventCell(
@@ -657,10 +652,12 @@ private fun CompactEventChip(
         formattedTitle
     }
 
-    // Calculate luminance to determine text color (dark text for light backgrounds)
-    val backgroundColor = Color(color)
-    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
-    val textColor = if (luminance > 0.5f) Color.Black else Color.White
+    // Cached color calculation (avoids recomputing luminance on every recomposition)
+    val (backgroundColor, textColor) = remember(color) {
+        val bg = Color(color)
+        val luminance = (0.299f * bg.red + 0.587f * bg.green + 0.114f * bg.blue)
+        bg to if (luminance > 0.5f) Color.Black else Color.White
+    }
 
     Row(
         modifier = modifier
@@ -741,7 +738,7 @@ private fun GridLines(
 @Composable
 private fun CurrentTimeIndicator(
     hourHeight: Dp,
-    pagerState: PagerState,
+    currentPage: Int,
     columnWidth: Dp,
     modifier: Modifier = Modifier
 ) {
@@ -767,7 +764,6 @@ private fun CurrentTimeIndicator(
     if (currentMinutes < startMinutes || currentMinutes >= endMinutes) return
 
     // Calculate today's visible position (0, 1, or 2 for the 3 visible columns)
-    val currentPage = pagerState.currentPage
     val todayVisibleOffset = todayPage - currentPage
 
     // Only show if today is in visible range (0, 1, or 2)

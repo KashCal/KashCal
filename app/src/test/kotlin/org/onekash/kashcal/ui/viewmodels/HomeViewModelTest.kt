@@ -38,6 +38,7 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -218,6 +219,8 @@ class HomeViewModelTest {
         coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
         coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
         coEvery { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
     }
 
     @After
@@ -624,7 +627,7 @@ class HomeViewModelTest {
     // ==================== Agenda Tests ====================
 
     @Test
-    fun `toggleAgendaPanel opens panel and loads events`() = runTest {
+    fun `setViewMode to AGENDA loads events`() = runTest {
         // Setup mock for agenda loading (now uses Flow)
         val testOccurrencesWithEvents = listOf(
             EventReader.OccurrenceWithEvent(
@@ -643,20 +646,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.showAgendaPanel)
+        assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
         assertTrue(viewModel.uiState.value.agendaOccurrences.isEmpty())
 
-        // Open agenda panel
-        viewModel.toggleAgendaPanel()
+        // Switch to agenda view
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.showAgendaPanel)
+        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
         assertEquals(2, viewModel.uiState.value.agendaOccurrences.size)
         assertFalse(viewModel.uiState.value.isLoadingAgenda)
     }
 
     @Test
-    fun `toggleAgendaPanel closes panel without reloading`() = runTest {
+    fun `setViewMode from AGENDA to MONTH does not reload agenda`() = runTest {
         val testOccurrencesWithEvents = listOf(
             EventReader.OccurrenceWithEvent(
                 occurrence = testOccurrences[0],
@@ -669,20 +672,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Open agenda
-        viewModel.toggleAgendaPanel()
+        // Switch to agenda
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.showAgendaPanel)
+        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
 
         // Clear mock call count
         io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true, childMocks = false)
 
-        // Close agenda
-        viewModel.toggleAgendaPanel()
+        // Switch back to month
+        viewModel.setViewMode(ViewMode.MONTH)
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.showAgendaPanel)
-        // Should NOT have called getVisibleOccurrencesWithEventsInRangeFlow when closing
+        assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
+        // Should NOT have called getVisibleOccurrencesWithEventsInRangeFlow when going to month
         verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) }
     }
 
@@ -693,7 +696,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.toggleAgendaPanel()
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
         // Verify the Flow-based range query was called
@@ -734,7 +737,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.toggleAgendaPanel()
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
         // Should be sorted by occurrence startTs (earlier first)
@@ -761,7 +764,7 @@ class HomeViewModelTest {
         // Initially not loading
         assertFalse(viewModel.uiState.value.isLoadingAgenda)
 
-        viewModel.toggleAgendaPanel()
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
         // Verify loading state was set (captured during fetch)
@@ -2413,7 +2416,7 @@ class HomeViewModelTest {
     // ==================== Week View Tests ====================
 
     @Test
-    fun `setAgendaViewType THREE_DAYS sets pending pager position to today`() = runTest {
+    fun `setViewMode THREE_DAYS sets pending pager position to today`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -2421,7 +2424,7 @@ class HomeViewModelTest {
         assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
         // Switch to 3-day view
-        viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
         // With infinite pager, switching to 3-day view sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
@@ -2438,9 +2441,8 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to 3-day view within agenda panel
-        viewModel.toggleAgendaPanel()  // Open agenda panel
-        viewModel.setAgendaViewType(AgendaViewType.THREE_DAYS)
+        // Switch to 3-day view
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
         // Clear any pending navigation from initialization
@@ -2466,9 +2468,9 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Make sure agenda panel is closed (month view)
-        if (viewModel.uiState.value.showAgendaPanel) {
-            viewModel.toggleAgendaPanel()
+        // Make sure we're in month view
+        if (viewModel.uiState.value.viewMode != ViewMode.MONTH) {
+            viewModel.setViewMode(ViewMode.MONTH)
             advanceUntilIdle()
         }
 
@@ -2503,12 +2505,11 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Open agenda panel (defaults to AGENDA view type)
-        viewModel.toggleAgendaPanel()
+        // Switch to agenda view
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.showAgendaPanel)
-        assertEquals(AgendaViewType.AGENDA, viewModel.uiState.value.agendaViewType)
+        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
 
         // Initially pendingScrollAgendaToTop should be false
         assertFalse(viewModel.uiState.value.pendingScrollAgendaToTop)
@@ -2535,8 +2536,8 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Open agenda panel and trigger scroll
-        viewModel.toggleAgendaPanel()
+        // Switch to agenda and trigger scroll
+        viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
         viewModel.goToToday()
         advanceUntilIdle()
@@ -2647,57 +2648,6 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `navigateToWeek updates week view start date`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Week starting Jan 13, 2025 (Monday)
-        val weekStartMs = java.time.LocalDate.of(2025, 1, 13)
-            .atStartOfDay(java.time.ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
-
-        viewModel.navigateToWeek(weekStartMs)
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.weekViewStartDate > 0)
-    }
-
-    @Test
-    fun `navigateToPreviousWeek calls goToTodayWeek when weekViewStartDate is zero`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // weekViewStartDate starts at 0
-        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
-
-        // Navigate to previous week - should trigger goToTodayWeek() since start is 0
-        viewModel.navigateToPreviousWeek()
-        advanceUntilIdle()
-
-        // Should have pending pager position at center (from goToTodayWeek)
-        val centerPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
-        assertEquals(centerPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
-    }
-
-    @Test
-    fun `navigateToNextWeek calls goToTodayWeek when weekViewStartDate is zero`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // weekViewStartDate starts at 0
-        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
-
-        // Navigate to next week - should trigger goToTodayWeek() since start is 0
-        viewModel.navigateToNextWeek()
-        advanceUntilIdle()
-
-        // Should have pending pager position at center (from goToTodayWeek)
-        val centerPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
-        assertEquals(centerPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
-    }
-
-    @Test
     fun `goToTodayWeek sets pending pager position to center`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2710,6 +2660,42 @@ class HomeViewModelTest {
         assertEquals(centerPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
         // onDayPagerPageChanged also updates weekViewPagerPosition
         assertEquals(centerPage, viewModel.uiState.value.weekViewPagerPosition)
+    }
+
+    @Test
+    fun `navigateDaysPagerPrevious sets pending position minus VISIBLE_DAYS`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Set a known pager position first
+        val startPage = WeekViewUtils.CENTER_DAY_PAGE
+        viewModel.setWeekViewPagerPosition(startPage)
+        advanceUntilIdle()
+
+        viewModel.navigateDaysPagerPrevious()
+        advanceUntilIdle()
+
+        val expectedPage = startPage - WeekViewUtils.VISIBLE_DAYS
+        assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
+        assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
+    }
+
+    @Test
+    fun `navigateDaysPagerNext sets pending position plus VISIBLE_DAYS`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Set a known pager position first
+        val startPage = WeekViewUtils.CENTER_DAY_PAGE
+        viewModel.setWeekViewPagerPosition(startPage)
+        advanceUntilIdle()
+
+        viewModel.navigateDaysPagerNext()
+        advanceUntilIdle()
+
+        val expectedPage = startPage + WeekViewUtils.VISIBLE_DAYS
+        assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
+        assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
     @Test
@@ -2867,6 +2853,99 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.showSearchDatePicker)
+    }
+
+    // ==================== CalendarViewType.WEEK Cleanup Tests ====================
+
+    @Test
+    fun `initialization defaults to month view without week-specific setup`() = runTest {
+        // After CalendarViewType removal, initialization never triggers goToTodayWeek
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Week view state should remain at defaults (no data loaded)
+        assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
+        assertTrue(viewModel.uiState.value.weekViewOccurrences.isEmpty())
+    }
+
+    @Test
+    fun `3-day view initializes week data via goToTodayWeek`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Switch to 3-day view
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
+        advanceUntilIdle()
+
+        // 3-day view should have triggered goToTodayWeek which sets pending navigation
+        // and starts loading data via onDayPagerPageChanged
+        assertEquals(ViewMode.THREE_DAYS, viewModel.uiState.value.viewMode)
+        // goToTodayWeek sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        assertEquals(WeekViewUtils.CENTER_DAY_PAGE, viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    // ==================== View Picker Tests ====================
+
+    @Test
+    fun `setViewMode same type is no-op`() = runTest {
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Already in MONTH view
+        assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
+
+        // Clear mocks to verify no calls happen
+        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true, childMocks = false)
+
+        // Set same view - should be no-op
+        viewModel.setViewMode(ViewMode.MONTH)
+        advanceUntilIdle()
+
+        // No data loading calls should have been made
+        verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) }
+    }
+
+    @Test
+    fun `setDefaultViewMode persists to DataStore`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setDefaultViewMode(ViewMode.AGENDA)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setDefaultCalendarView("agenda") }
+    }
+
+    @Test
+    fun `showViewPicker and hideViewPicker toggle state`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showViewPicker)
+
+        viewModel.showViewPicker()
+        assertTrue(viewModel.uiState.value.showViewPicker)
+
+        viewModel.hideViewPicker()
+        assertFalse(viewModel.uiState.value.showViewPicker)
+    }
+
+    @Test
+    fun `init loads default view from DataStore`() = runTest {
+        // Override default view to AGENDA (must be set before createViewModel)
+        coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_AGENDA
+        every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_AGENDA)
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+        // Explicit mock for onboardingDismissed (accessed via .first() in initializeAsync)
+        every { dataStore.onboardingDismissed } returns flowOf(false)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
+        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.defaultViewMode)
     }
 
     // ==================== Helper Functions ====================

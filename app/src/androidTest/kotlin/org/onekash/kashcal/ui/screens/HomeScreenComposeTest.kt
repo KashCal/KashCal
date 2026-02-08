@@ -21,6 +21,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
+import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Calendar as JavaCalendar
@@ -179,7 +180,7 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_displaysAgendaIcon() {
+    fun homeScreen_displaysViewPickerIcon() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -192,7 +193,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Agenda").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Calendar view").assertIsDisplayed()
     }
 
     // ==================== FAB Tests ====================
@@ -448,7 +449,7 @@ class HomeScreenComposeTest {
     fun homeScreen_agendaModeShowsTitle() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(showAgendaPanel = true),
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},
@@ -458,14 +459,14 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Agenda").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Upcoming Events").assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_agendaModeShowsCloseButton() {
+    fun homeScreen_agendaModeShowsViewPickerIcon() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(showAgendaPanel = true),
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},
@@ -475,7 +476,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Close").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Calendar view").assertIsDisplayed()
     }
 
     @Test
@@ -483,7 +484,7 @@ class HomeScreenComposeTest {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
-                    showAgendaPanel = true,
+                    viewMode = ViewMode.AGENDA,
                     isLoadingAgenda = false,
                     agendaOccurrences = persistentListOf()
                 ),
@@ -500,24 +501,21 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_agendaCloseTriggersCallback() {
-        var agendaCloseCalled = false
-
+    fun homeScreen_agendaModeShowsViewPickerAndSearchIcons() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(showAgendaPanel = true),
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},
                 onSetViewingMonth = { _, _ -> },
                 onClearNavigateToToday = {},
-                onClearNavigateToMonth = {},
-                onAgendaClose = { agendaCloseCalled = true }
+                onClearNavigateToMonth = {}
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Close").performClick()
-        assert(agendaCloseCalled)
+        composeTestRule.onNodeWithContentDescription("Calendar view").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Search").assertIsDisplayed()
     }
 
     // ==================== Event List Tests ====================
@@ -672,8 +670,8 @@ class HomeScreenComposeTest {
     }
 
     @Test
-    fun homeScreen_agendaClickTriggersCallback() {
-        var agendaClicked = false
+    fun homeScreen_viewPickerIconClickTriggersCallback() {
+        var viewPickerClicked = false
 
         composeTestRule.setContent {
             HomeScreen(
@@ -684,12 +682,12 @@ class HomeScreenComposeTest {
                 onSetViewingMonth = { _, _ -> },
                 onClearNavigateToToday = {},
                 onClearNavigateToMonth = {},
-                onAgendaClick = { agendaClicked = true }
+                onViewPickerClick = { viewPickerClicked = true }
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Agenda").performClick()
-        assert(agendaClicked)
+        composeTestRule.onNodeWithContentDescription("Calendar view").performClick()
+        assert(viewPickerClicked)
     }
 
     // ==================== Loading State Tests ====================
@@ -717,7 +715,7 @@ class HomeScreenComposeTest {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
-                    showAgendaPanel = true,
+                    viewMode = ViewMode.AGENDA,
                     isLoadingAgenda = true
                 ),
                 isOnline = true,

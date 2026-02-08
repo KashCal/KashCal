@@ -19,12 +19,6 @@ object PreferencesKeys {
 
     // ========== Calendar View ==========
 
-    /** Selected view type: "day", "week", "month", "agenda" (legacy) */
-    val CALENDAR_VIEW = stringPreferencesKey("calendar_view")
-
-    /** Calendar view type for bottom nav: "MONTH" or "WEEK" (v20.2.0) */
-    val CALENDAR_VIEW_TYPE = stringPreferencesKey("calendar_view_type")
-
     /** First day of week: 1=Sunday, 2=Monday, etc. (Calendar.SUNDAY, etc.) */
     val FIRST_DAY_OF_WEEK = intPreferencesKey("first_day_of_week")
 
@@ -89,6 +83,9 @@ object PreferencesKeys {
 
     /** Time format preference: "system", "12h", or "24h" */
     val TIME_FORMAT = stringPreferencesKey("time_format")
+
+    /** Default calendar view: "month", "agenda", or "three_days" */
+    val DEFAULT_CALENDAR_VIEW = stringPreferencesKey("default_calendar_view")
 
     // ========== Migration Flags ==========
 

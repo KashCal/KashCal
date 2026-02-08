@@ -82,8 +82,7 @@ import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
-import org.onekash.kashcal.ui.viewmodels.AgendaViewType
-import org.onekash.kashcal.ui.viewmodels.CalendarViewType
+import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.util.DateTimeUtils
@@ -141,17 +140,18 @@ fun HomeScreen(
     onFilterClick: () -> Unit = {},
     // Info callbacks
     onInfoClick: () -> Unit = {},
-    // Agenda callbacks
-    onAgendaClick: () -> Unit = {},
-    onAgendaClose: () -> Unit = {},
-    onAgendaViewTypeChange: (org.onekash.kashcal.ui.viewmodels.AgendaViewType) -> Unit = {},
+    // View picker callbacks
+    onViewPickerClick: () -> Unit = {},
+    onViewPickerDismiss: () -> Unit = {},
+    onViewSelect: (ViewMode) -> Unit = {},
+    onSetDefaultView: (ViewMode) -> Unit = {},
     // Year overlay callbacks
     onMonthHeaderClick: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
-    // View type callbacks
-    onViewTypeChange: (CalendarViewType) -> Unit = {},
     // Week view callbacks (infinite day pager)
+    onPreviousPage: () -> Unit = {},
+    onNextPage: () -> Unit = {},
     onDayPagerPageChanged: (Int) -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
     onWeekDatePickerDismiss: () -> Unit = {},
@@ -180,13 +180,12 @@ fun HomeScreen(
         DateTimeUtils.getTimePattern(uiState.timeFormat, is24HourDevice)
     }
 
-    // Handle system back button - close overlays before closing app
-    // Priority: Search (if active) > Agenda (if active) > Default (close app)
-    BackHandler(enabled = uiState.isSearchActive || uiState.showAgendaPanel) {
+    // Handle system back button - close overlays before returning to default view
+    // Priority: Search (if active) > Non-default view > Default (close app)
+    BackHandler(enabled = uiState.isSearchActive || uiState.viewMode != uiState.defaultViewMode) {
         when {
             uiState.isSearchActive -> onSearchClose()
-            uiState.showAgendaPanel -> onAgendaClose()
-            // else: do nothing - back will be handled by Activity (close app)
+            uiState.viewMode != uiState.defaultViewMode -> onViewSelect(uiState.defaultViewMode)
         }
     }
 
@@ -305,9 +304,7 @@ fun HomeScreen(
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
                 onSearchQueryChange = onSearchQueryChange,
-                onAgendaClick = onAgendaClick,
-                onAgendaClose = onAgendaClose,
-                onAgendaViewTypeChange = onAgendaViewTypeChange,
+                onViewPickerClick = onViewPickerClick,
                 onGoToToday = onGoToToday,
                 onSettingsClick = onSettingsClick,
                 onInfoClick = onInfoClick
@@ -363,16 +360,14 @@ fun HomeScreen(
                                 onCustomDateClick = onSearchShowDatePicker
                             )
                         }
-                        uiState.showAgendaPanel -> {
+                        uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.THREE_DAYS -> {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                // Month/Year row with Today button
-                                AgendaMonthYearRow(
-                                    viewType = uiState.agendaViewType,
-                                    weekStartMs = uiState.weekViewStartDate,
+                                ViewHeaderRow(
+                                    viewMode = uiState.viewMode,
                                     pagerPosition = uiState.weekViewPagerPosition,
-                                    refreshKey = refreshKey,
                                     onMonthClick = onWeekDatePickerRequest,
-                                    onTodayClick = onGoToToday
+                                    onPreviousPage = onPreviousPage,
+                                    onNextPage = onNextPage
                                 )
 
                                 // Agenda list scroll state
@@ -386,9 +381,8 @@ fun HomeScreen(
                                     }
                                 }
 
-                                // Content based on view type (chips moved to TopAppBar)
-                                when (uiState.agendaViewType) {
-                                    AgendaViewType.AGENDA -> {
+                                when (uiState.viewMode) {
+                                    ViewMode.AGENDA -> {
                                         if (uiState.isLoadingAgenda) {
                                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                                 CircularProgressIndicator()
@@ -407,7 +401,7 @@ fun HomeScreen(
                                             )
                                         }
                                     }
-                                    AgendaViewType.THREE_DAYS -> {
+                                    ViewMode.THREE_DAYS -> {
                                         WeekViewContent(
                                             timedOccurrences = uiState.weekViewOccurrences,
                                             timedEvents = uiState.weekViewEvents,
@@ -438,116 +432,80 @@ fun HomeScreen(
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
+                                    else -> {} // MONTH handled below
                                 }
                             }
                         }
                         else -> {
-                            // Calendar views based on view type
-                            when (uiState.calendarViewType) {
-                                CalendarViewType.WEEK -> {
-                                    // Week view
-                                    WeekViewContent(
-                                        timedOccurrences = uiState.weekViewOccurrences,
-                                        timedEvents = uiState.weekViewEvents,
-                                        allDayOccurrences = uiState.weekViewAllDayOccurrences,
-                                        allDayEvents = uiState.weekViewAllDayEvents,
-                                        calendars = uiState.calendars,
-                                        isLoading = uiState.isLoadingWeekView,
-                                        error = uiState.weekViewError,
-                                        scrollPosition = uiState.weekViewScrollPosition,
-                                        showEventEmojis = uiState.showEventEmojis,
-                                        timePattern = timePattern,
-                                        onDatePickerRequest = onWeekDatePickerRequest,
-                                        onEventClick = { event, occurrence ->
-                                            onEventClick(event, occurrence.startTs)
-                                        },
-                                        onLongPress = { date, hour, minute ->
-                                            // Convert date/time to timestamp for event creation
-                                            val calendar = JavaCalendar.getInstance().apply {
-                                                set(date.year, date.monthValue - 1, date.dayOfMonth, hour, minute, 0)
-                                                set(JavaCalendar.MILLISECOND, 0)
-                                            }
-                                            onCreateEventWithDateTime(calendar.timeInMillis)
-                                        },
-                                        onScrollPositionChange = onWeekScrollPositionChange,
-                                        onPageChanged = onDayPagerPageChanged,
-                                        pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
-                                        onNavigationConsumed = onClearPendingWeekPagerPosition,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
+                            // Month view with pager
+                            // CRITICAL: userScrollEnabled must be true for month view
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.Top,
+                                userScrollEnabled = true  // Always enabled in month view
+                            ) { page ->
+                                val monthOffset = page - initialPage
+                                val pageCal = JavaCalendar.getInstance().apply {
+                                    set(todayYear, todayMonth, 1)
+                                    add(JavaCalendar.MONTH, monthOffset)
                                 }
-                                CalendarViewType.MONTH -> {
-                                    // Month view with pager
-                                    // CRITICAL: userScrollEnabled must be true for month view
-                                    HorizontalPager(
-                                        state = pagerState,
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.Top,
-                                        userScrollEnabled = true  // Always enabled in month view
-                                    ) { page ->
-                                        val monthOffset = page - initialPage
-                                        val pageCal = JavaCalendar.getInstance().apply {
-                                            set(todayYear, todayMonth, 1)
-                                            add(JavaCalendar.MONTH, monthOffset)
-                                        }
-                                        val pageYear = pageCal.get(JavaCalendar.YEAR)
-                                        val pageMonth = pageCal.get(JavaCalendar.MONTH)
+                                val pageYear = pageCal.get(JavaCalendar.YEAR)
+                                val pageMonth = pageCal.get(JavaCalendar.MONTH)
 
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.Top
-                                        ) {
-                                            // Month navigation header
-                                            MonthNavHeader(
-                                                year = pageYear,
-                                                month = pageMonth,
-                                                onPrevious = {
-                                                    coroutineScope.launch {
-                                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                                    }
-                                                },
-                                                onNext = {
-                                                    coroutineScope.launch {
-                                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                                    }
-                                                },
-                                                onMonthClick = onMonthHeaderClick
-                                            )
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalArrangement = Arrangement.Top
+                                ) {
+                                    // Month navigation header
+                                    MonthNavHeader(
+                                        year = pageYear,
+                                        month = pageMonth,
+                                        onPrevious = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                            }
+                                        },
+                                        onNext = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                            }
+                                        },
+                                        onMonthClick = onMonthHeaderClick
+                                    )
 
-                                            // Day of week headers
-                                            DayOfWeekHeaders(firstDayOfWeek = uiState.firstDayOfWeek)
-                                            Spacer(modifier = Modifier.height(4.dp))
+                                    // Day of week headers
+                                    DayOfWeekHeaders(firstDayOfWeek = uiState.firstDayOfWeek)
+                                    Spacer(modifier = Modifier.height(4.dp))
 
-                                            // Calendar grid
-                                            CalendarGrid(
-                                                year = pageYear,
-                                                month = pageMonth,
-                                                selectedDate = uiState.selectedDate,
-                                                eventDots = uiState.eventDots,
-                                                onDateSelected = onDateSelected,
-                                                firstDayOfWeekPref = uiState.firstDayOfWeek,
-                                                refreshKey = refreshKey
-                                            )
-                                        }
-                                    }
-
-                                    // Day events pager (swipeable) below calendar
-                                    HorizontalDivider()
-                                    DayEventsPager(
-                                        uiState = uiState,
-                                        calendars = uiState.calendars,
-                                        monthPagerState = pagerState,
-                                        monthPagerInitialPage = initialPage,
-                                        todayYear = todayYear,
-                                        todayMonth = todayMonth,
-                                        timePattern = timePattern,
-                                        onEventClick = onEventClick,
+                                    // Calendar grid
+                                    CalendarGrid(
+                                        year = pageYear,
+                                        month = pageMonth,
+                                        selectedDate = uiState.selectedDate,
+                                        eventDots = uiState.eventDots,
                                         onDateSelected = onDateSelected,
-                                        onLoadEventsForRange = onLoadEventsForDayPagerRange,
-                                        shouldRefreshCache = shouldRefreshDayPagerCache
+                                        firstDayOfWeekPref = uiState.firstDayOfWeek,
+                                        refreshKey = refreshKey
                                     )
                                 }
                             }
+
+                            // Day events pager (swipeable) below calendar
+                            HorizontalDivider()
+                            DayEventsPager(
+                                uiState = uiState,
+                                calendars = uiState.calendars,
+                                monthPagerState = pagerState,
+                                monthPagerInitialPage = initialPage,
+                                todayYear = todayYear,
+                                todayMonth = todayMonth,
+                                timePattern = timePattern,
+                                onEventClick = onEventClick,
+                                onDateSelected = onDateSelected,
+                                onLoadEventsForRange = onLoadEventsForDayPagerRange,
+                                shouldRefreshCache = shouldRefreshDayPagerCache
+                            )
                         }
                     }
                 }
@@ -574,6 +532,19 @@ fun HomeScreen(
             firstDayOfWeek = uiState.firstDayOfWeek
         )
     }
+
+    // View picker bottom sheet
+    if (uiState.showViewPicker) {
+        val viewPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        org.onekash.kashcal.ui.components.ViewPickerSheet(
+            sheetState = viewPickerSheetState,
+            currentView = uiState.viewMode,
+            defaultView = uiState.defaultViewMode,
+            onViewSelect = onViewSelect,
+            onSetDefault = onSetDefaultView,
+            onDismiss = onViewPickerDismiss
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -585,9 +556,7 @@ private fun HomeTopAppBar(
     onSearchClick: () -> Unit,
     onSearchClose: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onAgendaClick: () -> Unit,
-    onAgendaClose: () -> Unit,
-    onAgendaViewTypeChange: (AgendaViewType) -> Unit,
+    onViewPickerClick: () -> Unit,
     onGoToToday: () -> Unit,
     onSettingsClick: () -> Unit,
     onInfoClick: () -> Unit
@@ -627,47 +596,6 @@ private fun HomeTopAppBar(
                 }
             )
         }
-        uiState.showAgendaPanel -> {
-            TopAppBar(
-                title = {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IconButton(onClick = onAgendaClose) {
-                            Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(28.dp))
-                        }
-                        // Equal-width chips for view toggle
-                        FilterChip(
-                            selected = uiState.agendaViewType == AgendaViewType.AGENDA,
-                            onClick = { onAgendaViewTypeChange(AgendaViewType.AGENDA) },
-                            label = {
-                                Text(
-                                    "Agenda",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center
-                                )
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = uiState.agendaViewType == AgendaViewType.THREE_DAYS,
-                            onClick = { onAgendaViewTypeChange(AgendaViewType.THREE_DAYS) },
-                            label = {
-                                Text(
-                                    "3 Days",
-                                    modifier = Modifier.fillMaxWidth(),
-                                    textAlign = TextAlign.Center
-                                )
-                            },
-                            modifier = Modifier.weight(1f)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                }
-            )
-        }
         else -> {
             CenterAlignedTopAppBar(
                 title = {
@@ -680,11 +608,11 @@ private fun HomeTopAppBar(
                 },
                 navigationIcon = {
                     Row {
+                        IconButton(onClick = onViewPickerClick) {
+                            Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = "Calendar view", modifier = Modifier.size(28.dp))
+                        }
                         IconButton(onClick = onSearchClick) {
                             Icon(Icons.Default.Search, contentDescription = "Search", modifier = Modifier.size(28.dp))
-                        }
-                        IconButton(onClick = onAgendaClick) {
-                            Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = "Agenda", modifier = Modifier.size(28.dp))
                         }
                     }
                 },
@@ -1301,58 +1229,59 @@ private fun SearchContent(
 }
 
 /**
- * Month/Year row for agenda panel - shows current viewing month with Today button.
- * For 3-day view: Shows month based on visible days (e.g., "January 2026" or "Jan - Feb 2026")
- * For agenda view: Shows "Upcoming Events"
+ * Header row for non-month views - shows context-appropriate title.
+ * For 3-day view: Month/year with navigation arrows (matches MonthNavHeader style)
+ * For agenda view: Centered "Upcoming Events"
+ *
+ * Today button is in the top bar (always visible), so not duplicated here.
  */
 @Composable
-private fun AgendaMonthYearRow(
-    viewType: AgendaViewType,
-    weekStartMs: Long,
+private fun ViewHeaderRow(
+    viewMode: ViewMode,
     pagerPosition: Int,
-    refreshKey: Int,
     onMonthClick: () -> Unit,
-    onTodayClick: () -> Unit
+    onPreviousPage: () -> Unit,
+    onNextPage: () -> Unit
 ) {
-    val displayText = remember(viewType, weekStartMs, pagerPosition) {
-        when (viewType) {
-            AgendaViewType.AGENDA -> "Upcoming Events"
-            AgendaViewType.THREE_DAYS -> {
-                if (weekStartMs > 0L) {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
-                        weekStartMs = weekStartMs,
-                        pagerPosition = pagerPosition
-                    )
-                } else {
-                    // Default to current month if week not initialized
-                    val monthFormat = SimpleDateFormat("MMMM", Locale.getDefault())
-                    monthFormat.format(Date())
-                }
-            }
+    val displayText = remember(viewMode, pagerPosition) {
+        when (viewMode) {
+            ViewMode.AGENDA -> "Upcoming Events"
+            ViewMode.THREE_DAYS -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(pagerPosition)
+            ViewMode.MONTH -> ""
         }
     }
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Month/Year text - clickable to open date picker (only for 3-day view)
-        Text(
-            text = displayText,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = if (viewType == AgendaViewType.THREE_DAYS) {
-                Modifier.clickable(onClick = onMonthClick)
-            } else {
-                Modifier
+    when (viewMode) {
+        ViewMode.THREE_DAYS -> {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onPreviousPage) {
+                    Icon(Icons.Default.ChevronLeft, "Previous 3 days")
+                }
+                Text(
+                    text = displayText,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.clickable(onClick = onMonthClick)
+                )
+                IconButton(onClick = onNextPage) {
+                    Icon(Icons.Default.ChevronRight, "Next 3 days")
+                }
             }
-        )
-
-        // Today button
-        TodayButton(onClick = onTodayClick, refreshKey = refreshKey)
+        }
+        ViewMode.AGENDA -> {
+            Text(
+                text = displayText,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(8.dp)
+            )
+        }
+        ViewMode.MONTH -> {} // Uses MonthNavHeader directly
     }
 }
 

@@ -130,9 +130,7 @@ data class HomeUiState(
     /** Loading state for agenda */
     val isLoadingAgenda: Boolean = false,
 
-    // === WEEK VIEW STATE ===
-    /** Current calendar view type (Month or Week) */
-    val calendarViewType: CalendarViewType = CalendarViewType.MONTH,
+    // === WEEK VIEW STATE (used by ViewMode.THREE_DAYS) ===
     /** First day of the currently displayed week (epoch millis at midnight) */
     val weekViewStartDate: Long = 0L,
     /** Timed events for the week (excludes all-day) */
@@ -165,10 +163,12 @@ data class HomeUiState(
     val showSyncChangesSheet: Boolean = false,
     /** Sync changes for bottom sheet display */
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
-    /** Show agenda panel (upcoming events) */
-    val showAgendaPanel: Boolean = false,
-    /** Agenda panel view type (agenda list or 3-day grid) */
-    val agendaViewType: AgendaViewType = AgendaViewType.AGENDA,
+    /** Current calendar view mode (month grid, agenda list, or 3-day grid) */
+    val viewMode: ViewMode = ViewMode.MONTH,
+    /** Show view picker bottom sheet */
+    val showViewPicker: Boolean = false,
+    /** User's persisted default view (opened on launch and Back navigation) */
+    val defaultViewMode: ViewMode = ViewMode.MONTH,
     /** Show year overlay for quick navigation */
     val showYearOverlay: Boolean = false,
 
@@ -371,23 +371,21 @@ sealed class PendingAction {
 }
 
 /**
- * Calendar view type for switching between month and week views.
- * Note: CalendarViewType is kept for backward compatibility but WEEK is now
- * accessed through the agenda panel, not the main calendar view.
+ * Calendar view mode. Replaces the old showAgendaPanel + AgendaViewType two-field model
+ * with a single enum for all views.
+ *
+ * Named ViewMode (not CalendarViewType) to avoid confusion with the removed CalendarViewType
+ * enum (commit 2ee370a7).
  */
-enum class CalendarViewType {
-    /** Traditional month grid view */
-    MONTH,
-    /** 3-day scrollable week view (accessed via agenda panel) */
-    WEEK
-}
-
-/**
- * Agenda panel view type for switching between agenda list and 3-day grid.
- */
-enum class AgendaViewType {
+enum class ViewMode(val key: String) {
+    /** Month calendar grid with day events below */
+    MONTH("month"),
     /** 30-day upcoming events list */
-    AGENDA,
+    AGENDA("agenda"),
     /** 3-day scrollable time grid */
-    THREE_DAYS
+    THREE_DAYS("three_days");
+
+    companion object {
+        fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH
+    }
 }

@@ -39,7 +39,6 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
-import org.onekash.kashcal.ui.viewmodels.CalendarViewType
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
@@ -271,8 +270,7 @@ class MainActivity : ComponentActivity() {
                         Log.d(TAG, "Create event clicked")
 
                         // Check if in 3-day view
-                        val isInThreeDaysView = uiState.calendarViewType == org.onekash.kashcal.ui.viewmodels.CalendarViewType.WEEK ||
-                            (uiState.showAgendaPanel && uiState.agendaViewType == org.onekash.kashcal.ui.viewmodels.AgendaViewType.THREE_DAYS)
+                        val isInThreeDaysView = uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS
 
                         val eventTimestamp = if (isInThreeDaysView && uiState.weekViewStartDate > 0L) {
                             // 3-day view: use current pager position and scroll position
@@ -349,17 +347,30 @@ class MainActivity : ComponentActivity() {
                     onFilterClick = { showCalendarVisibilitySheet = true },
                     // Info callbacks
                     onInfoClick = { homeViewModel.toggleAppInfoSheet() },
-                    // Agenda callbacks
-                    onAgendaClick = { homeViewModel.toggleAgendaPanel() },
-                    onAgendaClose = { homeViewModel.toggleAgendaPanel() },
-                    onAgendaViewTypeChange = { viewType -> homeViewModel.setAgendaViewType(viewType) },
+                    // View picker callbacks
+                    onViewPickerClick = { homeViewModel.showViewPicker() },
+                    onViewPickerDismiss = { homeViewModel.hideViewPicker() },
+                    onViewSelect = { mode ->
+                        homeViewModel.hideViewPicker()
+                        homeViewModel.setViewMode(mode)
+                    },
+                    onSetDefaultView = { mode ->
+                        homeViewModel.setDefaultViewMode(mode)
+                        homeViewModel.showSnackbar("Default view set to ${
+                            when (mode) {
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.MONTH -> "Month"
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.AGENDA -> "Agenda"
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS -> "3 Days"
+                            }
+                        }")
+                    },
                     // Year overlay callbacks
                     onMonthHeaderClick = { homeViewModel.toggleYearOverlay() },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
-                    // View type callbacks
-                    onViewTypeChange = { viewType -> homeViewModel.setCalendarViewType(viewType) },
                     // Week view callbacks (infinite day pager)
+                    onPreviousPage = { homeViewModel.navigateDaysPagerPrevious() },
+                    onNextPage = { homeViewModel.navigateDaysPagerNext() },
                     onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },

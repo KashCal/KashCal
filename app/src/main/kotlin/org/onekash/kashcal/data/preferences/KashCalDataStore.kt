@@ -116,30 +116,6 @@ class KashCalDataStore(private val context: Context) {
         }
     }
 
-    // ========== Calendar View Preferences ==========
-
-    val calendarView: Flow<String>
-        get() = getPreference(PreferencesKeys.CALENDAR_VIEW, DEFAULT_CALENDAR_VIEW)
-
-    suspend fun getCalendarView(): String = calendarView.first()
-
-    suspend fun setCalendarView(view: String) {
-        setPreference(PreferencesKeys.CALENDAR_VIEW, view)
-    }
-
-    /**
-     * Calendar view type for bottom nav (Month/Week toggle).
-     * Returns "MONTH" or "WEEK".
-     */
-    val calendarViewType: Flow<String>
-        get() = getPreference(PreferencesKeys.CALENDAR_VIEW_TYPE, DEFAULT_CALENDAR_VIEW_TYPE)
-
-    suspend fun getCalendarViewType(): String = calendarViewType.first()
-
-    suspend fun setCalendarViewType(viewType: String) {
-        setPreference(PreferencesKeys.CALENDAR_VIEW_TYPE, viewType)
-    }
-
     val firstDayOfWeek: Flow<Int>
         get() = getPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, Calendar.SUNDAY)
 
@@ -300,6 +276,26 @@ class KashCalDataStore(private val context: Context) {
             "Invalid time format: $format"
         }
         setPreference(PreferencesKeys.TIME_FORMAT, format)
+    }
+
+    // ========== Default Calendar View ==========
+
+    /**
+     * Default calendar view preference.
+     * - "month": Month grid (default)
+     * - "agenda": 30-day upcoming events list
+     * - "three_days": 3-day scrollable time grid
+     */
+    val defaultCalendarView: Flow<String>
+        get() = getPreference(PreferencesKeys.DEFAULT_CALENDAR_VIEW, VIEW_MONTH)
+
+    suspend fun getDefaultCalendarView(): String = defaultCalendarView.first()
+
+    suspend fun setDefaultCalendarView(view: String) {
+        require(view in VALID_VIEWS) {
+            "Invalid calendar view: $view"
+        }
+        setPreference(PreferencesKeys.DEFAULT_CALENDAR_VIEW, view)
     }
 
     // ========== Migration Flags ==========
@@ -574,8 +570,6 @@ class KashCalDataStore(private val context: Context) {
         const val DEFAULT_SYNC_FUTURE_DAYS = 365
 
         // Other defaults
-        const val DEFAULT_CALENDAR_VIEW = "month"
-        const val DEFAULT_CALENDAR_VIEW_TYPE = "MONTH"  // CalendarViewType.MONTH.name
         const val DEFAULT_EVENT_DURATION_MINUTES = 30
 
         // Theme values
@@ -584,10 +578,11 @@ class KashCalDataStore(private val context: Context) {
         const val THEME_DARK = "dark"
 
         // View values
-        const val VIEW_DAY = "day"
-        const val VIEW_WEEK = "week"
         const val VIEW_MONTH = "month"
         const val VIEW_AGENDA = "agenda"
+        const val VIEW_THREE_DAYS = "three_days"
+
+        private val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_THREE_DAYS)
 
         // Time format values
         const val TIME_FORMAT_SYSTEM = "system"

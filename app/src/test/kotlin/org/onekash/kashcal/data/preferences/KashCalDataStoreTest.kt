@@ -241,4 +241,39 @@ class KashCalDataStoreTest {
         assertEquals(60, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MINUTES)
         assertEquals(1L * 60 * 60 * 1000, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
     }
+
+    // ==================== Default Calendar View Tests ====================
+
+    @Test
+    fun `defaultCalendarView emits VIEW_MONTH when unset`() = runTest {
+        dataStore.defaultCalendarView.test {
+            assertEquals(KashCalDataStore.VIEW_MONTH, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setDefaultCalendarView updates Flow`() = runTest {
+        dataStore.defaultCalendarView.test {
+            assertEquals(KashCalDataStore.VIEW_MONTH, awaitItem())
+
+            dataStore.setDefaultCalendarView(KashCalDataStore.VIEW_AGENDA)
+            assertEquals(KashCalDataStore.VIEW_AGENDA, awaitItem())
+
+            dataStore.setDefaultCalendarView(KashCalDataStore.VIEW_THREE_DAYS)
+            assertEquals(KashCalDataStore.VIEW_THREE_DAYS, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setDefaultCalendarView rejects invalid values`() = runTest {
+        try {
+            dataStore.setDefaultCalendarView("invalid_view")
+            throw AssertionError("Expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            // Expected
+        }
+    }
 }

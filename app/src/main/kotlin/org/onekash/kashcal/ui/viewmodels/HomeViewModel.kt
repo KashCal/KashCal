@@ -185,16 +185,6 @@ class HomeViewModel @Inject constructor(
             // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
             observeCalendars()
 
-            // Restore saved view type preference
-            val savedViewType = dataStore.getCalendarViewType()
-            val viewType = try {
-                CalendarViewType.valueOf(savedViewType)
-            } catch (e: IllegalArgumentException) {
-                CalendarViewType.MONTH
-            }
-            _uiState.update { it.copy(calendarViewType = viewType) }
-            Log.d(TAG, "Restored calendar view type: $viewType")
-
             // Check if iCloud is configured
             checkICloudStatus()
 
@@ -207,17 +197,23 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
+            // Load default view from DataStore before building UI
+            val defaultView = ViewMode.fromKey(dataStore.getDefaultCalendarView())
+            _uiState.update { it.copy(viewMode = defaultView, defaultViewMode = defaultView) }
+
+            // Load data for the default view
+            when (defaultView) {
+                ViewMode.AGENDA -> loadAgendaEvents()
+                ViewMode.THREE_DAYS -> {} // goToToday() below handles week initialization
+                ViewMode.MONTH -> {} // Default, no extra loading needed
+            }
+
             // Build event dots for current month ±6 months
             val today = Calendar.getInstance()
             buildEventDots(today.get(Calendar.YEAR), today.get(Calendar.MONTH))
 
-            // Auto-select today
+            // Auto-select today (routes to correct view based on viewMode)
             goToToday()
-
-            // Initialize week view if that's the current view type
-            if (viewType == CalendarViewType.WEEK) {
-                goToTodayWeek()
-            }
 
             Log.d(TAG, "initializeAsync - COMPLETE")
         } catch (e: Exception) {
@@ -431,6 +427,11 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.firstDayOfWeek.collect { day ->
                 _uiState.update { it.copy(firstDayOfWeek = day) }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.defaultCalendarView.collect { viewKey ->
+                _uiState.update { it.copy(defaultViewMode = ViewMode.fromKey(viewKey)) }
             }
         }
     }
@@ -846,34 +847,29 @@ class HomeViewModel @Inject constructor(
      * Context-aware: If in 3-day view, navigates week view to today.
      */
     fun goToToday() {
-        // If in 3-day view, navigate the week view instead of month view
-        if (_uiState.value.showAgendaPanel &&
-            _uiState.value.agendaViewType == AgendaViewType.THREE_DAYS) {
-            goToTodayWeek()
-            return
+        when (_uiState.value.viewMode) {
+            ViewMode.THREE_DAYS -> {
+                goToTodayWeek()
+            }
+            ViewMode.AGENDA -> {
+                _uiState.update { it.copy(pendingScrollAgendaToTop = true) }
+            }
+            ViewMode.MONTH -> {
+                val today = Calendar.getInstance()
+                val year = today.get(Calendar.YEAR)
+                val month = today.get(Calendar.MONTH)
+
+                _uiState.update {
+                    it.copy(
+                        viewingYear = year,
+                        viewingMonth = month,
+                        pendingNavigateToToday = true
+                    )
+                }
+
+                selectDate(today.timeInMillis)
+            }
         }
-
-        // If in agenda list view, scroll to top (today)
-        if (_uiState.value.showAgendaPanel &&
-            _uiState.value.agendaViewType == AgendaViewType.AGENDA) {
-            _uiState.update { it.copy(pendingScrollAgendaToTop = true) }
-            return
-        }
-
-        // Month view: navigate to today's month and select today
-        val today = Calendar.getInstance()
-        val year = today.get(Calendar.YEAR)
-        val month = today.get(Calendar.MONTH)
-
-        _uiState.update {
-            it.copy(
-                viewingYear = year,
-                viewingMonth = month,
-                pendingNavigateToToday = true
-            )
-        }
-
-        selectDate(today.timeInMillis)
     }
 
     /**
@@ -994,73 +990,21 @@ class HomeViewModel @Inject constructor(
 
     // ==================== Week View Navigation ====================
 
-    /**
-     * Set calendar view type (Month or Week).
-     * Persists preference to DataStore.
-     */
-    fun setCalendarViewType(viewType: CalendarViewType) {
-        _uiState.update { it.copy(calendarViewType = viewType) }
-
-        // Persist preference
-        viewModelScope.launch {
-            dataStore.setCalendarViewType(viewType.name)
-        }
-
-        // Load data for new view type
-        when (viewType) {
-            CalendarViewType.WEEK -> {
-                // Initialize week view to today if not set
-                if (_uiState.value.weekViewStartDate == 0L) {
-                    goToTodayWeek()
-                } else {
-                    loadEventsForWeek(_uiState.value.weekViewStartDate)
-                }
-            }
-            CalendarViewType.MONTH -> {
-                // Cancel any week view loading
-                weekEventsJob?.cancel()
-            }
-        }
+    /** Navigate backward by 3 days in the 3-day view (matches visible window). */
+    fun navigateDaysPagerPrevious() {
+        val currentPage = _uiState.value.weekViewPagerPosition
+        if (currentPage <= 0) return
+        val targetPage = currentPage - WeekViewUtils.VISIBLE_DAYS
+        _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
+        onDayPagerPageChanged(targetPage)
     }
 
-    /**
-     * Navigate to a specific week.
-     * The weekStartMs should be the first day of the week (Sunday at midnight).
-     */
-    fun navigateToWeek(weekStartMs: Long) {
-        val normalizedStart = getWeekStart(weekStartMs)
-
-        // Only load if different week than current
-        if (normalizedStart != getWeekStart(_uiState.value.weekViewStartDate)) {
-            _uiState.update { it.copy(weekViewStartDate = normalizedStart) }
-            loadEventsForWeek(normalizedStart)
-        }
-    }
-
-    /**
-     * Navigate to the previous week (7 days back).
-     */
-    fun navigateToPreviousWeek() {
-        val currentStart = _uiState.value.weekViewStartDate
-        if (currentStart == 0L) {
-            goToTodayWeek()
-            return
-        }
-        val newStart = currentStart - (7L * 24 * 60 * 60 * 1000)
-        navigateToWeek(newStart)
-    }
-
-    /**
-     * Navigate to the next week (7 days forward).
-     */
-    fun navigateToNextWeek() {
-        val currentStart = _uiState.value.weekViewStartDate
-        if (currentStart == 0L) {
-            goToTodayWeek()
-            return
-        }
-        val newStart = currentStart + (7L * 24 * 60 * 60 * 1000)
-        navigateToWeek(newStart)
+    /** Navigate forward by 3 days in the 3-day view (matches visible window). */
+    fun navigateDaysPagerNext() {
+        val currentPage = _uiState.value.weekViewPagerPosition
+        val targetPage = currentPage + WeekViewUtils.VISIBLE_DAYS
+        _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
+        onDayPagerPageChanged(targetPage)
     }
 
     /**
@@ -1132,24 +1076,6 @@ class HomeViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    /**
-     * Get the start of the week for a given timestamp.
-     * Uses user's firstDayOfWeek preference and device's default timezone.
-     */
-    private fun getWeekStart(timestampMs: Long): Long {
-        val effectiveFirstDay = DateTimeUtils.resolveFirstDayOfWeek(_uiState.value.firstDayOfWeek)
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = timestampMs
-            firstDayOfWeek = effectiveFirstDay  // Set before DAY_OF_WEEK
-            set(Calendar.DAY_OF_WEEK, effectiveFirstDay)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }
-        return calendar.timeInMillis
     }
 
     // ==================== Infinite Day Pager Functions ====================
@@ -1816,29 +1742,45 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun toggleAgendaPanel() {
-        val newShowAgenda = !_uiState.value.showAgendaPanel
-        _uiState.update { it.copy(showAgendaPanel = newShowAgenda) }
+    /**
+     * Switch calendar view mode.
+     * Handles data loading for each view type and cancels unnecessary jobs.
+     */
+    fun setViewMode(mode: ViewMode) {
+        val oldMode = _uiState.value.viewMode
+        if (oldMode == mode) return
 
-        if (newShowAgenda) {
-            loadAgendaEvents()  // Load when opening
+        _uiState.update { it.copy(viewMode = mode) }
+
+        when (mode) {
+            ViewMode.AGENDA -> loadAgendaEvents()
+            ViewMode.THREE_DAYS -> {
+                // Cancel agenda observation since we're leaving agenda view
+                agendaEventsJob?.cancel()
+                if (currentLoadedRange == null) {
+                    goToTodayWeek()
+                }
+            }
+            ViewMode.MONTH -> {
+                agendaEventsJob?.cancel()
+            }
         }
     }
 
-    /**
-     * Set the agenda panel view type (agenda or 3-day).
-     * When switching to 3-day view, load events for today's range.
-     */
-    fun setAgendaViewType(viewType: AgendaViewType) {
-        _uiState.update { it.copy(agendaViewType = viewType) }
+    fun showViewPicker() {
+        _uiState.update { it.copy(showViewPicker = true) }
+    }
 
-        // Load events when switching to 3-day view
-        if (viewType == AgendaViewType.THREE_DAYS) {
-            // Always initialize to today when switching to 3-day view
-            // (infinite pager centered on today)
-            if (currentLoadedRange == null) {
-                goToTodayWeek()
-            }
+    fun hideViewPicker() {
+        _uiState.update { it.copy(showViewPicker = false) }
+    }
+
+    /**
+     * Persist the user's default view to DataStore.
+     */
+    fun setDefaultViewMode(mode: ViewMode) {
+        viewModelScope.launch {
+            dataStore.setDefaultCalendarView(mode.key)
         }
     }
 
@@ -1918,8 +1860,8 @@ class HomeViewModel @Inject constructor(
         if (_uiState.value.selectedDate > 0) {
             loadEventsForSelectedDay(_uiState.value.selectedDate)
         }
-        // Also reload week view if active
-        if (_uiState.value.calendarViewType == CalendarViewType.WEEK &&
+        // Also reload week view if 3-day view is active
+        if (_uiState.value.viewMode == ViewMode.THREE_DAYS &&
             _uiState.value.weekViewStartDate > 0) {
             loadEventsForWeek(_uiState.value.weekViewStartDate)
         }

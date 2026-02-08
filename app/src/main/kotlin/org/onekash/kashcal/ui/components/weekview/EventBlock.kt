@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -63,11 +64,12 @@ fun EventBlock(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Solid fill with contrasting text for readability
-    val backgroundColor = Color(color)
-    // Calculate luminance to determine text color (dark text for light backgrounds)
-    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
-    val textColor = if (luminance > 0.5f) Color.Black else Color.White
+    // Solid fill with contrasting text for readability (cached per color)
+    val (backgroundColor, textColor) = remember(color) {
+        val bg = Color(color)
+        val luminance = (0.299f * bg.red + 0.587f * bg.green + 0.114f * bg.blue)
+        bg to if (luminance > 0.5f) Color.Black else Color.White
+    }
 
     // Determine what content fits based on height
     val showTime = height >= HEIGHT_THRESHOLD_TIME
