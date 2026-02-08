@@ -85,6 +85,7 @@ Your calendar reveals your life: doctor appointments, job interviews, who you me
 | iCloud | ✓ | [@one-kash](https://github.com/one-kash) |
 | Nextcloud | ✓ | [@one-kash](https://github.com/one-kash) [@dev-inside](https://github.com/dev-inside) |
 | Baïkal | ✓ | [@one-kash](https://github.com/one-kash) |
+| Baïkal (Digest Auth) | ✓ | [@englut](https://github.com/englut) |
 | Radicale | ✓ | [@one-kash](https://github.com/one-kash) |
 | mailbox.org | ✓ | [@h1nnak](https://github.com/h1nnak) |
 | Infomaniak | ✓ | [@dirko-madrileno](https://github.com/dirko-madrileno) |
