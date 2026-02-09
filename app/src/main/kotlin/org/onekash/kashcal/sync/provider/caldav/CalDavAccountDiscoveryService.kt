@@ -146,7 +146,11 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 // Check for SSL errors specifically — no probing will help
                 if (isSSLError(error)) {
                     return@withContext DiscoveryResult.Error(
-                        "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+                        if (!trustInsecure) {
+                            "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+                        } else {
+                            "Secure connection failed even with 'Trust insecure connection' enabled. Please check the server URL and network settings."
+                        }
                     )
                 }
 
@@ -162,7 +166,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 if (principalUrl == null) {
                     return@withContext DiscoveryResult.Error(
                         if (urlContainsKnownCaldavPath(normalizedUrl)) {
-                            getErrorMessageForCalDavError(error, "connect to server")
+                            getErrorMessageForCalDavError(error, "connect to server", trustInsecure)
                         } else {
                             "CalDAV service not found. Tried common server paths (/dav/, /remote.php/dav/, etc.). Please check the server address."
                         }
@@ -180,7 +184,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = homeResult as CalDavResult.Error
                 Log.e(TAG, "Calendar home discovery failed: ${error.message}")
                 return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "find calendar home")
+                    getErrorMessageForCalDavError(error, "find calendar home", trustInsecure)
                 )
             }
 
@@ -195,7 +199,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = calendarsResult as CalDavResult.Error
                 Log.e(TAG, "Calendar listing failed: ${error.message}")
                 return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "list calendars")
+                    getErrorMessageForCalDavError(error, "list calendars", trustInsecure)
                 )
             }
 
@@ -389,7 +393,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         caldavUrl = calDavCalendar.url,
                         displayName = calDavCalendar.displayName,
                         color = parseColor(calDavCalendar.color, index),
-                        ctag = calDavCalendar.ctag,
+                        ctag = null,  // Must be null so first sync does a full pull
                         isReadOnly = calDavCalendar.isReadOnly,
                         isDefault = false,
                         isVisible = true
@@ -530,7 +534,11 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 // Check for SSL errors specifically — no probing will help
                 if (isSSLError(error)) {
                     return@withContext DiscoveryResult.Error(
-                        "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+                        if (!trustInsecure) {
+                            "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+                        } else {
+                            "Secure connection failed even with 'Trust insecure connection' enabled. Please check the server URL and network settings."
+                        }
                     )
                 }
 
@@ -552,7 +560,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 if (principalUrl == null) {
                     return@withContext DiscoveryResult.Error(
                         if (!shouldProbe) {
-                            getErrorMessageForCalDavError(error, "connect to server")
+                            getErrorMessageForCalDavError(error, "connect to server", trustInsecure)
                         } else {
                             "CalDAV service not found. Tried common server paths (/dav/, /remote.php/dav/, etc.). Please check the server address."
                         }
@@ -570,7 +578,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = homeResult as CalDavResult.Error
                 Log.e(TAG, "Calendar home discovery failed: ${error.message}")
                 return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "find calendar home")
+                    getErrorMessageForCalDavError(error, "find calendar home", trustInsecure)
                 )
             }
 
@@ -585,7 +593,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = calendarsResult as CalDavResult.Error
                 Log.e(TAG, "Calendar listing failed: ${error.message}")
                 return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "list calendars")
+                    getErrorMessageForCalDavError(error, "list calendars", trustInsecure)
                 )
             }
 
@@ -935,7 +943,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 if (!trustInsecure) {
                     "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                 } else {
-                    "Secure connection failed. Please check your network settings."
+                    "Secure connection failed even with 'Trust insecure connection' enabled. Please check the server URL and network settings."
                 }
             }
             is java.net.ConnectException ->
@@ -951,7 +959,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         if (!trustInsecure) {
                             "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                         } else {
-                            "Secure connection failed. Please check your network settings."
+                            "Secure connection failed even with 'Trust insecure connection' enabled. Please check the server URL and network settings."
                         }
                     }
                     else ->
@@ -964,7 +972,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
     /**
      * Convert CalDavResult.Error to user-friendly error message.
      */
-    private fun getErrorMessageForCalDavError(error: CalDavResult.Error, action: String): String {
+    private fun getErrorMessageForCalDavError(error: CalDavResult.Error, action: String, trustInsecure: Boolean = false): String {
         val message = error.message.lowercase()
         return when {
             error.code in 500..599 ->
@@ -977,8 +985,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 "Permission denied. Please check your credentials and server URL."
             message.contains("network") || message.contains("timeout") ->
                 "Network error. Please check your internet connection."
-            message.contains("ssl") || message.contains("certificate") ->
-                "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+            message.contains("ssl") || message.contains("certificate") -> {
+                if (!trustInsecure) {
+                    "Certificate verification failed. Enable 'Trust insecure connection' to continue."
+                } else {
+                    "Secure connection failed even with 'Trust insecure connection' enabled. Please check the server URL and network settings."
+                }
+            }
             else ->
                 "Could not $action. Please try again."
         }

@@ -55,6 +55,10 @@ class AccountRepositoryImpl @Inject constructor(
         return accountsDao.getAccountCountByProvider(provider)
     }
 
+    override fun getAccountByIdFlow(id: Long): Flow<Account?> {
+        return accountsDao.getByIdFlow(id)
+    }
+
     // ========== One-Shot Queries ==========
 
     override suspend fun getAccountById(id: Long): Account? {

@@ -35,9 +35,11 @@ sealed class ICloudConnectionState {
      * Shows account info and sync status.
      */
     data class Connected(
+        val accountId: Long,
         val appleId: String,
         val lastSyncTime: Long? = null,
-        val calendarCount: Int = 0
+        val calendarCount: Int = 0,
+        val consecutiveSyncFailures: Int = 0
     ) : ICloudConnectionState()
 }
 
@@ -48,10 +50,16 @@ sealed class ICloudConnectionState {
  * for the accounts list, separate from the full ICloudConnectionState.
  */
 data class ICloudAccountUiModel(
+    /** Account database ID */
+    val accountId: Long,
     /** User's Apple ID (email) */
     val email: String,
     /** Number of calendars synced from this account */
-    val calendarCount: Int
+    val calendarCount: Int,
+    /** Number of consecutive sync failures (0 = healthy) */
+    val consecutiveSyncFailures: Int = 0,
+    /** Timestamp of last successful sync (null = never synced) */
+    val lastSuccessfulSyncAt: Long? = null
 )
 
 /**

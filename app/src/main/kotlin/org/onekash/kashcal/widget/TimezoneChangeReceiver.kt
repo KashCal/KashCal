@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
 /**
@@ -19,6 +19,9 @@ import javax.inject.Inject
  * Per Android best practices:
  * - Uses goAsync() for work that takes > 10ms
  * - Uses Hilt DI for singleton services
+ *
+ * Recovery includes ReminderRefreshWorker to create missing ScheduledReminder rows
+ * for events that had reminders fired/dismissed/cleaned up.
  */
 @AndroidEntryPoint
 class TimezoneChangeReceiver : BroadcastReceiver() {
@@ -28,10 +31,7 @@ class TimezoneChangeReceiver : BroadcastReceiver() {
     }
 
     @Inject
-    lateinit var widgetUpdateManager: WidgetUpdateManager
-
-    @Inject
-    lateinit var reminderScheduler: ReminderScheduler
+    lateinit var handler: TimezoneChangeHandler
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -47,20 +47,20 @@ class TimezoneChangeReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
         scope.launch {
             try {
-                // Update widgets for correct time display
-                widgetUpdateManager.updateAllWidgets(reason = reason)
-
-                // CRITICAL: Reschedule reminders for new timezone
-                // Alarms are based on absolute timestamps, but user perception
-                // of "3pm" changes when timezone changes
-                reminderScheduler.rescheduleAllPending()
-
-                Log.d(TAG, "Successfully updated widgets and rescheduled reminders")
+                handler.handleChange(reason)
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling $reason", e)
             } finally {
                 pendingResult.finish()
             }
+        }
+
+        // Trigger immediate reminder refresh to create ScheduledReminder rows
+        // for events that are missing them. Runs via WorkManager (no 10s limit).
+        try {
+            ReminderRefreshWorker.runNow(context)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to trigger reminder refresh worker", e)
         }
     }
 }

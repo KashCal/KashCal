@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import app.cash.turbine.test
 import io.mockk.Runs
 import io.mockk.coEvery
+import io.mockk.Ordering
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
@@ -16,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -23,6 +25,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -40,8 +44,12 @@ import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
+import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
+import java.util.UUID
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
@@ -1808,5 +1816,304 @@ class AccountSettingsViewModelTest {
             state is ICloudConnectionState.Connected
         )
         assertEquals(3, (state as ICloudConnectionState.Connected).calendarCount)
+    }
+
+    // ==================== Account Detail Tests ====================
+
+    private val testDetailAccount = Account(
+        id = 10L,
+        provider = AccountProvider.CALDAV,
+        email = "user@example.com",
+        displayName = "My CalDAV",
+        principalUrl = "https://dav.example.com/principal",
+        homeSetUrl = "https://dav.example.com/calendars",
+        isEnabled = true,
+        lastSuccessfulSyncAt = System.currentTimeMillis() - 60_000,
+        consecutiveSyncFailures = 0
+    )
+
+    @Test
+    fun `observeAccountDetail populates accountDetail in uiState`() = runTest {
+        every { accountRepository.getAccountByIdFlow(10L) } returns flowOf(testDetailAccount)
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(10L)
+        advanceUntilIdle()
+
+        val detail = viewModel.uiState.value.accountDetail
+        assertNotNull(detail)
+        assertEquals(10L, detail!!.accountId)
+        assertEquals("My CalDAV", detail.displayName)
+        assertEquals(3, detail.calendarCount)
+        assertTrue(detail.isEnabled)
+    }
+
+    @Test
+    fun `observeAccountDetail sets null for unknown accountId`() = runTest {
+        every { accountRepository.getAccountByIdFlow(999L) } returns flowOf(null)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(999L)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.accountDetail)
+    }
+
+    @Test
+    fun `clearAccountDetail resets all detail state`() = runTest {
+        every { accountRepository.getAccountByIdFlow(10L) } returns flowOf(testDetailAccount)
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.observeAccountDetail(10L)
+        advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.accountDetail)
+
+        viewModel.clearAccountDetail()
+
+        assertNull(viewModel.uiState.value.accountDetail)
+        assertEquals(AccountDetailSyncStatus.Idle, viewModel.uiState.value.accountDetailSyncStatus)
+        assertEquals(AccountDetailDiscoverStatus.Idle, viewModel.uiState.value.accountDetailDiscoverStatus)
+    }
+
+    @Test
+    fun `syncAccountNow sets Syncing then Done on success`() = runTest {
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        assertEquals(AccountDetailSyncStatus.Syncing, viewModel.uiState.value.accountDetailSyncStatus)
+
+        syncStatusFlow.value = SyncStatus.Succeeded()
+        advanceUntilIdle()
+
+        val status = viewModel.uiState.value.accountDetailSyncStatus
+        assertTrue(status is AccountDetailSyncStatus.Done)
+        assertTrue((status as AccountDetailSyncStatus.Done).success)
+    }
+
+    @Test
+    fun `syncAccountNow sets Done with failure on Failed status`() = runTest {
+        val workId = UUID.randomUUID()
+        val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+        every { syncScheduler.syncAccount(10L) } returns workId
+        every { syncScheduler.observeSyncStatus(workId) } returns syncStatusFlow
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.syncAccountNow(10L)
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Failed("Network error")
+        advanceUntilIdle()
+
+        val status = viewModel.uiState.value.accountDetailSyncStatus
+        assertTrue(status is AccountDetailSyncStatus.Done)
+        assertFalse((status as AccountDetailSyncStatus.Done).success)
+    }
+
+    @Test
+    fun `toggleAccountEnabled calls setEnabled`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.toggleAccountEnabled(10L, false)
+        advanceUntilIdle()
+
+        coVerify { accountRepository.setEnabled(10L, false) }
+    }
+
+    @Test
+    fun `renameAccount updates displayName and reloads`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { accountRepository.getAccountsByProvider(AccountProvider.CALDAV) } returns listOf(testDetailAccount)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.renameAccount(10L, "New Name")
+        advanceUntilIdle()
+
+        coVerify {
+            accountRepository.updateAccount(match { it.displayName == "New Name" })
+        }
+    }
+
+    @Test
+    fun `renameAccount rejects empty name`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.renameAccount(10L, "   ")
+        advanceUntilIdle()
+
+        // Should not call updateAccount for empty names
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+    }
+
+    @Test
+    fun `changeAccountPassword saves new credentials on success`() = runTest {
+        val oldCreds = AccountCredentials(
+            username = "user",
+            password = "old-pass",
+            serverUrl = "https://dav.example.com"
+        )
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { accountRepository.getCredentials(10L) } returns oldCreds
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.Success(testDetailAccount, emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        var callbackResult: Result<Unit>? = null
+        viewModel.changeAccountPassword(10L, "new-pass") { callbackResult = it }
+        advanceUntilIdle()
+
+        assertTrue(callbackResult!!.isSuccess)
+        coVerify {
+            accountRepository.saveCredentials(10L, match { it.password == "new-pass" })
+        }
+    }
+
+    @Test
+    fun `changeAccountPassword reverts credentials on AuthError`() = runTest {
+        val oldCreds = AccountCredentials(
+            username = "user",
+            password = "old-pass",
+            serverUrl = "https://dav.example.com"
+        )
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { accountRepository.getCredentials(10L) } returns oldCreds
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.AuthError("Invalid credentials")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        var callbackResult: Result<Unit>? = null
+        viewModel.changeAccountPassword(10L, "wrong-pass") { callbackResult = it }
+        advanceUntilIdle()
+
+        assertTrue(callbackResult!!.isFailure)
+        assertEquals("Invalid password", callbackResult!!.exceptionOrNull()?.message)
+        // Verify old credentials restored
+        coVerify(ordering = Ordering.ORDERED) {
+            accountRepository.saveCredentials(10L, match { it.password == "wrong-pass" })
+            accountRepository.saveCredentials(10L, match { it.password == "old-pass" })
+        }
+    }
+
+    @Test
+    fun `changeAccountPassword reverts credentials on network Error`() = runTest {
+        val oldCreds = AccountCredentials(
+            username = "user",
+            password = "old-pass",
+            serverUrl = "https://dav.example.com"
+        )
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { accountRepository.getCredentials(10L) } returns oldCreds
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.Error("Connection timeout")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        var callbackResult: Result<Unit>? = null
+        viewModel.changeAccountPassword(10L, "new-pass") { callbackResult = it }
+        advanceUntilIdle()
+
+        assertTrue(callbackResult!!.isFailure)
+        assertEquals("Network error, try again", callbackResult!!.exceptionOrNull()?.message)
+        // Verify old credentials restored
+        coVerify {
+            accountRepository.saveCredentials(10L, match { it.password == "old-pass" })
+        }
+    }
+
+    @Test
+    fun `discoverNewCalendars routes to CalDAV service for CALDAV`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.Success(testDetailAccount, listOf(
+                Calendar(id = 1L, accountId = 10L, caldavUrl = "/cal1", displayName = "Cal 1", color = 0xFF0000),
+                Calendar(id = 2L, accountId = 10L, caldavUrl = "/cal2", displayName = "Cal 2", color = 0x00FF00),
+                Calendar(id = 3L, accountId = 10L, caldavUrl = "/cal3", displayName = "Cal 3", color = 0x0000FF),
+                Calendar(id = 4L, accountId = 10L, caldavUrl = "/cal4", displayName = "Cal 4", color = 0xFFFF00),
+                Calendar(id = 5L, accountId = 10L, caldavUrl = "/cal5", displayName = "Cal 5", color = 0xFF00FF)
+            ))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(10L)
+        advanceUntilIdle()
+
+        coVerify { calDavDiscoveryService.refreshCalendars(10L) }
+        val status = viewModel.uiState.value.accountDetailDiscoverStatus
+        assertTrue(status is AccountDetailDiscoverStatus.Done)
+        assertEquals(2, (status as AccountDetailDiscoverStatus.Done).newCount)
+        assertEquals(5, status.totalCount)
+    }
+
+    @Test
+    fun `discoverNewCalendars routes to iCloud service for ICLOUD`() = runTest {
+        val iCloudAccount = testDetailAccount.copy(id = 1L, provider = AccountProvider.ICLOUD)
+        coEvery { accountRepository.getAccountById(1L) } returns iCloudAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(1L) } returns 2
+        coEvery { discoveryService.refreshCalendars(1L) } returns
+            DiscoveryResult.Success(iCloudAccount, listOf(
+                Calendar(id = 1L, accountId = 1L, caldavUrl = "/cal1", displayName = "Cal 1", color = 0xFF0000),
+                Calendar(id = 2L, accountId = 1L, caldavUrl = "/cal2", displayName = "Cal 2", color = 0x00FF00),
+                Calendar(id = 3L, accountId = 1L, caldavUrl = "/cal3", displayName = "Cal 3", color = 0x0000FF)
+            ))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(1L)
+        advanceUntilIdle()
+
+        coVerify { discoveryService.refreshCalendars(1L) }
+        coVerify(exactly = 0) { calDavDiscoveryService.refreshCalendars(any()) }
+    }
+
+    @Test
+    fun `discoverNewCalendars handles AuthError`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.AuthError("Token expired")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(10L)
+        advanceUntilIdle()
+
+        val status = viewModel.uiState.value.accountDetailDiscoverStatus
+        assertTrue(status is AccountDetailDiscoverStatus.Error)
+        assertTrue((status as AccountDetailDiscoverStatus.Error).message.contains("Authentication failed"))
     }
 }

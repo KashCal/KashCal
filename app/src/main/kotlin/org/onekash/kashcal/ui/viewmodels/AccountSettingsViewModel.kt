@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
@@ -42,7 +43,12 @@ import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
+import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
+import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
+import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
@@ -238,9 +244,11 @@ class AccountSettingsViewModel @Inject constructor(
                     it.copy(
                         isLoading = false,
                         iCloudState = ICloudConnectionState.Connected(
+                            accountId = account.id,
                             appleId = account.email,
                             lastSyncTime = if (lastSync != null && lastSync > 0) lastSync else null,
-                            calendarCount = calendarCount
+                            calendarCount = calendarCount,
+                            consecutiveSyncFailures = account.consecutiveSyncFailures
                         )
                     )
                 }
@@ -321,7 +329,9 @@ class AccountSettingsViewModel @Inject constructor(
                         id = account.id,
                         email = account.email,
                         displayName = account.displayName ?: "CalDAV",
-                        calendarCount = calendarCount
+                        calendarCount = calendarCount,
+                        consecutiveSyncFailures = account.consecutiveSyncFailures,
+                        lastSuccessfulSyncAt = account.lastSuccessfulSyncAt
                     )
                 }
                 _uiState.update { it.copy(calDavAccounts = uiModels) }
@@ -607,6 +617,7 @@ class AccountSettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             iCloudState = ICloudConnectionState.Connected(
+                                accountId = result.account.id,
                                 appleId = result.account.email,
                                 lastSyncTime = null,
                                 calendarCount = result.calendars.size
@@ -1514,6 +1525,279 @@ class AccountSettingsViewModel @Inject constructor(
                 connectedCalendarCount = 0,
                 pendingFinishActivity = true
             )
+        }
+    }
+
+    // ==================== Account Detail ====================
+
+    /** Job tracking sync status observation — cancelled in clearAccountDetail() */
+    private var syncObservationJob: Job? = null
+
+    /** Job tracking account detail Flow observation — cancelled in clearAccountDetail() */
+    private var accountDetailJob: Job? = null
+
+    /**
+     * Observe account detail for the bottom sheet via Flow.
+     * Auto-updates when Room's invalidation tracker fires (e.g., after sync metadata changes).
+     *
+     * @param accountId The account to observe
+     */
+    fun observeAccountDetail(accountId: Long) {
+        accountDetailJob?.cancel()
+        accountDetailJob = viewModelScope.launch {
+            accountRepository.getAccountByIdFlow(accountId)
+                .distinctUntilChanged()
+                .collect { account ->
+                    if (account == null) {
+                        _uiState.update { it.copy(accountDetail = null) }
+                        return@collect
+                    }
+                    val calendarCount = eventCoordinator.getCalendarCountForAccount(accountId)
+                    _uiState.update { it.copy(accountDetail = account.toDetailUiModel(calendarCount)) }
+                }
+        }
+    }
+
+    /**
+     * Clear account detail state and cancel sync observation.
+     */
+    fun clearAccountDetail() {
+        accountDetailJob?.cancel()
+        accountDetailJob = null
+        syncObservationJob?.cancel()
+        syncObservationJob = null
+        _uiState.update {
+            it.copy(
+                accountDetail = null,
+                accountDetailSyncStatus = AccountDetailSyncStatus.Idle,
+                accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle
+            )
+        }
+    }
+
+    /**
+     * Trigger per-account sync and observe result.
+     *
+     * @param accountId The account to sync
+     */
+    fun syncAccountNow(accountId: Long) {
+        _uiState.update { it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Syncing) }
+        syncObservationJob?.cancel()
+
+        val workId = syncScheduler.syncAccount(accountId)
+        syncObservationJob = viewModelScope.launch {
+            syncScheduler.observeSyncStatus(workId).collect { status ->
+                when (status) {
+                    is SyncStatus.Succeeded -> {
+                        _uiState.update {
+                            it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Done(success = true))
+                        }
+                    }
+                    is SyncStatus.Failed, is SyncStatus.Cancelled -> {
+                        _uiState.update {
+                            it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Done(success = false))
+                        }
+                    }
+                    else -> { /* Enqueued, Running, Blocked, Idle — keep Syncing state */ }
+                }
+            }
+        }
+    }
+
+    /**
+     * Toggle account enabled/disabled for sync.
+     *
+     * @param accountId The account to toggle
+     * @param enabled New enabled state
+     */
+    fun toggleAccountEnabled(accountId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            accountRepository.setEnabled(accountId, enabled)
+        }
+    }
+
+    /**
+     * Rename an account's display name.
+     *
+     * @param accountId The account to rename
+     * @param newName New display name (trimmed, must not be empty)
+     * @return true if renamed, false if validation failed
+     */
+    fun renameAccount(accountId: Long, newName: String) {
+        val trimmed = newName.trim()
+        if (trimmed.isEmpty()) return
+
+        viewModelScope.launch {
+            val account = accountRepository.getAccountById(accountId) ?: return@launch
+            accountRepository.updateAccount(account.copy(displayName = trimmed))
+            // Refresh account lists in UI state
+            refreshCalDavAccounts()
+            refreshICloudState(account)
+        }
+    }
+
+    /**
+     * Change an account's password using save-then-validate pattern.
+     *
+     * Saves new credentials, validates via refreshCalendars(), reverts on failure.
+     *
+     * @param accountId The account to update
+     * @param newPassword New password
+     * @return Result with success or error message
+     */
+    fun changeAccountPassword(accountId: Long, newPassword: String, onResult: (Result<Unit>) -> Unit) {
+        viewModelScope.launch {
+            val account = accountRepository.getAccountById(accountId)
+            if (account == null) {
+                onResult(Result.failure(Exception("Account not found")))
+                return@launch
+            }
+
+            val oldCredentials = accountRepository.getCredentials(accountId)
+            if (oldCredentials == null) {
+                onResult(Result.failure(Exception("No existing credentials")))
+                return@launch
+            }
+
+            // Save new credentials
+            val newCredentials = oldCredentials.copy(password = newPassword)
+            accountRepository.saveCredentials(accountId, newCredentials)
+
+            // Validate by running refreshCalendars which uses stored credentials
+            val result = when (account.provider) {
+                AccountProvider.ICLOUD -> discoveryService.refreshCalendars(accountId)
+                AccountProvider.CALDAV -> calDavDiscoveryService.refreshCalendars(accountId)
+                else -> {
+                    onResult(Result.failure(Exception("Provider does not support password change")))
+                    return@launch
+                }
+            }
+
+            when (result) {
+                is DiscoveryResult.Success -> {
+                    onResult(Result.success(Unit))
+                }
+                is DiscoveryResult.CalendarsFound -> {
+                    // Unexpected for refresh, but credentials are valid
+                    onResult(Result.success(Unit))
+                }
+                is DiscoveryResult.AuthError -> {
+                    // Revert to old credentials
+                    accountRepository.saveCredentials(accountId, oldCredentials)
+                    onResult(Result.failure(Exception("Invalid password")))
+                }
+                is DiscoveryResult.Error -> {
+                    // Revert to old credentials
+                    accountRepository.saveCredentials(accountId, oldCredentials)
+                    onResult(Result.failure(Exception("Network error, try again")))
+                }
+            }
+        }
+    }
+
+    /**
+     * Discover new calendars for an existing account.
+     *
+     * @param accountId The account to refresh calendars for
+     */
+    fun discoverNewCalendars(accountId: Long) {
+        _uiState.update { it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Discovering) }
+
+        viewModelScope.launch {
+            val account = accountRepository.getAccountById(accountId)
+            if (account == null) {
+                _uiState.update {
+                    it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error("Account not found"))
+                }
+                return@launch
+            }
+
+            val beforeCount = eventCoordinator.getCalendarCountForAccount(accountId)
+
+            val result = when (account.provider) {
+                AccountProvider.ICLOUD -> discoveryService.refreshCalendars(accountId)
+                AccountProvider.CALDAV -> calDavDiscoveryService.refreshCalendars(accountId)
+                else -> {
+                    _uiState.update {
+                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error("Provider does not support discovery"))
+                    }
+                    return@launch
+                }
+            }
+
+            when (result) {
+                is DiscoveryResult.Success -> {
+                    val afterCount = result.calendars.size
+                    val newCount = (afterCount - beforeCount).coerceAtLeast(0)
+                    _uiState.update {
+                        it.copy(
+                            accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Done(
+                                newCount = newCount,
+                                totalCount = afterCount
+                            )
+                        )
+                    }
+                    if (newCount > 0) {
+                        syncScheduler.syncAccount(accountId)
+                    }
+                }
+                is DiscoveryResult.CalendarsFound -> {
+                    // Shouldn't happen for refresh — treat as no change
+                    _uiState.update {
+                        it.copy(
+                            accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Done(
+                                newCount = 0,
+                                totalCount = beforeCount
+                            )
+                        )
+                    }
+                }
+                is DiscoveryResult.AuthError -> {
+                    _uiState.update {
+                        it.copy(
+                            accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(
+                                "Authentication failed. Update your password."
+                            )
+                        )
+                    }
+                }
+                is DiscoveryResult.Error -> {
+                    _uiState.update {
+                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(result.message))
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Refresh CalDAV accounts list after rename.
+     */
+    private suspend fun refreshCalDavAccounts() {
+        val accounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
+        val uiModels = accounts.map { account ->
+            val count = eventCoordinator.getCalendarCountForAccount(account.id)
+            CalDavAccountUiModel(
+                id = account.id,
+                email = account.email,
+                displayName = account.displayName ?: account.provider.displayName,
+                calendarCount = count,
+                consecutiveSyncFailures = account.consecutiveSyncFailures,
+                lastSuccessfulSyncAt = account.lastSuccessfulSyncAt
+            )
+        }
+        _uiState.update { it.copy(calDavAccounts = uiModels) }
+    }
+
+    /**
+     * Refresh iCloud state after rename (if renamed account is iCloud).
+     */
+    private suspend fun refreshICloudState(account: Account) {
+        if (account.provider != AccountProvider.ICLOUD) return
+        val currentState = _uiState.value.iCloudState
+        if (currentState is ICloudConnectionState.Connected) {
+            // Connected state doesn't include displayName, so no update needed
+            // The account detail sheet auto-updates via observeAccountDetail Flow
         }
     }
 }

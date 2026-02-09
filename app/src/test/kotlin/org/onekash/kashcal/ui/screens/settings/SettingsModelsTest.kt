@@ -56,6 +56,7 @@ class SettingsModelsTest {
     @Test
     fun `ICloudConnectionState Connected stores account info`() {
         val state = ICloudConnectionState.Connected(
+            accountId = 1L,
             appleId = "user@icloud.com",
             lastSyncTime = 1704067200000L, // Jan 1, 2024
             calendarCount = 5
@@ -68,7 +69,7 @@ class SettingsModelsTest {
 
     @Test
     fun `ICloudConnectionState Connected default values`() {
-        val state = ICloudConnectionState.Connected(appleId = "test@icloud.com")
+        val state = ICloudConnectionState.Connected(accountId = 1L, appleId = "test@icloud.com")
 
         assertEquals("test@icloud.com", state.appleId)
         assertNull(state.lastSyncTime)
@@ -79,7 +80,7 @@ class SettingsModelsTest {
     fun `ICloudConnectionState states are distinct types`() {
         val notConnected = ICloudConnectionState.NotConnected()
         val connecting = ICloudConnectionState.Connecting
-        val connected = ICloudConnectionState.Connected("test@icloud.com")
+        val connected = ICloudConnectionState.Connected(accountId = 1L, appleId = "test@icloud.com")
 
         assertTrue(notConnected is ICloudConnectionState.NotConnected)
         assertTrue(connecting is ICloudConnectionState.Connecting)

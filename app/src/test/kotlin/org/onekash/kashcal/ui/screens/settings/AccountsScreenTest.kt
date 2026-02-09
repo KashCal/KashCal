@@ -1,7 +1,11 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onekash.kashcal.ui.screens.settings.SyncWarningConstants.SYNC_FAILURE_THRESHOLD
+import org.onekash.kashcal.ui.screens.settings.SyncWarningConstants.SYNC_ISSUE_SUBTITLE_THRESHOLD_MS
 
 /**
  * Unit tests for AccountsScreen logic.
@@ -27,7 +31,7 @@ class AccountsScreenTest {
 
     @Test
     fun `account count is 1 with only iCloud`() {
-        val iCloudAccount = ICloudAccountUiModel(email = "test@icloud.com", calendarCount = 3)
+        val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 3)
         val calDavAccounts = emptyList<CalDavAccountUiModel>()
 
         val accountCount = (if (iCloudAccount != null) 1 else 0) + calDavAccounts.size
@@ -49,7 +53,7 @@ class AccountsScreenTest {
 
     @Test
     fun `account count is 3 with iCloud plus 2 CalDAV`() {
-        val iCloudAccount = ICloudAccountUiModel(email = "test@icloud.com", calendarCount = 5)
+        val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
             CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2)
@@ -64,7 +68,7 @@ class AccountsScreenTest {
 
     @Test
     fun `preview shows iCloud first when connected`() {
-        val iCloudAccount = ICloudAccountUiModel(email = "test@icloud.com", calendarCount = 3)
+        val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 3)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@example.com", displayName = "Nextcloud", calendarCount = 2)
         )
@@ -95,7 +99,7 @@ class AccountsScreenTest {
 
     @Test
     fun `preview shows first two accounts max`() {
-        val iCloudAccount = ICloudAccountUiModel(email = "test@icloud.com", calendarCount = 5)
+        val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
             CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2),
@@ -112,7 +116,7 @@ class AccountsScreenTest {
 
     @Test
     fun `preview adds ellipsis when more than 2 accounts`() {
-        val iCloudAccount = ICloudAccountUiModel(email = "test@icloud.com", calendarCount = 5)
+        val iCloudAccount = ICloudAccountUiModel(accountId = 1L, email = "test@icloud.com", calendarCount = 5)
         val calDavAccounts = listOf(
             CalDavAccountUiModel(id = 1, email = "user@nextcloud.com", displayName = "Nextcloud", calendarCount = 3),
             CalDavAccountUiModel(id = 2, email = "user@fastmail.com", displayName = "FastMail", calendarCount = 2)
@@ -214,5 +218,81 @@ class AccountsScreenTest {
         }
 
         assertEquals("1 calendar", subtitle)
+    }
+
+    // ==================== Sync Warning Indicator Tests ====================
+
+    private fun hasSyncWarning(consecutiveSyncFailures: Int): Boolean =
+        consecutiveSyncFailures >= SYNC_FAILURE_THRESHOLD
+
+    private fun showSyncIssueSubtitle(
+        consecutiveSyncFailures: Int,
+        lastSuccessfulSyncAt: Long?,
+        nowMs: Long = System.currentTimeMillis()
+    ): Boolean {
+        if (consecutiveSyncFailures < SYNC_FAILURE_THRESHOLD) return false
+        return lastSuccessfulSyncAt == null ||
+            lastSuccessfulSyncAt <= 0 ||
+            nowMs - lastSuccessfulSyncAt > SYNC_ISSUE_SUBTITLE_THRESHOLD_MS
+    }
+
+    @Test
+    fun `no warning when 0 failures`() {
+        assertFalse(hasSyncWarning(0))
+        assertFalse(showSyncIssueSubtitle(0, null))
+    }
+
+    @Test
+    fun `no warning when 2 failures (grace period)`() {
+        assertFalse(hasSyncWarning(2))
+        assertFalse(showSyncIssueSubtitle(2, null))
+    }
+
+    @Test
+    fun `warning icon shown when failures at threshold`() {
+        assertTrue(hasSyncWarning(3))
+    }
+
+    @Test
+    fun `warning icon shown when failures above threshold`() {
+        assertTrue(hasSyncWarning(10))
+    }
+
+    @Test
+    fun `sync issue subtitle when 3 failures and never synced`() {
+        assertTrue(showSyncIssueSubtitle(3, null))
+    }
+
+    @Test
+    fun `sync issue subtitle when 3 failures and lastSuccessfulSyncAt is 0`() {
+        assertTrue(showSyncIssueSubtitle(3, 0L))
+    }
+
+    @Test
+    fun `sync issue subtitle when 3 failures and last sync over 24h ago`() {
+        val now = System.currentTimeMillis()
+        val twentyFiveHoursAgo = now - 25 * 60 * 60 * 1000L
+        assertTrue(showSyncIssueSubtitle(3, twentyFiveHoursAgo, now))
+    }
+
+    @Test
+    fun `normal subtitle when 3 failures but last sync under 24h ago`() {
+        val now = System.currentTimeMillis()
+        val oneHourAgo = now - 1 * 60 * 60 * 1000L
+        assertFalse(showSyncIssueSubtitle(3, oneHourAgo, now))
+    }
+
+    @Test
+    fun `boundary - exactly at 24h shows normal subtitle`() {
+        val now = System.currentTimeMillis()
+        val exactly24h = now - SYNC_ISSUE_SUBTITLE_THRESHOLD_MS
+        assertFalse(showSyncIssueSubtitle(3, exactly24h, now))
+    }
+
+    @Test
+    fun `boundary - 1ms past 24h shows sync issue subtitle`() {
+        val now = System.currentTimeMillis()
+        val justPast24h = now - SYNC_ISSUE_SUBTITLE_THRESHOLD_MS - 1
+        assertTrue(showSyncIssueSubtitle(3, justPast24h, now))
     }
 }

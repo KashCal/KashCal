@@ -23,6 +23,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -38,7 +39,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -53,8 +53,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.KashCalTheme
+
+/**
+ * Sub-sheet types for the account detail flow.
+ * Sequential pattern: only one sheet visible at a time.
+ */
+private enum class SubSheet { NONE, RENAME, CHANGE_PASSWORD, SIGN_OUT }
+
+/** Constants for sync warning indicator on account rows. */
+internal object SyncWarningConstants {
+    /** Minimum consecutive sync failures before showing warning indicator. */
+    const val SYNC_FAILURE_THRESHOLD = 3
+    /** Time window (24 hours in ms) — beyond this, subtitle changes to "Sync issue". */
+    const val SYNC_ISSUE_SUBTITLE_THRESHOLD_MS = 24 * 60 * 60 * 1000L
+}
 
 /**
  * Accounts detail screen.
@@ -62,19 +77,11 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
  * Dedicated screen for managing connected accounts (iCloud and CalDAV).
  * Features:
  * - List of connected accounts with calendar counts
- * - Tap account to show sign-out confirmation
+ * - Tap account to open AccountDetailSheet for management
  * - Add iCloud and Add CalDAV buttons
  * - Empty state when no accounts connected
  *
  * Follows SubscriptionsScreen navigation pattern.
- *
- * @param iCloudAccount Connected iCloud account (null if not connected)
- * @param calDavAccounts List of connected CalDAV accounts
- * @param onNavigateBack Callback to navigate back to Settings
- * @param onAddICloud Callback to open iCloud sign-in sheet
- * @param onICloudSignOut Callback when iCloud sign-out confirmed
- * @param onAddCalDav Callback to open CalDAV sign-in sheet
- * @param onCalDavSignOut Callback when CalDAV sign-out confirmed (with account ID)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,15 +93,30 @@ fun AccountsScreen(
     onAddICloud: () -> Unit,
     onICloudSignOut: () -> Unit,
     onAddCalDav: () -> Unit,
-    onCalDavSignOut: (Long) -> Unit
+    onCalDavSignOut: (Long) -> Unit,
+    // Account detail state + callbacks
+    accountDetail: AccountDetailUiModel? = null,
+    accountDetailSyncStatus: AccountDetailSyncStatus = AccountDetailSyncStatus.Idle,
+    accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
+    onObserveAccountDetail: (Long) -> Unit = {},
+    onClearAccountDetail: () -> Unit = {},
+    onSyncAccountNow: (Long) -> Unit = {},
+    onToggleAccountEnabled: (Long, Boolean) -> Unit = { _, _ -> },
+    onRenameAccount: (Long, String) -> Unit = { _, _ -> },
+    onChangeAccountPassword: (Long, String, (Result<Unit>) -> Unit) -> Unit = { _, _, _ -> },
+    onDiscoverCalendars: (Long) -> Unit = {}
 ) {
-    // State for sign-out confirmation (survives config change)
-    var showICloudSignOutSheet by rememberSaveable { mutableStateOf(false) }
-    var pendingCalDavSignOutId by rememberSaveable { mutableLongStateOf(-1L) }
+    // Selected account and sub-sheet state (survives config change)
+    var selectedAccountId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var activeSubSheet by rememberSaveable { mutableStateOf(SubSheet.NONE) }
+
+    // Password change state
+    var isPasswordValidating by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
 
     // Sheet states
-    val iCloudSheetState = rememberModalBottomSheetState()
-    val calDavSheetState = rememberModalBottomSheetState()
+    val detailSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val subSheetState = rememberModalBottomSheetState()
 
     val hasAccounts = iCloudAccount != null || calDavAccounts.isNotEmpty()
 
@@ -135,7 +157,12 @@ fun AccountsScreen(
                             providerName = stringResource(R.string.provider_icloud),
                             email = maskEmail(account.email),
                             calendarCount = account.calendarCount,
-                            onClick = { showICloudSignOutSheet = true }
+                            consecutiveSyncFailures = account.consecutiveSyncFailures,
+                            lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                            onClick = {
+                                selectedAccountId = account.accountId
+                                onObserveAccountDetail(account.accountId)
+                            }
                         )
                         HorizontalDivider(
                             modifier = Modifier.padding(start = 56.dp),
@@ -155,7 +182,12 @@ fun AccountsScreen(
                         providerName = account.displayName,
                         email = maskEmail(account.email),
                         calendarCount = account.calendarCount,
-                        onClick = { pendingCalDavSignOutId = account.id }
+                        consecutiveSyncFailures = account.consecutiveSyncFailures,
+                        lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                        onClick = {
+                            selectedAccountId = account.id
+                            onObserveAccountDetail(account.id)
+                        }
                     )
                     HorizontalDivider(
                         modifier = Modifier.padding(start = 56.dp),
@@ -190,29 +222,97 @@ fun AccountsScreen(
         }
     }
 
-    // iCloud sign-out confirmation sheet
-    if (showICloudSignOutSheet && iCloudAccount != null) {
-        GenericSignOutConfirmationSheet(
-            sheetState = iCloudSheetState,
-            providerName = stringResource(R.string.provider_icloud),
-            email = maskEmail(iCloudAccount.email),
-            onConfirm = onICloudSignOut,
-            onDismiss = { showICloudSignOutSheet = false }
+    // Account detail sheet
+    if (selectedAccountId != null && activeSubSheet == SubSheet.NONE && accountDetail != null) {
+        AccountDetailSheet(
+            sheetState = detailSheetState,
+            account = accountDetail,
+            syncStatus = accountDetailSyncStatus,
+            discoverStatus = accountDetailDiscoverStatus,
+            onRename = { activeSubSheet = SubSheet.RENAME },
+            onSyncNow = { onSyncAccountNow(accountDetail.accountId) },
+            onToggleEnabled = { enabled -> onToggleAccountEnabled(accountDetail.accountId, enabled) },
+            onDiscoverCalendars = { onDiscoverCalendars(accountDetail.accountId) },
+            onChangePassword = {
+                passwordError = null
+                activeSubSheet = SubSheet.CHANGE_PASSWORD
+            },
+            onSignOut = { activeSubSheet = SubSheet.SIGN_OUT },
+            onDismiss = {
+                selectedAccountId = null
+                onClearAccountDetail()
+            }
         )
     }
 
-    // CalDAV sign-out confirmation sheet
-    if (pendingCalDavSignOutId >= 0) {
-        val account = calDavAccounts.find { it.id == pendingCalDavSignOutId }
-        account?.let {
-            GenericSignOutConfirmationSheet(
-                sheetState = calDavSheetState,
-                providerName = it.displayName,
-                email = maskEmail(it.email),
-                onConfirm = { onCalDavSignOut(it.id) },
-                onDismiss = { pendingCalDavSignOutId = -1L }
-            )
-        }
+    // Rename sub-sheet
+    if (selectedAccountId != null && activeSubSheet == SubSheet.RENAME && accountDetail != null) {
+        RenameAccountSheet(
+            sheetState = subSheetState,
+            currentName = accountDetail.displayName,
+            onSave = { newName ->
+                onRenameAccount(accountDetail.accountId, newName)
+            },
+            onDismiss = {
+                activeSubSheet = SubSheet.NONE
+                // Reload detail with fresh data
+                selectedAccountId?.let { onObserveAccountDetail(it) }
+            }
+        )
+    }
+
+    // Change password sub-sheet
+    if (selectedAccountId != null && activeSubSheet == SubSheet.CHANGE_PASSWORD && accountDetail != null) {
+        ChangePasswordSheet(
+            sheetState = subSheetState,
+            provider = accountDetail.provider,
+            isValidating = isPasswordValidating,
+            error = passwordError,
+            onSave = { newPassword ->
+                isPasswordValidating = true
+                passwordError = null
+                onChangeAccountPassword(accountDetail.accountId, newPassword) { result ->
+                    isPasswordValidating = false
+                    result.fold(
+                        onSuccess = {
+                            activeSubSheet = SubSheet.NONE
+                            selectedAccountId?.let { onObserveAccountDetail(it) }
+                        },
+                        onFailure = { error ->
+                            passwordError = error.message
+                        }
+                    )
+                }
+            },
+            onDismiss = {
+                if (!isPasswordValidating) {
+                    activeSubSheet = SubSheet.NONE
+                    passwordError = null
+                    selectedAccountId?.let { onObserveAccountDetail(it) }
+                }
+            }
+        )
+    }
+
+    // Sign out confirmation sub-sheet
+    if (selectedAccountId != null && activeSubSheet == SubSheet.SIGN_OUT && accountDetail != null) {
+        GenericSignOutConfirmationSheet(
+            sheetState = subSheetState,
+            providerName = accountDetail.displayName,
+            email = accountDetail.email,
+            onConfirm = {
+                when (accountDetail.provider) {
+                    AccountProvider.ICLOUD -> onICloudSignOut()
+                    AccountProvider.CALDAV -> onCalDavSignOut(accountDetail.accountId)
+                    else -> {}
+                }
+                selectedAccountId = null
+                onClearAccountDetail()
+            },
+            onDismiss = {
+                activeSubSheet = SubSheet.NONE
+            }
+        )
     }
 }
 
@@ -226,9 +326,21 @@ private fun AccountRow(
     providerName: String,
     email: String,
     calendarCount: Int,
+    consecutiveSyncFailures: Int = 0,
+    lastSuccessfulSyncAt: Long? = null,
     onClick: () -> Unit
 ) {
-    val subtitle = if (calendarCount == 0) {
+    val hasSyncWarning = consecutiveSyncFailures >= SyncWarningConstants.SYNC_FAILURE_THRESHOLD
+
+    val showSyncIssueSubtitle = hasSyncWarning && (
+        lastSuccessfulSyncAt == null ||
+        lastSuccessfulSyncAt <= 0 ||
+        System.currentTimeMillis() - lastSuccessfulSyncAt > SyncWarningConstants.SYNC_ISSUE_SUBTITLE_THRESHOLD_MS
+    )
+
+    val subtitle = if (showSyncIssueSubtitle) {
+        stringResource(R.string.accounts_sync_issue)
+    } else if (calendarCount == 0) {
         stringResource(R.string.accounts_calendars_syncing)
     } else if (calendarCount == 1) {
         stringResource(R.string.accounts_calendar_count_one, email)
@@ -236,7 +348,10 @@ private fun AccountRow(
         stringResource(R.string.accounts_calendar_count_other, email, calendarCount)
     }
 
-    val semanticsDescription = "$providerName account, $email, $calendarCount calendars"
+    val syncWarningDesc = if (hasSyncWarning) {
+        ", " + stringResource(R.string.accounts_cd_sync_warning)
+    } else ""
+    val semanticsDescription = "$providerName account, $email, $calendarCount calendars$syncWarningDesc"
 
     Row(
         modifier = Modifier
@@ -264,11 +379,28 @@ private fun AccountRow(
                     providerName,
                     style = MaterialTheme.typography.bodyLarge
                 )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (hasSyncWarning) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = stringResource(R.string.accounts_cd_sync_warning),
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (showSyncIssueSubtitle) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+                    )
+                }
             }
         }
 
@@ -454,19 +586,20 @@ private fun AccountsScreenPreview() {
     KashCalTheme {
         AccountsScreen(
             iCloudAccount = ICloudAccountUiModel(
+                accountId = 1L,
                 email = "john@icloud.com",
                 calendarCount = 5
             ),
             showAddICloud = false,
             calDavAccounts = listOf(
                 CalDavAccountUiModel(
-                    id = 1,
+                    id = 2,
                     email = "user@nextcloud.example.com",
                     displayName = "Nextcloud",
                     calendarCount = 3
                 ),
                 CalDavAccountUiModel(
-                    id = 2,
+                    id = 3,
                     email = "me@fastmail.com",
                     displayName = "FastMail",
                     calendarCount = 2
@@ -504,6 +637,7 @@ private fun AccountsScreenICloudOnlyPreview() {
     KashCalTheme {
         AccountsScreen(
             iCloudAccount = ICloudAccountUiModel(
+                accountId = 1L,
                 email = "jane@icloud.com",
                 calendarCount = 0  // Syncing state
             ),
@@ -537,6 +671,46 @@ private fun AccountsScreenSameDisplayNamePreview() {
                     email = "testuser2",
                     displayName = "Work CalDAV",
                     calendarCount = 2
+                )
+            ),
+            onNavigateBack = {},
+            onAddICloud = {},
+            onICloudSignOut = {},
+            onAddCalDav = {},
+            onCalDavSignOut = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, name = "Sync Warning State")
+@Composable
+private fun AccountsScreenSyncWarningPreview() {
+    KashCalTheme {
+        AccountsScreen(
+            iCloudAccount = ICloudAccountUiModel(
+                accountId = 1L,
+                email = "john@icloud.com",
+                calendarCount = 5,
+                consecutiveSyncFailures = 5,
+                lastSuccessfulSyncAt = System.currentTimeMillis() - 48 * 60 * 60 * 1000L
+            ),
+            showAddICloud = false,
+            calDavAccounts = listOf(
+                CalDavAccountUiModel(
+                    id = 2,
+                    email = "user@nextcloud.example.com",
+                    displayName = "Nextcloud",
+                    calendarCount = 3,
+                    consecutiveSyncFailures = 3,
+                    lastSuccessfulSyncAt = System.currentTimeMillis() - 2 * 60 * 60 * 1000L
+                ),
+                CalDavAccountUiModel(
+                    id = 3,
+                    email = "me@fastmail.com",
+                    displayName = "FastMail",
+                    calendarCount = 2,
+                    consecutiveSyncFailures = 4,
+                    lastSuccessfulSyncAt = null
                 )
             ),
             onNavigateBack = {},

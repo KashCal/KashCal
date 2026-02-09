@@ -331,8 +331,9 @@
     <string name="placeholder_search_events">Search events…</string>
 
     <!-- ==================== Hints ==================== -->
-    <string name="hint_https_added_automatically">https:// added automatically</string>
+    <string name="hint_https_default">Defaults to https:// if not specified</string>
     <string name="hint_name_shown_in_settings">Name shown in settings</string>
+    <string name="caldav_trust_insecure_subtitle">For self-signed certificates or local HTTP servers</string>
 
     <!-- ==================== Recurrence ==================== -->
     <string name="label_recurrence_after">After</string>
@@ -415,6 +416,8 @@
     <string name="accounts_cd_icloud_icon">iCloud account</string>
     <string name="accounts_cd_caldav_icon">CalDAV account</string>
     <string name="accounts_cd_back">Navigate back</string>
+    <string name="accounts_sync_issue">Sync issue</string>
+    <string name="accounts_cd_sync_warning">Sync warning</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
     <string name="subscriptions_title">Subscriptions</string>
@@ -439,4 +442,45 @@
     <string name="subscriptions_cd_birthdays_icon">Contact Birthdays</string>
     <string name="subscriptions_cd_refresh">Refresh subscription</string>
     <string name="subscriptions_cd_delete">Delete subscription</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">SYNC</string>
+    <string name="account_detail_section_calendars">CALENDARS</string>
+    <string name="account_detail_section_account">ACCOUNT</string>
+    <string name="account_detail_enabled">Enabled</string>
+    <string name="account_detail_enabled_subtitle">Sync this account automatically</string>
+    <string name="account_detail_sync_now">Sync Now</string>
+    <string name="account_detail_syncing">Syncing…</string>
+    <string name="account_detail_discovering">Discovering…</string>
+    <string name="account_detail_discover_calendars">Discover New Calendars</string>
+    <string name="account_detail_change_password">Change Password</string>
+    <string name="account_detail_sign_out">Sign Out</string>
+    <string name="account_detail_never_synced">Never synced</string>
+    <string name="account_detail_last_success">Last success: %1$s</string>
+    <string name="account_detail_failure_one">Sync failed (%1$d attempt)</string>
+    <string name="account_detail_failure_other">Sync failed (%1$d attempts)</string>
+    <string name="account_detail_calendar_count_one">1 calendar</string>
+    <string name="account_detail_calendar_count_other">%1$d calendars</string>
+    <string name="account_detail_calendar_count_new">%1$d calendars (%2$d new)</string>
+    <!-- Content descriptions -->
+    <string name="account_detail_cd_rename">Rename</string>
+    <string name="account_detail_cd_show_password">Show password</string>
+    <string name="account_detail_cd_hide_password">Hide password</string>
+
+    <!-- Sync failure notification -->
+    <string name="sync_failure_notification_title">Sync issue with %1$s</string>
+    <string name="sync_failure_notification_text">Calendar sync has failed %1$d times</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Rename Account</string>
+    <string name="rename_account_label">Account Name</string>
+    <string name="rename_account_cancel">Cancel</string>
+    <string name="rename_account_save">Save</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Change Password</string>
+    <string name="change_password_label_icloud">App-Specific Password</string>
+    <string name="change_password_label_default">Password</string>
+    <string name="change_password_cancel">Cancel</string>
+    <string name="change_password_save">Save</string>
 </resources>

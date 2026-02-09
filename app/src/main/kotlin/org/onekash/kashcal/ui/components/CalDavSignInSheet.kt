@@ -49,7 +49,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 
 /**
@@ -65,7 +67,7 @@ import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
  * Features:
  * - Server URL with auto-https
  * - Username and password fields
- * - "Trust insecure connection" toggle for self-signed certificates
+ * - "Trust insecure connection" toggle for self-signed certificates and local HTTP servers
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -164,7 +166,7 @@ private fun NotConnectedContent(
             onValueChange = onServerUrlChange,
             label = { Text("Server URL") },
             placeholder = { Text("nextcloud.example.com") },
-            supportingText = { Text("https:// added automatically") },
+            supportingText = { Text(stringResource(R.string.hint_https_default)) },
             singleLine = true,
             isError = state.errorField == CalDavConnectionState.ErrorField.SERVER,
             keyboardOptions = KeyboardOptions(
@@ -305,7 +307,7 @@ private fun NotConnectedContent(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    "For self-signed certificates",
+                    stringResource(R.string.caldav_trust_insecure_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

@@ -336,18 +336,20 @@ class HomeViewModel @Inject constructor(
                     }
                     is SyncStatus.Succeeded -> {
                         suppressSyncIndicator = false  // Reset flag for next sync
+                        val hasPartialError = status.errorMessage != null
                         _uiState.update {
                             it.copy(
                                 isSyncing = false,
-                                showSyncBanner = showBanner,
-                                syncBannerMessage = "Sync complete"
+                                showSyncBanner = showBanner || hasPartialError,
+                                syncBannerMessage = if (hasPartialError)
+                                    "Sync complete with errors" else "Sync complete"
                             )
                         }
                         // Reload events after successful sync
                         reloadCurrentView()
-                        // Auto-dismiss after 2 seconds (only if banner was shown)
-                        if (showBanner) {
-                            delay(2000)
+                        // Auto-dismiss after delay
+                        if (showBanner || hasPartialError) {
+                            delay(if (hasPartialError) 3000 else 2000)
                             _uiState.update { it.copy(showSyncBanner = false) }
                             syncScheduler.resetBannerFlag()
                         }

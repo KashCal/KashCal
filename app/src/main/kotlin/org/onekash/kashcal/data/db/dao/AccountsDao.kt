@@ -41,6 +41,13 @@ interface AccountsDao {
     suspend fun getById(id: Long): Account?
 
     /**
+     * Get account by ID as reactive Flow.
+     * Emits new value when the account row changes.
+     */
+    @Query("SELECT * FROM accounts WHERE id = :id")
+    fun getByIdFlow(id: Long): Flow<Account?>
+
+    /**
      * Get account by provider and email (unique constraint).
      * Room TypeConverter handles AccountProvider → String conversion.
      */

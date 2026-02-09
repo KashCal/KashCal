@@ -946,6 +946,90 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
     }
 
+    // ==================== SSL Error Message Tests (Issue #56) ====================
+
+    @Test
+    fun `discoverAndCreateAccount shows different SSL error when trustInsecure already enabled`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Error(
+            0, "SSL certificate problem"
+        )
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://self-signed.local",
+            username = "user",
+            password = "pass",
+            trustInsecure = true
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        val error = result as DiscoveryResult.Error
+        assertFalse("Should not tell user to enable toggle that's already on", error.message.contains("Enable"))
+        assertTrue("Should acknowledge toggle is enabled", error.message.contains("even with"))
+    }
+
+    @Test
+    fun `discoverCalendars shows different SSL error when trustInsecure already enabled`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(0, "SSL error")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Error(
+            0, "SSL certificate problem"
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://self-signed.local",
+            username = "user",
+            password = "pass",
+            trustInsecure = true
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        val error = result as DiscoveryResult.Error
+        assertFalse("Should not tell user to enable toggle that's already on", error.message.contains("Enable"))
+        assertTrue("Should acknowledge toggle is enabled", error.message.contains("even with"))
+    }
+
+    @Test
+    fun `discoverCalendars shows SSL hint when trustInsecure disabled`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(0, "SSL error")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Error(
+            0, "SSL certificate problem"
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://self-signed.local",
+            username = "user",
+            password = "pass",
+            trustInsecure = false
+        )
+
+        assertTrue(result is DiscoveryResult.Error)
+        val error = result as DiscoveryResult.Error
+        assertTrue("Should hint to enable toggle", error.message.contains("Trust insecure"))
+    }
+
+    @Test
+    fun `discoverCalendars preserves explicit http scheme`() = runTest {
+        setupSuccessfulDiscovery(serverUrl = "http://192.168.1.100:8080")
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        discoveryService.discoverCalendars(
+            serverUrl = "http://192.168.1.100:8080",
+            username = "user",
+            password = "pass"
+        )
+
+        // Verify factory was called with http:// preserved (not upgraded to https://)
+        verify {
+            calDavClientFactory.createClient(
+                match<Credentials> { it.serverUrl == "http://192.168.1.100:8080" },
+                any()
+            )
+        }
+    }
+
     // ==================== normalizeServerUrl Tests (Issue #54) ====================
 
     @Test

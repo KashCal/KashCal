@@ -111,7 +111,13 @@ class SettingsActivity : ComponentActivity() {
                 // iCloud account for AccountsScreen — derived from uiState (single source of truth)
                 val iCloudAccount = remember(uiState.iCloudState) {
                     (uiState.iCloudState as? ICloudConnectionState.Connected)?.let {
-                        ICloudAccountUiModel(email = it.appleId, calendarCount = it.calendarCount)
+                        ICloudAccountUiModel(
+                            accountId = it.accountId,
+                            email = it.appleId,
+                            calendarCount = it.calendarCount,
+                            consecutiveSyncFailures = it.consecutiveSyncFailures,
+                            lastSuccessfulSyncAt = it.lastSyncTime
+                        )
                     }
                 }
 
@@ -202,7 +208,17 @@ class SettingsActivity : ComponentActivity() {
                                 onAddICloud = viewModel::showICloudSignInSheet,
                                 onICloudSignOut = viewModel::onSignOut,
                                 onAddCalDav = viewModel::showCalDavSignInSheet,
-                                onCalDavSignOut = viewModel::onCalDavSignOut
+                                onCalDavSignOut = viewModel::onCalDavSignOut,
+                                accountDetail = uiState.accountDetail,
+                                accountDetailSyncStatus = uiState.accountDetailSyncStatus,
+                                accountDetailDiscoverStatus = uiState.accountDetailDiscoverStatus,
+                                onObserveAccountDetail = viewModel::observeAccountDetail,
+                                onClearAccountDetail = viewModel::clearAccountDetail,
+                                onSyncAccountNow = viewModel::syncAccountNow,
+                                onToggleAccountEnabled = viewModel::toggleAccountEnabled,
+                                onRenameAccount = viewModel::renameAccount,
+                                onChangeAccountPassword = viewModel::changeAccountPassword,
+                                onDiscoverCalendars = viewModel::discoverNewCalendars
                             )
                         }
                         showSubscriptionsScreen -> {

@@ -454,12 +454,13 @@ sealed class SyncStatus {
     /** Sync is currently running */
     data object Running : SyncStatus()
 
-    /** Sync completed successfully */
+    /** Sync completed successfully (may include partial errors) */
     data class Succeeded(
         val calendarsSynced: Int = 0,
         val eventsPushed: Int = 0,
         val eventsPulled: Int = 0,
-        val durationMs: Long = 0
+        val durationMs: Long = 0,
+        val errorMessage: String? = null
     ) : SyncStatus()
 
     /** Sync failed */
@@ -495,7 +496,8 @@ private fun WorkInfo.toSyncStatus(): SyncStatus {
                 calendarsSynced = outputData.getInt(CalDavSyncWorker.KEY_CALENDARS_SYNCED, 0),
                 eventsPushed = outputData.getInt(CalDavSyncWorker.KEY_EVENTS_PUSHED, 0),
                 eventsPulled = outputData.getInt(CalDavSyncWorker.KEY_EVENTS_PULLED, 0),
-                durationMs = outputData.getLong(CalDavSyncWorker.KEY_DURATION_MS, 0)
+                durationMs = outputData.getLong(CalDavSyncWorker.KEY_DURATION_MS, 0),
+                errorMessage = outputData.getString(CalDavSyncWorker.KEY_ERROR_MESSAGE)
             )
         }
         WorkInfo.State.FAILED -> {

@@ -49,5 +49,7 @@ data class CalDavAccountUiModel(
     val id: Long,
     val email: String,
     val displayName: String,
-    val calendarCount: Int
+    val calendarCount: Int,
+    val consecutiveSyncFailures: Int = 0,
+    val lastSuccessfulSyncAt: Long? = null
 )

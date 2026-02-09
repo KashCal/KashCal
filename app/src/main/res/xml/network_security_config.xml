@@ -2,24 +2,25 @@
 <!--
     Network Security Configuration for KashCal.
 
-    Security:
-    - Cleartext (HTTP) traffic is disabled by default
-    - Only HTTPS connections are allowed
-    - This is required for CalDAV sync with iCloud and other providers
+    Cleartext (HTTP) traffic is allowed because:
+    - Self-hosted CalDAV servers (Baikal, Radicale) commonly run on local HTTP
+    - URL normalization defaults to HTTPS when no scheme is provided (secure by default)
+    - Users must explicitly type http:// to use cleartext (conscious choice)
+    - KashCal only connects to user-configured CalDAV servers (no third-party SDKs)
 
-    Android 7.0+ (API 24+): This config is respected
-    Earlier versions: Cleartext was allowed by default anyway
+    Android lint may flag this as InsecureBaseConfiguration — this is intentional
+    for the self-hosted CalDAV use case.
 -->
-<network-security-config>
-    <!-- Block all cleartext (HTTP) traffic by default -->
-    <base-config cleartextTrafficPermitted="false">
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true"
+        tools:ignore="InsecureBaseConfiguration">
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>
     </base-config>
 
     <!--
-        Debug builds: Allow self-signed certificates for local testing
+        Debug builds: Allow user-installed certificates for local testing.
         This does NOT apply to release builds.
     -->
     <debug-overrides>

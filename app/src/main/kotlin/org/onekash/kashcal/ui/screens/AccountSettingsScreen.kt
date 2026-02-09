@@ -54,6 +54,9 @@ import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
+import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
@@ -100,7 +103,13 @@ data class AccountSettingsUiState(
     /** Email for success sheet */
     val connectedEmail: String = "",
     /** Calendar count for success sheet */
-    val connectedCalendarCount: Int = 0
+    val connectedCalendarCount: Int = 0,
+    /** Account detail sheet state */
+    val accountDetail: AccountDetailUiModel? = null,
+    /** Sync status for account detail sheet */
+    val accountDetailSyncStatus: AccountDetailSyncStatus = AccountDetailSyncStatus.Idle,
+    /** Discovery status for account detail sheet */
+    val accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle
 )
 
 /**

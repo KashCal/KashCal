@@ -1043,4 +1043,92 @@ class CalDavSyncWorkerTest {
             calendarColor = 0xFF0000
         )
     }
+
+    // ==================== Account Detail: Sync Recording & isEnabled Guard ====================
+
+    @Test
+    fun `syncAccount calls recordSyncSuccess on Success`() = runTest {
+        val inputData = CalDavSyncWorker.createAccountSyncInput(accountId = 1L)
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 2, durationMs = 500)
+
+        worker.doWork()
+
+        coVerify { accountRepository.recordSyncSuccess(1L, any()) }
+        coVerify(exactly = 0) { accountRepository.recordSyncFailure(any(), any()) }
+    }
+
+    @Test
+    fun `syncAccount calls recordSyncFailure on PartialSuccess`() = runTest {
+        val inputData = CalDavSyncWorker.createAccountSyncInput(accountId = 1L)
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.PartialSuccess(
+                calendarsSynced = 1,
+                errors = listOf(SyncError(phase = SyncPhase.PULL, calendarId = 2L, message = "fetch failed")),
+                durationMs = 500
+            )
+
+        worker.doWork()
+
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        coVerify(exactly = 0) { accountRepository.recordSyncSuccess(any(), any()) }
+    }
+
+    @Test
+    fun `syncAccount calls recordSyncFailure on AuthError`() = runTest {
+        val inputData = CalDavSyncWorker.createAccountSyncInput(accountId = 1L)
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.AuthError("Invalid token")
+
+        worker.doWork()
+
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        coVerify(exactly = 0) { accountRepository.recordSyncSuccess(any(), any()) }
+    }
+
+    @Test
+    fun `syncAccount calls recordSyncFailure on Error`() = runTest {
+        val inputData = CalDavSyncWorker.createAccountSyncInput(accountId = 1L)
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.Error(-1, "Server error", true)
+
+        worker.doWork()
+
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        coVerify(exactly = 0) { accountRepository.recordSyncSuccess(any(), any()) }
+    }
+
+    @Test
+    fun `syncAccount skips disabled account and returns Success with 0 calendars`() = runTest {
+        val inputData = CalDavSyncWorker.createAccountSyncInput(accountId = 1L)
+        val worker = createWorker(inputData)
+        val disabledAccount = createTestAccount().copy(isEnabled = false)
+
+        coEvery { accountRepository.getAccountById(1L) } returns disabledAccount
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
+        // Sync engine should never be called
+        coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
+        // No sync metadata should be recorded
+        coVerify(exactly = 0) { accountRepository.recordSyncSuccess(any(), any()) }
+        coVerify(exactly = 0) { accountRepository.recordSyncFailure(any(), any()) }
+    }
 }

@@ -128,8 +128,9 @@ class ReminderNotificationManager @Inject constructor(
      * @return Formatted content text
      */
     private fun formatNotificationContent(reminder: ScheduledReminder): String {
-        val now = System.currentTimeMillis()
-        val diffMs = reminder.occurrenceTime - now
+        // Use stored trigger/occurrence times instead of wall clock to avoid
+        // drift from inexact alarms or processing delay (e.g. 15 min showing as 14)
+        val diffMs = reminder.occurrenceTime - reminder.triggerTime
 
         return when {
             reminder.isAllDay -> {

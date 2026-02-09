@@ -45,6 +45,12 @@ interface AccountRepository {
      */
     fun getAccountCountByProviderFlow(provider: AccountProvider): Flow<Int>
 
+    /**
+     * Get account by ID as reactive Flow.
+     * Used for AccountDetailSheet to auto-update on sync metadata changes.
+     */
+    fun getAccountByIdFlow(id: Long): Flow<Account?>
+
     // ========== One-Shot Queries ==========
 
     /**

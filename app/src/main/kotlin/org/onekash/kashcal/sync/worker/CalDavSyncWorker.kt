@@ -102,6 +102,9 @@ class CalDavSyncWorker @AssistedInject constructor(
         // Sync log retention (7 days)
         private const val SYNC_LOG_RETENTION_DAYS = 7
 
+        // Consecutive sync failures before notifying user
+        private const val SYNC_FAILURE_NOTIFICATION_THRESHOLD = 3
+
         /**
          * Create input data for full sync (all accounts).
          */
@@ -416,6 +419,12 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         Log.d(TAG, "Syncing account: ${account.email.maskEmail()}")
 
+        // Skip disabled accounts
+        if (!account.isEnabled) {
+            Log.d(TAG, "Account $accountId is disabled, skipping sync")
+            return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
+        }
+
         // Skip accounts that don't support CalDAV
         if (!account.provider.supportsCalDAV) {
             Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
@@ -472,13 +481,54 @@ class CalDavSyncWorker @AssistedInject constructor(
         Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
         // Sync this account with its quirks and isolated client
-        return syncEngine.syncAccountWithQuirks(
-            account = account,
-            quirks = quirks,
-            forceFullSync = forceFullSync,
-            client = isolatedClient,
-            trigger = trigger
-        )
+        val result = try {
+            syncEngine.syncAccountWithQuirks(
+                account = account,
+                quirks = quirks,
+                forceFullSync = forceFullSync,
+                client = isolatedClient,
+                trigger = trigger
+            )
+        } catch (e: Exception) {
+            accountRepository.recordSyncFailure(accountId, System.currentTimeMillis())
+            try { checkSyncFailureThreshold(accountId) } catch (_: Exception) { }
+            throw e
+        }
+
+        // Record sync metadata on account
+        val now = System.currentTimeMillis()
+        when (result) {
+            is SyncResult.Success ->
+                accountRepository.recordSyncSuccess(accountId, now)
+            is SyncResult.PartialSuccess -> {
+                accountRepository.recordSyncFailure(accountId, now)
+                checkSyncFailureThreshold(accountId)
+            }
+            is SyncResult.AuthError -> {
+                accountRepository.recordSyncFailure(accountId, now)
+                // Skip threshold notification — showAuthErrorNotification is more specific
+            }
+            is SyncResult.Error -> {
+                accountRepository.recordSyncFailure(accountId, now)
+                checkSyncFailureThreshold(accountId)
+            }
+        }
+
+        return result
+    }
+
+    /**
+     * Check if an account's consecutive sync failures just hit the notification threshold.
+     * Uses == (not >=) to fire exactly once at the threshold.
+     */
+    private suspend fun checkSyncFailureThreshold(accountId: Long) {
+        val account = accountRepository.getAccountById(accountId) ?: return
+        if (account.consecutiveSyncFailures == SYNC_FAILURE_NOTIFICATION_THRESHOLD) {
+            notificationManager.showSyncFailureThresholdNotification(
+                accountName = account.displayName ?: account.provider.displayName,
+                failureCount = account.consecutiveSyncFailures
+            )
+        }
     }
 
     /**
@@ -621,8 +671,11 @@ class CalDavSyncWorker @AssistedInject constructor(
                 throw e  // Re-throw to be caught by outer handler
             }
 
+            // Record per-account sync metadata (same as single-account path)
+            val now = System.currentTimeMillis()
             when (result) {
                 is SyncResult.Success -> {
+                    accountRepository.recordSyncSuccess(account.id, now)
                     totalCalendars += result.calendarsSynced
                     totalPushCreated += result.eventsPushedCreated
                     totalPushUpdated += result.eventsPushedUpdated
@@ -634,6 +687,8 @@ class CalDavSyncWorker @AssistedInject constructor(
                     allChanges.addAll(result.changes)
                 }
                 is SyncResult.PartialSuccess -> {
+                    accountRepository.recordSyncFailure(account.id, now)
+                    checkSyncFailureThreshold(account.id)
                     totalCalendars += result.calendarsSynced
                     totalPushCreated += result.eventsPushedCreated
                     totalPushUpdated += result.eventsPushedUpdated
@@ -646,6 +701,8 @@ class CalDavSyncWorker @AssistedInject constructor(
                     allChanges.addAll(result.changes)
                 }
                 is SyncResult.AuthError -> {
+                    accountRepository.recordSyncFailure(account.id, now)
+                    checkSyncFailureThreshold(account.id)
                     Log.e(TAG, "Auth error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.AUTH,
@@ -654,6 +711,8 @@ class CalDavSyncWorker @AssistedInject constructor(
                     ))
                 }
                 is SyncResult.Error -> {
+                    accountRepository.recordSyncFailure(account.id, now)
+                    checkSyncFailureThreshold(account.id)
                     Log.e(TAG, "Sync error for account ${account.email.maskEmail()}: ${result.message}")
                     allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                         phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,

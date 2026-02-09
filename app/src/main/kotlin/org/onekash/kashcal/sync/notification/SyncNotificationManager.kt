@@ -388,6 +388,27 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
+     * Show notification when sync has failed repeatedly for an account.
+     * Fires once at the threshold (not on every subsequent failure).
+     *
+     * @param accountName Display name of the account
+     * @param failureCount Number of consecutive failures
+     */
+    fun showSyncFailureThresholdNotification(accountName: String, failureCount: Int) {
+        val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(context.getString(R.string.sync_failure_notification_title, accountName))
+            .setContentText(context.getString(R.string.sync_failure_notification_text, failureCount))
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .setContentIntent(createOpenAppIntent())
+            .build()
+
+        notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_FAILURE_THRESHOLD, notification)
+    }
+
+    /**
      * Cancel progress notification.
      * Should be called when sync completes (success or failure).
      */

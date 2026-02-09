@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
 /**
@@ -26,6 +26,11 @@ import javax.inject.Inject
  * Per Android best practices:
  * - Uses goAsync() for work that takes > 10ms
  * - Reschedules from persistent database storage
+ *
+ * Recovery is two-phase:
+ * 1. Immediate: rescheduleAllPending() re-registers alarms for existing ScheduledReminder rows
+ * 2. Deferred: ReminderRefreshWorker creates missing rows for events that had reminders
+ *    fired/dismissed/cleaned up (runs via WorkManager, not subject to 10s receiver limit)
  */
 @AndroidEntryPoint
 class BootCompletedReceiver : BroadcastReceiver() {
@@ -35,7 +40,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
     }
 
     @Inject
-    lateinit var reminderScheduler: ReminderScheduler
+    lateinit var handler: BootRecoveryHandler
 
     // Scope for async work in receiver
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -59,18 +64,20 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
         scope.launch {
             try {
-                // Reschedule all pending reminders
-                reminderScheduler.rescheduleAllPending()
-
-                // Clean up old reminders while we're at it
-                reminderScheduler.cleanupOldReminders()
-
-                Log.d(TAG, "Successfully rescheduled all pending reminders")
+                handler.rescheduleReminders()
             } catch (e: Exception) {
                 Log.e(TAG, "Error rescheduling reminders after boot", e)
             } finally {
                 pendingResult.finish()
             }
+        }
+
+        // Trigger immediate reminder refresh to create ScheduledReminder rows
+        // for events that are missing them. Runs via WorkManager (no 10s limit).
+        try {
+            ReminderRefreshWorker.runNow(context)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to trigger reminder refresh worker", e)
         }
     }
 }
