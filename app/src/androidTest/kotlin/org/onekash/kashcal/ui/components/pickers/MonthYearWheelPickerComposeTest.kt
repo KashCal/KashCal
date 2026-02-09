@@ -8,6 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -74,8 +76,8 @@ class MonthYearWheelPickerComposeTest {
     fun headerClick_showsWheelPicker_hidesDayHeaders() {
         setUpDatePicker()
 
-        // Day-of-week headers should be visible initially
-        composeTestRule.onNodeWithText("S").assertIsDisplayed()
+        // Day-of-week headers should be visible initially (S appears twice: Sun + Sat)
+        composeTestRule.onAllNodesWithText("S").onFirst().assertIsDisplayed()
 
         // Click the header to show wheel picker
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
@@ -97,8 +99,8 @@ class MonthYearWheelPickerComposeTest {
         composeTestRule.onNodeWithContentDescription("Show calendar").performClick()
         composeTestRule.waitForIdle()
 
-        // Day-of-week headers should be back
-        composeTestRule.onNodeWithText("S").assertIsDisplayed()
+        // Day-of-week headers should be back (S appears twice: Sun + Sat)
+        composeTestRule.onAllNodesWithText("S").onFirst().assertIsDisplayed()
     }
 
     // ==================== Month/Year Selection Tests ====================
