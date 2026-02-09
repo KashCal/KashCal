@@ -4,9 +4,7 @@
 
 # KashCal™
 
-**Your calendar. Your device. Your rules.**
-
-A modern, privacy-first calendar with iCloud and CalDAV sync — finally done right on Android. Works offline. Looks beautiful. Doesn't track you.
+**A private, offline-first calendar for Android with iCloud and CalDAV sync.**
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="80">](https://f-droid.org/packages/org.onekash.kashcal)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" height="80">](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal)
@@ -45,10 +43,9 @@ A modern, privacy-first calendar with iCloud and CalDAV sync — finally done ri
 
 ## Why KashCal?
 
-- **Left iPhone but not iCloud?** We sync with Apple Calendar natively
-- **Don't trust Big Tech with your schedule?** We don't collect anything
-- **Self-host your life?** We speak CalDAV fluently
-- **Privacy apps look terrible?** We disagree
+Most calendar apps either lock you into a cloud ecosystem or look like they were built in 2012. KashCal syncs natively with iCloud and CalDAV servers (Nextcloud, Radicale, Baïkal, etc.) while keeping everything on your device by default. No account required, no analytics, no telemetry.
+
+If you switched from iPhone to Android but still use iCloud calendars, this is probably the app you've been looking for.
 
 ## Why Calendar Privacy Matters
 
@@ -58,31 +55,25 @@ Your calendar reveals your life: doctor appointments, job interviews, who you me
 
 ## Features
 
-- **iCloud & CalDAV** — Sync with Apple Calendar, Nextcloud, Radicale, Baïkal, and more
-- **Offline-First** — Works without internet. Sync when you want
-- **Material You** — Beautiful design with dynamic theming
-- **Home Widgets** — Agenda, week view, and date widgets
-- **ICS Subscriptions** — Subscribe to public calendars (holidays, sports, etc.)
-- **Contact Birthdays** — Auto-generate birthday calendar from contacts
-- **Search** — Full-text search across all your events
-- **Travel Friendly** — Set timezone per event
+- **iCloud & CalDAV sync**: Apple Calendar, Nextcloud, Radicale, Baïkal, and more
+- **Offline-first**: works without internet; sync when you want
+- **Material You** with dynamic theming
+- **Home widgets**: agenda, week view, and date
+- **ICS subscriptions** for public calendars (holidays, sports, etc.)
+- **Contact birthdays** auto-generated from your contacts
+- **Full-text search** across all events
+- **Per-event timezone** for travel
 
 ## Security & Privacy
 
-**Your Data Stays Yours:**
+No analytics, no tracking, no KashCal account required. Data is stored locally unless you explicitly set up sync.
 
-- **No Analytics** — Zero tracking or telemetry
-- **No Accounts** — No KashCal account required
-- **Local-First** — Data stored on your device
-- **Open Source** — Fully auditable codebase
-
-**Secure by Design:**
-
-- **Fort Knox Mode** — Other apps have no access to your events
-- **Encrypted Credentials** — AES-256-GCM via Android Keystore
-- **HTTPS Only** — Cleartext traffic blocked
-- **No WebViews** — Native UI only
-- **Minimal Permissions** — Only what's necessary
+- **Fort Knox Mode**: other apps have no access to your events
+- **Encrypted credentials** via Android Keystore (AES-256-GCM)
+- **HTTPS only**: cleartext traffic blocked
+- **No WebViews**: native UI only
+- **Minimal permissions**: only what's necessary
+- **Fully auditable**: open source codebase
 
 ## Tested CalDAV Providers
 
@@ -143,6 +134,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **[Website](https://kashcal.github.io)** · **[Issues](https://github.com/KashCal/KashCal/issues)** · **[Releases](https://github.com/KashCal/KashCal/releases)**
 
-Apache License 2.0 — see [LICENSE](LICENSE)
+Apache License 2.0 (see [LICENSE](LICENSE))
 
 </div>

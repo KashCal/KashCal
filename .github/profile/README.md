@@ -4,7 +4,7 @@
 
 # KashCal
 
-**Your calendar. Your device. Your rules.**
+**A private, offline-first calendar for Android.**
 
 ---
 
@@ -16,15 +16,11 @@
 
 ## Welcome
 
-KashCal is a privacy-first calendar for Android. It works completely offline with a local calendar, or syncs with CalDAV servers like iCloud, Nextcloud, Baïkal, and Radicale — your choice.
-
-We believe your schedule is personal. That's why KashCal has zero analytics, zero tracking, and requires no account. Your calendar data stays on your device unless you explicitly choose to sync it.
+KashCal is a calendar for Android that works completely offline, with optional CalDAV sync for iCloud, Nextcloud, Baïkal, Radicale, and others. No analytics, no tracking, no KashCal account required.
 
 ## Who It's For
 
-- **Privacy-conscious users** who want a calendar that respects their data
-- **Android users** who want to sync with iCloud or other CalDAV servers
-- **Anyone** who wants a beautiful, offline-first calendar without the bloat
+People who want a good calendar app that doesn't phone home. Whether you self-host with Nextcloud, still use iCloud after switching to Android, or just want something that works offline, KashCal does the job.
 
 ## Projects
 
@@ -36,16 +32,8 @@ We believe your schedule is personal. That's why KashCal has zero analytics, zer
 
 ## Contributing
 
-Open source is a collaboration. We welcome bug reports, feature requests, testing, and code contributions. If you find a CalDAV server that doesn't work, [let us know](https://github.com/KashCal/KashCal/issues).
+We welcome bug reports, feature requests, testing, and code contributions. If you find a CalDAV server that doesn't work, [let us know](https://github.com/KashCal/KashCal/issues).
 
 ## Links
 
 **[Website](https://kashcal.github.io)** · **[Download](https://f-droid.org/packages/org.onekash.kashcal)** · **[Issues](https://github.com/KashCal/KashCal/issues)**
-
----
-
-<div align="center">
-
-*Privacy isn't a feature. It's the foundation.*
-
-</div>
