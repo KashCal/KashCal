@@ -2,6 +2,13 @@ Your calendar. Your device. Your rules.
 
 A modern, privacy-first calendar with iCloud and CalDAV sync — finally done right on Android. Works offline. Looks beautiful. Doesn't track you.
 
+Why KashCal?
+
+• Left iPhone but not iCloud? We sync with Apple Calendar natively
+• Don't trust Big Tech with your schedule? We don't collect anything
+• Self-host your life? We speak CalDAV fluently
+• Privacy apps look terrible? We disagree
+
 Features
 
 • iCloud & CalDAV — Sync with Apple Calendar, Nextcloud, Radicale, Baikal, and more
@@ -30,12 +37,6 @@ Secure by Design:
 • No WebViews — Native UI only
 • Minimal Permissions — Only what's necessary
 
-Why KashCal?
-
-• Left iPhone but not iCloud? We sync with Apple Calendar natively
-• Don't trust Big Tech with your schedule? We don't collect anything
-• Self-host your life? We speak CalDAV fluently
-• Privacy apps look terrible? We disagree
-
 Website: https://kashcal.github.io
+
 Source code: https://github.com/KashCal/KashCal

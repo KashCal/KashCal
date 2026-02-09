@@ -273,6 +273,15 @@ private fun SyncSessionCard(session: SyncSession) {
                 )
             }
 
+            // Row 4 (optional): Constraint error warning
+            if (session.hasConstraintErrors && !expanded) {
+                Text(
+                    text = "⚠ ${session.skippedConstraintError} skipped (constraint error)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFFFFA000)
+                )
+            }
+
             // Expandable details
             AnimatedVisibility(
                 visible = expanded,
@@ -297,6 +306,17 @@ private fun SyncSessionCard(session: SyncSession) {
                         if (session.abandonedParseErrors > 0) {
                             DetailRow("Abandoned (max retries)", session.abandonedParseErrors.toString())
                         }
+                    }
+
+                    // Constraint error details
+                    if (session.hasConstraintErrors) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Constraint Errors",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFFA000)
+                        )
+                        DetailRow("Events skipped", session.skippedConstraintError.toString())
                     }
 
                     // Fallback details

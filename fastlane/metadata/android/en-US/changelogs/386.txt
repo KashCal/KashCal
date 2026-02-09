@@ -1,0 +1,10 @@
+v22.5.2
+
+What's New:
+- Month/Year Wheel Picker: Scroll to any month and year with circular wheel pickers
+- Inline Date Picker: Pick dates without leaving the event form
+- View Options: Switch between Month, Agenda, and 3 Days views
+- Absolute Reminder Times: Notifications show event start time instead of relative time
+- Sync Reliability: FK constraint errors no longer block sync permanently
+
+Plus many bug fixes and performance improvements.

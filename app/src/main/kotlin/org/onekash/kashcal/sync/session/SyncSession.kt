@@ -39,6 +39,7 @@ data class SyncSession(
     val skippedPendingLocal: Int = 0,
     val skippedEtagUnchanged: Int = 0,
     val skippedOrphanedException: Int = 0,
+    val skippedConstraintError: Int = 0,
 
     // Issue tracking
     val hasMissingEvents: Boolean = false,
@@ -87,6 +88,11 @@ data class SyncSession(
      * Whether this session has parse failures worth showing.
      */
     val hasParseFailures: Boolean get() = skippedParseError > 0
+
+    /**
+     * Whether this session has constraint errors (FK violations, etc.) worth showing.
+     */
+    val hasConstraintErrors: Boolean get() = skippedConstraintError > 0
 
     /**
      * Total events pushed to server (local → server).

@@ -101,11 +101,15 @@ fun <T> VerticalWheelPicker(
 
     // Offset scroll targets so the selected item appears at viewport center.
     // contentPadding cannot center items in the middle of a large virtual list.
-    val centeringOffset = if (effectiveCircular) visibleItems / 2 else 0
+    val centeringOffset = visibleItems / 2
 
     // Initial scroll position (start in middle for circular, offset to center)
     val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
-    val initialIndex = middleOffset + selectedIndex - centeringOffset
+    val initialIndex = if (effectiveCircular) {
+        middleOffset + selectedIndex - centeringOffset
+    } else {
+        (selectedIndex - centeringOffset).coerceAtLeast(0)
+    }
 
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
@@ -114,6 +118,12 @@ fun <T> VerticalWheelPicker(
 
     // Track previous actual index for wrap detection
     var previousActualIndex by remember { mutableIntStateOf(selectedIndex) }
+
+    // For non-circular lists, skip the first settle event. Before the first layout,
+    // visibleItemsInfo is empty and the fallback centerIndex is wrong for edge items
+    // (contentPadding shifts items but firstVisibleItemIndex + centeringOffset doesn't
+    // account for it). Circular lists don't have this problem.
+    var hasSettled by remember { mutableStateOf(effectiveCircular) }
 
     // Calculate center index based on actual pixel position in viewport.
     // This finds the item whose center is closest to the viewport's center pixel,
@@ -134,6 +144,13 @@ fun <T> VerticalWheelPicker(
     // Detect when scrolling settles and notify selection + handle recentering
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
+            // Skip the first settle for non-circular lists — centerIndex fallback
+            // is unreliable before first layout (see hasSettled comment above)
+            if (!hasSettled) {
+                hasSettled = true
+                return@LaunchedEffect
+            }
+
             // Use pixel-based centerIndex for accurate selection
             val centerVirtualIndex = centerIndex
             val actualIndex = virtualToActualIndex(centerVirtualIndex, items.size, effectiveCircular)
@@ -175,7 +192,12 @@ fun <T> VerticalWheelPicker(
                     targetActualIndex, currentVirtualIndex, items.size, effectiveCircular
                 )
                 coroutineScope.launch {
-                    listState.animateScrollToItem(targetVirtualIndex - centeringOffset)
+                    val scrollTarget = if (effectiveCircular) {
+                        targetVirtualIndex - centeringOffset
+                    } else {
+                        (targetVirtualIndex - centeringOffset).coerceAtLeast(0)
+                    }
+                    listState.animateScrollToItem(scrollTarget)
                 }
             }
         }

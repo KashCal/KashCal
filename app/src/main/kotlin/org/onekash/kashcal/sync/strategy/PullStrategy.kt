@@ -810,17 +810,17 @@ class PullStrategy @Inject constructor(
                     }
                 }
             } catch (e: SQLiteConstraintException) {
-                // Duplicate UID detected - fetch existing event and use that
-                // This can happen due to unique constraint on (uid, calendar_id) for master events
-                Log.w(TAG, "Duplicate UID detected for ${meta.parsed.uid}, fetching existing event")
+                // Check if this is a duplicate UID (unique constraint on uid, calendar_id)
                 val existing = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
                 if (existing != null) {
+                    Log.w(TAG, "Duplicate UID detected for ${meta.parsed.uid}, using existing event")
                     uidToMasterEvent[meta.parsed.uid] = existing
-                    continue // Skip to next event
-                } else {
-                    // Unexpected - constraint violation but no existing event found
-                    throw e
+                    continue
                 }
+                // Not a duplicate — FK or other constraint error. Skip to prevent sync abort loop (issue #55)
+                Log.w(TAG, "Constraint error for master ${meta.parsed.uid} (${meta.caldavUrl}), skipping: ${e.message}")
+                sessionBuilder?.incrementSkipConstraintError()
+                continue
             }
 
             uidToMasterEvent[meta.parsed.uid] = savedEvent
@@ -934,23 +934,31 @@ class PullStrategy @Inject constructor(
             // Uses Model B (linked occurrence) consistently to prevent duplicates.
             // linkException handles: delete Model A occurrence (if exists), update/create Model B.
             // Wrapped in withDbRetry for resilience against database lock errors
-            val savedExceptionEvent = withDbRetry {
-                database.runInTransaction {
-                    val eventId = eventsDao.upsert(event)
-                    val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+            val savedExceptionEvent = try {
+                withDbRetry {
+                    database.runInTransaction {
+                        val eventId = eventsDao.upsert(event)
+                        val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
 
-                    // Link exception to master's occurrence (Model B)
-                    // This normalizes any existing Model A to Model B, preventing duplicates
-                    val originalTime = event.originalInstanceTime
-                    if (originalTime != null) {
-                        occurrenceGenerator.linkException(masterEvent.id, originalTime, saved)
-                    } else {
-                        // Fallback: no original time means standalone occurrence
-                        occurrenceGenerator.regenerateOccurrences(saved)
+                        // Link exception to master's occurrence (Model B)
+                        // This normalizes any existing Model A to Model B, preventing duplicates
+                        val originalTime = event.originalInstanceTime
+                        if (originalTime != null) {
+                            occurrenceGenerator.linkException(masterEvent.id, originalTime, saved)
+                        } else {
+                            // Fallback: no original time means standalone occurrence
+                            occurrenceGenerator.regenerateOccurrences(saved)
+                        }
+
+                        saved // Return from transaction
                     }
-
-                    saved // Return from transaction
                 }
+            } catch (e: SQLiteConstraintException) {
+                // FK or other constraint error on exception event. Skip to prevent sync abort loop (issue #55)
+                Log.w(TAG, "Constraint error for exception ${meta.parsed.uid} " +
+                    "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp}), skipping: ${e.message}")
+                sessionBuilder?.incrementSkipConstraintError()
+                continue
             }
 
             // Track change for UI notification (exception events are shown like regular events)

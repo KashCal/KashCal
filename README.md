@@ -22,7 +22,13 @@ A modern, privacy-first calendar with iCloud and CalDAV sync — finally done ri
 <tr>
 <td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/HomePage-with-AboutMe.png" width="180"></td>
 <td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/NewEvent.png" width="180"></td>
-<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/NewEvent-Date-Time-Picker.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/New-Event-Date-Time-Picker.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Navigation-to-different-month-year.png" width="180"></td>
+</tr>
+<tr>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/ViewOptions.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/manage-account.png" width="180"></td>
+<td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/ics-and-birthday-cal-color-picker.png" width="180"></td>
 <td><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/Settings.png" width="180"></td>
 </tr>
 <tr>

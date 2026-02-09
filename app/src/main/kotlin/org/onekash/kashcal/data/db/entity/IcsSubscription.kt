@@ -142,7 +142,7 @@ data class IcsSubscription(
     fun isDueForSync(): Boolean {
         if (!enabled) return false
         val now = System.currentTimeMillis()
-        val intervalMs = syncIntervalHours * 60 * 60 * 1000L
+        val intervalMs = syncIntervalHours.toLong() * 60 * 60 * 1000
         return now - lastSync >= intervalMs
     }
 

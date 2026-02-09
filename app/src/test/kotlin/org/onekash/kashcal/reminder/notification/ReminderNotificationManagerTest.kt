@@ -1,27 +1,39 @@
 package org.onekash.kashcal.reminder.notification
 
+import android.app.Notification
 import android.content.Context
 import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Unit tests for ReminderNotificationManager.
  *
  * Tests verify:
  * - Notification building works correctly
- * - Time formatting is correct
+ * - Absolute event time formatting is correct
+ * - Cross-day date qualifiers work
  * - Constants are correctly defined for deep linking
  *
  * Note: The actual intent creation is tested indirectly through the notification
@@ -33,10 +45,18 @@ class ReminderNotificationManagerTest {
 
     private lateinit var context: Context
     private lateinit var channels: ReminderNotificationChannels
+    private lateinit var dataStore: KashCalDataStore
     private lateinit var manager: ReminderNotificationManager
+    private lateinit var originalTimeZone: TimeZone
+    private lateinit var originalLocale: Locale
 
     @Before
     fun setup() {
+        originalTimeZone = TimeZone.getDefault()
+        originalLocale = Locale.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
+        Locale.setDefault(Locale.US)
+
         mockkStatic(Log::class)
         every { Log.i(any(), any()) } returns 0
         every { Log.d(any(), any()) } returns 0
@@ -46,11 +66,14 @@ class ReminderNotificationManagerTest {
         context = RuntimeEnvironment.getApplication()
         channels = ReminderNotificationChannels(context)
         channels.createChannels()
-        manager = ReminderNotificationManager(context, channels)
+        dataStore = KashCalDataStore(context)
+        manager = ReminderNotificationManager(context, channels, dataStore)
     }
 
     @After
     fun tearDown() {
+        TimeZone.setDefault(originalTimeZone)
+        Locale.setDefault(originalLocale)
         unmockkAll()
     }
 
@@ -83,25 +106,7 @@ class ReminderNotificationManagerTest {
     // ==================== Notification Building Tests ====================
 
     @Test
-    fun `buildNotification creates notification successfully`() {
-        // Given a reminder
-        val reminder = createTestReminder(
-            id = 1L,
-            eventId = 100L,
-            eventTitle = "Test Meeting",
-            occurrenceTime = System.currentTimeMillis() + 900_000 // 15 min in future
-        )
-
-        // When building notification
-        val notification = manager.buildNotification(reminder)
-
-        // Then verify notification is created
-        assertNotNull("Notification should be created", notification)
-    }
-
-    @Test
-    fun `buildNotification sets auto-cancel flag`() {
-        // Given a reminder
+    fun `buildNotification creates notification successfully`() = runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -109,10 +114,22 @@ class ReminderNotificationManagerTest {
             occurrenceTime = System.currentTimeMillis() + 900_000
         )
 
-        // When building notification
         val notification = manager.buildNotification(reminder)
 
-        // Then verify auto-cancel is set
+        assertNotNull("Notification should be created", notification)
+    }
+
+    @Test
+    fun `buildNotification sets auto-cancel flag`() = runTest {
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Test Meeting",
+            occurrenceTime = System.currentTimeMillis() + 900_000
+        )
+
+        val notification = manager.buildNotification(reminder)
+
         val autoCancelFlag = notification.flags and android.app.Notification.FLAG_AUTO_CANCEL
         assertEquals(
             "Notification should have FLAG_AUTO_CANCEL set",
@@ -122,8 +139,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification has content intent set`() {
-        // Given a reminder
+    fun `buildNotification has content intent set`() = runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -131,16 +147,13 @@ class ReminderNotificationManagerTest {
             occurrenceTime = System.currentTimeMillis() + 900_000
         )
 
-        // When building notification
         val notification = manager.buildNotification(reminder)
 
-        // Then verify content intent is set
         assertNotNull("Notification should have content intent", notification.contentIntent)
     }
 
     @Test
-    fun `buildNotification includes two action buttons`() {
-        // Given a reminder
+    fun `buildNotification includes two action buttons`() = runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -148,16 +161,13 @@ class ReminderNotificationManagerTest {
             occurrenceTime = System.currentTimeMillis() + 900_000
         )
 
-        // When building notification
         val notification = manager.buildNotification(reminder)
 
-        // Then verify notification has two actions (Snooze and Dismiss)
         assertEquals("Notification should have 2 action buttons", 2, notification.actions.size)
     }
 
     @Test
-    fun `buildNotification action buttons are Snooze and Dismiss`() {
-        // Given a reminder
+    fun `buildNotification action buttons are Snooze and Dismiss`() = runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -165,12 +175,189 @@ class ReminderNotificationManagerTest {
             occurrenceTime = System.currentTimeMillis() + 900_000
         )
 
-        // When building notification
         val notification = manager.buildNotification(reminder)
 
-        // Then verify action labels
         assertEquals("First action should be Snooze", "Snooze", notification.actions[0].title)
         assertEquals("Second action should be Dismiss", "Dismiss", notification.actions[1].title)
+    }
+
+    // ==================== Content Text Tests ====================
+
+    @Test
+    fun `content text shows 12h absolute time for timed event`() = runTest {
+        dataStore.setTimeFormat("12h")
+
+        // Event at 10:30 AM today in pinned timezone
+        val zone = ZoneId.of("America/New_York")
+        val eventTime = ZonedDateTime.of(
+            LocalDate.now(zone), LocalTime.of(10, 30), zone
+        ).toInstant().toEpochMilli()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Morning Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime - 900_000 // 15 min before
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("10:30 AM", contentText)
+    }
+
+    @Test
+    fun `content text shows 24h absolute time for timed event`() = runTest {
+        dataStore.setTimeFormat("24h")
+
+        val zone = ZoneId.of("America/New_York")
+        val eventTime = ZonedDateTime.of(
+            LocalDate.now(zone), LocalTime.of(14, 30), zone
+        ).toInstant().toEpochMilli()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Afternoon Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime - 900_000
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("14:30", contentText)
+    }
+
+    @Test
+    fun `content text shows Starting now when diffMs is zero`() = runTest {
+        val eventTime = System.currentTimeMillis() + 60_000
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Now Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime // diffMs = 0
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("Starting now", contentText)
+    }
+
+    @Test
+    fun `content text shows Starting now when diffMs is negative for timed event`() = runTest {
+        val eventTime = System.currentTimeMillis() + 60_000
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Past Trigger Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime + 300_000 // trigger 5 min after occurrence -> diffMs < 0
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("Starting now", contentText)
+    }
+
+    @Test
+    fun `content text shows Today for all-day event with negative diffMs`() = runTest {
+        val eventTime = System.currentTimeMillis()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "All Day Event",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime + 60_000, // trigger after occurrence -> diffMs < 0
+            isAllDay = true
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("Today", contentText)
+    }
+
+    @Test
+    fun `content text shows duration for all-day event with positive diffMs`() = runTest {
+        val triggerTime = System.currentTimeMillis()
+        val occurrenceTime = triggerTime + 24 * 60 * 60 * 1000L // 1 day later
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Tomorrow All Day",
+            occurrenceTime = occurrenceTime,
+            triggerTime = triggerTime,
+            isAllDay = true
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        // Should be a duration string (e.g., "24 hours"), not a clock time
+        assertNotNull(contentText)
+        assertFalse("All-day content should not contain colon (clock time)", contentText!!.contains(":"))
+    }
+
+    @Test
+    fun `content text shows Tomorrow qualifier for next-day event`() = runTest {
+        dataStore.setTimeFormat("12h")
+
+        val zone = ZoneId.of("America/New_York")
+        val tomorrow = LocalDate.now(zone).plusDays(1)
+        val eventTime = ZonedDateTime.of(
+            tomorrow, LocalTime.of(10, 30), zone
+        ).toInstant().toEpochMilli()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Tomorrow Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime - 24 * 60 * 60 * 1000L // 1 day before
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        assertEquals("Tomorrow, 10:30 AM", contentText)
+    }
+
+    @Test
+    fun `content text shows weekday qualifier for further-out event`() = runTest {
+        dataStore.setTimeFormat("12h")
+
+        val zone = ZoneId.of("America/New_York")
+        val futureDate = LocalDate.now(zone).plusDays(3)
+        val eventTime = ZonedDateTime.of(
+            futureDate, LocalTime.of(9, 0), zone
+        ).toInstant().toEpochMilli()
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Future Meeting",
+            occurrenceTime = eventTime,
+            triggerTime = eventTime - 3 * 24 * 60 * 60 * 1000L // 3 days before
+        )
+
+        val notification = manager.buildNotification(reminder)
+        val contentText = notification.extras.getString(Notification.EXTRA_TEXT)
+
+        // Should contain weekday abbreviation and time
+        assertNotNull(contentText)
+        assertTrue(
+            "Should contain weekday and time, got: $contentText",
+            contentText!!.contains("9:00 AM") && contentText.contains(",")
+        )
     }
 
     // ==================== Time Formatting Tests ====================

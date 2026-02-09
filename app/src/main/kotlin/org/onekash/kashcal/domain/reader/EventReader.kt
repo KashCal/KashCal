@@ -737,7 +737,7 @@ class EventReader @Inject constructor(
         windowDays: Int = 7
     ): List<Occurrence> {
         val now = System.currentTimeMillis()
-        val windowEnd = now + (windowDays * 24 * 60 * 60 * 1000L)
+        val windowEnd = now + (windowDays.toLong() * 24 * 60 * 60 * 1000)
 
         return occurrencesDao.getForEvent(eventId)
             .filter { !it.isCancelled && it.startTs >= now && it.startTs <= windowEnd }

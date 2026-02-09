@@ -286,7 +286,7 @@ class ReminderScheduler @Inject constructor(
      */
     suspend fun scheduleUpcomingReminders(windowDays: Int = SCHEDULE_WINDOW_DAYS): Int {
         val now = System.currentTimeMillis()
-        val windowEnd = now + (windowDays * 24 * 60 * 60 * 1000L)
+        val windowEnd = now + (windowDays.toLong() * 24 * 60 * 60 * 1000)
 
         // Get all events with reminders that have occurrences in window
         val eventsWithReminders = eventReader.getEventsWithRemindersInRange(now, windowEnd)
@@ -588,7 +588,7 @@ class ReminderScheduler @Inject constructor(
      * @param snoozeDurationMinutes How long to snooze (default 15 minutes)
      */
     suspend fun snoozeReminder(reminderId: Long, snoozeDurationMinutes: Int = 15) {
-        val newTriggerTime = System.currentTimeMillis() + (snoozeDurationMinutes * 60 * 1000L)
+        val newTriggerTime = System.currentTimeMillis() + (snoozeDurationMinutes.toLong() * 60 * 1000)
 
         // Update in database
         scheduledRemindersDao.snooze(reminderId, newTriggerTime)
@@ -676,7 +676,7 @@ class ReminderScheduler @Inject constructor(
      * @param olderThanDays Delete reminders older than this many days
      */
     suspend fun cleanupOldReminders(olderThanDays: Int = 7) {
-        val cutoffTime = System.currentTimeMillis() - (olderThanDays * 24 * 60 * 60 * 1000L)
+        val cutoffTime = System.currentTimeMillis() - (olderThanDays.toLong() * 24 * 60 * 60 * 1000)
         scheduledRemindersDao.deleteOldReminders(cutoffTime)
         Log.d(TAG, "Cleaned up old reminders before $cutoffTime")
     }

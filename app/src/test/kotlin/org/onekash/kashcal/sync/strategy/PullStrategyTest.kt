@@ -18,7 +18,10 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
+import org.onekash.kashcal.sync.session.SyncTrigger
+import org.onekash.kashcal.sync.session.SyncType
 import kotlinx.coroutines.flow.flowOf
 
 /**
@@ -1343,5 +1346,290 @@ class PullStrategyTest {
             END:VEVENT
             END:VCALENDAR
         """.trimIndent()
+    }
+
+    // ========== FK Constraint Error Handling Tests (Issue #55) ==========
+
+    @Test
+    fun `FK error on second event still commits first event and continues to third`() = runTest {
+        // Verifies: Events processed before the FK error are committed individually.
+        // Each event upsert runs in its own transaction, so earlier events survive.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val event1Url = "${calendar.caldavUrl}event1.ics"
+        val event2Url = "${calendar.caldavUrl}event2.ics"
+        val event3Url = "${calendar.caldavUrl}event3.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("event1.ics", event1Url, "etag1", createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("event2.ics", event2Url, "etag2", createSimpleIcal("uid-2", "Event 2")),
+                CalDavEvent("event3.ics", event3Url, "etag3", createSimpleIcal("uid-3", "Event 3"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+
+        // First event succeeds
+        coEvery { eventsDao.upsert(match { it.uid == "uid-1" }) } returns 1L
+        // Second event throws FK violation
+        coEvery { eventsDao.upsert(match { it.uid == "uid-2" }) } throws
+            android.database.sqlite.SQLiteConstraintException(
+                "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
+            )
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-2", calendar.id) } returns null
+        // Third event would succeed but is never reached
+        coEvery { eventsDao.upsert(match { it.uid == "uid-3" }) } returns 3L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // After fix: FK error is skipped, sync continues to third event
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(2, (result as PullResult.Success).eventsAdded) // Events 1 and 3 succeed
+        // All three events were attempted
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-3" }) }
+    }
+
+    @Test
+    fun `FK error no longer prevents sync token advancement`() = runTest {
+        // After fix: FK error is skipped, sync succeeds, token advances.
+        // This breaks the infinite failure loop.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}problem-event.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("problem-event.ics", eventUrl, "etag-1",
+                    createSimpleIcal("uid-problem", "Problem Event"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.upsert(any()) } throws
+            android.database.sqlite.SQLiteConstraintException(
+                "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
+            )
+        coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
+
+        // First attempt — succeeds (event skipped)
+        val result1 = pullStrategy.pull(calendar, client = client)
+        assertTrue("First sync should succeed", result1 is PullResult.Success)
+
+        // Sync token WAS updated — loop is broken
+        coVerify(atLeast = 1) { calendarRepository.updateSyncToken(any(), any(), any()) }
+    }
+
+    // ========== FK Constraint Error Handling Fix Tests (Issue #55 - desired behavior) ==========
+
+    @Test
+    fun `FK constraint on master event skips event and continues sync`() = runTest {
+        // After fix: FK error on one master event should skip it and continue processing others.
+        // Result should be Success (not Error), and sync token should advance.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val event1Url = "${calendar.caldavUrl}event1.ics"
+        val event2Url = "${calendar.caldavUrl}event2.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("event1.ics", event1Url, "etag1", createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("event2.ics", event2Url, "etag2", createSimpleIcal("uid-2", "Event 2"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+
+        // First event throws FK violation
+        coEvery { eventsDao.upsert(match { it.uid == "uid-1" }) } throws
+            android.database.sqlite.SQLiteConstraintException(
+                "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
+            )
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-1", calendar.id) } returns null
+        // Second event succeeds
+        coEvery { eventsDao.upsert(match { it.uid == "uid-2" }) } returns 2L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // Should be Success, not Error — FK error skipped, sync continued
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // Sync token should advance (loop broken)
+        coVerify { calendarRepository.updateSyncToken(any(), any(), any()) }
+        // Both events should have been attempted
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
+    }
+
+    @Test
+    fun `FK constraint on exception event skips and continues sync`() = runTest {
+        // After fix: FK error on exception event upsert should skip it.
+        // Master event should still be intact in the database.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
+        val masterWithExceptionIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Weekly Meeting
+            RRULE:FREQ=WEEKLY;BYDAY=MO
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240115T120000Z
+            RECURRENCE-ID:20240108T100000Z
+            DTSTART:20240108T110000Z
+            DTEND:20240108T120000Z
+            SUMMARY:Modified Meeting
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("master-with-exception.ics", eventUrl, "etag-1", masterWithExceptionIcal)
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.getByUid("master-uid") } returns emptyList()
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime(any(), any(), any()) } returns null
+
+        // Master event upsert succeeds
+        coEvery { eventsDao.upsert(match { it.rrule != null }) } returns 1L
+        // Exception event upsert throws FK violation
+        coEvery { eventsDao.upsert(match { it.rrule == null }) } throws
+            android.database.sqlite.SQLiteConstraintException(
+                "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
+            )
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // Should be Success — master event saved, exception skipped
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // Sync token should advance
+        coVerify { calendarRepository.updateSyncToken(any(), any(), any()) }
+        // Master event WAS upserted (verify it's intact)
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.rrule != null }) }
+        // Master's occurrences were generated (intact)
+        coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
+    }
+
+    @Test
+    fun `multiple FK errors skip individually without aborting`() = runTest {
+        // After fix: Multiple FK errors should each be skipped individually.
+        // Events that succeed should still be processed.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("e1.ics", "${calendar.caldavUrl}e1.ics", "etag1", createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("e2.ics", "${calendar.caldavUrl}e2.ics", "etag2", createSimpleIcal("uid-2", "Event 2")),
+                CalDavEvent("e3.ics", "${calendar.caldavUrl}e3.ics", "etag3", createSimpleIcal("uid-3", "Event 3"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+
+        // Event 1: FK error
+        coEvery { eventsDao.upsert(match { it.uid == "uid-1" }) } throws
+            android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-1", calendar.id) } returns null
+        // Event 2: succeeds
+        coEvery { eventsDao.upsert(match { it.uid == "uid-2" }) } returns 2L
+        // Event 3: FK error
+        coEvery { eventsDao.upsert(match { it.uid == "uid-3" }) } throws
+            android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-3", calendar.id) } returns null
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // Should succeed with 1 event added (event 2)
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // All 3 events should have been attempted
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-3" }) }
+    }
+
+    @Test
+    fun `FK constraint error no longer creates persistent failure loop`() = runTest {
+        // After fix: Two consecutive syncs with FK errors should both succeed.
+        // Sync token should advance, breaking the infinite failure loop.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}problem-event.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("problem-event.ics", eventUrl, "etag-1",
+                    createSimpleIcal("uid-problem", "Problem Event"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.upsert(any()) } throws
+            android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
+        coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
+
+        // First attempt — should succeed (skip problematic event)
+        val result1 = pullStrategy.pull(calendar, client = client)
+        assertTrue("First sync should succeed", result1 is PullResult.Success)
+
+        // Sync token WAS updated — loop is broken
+        coVerify(atLeast = 1) { calendarRepository.updateSyncToken(any(), any(), any()) }
+
+        // Second attempt — also succeeds
+        val result2 = pullStrategy.pull(calendar, client = client)
+        assertTrue("Second sync should also succeed", result2 is PullResult.Success)
+    }
+
+    @Test
+    fun `FK constraint error increments session skip counter`() = runTest {
+        // After fix: sessionBuilder.incrementSkipConstraintError() should be called
+        // for each FK error, so the counter appears in Sync History UI.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("e1.ics", "${calendar.caldavUrl}e1.ics", "etag1", createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("e2.ics", "${calendar.caldavUrl}e2.ics", "etag2", createSimpleIcal("uid-2", "Event 2"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+
+        // Both events throw FK violations
+        coEvery { eventsDao.upsert(any()) } throws
+            android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
+        coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+
+        // Build the session and verify the constraint error counter
+        val session = sessionBuilder.build()
+        assertTrue("Session should have constraint errors", session.hasConstraintErrors)
+        assertEquals("Should have 2 constraint errors", 2, session.skippedConstraintError)
     }
 }

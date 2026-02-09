@@ -82,8 +82,7 @@ class WidgetUpdateManager @Inject constructor(
      * Note: SocketTimeoutException extends IOException, included for clarity.
      */
     private fun isTransientError(e: Exception): Boolean = when (e) {
-        is IOException -> true              // Network issues, file system
-        is SocketTimeoutException -> true   // Network timeout (subclass of IOException)
+        is IOException -> true              // Network issues (includes SocketTimeoutException)
         is RemoteException -> true          // Binder communication failed
         else -> false                       // Permanent failures (e.g., SecurityException)
     }

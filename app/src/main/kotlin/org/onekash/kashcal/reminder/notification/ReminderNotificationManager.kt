@@ -4,11 +4,19 @@ import android.app.Notification
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.text.format.DateFormat
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.reminder.receiver.ReminderActionReceiver
+import org.onekash.kashcal.util.DateTimeUtils
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -18,7 +26,7 @@ import kotlin.math.abs
  *
  * Responsibilities:
  * - Build notification for a scheduled reminder
- * - Format "time until event" text
+ * - Format absolute event time for timed events
  * - Create action buttons (Snooze, Dismiss)
  * - Show/cancel notifications
  *
@@ -31,7 +39,8 @@ import kotlin.math.abs
 @Singleton
 class ReminderNotificationManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val channels: ReminderNotificationChannels
+    private val channels: ReminderNotificationChannels,
+    private val dataStore: KashCalDataStore
 ) {
     companion object {
         private const val TAG = "ReminderNotificationMgr"
@@ -63,7 +72,7 @@ class ReminderNotificationManager @Inject constructor(
      * @param reminder The scheduled reminder
      * @return The notification ID used
      */
-    fun showNotification(reminder: ScheduledReminder): Int {
+    suspend fun showNotification(reminder: ScheduledReminder): Int {
         val notificationId = channels.getNotificationId(reminder.id)
         val notification = buildNotification(reminder)
 
@@ -80,7 +89,7 @@ class ReminderNotificationManager @Inject constructor(
      * @param reminder The scheduled reminder
      * @return Built notification ready to show
      */
-    fun buildNotification(reminder: ScheduledReminder): Notification {
+    suspend fun buildNotification(reminder: ScheduledReminder): Notification {
         val contentText = formatNotificationContent(reminder)
 
         val builder = NotificationCompat.Builder(context, ReminderNotificationChannels.CHANNEL_REMINDERS)
@@ -122,29 +131,56 @@ class ReminderNotificationManager @Inject constructor(
 
     /**
      * Format the notification content text.
-     * Shows time until event or "now" if event is starting.
+     *
+     * For timed events: shows absolute event start time (e.g., "10:30 AM").
+     * Adds date qualifier when the event is on a different day than today
+     * (e.g., "Tomorrow, 10:30 AM" or "Wed Jan 15, 10:30 AM").
+     *
+     * For all-day events: shows "Today" or relative duration.
+     *
+     * The absolute time complements Android's live countdown in the
+     * notification header (set via setWhen), giving users two useful
+     * pieces of information: when the event starts and how long until then.
      *
      * @param reminder The scheduled reminder
      * @return Formatted content text
      */
-    private fun formatNotificationContent(reminder: ScheduledReminder): String {
-        // Use stored trigger/occurrence times instead of wall clock to avoid
-        // drift from inexact alarms or processing delay (e.g. 15 min showing as 14)
+    private suspend fun formatNotificationContent(reminder: ScheduledReminder): String {
         val diffMs = reminder.occurrenceTime - reminder.triggerTime
 
         return when {
             reminder.isAllDay -> {
-                // All-day events
                 if (diffMs < 0) "Today" else formatTimeUntil(diffMs)
             }
             diffMs <= 0 -> "Starting now"
-            diffMs < 60_000 -> "Starting in less than a minute"
-            else -> "in ${formatTimeUntil(diffMs)}"
+            else -> {
+                // Format absolute event start time respecting user preference
+                val timeFormatPref = dataStore.getTimeFormat()
+                val is24Hour = DateFormat.is24HourFormat(context)
+                val pattern = DateTimeUtils.getTimePattern(timeFormatPref, is24Hour)
+                val zone = ZoneId.systemDefault()
+                val eventZdt = Instant.ofEpochMilli(reminder.occurrenceTime).atZone(zone)
+                val timeFormatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
+                val timeStr = eventZdt.format(timeFormatter)
+
+                // Add date qualifier if event is not today
+                val today = LocalDate.now(zone)
+                val eventDate = eventZdt.toLocalDate()
+                when {
+                    eventDate == today -> timeStr
+                    eventDate == today.plusDays(1) -> "Tomorrow, $timeStr"
+                    else -> {
+                        val dateFormatter = DateTimeFormatter.ofPattern("EEE MMM d", Locale.getDefault())
+                        "${eventDate.format(dateFormatter)}, $timeStr"
+                    }
+                }
+            }
         }
     }
 
     /**
      * Format time duration for display.
+     * Used by the all-day event path in [formatNotificationContent].
      *
      * @param durationMs Duration in milliseconds
      * @return Human-readable duration (e.g., "15 minutes", "1 hour 30 minutes")

@@ -1,6 +1,8 @@
 package org.onekash.kashcal.ui.components.pickers
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -22,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
@@ -51,6 +55,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -431,30 +439,33 @@ fun InlineDatePickerContent(
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
     val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
+    var showMonthYearPicker by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
-            .pointerInput(displayedMonth) {
-                detectHorizontalDragGestures(
-                    onDragStart = { totalDrag = 0f },
-                    onDragEnd = {
-                        if (totalDrag > 100f) {
-                            val newMonth = displayedMonth.clone() as JavaCalendar
-                            newMonth.add(JavaCalendar.MONTH, -1)
-                            onMonthChange(newMonth)
-                        } else if (totalDrag < -100f) {
-                            val newMonth = displayedMonth.clone() as JavaCalendar
-                            newMonth.add(JavaCalendar.MONTH, 1)
-                            onMonthChange(newMonth)
+            .then(
+                if (!showMonthYearPicker) Modifier.pointerInput(displayedMonth) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onDragEnd = {
+                            if (totalDrag > 100f) {
+                                val newMonth = displayedMonth.clone() as JavaCalendar
+                                newMonth.add(JavaCalendar.MONTH, -1)
+                                onMonthChange(newMonth)
+                            } else if (totalDrag < -100f) {
+                                val newMonth = displayedMonth.clone() as JavaCalendar
+                                newMonth.add(JavaCalendar.MONTH, 1)
+                                onMonthChange(newMonth)
+                            }
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            totalDrag += dragAmount
                         }
-                    },
-                    onHorizontalDrag = { _, dragAmount ->
-                        totalDrag += dragAmount
-                    }
-                )
-            }
+                    )
+                } else Modifier
+            )
     ) {
         // Month navigation header
         Row(
@@ -464,112 +475,170 @@ fun InlineDatePickerContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = {
-                    val newMonth = displayedMonth.clone() as JavaCalendar
-                    newMonth.add(JavaCalendar.MONTH, -1)
-                    onMonthChange(newMonth)
-                },
-                modifier = Modifier.size(32.dp)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous month", modifier = Modifier.size(20.dp))
+            if (!showMonthYearPicker) {
+                IconButton(
+                    onClick = {
+                        val newMonth = displayedMonth.clone() as JavaCalendar
+                        newMonth.add(JavaCalendar.MONTH, -1)
+                        onMonthChange(newMonth)
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous month", modifier = Modifier.size(20.dp))
+                }
+            } else {
+                Spacer(modifier = Modifier.size(32.dp))
             }
 
-            Text(
-                text = monthYearFormat.format(displayedMonth.time),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-
-            IconButton(
-                onClick = {
-                    val newMonth = displayedMonth.clone() as JavaCalendar
-                    newMonth.add(JavaCalendar.MONTH, 1)
-                    onMonthChange(newMonth)
-                },
-                modifier = Modifier.size(32.dp)
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { showMonthYearPicker = !showMonthYearPicker }
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .semantics(mergeDescendants = true) {
+                        role = Role.Button
+                        contentDescription = if (showMonthYearPicker) "Show calendar"
+                            else "Pick month and year"
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next month", modifier = Modifier.size(20.dp))
-            }
-        }
-
-        // Day of week headers
-        val orderedDays = remember(firstDayOfWeek) {
-            DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            orderedDays.forEach { day ->
                 Text(
-                    text = day.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center
+                    text = monthYearFormat.format(displayedMonth.time),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = if (showMonthYearPicker) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.onSurface
+                )
+                Icon(
+                    imageVector = if (showMonthYearPicker) Icons.Default.ExpandLess
+                                  else Icons.Default.ExpandMore,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = if (showMonthYearPicker) MaterialTheme.colorScheme.primary
+                           else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+
+            if (!showMonthYearPicker) {
+                IconButton(
+                    onClick = {
+                        val newMonth = displayedMonth.clone() as JavaCalendar
+                        newMonth.add(JavaCalendar.MONTH, 1)
+                        onMonthChange(newMonth)
+                    },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next month", modifier = Modifier.size(20.dp))
+                }
+            } else {
+                Spacer(modifier = Modifier.size(32.dp))
+            }
         }
 
-        Spacer(modifier = Modifier.height(4.dp))
-
-        // Calendar grid
-        val firstDayOfMonth = displayedMonth.clone() as JavaCalendar
-        firstDayOfMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
-        val gridOffset = DateTimeUtils.getFirstDayOffset(firstDayOfMonth, firstDayOfWeek)
-        val daysInMonth = displayedMonth.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
-        val weeks = ((gridOffset + daysInMonth + 6) / 7)
-
-        for (week in 0 until weeks) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                for (dayOfWeekIdx in 0..6) {
-                    val dayIndex = week * 7 + dayOfWeekIdx - gridOffset + 1
-
-                    if (dayIndex in 1..daysInMonth) {
-                        val dayCal = displayedMonth.clone() as JavaCalendar
-                        dayCal.set(JavaCalendar.DAY_OF_MONTH, dayIndex)
-
-                        val isSelected = selectedCal.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
-                            selectedCal.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
-                            selectedCal.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
-
-                        val isToday = today.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
-                            today.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
-                            today.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(36.dp)
-                                .padding(2.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (isSelected) MaterialTheme.colorScheme.primary
-                                    else Color.Transparent
-                                )
-                                .clickable {
-                                    val selectedTime = dayCal.clone() as JavaCalendar
-                                    val origCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
-                                    selectedTime.set(JavaCalendar.HOUR_OF_DAY, origCal.get(JavaCalendar.HOUR_OF_DAY))
-                                    selectedTime.set(JavaCalendar.MINUTE, origCal.get(JavaCalendar.MINUTE))
-                                    onDateSelect(selectedTime.timeInMillis)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = dayIndex.toString(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
-                                else MaterialTheme.colorScheme.onSurface,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                            )
+        // Crossfade between calendar grid and month/year wheel picker
+        Box(modifier = Modifier.heightIn(min = 220.dp)) {
+            Crossfade(
+                targetState = showMonthYearPicker,
+                animationSpec = tween(200),
+                label = "calendar-wheel-crossfade"
+            ) { showWheels ->
+                if (showWheels) {
+                    MonthYearWheelPicker(
+                        selectedYear = displayedMonth.get(JavaCalendar.YEAR),
+                        selectedMonth = displayedMonth.get(JavaCalendar.MONTH),
+                        onMonthYearSelected = { year, month ->
+                            val newMonth = displayedMonth.clone() as JavaCalendar
+                            newMonth.set(JavaCalendar.YEAR, year)
+                            newMonth.set(JavaCalendar.MONTH, month)
+                            newMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
+                            onMonthChange(newMonth)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    Column {
+                        // Day of week headers
+                        val orderedDays = remember(firstDayOfWeek) {
+                            DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
                         }
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            orderedDays.forEach { day ->
+                                Text(
+                                    text = day.getDisplayName(java.time.format.TextStyle.NARROW, java.util.Locale.getDefault()),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        // Calendar grid
+                        val firstDayOfMonth = displayedMonth.clone() as JavaCalendar
+                        firstDayOfMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
+                        val gridOffset = DateTimeUtils.getFirstDayOffset(firstDayOfMonth, firstDayOfWeek)
+                        val daysInMonth = displayedMonth.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
+                        val weeks = ((gridOffset + daysInMonth + 6) / 7)
+
+                        for (week in 0 until weeks) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly
+                            ) {
+                                for (dayOfWeekIdx in 0..6) {
+                                    val dayIndex = week * 7 + dayOfWeekIdx - gridOffset + 1
+
+                                    if (dayIndex in 1..daysInMonth) {
+                                        val dayCal = displayedMonth.clone() as JavaCalendar
+                                        dayCal.set(JavaCalendar.DAY_OF_MONTH, dayIndex)
+
+                                        val isSelected = selectedCal.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
+                                            selectedCal.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
+                                            selectedCal.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
+
+                                        val isToday = today.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
+                                            today.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
+                                            today.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
+
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(36.dp)
+                                                .padding(2.dp)
+                                                .clip(CircleShape)
+                                                .background(
+                                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                                    else Color.Transparent
+                                                )
+                                                .clickable {
+                                                    val selectedTime = dayCal.clone() as JavaCalendar
+                                                    val origCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
+                                                    selectedTime.set(JavaCalendar.HOUR_OF_DAY, origCal.get(JavaCalendar.HOUR_OF_DAY))
+                                                    selectedTime.set(JavaCalendar.MINUTE, origCal.get(JavaCalendar.MINUTE))
+                                                    onDateSelect(selectedTime.timeInMillis)
+                                                },
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = dayIndex.toString(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                                else MaterialTheme.colorScheme.onSurface,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        }
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

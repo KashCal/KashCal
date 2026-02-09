@@ -118,6 +118,12 @@ android {
         }
     }
 
+    lint {
+        // Workaround: NonNullableMutableLiveDataDetector crashes with NoClassDefFoundError
+        // in lifecycle-runtime-ktx 2.8.7 lint. This project doesn't use LiveData at all.
+        disable += "NullSafeMutableLiveData"
+    }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
