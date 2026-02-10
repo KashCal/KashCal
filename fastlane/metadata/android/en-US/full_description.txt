@@ -1,41 +1,25 @@
-Your calendar. Your device. Your rules.
+All your calendars. One app.
 
-A modern, privacy-first calendar with iCloud and CalDAV sync — finally done right on Android. Works offline. Looks beautiful. Doesn't track you.
+Your calendars are everywhere. Family stuff on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on Nextcloud. KashCal brings them together on your Android.
 
-Why KashCal?
+Your schedule, together
 
-• Left iPhone but not iCloud? We sync with Apple Calendar natively
-• Don't trust Big Tech with your schedule? We don't collect anything
-• Self-host your life? We speak CalDAV fluently
-• Privacy apps look terrible? We disagree
+• iCloud: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
+• CalDAV: Nextcloud, Radicale, Baïkal, Stalwart, FastMail, and more. Native sync, no middleware.
+• Holidays & schedules: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
+• Birthdays: Pulls from your contacts automatically.
+• Local: Don't need sync? Works fully offline out of the box.
 
-Features
+Material You with dynamic theming. Home screen widgets. Full-text search across all events. Per-event timezone for travel.
 
-• iCloud & CalDAV — Sync with Apple Calendar, Nextcloud, Radicale, Baikal, and more
-• Offline-First — Works without internet. Sync when you want
-• Material You — Beautiful design with dynamic theming
-• Home Widgets — Agenda, week view, and date widgets
-• ICS Subscriptions — Subscribe to public calendars (holidays, sports, etc.)
-• Contact Birthdays — Auto-generate birthday calendar from contacts
-• Search — Full-text search across all your events
-• Travel Friendly — Set timezone per event
+Private by default
 
-Security & Privacy
+No analytics. No telemetry. No KashCal account. Your data stays on your device unless you set up sync yourself.
 
-Your Data Stays Yours:
-
-• No Analytics — Zero tracking or telemetry
-• No Accounts — No KashCal account required
-• Local-First — Data stored on your device
-• Open Source — Fully auditable codebase
-
-Secure by Design:
-
-• Fort Knox Mode — Other apps have no access to your events
-• Encrypted Credentials — AES-256-GCM via Android Keystore
-• HTTPS Only — Cleartext traffic blocked
-• No WebViews — Native UI only
-• Minimal Permissions — Only what's necessary
+• Encrypted credentials (AES-256-GCM)
+• Fort Knox Mode: other apps can't read your events
+• HTTPS only, no WebViews, minimal permissions
+• Open source: fully auditable
 
 Website: https://kashcal.github.io
 

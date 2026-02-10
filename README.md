@@ -4,7 +4,7 @@
 
 # KashCal™
 
-**A private, offline-first calendar for Android with iCloud and CalDAV sync.**
+**All your calendars in one private app on Android.**
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="80">](https://f-droid.org/packages/org.onekash.kashcal)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" height="80">](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal)
@@ -41,30 +41,21 @@
 
 </div>
 
-## Why KashCal?
+## Your calendars are everywhere
 
-Most calendar apps either lock you into a cloud ecosystem or look like they were built in 2012. KashCal syncs natively with iCloud and CalDAV servers (Nextcloud, Radicale, Baïkal, etc.) while keeping everything on your device by default. No account required, no analytics, no telemetry.
+Family stuff on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on Nextcloud. KashCal brings them together on your Android. No account required, no analytics, no telemetry.
 
-If you switched from iPhone to Android but still use iCloud calendars, this is probably the app you've been looking for.
+## Your schedule, together
 
-## Why Calendar Privacy Matters
+- **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
+- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, FastMail, and more. Native sync, no middleware.
+- **Holidays & schedules**: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
+- **Birthdays**: Pulls from your contacts automatically.
+- **Local**: Don't need sync? Works fully offline out of the box.
 
-Your calendar reveals your life: doctor appointments, job interviews, who you meet, where you travel. When calendar apps connect to cloud AI systems, this data becomes an attack surface.
+Material You with dynamic theming. Home screen widgets. Full-text search across all events. Per-event timezone for travel.
 
-**[Recent research](https://www.miggo.io/post/weaponizing-calendar-invites-a-semantic-attack-on-google-gemini)** demonstrated how attackers can weaponize calendar invites to extract private data through AI assistants. A single malicious invite can trigger silent exfiltration of your entire schedule.
-
-## Features
-
-- **iCloud & CalDAV sync**: Apple Calendar, Nextcloud, Radicale, Baïkal, and more
-- **Offline-first**: works without internet; sync when you want
-- **Material You** with dynamic theming
-- **Home widgets**: agenda, week view, and date
-- **ICS subscriptions** for public calendars (holidays, sports, etc.)
-- **Contact birthdays** auto-generated from your contacts
-- **Full-text search** across all events
-- **Per-event timezone** for travel
-
-## Security & Privacy
+## Private by default
 
 No analytics, no tracking, no KashCal account required. Data is stored locally unless you explicitly set up sync.
 
