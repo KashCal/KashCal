@@ -63,6 +63,7 @@ object IcsPatcher {
 
         // Build updated event, preserving original's attendees/rawProperties
         val updated = original.copy(
+            uid = event.uid,
             summary = event.title,
             description = event.description,
             location = event.location,

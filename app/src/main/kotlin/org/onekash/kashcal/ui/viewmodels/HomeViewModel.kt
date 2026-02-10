@@ -1859,12 +1859,12 @@ class HomeViewModel @Inject constructor(
      */
     private fun reloadCurrentView() {
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        if (_uiState.value.selectedDate > 0) {
+        if (_uiState.value.selectedDate != 0L) {
             loadEventsForSelectedDay(_uiState.value.selectedDate)
         }
         // Also reload week view if 3-day view is active
         if (_uiState.value.viewMode == ViewMode.THREE_DAYS &&
-            _uiState.value.weekViewStartDate > 0) {
+            _uiState.value.weekViewStartDate != 0L) {
             loadEventsForWeek(_uiState.value.weekViewStartDate)
         }
     }

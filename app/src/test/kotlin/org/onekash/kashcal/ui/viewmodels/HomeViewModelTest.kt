@@ -473,6 +473,37 @@ class HomeViewModelTest {
         assertEquals(2, viewModel.uiState.value.selectedDayEvents.size)
     }
 
+    @Test
+    fun `selectDate with pre-1970 date updates selectedDate correctly`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Apollo 11 — July 20, 1969 (month param is 0-indexed: 6 = July)
+        val dateMillis = getTimestamp(1969, 6, 20, 0, 0)
+
+        // Pre-1970 dates have negative epoch millis
+        assertTrue("Pre-1970 date should have negative millis", dateMillis < 0)
+
+        viewModel.selectDate(dateMillis)
+        advanceUntilIdle()
+
+        assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
+        assertTrue(viewModel.uiState.value.selectedDayLabel.contains("1969"))
+    }
+
+    @Test
+    fun `selectDate with pre-1970 date loads events for that day`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val dateMillis = getTimestamp(1969, 6, 20, 0, 0)
+        viewModel.selectDate(dateMillis)
+        advanceUntilIdle()
+
+        // Verify events were loaded (same query path as post-1970 dates)
+        verify { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+    }
+
     // ==================== Search Tests ====================
 
     @Test
@@ -1414,6 +1445,48 @@ class HomeViewModelTest {
 
         // Verify reloadCurrentView was called (via getVisibleOccurrencesWithEventsForDay)
         verify(atLeast = 1) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+    }
+
+    @Test
+    fun `reloadCurrentView loads events for pre-1970 selectedDate - issue 53`() = runTest {
+        coEvery { eventCoordinator.deleteEvent(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Select a pre-1970 date (Feb 11, 1952 — from issue #53)
+        viewModel.selectDate(getTimestamp(1952, 1, 11, 0, 0))
+        advanceUntilIdle()
+
+        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true)
+
+        viewModel.deleteEventOptimistic(1L)
+        advanceUntilIdle()
+
+        // Verify reloadCurrentView loaded events for the pre-1970 date
+        // BUG: Before fix, reloadCurrentView skips because selectedDate > 0 is false for negative millis
+        verify(atLeast = 1) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+    }
+
+    @Test
+    fun `selectDate with zero millis is treated as no selection`() = runTest {
+        coEvery { eventCoordinator.deleteEvent(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // 0L is the sentinel for "no selection" — must remain so after the > 0 → != 0L fix
+        viewModel.selectDate(0L)
+        advanceUntilIdle()
+
+        // Clear mocks — selectDate itself triggers loadEventsForSelectedDay unconditionally
+        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true)
+
+        viewModel.deleteEventOptimistic(1L)
+        advanceUntilIdle()
+
+        // reloadCurrentView should NOT reload day events when selectedDate is 0L (sentinel)
+        verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
     }
 
     @Test

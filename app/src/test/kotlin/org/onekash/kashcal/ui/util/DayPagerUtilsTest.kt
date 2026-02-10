@@ -276,6 +276,68 @@ class DayPagerUtilsTest {
         assertEquals(targetPage, recoveredPage)
     }
 
+    // ==================== Pre-1970 Date Tests (Issue #53) ====================
+
+    @Test
+    fun `dateToPage handles pre-1970 date with negative epoch millis`() {
+        val todayMs = getFixedTodayMs()
+
+        // Apollo 11 — July 20, 1969
+        val apollo11 = LocalDate.of(1969, 7, 20)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        assertTrue("Pre-1970 date should have negative millis", apollo11 < 0)
+
+        val page = DayPagerUtils.dateToPage(apollo11, todayMs)
+        assertTrue("Pre-1970 page should be before INITIAL_PAGE", page < DayPagerUtils.INITIAL_PAGE)
+
+        // Round-trip
+        val recoveredMs = DayPagerUtils.pageToDateMs(page, todayMs)
+        val recoveredPage = DayPagerUtils.dateToPage(recoveredMs, todayMs)
+        assertEquals("Round trip failed for pre-1970 date", page, recoveredPage)
+    }
+
+    @Test
+    fun `msToDayCode handles pre-1970 date`() {
+        val dec31_1969 = LocalDate.of(1969, 12, 31)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val dayCode = DayPagerUtils.msToDayCode(dec31_1969)
+        assertEquals(19691231, dayCode)
+    }
+
+    @Test
+    fun `pageToDateMs and dateToPage round trip for pre-1970 dates`() {
+        val todayMs = getFixedTodayMs()
+
+        // Test several pre-1970 dates: 1969, 1960, 1940, 1926
+        listOf(
+            LocalDate.of(1969, 7, 20),
+            LocalDate.of(1960, 1, 1),
+            LocalDate.of(1940, 6, 15),
+            LocalDate.of(1926, 3, 10)
+        ).forEach { date ->
+            val dateMs = date.atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli()
+
+            val page = DayPagerUtils.dateToPage(dateMs, todayMs)
+            val recoveredMs = DayPagerUtils.pageToDateMs(page, todayMs)
+            val recoveredPage = DayPagerUtils.dateToPage(recoveredMs, todayMs)
+
+            assertEquals("Round trip failed for $date", page, recoveredPage)
+
+            // Verify dayCode is correct
+            val dayCode = DayPagerUtils.msToDayCode(recoveredMs)
+            val expectedDayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+            assertEquals("DayCode mismatch for $date", expectedDayCode, dayCode)
+        }
+    }
+
     // ==================== Helper Functions ====================
 
     /**

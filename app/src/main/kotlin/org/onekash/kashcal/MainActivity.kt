@@ -272,7 +272,7 @@ class MainActivity : ComponentActivity() {
                         // Check if in 3-day view
                         val isInThreeDaysView = uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS
 
-                        val eventTimestamp = if (isInThreeDaysView && uiState.weekViewStartDate > 0L) {
+                        val eventTimestamp = if (isInThreeDaysView && uiState.weekViewStartDate != 0L) {
                             // 3-day view: use current pager position and scroll position
                             val dayIndex = uiState.weekViewPagerPosition
 
@@ -295,7 +295,8 @@ class MainActivity : ComponentActivity() {
                             eventCal.timeInMillis
                         } else {
                             // Month view: use selected date with next hour
-                            val selectedDateMillis = if (uiState.selectedDate > 946684800000L) {
+                            // 0L = no date selected (sentinel from HomeUiState.selectedDate default)
+                            val selectedDateMillis = if (uiState.selectedDate != 0L) {
                                 uiState.selectedDate
                             } else {
                                 System.currentTimeMillis()

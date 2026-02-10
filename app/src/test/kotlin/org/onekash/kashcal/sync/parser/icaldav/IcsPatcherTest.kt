@@ -243,6 +243,63 @@ class IcsPatcherTest {
         assertEquals("Should have 2 EXDATEs", 2, patchedEvent.exdates.size)
     }
 
+    @Test
+    fun `patch uses Event entity UID even when rawIcal has different UID`() {
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:server-uid-123
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Original Title
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "local-uid-456",
+            title = "Updated Title",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        assertTrue("Patched ICS should contain entity UID", patched.contains("UID:local-uid-456"))
+        assertFalse("Patched ICS should not contain original UID", patched.contains("UID:server-uid-123"))
+    }
+
+    @Test
+    fun `patch uses Event entity UID when rawIcal has no UID`() {
+        // Gap 3 push scenario: rawIcal from a non-compliant server has no UID.
+        // ICalParser generates a random UUID on re-parse, but IcsPatcher must
+        // override it with the Event entity's UID (stable since first pull).
+        val originalIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:No UID Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val entity = createTestEvent(
+            uid = "stable-room-uid-789",
+            title = "Updated Title",
+            startTs = 1735120800000L,
+            endTs = 1735124400000L
+        )
+
+        val patched = IcsPatcher.patch(originalIcs, entity)
+        assertTrue("Patched ICS should contain entity UID", patched.contains("UID:stable-room-uid-789"))
+    }
+
     // ========== Generate Fresh Tests ==========
 
     @Test

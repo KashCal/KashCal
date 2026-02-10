@@ -882,7 +882,7 @@ private fun ColumnScope.DayEventsPager(
 
     // SYNC 2: Calendar tap → Scroll day pager
     LaunchedEffect(uiState.selectedDate) {
-        if (uiState.selectedDate > 0) {
+        if (uiState.selectedDate != 0L) {
             val targetPage = DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
             if (targetPage != dayPagerState.currentPage && !dayPagerState.isScrollInProgress) {
                 dayPagerState.animateScrollToPage(targetPage)
@@ -892,7 +892,7 @@ private fun ColumnScope.DayEventsPager(
 
     // Initial load
     LaunchedEffect(Unit) {
-        if (uiState.cacheRangeCenter == 0L && uiState.selectedDate > 0) {
+        if (uiState.cacheRangeCenter == 0L && uiState.selectedDate != 0L) {
             onLoadEventsForRange(uiState.selectedDate)
         }
     }
@@ -1833,7 +1833,7 @@ private fun WeekViewDatePickerSheet(
 
     // Stable current date - prevents recomposition jank
     val stableCurrentDate = remember(currentWeekStartMs) {
-        if (currentWeekStartMs > 0L) currentWeekStartMs else System.currentTimeMillis()
+        if (currentWeekStartMs != 0L) currentWeekStartMs else System.currentTimeMillis()
     }
 
     // Track displayed month - opens to current week's month
