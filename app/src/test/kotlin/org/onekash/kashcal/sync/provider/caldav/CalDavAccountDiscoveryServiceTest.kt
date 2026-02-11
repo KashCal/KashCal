@@ -541,7 +541,7 @@ class CalDavAccountDiscoveryServiceTest {
         val result = discoveryService.refreshCalendars(1L)
 
         assertTrue(result is DiscoveryResult.Success)
-        // refreshCalendars does NOT filter birthday calendars (inconsistency with discoverAndCreateAccount)
+        // Birthday calendars are not filtered — consistent with discoverAndCreateAccount and discoverCalendars
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
     }
 

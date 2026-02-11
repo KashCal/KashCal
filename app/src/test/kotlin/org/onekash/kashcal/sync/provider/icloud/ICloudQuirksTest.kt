@@ -253,6 +253,95 @@ class ICloudQuirksTest {
         assertEquals("Work", calendars[0].displayName)
     }
 
+    // ========== Component-based filtering tests ==========
+
+    @Test
+    fun `extractCalendars skips VTODO-only calendar by component type`() {
+        val xml = """
+            <multistatus xmlns="DAV:">
+                <response xmlns="DAV:">
+                    <href>/123/calendars/personal/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Personal</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav">
+                                <comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/>
+                            </supported-calendar-component-set>
+                        </prop>
+                    </propstat>
+                </response>
+                <response xmlns="DAV:">
+                    <href>/123/calendars/tasks/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Tasks</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav">
+                                <comp name='VTODO' xmlns='urn:ietf:params:xml:ns:caldav'/>
+                            </supported-calendar-component-set>
+                        </prop>
+                    </propstat>
+                </response>
+            </multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://caldav.icloud.com")
+
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
+    @Test
+    fun `extractCalendars keeps calendar with no component set`() {
+        val xml = """
+            <multistatus xmlns="DAV:">
+                <response xmlns="DAV:">
+                    <href>/123/calendars/personal/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Personal</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                        </prop>
+                    </propstat>
+                </response>
+            </multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://caldav.icloud.com")
+
+        // No supported-calendar-component-set → permissive fallback, keep the calendar
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
+    @Test
+    fun `extractCalendars keeps calendar with VEVENT and VTODO`() {
+        val xml = """
+            <multistatus xmlns="DAV:">
+                <response xmlns="DAV:">
+                    <href>/123/calendars/personal/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Personal</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                            <supported-calendar-component-set xmlns="urn:ietf:params:xml:ns:caldav">
+                                <comp name='VEVENT' xmlns='urn:ietf:params:xml:ns:caldav'/>
+                                <comp name='VTODO' xmlns='urn:ietf:params:xml:ns:caldav'/>
+                            </supported-calendar-component-set>
+                        </prop>
+                    </propstat>
+                </response>
+            </multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://caldav.icloud.com")
+
+        // Calendar supports both VEVENT and VTODO → keep (has events)
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
     // iCal data extraction tests
 
     @Test
