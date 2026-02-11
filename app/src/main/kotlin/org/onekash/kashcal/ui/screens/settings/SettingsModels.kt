@@ -1,10 +1,14 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.onekash.kashcal.network.AiaCertificateChainCompleter
+import java.net.URL
 import java.util.concurrent.TimeUnit
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * iCloud connection state - tracks sign-in flow.
@@ -135,7 +139,32 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
             .header("Accept", "text/calendar")
             .build()
 
-        val response = client.newCall(request).execute()
+        val response = try {
+            client.newCall(request).execute()
+        } catch (e: SSLHandshakeException) {
+            // Attempt AIA certificate chain completion (same as IcsFetcher)
+            Log.w("fetchCalendarInfo", "SSL failed, attempting AIA chain completion: ${e.message}")
+            val parsedUrl = URL(url)
+            val completer = AiaCertificateChainCompleter()
+            val aiaResult = completer.attemptChainCompletion(
+                hostname = parsedUrl.host,
+                port = if (parsedUrl.port > 0) parsedUrl.port else 443,
+                baseClientBuilder = client.newBuilder()
+            )
+            when (aiaResult) {
+                is AiaCertificateChainCompleter.Result.Success -> {
+                    try {
+                        aiaResult.client.newCall(request).execute()
+                    } catch (retryEx: Exception) {
+                        Log.e("fetchCalendarInfo", "Retry after AIA failed: ${retryEx.message}", retryEx)
+                        return@withContext FetchCalendarState.Error("SSL error: ${e.message}")
+                    }
+                }
+                is AiaCertificateChainCompleter.Result.Failed -> {
+                    return@withContext FetchCalendarState.Error("SSL error: ${e.message}")
+                }
+            }
+        }
 
         if (!response.isSuccessful) {
             return@withContext FetchCalendarState.Error("HTTP ${response.code}: ${response.message}")

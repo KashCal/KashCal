@@ -435,8 +435,11 @@ class PullStrategyTest {
 
     @Test
     fun `pull returns error with network error`() = runTest {
-        val calendar = createCalendar()
+        // Network error on ctag falls through (not auth/permission), then sync also fails
+        val calendar = createCalendar(syncToken = null)
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.networkError("Connection timeout")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.networkError("Connection timeout")
 
         val result = pullStrategy.pull(calendar, client = client)
 
@@ -1631,5 +1634,52 @@ class PullStrategyTest {
         val session = sessionBuilder.build()
         assertTrue("Session should have constraint errors", session.hasConstraintErrors)
         assertEquals("Should have 2 constraint errors", 2, session.skippedConstraintError)
+    }
+
+    // ========== Recently Pushed Event Skip (v22.5.6) ==========
+
+    @Test
+    fun `pull skips recently pushed event even when etag differs`() = runTest {
+        // When an event was just pushed in this sync cycle, pull should skip it
+        // even if the server returns a different etag (CDN staleness protection).
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}pushed-event.ics"
+        val existingEvent = createEvent(id = 42, caldavUrl = eventUrl, title = "Local Version").copy(
+            uid = "uid-pushed",
+            etag = "etag-after-push"
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("pushed-event.ics", eventUrl, "etag-stale-from-cdn",
+                    createSimpleIcal("uid-pushed", "Server Version (stale CDN)"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-pushed", calendar.id) } returns existingEvent
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(
+            calendar,
+            client = client,
+            sessionBuilder = sessionBuilder,
+            recentlyPushedEventIds = setOf(42L)
+        )
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        // Event should NOT have been upserted (it was skipped)
+        coVerify(exactly = 0) { eventsDao.upsert(match { it.uid == "uid-pushed" }) }
+
+        // Session should record the skip
+        val session = sessionBuilder.build()
+        assertEquals("Should have 1 recently-pushed skip", 1, session.skippedRecentlyPushed)
     }
 }

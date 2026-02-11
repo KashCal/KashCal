@@ -67,6 +67,7 @@ class PushStrategy @Inject constructor(
         var updated = 0
         var deleted = 0
         var failed = 0
+        val pushedEventIds = mutableSetOf<Long>()
 
         for (operation in readyOperations) {
             // Mark as in progress
@@ -80,8 +81,14 @@ class PushStrategy @Inject constructor(
                     pendingOperationsDao.deleteById(operation.id)
 
                     when (operation.operation) {
-                        PendingOperation.OPERATION_CREATE -> created++
-                        PendingOperation.OPERATION_UPDATE -> updated++
+                        PendingOperation.OPERATION_CREATE -> {
+                            created++
+                            pushedEventIds.add(operation.eventId)
+                        }
+                        PendingOperation.OPERATION_UPDATE -> {
+                            updated++
+                            pushedEventIds.add(operation.eventId)
+                        }
                         PendingOperation.OPERATION_DELETE -> deleted++
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
@@ -122,7 +129,8 @@ class PushStrategy @Inject constructor(
             eventsUpdated = updated,
             eventsDeleted = deleted,
             operationsProcessed = readyOperations.size,
-            operationsFailed = failed
+            operationsFailed = failed,
+            pushedEventIds = pushedEventIds
         )
     }
 
@@ -179,6 +187,7 @@ class PushStrategy @Inject constructor(
         var updated = 0
         var deleted = 0
         var failed = 0
+        val pushedEventIds = mutableSetOf<Long>()
 
         for (operation in calendarOperations) {
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
@@ -189,8 +198,14 @@ class PushStrategy @Inject constructor(
                 is SinglePushResult.Success -> {
                     pendingOperationsDao.deleteById(operation.id)
                     when (operation.operation) {
-                        PendingOperation.OPERATION_CREATE -> created++
-                        PendingOperation.OPERATION_UPDATE -> updated++
+                        PendingOperation.OPERATION_CREATE -> {
+                            created++
+                            pushedEventIds.add(operation.eventId)
+                        }
+                        PendingOperation.OPERATION_UPDATE -> {
+                            updated++
+                            pushedEventIds.add(operation.eventId)
+                        }
                         PendingOperation.OPERATION_DELETE -> deleted++
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
@@ -223,7 +238,8 @@ class PushStrategy @Inject constructor(
             eventsUpdated = updated,
             eventsDeleted = deleted,
             operationsProcessed = calendarOperations.size,
-            operationsFailed = failed
+            operationsFailed = failed,
+            pushedEventIds = pushedEventIds
         )
     }
 
@@ -385,8 +401,41 @@ class PushStrategy @Inject constructor(
                 SinglePushResult.Success(newEtag = newEtag)
             }
             result.isConflict() -> {
-                Log.w(TAG, "Event modified on server (412)")
-                SinglePushResult.Conflict()
+                // 412 Precondition Failed: server etag changed since our last pull.
+                // Common in shared calendars (another user's edit) or iCloud housekeeping.
+                // Retry once with a fresh etag before falling through to ConflictResolver.
+                Log.w(TAG, "412 Conflict for ${event.title}, fetching fresh etag for retry")
+                val freshEtagResult = clientToUse.fetchEtag(caldavUrl)
+                val freshEtag = freshEtagResult.getOrNull()
+
+                if (freshEtag != null) {
+                    // Update DB etag for retry. Note: the in-memory `event` object is now
+                    // stale — the retry uses `freshEtag` variable directly, not event.etag.
+                    // The eventsCache (batch-loaded at push start) is also not updated,
+                    // but this is safe since each operation processes independently.
+                    eventsDao.updateEtag(event.id, freshEtag)
+                    val retryResult = clientToUse.updateEvent(caldavUrl, icalData, freshEtag)
+                    when {
+                        retryResult.isSuccess() -> {
+                            val newEtag = retryResult.getOrNull()
+                                ?: return SinglePushResult.Error(-1, "Null result from retry", false)
+                            val now = System.currentTimeMillis()
+                            eventsDao.markSynced(event.id, newEtag, now)
+                            for (exception in serializedExceptions) {
+                                eventsDao.markSynced(exception.id, newEtag, now)
+                            }
+                            Log.d(TAG, "412 retry succeeded for ${event.title}")
+                            SinglePushResult.Success(newEtag = newEtag)
+                        }
+                        else -> {
+                            Log.w(TAG, "412 retry also failed for ${event.title}")
+                            SinglePushResult.Conflict()
+                        }
+                    }
+                } else {
+                    Log.w(TAG, "fetchEtag failed for ${event.title}, deferring to conflict resolution")
+                    SinglePushResult.Conflict()
+                }
             }
             else -> {
                 val error = (result as? CalDavResult.Error)

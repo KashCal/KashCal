@@ -23,7 +23,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.R
-import org.onekash.kashcal.data.credential.AccountCredentials
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
@@ -597,18 +596,8 @@ class AccountSettingsViewModel @Inject constructor(
                 result is DiscoveryResult.Success -> {
                     Log.i(TAG, "Discovery successful: ${result.calendars.size} calendars")
 
-                    // Save credentials to secure storage AFTER successful validation
-                    val credentials = AccountCredentials(
-                        username = appleIdInput.trim(),
-                        password = passwordInput.trim(),
-                        serverUrl = AccountCredentials.ICLOUD_DEFAULT_SERVER_URL,
-                        principalUrl = result.account.principalUrl,
-                        calendarHomeSet = result.account.homeSetUrl
-                    )
-                    val saved = accountRepository.saveCredentials(result.account.id, credentials)
-                    if (!saved) {
-                        Log.e(TAG, "Failed to save credentials securely")
-                    }
+                    // Credentials are saved inside ICloudAccountDiscoveryService.
+                    // If we reached here, they were saved successfully.
 
                     // Clear password from memory
                     passwordInput = ""

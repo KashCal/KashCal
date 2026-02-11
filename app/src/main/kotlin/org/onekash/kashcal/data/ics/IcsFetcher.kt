@@ -8,9 +8,11 @@ import okhttp3.Response
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import java.io.EOFException
 import java.io.IOException
+import org.onekash.kashcal.network.AiaCertificateChainCompleter
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.net.URL
 import java.net.UnknownHostException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -57,6 +59,8 @@ private const val DEFAULT_RETRY_AFTER_MS = 500L
  */
 @Singleton
 class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
+
+    private val aiaCertChainCompleter by lazy { AiaCertificateChainCompleter() }
 
     private val httpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -125,9 +129,33 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                 lastResult = IcsFetcher.FetchResult.Error("HTTP ${response.code}: ${response.message}")
 
             } catch (e: SSLHandshakeException) {
-                // Don't retry SSL errors - likely a security issue
-                Log.e(TAG, "SSL error fetching ICS (not retrying): ${e.message}", e)
-                return IcsFetcher.FetchResult.Error("SSL error: ${e.message}")
+                // Attempt AIA certificate chain completion as fallback.
+                // Some servers (e.g., Moodle) serve incomplete chains — the intermediate
+                // is missing but the leaf cert's AIA extension points to it.
+                Log.w(TAG, "SSL handshake failed, attempting AIA chain completion: ${e.message}")
+                val parsedUrl = URL(subscription.getNormalizedUrl())
+                val aiaResult = aiaCertChainCompleter.attemptChainCompletion(
+                    hostname = parsedUrl.host,
+                    port = if (parsedUrl.port > 0) parsedUrl.port else 443,
+                    baseClientBuilder = httpClient.newBuilder()
+                )
+                when (aiaResult) {
+                    is AiaCertificateChainCompleter.Result.Success -> {
+                        Log.i(TAG, "AIA succeeded, retrying fetch")
+                        return try {
+                            val retryResponse = aiaResult.client.newCall(request).execute()
+                            processResponse(retryResponse)
+                                ?: IcsFetcher.FetchResult.Error("HTTP ${retryResponse.code}: ${retryResponse.message}")
+                        } catch (retryEx: Exception) {
+                            Log.e(TAG, "Retry after AIA failed: ${retryEx.message}", retryEx)
+                            IcsFetcher.FetchResult.Error("SSL error: ${e.message}")
+                        }
+                    }
+                    is AiaCertificateChainCompleter.Result.Failed -> {
+                        Log.e(TAG, "AIA chain completion failed: ${aiaResult.reason}")
+                        return IcsFetcher.FetchResult.Error("SSL error: ${e.message}")
+                    }
+                }
 
             } catch (e: IOException) {
                 if (isRetryableError(e) && attempt < MAX_RETRIES - 1) {

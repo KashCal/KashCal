@@ -399,13 +399,12 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `onSignIn saves credentials and shows Connected`() = runTest {
-        // Mock successful discovery
+    fun `onSignIn shows Connected on successful discovery`() = runTest {
+        // Mock successful discovery (credentials are saved inside discovery service)
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
         )
-        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -422,18 +421,15 @@ class AccountSettingsViewModelTest {
             assertTrue(state.iCloudState is ICloudConnectionState.Connected)
             assertEquals("test@icloud.com", (state.iCloudState as ICloudConnectionState.Connected).appleId)
         }
-
-        coVerify { accountRepository.saveCredentials(testDbAccount.id, any()) }
     }
 
     @Test
     fun `onSignIn triggers account-scoped sync`() = runTest {
-        // Mock successful discovery
+        // Mock successful discovery (credentials saved inside discovery service)
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
         )
-        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()

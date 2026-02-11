@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.data.credential.AccountCredentials
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import java.net.SocketTimeoutException
@@ -161,6 +162,23 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
                 val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
+            }
+
+            // Step 4b: Save credentials to encrypted storage
+            val accountCredentials = AccountCredentials(
+                username = appleId,
+                password = appSpecificPassword,
+                serverUrl = AccountCredentials.ICLOUD_DEFAULT_SERVER_URL,
+                principalUrl = principalUrl,
+                calendarHomeSet = calendarHomeUrl
+            )
+            val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
+            if (!credentialsSaved) {
+                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
+                accountRepository.deleteAccount(account.id)
+                return@withContext DiscoveryResult.Error(
+                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
+                )
             }
 
             // Step 5: Create Calendar entities for each discovered calendar

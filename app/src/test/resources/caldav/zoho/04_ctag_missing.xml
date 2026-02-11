@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Zoho PROPFIND response for getctag request.
+     Zoho may not support the CalendarServer getctag extension.
+     The response is valid XML (207 Multi-Status) but lacks the getctag property.
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/">
+  <d:response>
+    <d:href>/caldav/user@example.com/default/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:displayname>My Calendar</d:displayname>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+    <!-- getctag requested but returned as 404 (not found) -->
+    <d:propstat>
+      <d:prop>
+        <cs:getctag/>
+      </d:prop>
+      <d:status>HTTP/1.1 404 Not Found</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>

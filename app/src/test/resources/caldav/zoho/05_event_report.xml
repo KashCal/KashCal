@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Zoho calendar-query REPORT response with events. -->
+<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:response>
+    <d:href>/caldav/user@example.com/default/event1.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"zoho-etag-001"</d:getetag>
+        <c:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Zoho//Calendar//EN
+BEGIN:VEVENT
+UID:zoho-uid-001@zoho.com
+DTSTAMP:20250101T120000Z
+DTSTART:20250115T100000Z
+DTEND:20250115T110000Z
+SUMMARY:Zoho Meeting
+DESCRIPTION:A test meeting from Zoho Calendar
+END:VEVENT
+END:VCALENDAR</c:calendar-data>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/caldav/user@example.com/default/event2.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"zoho-etag-002"</d:getetag>
+        <c:calendar-data>BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Zoho//Calendar//EN
+BEGIN:VEVENT
+UID:zoho-uid-002@zoho.com
+DTSTAMP:20250101T120000Z
+DTSTART;VALUE=DATE:20250120
+DTEND;VALUE=DATE:20250121
+SUMMARY:All Day Event
+END:VEVENT
+END:VCALENDAR</c:calendar-data>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>

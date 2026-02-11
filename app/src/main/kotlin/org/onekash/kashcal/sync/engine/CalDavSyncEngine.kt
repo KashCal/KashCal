@@ -187,7 +187,14 @@ class CalDavSyncEngine @Inject constructor(
             } else {
                 calendar
             }
-            val pullResult = pullStrategy.pull(calendarForPull, forceFullSync, quirks, client, sessionBuilder)
+            // Pass pushed event IDs so pull can skip recently-pushed events
+            // (prevents stale CDN reads from overwriting just-pushed data)
+            val pushedEventIds = when (pushResult) {
+                is PushResult.Success -> pushResult.pushedEventIds
+                else -> emptySet()
+            }
+            val pullResult = pullStrategy.pull(calendarForPull, forceFullSync, quirks, client, sessionBuilder,
+                recentlyPushedEventIds = pushedEventIds)
 
             when (pullResult) {
                 is PullResult.Success -> {

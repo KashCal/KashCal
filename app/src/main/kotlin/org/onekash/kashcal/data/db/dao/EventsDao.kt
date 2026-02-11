@@ -394,6 +394,14 @@ interface EventsDao {
     suspend fun markSynced(id: Long, etag: String?, now: Long)
 
     /**
+     * Update only the etag for an event, without changing syncStatus.
+     * Used during 412 retry: the event is still PENDING_UPDATE but needs
+     * the fresh etag for the retry PUT's If-Match header.
+     */
+    @Query("UPDATE events SET etag = :etag WHERE id = :id")
+    suspend fun updateEtag(id: Long, etag: String?)
+
+    /**
      * Mark event as synced with CalDAV URL after successful CREATE.
      * Sets caldav_url, etag, and sync_status = SYNCED.
      */

@@ -17,7 +17,8 @@ sealed class PushResult {
         val eventsUpdated: Int,
         val eventsDeleted: Int,
         val operationsProcessed: Int,
-        val operationsFailed: Int
+        val operationsFailed: Int,
+        val pushedEventIds: Set<Long> = emptySet()
     ) : PushResult()
 
     /**

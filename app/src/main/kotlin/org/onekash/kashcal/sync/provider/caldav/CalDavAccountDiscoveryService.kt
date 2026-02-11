@@ -62,6 +62,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             "/dav/",              // Davis, generic sabre/dav
             "/remote.php/dav/",   // Nextcloud
             "/dav.php/",          // Baikal
+            "/caldav",            // Zoho (no trailing slash — Zoho returns 501 for /caldav/)
             "/caldav/",           // Open-Xchange (mailbox.org)
             "/dav/cal/",          // Stalwart
             "/caldav.php/",       // Some servers
@@ -249,8 +250,11 @@ class CalDavAccountDiscoveryService @Inject constructor(
             )
             val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
             if (!credentialsSaved) {
-                Log.w(TAG, "Failed to save credentials - encryption may be unavailable")
-                // Continue anyway - credentials can be re-entered
+                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
+                accountRepository.deleteAccount(account.id)
+                return@withContext DiscoveryResult.Error(
+                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
+                )
             }
 
             // Step 6: Create Calendar entities for each discovered calendar
@@ -715,7 +719,11 @@ class CalDavAccountDiscoveryService @Inject constructor(
             )
             val credentialsSaved = accountRepository.saveCredentials(account.id, accountCredentials)
             if (!credentialsSaved) {
-                Log.w(TAG, "Failed to save credentials - encryption may be unavailable")
+                Log.e(TAG, "Failed to save credentials - secure storage unavailable")
+                accountRepository.deleteAccount(account.id)
+                return@withContext DiscoveryResult.Error(
+                    "Could not save credentials securely. Please try again, or restart your device if the problem persists."
+                )
             }
 
             // Step 3: Create Calendar entities for selected calendars only

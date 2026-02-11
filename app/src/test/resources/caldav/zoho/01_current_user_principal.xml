@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d:multistatus xmlns:d="DAV:">
+  <d:response>
+    <d:href>/caldav</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:current-user-principal>
+          <d:href>/caldav/user@example.com/</d:href>
+        </d:current-user-principal>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>

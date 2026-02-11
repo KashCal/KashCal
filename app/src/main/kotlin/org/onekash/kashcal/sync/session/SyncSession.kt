@@ -40,6 +40,7 @@ data class SyncSession(
     val skippedEtagUnchanged: Int = 0,
     val skippedOrphanedException: Int = 0,
     val skippedConstraintError: Int = 0,
+    val skippedRecentlyPushed: Int = 0,
 
     // Issue tracking
     val hasMissingEvents: Boolean = false,

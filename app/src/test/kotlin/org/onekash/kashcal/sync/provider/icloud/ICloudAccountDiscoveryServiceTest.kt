@@ -102,9 +102,10 @@ class ICloudAccountDiscoveryServiceTest {
         // Mock factory to return our mock client
         every { clientFactory.createClient(any(), any()) } returns calDavClient
 
-        // Default: no existing account
+        // Default: no existing account, credential save succeeds
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
     }
@@ -360,6 +361,46 @@ class ICloudAccountDiscoveryServiceTest {
         service.removeAccountByEmail(testAppleId)
 
         coVerify { accountRepository.deleteAccount(testDbAccount.id) }
+    }
+
+    // ==================== Credential Save Failure Tests (Issue #55) ====================
+
+    @Test
+    fun `discoverAndCreateAccount returns error when credentials fail to save`() = runTest {
+        coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
+
+        // Simulate EncryptedSharedPreferences failure (e.g., Android Keystore broken)
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val service = createService()
+        val result = service.discoverAndCreateAccount(testAppleId, testPassword)
+
+        assertTrue(
+            "Expected Error when credentials fail to save, but got $result",
+            result is DiscoveryResult.Error
+        )
+        val error = result as DiscoveryResult.Error
+        assertTrue(
+            "Error message should mention credential storage, but got: ${error.message}",
+            error.message.contains("credential", ignoreCase = true) ||
+                error.message.contains("secure storage", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `discoverAndCreateAccount cleans up account when credentials fail to save`() = runTest {
+        coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val service = createService()
+        service.discoverAndCreateAccount(testAppleId, testPassword)
+
+        // Account should be cleaned up since it can't sync without credentials
+        coVerify { accountRepository.deleteAccount(1L) }
     }
 
     // ==================== Rate Limiting Tests ====================

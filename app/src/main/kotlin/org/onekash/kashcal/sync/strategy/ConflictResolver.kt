@@ -291,6 +291,9 @@ class ConflictResolver @Inject constructor(
             resolveServerWins(event, operation, client)
         } else {
             Log.d(TAG, "Local version is newer (seq: $localSequence vs $serverSequence)")
+            // Update local etag to server's current value before creating retry.
+            // Without this, the retry uses the stale etag → 412 again → infinite loop.
+            eventsDao.updateEtag(event.id, serverEvent.etag)
             // Delete old operation and create a fresh one for immediate retry
             // This ensures the local version actually gets pushed to server
             pendingOperationsDao.deleteById(operation.id)

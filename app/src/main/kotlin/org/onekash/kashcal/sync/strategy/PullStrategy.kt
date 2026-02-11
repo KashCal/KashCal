@@ -130,7 +130,8 @@ class PullStrategy @Inject constructor(
         forceFullSync: Boolean = false,
         quirks: CalDavQuirks? = null,
         client: CalDavClient,
-        sessionBuilder: SyncSessionBuilder? = null
+        sessionBuilder: SyncSessionBuilder? = null,
+        recentlyPushedEventIds: Set<Long> = emptySet()
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
         val effectiveClient = client
@@ -138,17 +139,20 @@ class PullStrategy @Inject constructor(
         return try {
             // Step 1: Quick ctag check
             val ctagResult = effectiveClient.getCtag(calendar.caldavUrl)
-            if (ctagResult.isError()) {
+            val serverCtag: String? = if (ctagResult.isSuccess()) {
+                (ctagResult as CalDavResult.Success).data
+            } else {
                 val error = ctagResult as CalDavResult.Error
-                Log.e(TAG, "getCtag FAILED: ${error.code} - ${error.message}")
-                return PullResult.Error(
-                    code = error.code,
-                    message = error.message,
-                    isRetryable = error.isRetryable
-                )
+                // Auth/permission errors are systemic — abort immediately
+                if (error.code == 401 || error.code == 403) {
+                    Log.e(TAG, "getCtag failed: ${error.code} - ${error.message}")
+                    return PullResult.Error(code = error.code, message = error.message, isRetryable = error.isRetryable)
+                }
+                // getctag is a CalendarServer extension, not core CalDAV RFC 4791.
+                // Servers like Zoho don't support it. Skip the ctag optimization and proceed.
+                Log.w(TAG, "getCtag unavailable (${error.code}: ${error.message}), proceeding without ctag")
+                null
             }
-
-            val serverCtag = (ctagResult as CalDavResult.Success).data
             Log.d(TAG, "ctag check: server=$serverCtag, local=${calendar.ctag}, force=$forceFullSync")
             if (!forceFullSync && serverCtag == calendar.ctag && calendar.ctag != null) {
                 Log.d(TAG, "No changes (ctag unchanged)")
@@ -158,10 +162,10 @@ class PullStrategy @Inject constructor(
             // Step 2: Determine sync method
             val result = if (!forceFullSync && calendar.syncToken != null) {
                 // Incremental sync using sync-token
-                pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder)
+                pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds)
             } else {
                 // Full sync - fetch all events in time window
-                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder)
+                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds)
             }
 
             // Step 3: Update calendar metadata on success
@@ -210,7 +214,8 @@ class PullStrategy @Inject constructor(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
-        sessionBuilder: SyncSessionBuilder?
+        sessionBuilder: SyncSessionBuilder?,
+        recentlyPushedEventIds: Set<Long> = emptySet()
     ): PullResult {
         Log.d(TAG, "Incremental sync with token: ${calendar.syncToken?.take(8)}...")
 
@@ -221,13 +226,13 @@ class PullStrategy @Inject constructor(
             // Etag comparison saves ~96% bandwidth (33KB vs 834KB for 231 events)
             if (error.code == 403 || error.code == 410) {
                 Log.w(TAG, "Sync token expired (${error.code}), trying etag-based fallback")
-                val etagResult = pullWithEtagComparison(calendar, quirks, clientToUse, sessionBuilder)
+                val etagResult = pullWithEtagComparison(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds)
                 if (etagResult != null) {
                     Log.d(TAG, "Etag-based fallback succeeded")
                     return etagResult
                 }
                 Log.w(TAG, "Etag fallback returned null, falling back to full sync")
-                return pullFull(calendar, quirks, clientToUse, sessionBuilder)
+                return pullFull(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds)
             }
             return PullResult.Error(error.code, error.message, error.isRetryable)
         }
@@ -334,7 +339,7 @@ class PullStrategy @Inject constructor(
             Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}, missing: $missingHrefs")
         }
 
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
 
         // Clean up any duplicate master events that may have accumulated
         // This handles edge cases where duplicates were created due to:
@@ -408,7 +413,8 @@ class PullStrategy @Inject constructor(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
-        sessionBuilder: SyncSessionBuilder?
+        sessionBuilder: SyncSessionBuilder?,
+        recentlyPushedEventIds: Set<Long> = emptySet()
     ): PullResult {
         // Clean up any duplicate master events before processing
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
@@ -466,7 +472,7 @@ class PullStrategy @Inject constructor(
         }
 
         // Process server events
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
@@ -498,7 +504,8 @@ class PullStrategy @Inject constructor(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
-        sessionBuilder: SyncSessionBuilder?
+        sessionBuilder: SyncSessionBuilder?,
+        recentlyPushedEventIds: Set<Long> = emptySet()
     ): PullResult? {
         Log.d(TAG, "Attempting etag-based fallback sync for calendar: ${calendar.displayName}")
 
@@ -633,7 +640,7 @@ class PullStrategy @Inject constructor(
         Log.d(TAG, "Fetched ${serverEvents.size} events via multiget (requested ${hrefsToFetch.size})")
 
         // Step 6: Process fetched events
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
@@ -674,7 +681,8 @@ class PullStrategy @Inject constructor(
     private suspend fun processEvents(
         calendar: Calendar,
         serverEvents: List<CalDavEvent>,
-        sessionBuilder: SyncSessionBuilder? = null
+        sessionBuilder: SyncSessionBuilder?,
+        recentlyPushedEventIds: Set<Long> = emptySet()
     ): ProcessEventsResult {
         var added = 0
         var updated = 0
@@ -742,6 +750,16 @@ class PullStrategy @Inject constructor(
             if (existingEvent != null && existingEvent.hasPendingChanges()) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - has pending local changes (${existingEvent.syncStatus})")
                 sessionBuilder?.incrementSkipPendingLocal()
+                uidToMasterEvent[meta.parsed.uid] = existingEvent
+                continue
+            }
+
+            // CDN PROTECTION: Skip events we just pushed in this sync cycle.
+            // iCloud CDN may return stale data for recently-modified events.
+            // Trust our local version since we just successfully pushed it.
+            if (existingEvent != null && existingEvent.id in recentlyPushedEventIds) {
+                Log.d(TAG, "Skipping ${meta.caldavUrl} - recently pushed in this sync cycle")
+                sessionBuilder?.incrementSkipRecentlyPushed()
                 uidToMasterEvent[meta.parsed.uid] = existingEvent
                 continue
             }

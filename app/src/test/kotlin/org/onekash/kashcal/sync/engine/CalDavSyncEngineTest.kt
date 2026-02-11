@@ -898,4 +898,49 @@ class CalDavSyncEngineTest {
         // Should use original calendar
         coVerify { pullStrategy.pull(testCalendar, false, any(), client, any()) }
     }
+
+    // ========== Pushed Event IDs Wiring (v22.5.6) ==========
+
+    @Test
+    fun `syncCalendar passes pushed event IDs from push to pull`() = runTest {
+        val pushedIds = setOf(1L, 2L)
+
+        coEvery { pushStrategy.pushForCalendar(testCalendar, client) } returns PushResult.Success(
+            eventsCreated = 1,
+            eventsUpdated = 1,
+            eventsDeleted = 0,
+            operationsProcessed = 2,
+            operationsFailed = 0,
+            pushedEventIds = pushedIds
+        )
+        coEvery {
+            pullStrategy.pull(testCalendar, false, any(), client, any(), recentlyPushedEventIds = pushedIds)
+        } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar, client = client)
+
+        assert(result is SyncResult.Success)
+
+        // Verify pull was called with the pushed event IDs
+        coVerify {
+            pullStrategy.pull(testCalendar, false, any(), client, any(), recentlyPushedEventIds = pushedIds)
+        }
+    }
+
+    @Test
+    fun `syncCalendar passes empty pushed IDs when push has no pending operations`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar, client) } returns PushResult.NoPendingOperations
+        coEvery {
+            pullStrategy.pull(testCalendar, false, any(), client, any(), recentlyPushedEventIds = emptySet())
+        } returns PullResult.NoChanges
+
+        val result = syncEngine.syncCalendar(testCalendar, client = client)
+
+        assert(result is SyncResult.Success)
+
+        // Verify pull was called with empty set
+        coVerify {
+            pullStrategy.pull(testCalendar, false, any(), client, any(), recentlyPushedEventIds = emptySet())
+        }
+    }
 }

@@ -215,6 +215,11 @@ class NextcloudAccountCreationFlowTest {
             every {
                 runBlocking { countByDisplayName(any(), any()) }
             } returns 0
+
+            // saveCredentials - always succeeds in test
+            every {
+                runBlocking { saveCredentials(any(), any()) }
+            } returns true
         }
     }
 

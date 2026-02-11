@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Zoho calendar list response.
+     Key differences from other providers:
+     - No getctag property (CalendarServer extension not supported)
+     - No calendar-color (Apple iCal extension not supported)
+     - Calendars still have proper resourcetype with calendar element
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <!-- Calendar home collection (parent - not a calendar) -->
+  <d:response>
+    <d:href>/caldav/user@example.com/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:displayname>user@example.com</d:displayname>
+        <d:resourcetype>
+          <d:collection/>
+        </d:resourcetype>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <!-- Actual calendar -->
+  <d:response>
+    <d:href>/caldav/user@example.com/default/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:displayname>My Calendar</d:displayname>
+        <d:resourcetype>
+          <d:collection/>
+          <c:calendar/>
+        </d:resourcetype>
+        <d:current-user-privilege-set>
+          <d:privilege><d:read/></d:privilege>
+          <d:privilege><d:write/></d:privilege>
+          <d:privilege><d:write-content/></d:privilege>
+        </d:current-user-privilege-set>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <!-- Second calendar -->
+  <d:response>
+    <d:href>/caldav/user@example.com/work/</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:displayname>Work</d:displayname>
+        <d:resourcetype>
+          <d:collection/>
+          <c:calendar/>
+        </d:resourcetype>
+        <d:current-user-privilege-set>
+          <d:privilege><d:read/></d:privilege>
+          <d:privilege><d:write/></d:privilege>
+          <d:privilege><d:write-content/></d:privilege>
+        </d:current-user-privilege-set>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+</d:multistatus>

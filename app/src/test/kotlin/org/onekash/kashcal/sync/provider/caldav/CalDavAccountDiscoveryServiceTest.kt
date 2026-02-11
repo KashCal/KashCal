@@ -67,6 +67,9 @@ class CalDavAccountDiscoveryServiceTest {
         // Factory returns our mock client
         every { calDavClientFactory.createClient(any(), any()) } returns mockClient
 
+        // Default: credential save succeeds (overridden in credential-failure tests)
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns true
+
         discoveryService = CalDavAccountDiscoveryService(
             calDavClientFactory,
             accountRepository,
@@ -944,6 +947,155 @@ class CalDavAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Error)
         assertTrue((result as DiscoveryResult.Error).message.contains("Trust insecure"))
         coVerify(exactly = 1) { mockClient.discoverPrincipal(any()) }
+    }
+
+    // ==================== Zoho Path Probing Tests (Issue #61) ====================
+
+    @Test
+    fun `discoverAndCreateAccount probes caldav without trailing slash before with slash`() = runTest {
+        // Zoho returns 501 for /caldav/ but works with /caldav (no trailing slash).
+        // KNOWN_CALDAV_PATHS has /caldav before /caldav/ so Zoho is found first.
+        coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com") } returns
+            CalDavResult.Error(404, "Not found")
+        // /dav/ fails
+        coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/dav/") } returns
+            CalDavResult.Error(404, "Not found")
+        // /remote.php/dav/ fails
+        coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/remote.php/dav/") } returns
+            CalDavResult.Error(404, "Not found")
+        // /dav.php/ fails
+        coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/dav.php/") } returns
+            CalDavResult.Error(404, "Not found")
+        // /caldav succeeds (no trailing slash)
+        coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/caldav") } returns
+            CalDavResult.Success("https://calendar.zoho.com/caldav/user@example.com/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns
+            CalDavResult.Success("https://calendar.zoho.com/caldav/user@example.com/")
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(
+                CalDavCalendar("/caldav/user@example.com/default/", "https://calendar.zoho.com/caldav/user@example.com/default/", "My Calendar", null, null, false)
+            ))
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://calendar.zoho.com",
+            username = "user@example.com",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
+        // /caldav/ (with trailing slash) should never have been tried
+        coVerify(exactly = 0) { mockClient.discoverPrincipal("https://calendar.zoho.com/caldav/") }
+    }
+
+    // ==================== Credential Save Failure Tests (Issue #55) ====================
+
+    @Test
+    fun `discoverAndCreateAccount returns error when credentials fail to save`() = runTest {
+        setupSuccessfulDiscovery()
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        // Simulate EncryptedSharedPreferences failure (e.g., Android Keystore broken)
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(
+            "Expected Error when credentials fail to save, but got $result",
+            result is DiscoveryResult.Error
+        )
+        val error = result as DiscoveryResult.Error
+        assertTrue(
+            "Error message should mention credential storage, but got: ${error.message}",
+            error.message.contains("credential", ignoreCase = true) ||
+                error.message.contains("secure storage", ignoreCase = true)
+        )
+    }
+
+    @Test
+    fun `discoverAndCreateAccount cleans up account when credentials fail to save`() = runTest {
+        setupSuccessfulDiscovery()
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        // Account should be cleaned up since it can't sync without credentials
+        coVerify { accountRepository.deleteAccount(1L) }
+    }
+
+    @Test
+    fun `createAccountWithSelectedCalendars returns error when credentials fail to save`() = runTest {
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        val result = discoveryService.createAccountWithSelectedCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass",
+            trustInsecure = false,
+            principalUrl = "https://nextcloud.example.com/dav/principals/user/",
+            calendarHomeUrl = "https://nextcloud.example.com/dav/calendars/user/",
+            selectedCalendars = listOf(
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = 0xFF0000
+                )
+            )
+        )
+
+        assertTrue(
+            "Expected Error when credentials fail to save, but got $result",
+            result is DiscoveryResult.Error
+        )
+    }
+
+    @Test
+    fun `createAccountWithSelectedCalendars cleans up account when credentials fail to save`() = runTest {
+        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        coEvery { accountRepository.saveCredentials(any(), any()) } returns false
+
+        discoveryService.createAccountWithSelectedCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass",
+            trustInsecure = false,
+            principalUrl = "https://nextcloud.example.com/dav/principals/user/",
+            calendarHomeUrl = "https://nextcloud.example.com/dav/calendars/user/",
+            selectedCalendars = listOf(
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = 0xFF0000
+                )
+            )
+        )
+
+        coVerify { accountRepository.deleteAccount(1L) }
     }
 
     // ==================== SSL Error Message Tests (Issue #56) ====================

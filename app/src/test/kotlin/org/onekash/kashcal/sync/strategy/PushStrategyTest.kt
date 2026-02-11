@@ -228,7 +228,9 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-                coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified on server")
+        coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified on server")
+        // 412 retry: fetchEtag fails → falls through to conflict
+        coEvery { client.fetchEtag(any()) } returns CalDavResult.networkError("Connection failed")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -701,6 +703,228 @@ class PushStrategyTest {
         // Verify exception etags were updated (v14.2.20)
         coVerify { eventsDao.markSynced(exception1.id, "new-etag", any()) }
         coVerify { eventsDao.markSynced(exception2.id, "new-etag", any()) }
+    }
+
+    // ========== 412 Conflict Retry (v22.5.6) ==========
+
+    @Test
+    fun `pushAll retries update with fresh etag on 412 conflict`() = runTest {
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // First PUT with stale etag → 412
+        coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag → fresh etag
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") } just Runs
+        // Retry PUT with fresh etag → success
+        coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-fresh")) } returns
+            CalDavResult.success("etag-new")
+        coEvery { eventsDao.markSynced(eventWithUrl.id, "etag-new", any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assert(success.eventsUpdated == 1)
+        assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
+
+        // Verify the retry sequence
+        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") }
+        coVerify { eventsDao.markSynced(eventWithUrl.id, "etag-new", any()) }
+        coVerify { pendingOperationsDao.deleteById(operation.id) }
+    }
+
+    @Test
+    fun `pushAll falls back to conflict when fetchEtag fails on 412`() = runTest {
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { client.updateEvent(any(), any(), any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag fails
+        coEvery { client.fetchEtag(any()) } returns CalDavResult.networkError("Connection failed")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 1)
+
+        // Should fall through to normal conflict handling
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+        // Should NOT have tried updateEtag or second PUT
+        coVerify(exactly = 0) { eventsDao.updateEtag(any(), any()) }
+    }
+
+    @Test
+    fun `pushAll falls back to conflict when retry also gets 412`() = runTest {
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // First PUT → 412
+        coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag succeeds
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") } just Runs
+        // Retry PUT → also 412 (another concurrent edit)
+        coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-fresh")) } returns
+            CalDavResult.conflictError("Modified again")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 1)
+
+        // updateEtag was called (intermediate step)
+        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") }
+        // But ultimately fell through to conflict
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+    }
+
+    @Test
+    fun `pushAll retry updates exception event etags on success`() = runTest {
+        val masterEvent = testEvent.copy(
+            id = 200L,
+            rrule = "FREQ=DAILY;COUNT=5",
+            originalEventId = null,
+            caldavUrl = "https://caldav.icloud.com/123/calendar/master.ics",
+            etag = "etag-stale"
+        )
+
+        val exception1 = testEvent.copy(
+            id = 201L,
+            originalEventId = masterEvent.id,
+            originalInstanceTime = System.currentTimeMillis() + 86400_000,
+            rrule = null
+        )
+
+        val exception2 = testEvent.copy(
+            id = 202L,
+            originalEventId = masterEvent.id,
+            originalInstanceTime = System.currentTimeMillis() + 172800_000,
+            rrule = null
+        )
+
+        val operation = PendingOperation(
+            id = 1L,
+            eventId = masterEvent.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
+        coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exception1, exception2)
+        // First PUT → 412
+        coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), eq("etag-stale")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag → fresh
+        coEvery { client.fetchEtag(masterEvent.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
+        coEvery { eventsDao.updateEtag(masterEvent.id, "etag-fresh") } just Runs
+        // Retry → success
+        coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), eq("etag-fresh")) } returns
+            CalDavResult.success("etag-new")
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 0)
+
+        // Verify master + both exceptions all got markSynced with the new etag
+        coVerify { eventsDao.markSynced(masterEvent.id, "etag-new", any()) }
+        coVerify { eventsDao.markSynced(exception1.id, "etag-new", any()) }
+        coVerify { eventsDao.markSynced(exception2.id, "etag-new", any()) }
+    }
+
+    @Test
+    fun `pushAll falls back to conflict when fetchEtag returns same stale etag`() = runTest {
+        // CDN staleness: fetchEtag returns the same etag that caused the 412
+        val eventWithUrl = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "etag-stale",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventWithUrl.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // All PUTs with any etag → 412 (simulates stale CDN returning same etag)
+        coEvery { client.updateEvent(any(), any(), any()) } returns
+            CalDavResult.conflictError("Modified on server")
+        // fetchEtag returns same stale etag (CDN hasn't caught up)
+        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-stale")
+        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-stale") } just Runs
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 1)
+
+        // Retry was attempted with stale etag, also got 412, fell through to conflict
+        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-stale") }
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
     }
 
     // ========== Batch Query Optimization (v16.5.5) ==========
