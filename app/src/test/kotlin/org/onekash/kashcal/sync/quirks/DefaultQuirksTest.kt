@@ -7,6 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.sync.parser.CalDavXmlParser
 
 /**
  * Tests for DefaultQuirks - generic CalDAV parsing implementation.
@@ -18,10 +19,12 @@ import org.junit.Test
 class DefaultQuirksTest {
 
     private lateinit var quirks: DefaultQuirks
+    private lateinit var xmlParser: CalDavXmlParser
 
     @Before
     fun setup() {
         quirks = DefaultQuirks("https://nextcloud.example.com")
+        xmlParser = CalDavXmlParser()
     }
 
     // ========== Property tests ==========
@@ -209,6 +212,141 @@ class DefaultQuirksTest {
         val outbox = calendars.find { it.href.contains("outbox") }
         assertNull(inbox)
         assertNull(outbox)
+    }
+
+    // ========== Component-based filtering tests ==========
+
+    @Test
+    fun `extractCalendars skips VTODO-only calendar by component type`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/">
+                <d:response>
+                    <d:href>/calendars/user/personal/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
+                            <cal:supported-calendar-component-set>
+                                <cal:comp name="VEVENT"/>
+                            </cal:supported-calendar-component-set>
+                        </d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                    </d:propstat>
+                </d:response>
+                <d:response>
+                    <d:href>/calendars/user/todo-list/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>My Todo List</d:displayname>
+                            <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
+                            <cal:supported-calendar-component-set>
+                                <cal:comp name="VTODO"/>
+                            </cal:supported-calendar-component-set>
+                        </d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://example.com")
+
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
+    @Test
+    fun `extractCalendars keeps calendar with no component set`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+                <d:response>
+                    <d:href>/calendars/user/personal/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
+                        </d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://example.com")
+
+        // No supported-calendar-component-set → permissive fallback, keep the calendar
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
+    @Test
+    fun `extractCalendars keeps calendar with VEVENT and VTODO`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
+                <d:response>
+                    <d:href>/calendars/user/personal/</d:href>
+                    <d:propstat>
+                        <d:prop>
+                            <d:displayname>Personal</d:displayname>
+                            <d:resourcetype><d:collection/><cal:calendar/></d:resourcetype>
+                            <cal:supported-calendar-component-set>
+                                <cal:comp name="VEVENT"/>
+                                <cal:comp name="VTODO"/>
+                            </cal:supported-calendar-component-set>
+                        </d:prop>
+                        <d:status>HTTP/1.1 200 OK</d:status>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val calendars = quirks.extractCalendars(xml, "https://example.com")
+
+        // Calendar supports both VEVENT and VTODO → keep (has events)
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+    }
+
+    // ========== Parser-level component parsing tests ==========
+
+    @Test
+    fun `extractCalendars parses VEVENT component from Nextcloud`() {
+        val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
+        // Parse at XML parser level (before quirks filtering) to see all calendars including Tasks
+        val allCalendars = xmlParser.extractCalendars(xml)
+
+        val personal = allCalendars.find { it.displayName == "Personal" }
+        assertNotNull(personal)
+        assertEquals(setOf("VEVENT", "VTODO"), personal!!.supportedComponents)
+
+        val work = allCalendars.find { it.displayName == "Work" }
+        assertNotNull(work)
+        assertEquals(setOf("VEVENT"), work!!.supportedComponents)
+    }
+
+    @Test
+    fun `extractCalendars parses empty component set when absent`() {
+        val xml = loadResource("caldav/generic/no_component_set.xml")
+        val calendars = xmlParser.extractCalendars(xml)
+
+        assertEquals(1, calendars.size)
+        assertEquals("Personal", calendars[0].displayName)
+        // No supported-calendar-component-set in XML → empty set
+        assertEquals(emptySet<String>(), calendars[0].supportedComponents)
+    }
+
+    @Test
+    fun `extractCalendars parses VTODO-only from Nextcloud Tasks`() {
+        val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
+        // Parse at XML parser level (before quirks filtering) to see Tasks calendar
+        val allCalendars = xmlParser.extractCalendars(xml)
+
+        val tasks = allCalendars.find { it.displayName == "Tasks" }
+        assertNotNull(tasks)
+        assertEquals(setOf("VTODO"), tasks!!.supportedComponents)
     }
 
     // ========== extractICalData tests ==========

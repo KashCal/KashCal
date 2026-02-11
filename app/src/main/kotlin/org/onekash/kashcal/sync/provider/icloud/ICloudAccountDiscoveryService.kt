@@ -186,13 +186,6 @@ class ICloudAccountDiscoveryService @Inject constructor(
             var isFirst = true
 
             for ((index, calDavCalendar) in discoveredCalendars.withIndex()) {
-                // Skip reminders/tasks calendars
-                if (calDavCalendar.displayName.lowercase().contains("reminder") ||
-                    calDavCalendar.displayName.lowercase().contains("task")) {
-                    Log.d(TAG, "Skipping non-calendar: ${calDavCalendar.displayName}")
-                    continue
-                }
-
                 // Normalize calendar URL to canonical form before storage/lookup
                 val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
                     ?: calDavCalendar.url
@@ -343,11 +336,6 @@ class ICloudAccountDiscoveryService @Inject constructor(
             // Add/update calendars from server
             val createdCalendars = mutableListOf<Calendar>()
             for ((index, calDavCalendar) in discoveredCalendars.withIndex()) {
-                if (calDavCalendar.displayName.lowercase().contains("reminder") ||
-                    calDavCalendar.displayName.lowercase().contains("task")) {
-                    continue
-                }
-
                 // Normalize calendar URL to canonical form before storage/lookup
                 val normalizedCalendarUrl = ICloudUrlNormalizer.normalize(calDavCalendar.url)
                     ?: calDavCalendar.url

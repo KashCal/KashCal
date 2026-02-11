@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/">
+    <response>
+        <href>/calendars/user/personal/</href>
+        <propstat>
+            <prop>
+                <displayname>Personal</displayname>
+                <resourcetype>
+                    <collection/>
+                    <C:calendar/>
+                </resourcetype>
+                <CS:getctag>ctag-123</CS:getctag>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>

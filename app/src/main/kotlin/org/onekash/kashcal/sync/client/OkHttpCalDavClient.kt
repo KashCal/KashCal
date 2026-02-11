@@ -386,6 +386,7 @@ class OkHttpCalDavClient : CalDavClient {
                         <ic:calendar-color/>
                         <cs:getctag/>
                         <d:current-user-privilege-set/>
+                        <c:supported-calendar-component-set/>
                     </d:prop>
                 </d:propfind>
             """.trimIndent()
@@ -407,7 +408,8 @@ class OkHttpCalDavClient : CalDavClient {
                         displayName = parsed.displayName,
                         color = parsed.color,
                         ctag = parsed.ctag,
-                        isReadOnly = parsed.isReadOnly
+                        isReadOnly = parsed.isReadOnly,
+                        supportedComponents = parsed.supportedComponents
                     )
                 }
 

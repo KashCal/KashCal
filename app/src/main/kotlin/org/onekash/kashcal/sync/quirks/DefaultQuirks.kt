@@ -41,8 +41,12 @@ class DefaultQuirks(
 
     override fun extractCalendars(responseBody: String, baseHost: String): List<CalDavQuirks.ParsedCalendar> {
         val calendars = xmlParser.extractCalendars(responseBody)
-        // Apply shouldSkipCalendar filter (inbox/outbox/tasks)
-        return calendars.filter { !shouldSkipCalendar(it.href, it.displayName) }
+        return calendars.filter { parsed ->
+            !shouldSkipCalendar(parsed.href, parsed.displayName) &&
+            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only)
+            // Empty set = server didn't advertise components → keep (name-matching fallback handles it)
+            (parsed.supportedComponents.isEmpty() || "VEVENT" in parsed.supportedComponents)
+        }
     }
 
     override fun extractICalData(responseBody: String): List<CalDavQuirks.ParsedEventData> {

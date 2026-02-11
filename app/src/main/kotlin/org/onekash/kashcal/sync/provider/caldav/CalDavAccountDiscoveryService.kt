@@ -262,13 +262,6 @@ class CalDavAccountDiscoveryService @Inject constructor(
             var isFirst = true
 
             for ((index, calDavCalendar) in discoveredCalendars.withIndex()) {
-                // Skip reminders/tasks/birthday calendars (KashCal has its own birthday feature)
-                val name = calDavCalendar.displayName.lowercase()
-                if (name.contains("reminder") || name.contains("task") || name.contains("birthday")) {
-                    Log.d(TAG, "Skipping non-calendar: ${calDavCalendar.displayName}")
-                    continue
-                }
-
                 val existingCalendar = calendarRepository.getCalendarByUrl(calDavCalendar.url)
                 val calendar = if (existingCalendar != null) {
                     Log.d(TAG, "Updating calendar: ${calDavCalendar.displayName}")
@@ -377,11 +370,6 @@ class CalDavAccountDiscoveryService @Inject constructor(
             // Add/update calendars from server
             val createdCalendars = mutableListOf<Calendar>()
             for ((index, calDavCalendar) in discoveredCalendars.withIndex()) {
-                if (calDavCalendar.displayName.lowercase().contains("reminder") ||
-                    calDavCalendar.displayName.lowercase().contains("task")) {
-                    continue
-                }
-
                 val existingCalendar = calendarRepository.getCalendarByUrl(calDavCalendar.url)
                 val calendar = if (existingCalendar != null) {
                     val updated = existingCalendar.copy(
@@ -610,27 +598,20 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            // Convert to DiscoveredCalendar objects (skip reminders/tasks/birthdays)
-            val calendarList = discoveredCalendars.mapIndexedNotNull { index, calDavCalendar ->
-                // Skip reminders/tasks/birthday calendars (KashCal has its own birthday feature)
-                val name = calDavCalendar.displayName.lowercase()
-                if (name.contains("reminder") || name.contains("task") || name.contains("birthday")) {
-                    Log.d(TAG, "Skipping non-calendar: ${calDavCalendar.displayName}")
-                    null
-                } else {
-                    org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
-                        href = calDavCalendar.url,
-                        displayName = calDavCalendar.displayName,
-                        color = parseColor(calDavCalendar.color, index),
-                        supportsEvents = true,
-                        isReadOnly = calDavCalendar.isReadOnly
-                    )
-                }
+            // Convert to DiscoveredCalendar objects
+            val calendarList = discoveredCalendars.mapIndexed { index, calDavCalendar ->
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = calDavCalendar.url,
+                    displayName = calDavCalendar.displayName,
+                    color = parseColor(calDavCalendar.color, index),
+                    supportsEvents = true,
+                    isReadOnly = calDavCalendar.isReadOnly
+                )
             }
 
             if (calendarList.isEmpty()) {
                 return@withContext DiscoveryResult.Error(
-                    "No calendars found. Only task/reminder calendars were discovered."
+                    "No event calendars found on server."
                 )
             }
 

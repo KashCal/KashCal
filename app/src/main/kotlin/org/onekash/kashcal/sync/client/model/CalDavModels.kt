@@ -9,7 +9,8 @@ data class CalDavCalendar(
     val displayName: String,
     val color: String?,
     val ctag: String?,
-    val isReadOnly: Boolean = false
+    val isReadOnly: Boolean = false,
+    val supportedComponents: Set<String> = emptySet()
 )
 
 /**

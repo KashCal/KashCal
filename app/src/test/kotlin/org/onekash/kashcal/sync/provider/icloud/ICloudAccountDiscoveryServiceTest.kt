@@ -182,7 +182,7 @@ class ICloudAccountDiscoveryServiceTest {
     }
 
     @Test
-    fun `discovery skips reminder calendars`() = runTest {
+    fun `discovery creates calendar for each listed calendar`() = runTest {
         val calendarsWithReminders = testCalDavCalendars + CalDavCalendar(
             href = "/123/calendars/reminders",
             url = "https://caldav.icloud.com/123/calendars/reminders",
@@ -200,8 +200,8 @@ class ICloudAccountDiscoveryServiceTest {
         val result = service.discoverAndCreateAccount(testAppleId, testPassword)
 
         assertTrue(result is DiscoveryResult.Success)
-        // Only 2 calendars should be created (reminders skipped)
-        coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
+        // Discovery service creates all listed calendars — filtering is done by quirks layer
+        coVerify(exactly = 3) { calendarRepository.createCalendar(any()) }
     }
 
     // ==================== Authentication Error Tests ====================

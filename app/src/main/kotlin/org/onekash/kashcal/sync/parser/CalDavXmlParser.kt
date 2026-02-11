@@ -188,6 +188,9 @@ class CalDavXmlParser {
             var currentPropstatHasResourceType = false
             var currentPropstatStatus: String? = null
             var resourceTypeStatusOk = true  // Status for propstat containing resourcetype
+            // RFC 4791 supported-calendar-component-set tracking
+            var inSupportedComponentSet = false
+            var currentComponents = mutableSetOf<String>()
 
             while (parser.eventType != XmlPullParser.END_DOCUMENT) {
                 when (parser.eventType) {
@@ -207,6 +210,8 @@ class CalDavXmlParser {
                                 resourceTypeStatusOk = true
                                 currentPropstatHasResourceType = false
                                 currentPropstatStatus = null
+                                // Reset component tracking for this response
+                                currentComponents = mutableSetOf()
                             }
                             "propstat" -> {
                                 inPropstat = true
@@ -222,6 +227,14 @@ class CalDavXmlParser {
                             "calendar" -> if (inResourceType) isCalendar = true
                             "write", "write-content" -> if (inPrivilegeSet) hasWritePrivilege = true
                             "read-only" -> isReadOnly = true
+                            "supported-calendar-component-set" -> inSupportedComponentSet = true
+                            "comp" -> {
+                                if (inSupportedComponentSet) {
+                                    parser.getAttributeValue(null, "name")?.uppercase()?.let {
+                                        currentComponents.add(it)
+                                    }
+                                }
+                            }
                             "href" -> if (inResponse && !inPropstat && currentHref == null) {
                                 currentHref = readText(parser)
                             }
@@ -257,7 +270,8 @@ class CalDavXmlParser {
                                             displayName = name,
                                             color = currentColor,
                                             ctag = currentCtag,
-                                            isReadOnly = isReadOnly || !hasWritePrivilege
+                                            isReadOnly = isReadOnly || !hasWritePrivilege,
+                                            supportedComponents = currentComponents.toSet()
                                         )
                                     )
                                 }
@@ -275,6 +289,7 @@ class CalDavXmlParser {
                             }
                             "resourcetype" -> inResourceType = false
                             "current-user-privilege-set" -> inPrivilegeSet = false
+                            "supported-calendar-component-set" -> inSupportedComponentSet = false
                         }
                     }
                 }

@@ -276,7 +276,7 @@ class CalDavAccountDiscoveryServiceTest {
     }
 
     @Test
-    fun `discoverAndCreateAccount skips reminder calendars`() = runTest {
+    fun `discoverAndCreateAccount creates calendar for each listed calendar`() = runTest {
         coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
             "https://nextcloud.example.com/dav/principals/user/"
         )
@@ -324,9 +324,275 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Success)
-        // Only Personal calendar should be created (Reminders and Tasks skipped)
-        assertEquals(1, (result as DiscoveryResult.Success).calendars.size)
-        assertEquals("Personal", result.calendars[0].displayName)
+        // Discovery service creates all listed calendars — filtering is done by quirks layer
+        assertEquals(3, (result as DiscoveryResult.Success).calendars.size)
+    }
+
+    // ==================== Birthday Calendar Filter Tests ====================
+
+    @Test
+    fun `discoverAndCreateAccount includes birthday calendars`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/calendars/user/"
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/contact-birthdays/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/contact-birthdays/",
+                    displayName = "Contact birthdays",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = true
+                )
+            )
+        )
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Success)
+        // Birthday calendars are no longer filtered — quirks layer handles non-VEVENT filtering
+        assertEquals(2, (result as DiscoveryResult.Success).calendars.size)
+    }
+
+    @Test
+    fun `discoverAndCreateAccount includes calendar with birthday in name`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/calendars/user/"
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/party/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/party/",
+                    displayName = "Birthday Party Planning",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.Success)
+        // "Birthday Party Planning" is no longer a false positive — discovery service doesn't filter by name
+        assertEquals(2, (result as DiscoveryResult.Success).calendars.size)
+    }
+
+    @Test
+    fun `discoverCalendars includes birthday calendars`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/calendars/user/"
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/contact-birthdays/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/contact-birthdays/",
+                    displayName = "Contact birthdays",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = true
+                )
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        // Birthday calendars are no longer filtered — quirks layer handles non-VEVENT filtering
+        assertEquals(2, found.calendars.size)
+    }
+
+    @Test
+    fun `discoverCalendars includes calendar with birthday in name`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/calendars/user/"
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/party/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/party/",
+                    displayName = "Birthday Party Planning",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        // "Birthday Party Planning" is no longer a false positive — discovery service doesn't filter by name
+        assertEquals(2, found.calendars.size)
+    }
+
+    @Test
+    fun `refreshCalendars does not filter birthday calendars`() = runTest {
+        val account = createAccount(1L)
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal/personal/",
+                    url = "https://server/cal/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/cal/birthdays/",
+                    url = "https://server/cal/birthdays/",
+                    displayName = "Contact birthdays",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = true
+                )
+            )
+        )
+
+        val result = discoveryService.refreshCalendars(1L)
+
+        assertTrue(result is DiscoveryResult.Success)
+        // refreshCalendars does NOT filter birthday calendars (inconsistency with discoverAndCreateAccount)
+        coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
+    }
+
+    @Test
+    fun `discoverCalendars returns all listed calendars`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://nextcloud.example.com/dav/calendars/user/"
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/user/personal/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/reminders/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/reminders/",
+                    displayName = "Reminders",
+                    color = "#00FF00",
+                    ctag = "ctag2",
+                    isReadOnly = false
+                ),
+                CalDavCalendar(
+                    href = "/dav/calendars/user/tasks/",
+                    url = "https://nextcloud.example.com/dav/calendars/user/tasks/",
+                    displayName = "Tasks",
+                    color = "#0000FF",
+                    ctag = "ctag3",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://nextcloud.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue(result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        // Discovery service returns all listed calendars — filtering is done by quirks layer
+        assertEquals(3, found.calendars.size)
     }
 
     // ==================== Error Handling Tests ====================
