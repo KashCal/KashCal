@@ -546,6 +546,57 @@ object Migrations {
     }
 
     /**
+     * Migration from version 12 to 13.
+     *
+     * Changes the accounts unique index from (provider, email) to
+     * (provider, email, home_set_url) so that the same username on
+     * different CalDAV servers creates separate accounts instead of
+     * colliding (Issue #69).
+     */
+    val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                // Defensive check: log any CalDAV accounts with NULL home_set_url.
+                // These accounts would not be found by the new 3-param lookup.
+                // All CalDAV accounts should have home_set_url set during discovery.
+                val nullHomeSetCount = db.query(
+                    "SELECT COUNT(*) FROM accounts WHERE provider = 'CALDAV' AND home_set_url IS NULL"
+                ).use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                }
+                if (nullHomeSetCount > 0) {
+                    Log.w(TAG, "Found $nullHomeSetCount CalDAV account(s) with NULL home_set_url. " +
+                        "These accounts may need re-authentication after upgrade.")
+                }
+
+                // Step 1: Drop old unique index
+                dropIndexIfExists(db, "index_accounts_provider_email")
+
+                // Step 2: Create new unique index including home_set_url
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_accounts_provider_email_home_set_url " +
+                    "ON accounts (provider, email, home_set_url)"
+                )
+
+                // Step 3: Verify new index exists
+                if (indexExists(db, "index_accounts_provider_email_home_set_url")) {
+                    Log.d(TAG, "Migration 12->13 completed: unique index updated to include home_set_url")
+                } else {
+                    Log.w(TAG, "Migration 12->13: index verification FAILED")
+                }
+
+                // Step 4: Verify old index is gone
+                if (indexExists(db, "index_accounts_provider_email")) {
+                    Log.w(TAG, "Migration 12->13: old index still exists after drop")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in migration 12->13: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -559,6 +610,7 @@ object Migrations {
         MIGRATION_8_9,
         MIGRATION_9_10,
         MIGRATION_10_11,
-        MIGRATION_11_12
+        MIGRATION_11_12,
+        MIGRATION_12_13
     )
 }

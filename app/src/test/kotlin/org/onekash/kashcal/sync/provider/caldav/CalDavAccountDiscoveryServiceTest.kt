@@ -169,7 +169,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount creates account and calendars on success`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -204,7 +204,7 @@ class CalDavAccountDiscoveryServiceTest {
             homeSetUrl = "old-home",
             isEnabled = false
         )
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns existingAccount
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns existingAccount
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
@@ -226,7 +226,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount sets homeSetUrl for DefaultQuirks`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -249,7 +249,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount passes trustInsecure to credentials`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -312,7 +312,7 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -359,7 +359,7 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -404,7 +404,7 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -798,13 +798,183 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
+    // ==================== Account Collision Tests (Issue #69) ====================
+
+    @Test
+    fun `discoverAndCreateAccount creates separate account when same username on different server`() = runTest {
+        // Server B discovery succeeds
+        setupSuccessfulDiscovery("https://server-b.example.com")
+
+        // 3-param lookup returns null — no account for this server
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 2L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server-b.example.com",
+            username = "admin",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        // FIX: createAccount is called — a new separate account is created
+        coVerify { accountRepository.createAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+    }
+
+    @Test
+    fun `createAccountWithSelectedCalendars creates separate account when same username on different server`() = runTest {
+        // 3-param lookup returns null — no account for this server
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 2L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.createAccountWithSelectedCalendars(
+            serverUrl = "https://server-b.example.com",
+            username = "admin",
+            password = "pass",
+            trustInsecure = false,
+            principalUrl = "https://server-b.example.com/dav/principals/admin/",
+            calendarHomeUrl = "https://server-b.example.com/dav/calendars/admin/",
+            selectedCalendars = listOf(
+                org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
+                    href = "https://server-b.example.com/dav/calendars/admin/personal/",
+                    displayName = "Personal",
+                    color = 0xFF0000
+                )
+            )
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        // FIX: createAccount is called — a new separate account is created
+        coVerify { accountRepository.createAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount updates existing account when re-adding same server`() = runTest {
+        setupSuccessfulDiscovery("https://server-a.example.com")
+
+        val existingAccount = Account(
+            id = 1L,
+            provider = AccountProvider.CALDAV,
+            email = "user",
+            displayName = "server-a.example.com",
+            principalUrl = "https://server-a.example.com/dav/principals/user/",
+            homeSetUrl = "https://server-a.example.com/dav/calendars/user/",
+            isEnabled = true
+        )
+        // Same server — 3-param lookup finds the existing account
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns existingAccount
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server-a.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        assertEquals(1L, (result as DiscoveryResult.Success).account.id)
+        // Re-login updates, doesn't duplicate
+        coVerify { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+    }
+
+    @Test
+    fun `discoverAndCreateAccount matches existing account despite trailing slash variation`() = runTest {
+        // Server returns URL without trailing slash
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/admin/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/calendars/admin"  // No trailing slash!
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/dav/calendars/admin/personal/",
+                    url = "https://server.example.com/dav/calendars/admin/personal/",
+                    displayName = "Personal",
+                    color = "#FF0000",
+                    ctag = "ctag1",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val existingAccount = Account(
+            id = 1L,
+            provider = AccountProvider.CALDAV,
+            email = "admin",
+            displayName = "server.example.com",
+            principalUrl = "https://server.example.com/dav/principals/admin/",
+            homeSetUrl = "https://server.example.com/dav/calendars/admin/",  // Normalized with trailing slash
+            isEnabled = true
+        )
+        // Normalization adds trailing slash — matches stored account
+        coEvery {
+            accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+                AccountProvider.CALDAV, "admin", "https://server.example.com/dav/calendars/admin/"
+            )
+        } returns existingAccount
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "admin",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        // Normalization prevents duplication — update, not create
+        coVerify { accountRepository.updateAccount(any()) }
+        coVerify(exactly = 0) { accountRepository.createAccount(any()) }
+    }
+
+    // ==================== URL Normalization Tests (Issue #69) ====================
+
+    @Test
+    fun `normalizeHomeSetUrl adds trailing slash`() {
+        val result = discoveryService.normalizeHomeSetUrl("https://server.com/dav/calendars/admin")
+        assertEquals("https://server.com/dav/calendars/admin/", result)
+    }
+
+    @Test
+    fun `normalizeHomeSetUrl strips default https port`() {
+        val result = discoveryService.normalizeHomeSetUrl("https://server.com:443/dav/calendars/admin/")
+        assertEquals("https://server.com/dav/calendars/admin/", result)
+    }
+
+    @Test
+    fun `normalizeHomeSetUrl strips default http port`() {
+        val result = discoveryService.normalizeHomeSetUrl("http://server.com:80/dav/calendars/admin/")
+        assertEquals("http://server.com/dav/calendars/admin/", result)
+    }
+
+    @Test
+    fun `normalizeHomeSetUrl lowercases host but preserves path case`() {
+        val result = discoveryService.normalizeHomeSetUrl("https://Server.Example.COM/dav/Calendars/Admin/")
+        assertEquals("https://server.example.com/dav/Calendars/Admin/", result)
+    }
+
+    @Test
+    fun `normalizeHomeSetUrl preserves non-default port`() {
+        val result = discoveryService.normalizeHomeSetUrl("https://server.com:8443/dav/calendars/admin/")
+        assertEquals("https://server.com:8443/dav/calendars/admin/", result)
+    }
+
     // ==================== Server Display Name Tests ====================
 
     @Test
     fun `discoverAndCreateAccount extracts FastMail display name`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "https://caldav.fastmail.com")
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -824,7 +994,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount uses hostname for unknown servers`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "https://caldav.myserver.org")
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -863,7 +1033,7 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -900,7 +1070,7 @@ class CalDavAccountDiscoveryServiceTest {
             )
         )
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1261,7 +1431,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount returns error when credentials fail to save`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1291,7 +1461,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverAndCreateAccount cleans up account when credentials fail to save`() = runTest {
         setupSuccessfulDiscovery()
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1309,7 +1479,7 @@ class CalDavAccountDiscoveryServiceTest {
 
     @Test
     fun `createAccountWithSelectedCalendars returns error when credentials fail to save`() = runTest {
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1339,7 +1509,7 @@ class CalDavAccountDiscoveryServiceTest {
 
     @Test
     fun `createAccountWithSelectedCalendars cleans up account when credentials fail to save`() = runTest {
-        coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, "user") } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(AccountProvider.CALDAV, "user", any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1428,7 +1598,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `discoverCalendars preserves explicit http scheme`() = runTest {
         setupSuccessfulDiscovery(serverUrl = "http://192.168.1.100:8080")
 
-        coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 1L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L

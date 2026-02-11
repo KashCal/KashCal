@@ -83,16 +83,17 @@ class CredentialAdversarialTest {
     // ==================== Unique Constraint Tests ====================
 
     @Test
-    fun `duplicate provider-email rejected`() = runTest {
+    fun `duplicate provider-email-homeSetUrl rejected`() = runTest {
+        val home = "https://caldav.icloud.com/12345/calendars/"
         // First account succeeds
-        val account1 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com")
+        val account1 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com", homeSetUrl = home)
         database.accountsDao().insert(account1)
 
-        // Second with same provider+email should fail due to unique index
-        val account2 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com")
+        // Second with same provider+email+homeSetUrl should fail due to unique index
+        val account2 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com", homeSetUrl = home)
         try {
             database.accountsDao().insert(account2)
-            fail("Should throw on duplicate provider+email")
+            fail("Should throw on duplicate provider+email+homeSetUrl")
         } catch (e: Exception) {
             // Expected: UNIQUE constraint violation
             assertTrue(e.message?.contains("UNIQUE") == true || e.message?.contains("constraint") == true)

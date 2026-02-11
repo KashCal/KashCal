@@ -258,6 +258,49 @@ class AccountRepositoryImplTest {
         assertEquals(account, result)
     }
 
+    @Test
+    fun `getAccountByProviderEmailAndHomeSetUrl returns matching account`() = runBlocking {
+        // Setup
+        val account = Account(
+            id = 1L,
+            provider = AccountProvider.CALDAV,
+            email = "admin",
+            displayName = "Nextcloud",
+            homeSetUrl = "https://nextcloud.example.com/dav/calendars/admin/"
+        )
+        coEvery {
+            accountsDao.getByProviderEmailAndHomeSetUrl(
+                AccountProvider.CALDAV, "admin", "https://nextcloud.example.com/dav/calendars/admin/"
+            )
+        } returns account
+
+        // Execute
+        val result = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+            AccountProvider.CALDAV, "admin", "https://nextcloud.example.com/dav/calendars/admin/"
+        )
+
+        // Verify
+        assertEquals(account, result)
+    }
+
+    @Test
+    fun `getAccountByProviderEmailAndHomeSetUrl returns null for different server`() = runBlocking {
+        // Setup
+        coEvery {
+            accountsDao.getByProviderEmailAndHomeSetUrl(
+                AccountProvider.CALDAV, "admin", "https://other-server.com/dav/calendars/admin/"
+            )
+        } returns null
+
+        // Execute
+        val result = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+            AccountProvider.CALDAV, "admin", "https://other-server.com/dav/calendars/admin/"
+        )
+
+        // Verify
+        assertNull(result)
+    }
+
     // ========== Flow Tests ==========
 
     @Test

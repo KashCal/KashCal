@@ -64,6 +64,17 @@ interface AccountRepository {
     suspend fun getAccountByProviderAndEmail(provider: AccountProvider, email: String): Account?
 
     /**
+     * Get account by provider, email, and home set URL.
+     * Used for CalDAV where the same username can exist on different servers.
+     * For iCloud/ICS/CONTACTS, use [getAccountByProviderAndEmail] instead.
+     */
+    suspend fun getAccountByProviderEmailAndHomeSetUrl(
+        provider: AccountProvider,
+        email: String,
+        homeSetUrl: String
+    ): Account?
+
+    /**
      * Get all enabled accounts for sync.
      */
     suspend fun getEnabledAccounts(): List<Account>

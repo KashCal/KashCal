@@ -15,7 +15,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 @Entity(
     tableName = "accounts",
     indices = [
-        Index(value = ["provider", "email"], unique = true),
+        Index(value = ["provider", "email", "home_set_url"], unique = true),
         Index(value = ["is_enabled"])
     ]
 )

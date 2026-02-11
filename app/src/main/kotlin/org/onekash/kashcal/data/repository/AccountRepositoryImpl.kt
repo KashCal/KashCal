@@ -72,6 +72,14 @@ class AccountRepositoryImpl @Inject constructor(
         return accountsDao.getByProviderAndEmail(provider, email)
     }
 
+    override suspend fun getAccountByProviderEmailAndHomeSetUrl(
+        provider: AccountProvider,
+        email: String,
+        homeSetUrl: String
+    ): Account? {
+        return accountsDao.getByProviderEmailAndHomeSetUrl(provider, email, homeSetUrl)
+    }
+
     override suspend fun getEnabledAccounts(): List<Account> {
         return accountsDao.getEnabledAccounts()
     }

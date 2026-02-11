@@ -220,15 +220,28 @@ class AccountsDaoTest : BaseDaoTest() {
     // ========== Unique Constraint Tests ==========
 
     @Test(expected = android.database.sqlite.SQLiteConstraintException::class)
-    fun `insert duplicate provider-email throws`() = runTest {
-        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com"))
-        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com"))
+    fun `insert duplicate provider-email-homeSetUrl throws`() = runTest {
+        val home = "https://server/calendars/user/"
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com").copy(homeSetUrl = home))
+        accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "dup@test.com").copy(homeSetUrl = home))
     }
 
     @Test
     fun `same email different provider allowed`() = runTest {
         accountsDao.insert(createAccount(provider = AccountProvider.ICLOUD, email = "same@test.com"))
         accountsDao.insert(createAccount(provider = AccountProvider.CALDAV, email = "same@test.com"))
+
+        assertEquals(2, accountsDao.getAllOnce().size)
+    }
+
+    @Test
+    fun `same email same provider different homeSetUrl allowed`() = runTest {
+        accountsDao.insert(createAccount(provider = AccountProvider.CALDAV, email = "admin").copy(
+            homeSetUrl = "https://server-a.example.com/dav/calendars/admin/"
+        ))
+        accountsDao.insert(createAccount(provider = AccountProvider.CALDAV, email = "admin").copy(
+            homeSetUrl = "https://server-b.example.com/dav/calendars/admin/"
+        ))
 
         assertEquals(2, accountsDao.getAllOnce().size)
     }

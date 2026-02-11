@@ -111,7 +111,7 @@ class MigrationTest {
     fun `all migrations array contains expected migrations`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        assertEquals(10, migrations.size)
+        assertEquals(11, migrations.size)
     }
 
     @Test
@@ -144,6 +144,12 @@ class MigrationTest {
 
         assertEquals(10, migrations[8].startVersion)
         assertEquals(11, migrations[8].endVersion)
+
+        assertEquals(11, migrations[9].startVersion)
+        assertEquals(12, migrations[9].endVersion)
+
+        assertEquals(12, migrations[10].startVersion)
+        assertEquals(13, migrations[10].endVersion)
     }
 
     @Test
@@ -151,7 +157,7 @@ class MigrationTest {
         // Version 3 to 4 is handled by AutoMigration
         val migrations = Migrations.ALL_MIGRATIONS.toList()
 
-        // Manual migrations: 1->2, 2->3, 4->5, 5->6, 6->7, 7->8, 8->9, 9->10, 10->11
+        // Manual migrations: 1->2, 2->3, 4->5, 5->6, 6->7, 7->8, 8->9, 9->10, 10->11, 11->12, 12->13
         // AutoMigration: 3->4
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         // Gap at 3->4 (AutoMigration)
@@ -162,18 +168,20 @@ class MigrationTest {
         assertTrue(migrations[5].endVersion == migrations[6].startVersion) // 8
         assertTrue(migrations[6].endVersion == migrations[7].startVersion) // 9
         assertTrue(migrations[7].endVersion == migrations[8].startVersion) // 10
+        assertTrue(migrations[8].endVersion == migrations[9].startVersion) // 11
+        assertTrue(migrations[9].endVersion == migrations[10].startVersion) // 12
     }
 
     // ==================== Schema Validation Tests ====================
 
     @Test
-    fun `database version is 11`() {
-        // Current database version should be 11
+    fun `database version is 13`() {
+        // Current database version should be 13
         // This test ensures we track the expected version
-        val expectedVersion = 11
+        val expectedVersion = 13
 
-        // The database class uses version = 11
-        assertEquals(expectedVersion, 11)
+        // The database class uses version = 13
+        assertEquals(expectedVersion, 13)
     }
 
     @Test
@@ -190,7 +198,9 @@ class MigrationTest {
         // - 8 to 9 (UID-based exception lookup index)
         // - 9 to 10 (unique occurrence index)
         // - 10 to 11 (retry lifecycle columns: lifetime_reset_at, failed_at)
-        assertEquals(10, migrations.size)
+        // - 11 to 12 (source_calendar_id column for cross-account moves)
+        // - 12 to 13 (unique index includes home_set_url)
+        assertEquals(11, migrations.size)
     }
 
     // ==================== Migration 7 to 8 Tests ====================

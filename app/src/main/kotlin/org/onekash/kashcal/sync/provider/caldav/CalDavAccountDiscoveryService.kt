@@ -190,7 +190,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             val calendarHomeUrl = (homeResult as CalDavResult.Success).data
-            Log.d(TAG, "Calendar home URL: $calendarHomeUrl")
+            val normalizedHomeUrl = normalizeHomeSetUrl(calendarHomeUrl)
+            Log.d(TAG, "Calendar home URL: $calendarHomeUrl (normalized: $normalizedHomeUrl)")
 
             // Step 3: List calendars
             Log.d(TAG, "Step 3: Listing calendars...")
@@ -214,12 +215,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             // Step 4: Create or update Account in Room
-            val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, username)
+            // Use 3-param lookup so same username on different servers creates separate accounts
+            val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+                AccountProvider.CALDAV, username, normalizedHomeUrl
+            )
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
-                    homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
                 accountRepository.updateAccount(updated)
@@ -232,7 +236,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     email = username,
                     displayName = displayName,
                     principalUrl = principalUrl,
-                    homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
                 val accountId = accountRepository.createAccount(newAccount)
@@ -423,8 +427,16 @@ class CalDavAccountDiscoveryService @Inject constructor(
     /**
      * Remove CalDAV account by email.
      *
+     * @deprecated This method is ambiguous when multiple CalDAV accounts share the same
+     * email on different servers. Use [removeAccount] with accountId instead.
+     * CalDAV account removal in production goes through removeAccount(accountId).
+     *
      * @param email The email address of the account to remove
      */
+    @Deprecated(
+        message = "Ambiguous for multi-server CalDAV. Use removeAccount(accountId) instead.",
+        replaceWith = ReplaceWith("removeAccount(accountId)")
+    )
     suspend fun removeAccountByEmail(email: String) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing CalDAV account: $email")
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, email)
@@ -662,12 +674,16 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
         try {
             // Step 1: Create or update Account in Room
-            val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.CALDAV, username)
+            // Use 3-param lookup so same username on different servers creates separate accounts
+            val normalizedHomeUrl = normalizeHomeSetUrl(calendarHomeUrl)
+            val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
+                AccountProvider.CALDAV, username, normalizedHomeUrl
+            )
             val account = if (existingAccount != null) {
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
-                    homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
                 accountRepository.updateAccount(updated)
@@ -682,7 +698,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     email = username,
                     displayName = accountDisplayName,
                     principalUrl = principalUrl,
-                    homeSetUrl = calendarHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
                     isEnabled = true
                 )
                 val accountId = accountRepository.createAccount(newAccount)
@@ -784,6 +800,32 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
 
         return url
+    }
+
+    /**
+     * Normalize a calendar home set URL for consistent storage and lookup.
+     *
+     * Ensures the same logical server always produces the same stored value,
+     * even if the server returns minor variations between discoveries (trailing
+     * slash, explicit default port, mixed case host).
+     *
+     * Applied at two points:
+     * 1. Before storing in Account.homeSetUrl
+     * 2. Before lookup via getAccountByProviderEmailAndHomeSetUrl()
+     *
+     * Uses java.net.URI for consistency with normalizeServerUrl() and to
+     * work in plain JUnit tests without Robolectric.
+     */
+    internal fun normalizeHomeSetUrl(url: String): String {
+        val uri = URI(url)
+        val scheme = (uri.scheme ?: "https").lowercase()
+        val host = (uri.host ?: return url).lowercase()
+        val port = uri.port.let { p ->
+            if (p == -1 || (scheme == "https" && p == 443) || (scheme == "http" && p == 80)) ""
+            else ":$p"
+        }
+        val path = (uri.path ?: "/").trimEnd('/')
+        return "$scheme://$host$port$path/"
     }
 
     /**

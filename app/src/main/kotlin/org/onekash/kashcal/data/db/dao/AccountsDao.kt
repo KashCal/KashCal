@@ -55,6 +55,18 @@ interface AccountsDao {
     suspend fun getByProviderAndEmail(provider: AccountProvider, email: String): Account?
 
     /**
+     * Get account by provider, email, and calendar home set URL.
+     * Used for CalDAV where the same username can exist on different servers.
+     * For iCloud/ICS/CONTACTS, use [getByProviderAndEmail] instead.
+     */
+    @Query("SELECT * FROM accounts WHERE provider = :provider AND email = :email AND home_set_url = :homeSetUrl")
+    suspend fun getByProviderEmailAndHomeSetUrl(
+        provider: AccountProvider,
+        email: String,
+        homeSetUrl: String
+    ): Account?
+
+    /**
      * Get accounts by provider type.
      * Used to list all CalDAV accounts, all iCloud accounts, etc.
      */
