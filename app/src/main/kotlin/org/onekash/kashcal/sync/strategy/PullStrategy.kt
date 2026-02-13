@@ -1070,29 +1070,44 @@ class PullStrategy @Inject constructor(
         Log.d(TAG, "fetchEventsWithFallback: attempting batch fetch of ${hrefs.size} events")
         val batchResult = client.fetchEventsByHref(calendarUrl, hrefs)
 
-        if (batchResult is CalDavResult.Success) {
+        if (batchResult is CalDavResult.Success && batchResult.data.isNotEmpty()) {
             Log.d(TAG, "fetchEventsWithFallback: batch fetch succeeded, got ${batchResult.data.size} events")
             return FetchResult(batchResult.data, fallbackUsed = false, fetchFailedCount = 0)
         }
 
-        // Log the error details
-        val batchError = batchResult as CalDavResult.Error
-        Log.w(TAG, "fetchEventsWithFallback: batch fetch FAILED - code=${batchError.code}, " +
-                "message='${batchError.message}', retryable=${batchError.isRetryable}, hrefs=${hrefs.size}")
-
-        // Step 2: Retry once after delay (handles transient issues)
-        Log.d(TAG, "fetchEventsWithFallback: retrying batch after ${MULTIGET_RETRY_DELAY_MS}ms delay")
-        delay(MULTIGET_RETRY_DELAY_MS)
-
-        val retryResult = client.fetchEventsByHref(calendarUrl, hrefs)
-        if (retryResult is CalDavResult.Success) {
-            Log.d(TAG, "fetchEventsWithFallback: batch retry succeeded, got ${retryResult.data.size} events")
-            return FetchResult(retryResult.data, fallbackUsed = false, fetchFailedCount = 0)
+        // Empty success = server doesn't support multi-href multiget (e.g. Zoho returns HTTP 200
+        // empty body for ≥2 hrefs). Skip retry — same REPORT will return empty again.
+        // Error = transient issue — retry is worthwhile.
+        val emptyMultigetSuccess = batchResult is CalDavResult.Success
+        if (emptyMultigetSuccess) {
+            Log.w(TAG, "fetchEventsWithFallback: batch returned Success but 0 events for ${hrefs.size} hrefs, falling back")
         }
+        // TODO: Consider caching "server needs one-by-one multiget" per account to skip
+        // the batch attempt on subsequent syncs. For now, the fallback adds one extra
+        // round-trip per sync which is acceptable.
 
-        val retryError = retryResult as CalDavResult.Error
-        Log.w(TAG, "fetchEventsWithFallback: batch retry FAILED - code=${retryError.code}, " +
-                "message='${retryError.message}', falling back to individual fetches")
+        if (!emptyMultigetSuccess) {
+            val batchError = batchResult as CalDavResult.Error
+            Log.w(TAG, "fetchEventsWithFallback: batch fetch FAILED - code=${batchError.code}, " +
+                    "message='${batchError.message}', retryable=${batchError.isRetryable}, hrefs=${hrefs.size}")
+
+            // Step 2: Retry once after delay (handles transient issues)
+            Log.d(TAG, "fetchEventsWithFallback: retrying batch after ${MULTIGET_RETRY_DELAY_MS}ms delay")
+            delay(MULTIGET_RETRY_DELAY_MS)
+
+            val retryResult = client.fetchEventsByHref(calendarUrl, hrefs)
+            if (retryResult is CalDavResult.Success && retryResult.data.isNotEmpty()) {
+                Log.d(TAG, "fetchEventsWithFallback: batch retry succeeded, got ${retryResult.data.size} events")
+                return FetchResult(retryResult.data, fallbackUsed = false, fetchFailedCount = 0)
+            }
+
+            if (retryResult is CalDavResult.Error) {
+                Log.w(TAG, "fetchEventsWithFallback: batch retry FAILED - code=${retryResult.code}, " +
+                        "message='${retryResult.message}', falling back to individual fetches")
+            } else {
+                Log.w(TAG, "fetchEventsWithFallback: batch retry returned empty, falling back to individual fetches")
+            }
+        }
 
         // Step 3: Fall back to individual fetches in small batches
         val fetchedEvents = mutableListOf<CalDavEvent>()
@@ -1104,14 +1119,17 @@ class PullStrategy @Inject constructor(
                     "fetching ${batch.size} events")
 
             val smallBatchResult = client.fetchEventsByHref(calendarUrl, batch)
-            if (smallBatchResult is CalDavResult.Success) {
+            if (smallBatchResult is CalDavResult.Success && smallBatchResult.data.isNotEmpty()) {
                 fetchedEvents.addAll(smallBatchResult.data)
                 Log.d(TAG, "fetchEventsWithFallback: small batch succeeded, got ${smallBatchResult.data.size}")
             } else {
-                // Small batch failed, try one-by-one
-                val smallBatchError = smallBatchResult as CalDavResult.Error
-                Log.w(TAG, "fetchEventsWithFallback: small batch failed - code=${smallBatchError.code}, " +
-                        "trying individual fetches")
+                // Small batch failed or returned empty — try one-by-one
+                if (smallBatchResult is CalDavResult.Error) {
+                    Log.w(TAG, "fetchEventsWithFallback: small batch failed - code=${smallBatchResult.code}, " +
+                            "message='${smallBatchResult.message}', trying individual fetches")
+                } else {
+                    Log.w(TAG, "fetchEventsWithFallback: small batch returned empty, trying individual fetches")
+                }
 
                 for (href in batch) {
                     val singleResult = client.fetchEventsByHref(calendarUrl, listOf(href))

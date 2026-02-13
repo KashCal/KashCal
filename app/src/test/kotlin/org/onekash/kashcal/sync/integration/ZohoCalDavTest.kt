@@ -364,6 +364,133 @@ class ZohoCalDavTest {
         assertEquals(1, (result as PullResult.Success).eventsAdded)
     }
 
+    // ==================== Empty Multiget Fallback (Zoho returns HTTP 200 empty body for ≥2 hrefs) ====================
+
+    @Test
+    fun `pullFull falls back to one-by-one when multiget returns empty success`() = runTest {
+        // Zoho returns Success(emptyList()) for multi-href multiget. The fallback chain should:
+        // batch(5)→empty → [skip retry] → chunk(5)→empty → one-by-one(×5)→success
+        val calendar = createZohoCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+        val hrefs = (1..5).map { "/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/event$it%40zoho.com.ics" }
+        val etags = hrefs.map { Pair(it, "etag-$it") }
+
+        coEvery { client.getCtag(calendarUrl) } returns
+            CalDavResult.error(500, "Ctag not found in response")
+        coEvery { client.fetchEtagsInRange(calendarUrl, any(), any()) } returns
+            CalDavResult.success(etags)
+
+        // Multi-href multiget → empty (Zoho behavior: HTTP 200 empty body for ≥2 hrefs)
+        coEvery { client.fetchEventsByHref(calendarUrl, match { it.size > 1 }) } returns
+            CalDavResult.success(emptyList())
+
+        // Single-href multiget → works (Zoho returns HTTP 207 for exactly 1 href)
+        for ((i, href) in hrefs.withIndex()) {
+            val ical = createZohoIcal("uid-$i@zoho.com", "Event $i")
+            coEvery { client.fetchEventsByHref(calendarUrl, match { it.size == 1 && it[0] == href }) } returns
+                CalDavResult.success(listOf(
+                    CalDavEvent(href, "https://calendar.zoho.com$href", "etag-$href", ical)
+                ))
+        }
+
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Should succeed with one-by-one fallback", result is PullResult.Success)
+        assertEquals(5, (result as PullResult.Success).eventsAdded)
+        // 7 calls: 1 batch(5) + 1 chunk(5) + 5 individual
+        coVerify(exactly = 7) { client.fetchEventsByHref(calendarUrl, any()) }
+    }
+
+    @Test
+    fun `pullFull one-by-one handles partial failures after empty multiget`() = runTest {
+        val calendar = createZohoCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+        val hrefs = (1..5).map { "/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/event$it%40zoho.com.ics" }
+        val etags = hrefs.map { Pair(it, "etag-$it") }
+
+        coEvery { client.getCtag(calendarUrl) } returns
+            CalDavResult.error(500, "Ctag not found in response")
+        coEvery { client.fetchEtagsInRange(calendarUrl, any(), any()) } returns
+            CalDavResult.success(etags)
+
+        // Multi-href multiget → empty
+        coEvery { client.fetchEventsByHref(calendarUrl, match { it.size > 1 }) } returns
+            CalDavResult.success(emptyList())
+
+        // Single-href: 3 succeed, 2 fail
+        for ((i, href) in hrefs.withIndex()) {
+            if (i < 3) {
+                val ical = createZohoIcal("uid-$i@zoho.com", "Event $i")
+                coEvery { client.fetchEventsByHref(calendarUrl, match { it.size == 1 && it[0] == href }) } returns
+                    CalDavResult.success(listOf(
+                        CalDavEvent(href, "https://calendar.zoho.com$href", "etag-$href", ical)
+                    ))
+            } else {
+                coEvery { client.fetchEventsByHref(calendarUrl, match { it.size == 1 && it[0] == href }) } returns
+                    CalDavResult.error(500, "Server error")
+            }
+        }
+
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Should succeed with partial results", result is PullResult.Success)
+        assertEquals(3, (result as PullResult.Success).eventsAdded)
+    }
+
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    @Test
+    fun `pullFull empty multiget skips retry`() = runTest {
+        // Empty multiget success should NOT trigger retry (retrying the same broken REPORT
+        // is pointless). Verify via call count: 7 calls (not 8), and no delay() called.
+        val calendar = createZohoCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+        val hrefs = (1..5).map { "/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/event$it%40zoho.com.ics" }
+        val etags = hrefs.map { Pair(it, "etag-$it") }
+
+        coEvery { client.getCtag(calendarUrl) } returns
+            CalDavResult.error(500, "Ctag not found in response")
+        coEvery { client.fetchEtagsInRange(calendarUrl, any(), any()) } returns
+            CalDavResult.success(etags)
+
+        // Multi-href → empty
+        coEvery { client.fetchEventsByHref(calendarUrl, match { it.size > 1 }) } returns
+            CalDavResult.success(emptyList())
+
+        // Single-href → success
+        for ((i, href) in hrefs.withIndex()) {
+            val ical = createZohoIcal("uid-$i@zoho.com", "Event $i")
+            coEvery { client.fetchEventsByHref(calendarUrl, match { it.size == 1 && it[0] == href }) } returns
+                CalDavResult.success(listOf(
+                    CalDavEvent(href, "https://calendar.zoho.com$href", "etag-$href", ical)
+                ))
+        }
+
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(5, (result as PullResult.Success).eventsAdded)
+        // 7 calls total: 1 batch + 1 chunk + 5 individual. NOT 8 (no retry).
+        coVerify(exactly = 7) { client.fetchEventsByHref(calendarUrl, any()) }
+        // Verify testScheduler had no delay — retry was skipped entirely.
+        // In runTest, delay() advances virtual time. If retry ran, currentTime would be ≥ 2000ms.
+        assertEquals("No delay should have occurred (retry skipped)", 0L, testScheduler.currentTime)
+    }
+
     // ==================== Discovery: Trailing slash sensitivity ====================
 
     @Test
@@ -392,6 +519,22 @@ class ZohoCalDavTest {
         ctag = ctag,
         syncToken = syncToken
     )
+
+    private fun createZohoIcal(uid: String, summary: String): String {
+        return """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Zoho Corporation//Zoho Calendar-US//EN
+            BEGIN:VEVENT
+            UID:$uid
+            DTSTAMP:20260212T014217Z
+            DTSTART;TZID=America/Chicago:20260212T091500
+            DTEND;TZID=America/Chicago:20260212T094500
+            SUMMARY:$summary
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+    }
 
     private fun loadFixture(filename: String): String {
         return javaClass.classLoader!!

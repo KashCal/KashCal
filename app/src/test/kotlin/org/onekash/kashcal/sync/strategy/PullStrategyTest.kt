@@ -1636,6 +1636,113 @@ class PullStrategyTest {
         assertEquals("Should have 2 constraint errors", 2, session.skippedConstraintError)
     }
 
+    // ========== Empty Multiget Fallback Tests (Zoho compatibility) ==========
+
+    @Test
+    fun `non-empty multiget success returns immediately without fallback`() = runTest {
+        // Regression guard: working servers (iCloud, Nextcloud, etc.) that return non-empty
+        // multiget results should hit the early return and never trigger fallback.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}event.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                Pair("event1.ics", "etag-1"),
+                Pair("event2.ics", "etag-2")
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent("event1.ics", "${calendar.caldavUrl}event1.ics", "etag-1",
+                    createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("event2.ics", "${calendar.caldavUrl}event2.ics", "etag-2",
+                    createSimpleIcal("uid-2", "Event 2"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(2, (result as PullResult.Success).eventsAdded)
+        // Should be called exactly 1 time — batch succeeded, no fallback
+        coVerify(exactly = 1) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+    }
+
+    @Test
+    fun `multiget error still triggers retry before one-by-one fallback`() = runTest {
+        // Regression guard: actual errors (500, network) should still retry before fallback.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}event.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
+        // First call: error, second call (retry): success
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returnsMany listOf(
+            CalDavResult.error(500, "Server error"),
+            CalDavResult.success(listOf(
+                CalDavEvent("event.ics", eventUrl, "etag-1",
+                    createSimpleIcal("uid-1", "Event After Retry"))
+            ))
+        )
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // Should be called exactly 2 times: batch (error) + retry (success)
+        coVerify(exactly = 2) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+    }
+
+    @Test
+    fun `partial chunk data is accepted without one-by-one fallback`() = runTest {
+        // Tradeoff acknowledgment: if a chunk returns partial data (e.g. 1 of 3 events),
+        // isNotEmpty() accepts it and skips one-by-one for that chunk. Missing events
+        // are handled by the caller's "missing hrefs" detection.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val href1 = "event1.ics"
+        val href2 = "event2.ics"
+        val href3 = "event3.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                Pair(href1, "etag-1"),
+                Pair(href2, "etag-2"),
+                Pair(href3, "etag-3")
+            ))
+        // Batch: error (triggers retry+fallback chain)
+        // Retry: also error
+        // Chunk of 3: partial success — returns only 1 of 3 events
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returnsMany listOf(
+            CalDavResult.error(500, "Server error"),
+            CalDavResult.error(500, "Server error"),
+            CalDavResult.success(listOf(
+                CalDavEvent(href1, "${calendar.caldavUrl}event1.ics", "etag-1",
+                    createSimpleIcal("uid-1", "Event 1"))
+            ))
+        )
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // Should be called exactly 3 times: batch (error) + retry (error) + chunk (partial success)
+        // No one-by-one calls because chunk returned isNotEmpty()
+        coVerify(exactly = 3) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+    }
+
     // ========== Recently Pushed Event Skip (v22.5.6) ==========
 
     @Test

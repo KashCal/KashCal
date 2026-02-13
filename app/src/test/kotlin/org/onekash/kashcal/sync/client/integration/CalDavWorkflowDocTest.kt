@@ -99,14 +99,16 @@ class CalDavWorkflowDocTest {
             val propsFile = File(path)
             if (propsFile.exists()) {
                 propsFile.readLines().forEach { line ->
-                    val parts = line.split("=").map { it.trim() }
-                    if (parts.size == 2) {
-                        when {
-                            parts[0].contains("username", ignoreCase = true) -> username = parts[1]
-                            parts[0].contains("password", ignoreCase = true) &&
-                                !parts[0].contains("keystore", ignoreCase = true) -> password = parts[1]
-                            parts[0].contains("server", ignoreCase = true) -> serverUrl = parts[1]
-                        }
+                    val trimmed = line.trim()
+                    if (trimmed.startsWith("#") || !trimmed.contains("=")) return@forEach
+                    val key = trimmed.substringBefore("=").trim()
+                    val value = trimmed.substringAfter("=").trim()
+                    when (key) {
+                        "ICLOUD_USERNAME" -> username = value
+                        "ICLOUD_APP_PASSWORD" -> password = value
+                        "caldav.username" -> if (username == null) username = value
+                        "caldav.app_password" -> if (password == null) password = value
+                        "caldav.server" -> serverUrl = value
                     }
                 }
                 if (username != null && password != null) break
