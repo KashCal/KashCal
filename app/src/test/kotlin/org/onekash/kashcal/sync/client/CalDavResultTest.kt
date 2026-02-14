@@ -138,6 +138,24 @@ class CalDavResultTest {
     }
 
     @Test
+    fun `isConflict detects 412 Precondition Failed`() {
+        val result = CalDavResult.error(412, "Precondition Failed")
+        assertTrue(result.isConflict())
+    }
+
+    @Test
+    fun `isConflict detects 409 Conflict`() {
+        val result = CalDavResult.error(409, "Conflict")
+        assertTrue(result.isConflict())
+    }
+
+    @Test
+    fun `isConflict rejects non-conflict error codes`() {
+        val result = CalDavResult.error(500, "Server Error")
+        assertFalse(result.isConflict())
+    }
+
+    @Test
     fun `notFoundError creates 404 non-retryable error`() {
         val result = CalDavResult.notFoundError("Event deleted")
         val error = result as CalDavResult.Error

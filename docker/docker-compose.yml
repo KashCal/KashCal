@@ -83,9 +83,44 @@ services:
       timeout: 10s
       retries: 5
 
+  # ============================================
+  # SOGo - Groupware with CalDAV support
+  # Requires PostgreSQL + memcached (bundled in container)
+  # CalDAV endpoint: http://localhost:8083/SOGo/dav/
+  # ============================================
+  sogo:
+    image: kashcal-sogo
+    container_name: kashcal-sogo
+    ports:
+      - "8084:80"
+    depends_on:
+      sogo-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/SOGo/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  sogo-db:
+    image: postgres:16-alpine
+    container_name: kashcal-sogo-db
+    environment:
+      POSTGRES_USER: sogo
+      POSTGRES_PASSWORD: sogopass
+      POSTGRES_DB: sogo
+    volumes:
+      - sogo_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sogo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   nextcloud_data:
   radicale_data:
   baikal_data:
   baikal_config:
   stalwart_data:
+  sogo_db_data:

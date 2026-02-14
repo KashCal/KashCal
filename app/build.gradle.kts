@@ -133,9 +133,20 @@ android {
                 // See: https://github.com/corretto/corretto-17/issues
                 it.jvmArgs("-XX:TieredStopAtLevel=1")
                 it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+
+                // Exclude integration tests (real servers) by default.
+                // Run with: ./gradlew testDebugUnitTest -Pintegration
+                if (!project.hasProperty("integration")) {
+                    it.exclude("**/integration/**")
+                }
             }
         }
     }
+}
+
+// Disable release unit tests — identical to debug and doubles test time
+tasks.matching { it.name == "testReleaseUnitTest" }.configureEach {
+    enabled = false
 }
 
 dependencies {

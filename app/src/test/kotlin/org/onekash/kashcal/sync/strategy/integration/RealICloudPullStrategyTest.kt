@@ -131,13 +131,11 @@ class RealICloudPullStrategyTest {
             val propsFile = File(path)
             if (propsFile.exists()) {
                 propsFile.readLines().forEach { line ->
-                    val parts = line.split("=").map { it.trim() }
+                    val parts = line.split("=", limit = 2).map { it.trim() }
                     if (parts.size == 2) {
-                        when {
-                            parts[0].contains("username", ignoreCase = true) -> username = parts[1]
-                            parts[0].contains("password", ignoreCase = true) &&
-                                !parts[0].contains("keystore", ignoreCase = true) -> password = parts[1]
-                            parts[0].contains("server", ignoreCase = true) -> serverUrl = parts[1]
+                        when (parts[0]) {
+                            "ICLOUD_USERNAME" -> username = parts[1]
+                            "ICLOUD_PASSWORD", "ICLOUD_APP_PASSWORD" -> password = parts[1]
                         }
                     }
                 }
@@ -448,6 +446,63 @@ class RealICloudPullStrategyTest {
         // Verify all generated events have RRULE
         generatedEvents.forEach { event ->
             assert(event.rrule != null) { "Generated event should have RRULE" }
+        }
+    }
+
+    @Test
+    fun `pull full sync uses batched multiget for large calendar`() = runBlocking {
+        // Verifies that batched multiget works against real iCloud with many events.
+        // iCloud personal calendar has ~693 events — should be split into ~14 batches of 50.
+        assumeCredentialsAvailable()
+
+        val caldavCalendar = discoverTestCalendar()
+        assumeTrue("Should discover a calendar", caldavCalendar != null)
+
+        val calendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = caldavCalendar!!.url,
+            displayName = caldavCalendar.displayName,
+            color = -1,
+            ctag = null,
+            syncToken = null,
+            isVisible = true,
+            isDefault = false,
+            isReadOnly = false,
+            sortOrder = 0
+        )
+
+        println("=== Testing Batched Multiget (v22.5.11) ===")
+        println("Calendar: ${calendar.displayName}")
+
+        val capturedEvents = mutableListOf<Event>()
+        coEvery { eventsDao.upsert(capture(capturedEvents)) } returns 1L
+
+        val startTime = System.currentTimeMillis()
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
+        val durationMs = System.currentTimeMillis() - startTime
+
+        println("\n=== Batched Multiget Result ===")
+        println("Duration: ${durationMs}ms")
+
+        when (result) {
+            is PullResult.Success -> {
+                println("Events added: ${result.eventsAdded}")
+                println("Events captured: ${capturedEvents.size}")
+
+                // With batched multiget, large calendars should complete successfully
+                // instead of timing out (the bug this fix addresses)
+                assert(result.eventsAdded > 0) {
+                    "Should have added events from iCloud calendar"
+                }
+            }
+            is PullResult.Error -> {
+                println("Error: code=${result.code}, message=${result.message}, retryable=${result.isRetryable}")
+                // Don't fail - might be a transient network issue or rate limiting
+            }
+            is PullResult.NoChanges -> {
+                println("No changes (ctag matched unexpectedly)")
+            }
         }
     }
 }

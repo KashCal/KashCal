@@ -351,6 +351,10 @@ class CalDavXmlParser {
                                         icalData = currentIcalData!!
                                     )
                                 )
+                            } else if (currentHref != null && currentIcalData == null &&
+                                currentHref!!.endsWith(".ics")) {
+                                Log.w(TAG, "Response for ${currentHref} has no calendar-data " +
+                                    "— server may not support calendar-data in calendar-query")
                             }
                             inResponse = false
                         }

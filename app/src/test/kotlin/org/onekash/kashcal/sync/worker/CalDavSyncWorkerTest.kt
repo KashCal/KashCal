@@ -1044,6 +1044,149 @@ class CalDavSyncWorkerTest {
         )
     }
 
+    // ==================== Stale IN_PROGRESS Recovery Tests ====================
+
+    @Test
+    fun `doWork recovers stale IN_PROGRESS operations at sync start`() = runTest {
+        // Given - stale operations exist
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 2
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - stale recovery was called with ~1hr cutoff
+        coVerify { pendingOperationsDao.resetStaleInProgress(any(), any()) }
+    }
+
+    @Test
+    fun `doWork stale recovery runs before retry lifecycle`() = runTest {
+        // Given
+        coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 1
+        coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
+        coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
+        coEvery { accountRepository.getEnabledAccounts() } returns emptyList()
+
+        val inputData = CalDavSyncWorker.createFullSyncInput(forceFullSync = false)
+        val worker = createWorker(inputData)
+
+        // When
+        worker.doWork()
+
+        // Then - stale recovery runs before expiry check
+        coVerifyOrder {
+            pendingOperationsDao.resetStaleInProgress(any(), any())
+            pendingOperationsDao.getExpiredOperations(any())
+        }
+    }
+
+    // ==================== Per-Account Failure Threshold Tests ====================
+
+    @Test
+    fun `syncAll fires failure threshold notification at exactly 3 consecutive failures`() = runTest {
+        // Given - account with exactly 3 consecutive failures after this sync
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount().copy(
+            consecutiveSyncFailures = 2 // Will become 3 after recordSyncFailure
+        )
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
+            SyncResult.Error(-1, "Server unreachable", true)
+
+        // After recording failure, the account now has 3 consecutive failures
+        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 3)
+        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
+
+        // When
+        worker.doWork()
+
+        // Then - notification should fire because consecutiveSyncFailures == 3
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        verify { notificationManager.showSyncFailureThresholdNotification(any(), 3) }
+    }
+
+    @Test
+    fun `syncAll does NOT fire failure threshold notification at 2 failures`() = runTest {
+        // Given - account at 2 failures (below threshold)
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
+            SyncResult.Error(-1, "Server unreachable", true)
+
+        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 2)
+        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
+
+        // When
+        worker.doWork()
+
+        // Then - threshold notification should NOT fire
+        verify(exactly = 0) { notificationManager.showSyncFailureThresholdNotification(any(), any()) }
+    }
+
+    @Test
+    fun `syncAll does NOT fire failure threshold notification at 4 failures`() = runTest {
+        // Given - account at 4 failures (above threshold, == check means fires only once at exactly 3)
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } returns
+            SyncResult.Error(-1, "Server unreachable", true)
+
+        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 4)
+        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
+
+        // When
+        worker.doWork()
+
+        // Then - threshold notification should NOT fire (== 3, not >= 3)
+        verify(exactly = 0) { notificationManager.showSyncFailureThresholdNotification(any(), any()) }
+    }
+
+    // ==================== syncAll Per-Account Metadata Tests ====================
+
+    @Test
+    fun `syncAll records per-account metadata for multiple accounts with mixed results`() = runTest {
+        // Given - two accounts: one succeeds, one fails
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val account1 = createTestAccount(id = 1L)
+        val account2 = createTestAccount(id = 2L).copy(
+            email = "test2@icloud.com",
+            displayName = "Test Account 2"
+        )
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(account1, account2)
+
+        // Account 1 succeeds
+        coEvery { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 2, durationMs = 500)
+        // Account 2 fails
+        coEvery { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) } returns
+            SyncResult.Error(-1, "Connection refused", true)
+
+        // Account 2 after failure has 1 consecutive failure
+        coEvery { accountRepository.getAccountById(2L) } returns account2.copy(consecutiveSyncFailures = 1)
+
+        // When
+        worker.doWork()
+
+        // Then - BOTH accounts get their metadata recorded
+        coVerify { accountRepository.recordSyncSuccess(1L, any()) }
+        coVerify { accountRepository.recordSyncFailure(2L, any()) }
+    }
+
     // ==================== Account Detail: Sync Recording & isEnabled Guard ====================
 
     @Test

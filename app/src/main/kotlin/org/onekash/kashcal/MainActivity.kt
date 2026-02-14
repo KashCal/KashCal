@@ -762,7 +762,7 @@ class MainActivity : ComponentActivity() {
 
         if (!isFirstResume) {
             Log.d(TAG, "Returning to calendar, refreshing")
-            homeViewModel.refreshICloudStatus()
+            homeViewModel.refreshAccountStatus()
             homeViewModel.refreshCalendars()
 
             // Only sync if returning from external navigation (not Settings)

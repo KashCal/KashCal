@@ -201,7 +201,7 @@ class HomeViewModelTest {
         coEvery { dataStore.defaultCalendarId } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
         coEvery { accountRepository.hasCredentials(any()) } returns false
         coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(testOccurrences)
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(testOccurrences)
@@ -296,25 +296,239 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `initializeAsync checks iCloud status`() = runTest {
+    fun `initializeAsync checks account status`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // With null account, should not be configured
+        // With no accounts, should not be configured
         assertFalse(viewModel.uiState.value.isConfigured)
-        assertFalse(viewModel.uiState.value.isICloudConnected)
     }
 
     @Test
-    fun `initializeAsync sets iCloud connected when configured`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+    fun `initializeAsync sets isConfigured when account has credentials`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isConfigured)
-        assertTrue(viewModel.uiState.value.isICloudConnected)
+    }
+
+    // ==================== Account Status Baseline Tests ====================
+
+    @Test
+    fun `checkAccountStatus shows setup banner when no accounts exist`() = runTest {
+        // @Before default: getAllAccounts returns emptyList()
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+    fun `account without credentials shows setup banner`() = runTest {
+        val accountNoCredentials = Account(
+            id = 3L,
+            provider = AccountProvider.ICLOUD,
+            email = "test@icloud.com",
+            displayName = "iCloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(accountNoCredentials)
+        coEvery { accountRepository.hasCredentials(accountNoCredentials.id) } returns false
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - setup banner hides when any account is configured`() = runTest {
+        val caldavAccount = Account(
+            id = 2L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(caldavAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue("isConfigured should be true when any account has credentials", viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - setup banner shows for any unconfigured provider`() = runTest {
+        val caldavAccountNoCredentials = Account(
+            id = 2L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccountNoCredentials)
+        coEvery { accountRepository.hasCredentials(caldavAccountNoCredentials.id) } returns false
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse("isConfigured should be false when no credentials", viewModel.uiState.value.isConfigured)
+    }
+
+    // ==================== Account Status POST Tests (BUG 1 fix) ====================
+    // These tests verify the DESIRED behavior after removing iCloud hardcoding.
+    // checkAccountStatus() should consider ALL sync-capable accounts (iCloud + CalDAV).
+
+    @Test
+
+    fun `POST - checkAccountStatus sets isConfigured for CalDAV-only account`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(10L) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue("isConfigured should be true for CalDAV account with credentials",
+            viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - checkAccountStatus sets isConfigured for iCloud account`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue("isConfigured should be true for iCloud account with credentials (no regression)",
+            viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - checkAccountStatus sets isConfigured when both providers exist`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount, caldavAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+        coEvery { accountRepository.hasCredentials(10L) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue("isConfigured should be true when both providers configured",
+            viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - triggerStartupSync works with CalDAV-only account`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(10L) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isConfigured)
+
+        viewModel.triggerStartupSync()
+        advanceUntilIdle()
+
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+
+    fun `POST - syncOnResumeIfNeeded works with CalDAV-only account`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(10L) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isConfigured)
+
+        // Trigger startup sync first (sets hasTriggeredStartupSync)
+        viewModel.triggerStartupSync()
+        advanceUntilIdle()
+
+        // Simulate sync completing so isSyncing resets to false
+        syncStatusFlow.value = SyncStatus.Succeeded()
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isSyncing)
+
+        // Now resume sync should trigger
+        viewModel.syncOnResumeIfNeeded()
+        advanceUntilIdle()
+
+        // Should have been called twice: once for startup, once for resume
+        verify(atLeast = 2) { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+
+    fun `POST - isConfigured false when all accounts lack credentials`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(10L) } returns false
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse("isConfigured should be false when no credentials",
+            viewModel.uiState.value.isConfigured)
+    }
+
+    @Test
+
+    fun `POST - isConfigured false when no accounts exist`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns emptyList()
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse("isConfigured should be false with no accounts",
+            viewModel.uiState.value.isConfigured)
     }
 
     // ==================== Calendar Visibility Tests ====================
@@ -822,7 +1036,7 @@ class HomeViewModelTest {
 
     @Test
     fun `triggerStartupSync requests sync when configured`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -838,7 +1052,7 @@ class HomeViewModelTest {
 
     @Test
     fun `triggerStartupSync only runs once`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -854,7 +1068,7 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync requests full sync`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -868,7 +1082,7 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not start if already syncing`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -895,7 +1109,7 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync shows banner when Running`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -916,7 +1130,7 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync shows Sync complete on Success`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -942,7 +1156,7 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not show banner when Running`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -963,7 +1177,7 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync does not show banner on Success`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -986,7 +1200,7 @@ class HomeViewModelTest {
 
     @Test
     fun `sync failure always shows banner regardless of sync type`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1012,9 +1226,220 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
+    // ==================== Partial Error Chain Tests (GAP 2 / GAP 7 plan) ====================
+
+    @Test
+    fun `PartialSuccess shows banner with error message even for pull-to-refresh`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Pull-to-refresh sets showBannerForSync = false
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        // Emit PartialSuccess (Succeeded with errorMessage)
+        syncStatusFlow.value = SyncStatus.Succeeded(
+            calendarsSynced = 2,
+            eventsPulled = 5,
+            errorMessage = "1 account failed: Auth error"
+        )
+        // Advance enough for state update but not past auto-dismiss
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // Banner should be visible because hasPartialError forces it
+        assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
+        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+        assertFalse("isSyncing should be false", viewModel.uiState.value.isSyncing)
+    }
+
+    @Test
+    fun `PartialSuccess banner auto-dismisses after 3 seconds`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Succeeded(
+            calendarsSynced = 2,
+            errorMessage = "1 account failed"
+        )
+
+        // After 100ms, banner should be visible
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+        assertTrue("Banner should show initially", viewModel.uiState.value.showSyncBanner)
+
+        // After 3 seconds, banner should auto-dismiss
+        testScheduler.advanceTimeBy(3000)
+        testScheduler.runCurrent()
+        assertFalse("Banner should auto-dismiss after 3s", viewModel.uiState.value.showSyncBanner)
+    }
+
+    @Test
+    fun `clean Succeeded without errorMessage does not force banner`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Pull-to-refresh: banner flag is false
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        // Clean success — no errorMessage
+        syncStatusFlow.value = SyncStatus.Succeeded(
+            calendarsSynced = 3,
+            eventsPulled = 10
+        )
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // Banner should NOT show because showBanner=false and hasPartialError=false
+        assertFalse("Banner should not show for clean pull-to-refresh success",
+            viewModel.uiState.value.showSyncBanner)
+        assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
+    }
+
+    @Test
+    fun `Succeeded with errorMessage shows different message than Failed`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Test PartialSuccess banner message
+        syncStatusFlow.value = SyncStatus.Succeeded(errorMessage = "Nextcloud auth expired")
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        val partialMessage = viewModel.uiState.value.syncBannerMessage
+        assertEquals("Sync complete with errors", partialMessage)
+
+        // Reset and test Failed banner message
+        syncStatusFlow.value = SyncStatus.Idle
+        advanceUntilIdle()
+        syncStatusFlow.value = SyncStatus.Failed(errorMessage = "All accounts failed")
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        val failedMessage = viewModel.uiState.value.syncBannerMessage
+        assertTrue("Failed message should contain error", failedMessage.contains("Sync failed"))
+        assertTrue("Failed message should contain specific error", failedMessage.contains("All accounts failed"))
+    }
+
+    @Test
+    fun `forceFullSync shows banner on PartialSuccess`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Force full sync sets banner flag to true
+        viewModel.forceFullSync()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Succeeded(
+            calendarsSynced = 2,
+            errorMessage = "1 account: 401 Unauthorized"
+        )
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // Banner should show (both showBanner=true AND hasPartialError=true)
+        assertTrue("Banner should show", viewModel.uiState.value.showSyncBanner)
+        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+    }
+
+    @Test
+
+    fun `POST - refreshSync works with CalDAV-only account`() = runTest {
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(caldavAccount)
+        coEvery { accountRepository.hasCredentials(caldavAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertTrue("isConfigured should be true when CalDAV account configured",
+            viewModel.uiState.value.isConfigured)
+
+        viewModel.refreshSync()
+        assertTrue("isSyncing should be true after refreshSync", viewModel.uiState.value.isSyncing)
+        verify { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+    fun `PartialSuccess banner works with CalDAV multi-account setup`() = runTest {
+        // Setup: iCloud + CalDAV — mixed provider scenario
+        val caldavAccount = Account(
+            id = 10L,
+            provider = AccountProvider.CALDAV,
+            email = "user@nextcloud.example.com",
+            displayName = "Nextcloud",
+            isEnabled = true
+        )
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount, caldavAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+        coEvery { accountRepository.hasCredentials(caldavAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        syncStatusFlow.value = SyncStatus.Running
+        advanceUntilIdle()
+
+        // PartialSuccess: iCloud synced, Nextcloud auth expired
+        syncStatusFlow.value = SyncStatus.Succeeded(
+            calendarsSynced = 3,
+            eventsPulled = 10,
+            errorMessage = "Nextcloud: 401 Unauthorized"
+        )
+        testScheduler.advanceTimeBy(100)
+        testScheduler.runCurrent()
+
+        // Banner should show for partial error even in pull-to-refresh
+        assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
+        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+    }
+
     @Test
     fun `sync banner hidden when status is Idle`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1038,7 +1463,7 @@ class HomeViewModelTest {
 
     @Test
     fun `sync banner hidden when status is Cancelled`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1530,7 +1955,7 @@ class HomeViewModelTest {
 
     @Test
     fun `performSync sets isSyncing true immediately`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1551,7 +1976,7 @@ class HomeViewModelTest {
 
     @Test
     fun `forceFullSync full flow updates UI correctly through status changes`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1597,7 +2022,7 @@ class HomeViewModelTest {
 
     @Test
     fun `reloadCurrentView is triggered when SyncStatus becomes Succeeded`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1629,7 +2054,7 @@ class HomeViewModelTest {
 
     @Test
     fun `concurrent refreshSync calls are blocked when isSyncing is true`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
@@ -1653,7 +2078,7 @@ class HomeViewModelTest {
 
     @Test
     fun `sync failure does not leave stale isSyncing state`() = runTest {
-        coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testICloudAccount)
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()

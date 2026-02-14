@@ -1,60 +1,72 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Zoho calendar list response.
-     Key differences from other providers:
-     - No getctag property (CalendarServer extension not supported)
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Zoho PROPFIND Depth:1 response for calendar listing.
+     Captured pattern from calendar.zoho.com (2026-02-12).
+
+     Zoho quirks:
+     - Calendar home has resourcetype: collection + principal (not just collection)
+     - Calendar collection uses "B:" prefix for CalDAV namespace (non-standard)
+     - Supports getctag (CalendarServer extension) — contrary to earlier assumption
+     - Supports sync-token (RFC 6578)
      - No calendar-color (Apple iCal extension not supported)
-     - Calendars still have proper resourcetype with calendar element
+     - Includes schedule-inbox and schedule-outbox collections
 -->
-<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-  <!-- Calendar home collection (parent - not a calendar) -->
-  <d:response>
-    <d:href>/caldav/user@example.com/</d:href>
-    <d:propstat>
-      <d:prop>
-        <d:displayname>user@example.com</d:displayname>
-        <d:resourcetype>
-          <d:collection/>
-        </d:resourcetype>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
-  </d:response>
-  <!-- Actual calendar -->
-  <d:response>
-    <d:href>/caldav/user@example.com/default/</d:href>
-    <d:propstat>
-      <d:prop>
-        <d:displayname>My Calendar</d:displayname>
-        <d:resourcetype>
-          <d:collection/>
-          <c:calendar/>
-        </d:resourcetype>
-        <d:current-user-privilege-set>
-          <d:privilege><d:read/></d:privilege>
-          <d:privilege><d:write/></d:privilege>
-          <d:privilege><d:write-content/></d:privilege>
-        </d:current-user-privilege-set>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
-  </d:response>
-  <!-- Second calendar -->
-  <d:response>
-    <d:href>/caldav/user@example.com/work/</d:href>
-    <d:propstat>
-      <d:prop>
-        <d:displayname>Work</d:displayname>
-        <d:resourcetype>
-          <d:collection/>
-          <c:calendar/>
-        </d:resourcetype>
-        <d:current-user-privilege-set>
-          <d:privilege><d:read/></d:privilege>
-          <d:privilege><d:write/></d:privilege>
-          <d:privilege><d:write-content/></d:privilege>
-        </d:current-user-privilege-set>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
-  </d:response>
-</d:multistatus>
+<D:multistatus xmlns:D="DAV:">
+  <!-- Calendar home (parent — not a calendar) -->
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:resourcetype>
+          <D:collection/>
+          <D:principal/>
+        </D:resourcetype>
+        <getctag xmlns="http://calendarserver.org/ns/">1770859408092</getctag>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+  <!-- Actual calendar — named "events" by default -->
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:displayname>My Calendar</D:displayname>
+        <D:sync-token>1770859408092</D:sync-token>
+        <D:resourcetype>
+          <B:calendar xmlns:B="urn:ietf:params:xml:ns:caldav"/>
+          <D:collection/>
+        </D:resourcetype>
+        <getctag xmlns="http://calendarserver.org/ns/">1770859408092</getctag>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+  <!-- Schedule inbox -->
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/inbox/</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:resourcetype>
+          <D:collection/>
+          <B:schedule-inbox xmlns:B="urn:ietf:params:xml:ns:caldav"/>
+        </D:resourcetype>
+        <getctag xmlns="http://calendarserver.org/ns/">never-changes</getctag>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+  <!-- Schedule outbox -->
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/outbox/</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:resourcetype>
+          <B:schedule-outbox xmlns:B="urn:ietf:params:xml:ns:caldav"/>
+          <D:collection/>
+        </D:resourcetype>
+        <getctag xmlns="http://calendarserver.org/ns/">never-changes</getctag>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

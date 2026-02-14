@@ -248,7 +248,9 @@ class ExceptionDuplicateBugTest {
 
         // Setup mocks
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
-        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair("recurring.ics", "etag-v2")))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(
                     href = "recurring.ics",
@@ -360,7 +362,9 @@ class ExceptionDuplicateBugTest {
 
         // Setup mocks
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
-        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair("recurring.ics", "etag-v2")))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(
                     href = "recurring.ics",

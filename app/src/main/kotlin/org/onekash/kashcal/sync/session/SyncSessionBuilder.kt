@@ -86,12 +86,6 @@ class SyncSessionBuilder(
     // Error message (v16.8.0)
     private var errorMessage: String? = null
 
-    // Fetch fallback tracking (v16.8.0)
-    private var fallbackUsed = false
-    private var fetchFailedCount = 0
-    fun setFallbackUsed(used: Boolean) = apply { fallbackUsed = used }
-    fun setFetchFailedCount(count: Int) = apply { fetchFailedCount = count }
-
     // RFC 6578 Section 3.6: Server truncated results (507)
     private var truncated = false
     fun setTruncated(value: Boolean) = apply { truncated = value }
@@ -129,8 +123,6 @@ class SyncSessionBuilder(
             errorType = errorType,
             errorStage = errorStage,
             errorMessage = errorMessage,
-            fallbackUsed = fallbackUsed,
-            fetchFailedCount = fetchFailedCount,
             truncated = truncated
         )
     }

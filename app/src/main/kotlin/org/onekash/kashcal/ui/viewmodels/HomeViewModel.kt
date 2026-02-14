@@ -28,7 +28,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.data.repository.AccountRepository
-import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -185,14 +184,14 @@ class HomeViewModel @Inject constructor(
             // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
             observeCalendars()
 
-            // Check if iCloud is configured
-            checkICloudStatus()
+            // Check if any sync-capable account is configured
+            checkAccountStatus()
 
             // Show onboarding sheet if: not configured AND not dismissed before
             if (!_uiState.value.isConfigured) {
                 val dismissed = dataStore.onboardingDismissed.first()
                 if (!dismissed) {
-                    Log.d(TAG, "Showing onboarding sheet (first launch, iCloud not configured)")
+                    Log.d(TAG, "Showing onboarding sheet (first launch, no account configured)")
                     _uiState.update { it.copy(showOnboardingSheet = true) }
                 }
             }
@@ -224,58 +223,51 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // ==================== iCloud Status ====================
+    // ==================== Account Status ====================
 
     /**
-     * Check if iCloud is configured and update state.
+     * Check if any sync-capable account is configured and update state.
+     * Considers all providers with supportsCalDAV (iCloud, CalDAV).
      */
-    private suspend fun checkICloudStatus() {
-        val icloudAccounts = withContext(ioDispatcher) {
-            accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
+    private suspend fun checkAccountStatus() {
+        val allAccounts = withContext(ioDispatcher) {
+            accountRepository.getAllAccounts()
         }
-        val account = icloudAccounts.firstOrNull()
-        val hasCredentials = account?.let {
-            withContext(ioDispatcher) { accountRepository.hasCredentials(it.id) }
-        } ?: false
+        val syncableAccounts = allAccounts.filter { it.provider.supportsCalDAV }
 
-        if (account != null && hasCredentials) {
-            _uiState.update {
-                it.copy(
-                    isConfigured = true,
-                    isICloudConnected = account.isEnabled
-                )
-            }
-            Log.d(TAG, "iCloud configured: ${account.email.take(3)}***")
+        val hasConfiguredAccount = syncableAccounts.any { account ->
+            withContext(ioDispatcher) { accountRepository.hasCredentials(account.id) }
+        }
+
+        _uiState.update {
+            it.copy(isConfigured = hasConfiguredAccount)
+        }
+
+        if (hasConfiguredAccount) {
+            Log.d(TAG, "Account configured (${syncableAccounts.size} syncable accounts)")
         } else {
-            _uiState.update {
-                it.copy(
-                    isConfigured = false,
-                    isICloudConnected = false,
-                    syncMessage = "Tap to set up iCloud"
-                )
-            }
-            Log.d(TAG, "iCloud not configured")
+            Log.d(TAG, "No configured accounts")
         }
     }
 
     /**
-     * Refresh iCloud status (called when returning from settings).
-     * Also reloads calendars to pick up any newly discovered calendars from iCloud.
+     * Refresh account status (called when returning from settings).
+     * Also reloads calendars to pick up any newly discovered calendars.
      */
-    fun refreshICloudStatus() {
+    fun refreshAccountStatus() {
         viewModelScope.launch {
-            checkICloudStatus()
+            checkAccountStatus()
 
-            // Reload calendars to pick up newly discovered calendars from iCloud
+            // Reload calendars to pick up newly discovered calendars
             // (observeCalendars Flow should auto-update, but force refresh for safety)
             loadCalendars()
 
             if (_uiState.value.isConfigured && !hasTriggeredStartupSync) {
-                // First sync after iCloud setup - show banner for user feedback
+                // First sync after account setup - show banner for user feedback
                 hasTriggeredStartupSync = true
                 suppressSyncIndicator = true  // Has banner - no spinning icon needed
                 syncScheduler.setShowBannerForSync(true)  // Initial setup - user expects confirmation
-                Log.d(TAG, "refreshICloudStatus: First sync after iCloud setup (with banner, no icon)")
+                Log.d(TAG, "refreshAccountStatus: First sync after account setup (with banner, no icon)")
                 performSync()
             }
 

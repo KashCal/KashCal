@@ -95,9 +95,7 @@ data class HomeUiState(
     val isSyncing: Boolean = false,
     /** Message describing current sync state */
     val syncMessage: String? = null,
-    /** Is iCloud connected and configured */
-    val isICloudConnected: Boolean = false,
-    /** Is iCloud account configured (has credentials) */
+    /** Has any sync-capable account with credentials (iCloud or CalDAV) */
     val isConfigured: Boolean = false,
 
     // === LOADING STATE ===

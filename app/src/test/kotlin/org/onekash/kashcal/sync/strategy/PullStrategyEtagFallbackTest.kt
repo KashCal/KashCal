@@ -126,8 +126,8 @@ class PullStrategyEtagFallbackTest {
         assertTrue(result is PullResult.Success)
         // Verify etag fallback was used (fetchEtagsInRange called)
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
-        // Verify pullFull was NOT called (no fetchEventsInRange)
-        coVerify(exactly = 0) { client.fetchEventsInRange(any(), any(), any()) }
+        // Verify pullFull was NOT reached (no multiget for full sync)
+        coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
     @Test
@@ -167,7 +167,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns emptyList()
 
         // pullFull will be called
-        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -178,7 +178,7 @@ class PullStrategyEtagFallbackTest {
         // Verify etag fallback tried but fell through
         coVerify { eventsDao.getEtagsByCalendarId(calendar.id) }
         // Verify pullFull was called
-        coVerify { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) }
+        coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
     @Test
@@ -196,21 +196,20 @@ class PullStrategyEtagFallbackTest {
             EtagEntry(eventUrl, "etag-1")
         )
 
-        // Server etag fetch fails
-        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
-            CalDavResult.error(500, "Server error")
-
-        // pullFull will be called
-        coEvery { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) } returns
+        // Server etag fetch fails first (etag comparison), then succeeds (pullFull)
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returnsMany listOf(
+            CalDavResult.error(500, "Server error"),
             CalDavResult.success(emptyList())
+        )
+
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
-        coVerify { client.fetchEventsInRange(calendar.caldavUrl, any(), any()) }
+        // Verify fetchEtagsInRange was called twice (once for etag comparison, once for pullFull)
+        coVerify(exactly = 2) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
     // ========== Change Detection Tests ==========

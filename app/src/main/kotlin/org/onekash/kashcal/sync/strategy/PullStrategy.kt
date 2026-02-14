@@ -3,6 +3,9 @@ package org.onekash.kashcal.sync.strategy
 import android.database.sqlite.SQLiteConstraintException
 import android.database.sqlite.SQLiteException
 import android.util.Log
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
@@ -73,9 +76,8 @@ class PullStrategy @Inject constructor(
         // Parse failure retry: hold token for N syncs before giving up (v16.7.0)
         private const val MAX_PARSE_RETRIES = 3
 
-        // Multiget fallback: retry delay and batch size for individual fetches (v16.8.0)
-        private const val MULTIGET_RETRY_DELAY_MS = 2000L
-        private const val INDIVIDUAL_FETCH_BATCH_SIZE = 10
+        // Batched multiget: max hrefs per calendar-multiget request (v22.5.11)
+        private const val MULTIGET_BATCH_SIZE = 50
 
         // DB retry configuration
         private const val MAX_DB_RETRIES = 3
@@ -196,6 +198,10 @@ class PullStrategy @Inject constructor(
             // Rethrow cancellation to properly handle coroutine cancellation
             Log.d(TAG, "Pull cancelled")
             throw e
+        } catch (e: SyncBatchException) {
+            // Defensive: catch SyncBatchException that escapes a caller's try/catch
+            Log.e(TAG, "Batch fetch failed: code=${e.code}, retryable=${e.isRetryable}")
+            PullResult.Error(code = e.code, message = e.message, isRetryable = e.isRetryable)
         } catch (e: Exception) {
             Log.e(TAG, "Pull failed: ${e.message}", e)
             PullResult.Error(
@@ -312,21 +318,13 @@ class PullStrategy @Inject constructor(
         // Track hrefs reported by sync-collection
         sessionBuilder?.setHrefsReported(changedHrefs.size)
 
-        // Fetch events with retry and fallback to individual fetches (v16.8.0)
-        val fetchResult = fetchEventsWithFallback(
-            clientToUse,
-            calendar.caldavUrl,
-            changedHrefs
-        )
-        val serverEvents = fetchResult.events
-
-        // Track fallback usage in session
-        if (fetchResult.fallbackUsed) {
-            sessionBuilder?.setFallbackUsed(true)
-            sessionBuilder?.setFetchFailedCount(fetchResult.fetchFailedCount)
+        // Fetch events in batched concurrent multiget (v22.5.11)
+        val fetchResult = try {
+            fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs)
+        } catch (e: SyncBatchException) {
+            return PullResult.Error(e.code, e.message, e.isRetryable)
         }
-
-        // Track events fetched
+        val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
         // Detect missing events due to iCloud eventual consistency
@@ -426,21 +424,19 @@ class PullStrategy @Inject constructor(
         val startMs = now - PAST_WINDOW_MS
         val endMs = FUTURE_END_MS  // Unlimited future - fetch all future events
 
-        // Fetch all events in range
-        val eventsResult = clientToUse.fetchEventsInRange(calendar.caldavUrl, startMs, endMs)
-        if (eventsResult.isError()) {
-            val error = eventsResult as CalDavResult.Error
+        // Step 1: Fetch etags only (lightweight calendar-query, no calendar-data)
+        val etagResult = clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+        if (etagResult.isError()) {
+            val error = etagResult as CalDavResult.Error
             return PullResult.Error(error.code, error.message, error.isRetryable)
         }
+        val serverEtags = (etagResult as CalDavResult.Success).data
+        sessionBuilder?.setHrefsReported(serverEtags.size)
 
-        val serverEvents = (eventsResult as CalDavResult.Success).data
-
-        // Track events fetched (for full sync, hrefs reported = events fetched)
-        sessionBuilder?.setHrefsReported(serverEvents.size)
-        sessionBuilder?.setEventsFetched(serverEvents.size)
-
-        // Get all server URLs for deletion detection
-        val serverUrls = serverEvents.map { it.url }.toSet()
+        // Build server URL set for deletion detection (href → full URL)
+        val serverUrls = serverEtags.map { (href, _) ->
+            quirks.buildEventUrl(href, calendar.caldavUrl)
+        }.toSet()
 
         // Find local events not on server anymore (within sync window)
         // LOCAL-FIRST: Exclude events with pending local changes from deletion
@@ -470,6 +466,31 @@ class PullStrategy @Inject constructor(
             eventsDao.deleteById(event.id)
             deleted++
         }
+
+        // Step 2: Fetch all event data via calendar-multiget
+        val hrefsToFetch = serverEtags.map { it.first }
+
+        if (hrefsToFetch.isEmpty()) {
+            // No events on server — only deletions
+            sessionBuilder?.setEventsFetched(0)
+            val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
+            return PullResult.Success(
+                eventsAdded = 0,
+                eventsUpdated = 0,
+                eventsDeleted = deleted,
+                newSyncToken = syncTokenResult.getOrNull(),
+                newCtag = null,
+                changes = deletedChanges
+            )
+        }
+
+        val fetchResult = try {
+            fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
+        } catch (e: SyncBatchException) {
+            return PullResult.Error(e.code, e.message, e.isRetryable)
+        }
+        val serverEvents = fetchResult.events
+        sessionBuilder?.setEventsFetched(serverEvents.size)
 
         // Process server events
         val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
@@ -623,18 +644,13 @@ class PullStrategy @Inject constructor(
         // Track hrefs for session
         sessionBuilder?.setHrefsReported(hrefsToFetch.size)
 
-        // Fetch events with fallback
-        val fetchResult = fetchEventsWithFallback(
-            clientToUse,
-            calendar.caldavUrl,
-            hrefsToFetch
-        )
-        val serverEvents = fetchResult.events
-
-        if (fetchResult.fallbackUsed) {
-            sessionBuilder?.setFallbackUsed(true)
-            sessionBuilder?.setFetchFailedCount(fetchResult.fetchFailedCount)
+        // Fetch events in batched concurrent multiget (v22.5.11)
+        val fetchResult = try {
+            fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
+        } catch (e: SyncBatchException) {
+            return PullResult.Error(e.code, e.message, e.isRetryable)
         }
+        val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
         Log.d(TAG, "Fetched ${serverEvents.size} events via multiget (requested ${hrefsToFetch.size})")
@@ -1039,120 +1055,89 @@ class PullStrategy @Inject constructor(
         val etag: String?
     )
 
-    /**
-     * Result of fetchEventsWithFallback containing events and tracking info.
-     */
     private data class FetchResult(
-        val events: List<CalDavEvent>,
-        val fallbackUsed: Boolean,
-        val fetchFailedCount: Int
+        val events: List<CalDavEvent>
     )
 
     /**
-     * Fetch events with retry and fallback to individual fetches (v16.8.0).
-     *
-     * Strategy:
-     * 1. Try batch multiget (normal path)
-     * 2. If batch fails, retry once after delay
-     * 3. If still fails, fall back to individual fetches in small batches
-     * 4. Return whatever events we successfully fetched (missing handled by caller)
-     *
-     * This handles transient network issues and isolates problematic events.
+     * Exception for propagating batch fetch errors through coroutineScope.
      */
-    private suspend fun fetchEventsWithFallback(
+    private class SyncBatchException(
+        val code: Int,
+        override val message: String,
+        val isRetryable: Boolean
+    ) : Exception(message)
+
+    /**
+     * Fetch events in batched concurrent multiget requests (v22.5.11).
+     *
+     * Splits hrefs into batches of [MULTIGET_BATCH_SIZE] and fetches them concurrently.
+     * OkHttp Dispatcher throttles to 5 concurrent requests per host.
+     * Fails fast on any batch error — WorkManager retries the entire sync.
+     *
+     * Empty-response fallback: if a batch returns 0 events for >1 hrefs (Zoho returns
+     * HTTP 200 empty body for multi-href calendar-multiget), falls back to concurrent
+     * single-href fetches for that batch. This also serves as a safety net for any
+     * server with transient empty-response issues.
+     */
+    private suspend fun fetchEventsBatched(
         client: CalDavClient,
         calendarUrl: String,
         hrefs: List<String>
     ): FetchResult {
-        if (hrefs.isEmpty()) return FetchResult(emptyList(), fallbackUsed = false, fetchFailedCount = 0)
+        if (hrefs.isEmpty()) return FetchResult(emptyList())
 
-        // Step 1: Try batch multiget
-        Log.d(TAG, "fetchEventsWithFallback: attempting batch fetch of ${hrefs.size} events")
-        val batchResult = client.fetchEventsByHref(calendarUrl, hrefs)
+        val batches = hrefs.chunked(MULTIGET_BATCH_SIZE)
+        Log.d(TAG, "fetchEventsBatched: ${hrefs.size} hrefs in ${batches.size} batches of $MULTIGET_BATCH_SIZE")
 
-        if (batchResult is CalDavResult.Success && batchResult.data.isNotEmpty()) {
-            Log.d(TAG, "fetchEventsWithFallback: batch fetch succeeded, got ${batchResult.data.size} events")
-            return FetchResult(batchResult.data, fallbackUsed = false, fetchFailedCount = 0)
-        }
-
-        // Empty success = server doesn't support multi-href multiget (e.g. Zoho returns HTTP 200
-        // empty body for ≥2 hrefs). Skip retry — same REPORT will return empty again.
-        // Error = transient issue — retry is worthwhile.
-        val emptyMultigetSuccess = batchResult is CalDavResult.Success
-        if (emptyMultigetSuccess) {
-            Log.w(TAG, "fetchEventsWithFallback: batch returned Success but 0 events for ${hrefs.size} hrefs, falling back")
-        }
-        // TODO: Consider caching "server needs one-by-one multiget" per account to skip
-        // the batch attempt on subsequent syncs. For now, the fallback adds one extra
-        // round-trip per sync which is acceptable.
-
-        if (!emptyMultigetSuccess) {
-            val batchError = batchResult as CalDavResult.Error
-            Log.w(TAG, "fetchEventsWithFallback: batch fetch FAILED - code=${batchError.code}, " +
-                    "message='${batchError.message}', retryable=${batchError.isRetryable}, hrefs=${hrefs.size}")
-
-            // Step 2: Retry once after delay (handles transient issues)
-            Log.d(TAG, "fetchEventsWithFallback: retrying batch after ${MULTIGET_RETRY_DELAY_MS}ms delay")
-            delay(MULTIGET_RETRY_DELAY_MS)
-
-            val retryResult = client.fetchEventsByHref(calendarUrl, hrefs)
-            if (retryResult is CalDavResult.Success && retryResult.data.isNotEmpty()) {
-                Log.d(TAG, "fetchEventsWithFallback: batch retry succeeded, got ${retryResult.data.size} events")
-                return FetchResult(retryResult.data, fallbackUsed = false, fetchFailedCount = 0)
-            }
-
-            if (retryResult is CalDavResult.Error) {
-                Log.w(TAG, "fetchEventsWithFallback: batch retry FAILED - code=${retryResult.code}, " +
-                        "message='${retryResult.message}', falling back to individual fetches")
-            } else {
-                Log.w(TAG, "fetchEventsWithFallback: batch retry returned empty, falling back to individual fetches")
-            }
-        }
-
-        // Step 3: Fall back to individual fetches in small batches
-        val fetchedEvents = mutableListOf<CalDavEvent>()
-        val failedHrefs = mutableListOf<String>()
-
-        // Process in small batches to balance efficiency and isolation
-        hrefs.chunked(INDIVIDUAL_FETCH_BATCH_SIZE).forEachIndexed { batchIndex, batch ->
-            Log.d(TAG, "fetchEventsWithFallback: individual batch ${batchIndex + 1}, " +
-                    "fetching ${batch.size} events")
-
-            val smallBatchResult = client.fetchEventsByHref(calendarUrl, batch)
-            if (smallBatchResult is CalDavResult.Success && smallBatchResult.data.isNotEmpty()) {
-                fetchedEvents.addAll(smallBatchResult.data)
-                Log.d(TAG, "fetchEventsWithFallback: small batch succeeded, got ${smallBatchResult.data.size}")
-            } else {
-                // Small batch failed or returned empty — try one-by-one
-                if (smallBatchResult is CalDavResult.Error) {
-                    Log.w(TAG, "fetchEventsWithFallback: small batch failed - code=${smallBatchResult.code}, " +
-                            "message='${smallBatchResult.message}', trying individual fetches")
-                } else {
-                    Log.w(TAG, "fetchEventsWithFallback: small batch returned empty, trying individual fetches")
-                }
-
-                for (href in batch) {
-                    val singleResult = client.fetchEventsByHref(calendarUrl, listOf(href))
-                    if (singleResult is CalDavResult.Success && singleResult.data.isNotEmpty()) {
-                        fetchedEvents.addAll(singleResult.data)
+        val allEvents = coroutineScope {
+            batches.mapIndexed { index, batch ->
+                async {
+                    Log.d(TAG, "fetchEventsBatched: batch ${index + 1}/${batches.size}, ${batch.size} hrefs")
+                    val result = client.fetchEventsByHref(calendarUrl, batch)
+                    if (result.isError()) {
+                        val error = result as CalDavResult.Error
+                        throw SyncBatchException(error.code, error.message, error.isRetryable)
+                    }
+                    val events = (result as CalDavResult.Success).data
+                    if (events.isEmpty() && batch.size > 1) {
+                        Log.w(TAG, "fetchEventsBatched: batch ${index + 1} returned 0 events " +
+                            "for ${batch.size} hrefs, falling back to single-href fetches")
+                        fetchSingleHrefConcurrent(client, calendarUrl, batch)
                     } else {
-                        failedHrefs.add(href)
-                        val singleError = singleResult as? CalDavResult.Error
-                        Log.w(TAG, "fetchEventsWithFallback: individual fetch FAILED for href=$href, " +
-                                "code=${singleError?.code}, message='${singleError?.message}'")
+                        events
                     }
                 }
+            }.awaitAll().flatten()
+        }
+
+        Log.d(TAG, "fetchEventsBatched: fetched ${allEvents.size} events from ${hrefs.size} hrefs")
+        return FetchResult(allEvents)
+    }
+
+    /**
+     * Fetch events one href at a time, concurrently. Used as fallback when a server
+     * returns empty for multi-href calendar-multiget (Zoho quirk).
+     * OkHttp Dispatcher throttles to 5 concurrent requests per host.
+     * Skips individual failures — partial data is better than none.
+     */
+    private suspend fun fetchSingleHrefConcurrent(
+        client: CalDavClient,
+        calendarUrl: String,
+        hrefs: List<String>
+    ): List<CalDavEvent> = coroutineScope {
+        hrefs.map { href ->
+            async {
+                val result = client.fetchEventsByHref(calendarUrl, listOf(href))
+                if (result.isSuccess()) {
+                    result.getOrNull()!!
+                } else {
+                    val error = result as CalDavResult.Error
+                    Log.w(TAG, "fetchSingleHrefConcurrent: failed for $href " +
+                        "(code=${error.code}): ${error.message}")
+                    emptyList()
+                }
             }
-        }
-
-        if (failedHrefs.isNotEmpty()) {
-            Log.w(TAG, "fetchEventsWithFallback: completed with ${failedHrefs.size} failed hrefs: " +
-                    failedHrefs.take(5).joinToString())
-        }
-
-        Log.d(TAG, "fetchEventsWithFallback: fallback complete - requested=${hrefs.size}, " +
-                "fetched=${fetchedEvents.size}, failed=${failedHrefs.size}")
-
-        return FetchResult(fetchedEvents, fallbackUsed = true, fetchFailedCount = failedHrefs.size)
+        }.awaitAll().flatten()
     }
 }

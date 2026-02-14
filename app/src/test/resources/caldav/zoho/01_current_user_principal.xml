@@ -1,14 +1,22 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<d:multistatus xmlns:d="DAV:">
-  <d:response>
-    <d:href>/caldav</d:href>
-    <d:propstat>
-      <d:prop>
-        <d:current-user-principal>
-          <d:href>/caldav/user@example.com/</d:href>
-        </d:current-user-principal>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
-  </d:response>
-</d:multistatus>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Zoho PROPFIND response for current-user-principal.
+     Captured pattern from calendar.zoho.com (2026-02-12).
+
+     Zoho quirks:
+     - Uses opaque hash as user identifier (not email)
+     - Href is /caldav/{hash}/user/ (not /caldav/{email}/)
+     - No namespace prefix on inner elements
+-->
+<D:multistatus xmlns:D="DAV:">
+  <D:response>
+    <D:href>/caldav</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:current-user-principal>
+          <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/user/</D:href>
+        </D:current-user-principal>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

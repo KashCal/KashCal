@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Zoho calendar-multiget REPORT response — the fix for Issue #61.
+     Captured pattern from calendar.zoho.com (2026-02-12).
+
+     Unlike calendar-query (05_calendar_query_no_data.xml), Zoho correctly
+     returns calendar-data in calendar-multiget responses. This is the
+     RFC 4791 Section 7.9 REQUIRED behavior.
+
+     Zoho quirks in this response:
+     - Uses "B:" prefix for CalDAV namespace (non-standard, but valid XML)
+     - PRODID is "-//Zoho Corporation//Zoho Calendar-US//EN"
+     - Includes non-standard IMPORTANT:0 property in VEVENT
+     - Always sets ORGANIZER even for personal events
+     - Uses EMAIL alarm type (not DISPLAY)
+     - CLASS:PUBLIC and TRANSP:OPAQUE explicitly set
+-->
+<D:multistatus xmlns:D="DAV:">
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/aabb0011223344556677889900aabb01%40zoho.com.ics</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:getetag>1770859402675</D:getetag>
+        <B:calendar-data xmlns:B="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+PRODID:-//Zoho Corporation//Zoho Calendar-US//EN
+VERSION:2.0
+X-WR-CALNAME:testuser
+X-WR-TIMEZONE:America/Chicago
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+SUMMARY:Team Standup
+DESCRIPTION:Daily sync meeting
+DTSTART;TZID=America/Chicago:20260212T091500
+DTEND;TZID=America/Chicago:20260212T094500
+LOCATION:Conference Room B
+CLASS:PUBLIC
+IMPORTANT:0
+STATUS:CONFIRMED
+UID:aabb0011223344556677889900aabb01@zoho.com
+TRANSP:OPAQUE
+CREATED:20260212T012322Z
+LAST-MODIFIED:20260212T012322Z
+DTSTAMP:20260212T014217Z
+ORGANIZER;CN=testuser:MAILTO:testuser@example.com
+BEGIN:VALARM
+ACTION:EMAIL
+ATTENDEE:mailto:testuser@example.com
+TRIGGER;VALUE=DURATION;RELATED=START:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR</B:calendar-data>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/ccdd0011223344556677889900ccdd02%40zoho.com.ics</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:getetag>1770859408075</D:getetag>
+        <B:calendar-data xmlns:B="urn:ietf:params:xml:ns:caldav">BEGIN:VCALENDAR
+PRODID:-//Zoho Corporation//Zoho Calendar-US//EN
+VERSION:2.0
+X-WR-CALNAME:testuser
+X-WR-TIMEZONE:America/Chicago
+CALSCALE:GREGORIAN
+BEGIN:VTIMEZONE
+TZID:America/Chicago
+BEGIN:DAYLIGHT
+TZOFFSETFROM:-0600
+TZOFFSETTO:-0500
+DTSTART:19700308T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU
+END:DAYLIGHT
+BEGIN:STANDARD
+TZOFFSETFROM:-0500
+TZOFFSETTO:-0600
+DTSTART:19701101T020000
+RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU
+END:STANDARD
+END:VTIMEZONE
+BEGIN:VEVENT
+SUMMARY:Project Review
+DESCRIPTION:Weekly project status review
+DTSTART;TZID=America/Chicago:20260213T140000
+DTEND;TZID=America/Chicago:20260213T150000
+LOCATION:
+CLASS:PUBLIC
+IMPORTANT:0
+STATUS:CONFIRMED
+UID:ccdd0011223344556677889900ccdd02@zoho.com
+TRANSP:OPAQUE
+CREATED:20260212T012328Z
+LAST-MODIFIED:20260212T012328Z
+DTSTAMP:20260212T014217Z
+ORGANIZER;CN=testuser:MAILTO:testuser@example.com
+BEGIN:VALARM
+ACTION:EMAIL
+ATTENDEE:mailto:testuser@example.com
+TRIGGER;VALUE=DURATION;RELATED=START:-PT15M
+END:VALARM
+END:VEVENT
+END:VCALENDAR</B:calendar-data>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

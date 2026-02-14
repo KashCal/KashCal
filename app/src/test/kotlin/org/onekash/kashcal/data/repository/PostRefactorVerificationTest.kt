@@ -468,13 +468,13 @@ class PostRefactorVerificationTest {
      * Phase 10 COMPLETE: HomeViewModel uses AccountRepository.
      *
      * Changed from:
-     * - ICloudAuthManager.loadAccount() -> AccountRepository.getAccountsByProvider(ICLOUD)
+     * - ICloudAuthManager.loadAccount() -> AccountRepository.getAllAccounts() + filter supportsCalDAV
      * - account.hasCredentials() -> AccountRepository.hasCredentials(account.id)
      * - account.appleId -> account.email (Account entity field)
      */
     @Test
-    fun `PHASE 10 - HomeViewModel uses AccountRepository for iCloud status check`() = runBlocking {
-        // Create mocks needed for HomeViewModel iCloud status check
+    fun `PHASE 10 - HomeViewModel uses AccountRepository for account status check`() = runBlocking {
+        // Create mocks needed for HomeViewModel account status check
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
 
         // Setup mocks - account exists with credentials
@@ -485,12 +485,13 @@ class PostRefactorVerificationTest {
             displayName = "iCloud",
             isEnabled = true
         )
-        coEvery { mockAccountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testAccount)
+        coEvery { mockAccountRepository.getAllAccounts() } returns listOf(testAccount)
         coEvery { mockAccountRepository.hasCredentials(testAccount.id) } returns true
 
-        // Execute - simulate checkICloudStatus logic
-        val icloudAccounts = mockAccountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
-        val account = icloudAccounts.firstOrNull()
+        // Execute - simulate checkAccountStatus logic
+        val allAccounts = mockAccountRepository.getAllAccounts()
+        val syncableAccounts = allAccounts.filter { it.provider.supportsCalDAV }
+        val account = syncableAccounts.firstOrNull()
         val hasCredentials = account?.let { mockAccountRepository.hasCredentials(it.id) } ?: false
 
         // Verify

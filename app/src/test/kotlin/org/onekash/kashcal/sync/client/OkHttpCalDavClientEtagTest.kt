@@ -338,8 +338,8 @@ class OkHttpCalDavClientEtagTest {
     }
 
     @Test
-    fun `createEvent returns empty ETag when PROPFIND also fails`() = runTest {
-        // Arrange: No ETag header AND PROPFIND fails
+    fun `createEvent returns empty ETag when PROPFIND and multiget both fail`() = runTest {
+        // Arrange: No ETag header, PROPFIND fails, multiget also fails
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -348,6 +348,10 @@ class OkHttpCalDavClientEtagTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(500)  // PROPFIND fails
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // Multiget fallback also fails
         )
 
         val calendarUrl = mockWebServer.url("/calendars/test/").toString()
@@ -362,12 +366,13 @@ class OkHttpCalDavClientEtagTest {
         // Assert
         assertTrue("Result should still be success (create worked)", result.isSuccess())
         val (url, etag) = result.getOrNull()!!
-        assertEquals("Should return empty ETag when fallback fails", "", etag)
+        assertEquals("Should return empty ETag when all fallbacks fail", "", etag)
+        assertEquals("Should make 3 requests (PUT + PROPFIND + multiget)", 3, mockWebServer.requestCount)
     }
 
     @Test
-    fun `updateEvent returns old ETag when PROPFIND also fails`() = runTest {
-        // Arrange: No ETag header AND PROPFIND fails
+    fun `updateEvent returns old ETag when PROPFIND and multiget both fail`() = runTest {
+        // Arrange: No ETag header, PROPFIND fails, multiget also fails
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -376,6 +381,10 @@ class OkHttpCalDavClientEtagTest {
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(500)  // PROPFIND fails
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // Multiget fallback also fails
         )
 
         val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
@@ -391,7 +400,8 @@ class OkHttpCalDavClientEtagTest {
         // Assert
         assertTrue("Result should still be success (update worked)", result.isSuccess())
         val newEtag = result.getOrNull()
-        assertEquals("Should return old ETag when fallback fails", oldEtag, newEtag)
+        assertEquals("Should return old ETag when all fallbacks fail", oldEtag, newEtag)
+        assertEquals("Should make 3 requests (PUT + PROPFIND + multiget)", 3, mockWebServer.requestCount)
     }
 
     // ========== PROPFIND XML PARSING TESTS ==========
@@ -466,6 +476,180 @@ class OkHttpCalDavClientEtagTest {
         assertTrue("Result should be success", result.isSuccess())
         val (url, etag) = result.getOrNull()!!
         assertEquals("Should handle uppercase D: prefix", "differentPrefix", etag)
+    }
+
+    // ========== MULTIGET FALLBACK TESTS ==========
+
+    @Test
+    fun `fetchEtag uses multiget when PROPFIND fails`() = runTest {
+        // Arrange: PROPFIND returns 501, multiget succeeds
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // PROPFIND fails (Zoho)
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createMultigetResponse("multiget-etag-abc"))
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        // Act
+        val result = client.fetchEtag(eventUrl)
+
+        // Assert
+        assertTrue("Result should be success", result.isSuccess())
+        assertEquals("multiget-etag-abc", result.getOrNull())
+        assertEquals("Should make 2 requests (PROPFIND + multiget)", 2, mockWebServer.requestCount)
+
+        // Verify request types
+        val propfindRequest = mockWebServer.takeRequest()
+        assertEquals("PROPFIND", propfindRequest.method)
+        val multigetRequest = mockWebServer.takeRequest()
+        assertEquals("REPORT", multigetRequest.method)
+        assertTrue("Multiget body should contain calendar-multiget",
+            multigetRequest.body.readUtf8().contains("calendar-multiget"))
+    }
+
+    @Test
+    fun `fetchEtag does not try multiget on 404`() = runTest {
+        // Arrange: PROPFIND returns 404 — event doesn't exist, multiget won't help
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(404)
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/nonexistent.ics").toString()
+
+        // Act
+        val result = client.fetchEtag(eventUrl)
+
+        // Assert
+        assertTrue("Should be not found error", result.isNotFound())
+        assertEquals("Should only make 1 request (no multiget)", 1, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `fetchEtag returns error when both PROPFIND and multiget fail`() = runTest {
+        // Arrange: PROPFIND 501, multiget also 501
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // PROPFIND fails
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // Multiget also fails
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        // Act
+        val result = client.fetchEtag(eventUrl)
+
+        // Assert
+        assertTrue("Should be error", result.isError())
+        val error = result as CalDavResult.Error
+        assertEquals("Error code should be from PROPFIND", 501, error.code)
+        assertEquals("Should make 2 requests (PROPFIND + multiget)", 2, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `createEvent uses multiget fallback when PROPFIND fails`() = runTest {
+        // Arrange: PUT 201 (no ETag), PROPFIND 501, multiget 207 with etag
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                // No ETag header
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // PROPFIND fails (Zoho)
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createMultigetResponse("multiget-etag-123"))
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/test/").toString()
+
+        // Act
+        val result = client.createEvent(
+            calendarUrl = calendarUrl,
+            uid = "test-event",
+            icalData = createTestIcal("test-event")
+        )
+
+        // Assert
+        assertTrue("Result should be success", result.isSuccess())
+        val (url, etag) = result.getOrNull()!!
+        assertEquals("Should get ETag from multiget fallback", "multiget-etag-123", etag)
+        assertEquals("Should make 3 requests (PUT + PROPFIND + multiget)", 3, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `updateEvent uses multiget fallback when PROPFIND fails`() = runTest {
+        // Arrange: PUT 201 (no ETag), PROPFIND 501, multiget 207 with etag
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                // No ETag header
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(501)  // PROPFIND fails (Zoho)
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createMultigetResponse("multiget-etag-456"))
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        // Act
+        val result = client.updateEvent(
+            eventUrl = eventUrl,
+            icalData = createTestIcal("test-event"),
+            etag = "oldetag"
+        )
+
+        // Assert
+        assertTrue("Result should be success", result.isSuccess())
+        val newEtag = result.getOrNull()
+        assertEquals("Should get ETag from multiget, not old etag", "multiget-etag-456", newEtag)
+        assertEquals("Should make 3 requests (PUT + PROPFIND + multiget)", 3, mockWebServer.requestCount)
+    }
+
+    @Test
+    fun `PROPFIND success short-circuits multiget fallback`() = runTest {
+        // Arrange: PUT 201 (no ETag), PROPFIND 207 succeeds — multiget not needed
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                // No ETag header
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createPropfindResponse("propfind-etag"))
+        )
+
+        val calendarUrl = mockWebServer.url("/calendars/test/").toString()
+
+        // Act
+        val result = client.createEvent(
+            calendarUrl = calendarUrl,
+            uid = "test-event",
+            icalData = createTestIcal("test-event")
+        )
+
+        // Assert
+        assertTrue("Result should be success", result.isSuccess())
+        val (url, etag) = result.getOrNull()!!
+        assertEquals("Should get ETag from PROPFIND", "propfind-etag", etag)
+        assertEquals("Should make only 2 requests (no multiget)", 2, mockWebServer.requestCount)
     }
 
     // ========== fetchEtag() DIRECT TESTS ==========
@@ -605,6 +789,74 @@ class OkHttpCalDavClientEtagTest {
         assertEquals("Permission denied", error.message)
     }
 
+    // ========== HTTP 201 Acceptance Tests (Zoho compatibility) ==========
+
+    @Test
+    fun `updateEvent accepts HTTP 201 response`() = runTest {
+        // Zoho CalDAV returns 201 for updates instead of standard 204
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                .setHeader("ETag", "\"updated-etag-201\"")
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        val result = client.updateEvent(
+            eventUrl = eventUrl,
+            icalData = createTestIcal("test-event"),
+            etag = "old-etag"
+        )
+
+        assertTrue("Result should be success for 201", result.isSuccess())
+        assertEquals("updated-etag-201", result.getOrNull())
+    }
+
+    @Test
+    fun `updateEvent accepts HTTP 200 response`() = runTest {
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("ETag", "\"updated-etag-200\"")
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        val result = client.updateEvent(
+            eventUrl = eventUrl,
+            icalData = createTestIcal("test-event"),
+            etag = "old-etag"
+        )
+
+        assertTrue("Result should be success for 200", result.isSuccess())
+        assertEquals("updated-etag-200", result.getOrNull())
+    }
+
+    @Test
+    fun `updateEvent with 201 and no ETag header falls back to PROPFIND`() = runTest {
+        // 201 with no ETag header → PROPFIND fallback
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(201)
+        )
+        mockWebServer.enqueue(
+            MockResponse()
+                .setResponseCode(207)
+                .setBody(createPropfindResponse("propfind-etag-201"))
+        )
+
+        val eventUrl = mockWebServer.url("/calendars/test/event.ics").toString()
+
+        val result = client.updateEvent(
+            eventUrl = eventUrl,
+            icalData = createTestIcal("test-event"),
+            etag = "old-etag"
+        )
+
+        assertTrue("Result should be success", result.isSuccess())
+        assertEquals("propfind-etag-201", result.getOrNull())
+        assertEquals("Should make 2 requests (PUT + PROPFIND)", 2, mockWebServer.requestCount)
+    }
+
     // ========== Helper Functions ==========
 
     private fun createTestIcal(uid: String): String = """
@@ -626,6 +878,21 @@ class OkHttpCalDavClientEtagTest {
         <d:multistatus xmlns:d="DAV:">
             <d:response>
                 <d:href>/calendars/test/event.ics</d:href>
+                <d:propstat>
+                    <d:prop>
+                        <d:getetag>"$etag"</d:getetag>
+                    </d:prop>
+                    <d:status>HTTP/1.1 200 OK</d:status>
+                </d:propstat>
+            </d:response>
+        </d:multistatus>
+    """.trimIndent()
+
+    private fun createMultigetResponse(etag: String): String = """
+        <?xml version="1.0"?>
+        <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+            <d:response>
+                <d:href>/calendars/test/test-event.ics</d:href>
                 <d:propstat>
                     <d:prop>
                         <d:getetag>"$etag"</d:getetag>

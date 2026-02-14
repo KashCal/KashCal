@@ -16,8 +16,6 @@ class SyncSessionTest {
         eventsWritten: Int = 0,
         eventsUpdated: Int = 0,
         eventsDeleted: Int = 0,
-        fallbackUsed: Boolean = false,
-        fetchFailedCount: Int = 0,
         // Push statistics
         eventsPushedCreated: Int = 0,
         eventsPushedUpdated: Int = 0,
@@ -37,9 +35,7 @@ class SyncSessionTest {
         eventsPushedUpdated = eventsPushedUpdated,
         eventsPushedDeleted = eventsPushedDeleted,
         skippedParseError = skippedParseError,
-        errorType = errorType,
-        fallbackUsed = fallbackUsed,
-        fetchFailedCount = fetchFailedCount
+        errorType = errorType
     )
 
     // Status determination tests
@@ -70,13 +66,6 @@ class SyncSessionTest {
             skippedParseError = 5
         )
         assertEquals(SyncStatus.FAILED, session.status)
-    }
-
-    @Test
-    fun `status is SUCCESS when fallback used but no parse errors`() {
-        // Fallback is transparent - doesn't affect status
-        val session = createSession(fallbackUsed = true, fetchFailedCount = 2)
-        assertEquals(SyncStatus.SUCCESS, session.status)
     }
 
     // totalChanges tests

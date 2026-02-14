@@ -264,7 +264,7 @@ private fun SyncSessionCard(session: SyncSession) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Row 3 (optional): Parse failure warning (fallback is now shown inline in buildChangeSummary)
+            // Row 3 (optional): Parse failure warning
             if (session.hasParseFailures && !expanded) {
                 Text(
                     text = "⚠ ${session.skippedParseError} failed to parse",
@@ -317,20 +317,6 @@ private fun SyncSessionCard(session: SyncSession) {
                             color = Color(0xFFFFA000)
                         )
                         DetailRow("Events skipped", session.skippedConstraintError.toString())
-                    }
-
-                    // Fallback details
-                    if (session.fallbackUsed) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Fallback Mode",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFFA000)
-                        )
-                        DetailRow("Batch fetch", "Failed → individual fallback")
-                        if (session.fetchFailedCount > 0) {
-                            DetailRow("Individual failures", session.fetchFailedCount.toString())
-                        }
                     }
 
                     // Error details
@@ -392,8 +378,6 @@ private fun buildChangeSummary(session: SyncSession): String {
             if (session.eventsDeleted > 0) pullParts.add("-${session.eventsDeleted}")
 
             parts.add("↓ ${if (pullParts.isEmpty()) "0" else pullParts.joinToString(" ")}")
-
-            if (session.fallbackUsed) parts.add("⚡")
 
             parts.joinToString("   ")
         }

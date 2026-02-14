@@ -65,7 +65,7 @@ sealed class CalDavResult<out T> {
 
     fun isSuccess() = this is Success
     fun isError() = this is Error
-    fun isConflict() = this is Error && code == 412
+    fun isConflict() = this is Error && (code == 412 || code == 409)
     fun isNotFound() = this is Error && code == 404
     fun isAuthError() = this is Error && code == 401
 

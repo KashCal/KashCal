@@ -492,7 +492,16 @@ class LocalFirstSyncIntegrationTest {
 
     private fun mockFullSyncResponse(ctag: String, events: List<CalDavEvent>) {
         coEvery { client.getCtag(any()) } returns CalDavResult.success(ctag)
-        coEvery { client.fetchEventsInRange(any(), any(), any()) } returns CalDavResult.success(events)
+        // Two-step: etags via calendar-query, then data via calendar-multiget.
+        // Derive absolute-path hrefs from event URLs to match real server behavior
+        // (servers return "/12345/calendars/home/event.ics", not "event.ics").
+        val etagPairs = events.map { event ->
+            val href = java.net.URI(event.url).path
+            Pair(href, event.etag)
+        }
+        coEvery { client.fetchEtagsInRange(any(), any(), any()) } returns
+            CalDavResult.success(etagPairs)
+        coEvery { client.fetchEventsByHref(any(), any()) } returns CalDavResult.success(events)
         coEvery { client.getSyncToken(any()) } returns CalDavResult.success("new-sync-token")
     }
 

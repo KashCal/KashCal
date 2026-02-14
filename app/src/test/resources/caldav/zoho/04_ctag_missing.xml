@@ -1,23 +1,27 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Zoho PROPFIND response for getctag request.
-     Zoho may not support the CalendarServer getctag extension.
-     The response is valid XML (207 Multi-Status) but lacks the getctag property.
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Zoho PROPFIND response when getctag is requested on a path that doesn't support it.
+     Captured pattern from calendar.zoho.com (2026-02-12).
+
+     Note: Live testing (2026-02-12) showed Zoho DOES support getctag on the
+     calendar collection (/caldav/{hash}/events/). This fixture models the case
+     where a server returns 404 for getctag — used to test KashCal's graceful
+     handling of servers that don't support this CalendarServer extension.
 -->
-<d:multistatus xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/">
-  <d:response>
-    <d:href>/caldav/user@example.com/default/</d:href>
-    <d:propstat>
-      <d:prop>
-        <d:displayname>My Calendar</d:displayname>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
+<D:multistatus xmlns:D="DAV:" xmlns:cs="http://calendarserver.org/ns/">
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/</D:href>
+    <D:propstat>
+      <D:prop>
+        <D:displayname>My Calendar</D:displayname>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
     <!-- getctag requested but returned as 404 (not found) -->
-    <d:propstat>
-      <d:prop>
+    <D:propstat>
+      <D:prop>
         <cs:getctag/>
-      </d:prop>
-      <d:status>HTTP/1.1 404 Not Found</d:status>
-    </d:propstat>
-  </d:response>
-</d:multistatus>
+      </D:prop>
+      <D:status>HTTP/1.1 404 Not Found</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

@@ -659,20 +659,21 @@ class OkHttpCalDavClient : CalDavClient {
             return@withContext CalDavResult.success(emptyList())
         }
 
-        val hrefElements = hrefs.joinToString("\n") { href ->
-            "<d:href>$href</d:href>"
+        // Build XML without trimIndent() — multi-line interpolation via joinToString("\n")
+        // produces lines with 0 indentation, causing trimIndent() to leave leading whitespace
+        // before <?xml declaration (invalid XML). iCloud rejects with HTTP 400.
+        val body = buildString {
+            appendLine("""<?xml version="1.0" encoding="utf-8"?>""")
+            appendLine("""<c:calendar-multiget xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">""")
+            appendLine("""    <d:prop>""")
+            appendLine("""        <d:getetag/>""")
+            appendLine("""        <c:calendar-data/>""")
+            appendLine("""    </d:prop>""")
+            for (href in hrefs) {
+                appendLine("""    <d:href>$href</d:href>""")
+            }
+            append("""</c:calendar-multiget>""")
         }
-
-        val body = """
-            <?xml version="1.0" encoding="utf-8"?>
-            <c:calendar-multiget xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-                <d:prop>
-                    <d:getetag/>
-                    <c:calendar-data/>
-                </d:prop>
-                $hrefElements
-            </c:calendar-multiget>
-        """.trimIndent()
 
         val request = Request.Builder()
             .url(calendarUrl)
@@ -766,8 +767,16 @@ class OkHttpCalDavClient : CalDavClient {
                     }
                     response.code == 401 -> CalDavResult.authError("Authentication failed")
                     else -> {
-                        Log.w(TAG, "fetchEtag failed: ${response.code} for $eventUrl")
-                        CalDavResult.error(response.code, "Failed to fetch ETag: ${response.code}")
+                        // PROPFIND failed (e.g., Zoho returns 501). Try single-href multiget.
+                        response.close()  // Defensive — body already consumed by bodyWithLimit()
+                        Log.w(TAG, "fetchEtag: PROPFIND failed (${response.code}) for $eventUrl, trying multiget")
+                        val calendarUrl = eventUrl.substringBeforeLast("/") + "/"
+                        val multigetEtag = fetchEtagViaMultiget(calendarUrl, eventUrl)
+                        if (multigetEtag != null) {
+                            CalDavResult.success(multigetEtag)
+                        } else {
+                            CalDavResult.error(response.code, "Failed to fetch ETag: ${response.code}")
+                        }
                     }
                 }
             } catch (e: IOException) {
@@ -798,6 +807,47 @@ class OkHttpCalDavClient : CalDavClient {
         return EtagUtils.normalizeEtag(decoded)
     }
 
+    /**
+     * Fallback ETag retrieval via single-href calendar-multiget REPORT.
+     * Used when PROPFIND fails (e.g., Zoho returns 501 for PROPFIND on individual events).
+     * Requests only getetag (no calendar-data) to minimize bandwidth.
+     */
+    private fun fetchEtagViaMultiget(calendarUrl: String, eventUrl: String): String? {
+        val href = java.net.URI(eventUrl).path
+        val body = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <c:calendar-multiget xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                <d:prop>
+                    <d:getetag/>
+                </d:prop>
+                <d:href>$href</d:href>
+            </c:calendar-multiget>
+        """.trimIndent()
+
+        val request = Request.Builder()
+            .url(calendarUrl)
+            .method("REPORT", body.toRequestBody(XML_MEDIA_TYPE))
+            .header("Depth", "1")
+            .build()
+
+        return try {
+            val response = httpClient.newCall(request).execute()
+            if (response.isSuccessful) {
+                val responseBody = response.bodyWithLimit()
+                val etag = extractEtagFromPropfind(responseBody)
+                Log.d(TAG, "fetchEtagViaMultiget: Got ETag '$etag' for $eventUrl")
+                etag
+            } else {
+                response.close()
+                Log.w(TAG, "fetchEtagViaMultiget failed: ${response.code} for $eventUrl")
+                null
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "fetchEtagViaMultiget network error: ${e.message}")
+            null
+        }
+    }
+
     // ========== Mutations ==========
 
     override suspend fun createEvent(
@@ -822,10 +872,10 @@ class OkHttpCalDavClient : CalDavClient {
                     var etag = EtagUtils.normalizeEtag(response.header("ETag"))
 
                     // RFC 4791 Section 5.3.4: Server SHOULD return ETag, but MAY not.
-                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud).
+                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud, Zoho).
                     if (etag.isNullOrEmpty()) {
-                        Log.d(TAG, "createEvent: No ETag in response header, fetching via PROPFIND")
-                        etag = fetchEtagFallback(eventUrl)
+                        Log.d(TAG, "createEvent: No ETag in response header, fetching via fallback")
+                        etag = fetchEtag(eventUrl).getOrNull()
                     }
 
                     CalDavResult.success(Pair(eventUrl, etag ?: ""))
@@ -850,43 +900,6 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
-    /**
-     * Internal helper to fetch ETag via PROPFIND when PUT response lacks ETag header.
-     * This is a synchronous call meant to be used within withContext(Dispatchers.IO).
-     */
-    private fun fetchEtagFallback(eventUrl: String): String? {
-        val propfindBody = """
-            <?xml version="1.0" encoding="utf-8"?>
-            <d:propfind xmlns:d="DAV:">
-                <d:prop>
-                    <d:getetag/>
-                </d:prop>
-            </d:propfind>
-        """.trimIndent()
-
-        val request = Request.Builder()
-            .url(eventUrl)
-            .method("PROPFIND", propfindBody.toRequestBody(XML_MEDIA_TYPE))
-            .header("Depth", "0")
-            .build()
-
-        return try {
-            val response = httpClient.newCall(request).execute()
-            if (response.isSuccessful) {
-                val responseBody = response.bodyWithLimit()
-                val etag = extractEtagFromPropfind(responseBody)
-                Log.d(TAG, "fetchEtagFallback: Got ETag '$etag' for $eventUrl")
-                etag
-            } else {
-                Log.w(TAG, "fetchEtagFallback failed: ${response.code} for $eventUrl")
-                null
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "fetchEtagFallback network error: ${e.message}")
-            null
-        }
-    }
-
     override suspend fun updateEvent(
         eventUrl: String,
         icalData: String,
@@ -902,15 +915,15 @@ class OkHttpCalDavClient : CalDavClient {
             val response = httpClient.newCall(request).execute()
 
             when {
-                response.code == 200 || response.code == 204 -> {
+                response.code in listOf(200, 201, 204) -> {
                     // Try to get new ETag from response header first (normalize handles W/ prefix)
                     var newEtag = EtagUtils.normalizeEtag(response.header("ETag"))
 
                     // RFC 4791 Section 5.3.4: Server SHOULD return ETag, but MAY not.
-                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud).
+                    // If missing, fetch via PROPFIND as fallback (e.g., Nextcloud, Zoho).
                     if (newEtag.isNullOrEmpty()) {
-                        Log.d(TAG, "updateEvent: No ETag in response header, fetching via PROPFIND")
-                        newEtag = fetchEtagFallback(eventUrl) ?: etag
+                        Log.d(TAG, "updateEvent: No ETag in response header, fetching via fallback")
+                        newEtag = fetchEtag(eventUrl).getOrNull() ?: etag
                     }
 
                     CalDavResult.success(newEtag)

@@ -1,14 +1,21 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-  <d:response>
-    <d:href>/caldav/user@example.com/</d:href>
-    <d:propstat>
-      <d:prop>
-        <c:calendar-home-set>
-          <d:href>/caldav/user@example.com/</d:href>
-        </c:calendar-home-set>
-      </d:prop>
-      <d:status>HTTP/1.1 200 OK</d:status>
-    </d:propstat>
-  </d:response>
-</d:multistatus>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Zoho PROPFIND response for calendar-home-set.
+     Captured pattern from calendar.zoho.com (2026-02-12).
+
+     Zoho quirks:
+     - calendar-home-set uses non-prefixed CalDAV namespace
+     - Calendar home is /caldav/{hash}/ (parent of /user/)
+-->
+<D:multistatus xmlns:D="DAV:">
+  <D:response>
+    <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/user/</D:href>
+    <D:propstat>
+      <D:prop>
+        <calendar-home-set xmlns="urn:ietf:params:xml:ns:caldav">
+          <D:href>/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/</D:href>
+        </calendar-home-set>
+      </D:prop>
+      <D:status>HTTP/1.1 200 OK</D:status>
+    </D:propstat>
+  </D:response>
+</D:multistatus>

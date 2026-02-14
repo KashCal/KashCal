@@ -181,9 +181,6 @@ class SyncSessionStore @Inject constructor(
                 if (session.hasConstraintErrors) {
                     appendLine("   ⚠ ${session.skippedConstraintError} skipped (constraint error)")
                 }
-                if (session.fallbackUsed) {
-                    appendLine("   ⚡ Fallback${if (session.fetchFailedCount > 0) " (${session.fetchFailedCount} failed)" else ""}")
-                }
                 appendLine()
             }
         }
