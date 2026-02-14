@@ -28,9 +28,15 @@ interface CalDavQuirks {
     fun extractPrincipalUrl(responseBody: String): String?
 
     /**
-     * Extract calendar home URL from principal PROPFIND response.
+     * Extract all calendar home URLs from principal PROPFIND response.
+     * RFC 4791 Section 6.2.1 allows multiple hrefs in calendar-home-set.
      */
-    fun extractCalendarHomeUrl(responseBody: String): String?
+    fun extractCalendarHomeUrls(responseBody: String): List<String>
+
+    /**
+     * Extract first calendar home URL from principal PROPFIND response.
+     */
+    fun extractCalendarHomeUrl(responseBody: String): String? = extractCalendarHomeUrls(responseBody).firstOrNull()
 
     /**
      * Extract calendar list from calendar-home PROPFIND response.

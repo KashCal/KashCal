@@ -1,14 +1,12 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
-import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
@@ -33,8 +31,7 @@ class ConflictResolver @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
     private val pendingOperationsDao: PendingOperationsDao,
-    private val occurrenceGenerator: OccurrenceGenerator,
-    private val dataStore: KashCalDataStore
+    private val occurrenceGenerator: OccurrenceGenerator
 ) {
     private val icalParser = ICalParser()
 
@@ -151,10 +148,6 @@ class ConflictResolver @Inject constructor(
             return ConflictResult.LocalDeleted
         }
 
-        // Read user's default reminder settings
-        val defaultReminderMinutes = dataStore.defaultReminderMinutes.first()
-        val defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
-
         // Update local event with server data using ICalEventMapper
         var updatedEvent = ICalEventMapper.toEntity(
             icalEvent = parsedEvent,
@@ -163,15 +156,6 @@ class ConflictResolver @Inject constructor(
             caldavUrl = serverEvent.url,
             etag = serverEvent.etag
         )
-
-        // Apply default reminders if server didn't provide any
-        if (updatedEvent.reminders.isNullOrEmpty()) {
-            val defaultMinutes = if (updatedEvent.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
-            if (defaultMinutes > 0) {
-                val defaultReminder = minutesToIsoDuration(defaultMinutes)
-                updatedEvent = updatedEvent.copy(reminders = listOf(defaultReminder))
-            }
-        }
 
         // Preserve existing event ID and timestamps
         updatedEvent = updatedEvent.copy(
@@ -338,21 +322,6 @@ class ConflictResolver @Inject constructor(
         return ConflictResult.MarkedForManualResolution
     }
 
-    /**
-     * Convert reminder minutes to ISO 8601 duration format.
-     */
-    private fun minutesToIsoDuration(minutes: Int): String {
-        return when {
-            minutes <= 0 -> "PT0M"
-            minutes < 60 -> "-PT${minutes}M"
-            minutes < 1440 -> {
-                val hours = minutes / 60
-                val mins = minutes % 60
-                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
-            }
-            else -> "-P${minutes / 1440}D"
-        }
-    }
 }
 
 /**

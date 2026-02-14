@@ -140,7 +140,7 @@ class DockerServerDiagnosticTest {
         }
 
         println("=== $serverName: Step 3 - listCalendars ===")
-        val calendarsResult = client.listCalendars(homeResult.getOrNull()!!)
+        val calendarsResult = client.listCalendars(homeResult.getOrNull()!!.first())
         println("Calendars: success=${calendarsResult.isSuccess()}")
         if (calendarsResult.isError()) {
             val err = calendarsResult as CalDavResult.Error

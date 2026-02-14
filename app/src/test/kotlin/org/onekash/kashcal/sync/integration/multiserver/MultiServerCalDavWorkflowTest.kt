@@ -89,7 +89,7 @@ class MultiServerCalDavWorkflowTest(
         }
 
         val principal = c.discoverPrincipal(caldavUrl).getOrNull() ?: return null
-        val home = c.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = c.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = c.listCalendars(home).getOrNull() ?: return null
 
         return calendars.firstOrNull { cal ->
@@ -171,7 +171,7 @@ END:VCALENDAR
         assert(result.isSuccess()) {
             "Failed to discover calendar home on ${config.name}: ${(result as? CalDavResult.Error)?.message}"
         }
-        assert(result.getOrNull()!!.isNotEmpty()) { "Calendar home should not be empty on ${config.name}" }
+        assert(result.getOrNull()!!.first().isNotEmpty()) { "Calendar home should not be empty on ${config.name}" }
     }
 
     // ========== 3. List calendars ==========

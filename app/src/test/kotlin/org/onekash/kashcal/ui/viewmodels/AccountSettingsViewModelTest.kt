@@ -2071,6 +2071,34 @@ class AccountSettingsViewModelTest {
         assertTrue(status is AccountDetailDiscoverStatus.Done)
         assertEquals(2, (status as AccountDetailDiscoverStatus.Done).newCount)
         assertEquals(5, status.totalCount)
+
+        // Pattern 18: Discovery of new calendars must trigger sync
+        coVerify { syncScheduler.syncAccount(10L) }
+    }
+
+    @Test
+    fun `discoverNewCalendars does not trigger sync when no new calendars`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.Success(testDetailAccount, listOf(
+                Calendar(id = 1L, accountId = 10L, caldavUrl = "/cal1", displayName = "Cal 1", color = 0xFF0000),
+                Calendar(id = 2L, accountId = 10L, caldavUrl = "/cal2", displayName = "Cal 2", color = 0x00FF00),
+                Calendar(id = 3L, accountId = 10L, caldavUrl = "/cal3", displayName = "Cal 3", color = 0x0000FF)
+            ))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(10L)
+        advanceUntilIdle()
+
+        val status = viewModel.uiState.value.accountDetailDiscoverStatus
+        assertTrue(status is AccountDetailDiscoverStatus.Done)
+        assertEquals(0, (status as AccountDetailDiscoverStatus.Done).newCount)
+
+        // Pattern 18: No new calendars → no sync trigger
+        coVerify(exactly = 0) { syncScheduler.syncAccount(10L) }
     }
 
     @Test

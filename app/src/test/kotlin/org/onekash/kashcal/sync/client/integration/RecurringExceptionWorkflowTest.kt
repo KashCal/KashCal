@@ -120,7 +120,7 @@ class RecurringExceptionWorkflowTest {
 
     private suspend fun discoverCalendar(): String? {
         val principal = client.discoverPrincipal(serverUrl).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         // Find first non-inbox/outbox calendar

@@ -133,7 +133,7 @@ class SoGoCalDavIntegrationTest {
         // SOGo well-known discovery: serverUrl -> principal -> calendar-home -> calendars
         val davUrl = "$serverUrl/SOGo/dav/$username/"
         val principal = client.discoverPrincipal(davUrl).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         // SOGo creates a default "Personal Calendar" at .../Calendar/personal/
@@ -170,9 +170,9 @@ class SoGoCalDavIntegrationTest {
         val result = client.discoverCalendarHome(principal!!)
         assert(result.isSuccess()) { "Failed to discover calendar home: ${(result as? CalDavResult.Error)?.message}" }
 
-        val home = result.getOrNull()!!
-        println("Calendar home: $home")
-        assert(home.isNotEmpty()) { "Calendar home should not be empty" }
+        val homes = result.getOrNull()!!
+        println("Calendar home: ${homes.first()}")
+        assert(homes.first().isNotEmpty()) { "Calendar home should not be empty" }
     }
 
     @Test
@@ -184,7 +184,7 @@ class SoGoCalDavIntegrationTest {
         val principal = client.discoverPrincipal(davUrl).getOrNull()
         assumeTrue("Could not discover principal", principal != null)
 
-        val home = client.discoverCalendarHome(principal!!).getOrNull()
+        val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("Could not discover calendar home", home != null)
 
         val result = client.listCalendars(home!!)

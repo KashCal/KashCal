@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Real response from cal.aegee.org (SOGo) captured 2026-02-14 (Issue #70).
+     Server returns multiple <href> inside <calendar-home-set>:
+     - /dav/calendars/user/aaa/ (user's own calendar home: 2 calendars)
+     - /dav/calendars/user/bbb/ (shared by another user: 1 calendar)
+     - /dav/calendars/user/cal/ (organization-wide: 4 calendars)
+     This is valid per RFC 4791 Section 6.2.1.
+     KashCal's existing parser only sees the first href, missing 5 of 7 calendars. -->
+<d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+<d:response><d:href>/dav/principals/user/aaa/</d:href><d:propstat><d:prop><c:calendar-home-set><d:href>/dav/calendars/user/aaa/</d:href><d:href>/dav/calendars/user/bbb/</d:href><d:href>/dav/calendars/user/cal/</d:href></c:calendar-home-set></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>

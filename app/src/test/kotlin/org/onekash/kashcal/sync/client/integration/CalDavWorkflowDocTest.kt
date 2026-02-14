@@ -125,7 +125,7 @@ class CalDavWorkflowDocTest {
 
     private suspend fun discoverCalendars(): Pair<String?, String?> {
         val principal = client.discoverPrincipal(serverUrl).getOrNull() ?: return null to null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null to null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null to null
         val calendars = client.listCalendars(home).getOrNull() ?: return null to null
 
         // Find first two non-inbox/outbox calendars

@@ -22,7 +22,6 @@ import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * Tests for PullStrategy - CalDAV server to local database sync.
@@ -66,10 +65,6 @@ class PullStrategyTest {
             val block = firstArg<suspend () -> Any>()
             block()
         }
-
-        // Setup DataStore mock to return default reminder settings
-        every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        every { dataStore.defaultAllDayReminder } returns flowOf(1440)
 
         // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
@@ -1315,6 +1310,111 @@ class PullStrategyTest {
         assertEquals(0, success.eventsUpdated)
         assertEquals(1, success.eventsDeleted)
         assertEquals(4, success.totalChanges)
+    }
+
+    // ========== Default Reminder Tests (Issue #74) ==========
+
+    @Test
+    fun `pull does not apply default reminders to events without alarms`() = runTest {
+        // Server event has NO VALARM — reminders should stay null
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}no-alarm.ics"
+        val ical = createSimpleIcal("uid-no-alarm", "No Alarm Event")
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("no-alarm.ics", eventUrl, "etag-1", ical)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+
+        val capturedEvent = slot<Event>()
+        coEvery { eventsDao.upsert(capture(capturedEvent)) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertNull("Event without VALARM should have null reminders", capturedEvent.captured.reminders)
+    }
+
+    @Test
+    fun `pull preserves server-provided reminders`() = runTest {
+        // Server event has VALARM with -PT30M — should be preserved
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}with-alarm.ics"
+        val ical = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:uid-with-alarm
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Event With Alarm
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            DESCRIPTION:Reminder
+            TRIGGER:-PT30M
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("with-alarm.ics", eventUrl, "etag-1", ical)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+
+        val capturedEvent = slot<Event>()
+        coEvery { eventsDao.upsert(capture(capturedEvent)) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertNotNull("Event with VALARM should have reminders", capturedEvent.captured.reminders)
+        assertEquals(listOf("-PT30M"), capturedEvent.captured.reminders)
+    }
+
+    @Test
+    fun `pull does not apply default reminders to all-day events without alarms`() = runTest {
+        // All-day event with NO VALARM — reminders should stay null
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}allday-no-alarm.ics"
+        val ical = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:uid-allday-no-alarm
+            DTSTAMP:20240101T120000Z
+            DTSTART;VALUE=DATE:20240115
+            DTEND;VALUE=DATE:20240116
+            SUMMARY:All Day No Alarm
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("allday-no-alarm.ics", eventUrl, "etag-1", ical)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+
+        val capturedEvent = slot<Event>()
+        coEvery { eventsDao.upsert(capture(capturedEvent)) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        assertTrue("All-day event should be marked as all-day", capturedEvent.captured.isAllDay)
+        assertNull("All-day event without VALARM should have null reminders", capturedEvent.captured.reminders)
     }
 
     // ========== Real iCloud Data Tests ==========

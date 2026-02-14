@@ -278,7 +278,7 @@ class ICloudCredentialIntegrationTest {
         if (result != null) {
             when (result) {
                 is CalDavResult.Success -> {
-                    val url = result.data
+                    val url = result.data.first()
                     assertTrue("Result should be HTTPS URL", url.startsWith("https://"))
                     assertTrue("Result should be iCloud URL", url.contains("icloud.com"))
                 }
@@ -305,7 +305,7 @@ class ICloudCredentialIntegrationTest {
 
             when (homeResult) {
                 is CalDavResult.Success -> {
-                    val calendarHome = homeResult.data
+                    val calendarHome = homeResult.data.first()
                     assertNotNull("Should discover calendar home", calendarHome)
 
                     // Then list calendars
@@ -384,7 +384,7 @@ class ICloudCredentialIntegrationTest {
                 return@runTest
             }
 
-            val calendarsResult = calDavClient.listCalendars(homeResult.data)
+            val calendarsResult = calDavClient.listCalendars(homeResult.data.first())
             if (calendarsResult !is CalDavResult.Success || calendarsResult.data.size < 2) {
                 println("SKIPPED: Need at least 2 calendars for move test")
                 return@runTest

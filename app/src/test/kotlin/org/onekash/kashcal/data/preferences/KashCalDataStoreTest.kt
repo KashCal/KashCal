@@ -242,6 +242,38 @@ class KashCalDataStoreTest {
         assertEquals(1L * 60 * 60 * 1000, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
     }
 
+    // ==================== First Day of Week Tests ====================
+
+    @Test
+    fun `firstDayOfWeek defaults to FIRST_DAY_SYSTEM (0) not Sunday`() = runTest {
+        dataStore.firstDayOfWeek.test {
+            // Must be 0 (system locale), not 1 (Calendar.SUNDAY)
+            assertEquals(KashCalDataStore.FIRST_DAY_SYSTEM, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setFirstDayOfWeek updates Flow`() = runTest {
+        dataStore.firstDayOfWeek.test {
+            assertEquals(KashCalDataStore.FIRST_DAY_SYSTEM, awaitItem())
+
+            dataStore.setFirstDayOfWeek(java.util.Calendar.MONDAY)
+            assertEquals(java.util.Calendar.MONDAY, awaitItem())
+
+            dataStore.setFirstDayOfWeek(java.util.Calendar.SATURDAY)
+            assertEquals(java.util.Calendar.SATURDAY, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `FIRST_DAY_SYSTEM constant is 0`() {
+        // Guard against accidental constant change
+        assertEquals(0, KashCalDataStore.FIRST_DAY_SYSTEM)
+    }
+
     // ==================== Default Calendar View Tests ====================
 
     @Test

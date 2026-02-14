@@ -139,7 +139,7 @@ class BaikalDigestAuthIntegrationTest {
 
     private suspend fun discoverCalendar(): String? {
         val principal = client.discoverPrincipal(davEndpoint).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         return calendars.firstOrNull { cal ->
@@ -175,7 +175,8 @@ class BaikalDigestAuthIntegrationTest {
             "Failed to discover calendar home through Digest auth: ${(result as? CalDavResult.Error)?.message}"
         }
 
-        val home = result.getOrNull()!!
+        val homes = result.getOrNull()!!
+        val home = homes.first()
         println("Digest Baikal calendar home: $home")
         assert(home.isNotEmpty()) { "Calendar home should not be empty" }
     }
@@ -187,7 +188,7 @@ class BaikalDigestAuthIntegrationTest {
         val principal = client.discoverPrincipal(davEndpoint).getOrNull()
         assumeTrue("Could not discover principal", principal != null)
 
-        val home = client.discoverCalendarHome(principal!!).getOrNull()
+        val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("Could not discover calendar home", home != null)
 
         val result = client.listCalendars(home!!)

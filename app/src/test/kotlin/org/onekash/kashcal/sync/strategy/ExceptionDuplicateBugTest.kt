@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.*
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
@@ -69,9 +68,6 @@ class ExceptionDuplicateBugTest {
             val block = firstArg<suspend () -> Any>()
             block()
         }
-
-        every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        every { dataStore.defaultAllDayReminder } returns flowOf(1440)
 
         // Track upsert calls
         // @Upsert returns:

@@ -7,7 +7,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -704,10 +703,6 @@ class PullStrategy @Inject constructor(
         var updated = 0
         val changes = mutableListOf<SyncChange>()
 
-        // Read user's default reminder settings
-        val defaultReminderMinutes = dataStore.defaultReminderMinutes.first()
-        val defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
-
         // First pass: collect all parsed events, separate masters from exceptions
         val masterEvents = mutableListOf<ParsedEventWithMeta>()
         val exceptionEvents = mutableListOf<ParsedEventWithMeta>()
@@ -799,15 +794,6 @@ class PullStrategy @Inject constructor(
                 caldavUrl = meta.caldavUrl,
                 etag = meta.etag
             )
-
-            // Apply default reminders if server didn't provide any
-            if (event.reminders.isNullOrEmpty()) {
-                val defaultMinutes = if (event.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
-                if (defaultMinutes > 0) {
-                    val defaultReminder = minutesToIsoDuration(defaultMinutes)
-                    event = event.copy(reminders = listOf(defaultReminder))
-                }
-            }
 
             // Preserve existing event ID and timestamps
             if (existingEvent != null) {
@@ -940,15 +926,6 @@ class PullStrategy @Inject constructor(
                 etag = meta.etag
             )
 
-            // Apply default reminders if server didn't provide any
-            if (event.reminders.isNullOrEmpty()) {
-                val defaultMinutes = if (event.isAllDay) defaultAllDayReminderMinutes else defaultReminderMinutes
-                if (defaultMinutes > 0) {
-                    val defaultReminder = minutesToIsoDuration(defaultMinutes)
-                    event = event.copy(reminders = listOf(defaultReminder))
-                }
-            }
-
             // Link to master event
             event = event.copy(
                 originalEventId = masterEvent.id,
@@ -1018,31 +995,6 @@ class PullStrategy @Inject constructor(
         }
 
         return ProcessEventsResult(added, updated, changes)
-    }
-
-    /**
-     * Convert reminder minutes to ISO 8601 duration format.
-     * Positive minutes = before event (negative trigger in iCal).
-     */
-    private fun minutesToIsoDuration(minutes: Int): String {
-        return when {
-            minutes <= 0 -> "PT0M"
-            minutes < 60 -> "-PT${minutes}M"
-            minutes < 1440 -> {
-                val hours = minutes / 60
-                val mins = minutes % 60
-                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
-            }
-            minutes < 10080 -> { // Less than 1 week
-                val days = minutes / 1440
-                val hours = (minutes % 1440) / 60
-                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
-            }
-            else -> {
-                val weeks = minutes / 10080
-                "-P${weeks}W"
-            }
-        }
     }
 
     /**

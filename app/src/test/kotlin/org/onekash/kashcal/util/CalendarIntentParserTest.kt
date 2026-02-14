@@ -1,6 +1,7 @@
 package org.onekash.kashcal.util
 
 import android.content.Intent
+import android.net.Uri
 import android.provider.CalendarContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -9,6 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -20,6 +22,7 @@ import org.robolectric.annotation.Config
  * - Intent parsing (all CalendarContract extras)
  * - Edge cases (missing fields, invalid values)
  * - CalendarIntentData helper methods (invitees formatting)
+ * - CalendarContract content URI parsing (VIEW/EDIT intents from launchers)
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -354,6 +357,379 @@ class CalendarIntentParserTest {
         val result = data.getDescriptionWithInvitees(invitees)
 
         assertEquals("Invitees: alice@example.com", result)
+    }
+
+    // ==================== isCalendarContractIntent Tests ====================
+
+    @Test
+    fun `isCalendarContractIntent returns true for VIEW with time URI`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/1704369600000")
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns true for VIEW with events URI`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns true for EDIT with events URI`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for null intent`() {
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(null))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for wrong host`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.example.other/time/1704369600000")
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for wrong action (INSERT)`() {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = Uri.parse("content://com.android.calendar/time/1704369600000")
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for no data URI`() {
+        val intent = Intent(Intent.ACTION_VIEW)
+
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for wrong scheme (https)`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://com.android.calendar/time/1704369600000")
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarContractIntent returns false for DELETE action`() {
+        val intent = Intent(Intent.ACTION_DELETE).apply {
+            data = Uri.parse("content://com.android.calendar/events/123")
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarContractIntent(intent))
+    }
+
+    // ==================== parseCalendarContractUri - GoToDate Tests ====================
+
+    @Test
+    fun `parseCalendarContractUri returns GoToDate for valid time millis`() {
+        val millis = 1704369600000L // Jan 4, 2024 12:00:00 UTC
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/$millis")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.GoToDate)
+        val dayCode = (result as CalendarContractAction.GoToDate).dayCode
+        // Verify dayCode is a valid YYYYMMDD (exact value depends on system timezone)
+        assertTrue("dayCode $dayCode should be 8 digits", dayCode in 20240104..20240105)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns GoToDate with correct dayCode`() {
+        // Use DayPagerUtils to compute expected dayCode for comparison
+        val millis = 1704369600000L
+        val expectedDayCode = DayPagerUtils.msToDayCode(millis)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/$millis")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.GoToDate)
+        assertEquals(expectedDayCode, (result as CalendarContractAction.GoToDate).dayCode)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for non-numeric millis`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/abc")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for zero millis`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/0")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for negative millis`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/-1")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for time path with no millis segment`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for time path with empty millis segment`() {
+        // content://com.android.calendar/time/ — trailing slash creates empty second segment
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri clamps extreme millis to reasonable range`() {
+        // Year 292278994 millis - should be clamped to ~year 2200
+        val extremeMillis = Long.MAX_VALUE
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/time/$extremeMillis")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.GoToDate)
+        val dayCode = (result as CalendarContractAction.GoToDate).dayCode
+        // Clamped to ~year 2200, dayCode should be 2199XXXX or 2200XXXX range
+        assertTrue("dayCode $dayCode should be clamped to reasonable range", dayCode < 22010000)
+    }
+
+    // ==================== parseCalendarContractUri - CreateEvent Tests ====================
+
+    @Test
+    fun `parseCalendarContractUri returns CreateEvent for EDIT events with begin time`() {
+        val startTime = 1704369600000L
+        val endTime = 1704373200000L
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.CreateEvent)
+        val createEvent = result as CalendarContractAction.CreateEvent
+        assertEquals(startTime, createEvent.data.startTimeMillis)
+        assertEquals(endTime, createEvent.data.endTimeMillis)
+    }
+
+    @Test
+    fun `parseCalendarContractUri CreateEvent extracts all extras`() {
+        val startTime = 1704369600000L
+        val endTime = 1704373200000L
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime)
+            putExtra(CalendarContract.Events.TITLE, "Lunch Meeting")
+            putExtra(CalendarContract.Events.DESCRIPTION, "Discuss project")
+            putExtra(CalendarContract.Events.EVENT_LOCATION, "Cafe")
+            putExtra(CalendarContract.Events.RRULE, "FREQ=WEEKLY")
+            putExtra(Intent.EXTRA_EMAIL, "alice@example.com, bob@example.com")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.CreateEvent)
+        val createEvent = result as CalendarContractAction.CreateEvent
+        assertEquals("Lunch Meeting", createEvent.data.title)
+        assertEquals("Discuss project", createEvent.data.description)
+        assertEquals("Cafe", createEvent.data.location)
+        assertEquals(startTime, createEvent.data.startTimeMillis)
+        assertEquals(endTime, createEvent.data.endTimeMillis)
+        assertEquals("FREQ=WEEKLY", createEvent.data.rrule)
+        assertEquals(listOf("alice@example.com", "bob@example.com"), createEvent.invitees)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for EDIT events without extras`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for EDIT events with zero begin time`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 0L)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for EDIT events with negative begin time`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, -100L)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri CreateEvent extracts all-day flag`() {
+        val startTime = 1704326400000L // Jan 4, 2024 00:00:00 UTC
+        val endTime = 1704412800000L   // Jan 5, 2024 00:00:00 UTC
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startTime)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, endTime)
+            putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertTrue(result is CalendarContractAction.CreateEvent)
+        val createEvent = result as CalendarContractAction.CreateEvent
+        assertTrue(createEvent.data.isAllDay)
+        assertEquals(startTime, createEvent.data.startTimeMillis)
+        assertEquals(endTime, createEvent.data.endTimeMillis)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events with begin time (not EDIT)`() {
+        // VIEW on /events should be OpenApp even if extras are present — only EDIT creates
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1704369600000L)
+            putExtra(CalendarContract.Events.TITLE, "Meeting")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events (not EDIT)`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    // ==================== parseCalendarContractUri - Fallback Tests ====================
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for VIEW events with ID`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/events/123")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for EDIT events with ID`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = Uri.parse("content://com.android.calendar/events/123")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for unknown path`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar/calendars/5")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns OpenApp for empty path (just authority)`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("content://com.android.calendar")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertEquals(CalendarContractAction.OpenApp, result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns null for null intent`() {
+        val result = CalendarIntentParser.parseCalendarContractUri(null)
+
+        assertNull(result)
+    }
+
+    @Test
+    fun `parseCalendarContractUri returns null for non-matching intent`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse("https://example.com")
+        }
+
+        val result = CalendarIntentParser.parseCalendarContractUri(intent)
+
+        assertNull(result)
     }
 
     // ==================== Helper Methods ====================

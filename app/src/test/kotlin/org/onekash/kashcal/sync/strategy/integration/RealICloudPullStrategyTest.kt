@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.strategy.integration
 
 import io.mockk.*
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assume.assumeTrue
@@ -100,10 +99,6 @@ class RealICloudPullStrategyTest {
         coEvery { eventsDao.getByUid(any()) } returns emptyList()
         coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
 
-        // Setup DataStore mock to return default reminder settings
-        every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        every { dataStore.defaultAllDayReminder } returns flowOf(1440)
-
         pullStrategy = PullStrategy(
             database = database,
             calendarRepository = calendarRepository,
@@ -155,7 +150,7 @@ class RealICloudPullStrategyTest {
         if (testCalendar != null) return testCalendar
 
         val principal = client.discoverPrincipal(serverUrl).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         testCalendar = calendars.firstOrNull { cal ->

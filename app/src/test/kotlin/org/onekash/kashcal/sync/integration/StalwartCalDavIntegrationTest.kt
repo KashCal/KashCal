@@ -167,7 +167,7 @@ class StalwartCalDavIntegrationTest {
         }
 
         val principal = client.discoverPrincipal(caldavUrl).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         val calendar = calendars.firstOrNull { cal ->
@@ -230,7 +230,8 @@ class StalwartCalDavIntegrationTest {
         val result = client.discoverCalendarHome(principal!!)
         assert(result.isSuccess()) { "Failed to discover calendar home: ${(result as? CalDavResult.Error)?.message}" }
 
-        val home = result.getOrNull()!!
+        val homes = result.getOrNull()!!
+        val home = homes.first()
         println("Stalwart calendar home: $home")
         assert(home.isNotEmpty()) { "Calendar home should not be empty" }
     }
@@ -244,7 +245,7 @@ class StalwartCalDavIntegrationTest {
         val principal = client.discoverPrincipal(caldavUrl).getOrNull()
         assumeTrue("Could not discover principal", principal != null)
 
-        val home = client.discoverCalendarHome(principal!!).getOrNull()
+        val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("Could not discover calendar home", home != null)
 
         val result = client.listCalendars(home!!)

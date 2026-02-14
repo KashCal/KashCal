@@ -43,6 +43,7 @@ import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
+import org.onekash.kashcal.util.CalendarContractAction
 import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
 import org.onekash.kashcal.util.DateTimeUtils
@@ -867,6 +868,27 @@ class MainActivity : ComponentActivity() {
         CalendarIntentParser.parse(intent)?.let { (data, invitees) ->
             Log.d(TAG, "Calendar intent: title=${data.title}, start=${data.startTimeMillis}, invitees=${invitees.size}")
             homeViewModel.setPendingAction(PendingAction.CreateEventFromCalendarIntent(data, invitees))
+            return
+        }
+
+        // Handle CalendarContract content URIs (VIEW/EDIT on content://com.android.calendar)
+        // Used by launchers (Kvaesitso), clock widgets, and other apps
+        CalendarIntentParser.parseCalendarContractUri(intent)?.let { action ->
+            when (action) {
+                is CalendarContractAction.GoToDate -> {
+                    Log.d(TAG, "CalendarContract: navigating to dayCode=${action.dayCode}")
+                    homeViewModel.setPendingAction(PendingAction.GoToDate(action.dayCode))
+                }
+                is CalendarContractAction.CreateEvent -> {
+                    Log.d(TAG, "CalendarContract: creating event, title=${action.data.title}")
+                    homeViewModel.setPendingAction(
+                        PendingAction.CreateEventFromCalendarIntent(action.data, action.invitees)
+                    )
+                }
+                is CalendarContractAction.OpenApp -> {
+                    Log.d(TAG, "CalendarContract: open app (fallback)")
+                }
+            }
             return
         }
 

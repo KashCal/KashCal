@@ -243,7 +243,7 @@ class ICalDavMigrationTest {
             println("Home discovery failed: ${(homeResult as CalDavResult.Error).message}")
             return null
         }
-        return homeResult.data
+        return homeResult.data.firstOrNull()
     }
 
     @Test

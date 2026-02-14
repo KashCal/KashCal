@@ -310,7 +310,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
             CalDavResult.Success("https://radicale.example.com/user/")
 
         coEvery { mockClient.discoverCalendarHome("https://radicale.example.com/user/") } returns
-            CalDavResult.Success("https://radicale.example.com/user/")
+            CalDavResult.Success(listOf("https://radicale.example.com/user/"))
 
         coEvery { mockClient.listCalendars("https://radicale.example.com/user/") } returns
             CalDavResult.Success(
@@ -381,7 +381,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
             CalDavResult.Success(principalUrl)
         coEvery { mockClient.discoverCalendarHome(principalUrl) } returns
-            CalDavResult.Success(calendarHomeUrl)
+            CalDavResult.Success(listOf(calendarHomeUrl))
         coEvery { mockClient.listCalendars(calendarHomeUrl) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -408,7 +408,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
             CalDavResult.Success("https://davis.example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://davis.example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -435,7 +435,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         coEvery { mockClient.discoverPrincipal("https://myserver.example.com/dav/") } returns
             CalDavResult.Success("https://myserver.example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://myserver.example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://myserver.example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://myserver.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -462,7 +462,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
     ) {
         coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Success(wellKnownUrl)
         coEvery { mockClient.discoverPrincipal(wellKnownUrl) } returns CalDavResult.Success(principalUrl)
-        coEvery { mockClient.discoverCalendarHome(principalUrl) } returns CalDavResult.Success(calendarHomeUrl)
+        coEvery { mockClient.discoverCalendarHome(principalUrl) } returns CalDavResult.Success(listOf(calendarHomeUrl))
         coEvery { mockClient.listCalendars(calendarHomeUrl) } returns CalDavResult.Success(calendars)
     }
 }

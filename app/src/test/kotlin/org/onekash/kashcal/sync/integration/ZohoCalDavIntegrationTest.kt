@@ -145,7 +145,7 @@ class ZohoCalDavIntegrationTest {
         val result = client.discoverCalendarHome(principalUrl!!)
         assertSuccess("discoverCalendarHome", result)
 
-        calendarHomeUrl = result.getOrNull()!!
+        calendarHomeUrl = result.getOrNull()!!.first()
         println("Calendar Home URL: $calendarHomeUrl")
         assertTrue("Calendar home should be non-empty", calendarHomeUrl!!.isNotEmpty())
     }

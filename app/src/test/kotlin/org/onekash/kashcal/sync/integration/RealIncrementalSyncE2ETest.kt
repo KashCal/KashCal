@@ -435,7 +435,7 @@ class RealIncrementalSyncE2ETest {
 
         val homeResult = client.discoverCalendarHome(principal)
         if (homeResult.isError()) return null
-        val home = homeResult.getOrNull()!!
+        val home = homeResult.getOrNull()!!.first()
 
         val calendarsResult = client.listCalendars(home)
         if (calendarsResult.isError()) return null

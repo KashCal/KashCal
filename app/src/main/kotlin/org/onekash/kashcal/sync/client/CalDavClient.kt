@@ -33,13 +33,14 @@ interface CalDavClient {
     suspend fun discoverPrincipal(serverUrl: String): CalDavResult<String>
 
     /**
-     * Discover the calendar home URL from principal.
+     * Discover calendar home URLs from principal.
      * Uses PROPFIND with calendar-home-set property.
+     * RFC 4791 Section 6.2.1 allows multiple home sets.
      *
      * @param principalUrl Full principal URL
-     * @return Calendar home URL
+     * @return List of calendar home URLs (typically 1, but can be multiple on SOGo/Cyrus)
      */
-    suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<String>
+    suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<List<String>>
 
     /**
      * List all calendars from calendar home.

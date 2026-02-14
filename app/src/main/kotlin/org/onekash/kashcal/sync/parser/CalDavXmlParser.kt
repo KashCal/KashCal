@@ -68,14 +68,16 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract calendar home URL from PROPFIND response.
-     * Looks for: <calendar-home-set><href>...</href></calendar-home-set>
+     * Extract ALL calendar home URLs from PROPFIND response.
+     * RFC 4791 Section 6.2.1 allows multiple <href> values inside <calendar-home-set>.
+     * Looks for: <calendar-home-set><href>...</href><href>...</href></calendar-home-set>
      */
-    fun extractCalendarHomeUrl(xml: String): String? {
-        if (xml.isBlank()) return null
+    fun extractCalendarHomeUrls(xml: String): List<String> {
+        if (xml.isBlank()) return emptyList()
         return try {
             val parser = createParser(xml)
             var inHomeSet = false
+            val urls = mutableListOf<String>()
 
             while (parser.eventType != XmlPullParser.END_DOCUMENT) {
                 when (parser.eventType) {
@@ -85,7 +87,10 @@ class CalDavXmlParser {
                         } else if (inHomeSet && parser.name == "href") {
                             parser.next()
                             if (parser.eventType == XmlPullParser.TEXT) {
-                                return parser.text.trim()
+                                val url = parser.text.trim()
+                                if (url.isNotEmpty()) {
+                                    urls.add(url)
+                                }
                             }
                         }
                     }
@@ -97,12 +102,18 @@ class CalDavXmlParser {
                 }
                 parser.next()
             }
-            null
+            urls
         } catch (e: Exception) {
-            Log.w(TAG, "Failed to parse calendar home URL: ${e.message}")
-            null
+            Log.w(TAG, "Failed to parse calendar home URLs: ${e.message}")
+            emptyList()
         }
     }
+
+    /**
+     * Extract first calendar home URL from PROPFIND response.
+     * Delegates to [extractCalendarHomeUrls] for backward compatibility.
+     */
+    fun extractCalendarHomeUrl(xml: String): String? = extractCalendarHomeUrls(xml).firstOrNull()
 
     /**
      * Extract sync token from multistatus response.

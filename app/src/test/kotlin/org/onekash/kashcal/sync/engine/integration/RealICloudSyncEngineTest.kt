@@ -29,7 +29,6 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.data.preferences.KashCalDataStore
-import kotlinx.coroutines.flow.flowOf
 import java.io.File
 import java.util.UUID
 
@@ -141,10 +140,6 @@ class RealICloudSyncEngineTest {
             block()
         }
 
-        // DataStore mock setup
-        io.mockk.every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        io.mockk.every { dataStore.defaultAllDayReminder } returns flowOf(1440)
-
         // Default mock behaviors
         coEvery { eventsDao.upsert(any()) } returns 1L
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
@@ -177,8 +172,7 @@ class RealICloudSyncEngineTest {
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator,
-            dataStore = dataStore
+            occurrenceGenerator = occurrenceGenerator
         )
 
         syncEngine = CalDavSyncEngine(
@@ -233,7 +227,7 @@ class RealICloudSyncEngineTest {
         if (testCalendar != null) return testCalendar
 
         val principal = client.discoverPrincipal(serverUrl).getOrNull() ?: return null
-        val home = client.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
         testCalendar = calendars.firstOrNull { cal ->

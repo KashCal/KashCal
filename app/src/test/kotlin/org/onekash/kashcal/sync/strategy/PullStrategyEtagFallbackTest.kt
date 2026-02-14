@@ -20,7 +20,6 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.*
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * Tests for PullStrategy etag-based fallback sync (v16.9.0).
@@ -68,10 +67,6 @@ class PullStrategyEtagFallbackTest {
             val block = firstArg<suspend () -> Any>()
             block()
         }
-
-        // Setup DataStore mock to return default reminder settings
-        every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        every { dataStore.defaultAllDayReminder } returns flowOf(1440)
 
         // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null

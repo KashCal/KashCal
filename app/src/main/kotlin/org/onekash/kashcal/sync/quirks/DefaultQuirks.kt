@@ -35,8 +35,8 @@ class DefaultQuirks(
         return xmlParser.extractPrincipalUrl(responseBody)
     }
 
-    override fun extractCalendarHomeUrl(responseBody: String): String? {
-        return xmlParser.extractCalendarHomeUrl(responseBody)
+    override fun extractCalendarHomeUrls(responseBody: String): List<String> {
+        return xmlParser.extractCalendarHomeUrls(responseBody)
     }
 
     override fun extractCalendars(responseBody: String, baseHost: String): List<CalDavQuirks.ParsedCalendar> {

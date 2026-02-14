@@ -339,7 +339,7 @@ class OkHttpCalDavClient : CalDavClient {
             }
         }
 
-    override suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<String> =
+    override suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<List<String>> =
         withContext(Dispatchers.IO) {
             val body = """
                 <?xml version="1.0" encoding="utf-8"?>
@@ -357,20 +357,24 @@ class OkHttpCalDavClient : CalDavClient {
                 .build()
 
             executeRequest(request) { responseBody ->
-                val homePath = quirks.extractCalendarHomeUrl(responseBody)
-                    ?: return@executeRequest CalDavResult.error(
+                val homePaths = quirks.extractCalendarHomeUrls(responseBody)
+                if (homePaths.isEmpty()) {
+                    return@executeRequest CalDavResult.error(
                         500, "Calendar home URL not found in response"
                     )
-
-                // Home URL might be absolute or relative
-                val homeUrl = if (homePath.startsWith("http")) {
-                    homePath
-                } else {
-                    val baseHost = extractBaseHost(principalUrl)
-                    "$baseHost$homePath"
                 }
 
-                CalDavResult.success(homeUrl)
+                // Resolve each relative URL to absolute
+                val homeUrls = homePaths.map { homePath ->
+                    if (homePath.startsWith("http")) {
+                        homePath
+                    } else {
+                        val baseHost = extractBaseHost(principalUrl)
+                        "$baseHost$homePath"
+                    }
+                }
+
+                CalDavResult.success(homeUrls)
             }
         }
 

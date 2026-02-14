@@ -146,7 +146,7 @@ class RealICloudRfc5545RoundTripTest {
         // Discover calendar home
         val homeResult = client.discoverCalendarHome(principal)
         assert(homeResult.isSuccess()) { "Failed to discover calendar home" }
-        val home = homeResult.getOrNull()!!
+        val home = homeResult.getOrNull()!!.first()
         println("Calendar Home: $home")
 
         // List calendars

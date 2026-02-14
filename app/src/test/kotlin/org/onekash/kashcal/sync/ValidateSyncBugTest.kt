@@ -152,7 +152,7 @@ class ValidateSyncBugTest {
 
         val homeResult = client.discoverCalendarHome(principal)
         assumeTrue("Should discover home", homeResult.isSuccess())
-        val home = homeResult.getOrNull()!!
+        val home = homeResult.getOrNull()!!.first()
 
         val calendarsResult = client.listCalendars(home)
         assumeTrue("Should list calendars", calendarsResult.isSuccess())

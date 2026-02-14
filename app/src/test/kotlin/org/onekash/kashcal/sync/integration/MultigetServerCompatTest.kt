@@ -53,7 +53,7 @@ class MultigetServerCompatTest {
         // Discovery
         val principal = client.discoverPrincipal(url).getOrNull()
         assumeTrue("$serverName: could not discover principal", principal != null)
-        val home = client.discoverCalendarHome(principal!!).getOrNull()
+        val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("$serverName: could not discover home", home != null)
         val calendars = client.listCalendars(home!!).getOrNull()
         assumeTrue("$serverName: no calendars found", calendars != null && calendars.isNotEmpty())
@@ -136,7 +136,7 @@ class MultigetServerCompatTest {
 
         // Discovery
         val principal = client.discoverPrincipal(davEndpoint).getOrNull()!!
-        val home = client.discoverCalendarHome(principal).getOrNull()!!
+        val home = client.discoverCalendarHome(principal).getOrNull()!!.first()
         val calendars = client.listCalendars(home).getOrNull()!!
         assumeTrue("No calendars", calendars.isNotEmpty())
         val calendarUrl = calendars[0].url

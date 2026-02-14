@@ -903,6 +903,33 @@ class DateTimeUtilsTest {
     }
 
     @Test
+    fun `resolveFirstDayOfWeek_system default returns valid Calendar constant`() {
+        // 0 = FIRST_DAY_SYSTEM sentinel, should resolve to the locale's first day
+        val result = DateTimeUtils.resolveFirstDayOfWeek(0)
+        assertTrue(
+            "System default should resolve to SUNDAY(1), MONDAY(2), or SATURDAY(7), got: $result",
+            result in listOf(java.util.Calendar.SUNDAY, java.util.Calendar.MONDAY, java.util.Calendar.SATURDAY)
+        )
+    }
+
+    @Test
+    fun `resolveFirstDayOfWeek_system default matches locale`() {
+        // Verify that resolveFirstDayOfWeek(0) agrees with getLocaleFirstDayOfWeek()
+        val resolved = DateTimeUtils.resolveFirstDayOfWeek(0)
+        val localeDay = DateTimeUtils.getLocaleFirstDayOfWeek()
+        val expectedCalendarConstant = when (localeDay) {
+            java.time.DayOfWeek.SUNDAY -> java.util.Calendar.SUNDAY
+            java.time.DayOfWeek.MONDAY -> java.util.Calendar.MONDAY
+            java.time.DayOfWeek.SATURDAY -> java.util.Calendar.SATURDAY
+            else -> java.util.Calendar.SUNDAY // Rare locales fall back to Sunday
+        }
+        assertEquals(
+            "resolveFirstDayOfWeek(0) should match getLocaleFirstDayOfWeek()",
+            expectedCalendarConstant, resolved
+        )
+    }
+
+    @Test
     fun `getLocaleFirstDayOfWeek returns valid DayOfWeek`() {
         val result = DateTimeUtils.getLocaleFirstDayOfWeek()
         // Result should be a valid DayOfWeek (not null)
@@ -935,6 +962,15 @@ class DateTimeUtilsTest {
         val offset = DateTimeUtils.getFirstDayOffset(calendar, java.util.Calendar.SATURDAY)
         // Thursday is the 6th day when Saturday is first (Sat=0, Sun=1, Mon=2, Tue=3, Wed=4, Thu=5)
         assertEquals(5, offset)
+    }
+
+    @Test
+    fun `getFirstDayOffset_system default resolves correctly`() {
+        // firstDayOfWeek=0 should resolve to locale default and compute a valid offset
+        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) } // Jan 1 2026 = Thursday
+        val offset = DateTimeUtils.getFirstDayOffset(calendar, 0)
+        // Offset must be in [0, 6] regardless of which locale day is resolved
+        assertTrue("Offset $offset should be in [0, 6]", offset in 0..6)
     }
 
     @Test

@@ -281,7 +281,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -336,7 +336,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -381,7 +381,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -427,7 +427,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -469,7 +469,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -552,7 +552,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -687,7 +687,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://nextcloud.example.com/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://nextcloud.example.com/dav/calendars/user/"
+            listOf("https://nextcloud.example.com/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
 
@@ -891,7 +891,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://server.example.com/dav/principals/admin/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://server.example.com/dav/calendars/admin"  // No trailing slash!
+            listOf("https://server.example.com/dav/calendars/admin")  // No trailing slash!
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -1018,7 +1018,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://server/principal/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://server/calendars/"
+            listOf("https://server/calendars/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -1055,7 +1055,7 @@ class CalDavAccountDiscoveryServiceTest {
             "https://server/principal/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "https://server/calendars/"
+            listOf("https://server/calendars/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -1087,6 +1087,256 @@ class CalDavAccountDiscoveryServiceTest {
         assertEquals(0xCCFF5733.toInt(), calendar.color)
     }
 
+    // ==================== Multiple Calendar Home Set Tests (Issue #70) ====================
+
+    @Test
+    fun `discoverAndCreateAccount merges calendars from multiple home sets`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/user/"
+        )
+        // Server returns 2 home sets
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf(
+                "https://server.example.com/dav/calendars/user/aaa/",
+                "https://server.example.com/dav/calendars/user/bbb/"
+            )
+        )
+        // Home set A has 2 calendars
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/aaa/personal/", "https://server.example.com/dav/calendars/user/aaa/personal/", "Personal", "#FF0000", "ctag1", false),
+                CalDavCalendar("/dav/calendars/user/aaa/work/", "https://server.example.com/dav/calendars/user/aaa/work/", "Work", "#00FF00", "ctag2", false)
+            )
+        )
+        // Home set B has 1 calendar
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/bbb/shared/", "https://server.example.com/dav/calendars/user/bbb/shared/", "Shared", "#0000FF", "ctag3", true)
+            )
+        )
+
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        val success = result as DiscoveryResult.Success
+        // All 3 calendars from both home sets should be merged
+        assertEquals(3, success.calendars.size)
+        // listCalendars called once per home set
+        coVerify(exactly = 1) { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") }
+        coVerify(exactly = 1) { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") }
+        // homeSetUrl should be first sorted URL
+        assertEquals("https://server.example.com/dav/calendars/user/aaa/", success.account.homeSetUrl)
+    }
+
+    @Test
+    fun `discoverAndCreateAccount continues when one home set fails`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf(
+                "https://server.example.com/dav/calendars/user/aaa/",
+                "https://server.example.com/dav/calendars/user/bbb/"
+            )
+        )
+        // Home set A succeeds
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/aaa/personal/", "https://server.example.com/dav/calendars/user/aaa/personal/", "Personal", "#FF0000", "ctag1", false)
+            )
+        )
+        // Home set B fails
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Error(500, "Internal error")
+
+        coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
+        coEvery { accountRepository.createAccount(any()) } returns 1L
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+
+        val result = discoveryService.discoverAndCreateAccount(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        val success = result as DiscoveryResult.Success
+        // Only calendars from successful home set A
+        assertEquals(1, success.calendars.size)
+        assertEquals("Personal", success.calendars.first().displayName)
+    }
+
+    @Test
+    fun `discoverCalendars merges calendars from multiple home sets`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf(
+                "https://server.example.com/dav/calendars/user/aaa/",
+                "https://server.example.com/dav/calendars/user/bbb/"
+            )
+        )
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/aaa/personal/", "https://server.example.com/dav/calendars/user/aaa/personal/", "Personal", "#FF0000", "ctag1", false)
+            )
+        )
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/bbb/shared/", "https://server.example.com/dav/calendars/user/bbb/shared/", "Shared", "#0000FF", "ctag2", true)
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound, got $result", result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        assertEquals(2, found.calendars.size)
+        assertTrue(found.calendars.any { it.displayName == "Personal" })
+        assertTrue(found.calendars.any { it.displayName == "Shared" })
+    }
+
+    @Test
+    fun `discoverCalendars stores first sorted home URL in CalendarsFound`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/user/"
+        )
+        // Returned in reverse alphabetical order
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf(
+                "https://server.example.com/dav/calendars/user/zzz/",
+                "https://server.example.com/dav/calendars/user/aaa/"
+            )
+        )
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/cal/", "https://server.example.com/cal/", "Test", "#FF0000", "ctag1", false)
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound, got $result", result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        // First sorted URL is used for calendarHomeUrl
+        assertEquals("https://server.example.com/dav/calendars/user/aaa/", found.calendarHomeUrl)
+    }
+
+    @Test
+    fun `discoverCalendars continues when one home set fails`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns CalDavResult.Error(404, "Not found")
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
+            "https://server.example.com/dav/principals/user/"
+        )
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf(
+                "https://server.example.com/dav/calendars/user/aaa/",
+                "https://server.example.com/dav/calendars/user/bbb/"
+            )
+        )
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Error(403, "Forbidden")
+        coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar("/dav/calendars/user/bbb/shared/", "https://server.example.com/dav/calendars/user/bbb/shared/", "Shared", "#0000FF", "ctag1", true)
+            )
+        )
+
+        val result = discoveryService.discoverCalendars(
+            serverUrl = "https://server.example.com",
+            username = "user",
+            password = "pass"
+        )
+
+        assertTrue("Expected CalendarsFound, got $result", result is DiscoveryResult.CalendarsFound)
+        val found = result as DiscoveryResult.CalendarsFound
+        assertEquals(1, found.calendars.size)
+        assertEquals("Shared", found.calendars.first().displayName)
+    }
+
+    @Test
+    fun `refreshCalendars re-discovers home sets from principal`() = runTest {
+        val account = createAccount(1L, "https://server/calendars/user/old/")
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server",
+            principalUrl = "https://server/principal/user/"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        // Re-discovery returns 2 home sets
+        coEvery { mockClient.discoverCalendarHome("https://server/principal/user/") } returns CalDavResult.Success(
+            listOf(
+                "https://server/calendars/user/aaa/",
+                "https://server/calendars/user/bbb/"
+            )
+        )
+        coEvery { mockClient.listCalendars("https://server/calendars/user/aaa/") } returns CalDavResult.Success(
+            listOf(CalDavCalendar("/cal/aaa/personal/", "https://server/cal/aaa/personal/", "Personal", "#FF0000", "ctag1", false))
+        )
+        coEvery { mockClient.listCalendars("https://server/calendars/user/bbb/") } returns CalDavResult.Success(
+            listOf(CalDavCalendar("/cal/bbb/shared/", "https://server/cal/bbb/shared/", "Shared", "#0000FF", "ctag2", true))
+        )
+
+        val result = discoveryService.refreshCalendars(1L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        // Both home sets' calendars should be created
+        coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
+        // Should have re-discovered from principal, not used stored URL
+        coVerify { mockClient.discoverCalendarHome("https://server/principal/user/") }
+    }
+
+    @Test
+    fun `refreshCalendars falls back to stored URL when principal unavailable`() = runTest {
+        val account = createAccount(1L, "https://server/calendars/user/")
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server",
+            principalUrl = "https://server/principal/user/"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
+        coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
+        coEvery { calendarRepository.createCalendar(any()) } returns 1L
+        // Re-discovery from principal fails
+        coEvery { mockClient.discoverCalendarHome("https://server/principal/user/") } returns CalDavResult.Error(500, "Server error")
+        // Fallback to stored URL works
+        coEvery { mockClient.listCalendars("https://server/calendars/user/") } returns CalDavResult.Success(
+            listOf(CalDavCalendar("/cal/personal/", "https://server/cal/personal/", "Personal", "#FF0000", "ctag1", false))
+        )
+
+        val result = discoveryService.refreshCalendars(1L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify(exactly = 1) { calendarRepository.createCalendar(any()) }
+    }
+
     // ==================== Helper Methods ====================
 
     private fun setupSuccessfulDiscovery(serverUrl: String = "https://nextcloud.example.com") {
@@ -1094,7 +1344,7 @@ class CalDavAccountDiscoveryServiceTest {
             "$serverUrl/dav/principals/user/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            "$serverUrl/dav/calendars/user/"
+            listOf("$serverUrl/dav/calendars/user/")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -1160,7 +1410,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
             CalDavResult.Success("https://davis.example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://davis.example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -1184,7 +1434,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://davis.example.com/dav/") } returns
             CalDavResult.Success("https://davis.example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://davis.example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://davis.example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://davis.example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -1210,7 +1460,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://nc.example.com/remote.php/dav/") } returns
             CalDavResult.Success("https://nc.example.com/remote.php/dav/principals/users/admin/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://nc.example.com/remote.php/dav/calendars/admin/")
+            CalDavResult.Success(listOf("https://nc.example.com/remote.php/dav/calendars/admin/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/remote.php/dav/calendars/admin/personal/", "https://nc.example.com/remote.php/dav/calendars/admin/personal/", "Personal", "#0082C9", "ctag1", false)
@@ -1310,7 +1560,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://server.example.com/remote.php/dav/") } returns
             CalDavResult.Success("https://server.example.com/remote.php/dav/principals/users/admin/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://server.example.com/remote.php/dav/calendars/admin/")
+            CalDavResult.Success(listOf("https://server.example.com/remote.php/dav/calendars/admin/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/remote.php/dav/calendars/admin/personal/", "https://server.example.com/remote.php/dav/calendars/admin/personal/", "Personal", "#0082C9", "ctag1", false)
@@ -1336,7 +1586,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://localhost:8080/dav/") } returns
             CalDavResult.Success("https://localhost:8080/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://localhost:8080/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://localhost:8080/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://localhost:8080/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -1406,7 +1656,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/caldav") } returns
             CalDavResult.Success("https://calendar.zoho.com/caldav/user@example.com/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://calendar.zoho.com/caldav/user@example.com/")
+            CalDavResult.Success(listOf("https://calendar.zoho.com/caldav/user@example.com/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/caldav/user@example.com/default/", "https://calendar.zoho.com/caldav/user@example.com/default/", "My Calendar", null, null, false)
@@ -1625,7 +1875,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://example.com/dav/") } returns
             CalDavResult.Success("https://example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)
@@ -1647,7 +1897,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal("https://example.com") } returns
             CalDavResult.Success("https://example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
-            CalDavResult.Success("https://example.com/dav/calendars/user/")
+            CalDavResult.Success(listOf("https://example.com/dav/calendars/user/"))
         coEvery { mockClient.listCalendars(any()) } returns
             CalDavResult.Success(listOf(
                 CalDavCalendar("/dav/calendars/user/default/", "https://example.com/dav/calendars/user/default/", "Default", "#0000FF", "ctag1", false)

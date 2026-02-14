@@ -395,7 +395,7 @@ class EtagBasedSyncTest {
             return null
         }
 
-        val home = client.discoverCalendarHome(principal).getOrNull()
+        val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull()
         if (home == null) {
             println("Failed to discover calendar home")
             return null

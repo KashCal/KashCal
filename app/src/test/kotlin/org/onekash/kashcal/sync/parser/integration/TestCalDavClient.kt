@@ -104,9 +104,10 @@ class TestCalDavClient(
     }
 
     /**
-     * Discover calendar home URL from principal.
+     * Discover calendar home URLs from principal.
+     * Returns all hrefs in calendar-home-set (RFC 4791 allows multiple).
      */
-    fun discoverCalendarHome(principalUrl: String): Result<String> {
+    fun discoverCalendarHome(principalUrl: String): Result<List<String>> {
         val propfindBody = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -133,42 +134,38 @@ class TestCalDavClient(
                 return Result.failure(Exception("PROPFIND failed: ${response.code}"))
             }
 
-            // Extract calendar-home-set URL - try various patterns
-            val homePatterns = listOf(
-                """calendar-home-set.*?<.*?href[^>]*>([^<]+)</""",
-                """<c:calendar-home-set>\s*<d:href>([^<]+)</d:href>""",
-                """<C:calendar-home-set>\s*<D:href>([^<]+)</D:href>""",
-                """<[^:]*:?calendar-home-set[^>]*>\s*<[^:]*:?href[^>]*>([^<]+)</"""
+            // Extract all calendar-home-set URLs
+            val homeSetRegex = Regex(
+                """calendar-home-set.*?</[^>]*calendar-home-set>""",
+                setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
             )
+            val homeSetBlock = homeSetRegex.find(body)?.value ?: ""
 
-            var homePath: String? = null
-            for (pattern in homePatterns) {
-                val regex = Regex(pattern, setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
-                val matchResult = regex.find(body)
-                if (matchResult != null) {
-                    homePath = matchResult.groupValues[1]
-                    println("Matched calendar home with pattern: $pattern")
-                    println("Home path: $homePath")
-                    break
-                }
-            }
+            val hrefRegex = Regex(
+                """<[^>]*href[^>]*>([^<]+)</[^>]*href>""",
+                RegexOption.IGNORE_CASE
+            )
+            val homePaths = hrefRegex.findAll(homeSetBlock).map { it.groupValues[1].trim() }
+                .filter { it.isNotEmpty() }.toList()
 
-            if (homePath == null) {
+            if (homePaths.isEmpty()) {
                 return Result.failure(Exception("Calendar home not found"))
             }
 
-            val homeUrl = if (homePath.startsWith("http")) {
-                homePath
-            } else {
-                // Use the host from principalUrl
-                val host = principalUrl.substringBefore("/", principalUrl).let {
-                    if (it.contains("://")) it.substringBefore("/").plus("/").plus(principalUrl.substringAfter("://").substringBefore("/"))
-                    else ICLOUD_CALDAV_URL
+            val homeUrls = homePaths.map { homePath ->
+                if (homePath.startsWith("http")) {
+                    homePath
+                } else {
+                    val host = principalUrl.substringBefore("/", principalUrl).let {
+                        if (it.contains("://")) it.substringBefore("/").plus("/").plus(principalUrl.substringAfter("://").substringBefore("/"))
+                        else ICLOUD_CALDAV_URL
+                    }
+                    "$host$homePath".replace("//", "/").replace(":/", "://")
                 }
-                "$host$homePath".replace("//", "/").replace(":/", "://")
             }
 
-            Result.success(homeUrl)
+            println("Calendar home URLs: $homeUrls")
+            Result.success(homeUrls)
         } catch (e: Exception) {
             Result.failure(e)
         }

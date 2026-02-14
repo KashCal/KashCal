@@ -65,7 +65,7 @@ class ZohoLiveDebugTest {
             println("ERROR: ${(homeResult as org.onekash.kashcal.sync.client.model.CalDavResult.Error).message}")
             return@runBlocking
         }
-        val homeUrl = homeResult.getOrNull()!!
+        val homeUrl = homeResult.getOrNull()!!.first()
 
         println("\n=== Step 3: List calendars ===")
         val calendarsResult = client.listCalendars(homeUrl)
@@ -190,7 +190,7 @@ class ZohoLiveDebugTest {
 
         // Discovery
         val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!
+        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
         val calendars = client.listCalendars(homeUrl).getOrNull()!!
         assumeTrue("No calendars found", calendars.isNotEmpty())
         val calendarUrl = calendars[0].url
@@ -293,7 +293,7 @@ class ZohoLiveDebugTest {
 
         // Discovery
         val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!
+        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
         val calendars = client.listCalendars(homeUrl).getOrNull()!!
         assumeTrue("No calendars found", calendars.isNotEmpty())
         val calendarUrl = calendars[0].url
@@ -452,7 +452,7 @@ class ZohoLiveDebugTest {
 
         // Discovery
         val principalUrl = client.discoverPrincipal(serverUrl!!).getOrNull()!!
-        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!
+        val homeUrl = client.discoverCalendarHome(principalUrl).getOrNull()!!.first()
         val calendars = client.listCalendars(homeUrl).getOrNull()!!
         assumeTrue("No calendars found", calendars.isNotEmpty())
         val calendarUrl = calendars[0].url

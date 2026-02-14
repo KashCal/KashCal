@@ -423,7 +423,7 @@ class MoveOperationServerTest {
             println("Failed to discover calendar home: $homeResult")
             return@runBlocking emptyList()
         }
-        val calendarHome = homeResult.getOrNull()!!
+        val calendarHome = homeResult.getOrNull()!!.first()
         println("Calendar home: $calendarHome")
 
         // List calendars

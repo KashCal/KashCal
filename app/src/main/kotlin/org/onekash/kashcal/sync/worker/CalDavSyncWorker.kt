@@ -825,6 +825,12 @@ class CalDavSyncWorker @AssistedInject constructor(
                     continue
                 }
 
+                // For MODIFIED events, cancel existing reminders first (before null check,
+                // handles transition from having reminders to no reminders)
+                if (change.type == ChangeType.MODIFIED) {
+                    reminderScheduler.cancelRemindersForEvent(event.id)
+                }
+
                 // Skip events without reminders
                 if (event.reminders.isNullOrEmpty()) {
                     skipped++
@@ -836,11 +842,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                     Log.w(TAG, "Calendar ${event.calendarId} not found for event ${event.id}")
                     skipped++
                     continue
-                }
-
-                // For MODIFIED events, cancel existing reminders first (handles time changes)
-                if (change.type == ChangeType.MODIFIED) {
-                    reminderScheduler.cancelRemindersForEvent(event.id)
                 }
 
                 // Get occurrences - handle exception events specially

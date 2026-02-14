@@ -12,7 +12,7 @@ package org.onekash.kashcal.data.credential
  * @property serverUrl CalDAV server URL (iCloud uses default)
  * @property trustInsecure Allow self-signed certificates (CalDAV only)
  * @property principalUrl Discovered CalDAV principal URL
- * @property calendarHomeSet Discovered CalDAV calendar home set URL
+ * @property calendarHomeSet Primary (first) discovered CalDAV calendar home set URL
  */
 data class AccountCredentials(
     val username: String,

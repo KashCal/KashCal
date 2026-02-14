@@ -159,8 +159,8 @@ class NextcloudMultiAccountTest {
         assertTrue("User 1 home discovery failed: $home1Result", home1Result.isSuccess())
         assertTrue("User 2 home discovery failed: $home2Result", home2Result.isSuccess())
 
-        val home1 = home1Result.getOrNull()!!
-        val home2 = home2Result.getOrNull()!!
+        val home1 = home1Result.getOrNull()!!.first()
+        val home2 = home2Result.getOrNull()!!.first()
 
         assertNotEquals(
             "Different users should have different calendar home URLs",
@@ -192,12 +192,12 @@ class NextcloudMultiAccountTest {
 
         // Full discovery for user 1
         val principal1 = client1.discoverPrincipal(davEndpoint).getOrNull()!!
-        val home1 = client1.discoverCalendarHome(principal1).getOrNull()!!
+        val home1 = client1.discoverCalendarHome(principal1).getOrNull()!!.first()
         val calendars1Result = client1.listCalendars(home1)
 
         // Full discovery for user 2
         val principal2 = client2.discoverPrincipal(davEndpoint).getOrNull()!!
-        val home2 = client2.discoverCalendarHome(principal2).getOrNull()!!
+        val home2 = client2.discoverCalendarHome(principal2).getOrNull()!!.first()
         val calendars2Result = client2.listCalendars(home2)
 
         println("=== User 1: $username1 ===")
@@ -261,7 +261,7 @@ class NextcloudMultiAccountTest {
         )
 
         val principal1 = client1.discoverPrincipal(davEndpoint).getOrNull()!!
-        val home1 = client1.discoverCalendarHome(principal1).getOrNull()!!
+        val home1 = client1.discoverCalendarHome(principal1).getOrNull()!!.first()
         val calendars1 = client1.listCalendars(home1).getOrNull()!!
 
         println("Principal 1: $principal1")
@@ -281,7 +281,7 @@ class NextcloudMultiAccountTest {
         )
 
         val principal2 = client2.discoverPrincipal(davEndpoint).getOrNull()!!
-        val home2 = client2.discoverCalendarHome(principal2).getOrNull()!!
+        val home2 = client2.discoverCalendarHome(principal2).getOrNull()!!.first()
         val calendars2 = client2.listCalendars(home2).getOrNull()!!
 
         println("Principal 2: $principal2")

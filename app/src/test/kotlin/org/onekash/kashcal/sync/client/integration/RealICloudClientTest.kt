@@ -137,7 +137,7 @@ class RealICloudClientTest {
         println("Calendar home discovery result: $result")
         assert(result.isSuccess()) { "Should discover calendar home: ${(result as? CalDavResult.Error)?.message}" }
 
-        val url = result.getOrNull()!!
+        val url = result.getOrNull()!!.first()
         println("Calendar Home URL: $url")
         assert(url.isNotBlank()) { "Calendar home URL should not be blank" }
 
@@ -153,7 +153,7 @@ class RealICloudClientTest {
         val principal = client.discoverPrincipal(serverUrl).getOrNull()
         assumeTrue("Should discover principal", principal != null)
 
-        val home = client.discoverCalendarHome(principal!!).getOrNull()
+        val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("Should discover calendar home", home != null)
 
         // List calendars
@@ -344,7 +344,7 @@ class RealICloudClientTest {
         println("Step 2: Discovering calendar home...")
         val homeResult = client.discoverCalendarHome(principal)
         assert(homeResult.isSuccess()) { "Calendar home discovery failed" }
-        val home = homeResult.getOrNull()!!
+        val home = homeResult.getOrNull()!!.first()
         println("Calendar home: $home\n")
 
         // Step 3: List calendars
@@ -414,7 +414,7 @@ class RealICloudClientTest {
                 return null
             }
 
-            val home = client.discoverCalendarHome(principal).getOrNull()
+            val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull()
             if (home == null) {
                 println("Failed to discover calendar home")
                 return null

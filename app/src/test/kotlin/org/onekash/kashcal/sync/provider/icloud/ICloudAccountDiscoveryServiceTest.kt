@@ -131,7 +131,7 @@ class ICloudAccountDiscoveryServiceTest {
     fun `discovery flow creates account and calendars on success`() = runTest {
         // Setup successful mocks
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
 
         val service = createService()
@@ -152,7 +152,7 @@ class ICloudAccountDiscoveryServiceTest {
     @Test
     fun `discovery creates client with credentials via factory`() = runTest {
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
 
         val service = createService()
@@ -168,7 +168,7 @@ class ICloudAccountDiscoveryServiceTest {
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns testDbAccount
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
 
         val service = createService()
@@ -193,7 +193,7 @@ class ICloudAccountDiscoveryServiceTest {
         )
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(calendarsWithReminders)
 
         val service = createService()
@@ -246,7 +246,7 @@ class ICloudAccountDiscoveryServiceTest {
     @Test
     fun `discovery returns Error on calendar list failure`() = runTest {
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.error(500, "Server error")
 
         val service = createService()
@@ -307,7 +307,7 @@ class ICloudAccountDiscoveryServiceTest {
         )
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(calendarsWithICloudColors)
 
         val service = createService()
@@ -332,7 +332,7 @@ class ICloudAccountDiscoveryServiceTest {
         )
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(calendarsWithInvalidColors)
 
         val service = createService()
@@ -368,7 +368,7 @@ class ICloudAccountDiscoveryServiceTest {
     @Test
     fun `discoverAndCreateAccount returns error when credentials fail to save`() = runTest {
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
 
         // Simulate EncryptedSharedPreferences failure (e.g., Android Keystore broken)
@@ -392,7 +392,7 @@ class ICloudAccountDiscoveryServiceTest {
     @Test
     fun `discoverAndCreateAccount cleans up account when credentials fail to save`() = runTest {
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
-        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(testHomeUrl)
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
         coEvery { accountRepository.saveCredentials(any(), any()) } returns false
 

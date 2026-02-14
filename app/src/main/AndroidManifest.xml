@@ -140,6 +140,20 @@
                 <data android:mimeType="vnd.android.cursor.dir/event" />
             </intent-filter>
 
+            <!-- Handle CalendarContract VIEW intents (launchers, clock widgets) -->
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="com.android.calendar" />
+            </intent-filter>
+
+            <!-- Handle CalendarContract EDIT intents (launcher "create event" button) -->
+            <intent-filter tools:ignore="AppLinkUrlError">
+                <action android:name="android.intent.action.EDIT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="com.android.calendar" />
+            </intent-filter>
+
             <!-- App Shortcuts (long-press launcher icon) -->
             <meta-data
                 android:name="android.app.shortcuts"

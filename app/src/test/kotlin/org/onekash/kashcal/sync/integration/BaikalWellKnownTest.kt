@@ -213,9 +213,9 @@ class BaikalWellKnownTest {
                 val homeResult = testClient.discoverCalendarHome(principalUrl)
                 println("  calendar-home: ${if (homeResult.isSuccess()) "OK - ${homeResult.getOrNull()}" else "FAIL - $homeResult"}")
 
-                // If home worked, list calendars
+                // If home worked, list calendars from first home set
                 if (homeResult.isSuccess()) {
-                    val homeUrl = homeResult.getOrNull()!!
+                    val homeUrl = homeResult.getOrNull()!!.first()
                     val calendarsResult = testClient.listCalendars(homeUrl)
                     if (calendarsResult.isSuccess()) {
                         val calendars = calendarsResult.getOrNull()!!

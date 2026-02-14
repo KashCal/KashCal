@@ -80,7 +80,7 @@ class ICloudEventualConsistencyTest {
 
         // Step 1: Discover calendar
         val principal = client.discoverPrincipal(serverUrl).getOrNull()!!
-        val home = client.discoverCalendarHome(principal).getOrNull()!!
+        val home = client.discoverCalendarHome(principal).getOrNull()!!.first()
         val calendars = client.listCalendars(home).getOrNull()!!
         val calendar = calendars.first { !it.url.contains("inbox") && !it.url.contains("outbox") }
         println("Calendar: ${calendar.displayName}")

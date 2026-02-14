@@ -165,7 +165,7 @@ class RealICloud412ConflictTest {
 
         val homeResult = client.discoverCalendarHome(principal)
         assert(homeResult.isSuccess()) { "Failed to discover calendar home" }
-        val home = homeResult.getOrNull()!!
+        val home = homeResult.getOrNull()!!.first()
 
         val calendarsResult = client.listCalendars(home)
         assert(calendarsResult.isSuccess()) { "Failed to list calendars" }

@@ -788,6 +788,41 @@ class CalDavSyncWorkerTest {
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
     }
 
+    @Test
+    fun `sync cancels reminders for MODIFIED events that now have no reminders`() = runTest {
+        // Regression test: When an event transitions from having reminders to no reminders
+        // (e.g., after removing default reminder application from sync), the old AlarmManager
+        // alarms must be cancelled. Without this fix, phantom notifications would fire.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val calendarId = 1L
+
+        val syncChange = createTestSyncChange(ChangeType.MODIFIED, eventId)
+        val syncResult = SyncResult.Success(
+            calendarsSynced = 1,
+            eventsPulledUpdated = 1,
+            durationMs = 100,
+            changes = listOf(syncChange)
+        )
+
+        // MODIFIED event now has NO reminders (previously had defaults applied)
+        val testEvent = createTestEvent(eventId, calendarId, reminders = null)
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+
+        // When
+        worker.doWork()
+
+        // Then - Old reminders MUST be cancelled even though new reminders are null
+        coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
+        // No new reminders should be scheduled
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
     // ==================== Trigger Propagation Tests ====================
 
     @Test

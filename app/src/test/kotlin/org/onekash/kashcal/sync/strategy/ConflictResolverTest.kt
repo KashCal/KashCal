@@ -1,17 +1,17 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.*
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -25,7 +25,6 @@ class ConflictResolverTest {
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
-    private lateinit var dataStore: KashCalDataStore
     private lateinit var client: CalDavClient
 
     @Before
@@ -34,18 +33,13 @@ class ConflictResolverTest {
         eventsDao = mockk()
         pendingOperationsDao = mockk()
         occurrenceGenerator = mockk()
-        dataStore = mockk()
         client = mockk()
-
-        every { dataStore.defaultReminderMinutes } returns flowOf(15)
-        every { dataStore.defaultAllDayReminder } returns flowOf(1440)
 
         conflictResolver = ConflictResolver(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator,
-            dataStore = dataStore
+            occurrenceGenerator = occurrenceGenerator
         )
     }
 
@@ -119,5 +113,73 @@ class ConflictResolverTest {
             pendingOperationsDao.deleteById(operation.id)
             pendingOperationsDao.insert(any())
         }
+    }
+
+    // ========== Default Reminder Tests (Issue #74) ==========
+
+    @Test
+    fun `resolveServerWins does not apply default reminders when server has no alarms`() = runTest {
+        // Server event has NO VALARM — reminders should stay null (not get defaults applied)
+        val event = Event(
+            id = 50L,
+            uid = "no-alarm-uid",
+            calendarId = 1L,
+            title = "Local Version",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600_000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = "https://caldav.example.com/cal/no-alarm.ics",
+            etag = "etag-old",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 20L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        // Server event has NO VALARM
+        val serverIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:no-alarm-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Server No Alarm Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val calendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.example.com/cal/",
+            displayName = "Test Calendar",
+            color = 0xFF0000
+        )
+
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { client.fetchEvent(event.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent("no-alarm.ics", event.caldavUrl!!, "etag-server", serverIcal)
+        )
+        coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
+
+        val capturedEvent = slot<Event>()
+        coEvery { eventsDao.upsert(capture(capturedEvent)) } returns 1L
+        coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
+        coEvery { pendingOperationsDao.deleteById(operation.id) } returns Unit
+
+        val result = conflictResolver.resolve(operation, strategy = ConflictStrategy.SERVER_WINS, client = client)
+
+        assert(result == ConflictResult.ServerVersionKept)
+        assertNull(
+            "SERVER_WINS should not apply default reminders when server has no VALARM",
+            capturedEvent.captured.reminders
+        )
     }
 }

@@ -14,6 +14,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClientFactory
+import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
@@ -119,25 +120,35 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            val calendarHomeUrl = ICloudUrlNormalizer.normalize(
-                (homeResult as CalDavResult.Success).data
-            ) ?: (homeResult as CalDavResult.Success).data
-            Log.d(TAG, "Calendar home URL: $calendarHomeUrl")
+            val calendarHomeUrls = (homeResult as CalDavResult.Success).data.map { url ->
+                ICloudUrlNormalizer.normalize(url) ?: url
+            }.sorted()
+            val calendarHomeUrl = calendarHomeUrls.first()
+            Log.d(TAG, "Calendar home URLs: $calendarHomeUrls")
 
-            // Step 3: List calendars
-            Log.d(TAG, "Step 3: Listing calendars...")
-            val calendarsResult = client.listCalendars(calendarHomeUrl)
-
-            if (calendarsResult.isError()) {
-                val error = calendarsResult as CalDavResult.Error
-                Log.e(TAG, "Calendar listing failed: ${error.message}")
-                return@withContext DiscoveryResult.Error(
-                    getErrorMessageForCalDavError(error, "list calendars")
-                )
+            // Step 3: List calendars from all home sets
+            Log.d(TAG, "Step 3: Listing calendars from ${calendarHomeUrls.size} home set(s)...")
+            val allCalendars = mutableListOf<CalDavCalendar>()
+            val seenUrls = mutableSetOf<String>()
+            for (homeUrl in calendarHomeUrls) {
+                val calendarsResult = client.listCalendars(homeUrl)
+                if (calendarsResult.isSuccess()) {
+                    for (cal in (calendarsResult as CalDavResult.Success).data) {
+                        if (seenUrls.add(cal.url)) allCalendars.add(cal)
+                    }
+                } else {
+                    Log.w(TAG, "Failed to list calendars from home set $homeUrl: ${(calendarsResult as CalDavResult.Error).message}")
+                }
             }
 
-            val discoveredCalendars = (calendarsResult as CalDavResult.Success).data
-            Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars")
+            val discoveredCalendars = allCalendars
+            Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars across ${calendarHomeUrls.size} home set(s)")
+
+            if (discoveredCalendars.isEmpty()) {
+                return@withContext DiscoveryResult.Error(
+                    "No calendars found on iCloud. Please check your account settings."
+                )
+            }
 
             // Step 4: Create or update Account in Room
             val existingAccount = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, appleId)
@@ -307,18 +318,47 @@ class ICloudAccountDiscoveryService @Inject constructor(
         val client = clientFactory.createClient(credentials, icloudQuirks)
 
         try {
-            val calendarsResult = client.listCalendars(calendarHomeUrl)
-
-            if (calendarsResult.isError()) {
-                val error = calendarsResult as CalDavResult.Error
-                return@withContext if (error.isAuthError()) {
-                    DiscoveryResult.AuthError("Session expired. Please sign in again.")
+            // Re-discover home sets from principal (handles added/removed home sets)
+            val calendarHomeUrls = if (account.principalUrl != null) {
+                val homeResult = client.discoverCalendarHome(account.principalUrl!!)
+                if (homeResult.isSuccess()) {
+                    (homeResult as CalDavResult.Success).data.map { url ->
+                        ICloudUrlNormalizer.normalize(url) ?: url
+                    }.sorted()
                 } else {
-                    DiscoveryResult.Error("Could not refresh calendars: ${error.message}")
+                    Log.w(TAG, "Re-discovery failed, falling back to stored homeSetUrl")
+                    listOf(calendarHomeUrl)
+                }
+            } else {
+                listOf(calendarHomeUrl)
+            }
+            Log.d(TAG, "Calendar home URLs for refresh: $calendarHomeUrls")
+
+            // List calendars from all home sets
+            val allCalendars = mutableListOf<CalDavCalendar>()
+            val seenUrls = mutableSetOf<String>()
+            var anyHomeSetSucceeded = false
+            for (homeUrl in calendarHomeUrls) {
+                val calendarsResult = client.listCalendars(homeUrl)
+                if (calendarsResult.isSuccess()) {
+                    anyHomeSetSucceeded = true
+                    for (cal in (calendarsResult as CalDavResult.Success).data) {
+                        if (seenUrls.add(cal.url)) allCalendars.add(cal)
+                    }
+                } else {
+                    val error = calendarsResult as CalDavResult.Error
+                    if (error.isAuthError()) {
+                        return@withContext DiscoveryResult.AuthError("Session expired. Please sign in again.")
+                    }
+                    Log.w(TAG, "Failed to list calendars from home set $homeUrl: ${error.message}")
                 }
             }
 
-            val discoveredCalendars = (calendarsResult as CalDavResult.Success).data
+            if (!anyHomeSetSucceeded) {
+                return@withContext DiscoveryResult.Error("Could not refresh calendars from any home set")
+            }
+
+            val discoveredCalendars = allCalendars
             val existingCalendars = calendarRepository.getCalendarsForAccountOnce(accountId)
             // Normalize discovered URLs for comparison (server returns regional, DB has canonical)
             val discoveredUrls = discoveredCalendars.map {
@@ -355,7 +395,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                         caldavUrl = normalizedCalendarUrl,
                         displayName = calDavCalendar.displayName,
                         color = parseColor(calDavCalendar.color, index),
-                        ctag = calDavCalendar.ctag,
+                        ctag = null, // Must be null so first sync does a full pull (pattern 18)
                         isReadOnly = calDavCalendar.isReadOnly,
                         isDefault = false,
                         isVisible = true

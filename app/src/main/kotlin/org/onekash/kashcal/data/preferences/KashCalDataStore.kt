@@ -117,7 +117,7 @@ class KashCalDataStore(private val context: Context) {
     }
 
     val firstDayOfWeek: Flow<Int>
-        get() = getPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, Calendar.SUNDAY)
+        get() = getPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, FIRST_DAY_SYSTEM)
 
     suspend fun getFirstDayOfWeek(): Int = firstDayOfWeek.first()
 

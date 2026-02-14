@@ -77,7 +77,7 @@ class MultiServerEtagSyncTest(
             endpoint
         }
         val principal = c.discoverPrincipal(caldavUrl).getOrNull() ?: return null
-        val home = c.discoverCalendarHome(principal).getOrNull() ?: return null
+        val home = c.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = c.listCalendars(home).getOrNull() ?: return null
         return calendars.firstOrNull { !it.url.contains("inbox") && !it.url.contains("outbox") }?.url
     }

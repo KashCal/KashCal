@@ -126,6 +126,61 @@ class CalDavXmlParserTest {
         assertNull(parser.extractCalendarHomeUrl("<response><href>/test</href></response>"))
     }
 
+    // ========== extractCalendarHomeUrls (Issue #70) ==========
+
+    @Test
+    fun `extractCalendarHomeUrls returns all hrefs from AEGEE multi-home-set response`() {
+        val xml = loadResource("caldav/aegee/02_calendar_home_set.xml")
+        val urls = parser.extractCalendarHomeUrls(xml)
+
+        assertEquals(3, urls.size)
+        assertEquals("/dav/calendars/user/aaa/", urls[0])
+        assertEquals("/dav/calendars/user/bbb/", urls[1])
+        assertEquals("/dav/calendars/user/cal/", urls[2])
+    }
+
+    @Test
+    fun `extractCalendarHomeUrls returns empty list for blank XML`() {
+        assertEquals(emptyList<String>(), parser.extractCalendarHomeUrls(""))
+        assertEquals(emptyList<String>(), parser.extractCalendarHomeUrls("   "))
+    }
+
+    @Test
+    fun `extractCalendarHomeUrls filters empty href elements`() {
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                <d:response>
+                    <d:propstat>
+                        <d:prop>
+                            <c:calendar-home-set>
+                                <d:href>/real/path/</d:href>
+                                <d:href>  </d:href>
+                                <d:href>/another/path/</d:href>
+                            </c:calendar-home-set>
+                        </d:prop>
+                    </d:propstat>
+                </d:response>
+            </d:multistatus>
+        """.trimIndent()
+
+        val urls = parser.extractCalendarHomeUrls(xml)
+        assertEquals(2, urls.size)
+        assertEquals("/real/path/", urls[0])
+        assertEquals("/another/path/", urls[1])
+    }
+
+    @Test
+    fun `extractCalendarHomeUrl returns first URL for backward compatibility`() {
+        val xml = loadResource("caldav/aegee/02_calendar_home_set.xml")
+
+        val singleUrl = parser.extractCalendarHomeUrl(xml)
+        val allUrls = parser.extractCalendarHomeUrls(xml)
+
+        assertEquals(allUrls.first(), singleUrl)
+        assertEquals("/dav/calendars/user/aaa/", singleUrl)
+    }
+
     // ========== extractCalendars ==========
 
     @Test
