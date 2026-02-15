@@ -81,6 +81,18 @@ class PullStrategy @Inject constructor(
         // DB retry configuration
         private const val MAX_DB_RETRIES = 3
         private const val INITIAL_DB_RETRY_DELAY_MS = 100L
+
+        /**
+         * Check if ICS data contains non-event RFC 5545 components but no VEVENTs.
+         * Used to distinguish "valid non-event resource" from "genuinely failed to parse"
+         * when parseAllEvents() returns empty.
+         */
+        private fun isNonEventResource(icalData: String): Boolean {
+            return !icalData.contains("BEGIN:VEVENT") &&
+                (icalData.contains("BEGIN:VTODO") ||
+                 icalData.contains("BEGIN:VJOURNAL") ||
+                 icalData.contains("BEGIN:VFREEBUSY"))
+        }
     }
 
     /**
@@ -727,6 +739,10 @@ class PullStrategy @Inject constructor(
             }
 
             if (parsedEvents.isEmpty()) {
+                if (isNonEventResource(serverEvent.icalData)) {
+                    Log.d(TAG, "Skipping non-event resource at ${serverEvent.url} (VTODO/VJOURNAL/VFREEBUSY)")
+                    continue
+                }
                 Log.w(TAG, "Failed to parse event at ${serverEvent.url}: no VEVENT components found")
                 sessionBuilder?.incrementSkipParseError()
                 continue

@@ -134,7 +134,16 @@ class ConflictResolver @Inject constructor(
             is ParseResult.Error -> return ConflictResult.Error("Failed to parse server event: ${parseResult.error.message}")
         }
         if (parsedEvents.isEmpty()) {
-            return ConflictResult.Error("Failed to parse server event: no events found")
+            val isNonEvent = !serverEvent.icalData.contains("BEGIN:VEVENT") &&
+                (serverEvent.icalData.contains("BEGIN:VTODO") ||
+                 serverEvent.icalData.contains("BEGIN:VJOURNAL") ||
+                 serverEvent.icalData.contains("BEGIN:VFREEBUSY"))
+            return if (isNonEvent) {
+                Log.d(TAG, "Conflict resolution: server resource is non-event (VTODO/VJOURNAL/VFREEBUSY)")
+                ConflictResult.Error("Server resource is non-event (VTODO/VJOURNAL)")
+            } else {
+                ConflictResult.Error("Failed to parse server event: no events found")
+            }
         }
 
         val parsedEvent = parsedEvents.first()
@@ -250,7 +259,16 @@ class ConflictResolver @Inject constructor(
             is ParseResult.Error -> return ConflictResult.Error("Failed to parse server event: ${parseResult.error.message}")
         }
         if (parsedEvents.isEmpty()) {
-            return ConflictResult.Error("Failed to parse server event: no events found")
+            val isNonEvent = !serverEvent.icalData.contains("BEGIN:VEVENT") &&
+                (serverEvent.icalData.contains("BEGIN:VTODO") ||
+                 serverEvent.icalData.contains("BEGIN:VJOURNAL") ||
+                 serverEvent.icalData.contains("BEGIN:VFREEBUSY"))
+            return if (isNonEvent) {
+                Log.d(TAG, "Conflict resolution: server resource is non-event (VTODO/VJOURNAL/VFREEBUSY)")
+                ConflictResult.Error("Server resource is non-event (VTODO/VJOURNAL)")
+            } else {
+                ConflictResult.Error("Failed to parse server event: no events found")
+            }
         }
 
         val parsedICalEvent = parsedEvents.first()

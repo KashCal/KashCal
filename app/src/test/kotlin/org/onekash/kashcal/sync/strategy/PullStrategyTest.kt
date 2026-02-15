@@ -2416,4 +2416,228 @@ class PullStrategyTest {
         val session = sessionBuilder.build()
         assertEquals("Should have 1 recently-pushed skip", 1, session.skippedRecentlyPushed)
     }
+
+    // ========== Non-Event Resource Handling (VTODO/VJOURNAL/VFREEBUSY) ==========
+
+    private fun createVtodoIcal(uid: String, summary: String): String {
+        return """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VTODO
+            UID:$uid
+            DTSTAMP:20240101T120000Z
+            SUMMARY:$summary
+            STATUS:NEEDS-ACTION
+            END:VTODO
+            END:VCALENDAR
+        """.trimIndent()
+    }
+
+    private fun createVjournalIcal(uid: String, summary: String): String {
+        return """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VJOURNAL
+            UID:$uid
+            DTSTAMP:20240101T120000Z
+            SUMMARY:$summary
+            DESCRIPTION:Journal entry content
+            END:VJOURNAL
+            END:VCALENDAR
+        """.trimIndent()
+    }
+
+    @Test
+    fun `incremental pull — VTODO resource is NOT counted as parse failure`() = runTest {
+        val calendar = createCalendar(syncToken = "sync-token-1")
+        val todoHref = "todo-1.ics"
+        val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
+
+        // sync-collection returns one VTODO href
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-1") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-2",
+                changed = listOf(SyncItem(todoHref, "etag-todo", SyncItemStatus.OK)),
+                deleted = emptyList()
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(todoHref, vtodoUrl, "etag-todo", createVtodoIcal("vtodo-uid-1", "Buy groceries"))
+            ))
+        coEvery { eventsDao.getByCaldavUrl(vtodoUrl) } returns null
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.INCREMENTAL,
+            triggerSource = SyncTrigger.BACKGROUND_PERIODIC
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        val session = sessionBuilder.build()
+        assertEquals("VTODO should NOT be counted as parse error", 0, session.skippedParseError)
+        assertEquals("Session should be SUCCESS, not PARTIAL", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
+        // Token should advance (no parse errors holding it back)
+        assertEquals("sync-token-2", (result as PullResult.Success).newSyncToken)
+    }
+
+    @Test
+    fun `incremental pull — mixed VEVENT + VTODO resources parse correctly`() = runTest {
+        val calendar = createCalendar(syncToken = "sync-token-1")
+        val eventHref = "event-1.ics"
+        val todoHref = "todo-1.ics"
+        val eventUrl = "${calendar.caldavUrl}event-1.ics"
+        val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
+
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-1") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-2",
+                changed = listOf(
+                    SyncItem(eventHref, "etag-event", SyncItemStatus.OK),
+                    SyncItem(todoHref, "etag-todo", SyncItemStatus.OK)
+                ),
+                deleted = emptyList()
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(eventHref, eventUrl, "etag-event", createSimpleIcal("vevent-uid-1", "Real Meeting")),
+                CalDavEvent(todoHref, vtodoUrl, "etag-todo", createVtodoIcal("vtodo-uid-1", "Buy groceries"))
+            ))
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.getByCaldavUrl(vtodoUrl) } returns null
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.INCREMENTAL,
+            triggerSource = SyncTrigger.BACKGROUND_PERIODIC
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        val success = result as PullResult.Success
+        assertEquals("VEVENT should be written", 1, success.eventsAdded)
+        val session = sessionBuilder.build()
+        assertEquals("VTODO should NOT be counted as parse error", 0, session.skippedParseError)
+        assertEquals("Session should be SUCCESS", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
+    }
+
+    @Test
+    fun `incremental pull — VJOURNAL resource is silently skipped`() = runTest {
+        val calendar = createCalendar(syncToken = "sync-token-1")
+        val journalHref = "journal-1.ics"
+        val vjournalUrl = "${calendar.caldavUrl}journal-1.ics"
+
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-1") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-2",
+                changed = listOf(SyncItem(journalHref, "etag-journal", SyncItemStatus.OK)),
+                deleted = emptyList()
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(journalHref, vjournalUrl, "etag-journal", createVjournalIcal("vjournal-uid-1", "Meeting notes"))
+            ))
+        coEvery { eventsDao.getByCaldavUrl(vjournalUrl) } returns null
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.INCREMENTAL,
+            triggerSource = SyncTrigger.BACKGROUND_PERIODIC
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        val session = sessionBuilder.build()
+        assertEquals("VJOURNAL should NOT be counted as parse error", 0, session.skippedParseError)
+        assertEquals("Session should be SUCCESS", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
+        assertEquals("sync-token-2", (result as PullResult.Success).newSyncToken)
+    }
+
+    @Test
+    fun `genuinely malformed ICS still counts as parse error`() = runTest {
+        val calendar = createCalendar(syncToken = "sync-token-1")
+        val badHref = "bad-event.ics"
+        val badUrl = "${calendar.caldavUrl}bad-event.ics"
+
+        coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-1") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "sync-token-2",
+                changed = listOf(SyncItem(badHref, "etag-bad", SyncItemStatus.OK)),
+                deleted = emptyList()
+            ))
+        // Malformed ICS: has VCALENDAR but no valid component inside
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(badHref, badUrl, "etag-bad",
+                    """
+                    BEGIN:VCALENDAR
+                    VERSION:2.0
+                    PRODID:-//Test//Test//EN
+                    END:VCALENDAR
+                    """.trimIndent())
+            ))
+        coEvery { eventsDao.getByCaldavUrl(badUrl) } returns null
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.INCREMENTAL,
+            triggerSource = SyncTrigger.BACKGROUND_PERIODIC
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        val session = sessionBuilder.build()
+        assertEquals("Genuinely malformed ICS SHOULD count as parse error", 1, session.skippedParseError)
+        assertEquals("Session should be PARTIAL for real parse errors", org.onekash.kashcal.sync.session.SyncStatus.PARTIAL, session.status)
+    }
+
+    @Test
+    fun `full pull — VTODO resource in processEvents is silently skipped`() = runTest {
+        // Defense-in-depth: pullFull uses fetchEtagsInRange which has comp-filter VEVENT,
+        // so VTODOs shouldn't reach processEvents. But if they do, they should be skipped.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}event-1.ics"
+        val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent("event-1.ics", eventUrl, "etag-event", createSimpleIcal("vevent-uid-1", "Real Event")),
+            CalDavEvent("todo-1.ics", vtodoUrl, "etag-todo", createVtodoIcal("vtodo-uid-1", "Task Item"))
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.getByCaldavUrl(vtodoUrl) } returns null
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        val success = result as PullResult.Success
+        assertEquals("VEVENT should be written", 1, success.eventsAdded)
+        val session = sessionBuilder.build()
+        assertEquals("VTODO should NOT be counted as parse error", 0, session.skippedParseError)
+        assertEquals("Session should be SUCCESS", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
+    }
 }
