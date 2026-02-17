@@ -7,11 +7,9 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.ui.model.CalendarGroup
 import android.net.Uri
@@ -57,21 +55,15 @@ data class HomeUiState(
     val selectedDate: Long = 0L,
     /** Formatted label for selected day (e.g., "December 17, 2024") */
     val selectedDayLabel: String = "",
-    /** Events for the selected day (expanded from occurrences) */
-    val selectedDayEvents: ImmutableList<Event> = persistentListOf(),
-    /** Occurrences for the selected day (includes recurring instances) */
-    val selectedDayOccurrences: ImmutableList<Occurrence> = persistentListOf(),
-    /** Loading state for day events */
-    val isLoadingDayEvents: Boolean = false,
 
     // === DAY EVENTS CACHE (for swipe pager) ===
     /**
      * Cache of events grouped by dayCode for smooth day pager scrolling.
      * Key: dayCode (YYYYMMDD format, e.g., 20260115)
-     * Value: List of OccurrenceWithEvent for that day
+     * Value: List of DisplayEvent for that day
      * Loaded as a 7-day sliding window centered on selectedDate.
      */
-    val dayEventsCache: ImmutableMap<Int, ImmutableList<OccurrenceWithEvent>> = persistentMapOf(),
+    val dayEventsCache: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
     /** Center date of the current cache (epoch millis at midnight) */
     val cacheRangeCenter: Long = 0L,
     /**
@@ -107,8 +99,8 @@ data class HomeUiState(
     val isSearchActive: Boolean = false,
     /** Current search query */
     val searchQuery: String = "",
-    /** Search results with next occurrence timestamp for recurring events */
-    val searchResults: ImmutableList<EventWithNextOccurrence> = persistentListOf(),
+    /** Search results (Room + device events) with display timestamp */
+    val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     /** Include past events in search */
     val searchIncludePast: Boolean = false,
     /** Date filter for search (Any time, Today, This Week, etc.) */
@@ -124,7 +116,7 @@ data class HomeUiState(
 
     // === AGENDA STATE ===
     /** Agenda occurrences - upcoming events for next 30 days (each recurring instance separate) */
-    val agendaOccurrences: ImmutableList<OccurrenceWithEvent> = persistentListOf(),
+    val agendaEvents: ImmutableList<DisplayEvent> = persistentListOf(),
     /** Loading state for agenda */
     val isLoadingAgenda: Boolean = false,
 
@@ -132,13 +124,9 @@ data class HomeUiState(
     /** First day of the currently displayed week (epoch millis at midnight) */
     val weekViewStartDate: Long = 0L,
     /** Timed events for the week (excludes all-day) */
-    val weekViewOccurrences: ImmutableList<Occurrence> = persistentListOf(),
-    /** Event data for weekViewOccurrences (keyed by exceptionEventId ?: eventId) */
-    val weekViewEvents: ImmutableList<Event> = persistentListOf(),
-    /** All-day occurrences for the week */
-    val weekViewAllDayOccurrences: ImmutableList<Occurrence> = persistentListOf(),
-    /** Event data for weekViewAllDayOccurrences */
-    val weekViewAllDayEvents: ImmutableList<Event> = persistentListOf(),
+    val weekViewTimedEvents: ImmutableList<DisplayEvent> = persistentListOf(),
+    /** All-day events for the week */
+    val weekViewAllDayEvents: ImmutableList<DisplayEvent> = persistentListOf(),
     /** Loading state for week view */
     val isLoadingWeekView: Boolean = false,
     /** Error message if week view load fails */
@@ -267,30 +255,6 @@ data class HomeUiState(
         return calendars.find { it.id == calendarId }?.isVisible ?: true
     }
 
-    /**
-     * Get count of visible events for selected day.
-     * Uses Calendar.isVisible as source of truth.
-     */
-    fun getVisibleEventCount(): Int {
-        val visibleCalendarIds = calendars.filter { it.isVisible }.map { it.id }.toSet()
-        return selectedDayEvents.count { it.calendarId in visibleCalendarIds }
-    }
-}
-
-/**
- * Event representing a single occurrence to display in the UI.
- * Combines event data with occurrence timing for display.
- */
-data class DisplayEvent(
-    val event: Event,
-    val occurrence: Occurrence,
-    val calendarColor: Int
-) {
-    val title: String get() = event.title
-    val startTs: Long get() = occurrence.startTs
-    val endTs: Long get() = occurrence.endTs
-    val isAllDay: Boolean get() = event.isAllDay
-    val location: String? get() = event.location
 }
 
 /**

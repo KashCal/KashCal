@@ -22,8 +22,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 
 /**
@@ -33,8 +32,7 @@ import java.time.LocalDate
  * Handles overlapping events by stacking (max 2 visible, then "+N more" badge).
  *
  * @param date The date this column represents
- * @param events List of (Event, Occurrence) pairs for this day
- * @param calendarColors Map of calendar ID to color
+ * @param events List of DisplayEvent for this day
  * @param hourHeight Height of one hour in the grid
  * @param isToday True if this column is today
  * @param onEventClick Called when an event is tapped
@@ -45,15 +43,14 @@ import java.time.LocalDate
 @Composable
 fun DayColumn(
     date: LocalDate,
-    events: List<Pair<Event, Occurrence>>,
-    calendarColors: Map<Long, Int>,
+    events: List<DisplayEvent>,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     isToday: Boolean = false,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     is24Hour: Boolean = false,
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
+    onOverflowClick: (List<DisplayEvent>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
     modifier: Modifier = Modifier
 ) {
@@ -110,18 +107,13 @@ fun DayColumn(
             val (visibleEvents, overflowCount) = WeekViewUtils.groupForDisplay(group)
 
             visibleEvents.forEachIndexed { index, positioned ->
-                val color = calendarColors[positioned.event.calendarId]
-                    ?: DEFAULT_EVENT_COLOR
-
                 // Calculate position within the column
                 val eventWidth = columnWidth * positioned.widthFraction
                 val eventLeft = columnWidth * positioned.leftFraction
 
                 EventBlock(
-                    event = positioned.event,
-                    occurrence = positioned.occurrence,
+                    displayEvent = positioned.displayEvent,
                     height = positioned.height,
-                    color = color,
                     clampedStart = positioned.clampedStart,
                     clampedEnd = positioned.clampedEnd,
                     originalStartMinutes = positioned.originalStartMinutes,
@@ -129,7 +121,7 @@ fun DayColumn(
                     showEventEmojis = showEventEmojis,
                     timePattern = timePattern,
                     is24Hour = is24Hour,
-                    onClick = { onEventClick(positioned.event, positioned.occurrence) },
+                    onClick = { onEventClick(positioned.displayEvent) },
                     modifier = Modifier
                         .offset(x = eventLeft, y = positioned.topOffset)
                         .width(eventWidth - 2.dp)  // 2dp gap between overlapping events
@@ -146,7 +138,7 @@ fun DayColumn(
                     count = overflowCount,
                     onClick = {
                         val overflowEvents = group.drop(WeekViewUtils.MAX_VISIBLE_OVERLAP)
-                            .map { it.event to it.occurrence }
+                            .map { it.displayEvent }
                         onOverflowClick(overflowEvents)
                     },
                     modifier = Modifier
@@ -197,5 +189,3 @@ private fun groupOverlappingEvents(
 
     return groups
 }
-
-private const val DEFAULT_EVENT_COLOR = 0xFF6200EE.toInt()

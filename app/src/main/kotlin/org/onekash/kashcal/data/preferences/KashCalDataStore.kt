@@ -135,6 +135,8 @@ class KashCalDataStore(private val context: Context) {
     val showDeclinedEvents: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_DECLINED_EVENTS, false)
 
+    suspend fun getShowDeclinedEvents(): Boolean = showDeclinedEvents.first()
+
     suspend fun setShowDeclinedEvents(show: Boolean) {
         setPreference(PreferencesKeys.SHOW_DECLINED_EVENTS, show)
     }
@@ -404,6 +406,34 @@ class KashCalDataStore(private val context: Context) {
 
     suspend fun setBirthdayReminder(minutes: Int) {
         setPreference(PreferencesKeys.BIRTHDAY_REMINDER, minutes)
+    }
+
+    // ========== Device Calendars ==========
+
+    /**
+     * Whether device calendar integration is enabled.
+     */
+    val deviceCalendarsEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.DEVICE_CALENDARS_ENABLED, false)
+
+    suspend fun getDeviceCalendarsEnabled(): Boolean = deviceCalendarsEnabled.first()
+
+    suspend fun setDeviceCalendarsEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.DEVICE_CALENDARS_ENABLED, enabled)
+    }
+
+    /**
+     * Set of enabled device calendar IDs.
+     * Stored as Set<String> (DataStore limitation), converted to/from Set<Long>.
+     */
+    val enabledDeviceCalendarIds: Flow<Set<Long>>
+        get() = getPreference(PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS, emptySet<String>())
+            .map { strings -> strings.mapNotNull { it.toLongOrNull() }.toSet() }
+
+    suspend fun getEnabledDeviceCalendarIds(): Set<Long> = enabledDeviceCalendarIds.first()
+
+    suspend fun setEnabledDeviceCalendarIds(ids: Set<Long>) {
+        setPreference(PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS, ids.map { it.toString() }.toSet())
     }
 
     // ========== Parse Failure Retry (v16.7.0) ==========

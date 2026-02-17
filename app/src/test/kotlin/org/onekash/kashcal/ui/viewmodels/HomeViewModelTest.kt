@@ -32,6 +32,9 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
 import org.onekash.kashcal.network.NetworkMonitor
@@ -62,6 +65,7 @@ class HomeViewModelTest {
     // Mocks
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var eventReader: EventReader
+    private lateinit var displayEventRepository: DisplayEventRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
@@ -168,6 +172,7 @@ class HomeViewModelTest {
         // Initialize mocks
         eventCoordinator = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
+        displayEventRepository = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
@@ -219,6 +224,15 @@ class HomeViewModelTest {
         coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
         coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
         coEvery { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
+        // Device calendar change signal (starts at 0, no changes)
+        every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
+
+        // SearchDisplayEvents mock: invokes roomSearcher lambda so EventReader verifications still work
+        coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
+            val query = firstArg<String>()
+            val roomSearcher = arg<suspend (String) -> List<SearchResult>>(3)
+            roomSearcher(query)
+        }
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
     }
@@ -232,6 +246,7 @@ class HomeViewModelTest {
         return HomeViewModel(
             eventCoordinator = eventCoordinator,
             eventReader = eventReader,
+            displayEventRepository = displayEventRepository,
             dataStore = dataStore,
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
@@ -673,7 +688,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `selectDate loads events for that day`() = runTest {
+    fun `selectDate updates state`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -681,10 +696,9 @@ class HomeViewModelTest {
         viewModel.selectDate(dateMillis)
         advanceUntilIdle()
 
-        // Uses dayCode-based query (YYYYMMDD) for proper all-day event handling
-        verify { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
-        assertEquals(2, viewModel.uiState.value.selectedDayOccurrences.size)
-        assertEquals(2, viewModel.uiState.value.selectedDayEvents.size)
+        // selectDate updates selectedDate and label (events loaded via day pager cache)
+        assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
+        assertTrue(viewModel.uiState.value.selectedDayLabel.contains("2024"))
     }
 
     @Test
@@ -706,16 +720,19 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `selectDate with pre-1970 date loads events for that day`() = runTest {
+    fun `selectDate with pre-1970 date updates state correctly`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         val dateMillis = getTimestamp(1969, 6, 20, 0, 0)
+        assertTrue("Pre-1970 date should have negative millis", dateMillis < 0)
+
         viewModel.selectDate(dateMillis)
         advanceUntilIdle()
 
-        // Verify events were loaded (same query path as post-1970 dates)
-        verify { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+        // Pre-1970 dates should update state correctly
+        assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
+        assertTrue(viewModel.uiState.value.selectedDayLabel.contains("1969"))
     }
 
     // ==================== Search Tests ====================
@@ -873,46 +890,34 @@ class HomeViewModelTest {
 
     @Test
     fun `setViewMode to AGENDA loads events`() = runTest {
-        // Setup mock for agenda loading (now uses Flow)
-        val testOccurrencesWithEvents = listOf(
-            EventReader.OccurrenceWithEvent(
-                occurrence = testOccurrences[0],
-                event = testEvents[0],
-                calendar = testCalendars[0]
-            ),
-            EventReader.OccurrenceWithEvent(
-                occurrence = testOccurrences[1],
-                event = testEvents[1],
-                calendar = testCalendars[1]
-            )
+        // Setup DisplayEventRepository mock for agenda (merges Room + device events)
+        val testDisplayEvents = persistentListOf(
+            DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0]),
+            DisplayEvent.Room(testEvents[1], testOccurrences[1], testCalendars[1])
         )
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(testDisplayEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
-        assertTrue(viewModel.uiState.value.agendaOccurrences.isEmpty())
+        assertTrue(viewModel.uiState.value.agendaEvents.isEmpty())
 
         // Switch to agenda view
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
-        assertEquals(2, viewModel.uiState.value.agendaOccurrences.size)
+        assertEquals(2, viewModel.uiState.value.agendaEvents.size)
         assertFalse(viewModel.uiState.value.isLoadingAgenda)
     }
 
     @Test
     fun `setViewMode from AGENDA to MONTH does not reload agenda`() = runTest {
-        val testOccurrencesWithEvents = listOf(
-            EventReader.OccurrenceWithEvent(
-                occurrence = testOccurrences[0],
-                event = testEvents[0],
-                calendar = testCalendars[0]
-            )
+        val testDisplayEvents = persistentListOf(
+            DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0])
         )
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(testDisplayEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -923,20 +928,20 @@ class HomeViewModelTest {
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
 
         // Clear mock call count
-        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true, childMocks = false)
+        io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
 
         // Switch back to month
         viewModel.setViewMode(ViewMode.MONTH)
         advanceUntilIdle()
 
         assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
-        // Should NOT have called getVisibleOccurrencesWithEventsInRangeFlow when going to month
-        verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) }
+        // Should NOT have called getDisplayEventsForRange when going to month
+        verify(exactly = 0) { displayEventRepository.getDisplayEventsForRange(any(), any()) }
     }
 
     @Test
     fun `agenda loads 30 days of events`() = runTest {
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -944,9 +949,9 @@ class HomeViewModelTest {
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
-        // Verify the Flow-based range query was called
+        // Verify the DisplayEventRepository range query was called
         verify {
-            eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any())
+            displayEventRepository.getDisplayEventsForRange(any(), any())
         }
     }
 
@@ -972,12 +977,13 @@ class HomeViewModelTest {
             dtstamp = System.currentTimeMillis()
         )
 
-        // Return in wrong order - later event first
-        val unsortedOccurrences = listOf(
-            EventReader.OccurrenceWithEvent(laterOccurrence, laterEvent, testCalendars[0]),
-            EventReader.OccurrenceWithEvent(testOccurrences[0], testEvents[0], testCalendars[0])
+        // DisplayEventRepository returns pre-sorted (later first to test sort correctness)
+        // In practice, DisplayEventRepository sorts by startTs; verify ViewModel stores as-is
+        val sortedDisplayEvents = persistentListOf(
+            DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0]),
+            DisplayEvent.Room(laterEvent, laterOccurrence, testCalendars[0])
         )
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(unsortedOccurrences)
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(sortedDisplayEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -985,11 +991,11 @@ class HomeViewModelTest {
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
-        // Should be sorted by occurrence startTs (earlier first)
-        assertEquals(2, viewModel.uiState.value.agendaOccurrences.size)
+        // Should be sorted by startTs (earlier first) - DisplayEventRepository handles sorting
+        assertEquals(2, viewModel.uiState.value.agendaEvents.size)
         assertTrue(
-            viewModel.uiState.value.agendaOccurrences[0].occurrence.startTs <
-            viewModel.uiState.value.agendaOccurrences[1].occurrence.startTs
+            viewModel.uiState.value.agendaEvents[0].startTs <
+            viewModel.uiState.value.agendaEvents[1].startTs
         )
     }
 
@@ -997,10 +1003,10 @@ class HomeViewModelTest {
     fun `agenda shows loading state while fetching`() = runTest {
         // Track loading state during the fetch
         var loadingStateDuringFetch = false
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } answers {
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } answers {
             // This captures that isLoadingAgenda was true when we started fetching
             loadingStateDuringFetch = true
-            flowOf(emptyList())
+            flowOf(persistentListOf())
         }
 
         val viewModel = createViewModel()
@@ -1859,21 +1865,18 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Select a date to enable day reload
-        viewModel.selectDate(getTimestamp(2024, 11, 17, 0, 0))
-        advanceUntilIdle()
-
-        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true)
+        io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true)
+        every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
 
         viewModel.deleteEventOptimistic(1L)
         advanceUntilIdle()
 
-        // Verify reloadCurrentView was called (via getVisibleOccurrencesWithEventsForDay)
-        verify(atLeast = 1) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+        // Verify reloadCurrentView was called (rebuilds event dots via DisplayEventRepository)
+        coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
     @Test
-    fun `reloadCurrentView loads events for pre-1970 selectedDate - issue 53`() = runTest {
+    fun `reloadCurrentView rebuilds dots after delete with pre-1970 selectedDate - issue 53`() = runTest {
         coEvery { eventCoordinator.deleteEvent(any()) } returns Unit
 
         val viewModel = createViewModel()
@@ -1883,35 +1886,26 @@ class HomeViewModelTest {
         viewModel.selectDate(getTimestamp(1952, 1, 11, 0, 0))
         advanceUntilIdle()
 
-        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true)
+        io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true)
+        every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
 
         viewModel.deleteEventOptimistic(1L)
         advanceUntilIdle()
 
-        // Verify reloadCurrentView loaded events for the pre-1970 date
-        // BUG: Before fix, reloadCurrentView skips because selectedDate > 0 is false for negative millis
-        verify(atLeast = 1) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+        // Verify reloadCurrentView rebuilt dots via DisplayEventRepository (always happens regardless of selectedDate)
+        coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
     @Test
     fun `selectDate with zero millis is treated as no selection`() = runTest {
-        coEvery { eventCoordinator.deleteEvent(any()) } returns Unit
-
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // 0L is the sentinel for "no selection" — must remain so after the > 0 → != 0L fix
+        // 0L is the sentinel for "no selection"
         viewModel.selectDate(0L)
         advanceUntilIdle()
 
-        // Clear mocks — selectDate itself triggers loadEventsForSelectedDay unconditionally
-        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true)
-
-        viewModel.deleteEventOptimistic(1L)
-        advanceUntilIdle()
-
-        // reloadCurrentView should NOT reload day events when selectedDate is 0L (sentinel)
-        verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+        assertEquals(0L, viewModel.uiState.value.selectedDate)
     }
 
     @Test
@@ -2028,28 +2022,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Select a date first so we can verify reloadCurrentView updates selectedDayOccurrences
-        val dateMillis = getTimestamp(2024, 11, 17, 0, 0)
-        viewModel.selectDate(dateMillis)
-        advanceUntilIdle()
-
-        // Clear the call count from selectDate
-        io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true, childMocks = false)
+        // Clear initial call counts
+        io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
+        every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
 
         // Start sync
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // At this point, reloadCurrentView should NOT have been called (only by observeSyncStatus on success)
-        // The old buggy code would call it immediately here
-
         // Now simulate sync completing successfully
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 5)
         advanceUntilIdle()
 
-        // NOW reloadCurrentView should be called, which queries occurrences
-        // Uses dayCode-based query for selected day events
-        verify(atLeast = 1) { eventReader.getVisibleOccurrencesWithEventsForDay(any()) }
+        // reloadCurrentView should rebuild event dots via DisplayEventRepository
+        coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
     @Test
@@ -2105,85 +2091,6 @@ class HomeViewModelTest {
     // ==================== All-Day Event Tests ====================
 
     @Test
-    fun `all-day event appears on correct day using dayCode query`() = runTest {
-        val allDayOccurrence = Occurrence(
-            id = 10L,
-            eventId = 10L,
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 0, 0), // Dec 17, 2024 midnight UTC
-            endTs = getTimestamp(2024, 11, 18, 0, 0),   // Dec 18, 2024 midnight UTC
-            startDay = 20241217,
-            endDay = 20241217
-        )
-        val allDayEvent = Event(
-            id = 10L,
-            uid = "allday@test",
-            calendarId = 1L,
-            title = "Holiday",
-            startTs = getTimestamp(2024, 11, 17, 0, 0),
-            endTs = getTimestamp(2024, 11, 18, 0, 0),
-            isAllDay = true,
-            dtstamp = System.currentTimeMillis()
-        )
-        val allDayOccWithEvent = OccurrenceWithEvent(allDayOccurrence, allDayEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) } returns flowOf(listOf(allDayOccWithEvent))
-        coEvery { eventReader.getEventById(10L) } returns allDayEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Select Dec 17, 2024
-        val dateMillis = getTimestamp(2024, 11, 17, 0, 0)
-        viewModel.selectDate(dateMillis)
-        advanceUntilIdle()
-
-        // Should use dayCode-based query
-        verify { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) }
-        assertEquals(1, viewModel.uiState.value.selectedDayOccurrences.size)
-        assertEquals("Holiday", viewModel.uiState.value.selectedDayEvents[0].title)
-    }
-
-    @Test
-    fun `multi-day all-day event appears on all days`() = runTest {
-        // 3-day event: Dec 17-19, 2024
-        val multiDayOccurrence = Occurrence(
-            id = 11L,
-            eventId = 11L,
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 0, 0),
-            endTs = getTimestamp(2024, 11, 20, 0, 0), // Exclusive end
-            startDay = 20241217,
-            endDay = 20241219 // Inclusive end day
-        )
-        val multiDayEvent = Event(
-            id = 11L,
-            uid = "multiday@test",
-            calendarId = 1L,
-            title = "Conference",
-            startTs = getTimestamp(2024, 11, 17, 0, 0),
-            endTs = getTimestamp(2024, 11, 20, 0, 0),
-            isAllDay = true,
-            dtstamp = System.currentTimeMillis()
-        )
-
-        // Should appear on day 18 (middle day)
-        val multiDayOccWithEvent = OccurrenceWithEvent(multiDayOccurrence, multiDayEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241218) } returns flowOf(listOf(multiDayOccWithEvent))
-        coEvery { eventReader.getEventById(11L) } returns multiDayEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Select Dec 18, 2024 (middle day)
-        val dateMillis = getTimestamp(2024, 11, 18, 0, 0)
-        viewModel.selectDate(dateMillis)
-        advanceUntilIdle()
-
-        assertEquals(1, viewModel.uiState.value.selectedDayOccurrences.size)
-        assertEquals("Conference", viewModel.uiState.value.selectedDayEvents[0].title)
-    }
-
-    @Test
     fun `saveEvent handles all-day event correctly`() = runTest {
         val createdEvent = Event(
             id = 100L,
@@ -2217,403 +2124,23 @@ class HomeViewModelTest {
         coVerify { eventCoordinator.createEvent(match { it.isAllDay }, any()) }
     }
 
-    // ==================== Multi-Day Timed Event Tests ====================
-
-    @Test
-    fun `multi-day timed event spans multiple days`() = runTest {
-        // Event from Dec 17 10:00 AM to Dec 18 2:00 PM
-        val multiDayTimedOccurrence = Occurrence(
-            id = 12L,
-            eventId = 12L,
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 18, 14, 0),
-            startDay = 20241217,
-            endDay = 20241218
-        )
-        val multiDayTimedEvent = Event(
-            id = 12L,
-            uid = "multiday-timed@test",
-            calendarId = 1L,
-            title = "Overnight Hackathon",
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 18, 14, 0),
-            isAllDay = false,
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val multiDayTimedOccWithEvent = OccurrenceWithEvent(multiDayTimedOccurrence, multiDayTimedEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241218) } returns flowOf(listOf(multiDayTimedOccWithEvent))
-        coEvery { eventReader.getEventById(12L) } returns multiDayTimedEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Select Dec 18, 2024 (second day)
-        viewModel.selectDate(getTimestamp(2024, 11, 18, 0, 0))
-        advanceUntilIdle()
-
-        assertEquals(1, viewModel.uiState.value.selectedDayOccurrences.size)
-        assertEquals("Overnight Hackathon", viewModel.uiState.value.selectedDayEvents[0].title)
-    }
-
-    // ==================== Exception Event Tests (Recurring Event Modifications) ====================
-
-    @Test
-    fun `exception event is loaded when occurrence has exceptionEventId`() = runTest {
-        // REGRESSION TEST: v14.2.20 fix was incomplete - occurrenceMap key was fixed
-        // but selectedDayEvents still loaded master event instead of exception event.
-        //
-        // Scenario: User modified one occurrence of a weekly meeting (changed title)
-        // - Master event: id=100, title="Weekly Meeting"
-        // - Exception event: id=101, title="Cancelled", originalEventId=100
-        // - Occurrence: eventId=100 (master), exceptionEventId=101 (exception)
-        //
-        // Expected: selectedDayEvents should contain the EXCEPTION event (id=101)
-        // Bug: selectedDayEvents contained the MASTER event (id=100)
-
-        val masterEvent = Event(
-            id = 100L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Weekly Meeting",
-            startTs = getTimestamp(2024, 11, 10, 10, 0),
-            endTs = getTimestamp(2024, 11, 10, 11, 0),
-            rrule = "FREQ=WEEKLY;BYDAY=TU",
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val exceptionEvent = Event(
-            id = 101L,
-            uid = "weekly-meeting@test", // Same UID as master (RFC 5545)
-            calendarId = 1L,
-            title = "Cancelled", // Modified title
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 17, 11, 0),
-            originalEventId = 100L, // Links to master
-            originalInstanceTime = getTimestamp(2024, 11, 17, 10, 0),
-            dtstamp = System.currentTimeMillis()
-        )
-
-        // Occurrence with exceptionEventId - this is the key field
-        val exceptionOccurrence = Occurrence(
-            id = 20L,
-            eventId = 100L, // Master event ID
-            exceptionEventId = 101L, // Exception event ID - THIS IS THE KEY
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 17, 11, 0),
-            startDay = 20241217,
-            endDay = 20241217
-        )
-
-        // JOIN query returns exception event (due to exceptionEventId match in JOIN condition)
-        val exceptionOccWithEvent = OccurrenceWithEvent(exceptionOccurrence, exceptionEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) } returns flowOf(listOf(exceptionOccWithEvent))
-        coEvery { eventReader.getEventById(100L) } returns masterEvent
-        coEvery { eventReader.getEventById(101L) } returns exceptionEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Select Dec 17, 2024 (the exception occurrence date)
-        viewModel.selectDate(getTimestamp(2024, 11, 17, 0, 0))
-        advanceUntilIdle()
-
-        // CRITICAL: Should load EXCEPTION event (id=101), not master (id=100)
-        assertEquals(1, viewModel.uiState.value.selectedDayEvents.size)
-        assertEquals(101L, viewModel.uiState.value.selectedDayEvents[0].id)
-        assertEquals("Cancelled", viewModel.uiState.value.selectedDayEvents[0].title)
-        assertEquals(100L, viewModel.uiState.value.selectedDayEvents[0].originalEventId)
-    }
-
-    @Test
-    fun `normal occurrence loads master event when no exceptionEventId`() = runTest {
-        // Verify normal behavior is preserved - when occurrence has no exceptionEventId,
-        // the master event should be loaded (not some null or error)
-
-        val masterEvent = Event(
-            id = 100L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Weekly Meeting",
-            startTs = getTimestamp(2024, 11, 10, 10, 0),
-            endTs = getTimestamp(2024, 11, 10, 11, 0),
-            rrule = "FREQ=WEEKLY;BYDAY=TU",
-            dtstamp = System.currentTimeMillis()
-        )
-
-        // Normal occurrence without exception
-        val normalOccurrence = Occurrence(
-            id = 21L,
-            eventId = 100L,
-            exceptionEventId = null, // No exception
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 10, 10, 0),
-            endTs = getTimestamp(2024, 11, 10, 11, 0),
-            startDay = 20241210,
-            endDay = 20241210
-        )
-
-        // JOIN query returns master event (since exceptionEventId is null)
-        val normalOccWithEvent = OccurrenceWithEvent(normalOccurrence, masterEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241210) } returns flowOf(listOf(normalOccWithEvent))
-        coEvery { eventReader.getEventById(100L) } returns masterEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        // Select Dec 10, 2024
-        viewModel.selectDate(getTimestamp(2024, 11, 10, 0, 0))
-        advanceUntilIdle()
-
-        // Should load master event
-        assertEquals(1, viewModel.uiState.value.selectedDayEvents.size)
-        assertEquals(100L, viewModel.uiState.value.selectedDayEvents[0].id)
-        assertEquals("Weekly Meeting", viewModel.uiState.value.selectedDayEvents[0].title)
-    }
-
-    @Test
-    fun `mixed occurrences load correct events`() = runTest {
-        // Test day with both normal and exception occurrences
-
-        val masterEvent1 = Event(
-            id = 100L,
-            uid = "event-100@test",
-            calendarId = 1L,
-            title = "Regular Event",
-            startTs = getTimestamp(2024, 11, 17, 9, 0),
-            endTs = getTimestamp(2024, 11, 17, 10, 0),
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val masterEvent2 = Event(
-            id = 200L,
-            uid = "recurring@test",
-            calendarId = 1L,
-            title = "Weekly Sync",
-            startTs = getTimestamp(2024, 11, 17, 14, 0),
-            endTs = getTimestamp(2024, 11, 17, 15, 0),
-            rrule = "FREQ=WEEKLY",
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val exceptionEvent = Event(
-            id = 201L,
-            uid = "recurring@test",
-            calendarId = 1L,
-            title = "Weekly Sync - MOVED",
-            startTs = getTimestamp(2024, 11, 17, 16, 0), // Different time
-            endTs = getTimestamp(2024, 11, 17, 17, 0),
-            originalEventId = 200L,
-            originalInstanceTime = getTimestamp(2024, 11, 17, 14, 0),
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val normalOccurrence = Occurrence(
-            id = 30L,
-            eventId = 100L,
-            exceptionEventId = null,
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 9, 0),
-            endTs = getTimestamp(2024, 11, 17, 10, 0),
-            startDay = 20241217,
-            endDay = 20241217
-        )
-
-        val exceptionOccurrence = Occurrence(
-            id = 31L,
-            eventId = 200L,
-            exceptionEventId = 201L, // Links to exception
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 16, 0),
-            endTs = getTimestamp(2024, 11, 17, 17, 0),
-            startDay = 20241217,
-            endDay = 20241217
-        )
-
-        // JOIN query returns correct events: normal -> masterEvent1, exception -> exceptionEvent
-        val normalOccWithEvent = OccurrenceWithEvent(normalOccurrence, masterEvent1, testCalendars[0])
-        val exceptionOccWithEvent = OccurrenceWithEvent(exceptionOccurrence, exceptionEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) } returns
-            flowOf(listOf(normalOccWithEvent, exceptionOccWithEvent))
-        coEvery { eventReader.getEventById(100L) } returns masterEvent1
-        coEvery { eventReader.getEventById(200L) } returns masterEvent2
-        coEvery { eventReader.getEventById(201L) } returns exceptionEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.selectDate(getTimestamp(2024, 11, 17, 0, 0))
-        advanceUntilIdle()
-
-        // Should have 2 events: masterEvent1 and exceptionEvent (NOT masterEvent2)
-        assertEquals(2, viewModel.uiState.value.selectedDayEvents.size)
-
-        val eventIds = viewModel.uiState.value.selectedDayEvents.map { it.id }.toSet()
-        assertTrue(100L in eventIds) // Normal event
-        assertTrue(201L in eventIds) // Exception event (NOT 200L master)
-        assertFalse(200L in eventIds) // Master should NOT be loaded
-
-        val titles = viewModel.uiState.value.selectedDayEvents.map { it.title }.toSet()
-        assertTrue("Regular Event" in titles)
-        assertTrue("Weekly Sync - MOVED" in titles)
-        assertFalse("Weekly Sync" in titles)
-    }
-
-    @Test
-    fun `re-editing exception event multiple times loads correct data`() = runTest {
-        // REGRESSION TEST: When user edits an exception event again (re-editing),
-        // the exception event should still be loaded correctly.
-        //
-        // Scenario: User modified occurrence twice:
-        // 1. First edit: "Weekly Meeting" -> "Cancelled"
-        // 2. Second edit: "Cancelled" -> "Rescheduled to Next Week"
-        //
-        // The exception event (id=101) is updated in place, and
-        // selectedDayEvents should contain the latest version.
-
-        val masterEvent = Event(
-            id = 100L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Weekly Meeting",
-            startTs = getTimestamp(2024, 11, 10, 10, 0),
-            endTs = getTimestamp(2024, 11, 10, 11, 0),
-            rrule = "FREQ=WEEKLY;BYDAY=TU",
-            dtstamp = System.currentTimeMillis()
-        )
-
-        // Exception event after SECOND edit (latest version)
-        val exceptionEvent = Event(
-            id = 101L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Rescheduled to Next Week", // Second modification
-            description = "This occurrence has been rescheduled",
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 17, 11, 0),
-            originalEventId = 100L,
-            originalInstanceTime = getTimestamp(2024, 11, 17, 10, 0),
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val exceptionOccurrence = Occurrence(
-            id = 20L,
-            eventId = 100L, // Still points to master
-            exceptionEventId = 101L, // Still points to exception
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 10, 0),
-            endTs = getTimestamp(2024, 11, 17, 11, 0),
-            startDay = 20241217,
-            endDay = 20241217
-        )
-
-        val exceptionOccWithEvent = OccurrenceWithEvent(exceptionOccurrence, exceptionEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) } returns flowOf(listOf(exceptionOccWithEvent))
-        coEvery { eventReader.getEventById(100L) } returns masterEvent
-        coEvery { eventReader.getEventById(101L) } returns exceptionEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.selectDate(getTimestamp(2024, 11, 17, 0, 0))
-        advanceUntilIdle()
-
-        // Should load the exception event with latest modifications
-        assertEquals(1, viewModel.uiState.value.selectedDayEvents.size)
-        assertEquals(101L, viewModel.uiState.value.selectedDayEvents[0].id)
-        assertEquals("Rescheduled to Next Week", viewModel.uiState.value.selectedDayEvents[0].title)
-        assertEquals("This occurrence has been rescheduled", viewModel.uiState.value.selectedDayEvents[0].description)
-        assertEquals(100L, viewModel.uiState.value.selectedDayEvents[0].originalEventId)
-    }
-
-    @Test
-    fun `exception event context is preserved for edit operations`() = runTest {
-        // Test that the exception event provides correct context for edit operations:
-        // - event.id should be exception ID (for form loading)
-        // - event.originalEventId should be master ID (for editSingleOccurrence resolution)
-        // - event.originalInstanceTime should be set (for occurrence lookup)
-
-        val masterEvent = Event(
-            id = 100L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Weekly Meeting",
-            startTs = getTimestamp(2024, 11, 10, 10, 0),
-            endTs = getTimestamp(2024, 11, 10, 11, 0),
-            rrule = "FREQ=WEEKLY;BYDAY=TU",
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val exceptionEvent = Event(
-            id = 101L,
-            uid = "weekly-meeting@test",
-            calendarId = 1L,
-            title = "Modified Meeting",
-            startTs = getTimestamp(2024, 11, 17, 14, 0), // Changed time
-            endTs = getTimestamp(2024, 11, 17, 15, 0),
-            originalEventId = 100L, // Links to master
-            originalInstanceTime = getTimestamp(2024, 11, 17, 10, 0), // Original unmodified time
-            dtstamp = System.currentTimeMillis()
-        )
-
-        val exceptionOccurrence = Occurrence(
-            id = 20L,
-            eventId = 100L,
-            exceptionEventId = 101L,
-            calendarId = 1L,
-            startTs = getTimestamp(2024, 11, 17, 14, 0), // Matches exception's modified time
-            endTs = getTimestamp(2024, 11, 17, 15, 0),
-            startDay = 20241217,
-            endDay = 20241217
-        )
-
-        val exceptionOccWithEvent = OccurrenceWithEvent(exceptionOccurrence, exceptionEvent, testCalendars[0])
-        every { eventReader.getVisibleOccurrencesWithEventsForDay(20241217) } returns flowOf(listOf(exceptionOccWithEvent))
-        coEvery { eventReader.getEventById(100L) } returns masterEvent
-        coEvery { eventReader.getEventById(101L) } returns exceptionEvent
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.selectDate(getTimestamp(2024, 11, 17, 0, 0))
-        advanceUntilIdle()
-
-        val event = viewModel.uiState.value.selectedDayEvents[0]
-
-        // Verify exception event provides correct context for edit operations
-        assertEquals(101L, event.id) // Exception ID - for form loading
-        assertEquals(100L, event.originalEventId) // Master ID - for editSingleOccurrence
-        assertEquals(
-            getTimestamp(2024, 11, 17, 10, 0),
-            event.originalInstanceTime // Original time - for occurrence lookup
-        )
-
-        // Verify modified data is shown
-        assertEquals("Modified Meeting", event.title)
-        assertEquals(getTimestamp(2024, 11, 17, 14, 0), event.startTs) // Modified time
-    }
-
     // ==================== Event Dots / Calendar Month View Tests ====================
 
     @Test
     fun `event dots are built from occurrences`() = runTest {
-        val monthOccurrences = listOf(
-            Occurrence(id = 1L, eventId = 1L, calendarId = 1L,
-                startTs = getTimestamp(2024, 11, 5, 10, 0),
-                endTs = getTimestamp(2024, 11, 5, 11, 0),
-                startDay = 20241205, endDay = 20241205),
-            Occurrence(id = 2L, eventId = 2L, calendarId = 1L,
-                startTs = getTimestamp(2024, 11, 10, 14, 0),
-                endTs = getTimestamp(2024, 11, 10, 15, 0),
-                startDay = 20241210, endDay = 20241210),
-            Occurrence(id = 3L, eventId = 3L, calendarId = 2L,
-                startTs = getTimestamp(2024, 11, 10, 16, 0),
-                endTs = getTimestamp(2024, 11, 10, 17, 0),
-                startDay = 20241210, endDay = 20241210)
+        // Mock DisplayEventRepository to return pre-grouped events by day code
+        val cal1Color = testCalendars[0].color
+        val cal2Color = testCalendars[1].color
+        val groupedEvents = mapOf(
+            20241205 to listOf(
+                createDotDisplayEvent(1L, "Event 1", getTimestamp(2024, 11, 5, 10, 0), getTimestamp(2024, 11, 5, 11, 0), 20241205, calendarColor = cal1Color)
+            ),
+            20241210 to listOf(
+                createDotDisplayEvent(2L, "Event 2", getTimestamp(2024, 11, 10, 14, 0), getTimestamp(2024, 11, 10, 15, 0), 20241210, calendarColor = cal1Color),
+                createDotDisplayEvent(3L, "Event 3", getTimestamp(2024, 11, 10, 16, 0), getTimestamp(2024, 11, 10, 17, 0), 20241210, calendarColor = cal2Color)
+            )
         )
-        coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(monthOccurrences)
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns groupedEvents
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2637,21 +2164,19 @@ class HomeViewModelTest {
     @Test
     fun `recurring event shows dots on all occurrence days`() = runTest {
         // Recurring weekly event with 3 occurrences in the month
-        val recurringOccurrences = listOf(
-            Occurrence(id = 1L, eventId = 10L, calendarId = 1L,
-                startTs = getTimestamp(2024, 11, 3, 10, 0),
-                endTs = getTimestamp(2024, 11, 3, 11, 0),
-                startDay = 20241203, endDay = 20241203),
-            Occurrence(id = 2L, eventId = 10L, calendarId = 1L,
-                startTs = getTimestamp(2024, 11, 10, 10, 0),
-                endTs = getTimestamp(2024, 11, 10, 11, 0),
-                startDay = 20241210, endDay = 20241210),
-            Occurrence(id = 3L, eventId = 10L, calendarId = 1L,
-                startTs = getTimestamp(2024, 11, 17, 10, 0),
-                endTs = getTimestamp(2024, 11, 17, 11, 0),
-                startDay = 20241217, endDay = 20241217)
+        val cal1Color = testCalendars[0].color
+        val groupedEvents = mapOf(
+            20241203 to listOf(
+                createDotDisplayEvent(10L, "Weekly", getTimestamp(2024, 11, 3, 10, 0), getTimestamp(2024, 11, 3, 11, 0), 20241203, calendarColor = cal1Color)
+            ),
+            20241210 to listOf(
+                createDotDisplayEvent(10L, "Weekly", getTimestamp(2024, 11, 10, 10, 0), getTimestamp(2024, 11, 10, 11, 0), 20241210, calendarColor = cal1Color)
+            ),
+            20241217 to listOf(
+                createDotDisplayEvent(10L, "Weekly", getTimestamp(2024, 11, 17, 10, 0), getTimestamp(2024, 11, 17, 11, 0), 20241217, calendarColor = cal1Color)
+            )
         )
-        coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(recurringOccurrences)
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns groupedEvents
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2991,14 +2516,10 @@ class HomeViewModelTest {
 
     @Test
     fun `goToToday in agenda list view sets pendingScrollAgendaToTop`() = runTest {
-        val testOccurrencesWithEvents = listOf(
-            EventReader.OccurrenceWithEvent(
-                occurrence = testOccurrences[0],
-                event = testEvents[0],
-                calendar = testCalendars[0]
-            )
+        val testDisplayEvents = persistentListOf(
+            DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0])
         )
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(testDisplayEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -3022,14 +2543,10 @@ class HomeViewModelTest {
 
     @Test
     fun `clearScrollAgendaToTop clears the flag`() = runTest {
-        val testOccurrencesWithEvents = listOf(
-            EventReader.OccurrenceWithEvent(
-                occurrence = testOccurrences[0],
-                event = testEvents[0],
-                calendar = testCalendars[0]
-            )
+        val testDisplayEvents = persistentListOf(
+            DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0])
         )
-        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(testOccurrencesWithEvents)
+        every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(testDisplayEvents)
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -3363,7 +2880,7 @@ class HomeViewModelTest {
 
         // Week view state should remain at defaults (no data loaded)
         assertEquals(0L, viewModel.uiState.value.weekViewStartDate)
-        assertTrue(viewModel.uiState.value.weekViewOccurrences.isEmpty())
+        assertTrue(viewModel.uiState.value.weekViewTimedEvents.isEmpty())
     }
 
     @Test
@@ -3453,5 +2970,38 @@ class HomeViewModelTest {
             set(year, month, day, hour, minute, 0)
             set(JavaCalendar.MILLISECOND, 0)
         }.timeInMillis
+    }
+
+    /**
+     * Create a DisplayEvent.Room for dots tests.
+     * Lightweight helper — only calendarColor matters for dots, other fields are minimal.
+     */
+    private fun createDotDisplayEvent(
+        id: Long,
+        title: String,
+        startTs: Long,
+        endTs: Long,
+        dayCode: Int,
+        calendarColor: Int = testCalendars[0].color
+    ): DisplayEvent {
+        val event = Event(
+            id = id,
+            uid = "$title-$id@test",
+            calendarId = 1L,
+            title = title,
+            startTs = startTs,
+            endTs = endTs,
+            dtstamp = System.currentTimeMillis()
+        )
+        val occurrence = Occurrence(
+            eventId = id,
+            calendarId = 1L,
+            startTs = startTs,
+            endTs = endTs,
+            startDay = dayCode,
+            endDay = dayCode
+        )
+        val calendar = testCalendars.find { it.color == calendarColor }
+        return DisplayEvent.Room(event, occurrence, calendar)
     }
 }

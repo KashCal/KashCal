@@ -71,13 +71,13 @@ import androidx.compose.foundation.pager.PagerState
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
 import org.onekash.kashcal.domain.EmojiMatcher
-import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import android.content.Intent
 import android.net.Uri
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
@@ -120,6 +120,7 @@ fun HomeScreen(
     onClearNavigateToMonth: () -> Unit,
     // Event callbacks
     onEventClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, occurrenceStartTs)
+    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},  // device calendar event clicked
     onCreateEvent: () -> Unit = {},
     onCreateEventWithDateTime: (Long) -> Unit = {},  // timestamp for pre-filled event form
     // Sync callbacks
@@ -351,11 +352,11 @@ fun HomeScreen(
                             // SearchContent with 4 date filter chips
                             SearchContent(
                                 results = uiState.searchResults,
-                                calendars = uiState.calendars,
                                 currentFilter = uiState.searchDateFilter,
                                 showEventEmojis = uiState.showEventEmojis,
                                 timePattern = timePattern,
                                 onResultClick = onSearchResultClick,
+                                onDeviceEventClick = onDeviceEventClick,
                                 onFilterSelect = onSearchDateFilterChange,
                                 onCustomDateClick = onSearchShowDatePicker
                             )
@@ -389,33 +390,35 @@ fun HomeScreen(
                                             }
                                         } else {
                                             AgendaContent(
-                                                occurrences = uiState.agendaOccurrences,
-                                                calendars = uiState.calendars,
+                                                events = uiState.agendaEvents,
                                                 listState = agendaListState,
                                                 showEventEmojis = uiState.showEventEmojis,
                                                 timePattern = timePattern,
                                                 refreshKey = refreshKey,
-                                                onEventClick = { event, occurrenceTs ->
-                                                    onEventClick(event, occurrenceTs)
+                                                onEventClick = { displayEvent ->
+                                                    when (displayEvent) {
+                                                        is DisplayEvent.Room -> onEventClick(displayEvent.event, displayEvent.occurrence.startTs)
+                                                        is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
+                                                    }
                                                 }
                                             )
                                         }
                                     }
                                     ViewMode.THREE_DAYS -> {
                                         WeekViewContent(
-                                            timedOccurrences = uiState.weekViewOccurrences,
-                                            timedEvents = uiState.weekViewEvents,
-                                            allDayOccurrences = uiState.weekViewAllDayOccurrences,
+                                            timedEvents = uiState.weekViewTimedEvents,
                                             allDayEvents = uiState.weekViewAllDayEvents,
-                                            calendars = uiState.calendars,
                                             isLoading = uiState.isLoadingWeekView,
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
                                             showEventEmojis = uiState.showEventEmojis,
                                             timePattern = timePattern,
                                             onDatePickerRequest = onWeekDatePickerRequest,
-                                            onEventClick = { event, occurrence ->
-                                                onEventClick(event, occurrence.startTs)
+                                            onEventClick = { displayEvent ->
+                                                when (displayEvent) {
+                                                    is DisplayEvent.Room -> onEventClick(displayEvent.event, displayEvent.occurrence.startTs)
+                                                    is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
+                                                }
                                             },
                                             onLongPress = { date, hour, minute ->
                                                 // Convert date/time to timestamp for event creation
@@ -495,13 +498,13 @@ fun HomeScreen(
                             HorizontalDivider()
                             DayEventsPager(
                                 uiState = uiState,
-                                calendars = uiState.calendars,
                                 monthPagerState = pagerState,
                                 monthPagerInitialPage = initialPage,
                                 todayYear = todayYear,
                                 todayMonth = todayMonth,
                                 timePattern = timePattern,
                                 onEventClick = onEventClick,
+                                onDeviceEventClick = onDeviceEventClick,
                                 onDateSelected = onDateSelected,
                                 onLoadEventsForRange = onLoadEventsForDayPagerRange,
                                 shouldRefreshCache = shouldRefreshDayPagerCache
@@ -834,13 +837,13 @@ private fun CalendarGrid(
 @Composable
 private fun ColumnScope.DayEventsPager(
     uiState: HomeUiState,
-    calendars: ImmutableList<Calendar>,
     monthPagerState: PagerState,
     monthPagerInitialPage: Int,
     todayYear: Int,
     todayMonth: Int,
     timePattern: String = "h:mm a",
     onEventClick: (Event, Long?) -> Unit,
+    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
     onDateSelected: (Long) -> Unit,
     onLoadEventsForRange: (Long) -> Unit,
     shouldRefreshCache: (Long) -> Boolean
@@ -936,11 +939,11 @@ private fun ColumnScope.DayEventsPager(
             DayEventsPage(
                 dateMs = pageDateMs,
                 events = events,
-                calendars = calendars,
                 showEventEmojis = uiState.showEventEmojis,
                 timePattern = timePattern,
                 isLoading = !isLoaded && uiState.cacheRangeCenter != 0L,
-                onEventClick = onEventClick
+                onEventClick = onEventClick,
+                onDeviceEventClick = onDeviceEventClick
             )
         }
     }
@@ -952,18 +955,13 @@ private fun ColumnScope.DayEventsPager(
 @Composable
 private fun DayEventsPage(
     dateMs: Long,
-    events: ImmutableList<OccurrenceWithEvent>,
-    calendars: ImmutableList<Calendar>,
+    events: ImmutableList<DisplayEvent>,
     showEventEmojis: Boolean,
     timePattern: String = "h:mm a",
     isLoading: Boolean,
-    onEventClick: (Event, Long?) -> Unit
+    onEventClick: (Event, Long?) -> Unit,
+    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {}
 ) {
-    val colorMap = remember(calendars) {
-        calendars.associate { it.id to Color(it.color) }
-    }
-    val defaultColor = Color(0xFF6200EE)
-
     when {
         isLoading -> {
             Box(
@@ -997,21 +995,23 @@ private fun DayEventsPage(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                events.forEach { occWithEvent ->
-                    val event = occWithEvent.event
-                    val occurrence = occWithEvent.occurrence
-                    val eventColor = colorMap[event.calendarId] ?: defaultColor
-                    val isPast = DateTimeUtils.isEventPast(occurrence.endTs, occurrence.endDay, event.isAllDay)
+                events.forEach { displayEvent ->
+                    val eventColor = Color(displayEvent.calendarColor)
+                    val isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay)
 
                     EventCard(
-                        event = event,
+                        displayEvent = displayEvent,
                         eventColor = eventColor,
                         isPast = isPast,
                         selectedDate = dateMs,
-                        occurrenceTs = occurrence.startTs,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
-                        onClick = { onEventClick(event, occurrence.startTs) }
+                        onClick = {
+                            when (displayEvent) {
+                                is DisplayEvent.Room -> onEventClick(displayEvent.event, displayEvent.occurrence.startTs)
+                                is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
+                            }
+                        }
                     )
                 }
             }
@@ -1021,17 +1021,16 @@ private fun DayEventsPage(
 
 @Composable
 private fun EventCard(
-    event: Event,
+    displayEvent: DisplayEvent,
     eventColor: Color,
     isPast: Boolean,
     selectedDate: Long,
-    occurrenceTs: Long?,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
     onClick: () -> Unit
 ) {
-    val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
-        formatEventTitle(event, occurrenceTs, showEventEmojis)
+    val displayTitle = remember(displayEvent, showEventEmojis) {
+        formatDisplayEventTitle(displayEvent, showEventEmojis)
     }
 
     Card(
@@ -1055,15 +1054,15 @@ private fun EventCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                val timeText = formatEventTimeDisplay(event, selectedDate, timePattern = timePattern)
+                val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, timePattern = timePattern)
                 Text(
                     timeText,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
-                if (!event.location.isNullOrEmpty()) {
+                if (!displayEvent.location.isNullOrEmpty()) {
                     Text(
-                        event.location,
+                        displayEvent.location!!,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -1074,24 +1073,36 @@ private fun EventCard(
 }
 @Composable
 private fun SearchResultCard(
-    event: Event,
-    nextOccurrenceTs: Long?,
-    eventColor: Color,
+    searchResult: SearchResult,
     isPast: Boolean,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // For recurring events with nextOccurrenceTs, show "Next: date" format
-    // For non-recurring events, keep original format
-    val dateString = remember(event, nextOccurrenceTs, timePattern) {
-        formatSearchResultDateWithOccurrence(event, nextOccurrenceTs, timePattern = timePattern)
+    val displayEvent = searchResult.displayEvent
+    val eventColor = Color(displayEvent.calendarColor)
+
+    // Format date: for Room recurring events, show "Next: date" format using displayTs
+    val dateString = remember(searchResult, timePattern) {
+        when (displayEvent) {
+            is DisplayEvent.Room -> {
+                // Determine nextOccurrenceTs: non-null if displayTs differs from event start (recurring with future occ)
+                val nextOccTs = searchResult.displayTs.takeIf { it != displayEvent.event.startTs }
+                formatSearchResultDateWithOccurrence(displayEvent.event, nextOccTs, timePattern = timePattern)
+            }
+            is DisplayEvent.Device -> {
+                formatSearchResultDate(displayEvent, timePattern = timePattern)
+            }
+        }
     }
 
     // Format title with age for birthday events and optional emoji
-    val displayTitle = remember(event, nextOccurrenceTs, showEventEmojis) {
-        formatEventTitle(event, nextOccurrenceTs, showEventEmojis)
+    val displayTitle = remember(searchResult, showEventEmojis) {
+        when (displayEvent) {
+            is DisplayEvent.Room -> formatEventTitle(displayEvent.event, searchResult.displayTs, showEventEmojis)
+            is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+        }
     }
 
     Card(
@@ -1120,9 +1131,9 @@ private fun SearchResultCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (!event.location.isNullOrEmpty()) {
+                if (!displayEvent.location.isNullOrEmpty()) {
                     Text(
-                        event.location,
+                        displayEvent.location!!,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1140,18 +1151,15 @@ private fun SearchResultCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchContent(
-    results: ImmutableList<EventWithNextOccurrence>,
-    calendars: ImmutableList<Calendar>,
+    results: ImmutableList<SearchResult>,
     currentFilter: DateFilter,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
     onResultClick: (Event, Long?) -> Unit,
+    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
     onFilterSelect: (DateFilter) -> Unit,
     onCustomDateClick: () -> Unit
 ) {
-    val colorMap = remember(calendars) { calendars.associate { it.id to Color(it.color) } }
-    val defaultColor = Color(0xFF6200EE)
-
     Column(modifier = Modifier.fillMaxSize()) {
         // Filter chips row - OUTSIDE LazyColumn, no scroll needed for 4 chips
         Row(
@@ -1205,22 +1213,32 @@ private fun SearchContent(
             ) {
                 items(
                     items = results,
-                    key = { it.event.id }
+                    key = { result ->
+                        when (val de = result.displayEvent) {
+                            is DisplayEvent.Room -> "room_${de.event.id}"
+                            is DisplayEvent.Device -> "device_${de.instance.instanceId}"
+                        }
+                    }
                 ) { result ->
-                    val event = result.event
-                    val eventColor = colorMap[event.calendarId] ?: defaultColor
-                    // For non-recurring events, use event.endTs with timezone-aware isPast check
-                    val endDay = DateTimeUtils.eventTsToDayCode(event.endTs, event.isAllDay)
-                    val isPast = !event.isRecurring && !event.isException &&
-                        DateTimeUtils.isEventPast(event.endTs, endDay, event.isAllDay)
+                    val displayEvent = result.displayEvent
+                    // Determine if event is recurring (Room exceptions count as recurring)
+                    val isRecurring = when (displayEvent) {
+                        is DisplayEvent.Room -> displayEvent.event.isRecurring || displayEvent.event.isException
+                        is DisplayEvent.Device -> displayEvent.hasRrule
+                    }
+                    val isPast = !isRecurring &&
+                        DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay)
                     SearchResultCard(
-                        event = event,
-                        nextOccurrenceTs = result.nextOccurrenceTs,
-                        eventColor = eventColor,
+                        searchResult = result,
                         isPast = isPast,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
-                        onClick = { onResultClick(event, result.nextOccurrenceTs) }
+                        onClick = {
+                            when (displayEvent) {
+                                is DisplayEvent.Room -> onResultClick(displayEvent.event, result.displayTs)
+                                is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
+                            }
+                        }
                     )
                 }
             }
@@ -1286,11 +1304,11 @@ private fun ViewHeaderRow(
 }
 
 /**
- * Display item for agenda - represents one day of an occurrence.
- * For multi-day events, one occurrence becomes multiple display items.
+ * Display item for agenda - represents one day of an event.
+ * For multi-day events, one event becomes multiple display items.
  */
 private data class AgendaDisplayItem(
-    val occWithEvent: OccurrenceWithEvent,
+    val displayEvent: DisplayEvent,
     val displayDay: Int,      // YYYYMMDD for this display entry
     val dayNumber: Int,       // 1, 2, 3... (which day of multi-day event)
     val totalDays: Int        // Total days in event (1 for single-day)
@@ -1304,16 +1322,13 @@ private data class AgendaDisplayItem(
  */
 @Composable
 private fun AgendaContent(
-    occurrences: ImmutableList<OccurrenceWithEvent>,
-    calendars: ImmutableList<Calendar>,
+    events: ImmutableList<DisplayEvent>,
     listState: LazyListState = rememberLazyListState(),
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
     refreshKey: Int = 0,
-    onEventClick: (Event, Long) -> Unit  // (event, occurrenceStartTs)
+    onEventClick: (DisplayEvent) -> Unit
 ) {
-    val colorMap = remember(calendars) { calendars.associate { it.id to Color(it.color) } }
-    val defaultColor = Color(0xFF6200EE)
     val dateFormat = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()) }
 
     // Calculate today's day code for filtering - refreshes on resume via refreshKey
@@ -1324,34 +1339,34 @@ private fun AgendaContent(
             cal.get(JavaCalendar.DAY_OF_MONTH)
     }
 
-    // Expand multi-day occurrences into separate display items per day
-    val expandedItems = remember(occurrences, todayDayCode) {
-        occurrences.flatMap { occWithEvent ->
-            val occ = occWithEvent.occurrence
-            if (occ.isMultiDay) {
+    // Expand multi-day events into separate display items per day
+    val expandedItems = remember(events, todayDayCode) {
+        events.flatMap { displayEvent ->
+            val isMultiDay = displayEvent.endDay > displayEvent.startDay
+            if (isMultiDay) {
                 // Create entry for each day the event spans
                 val items = mutableListOf<AgendaDisplayItem>()
-                var currentDay = occ.startDay
+                var currentDay = displayEvent.startDay
                 var dayNum = 1
-                val total = occ.totalDays
-                while (currentDay <= occ.endDay) {
-                    items.add(AgendaDisplayItem(occWithEvent, currentDay, dayNum, total))
+                val total = Occurrence.calculateDaysBetween(displayEvent.startDay, displayEvent.endDay) + 1
+                while (currentDay <= displayEvent.endDay) {
+                    items.add(AgendaDisplayItem(displayEvent, currentDay, dayNum, total))
                     currentDay = Occurrence.incrementDayCode(currentDay)
                     dayNum++
                 }
                 items
             } else {
-                listOf(AgendaDisplayItem(occWithEvent, occ.startDay, 1, 1))
+                listOf(AgendaDisplayItem(displayEvent, displayEvent.startDay, 1, 1))
             }
         }.filter { item ->
             // Only show items from today onwards
             item.displayDay >= todayDayCode
         }.distinctBy { item ->
-            // Deduplicate by key to prevent LazyColumn crash (duplicate occurrences in DB)
-            "${item.occWithEvent.event.id}-${item.occWithEvent.occurrence.startTs}-${item.displayDay}"
+            // Deduplicate: use identity-based key (startTs + title + displayDay)
+            "${item.displayEvent.title}-${item.displayEvent.startTs}-${item.displayDay}"
         }.sortedWith(compareBy(
             { it.displayDay },  // Primary: by date
-            { it.occWithEvent.occurrence.startTs }  // Secondary: by original start time
+            { it.displayEvent.startTs }  // Secondary: by original start time
         ))
     }
 
@@ -1385,9 +1400,9 @@ private fun AgendaContent(
                 }
                 items(
                     items = dayItems,
-                    key = { "${it.occWithEvent.event.id}-${it.occWithEvent.occurrence.startTs}-${it.displayDay}" }
+                    key = { "${it.displayEvent.title}-${it.displayEvent.startTs}-${it.displayDay}" }
                 ) { item ->
-                    val eventColor = colorMap[item.occWithEvent.event.calendarId] ?: defaultColor
+                    val eventColor = Color(item.displayEvent.calendarColor)
                     val isPast = item.displayDay < todayDayCode
                     AgendaCard(
                         item = item,
@@ -1395,7 +1410,7 @@ private fun AgendaContent(
                         isPast = isPast,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
-                        onClick = { onEventClick(item.occWithEvent.event, item.occWithEvent.occurrence.startTs) }
+                        onClick = { onEventClick(item.displayEvent) }
                     )
                 }
             }
@@ -1404,8 +1419,8 @@ private fun AgendaContent(
 }
 
 /**
- * Card for displaying an agenda occurrence.
- * Shows time using occurrence timestamps (correct for recurring events).
+ * Card for displaying an agenda event.
+ * Shows time using DisplayEvent common properties.
  * Shows "Day X of Y" for multi-day events.
  */
 @Composable
@@ -1417,13 +1432,12 @@ private fun AgendaCard(
     timePattern: String = "h:mm a",
     onClick: () -> Unit
 ) {
-    val event = item.occWithEvent.event
-    val occurrence = item.occWithEvent.occurrence
-    val dateString = formatAgendaCardDate(event, occurrence, item.dayNumber, item.totalDays, timePattern)
+    val displayEvent = item.displayEvent
+    val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, timePattern)
 
     // Format title with age for birthday events and optional emoji
-    val displayTitle = remember(event, occurrence.startTs, showEventEmojis) {
-        formatEventTitle(event, occurrence.startTs, showEventEmojis)
+    val displayTitle = remember(displayEvent, showEventEmojis) {
+        formatDisplayEventTitle(displayEvent, showEventEmojis)
     }
 
     Card(
@@ -1452,9 +1466,9 @@ private fun AgendaCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (!event.location.isNullOrEmpty()) {
+                if (!displayEvent.location.isNullOrEmpty()) {
                     Text(
-                        event.location,
+                        displayEvent.location!!,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -1513,42 +1527,96 @@ private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Bool
 }
 
 /**
+ * Format title for a DisplayEvent from any source.
+ * Routes to the Event-specific formatter for Room events (birthday decoration, etc.)
+ * and applies emoji formatting for Device events.
+ */
+private fun formatDisplayEventTitle(displayEvent: DisplayEvent, showEmojis: Boolean): String {
+    return when (displayEvent) {
+        is DisplayEvent.Room -> formatEventTitle(displayEvent.event, displayEvent.occurrence.startTs, showEmojis)
+        is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEmojis)
+    }
+}
+
+/**
+ * Format time display for a DisplayEvent from any source.
+ * Uses DisplayEvent common properties — no type branching needed.
+ * Shows "Day X of Y" for multi-day events, recurring indicator, etc.
+ */
+private fun formatDisplayEventTimeDisplay(
+    displayEvent: DisplayEvent,
+    selectedDateMillis: Long,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    timePattern: String = "h:mm a"
+): String {
+    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+    val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
+
+    val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
+    val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
+    val isMultiDay = endDate.isAfter(startDate)
+
+    if (!isMultiDay) {
+        return if (displayEvent.isAllDay) "All day$recurringIndicator"
+        else {
+            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
+            val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
+            "$startTime - $endTime$recurringIndicator"
+        }
+    }
+
+    val totalDays = DateTimeUtils.calculateTotalDays(displayEvent.startTs, displayEvent.endTs, displayEvent.isAllDay, zoneId)
+    val currentDay = calculateCurrentDayForEvent(displayEvent.startTs, selectedDateMillis, displayEvent.isAllDay, zoneId)
+        .coerceIn(1, totalDays)
+
+    return when {
+        currentDay == 1 && !displayEvent.isAllDay -> {
+            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
+            "Day 1 of $totalDays · starts $startTime$recurringIndicator"
+        }
+        currentDay == totalDays && !displayEvent.isAllDay -> {
+            val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
+            "Day $totalDays of $totalDays · ends $endTime$recurringIndicator"
+        }
+        else -> "Day $currentDay of $totalDays$recurringIndicator"
+    }
+}
+
+/**
  * Format time display for agenda card.
- * Uses occurrence timestamps for correct recurring event display.
+ * Uses DisplayEvent common properties for correct recurring event display.
  * Shows "Day X of Y" for multi-day events.
  */
 private fun formatAgendaCardDate(
-    event: Event,
-    occurrence: Occurrence,
+    displayEvent: DisplayEvent,
     dayNumber: Int,
     totalDays: Int,
     timePattern: String = "h:mm a"
 ): String {
     val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
-    val isRecurring = event.isRecurring || event.isException
-    val recurringIndicator = if (isRecurring) " \uD83D\uDD01" else ""
+    val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
 
     return when {
         totalDays > 1 -> {
             // Multi-day event - show "Day X of Y" with context
             val dayIndicator = "Day $dayNumber of $totalDays"
             when {
-                event.isAllDay -> "$dayIndicator (All day)$recurringIndicator"
+                displayEvent.isAllDay -> "$dayIndicator (All day)$recurringIndicator"
                 dayNumber == 1 -> {
-                    val startTime = timeFormat.format(Date(occurrence.startTs))
+                    val startTime = timeFormat.format(Date(displayEvent.startTs))
                     "$dayIndicator \u2022 Starts $startTime$recurringIndicator"
                 }
                 dayNumber == totalDays -> {
-                    val endTime = timeFormat.format(Date(occurrence.endTs))
+                    val endTime = timeFormat.format(Date(displayEvent.endTs))
                     "$dayIndicator \u2022 Ends $endTime$recurringIndicator"
                 }
                 else -> "$dayIndicator (All day)$recurringIndicator"
             }
         }
-        event.isAllDay -> "All day$recurringIndicator"
+        displayEvent.isAllDay -> "All day$recurringIndicator"
         else -> {
-            val startTime = timeFormat.format(Date(occurrence.startTs))
-            val endTime = timeFormat.format(Date(occurrence.endTs))
+            val startTime = timeFormat.format(Date(displayEvent.startTs))
+            val endTime = timeFormat.format(Date(displayEvent.endTs))
             "$startTime - $endTime$recurringIndicator"
         }
     }
@@ -1683,6 +1751,34 @@ internal fun formatSearchResultDate(
             append(" \u00B7 $startTime")
         }
         if (isRecurring) append(" \uD83D\uDD01")
+    }
+}
+
+/**
+ * Format search result date for a device calendar event.
+ * Uses DisplayEvent common properties (no Event-specific fields needed).
+ */
+private fun formatSearchResultDate(
+    displayEvent: DisplayEvent,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    timePattern: String = "h:mm a"
+): String {
+    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+
+    val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
+    val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
+    val isMultiDay = endDate.isAfter(startDate)
+
+    return buildString {
+        append(startDate.format(dateFormatter))
+        if (isMultiDay) {
+            append(" \u2192 ${endDate.format(dateFormatter)}")
+        } else if (!displayEvent.isAllDay) {
+            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
+            append(" \u00B7 $startTime")
+        }
+        if (displayEvent.hasRrule) append(" \uD83D\uDD01")
     }
 }
 

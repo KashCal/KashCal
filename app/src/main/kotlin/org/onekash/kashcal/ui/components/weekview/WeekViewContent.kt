@@ -56,12 +56,10 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
+import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.util.DayPagerUtils
-import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -87,18 +85,15 @@ private const val TAG = "WeekViewContent"
  */
 @Composable
 fun WeekViewContent(
-    timedOccurrences: ImmutableList<Occurrence>,
-    timedEvents: ImmutableList<Event>,
-    allDayOccurrences: ImmutableList<Occurrence>,
-    allDayEvents: ImmutableList<Event>,
-    calendars: ImmutableList<Calendar>,
+    timedEvents: ImmutableList<DisplayEvent>,
+    allDayEvents: ImmutableList<DisplayEvent>,
     isLoading: Boolean,
     error: String?,
     scrollPosition: Int,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     onDatePickerRequest: () -> Unit,
-    onEventClick: (Event, Occurrence) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit,
     onPageChanged: (Int) -> Unit = {},
@@ -142,18 +137,13 @@ fun WeekViewContent(
     // Scroll state for time grid
     val scrollState = rememberScrollState(initial = scrollPosition)
 
-    // Calendar colors map
-    val calendarColors = remember(calendars) {
-        calendars.associate { it.id to it.color }
-    }
-
     // Group events by date (LocalDate key)
-    val timedEventsByDate = remember(timedOccurrences, timedEvents) {
-        groupEventsByDate(timedOccurrences.toList(), timedEvents.toList())
+    val timedEventsByDate = remember(timedEvents) {
+        groupEventsByDate(timedEvents.toList())
     }
 
-    val allDayEventsByDate = remember(allDayOccurrences, allDayEvents) {
-        groupEventsByDate(allDayOccurrences.toList(), allDayEvents.toList())
+    val allDayEventsByDate = remember(allDayEvents) {
+        groupEventsByDate(allDayEvents.toList())
     }
 
     // Separate timed events into early (before 6am), normal (6am-11pm), and late (after 11pm)
@@ -162,7 +152,7 @@ fun WeekViewContent(
     }
 
     // State for overflow sheet
-    var overflowEvents by remember { mutableStateOf<List<Pair<Event, Occurrence>>?>(null) }
+    var overflowEvents by remember { mutableStateOf<List<DisplayEvent>?>(null) }
 
     // Main content — always render the grid immediately so the structure
     // (time labels, grid lines, headers) appears without a spinner flash.
@@ -190,7 +180,6 @@ fun WeekViewContent(
                 allDayEventsByDate = allDayEventsByDate,
                 earlyEventsByDate = earlyEventsByDate,
                 lateEventsByDate = lateEventsByDate,
-                calendarColors = calendarColors,
                 scrollState = scrollState,
                 showEventEmojis = showEventEmojis,
                 timePattern = timePattern,
@@ -208,7 +197,6 @@ fun WeekViewContent(
     overflowEvents?.let { events ->
         OverlapListSheet(
             events = events,
-            calendarColors = calendarColors,
             showEventEmojis = showEventEmojis,
             timePattern = timePattern,
             onDismiss = { overflowEvents = null },
@@ -224,18 +212,17 @@ fun WeekViewContent(
 @Composable
 private fun UnifiedTimeGrid(
     pagerState: PagerState,
-    normalEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    earlyEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    lateEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    calendarColors: Map<Long, Int>,
+    normalEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    earlyEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    lateEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     scrollState: ScrollState = rememberScrollState(),
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     is24Hour: Boolean = false,
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
+    onOverflowClick: (List<DisplayEvent>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
     onScrollPositionChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
@@ -291,7 +278,6 @@ private fun UnifiedTimeGrid(
         AllDayEventsPagerRow(
             visibleDates = visibleDates,
             allDayEventsByDate = allDayEventsByDate,
-            calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
             showEventEmojis = showEventEmojis,
             onEventClick = onEventClick,
@@ -302,7 +288,6 @@ private fun UnifiedTimeGrid(
         OverflowEventsPagerRow(
             visibleDates = visibleDates,
             overflowEventsByDate = earlyEventsByDate,
-            calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
             showEventEmojis = showEventEmojis,
             timePattern = timePattern,
@@ -358,7 +343,6 @@ private fun UnifiedTimeGrid(
                             DayColumn(
                                 date = date,
                                 events = dayEvents,
-                                calendarColors = calendarColors,
                                 hourHeight = hourHeight,
                                 isToday = date == today,
                                 showEventEmojis = showEventEmojis,
@@ -386,7 +370,6 @@ private fun UnifiedTimeGrid(
         OverflowEventsPagerRow(
             visibleDates = visibleDates,
             overflowEventsByDate = lateEventsByDate,
-            calendarColors = calendarColors,
             timeColumnWidth = timeColumnWidth,
             showEventEmojis = showEventEmojis,
             timePattern = timePattern,
@@ -461,12 +444,11 @@ private fun DayHeaderCell(
 @Composable
 private fun AllDayEventsPagerRow(
     visibleDates: List<LocalDate>,
-    allDayEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    calendarColors: Map<Long, Int>,
+    allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     timeColumnWidth: Dp,
     showEventEmojis: Boolean = true,
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
+    onOverflowClick: (List<DisplayEvent>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Check if any visible day has all-day events
@@ -502,7 +484,6 @@ private fun AllDayEventsPagerRow(
 
                 CompactEventCell(
                     events = dayEvents,
-                    calendarColors = calendarColors,
                     showTime = false,
                     showEventEmojis = showEventEmojis,
                     onEventClick = onEventClick,
@@ -523,13 +504,12 @@ private fun AllDayEventsPagerRow(
 @Composable
 private fun OverflowEventsPagerRow(
     visibleDates: List<LocalDate>,
-    overflowEventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>,
-    calendarColors: Map<Long, Int>,
+    overflowEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     timeColumnWidth: Dp,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
+    onOverflowClick: (List<DisplayEvent>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Check if any visible day has overflow events
@@ -565,7 +545,6 @@ private fun OverflowEventsPagerRow(
 
                 CompactEventCell(
                     events = dayEvents,
-                    calendarColors = calendarColors,
                     showTime = true,
                     showEventEmojis = showEventEmojis,
                     timePattern = timePattern,
@@ -586,13 +565,12 @@ private fun OverflowEventsPagerRow(
  */
 @Composable
 private fun CompactEventCell(
-    events: List<Pair<Event, Occurrence>>,
-    calendarColors: Map<Long, Int>,
+    events: List<DisplayEvent>,
     showTime: Boolean,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
-    onEventClick: (Event, Occurrence) -> Unit,
-    onOverflowClick: (List<Pair<Event, Occurrence>>) -> Unit,
+    onEventClick: (DisplayEvent) -> Unit,
+    onOverflowClick: (List<DisplayEvent>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (events.isEmpty()) {
@@ -602,14 +580,11 @@ private fun CompactEventCell(
 
     Column(modifier = modifier) {
         // Show only 1 event
-        val (firstEvent, firstOccurrence) = events.first()
-        val color = calendarColors[firstEvent.calendarId] ?: DEFAULT_EVENT_COLOR
+        val firstEvent = events.first()
 
         CompactEventChip(
-            event = firstEvent,
-            occurrence = firstOccurrence,
-            color = color,
-            onClick = { onEventClick(firstEvent, firstOccurrence) },
+            displayEvent = firstEvent,
+            onClick = { onEventClick(firstEvent) },
             showTime = showTime,
             showEventEmojis = showEventEmojis,
             timePattern = timePattern
@@ -636,18 +611,17 @@ private fun CompactEventCell(
  */
 @Composable
 private fun CompactEventChip(
-    event: Event,
-    occurrence: Occurrence,
-    color: Int,
+    displayEvent: DisplayEvent,
     onClick: () -> Unit,
     showTime: Boolean = false,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     modifier: Modifier = Modifier
 ) {
-    val formattedTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
+    val color = displayEvent.calendarColor
+    val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
     val displayText = if (showTime) {
-        "${WeekViewUtils.formatOverflowTime(occurrence.startTs, timePattern)} $formattedTitle"
+        "${WeekViewUtils.formatOverflowTime(displayEvent.startTs, timePattern)} $formattedTitle"
     } else {
         formattedTitle
     }
@@ -802,27 +776,21 @@ private fun CurrentTimeIndicator(
 /**
  * Group events by LocalDate.
  *
- * Uses pre-calculated startDay/endDay from Occurrence which are already
- * UTC-aware for all-day events (calculated at sync time via Occurrence.toDayFormat).
+ * Uses pre-calculated startDay/endDay from DisplayEvent which are already
+ * UTC-aware for all-day events.
  * Expands multi-day events to appear on all days they span.
  */
 private fun groupEventsByDate(
-    occurrences: List<Occurrence>,
-    events: List<Event>
-): Map<LocalDate, List<Pair<Event, Occurrence>>> {
-    val eventMap = events.associateBy { it.id }
-    val result = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+    events: List<DisplayEvent>
+): Map<LocalDate, List<DisplayEvent>> {
+    val result = mutableMapOf<LocalDate, MutableList<DisplayEvent>>()
 
-    for (occurrence in occurrences) {
-        val eventId = occurrence.exceptionEventId ?: occurrence.eventId
-        val event = eventMap[eventId] ?: continue
-
+    for (displayEvent in events) {
         // Expand multi-day events to all days they span
-        // Uses pre-calculated startDay/endDay (UTC-aware for all-day events)
-        var currentDay = occurrence.startDay
-        while (currentDay <= occurrence.endDay) {
+        var currentDay = displayEvent.startDay
+        while (currentDay <= displayEvent.endDay) {
             val date = DayPagerUtils.dayCodeToLocalDate(currentDay)
-            result.getOrPut(date) { mutableListOf() }.add(event to occurrence)
+            result.getOrPut(date) { mutableListOf() }.add(displayEvent)
             currentDay = Occurrence.incrementDayCode(currentDay)
         }
     }
@@ -834,24 +802,23 @@ private fun groupEventsByDate(
  * Separates events by time slot into early (before 6am), normal (6am-11pm), and late (after 11pm).
  */
 private fun separateEventsByTimeSlotByDate(
-    eventsByDate: Map<LocalDate, List<Pair<Event, Occurrence>>>
-): Triple<Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>, Map<LocalDate, List<Pair<Event, Occurrence>>>> {
-    val earlyEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-    val normalEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
-    val lateEvents = mutableMapOf<LocalDate, MutableList<Pair<Event, Occurrence>>>()
+    eventsByDate: Map<LocalDate, List<DisplayEvent>>
+): Triple<Map<LocalDate, List<DisplayEvent>>, Map<LocalDate, List<DisplayEvent>>, Map<LocalDate, List<DisplayEvent>>> {
+    val earlyEvents = mutableMapOf<LocalDate, MutableList<DisplayEvent>>()
+    val normalEvents = mutableMapOf<LocalDate, MutableList<DisplayEvent>>()
+    val lateEvents = mutableMapOf<LocalDate, MutableList<DisplayEvent>>()
 
     for ((date, events) in eventsByDate) {
-        for (eventPair in events) {
-            val (_, occurrence) = eventPair
-            when (WeekViewUtils.classifyTimeSlot(occurrence)) {
+        for (displayEvent in events) {
+            when (WeekViewUtils.classifyTimeSlot(displayEvent)) {
                 WeekViewUtils.TimeSlot.EARLY -> {
-                    earlyEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                    earlyEvents.getOrPut(date) { mutableListOf() }.add(displayEvent)
                 }
                 WeekViewUtils.TimeSlot.NORMAL -> {
-                    normalEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                    normalEvents.getOrPut(date) { mutableListOf() }.add(displayEvent)
                 }
                 WeekViewUtils.TimeSlot.LATE -> {
-                    lateEvents.getOrPut(date) { mutableListOf() }.add(eventPair)
+                    lateEvents.getOrPut(date) { mutableListOf() }.add(displayEvent)
                 }
             }
         }

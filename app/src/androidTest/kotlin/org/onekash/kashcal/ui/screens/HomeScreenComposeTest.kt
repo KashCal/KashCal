@@ -103,9 +103,7 @@ class HomeScreenComposeTest {
             viewingYear = today.get(JavaCalendar.YEAR),
             viewingMonth = today.get(JavaCalendar.MONTH),
             selectedDate = today.timeInMillis,
-            calendars = testCalendars,
-            selectedDayEvents = persistentListOf(),
-            selectedDayOccurrences = persistentListOf()
+            calendars = testCalendars
         )
     }
 
@@ -486,7 +484,7 @@ class HomeScreenComposeTest {
                 uiState = createDefaultUiState().copy(
                     viewMode = ViewMode.AGENDA,
                     isLoadingAgenda = false,
-                    agendaOccurrences = persistentListOf()
+                    agendaEvents = persistentListOf()
                 ),
                 isOnline = true,
                 onDateSelected = {},
@@ -524,10 +522,7 @@ class HomeScreenComposeTest {
     fun homeScreen_noEventsShowsMessage() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState().copy(
-                    selectedDayEvents = persistentListOf(),
-                    selectedDayOccurrences = persistentListOf()
-                ),
+                uiState = createDefaultUiState(),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},

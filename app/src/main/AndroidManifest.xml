@@ -34,6 +34,9 @@
     <!-- Contact birthdays: Read contacts to generate birthday calendar -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <!-- Device calendars: Read events from sync adapters (DAVx5, etc.) -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
     <!--
         Declare touchscreen as optional for Chromebook/tablet compatibility.
         Without this, app is filtered out of Play Store for non-touch devices.

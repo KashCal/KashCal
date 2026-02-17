@@ -39,7 +39,7 @@ data class SyncSession(
     val skippedPendingLocal: Int = 0,
     val skippedEtagUnchanged: Int = 0,
     val skippedOrphanedException: Int = 0,
-    val skippedConstraintError: Int = 0,
+    val skippedAlreadySynced: Int = 0,
     val skippedRecentlyPushed: Int = 0,
 
     // Issue tracking
@@ -87,9 +87,9 @@ data class SyncSession(
     val hasParseFailures: Boolean get() = skippedParseError > 0
 
     /**
-     * Whether this session has constraint errors (FK violations, etc.) worth showing.
+     * Whether this session skipped events that were already synced in a prior session.
      */
-    val hasConstraintErrors: Boolean get() = skippedConstraintError > 0
+    val hasAlreadySynced: Boolean get() = skippedAlreadySynced > 0
 
     /**
      * Total events pushed to server (local → server).

@@ -41,7 +41,7 @@ class DetailSheetsTest {
     @Test
     fun `TIMED_REMINDER_OPTIONS available for picker`() {
         assertTrue(TIMED_REMINDER_OPTIONS.isNotEmpty())
-        assertEquals(7, TIMED_REMINDER_OPTIONS.size) // None, 15m, 30m, 1h, 4h, 1d, 1w
+        assertEquals(9, TIMED_REMINDER_OPTIONS.size) // None, 0m, 5m, 15m, 30m, 1h, 4h, 1d, 1w
     }
 
     @Test

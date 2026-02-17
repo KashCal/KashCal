@@ -273,12 +273,12 @@ private fun SyncSessionCard(session: SyncSession) {
                 )
             }
 
-            // Row 4 (optional): Constraint error warning
-            if (session.hasConstraintErrors && !expanded) {
+            // Row 4 (optional): Already-synced info
+            if (session.hasAlreadySynced && !expanded) {
                 Text(
-                    text = "⚠ ${session.skippedConstraintError} skipped (constraint error)",
+                    text = "${session.skippedAlreadySynced} already synced",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFFFFA000)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -308,15 +308,15 @@ private fun SyncSessionCard(session: SyncSession) {
                         }
                     }
 
-                    // Constraint error details
-                    if (session.hasConstraintErrors) {
+                    // Already-synced details
+                    if (session.hasAlreadySynced) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Constraint Errors",
+                            text = "Already Synced",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFFFFA000)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        DetailRow("Events skipped", session.skippedConstraintError.toString())
+                        DetailRow("Events skipped", session.skippedAlreadySynced.toString())
                     }
 
                     // Error details

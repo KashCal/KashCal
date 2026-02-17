@@ -31,6 +31,9 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.error.ErrorActionCallback
@@ -76,6 +79,7 @@ private const val TAG = "HomeViewModel"
 class HomeViewModel @Inject constructor(
     private val eventCoordinator: EventCoordinator,
     private val eventReader: EventReader,
+    private val displayEventRepository: DisplayEventRepository,
     private val dataStore: KashCalDataStore,
     private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
@@ -117,10 +121,6 @@ class HomeViewModel @Inject constructor(
 
     // Job for on-demand dots loading (cancel previous on fast swipe)
     private var loadDotsJob: Job? = null
-
-    // Job for day events observation (cancel previous when date changes)
-    // Uses Flow for progressive updates during sync
-    private var dayEventsJob: Job? = null
 
     // Job for agenda events observation (cancel previous when reopened)
     // Uses Flow for progressive updates during sync
@@ -170,6 +170,9 @@ class HomeViewModel @Inject constructor(
 
         // Observe display settings
         observeDisplaySettings()
+
+        // Observe device calendar changes to invalidate event dots cache
+        observeDeviceCalendarChanges()
     }
 
     /**
@@ -430,6 +433,33 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Observe device calendar changes (ContentObserver signal from CalendarProviderManager).
+     * Invalidates event dots cache so dots rebuild with fresh device event data.
+     * Day pager, agenda, and week view auto-update via DisplayEventRepository's combine() flows.
+     */
+    private fun observeDeviceCalendarChanges() {
+        viewModelScope.launch {
+            displayEventRepository.deviceCalendarChangeSignal
+                .collect { signal ->
+                    if (signal > 0) {
+                        // Clear loaded months so dots rebuild with fresh data
+                        _uiState.update {
+                            it.copy(
+                                loadedMonths = persistentSetOf(),
+                                eventDots = persistentMapOf()
+                            )
+                        }
+                        // Rebuild dots for current viewing month
+                        buildEventDots(
+                            _uiState.value.viewingYear,
+                            _uiState.value.viewingMonth
+                        )
+                    }
+                }
+        }
+    }
+
     // ==================== Sync Operations ====================
 
     /**
@@ -685,40 +715,27 @@ class HomeViewModel @Inject constructor(
 
         loadDotsJob = viewModelScope.launch {
             try {
-                val calendar = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, month)
-                    set(Calendar.DAY_OF_MONTH, 1)
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
-                }
-                val startTs = calendar.timeInMillis
-                calendar.add(Calendar.MONTH, 1)
-                val endTs = calendar.timeInMillis
+                // month is 0-indexed (Calendar.MONTH), LocalDate uses 1-indexed
+                val firstDay = LocalDate.of(year, month + 1, 1)
+                val lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth())
+                val startDayCode = firstDay.year * 10000 + firstDay.monthValue * 100 + firstDay.dayOfMonth
+                val endDayCode = lastDay.year * 10000 + lastDay.monthValue * 100 + lastDay.dayOfMonth
 
-                val occurrences = withContext(ioDispatcher) {
-                    eventReader.getVisibleOccurrencesInRange(startTs, endTs).first()
+                val eventsMap = withContext(ioDispatcher) {
+                    displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
                 }
 
-                val calendarColors = _uiState.value.calendars.associate { it.id to it.color }
                 val monthKey = String.format("%04d-%02d", year, month + 1)
                 val monthDots = mutableMapOf<Int, MutableList<Int>>()
 
-                for (occurrence in occurrences) {
-                    val color = calendarColors[occurrence.calendarId] ?: 0xFF6200EE.toInt()
-                    var currentDayCode = occurrence.startDay
-                    while (currentDayCode <= occurrence.endDay) {
-                        val (occYear, occMonth, day) = parseDayFormat(currentDayCode)
-                        // Only add dots for target month
-                        if (occYear == year && occMonth == month) {
-                            val dayColors = monthDots.getOrPut(day) { mutableListOf() }
-                            if (!dayColors.contains(color)) {
-                                dayColors.add(color)
-                            }
+                for ((dayCode, events) in eventsMap) {
+                    val (_, _, day) = parseDayFormat(dayCode)
+                    val dayColors = monthDots.getOrPut(day) { mutableListOf() }
+                    for (event in events) {
+                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
+                        if (!dayColors.contains(color)) {
+                            dayColors.add(color)
                         }
-                        currentDayCode = Occurrence.incrementDayCode(currentDayCode)
                     }
                 }
 
@@ -753,57 +770,37 @@ class HomeViewModel @Inject constructor(
             try {
                 val dots = mutableMapOf<String, MutableMap<Int, MutableList<Int>>>()
 
-                // Calculate cache range bounds BEFORE modifying calendar
+                // Calculate cache range bounds
                 val centerEncoded = encodeMonth(year, month)
                 val startEncoded = centerEncoded - 6
                 val endEncoded = centerEncoded + 6
 
-                // Get range: 6 months before to 6 months after
-                val calendar = Calendar.getInstance().apply {
-                    set(Calendar.YEAR, year)
-                    set(Calendar.MONTH, month)
-                    set(Calendar.DAY_OF_MONTH, 1)
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
+                // Compute day code range from ±6 months
+                val (startYear, startMonth) = decodeMonth(startEncoded)
+                val (endYear, endMonth) = decodeMonth(endEncoded)
+                val firstDay = LocalDate.of(startYear, startMonth + 1, 1)
+                val lastDay = LocalDate.of(endYear, endMonth + 1, 1)
+                    .withDayOfMonth(LocalDate.of(endYear, endMonth + 1, 1).lengthOfMonth())
+                val startDayCode = firstDay.year * 10000 + firstDay.monthValue * 100 + firstDay.dayOfMonth
+                val endDayCode = lastDay.year * 10000 + lastDay.monthValue * 100 + lastDay.dayOfMonth
+
+                // Query merged Room + device events grouped by day
+                val eventsMap = withContext(ioDispatcher) {
+                    displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
                 }
 
-                // Go back 6 months
-                calendar.add(Calendar.MONTH, -6)
-                val startTs = calendar.timeInMillis
+                // Build dots from pre-grouped events (multi-day expansion already handled)
+                for ((dayCode, events) in eventsMap) {
+                    val (occYear, occMonth, day) = parseDayFormat(dayCode)
+                    val key = String.format("%04d-%02d", occYear, occMonth + 1)
 
-                // Go forward 13 months (to include all of +6 month)
-                // 13 = -6 + 13 = +7, so endTs is first moment of month +7
-                // This ensures all events in month +6 are included (start_ts <= endTs)
-                calendar.add(Calendar.MONTH, 13)
-                val endTs = calendar.timeInMillis
-
-                // Query occurrences in range (uses visible calendars from DataStore)
-                val occurrences = withContext(ioDispatcher) {
-                    eventReader.getVisibleOccurrencesInRange(startTs, endTs).first()
-                }
-
-                // Get calendar colors map
-                val calendarColors = _uiState.value.calendars.associate { it.id to it.color }
-
-                // Group by month and day - iterate through ALL days of multi-day events
-                for (occurrence in occurrences) {
-                    val color = calendarColors[occurrence.calendarId] ?: 0xFF6200EE.toInt()
-
-                    // Iterate through each day this occurrence spans
-                    var currentDayCode = occurrence.startDay
-                    while (currentDayCode <= occurrence.endDay) {
-                        val (occYear, occMonth, day) = parseDayFormat(currentDayCode)
-                        val key = String.format("%04d-%02d", occYear, occMonth + 1)
-
-                        val monthMap = dots.getOrPut(key) { mutableMapOf() }
-                        val dayColors = monthMap.getOrPut(day) { mutableListOf() }
+                    val monthMap = dots.getOrPut(key) { mutableMapOf() }
+                    val dayColors = monthMap.getOrPut(day) { mutableListOf() }
+                    for (event in events) {
+                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
                         if (!dayColors.contains(color)) {
                             dayColors.add(color)
                         }
-
-                        currentDayCode = Occurrence.incrementDayCode(currentDayCode)
                     }
                 }
 
@@ -825,9 +822,9 @@ class HomeViewModel @Inject constructor(
                     )
                 }
 
-                val (startYear, startMonth) = decodeMonth(startEncoded)
-                val (endYear, endMonth) = decodeMonth(endEncoded)
                 Log.d(TAG, "Built event dots for ${dots.size} months, loaded ${loadedMonthsSet.size} months: $startYear-${startMonth + 1} to $endYear-${endMonth + 1}")
+            } catch (e: CancellationException) {
+                throw e  // Don't catch cancellation
             } catch (e: Exception) {
                 Log.e(TAG, "Error building event dots", e)
             }
@@ -1034,29 +1031,26 @@ class HomeViewModel @Inject constructor(
 
         weekEventsJob = viewModelScope.launch {
             try {
-                // Use reactive method that auto-filters by visibility via combine()
-                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(weekStartMs, weekEndMs)
-                    .collect { visible ->
+                displayEventRepository.getDisplayEventsForRange(weekStartMs, weekEndMs)
+                    .collect { displayEvents ->
                         // Separate timed and all-day events
-                        val timedOccurrences = visible
-                            .filter { !it.event.isAllDay }
-                            .sortedBy { it.occurrence.startTs }
+                        val timedEvents = displayEvents
+                            .filter { !it.isAllDay }
+                            .sortedBy { it.startTs }
 
-                        val allDayOccurrences = visible
-                            .filter { it.event.isAllDay }
-                            .sortedBy { it.occurrence.startTs }
+                        val allDayEvents = displayEvents
+                            .filter { it.isAllDay }
+                            .sortedBy { it.startTs }
 
                         _uiState.update {
                             it.copy(
-                                weekViewOccurrences = timedOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
-                                weekViewEvents = timedOccurrences.map { owe -> owe.event }.toPersistentList(),
-                                weekViewAllDayOccurrences = allDayOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
-                                weekViewAllDayEvents = allDayOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                weekViewTimedEvents = timedEvents.toPersistentList(),
+                                weekViewAllDayEvents = allDayEvents.toPersistentList(),
                                 isLoadingWeekView = false
                             )
                         }
 
-                        Log.d(TAG, "Week view updated: ${timedOccurrences.size} timed, ${allDayOccurrences.size} all-day")
+                        Log.d(TAG, "Week view updated: ${timedEvents.size} timed, ${allDayEvents.size} all-day")
                     }
             } catch (e: CancellationException) {
                 throw e
@@ -1127,29 +1121,26 @@ class HomeViewModel @Inject constructor(
 
         weekEventsJob = viewModelScope.launch {
             try {
-                // Use reactive method that auto-filters by visibility via combine()
-                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs)
-                    .collect { visible ->
+                displayEventRepository.getDisplayEventsForRange(startMs, endMs)
+                    .collect { displayEvents ->
                         // Separate timed and all-day events
-                        val timedOccurrences = visible
-                            .filter { !it.event.isAllDay }
-                            .sortedBy { it.occurrence.startTs }
+                        val timedEvents = displayEvents
+                            .filter { !it.isAllDay }
+                            .sortedBy { it.startTs }
 
-                        val allDayOccurrences = visible
-                            .filter { it.event.isAllDay }
-                            .sortedBy { it.occurrence.startTs }
+                        val allDayEvents = displayEvents
+                            .filter { it.isAllDay }
+                            .sortedBy { it.startTs }
 
                         _uiState.update {
                             it.copy(
-                                weekViewOccurrences = timedOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
-                                weekViewEvents = timedOccurrences.map { owe -> owe.event }.toPersistentList(),
-                                weekViewAllDayOccurrences = allDayOccurrences.map { owe -> owe.occurrence }.toPersistentList(),
-                                weekViewAllDayEvents = allDayOccurrences.map { owe -> owe.event }.toPersistentList(),
+                                weekViewTimedEvents = timedEvents.toPersistentList(),
+                                weekViewAllDayEvents = allDayEvents.toPersistentList(),
                                 isLoadingWeekView = false
                             )
                         }
 
-                        Log.d(TAG, "Day pager updated: ${timedOccurrences.size} timed, ${allDayOccurrences.size} all-day")
+                        Log.d(TAG, "Day pager updated: ${timedEvents.size} timed, ${allDayEvents.size} all-day")
                     }
             } catch (e: CancellationException) {
                 throw e
@@ -1265,71 +1256,8 @@ class HomeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 selectedDate = dateMillis,
-                selectedDayLabel = formatDateLabel(dateMillis),
-                isLoadingDayEvents = true
+                selectedDayLabel = formatDateLabel(dateMillis)
             )
-        }
-
-        loadEventsForSelectedDay(dateMillis)
-    }
-
-    /**
-     * Observe events for the selected day using reactive Flow.
-     *
-     * Uses dayCode-based query (YYYYMMDD) instead of timestamp-based query
-     * to avoid timezone boundary issues with all-day events.
-     *
-     * All-day events are stored as UTC midnight timestamps. A timestamp-based
-     * query using local timezone boundaries can incorrectly match events on
-     * adjacent days due to UTC offset. The dayCode query uses pre-calculated
-     * start_day/end_day columns that are timezone-aware.
-     *
-     * PROGRESSIVE LOADING: Events appear as they sync because this uses Flow
-     * collection instead of one-shot query.
-     *
-     * REACTIVITY FIX (v20.10.6): Uses JOIN-based query that tracks BOTH the
-     * occurrences AND events tables. This ensures that event metadata changes
-     * (location, title, description) trigger Flow emissions even when occurrence
-     * times don't change. Room automatically tracks all tables in a JOIN query.
-     */
-    private fun loadEventsForSelectedDay(dateMillis: Long) {
-        // Cancel any previous day events observation
-        dayEventsJob?.cancel()
-
-        // Convert to dayCode using java.time (Android recommended API)
-        // This gives us the LOCAL date the user selected in the UI
-        val localDate = Instant.ofEpochMilli(dateMillis)
-            .atZone(ZoneId.systemDefault())
-            .toLocalDate()
-        val dayCode = localDate.year * 10000 + localDate.monthValue * 100 + localDate.dayOfMonth
-
-        // Start observing events for this day (reactive - updates as sync progresses)
-        // JOIN query includes Event data, so no separate event fetch needed
-        dayEventsJob = viewModelScope.launch {
-            try {
-                eventReader.getVisibleOccurrencesWithEventsForDay(dayCode)
-                    .distinctUntilChanged()
-                    .collect { occurrencesWithEvents ->
-                        // Events already available from JOIN query
-                        val occurrences = occurrencesWithEvents.map { it.occurrence }
-                        val events = occurrencesWithEvents.map { it.event }
-
-                        _uiState.update {
-                            it.copy(
-                                selectedDayOccurrences = occurrences.toPersistentList(),
-                                selectedDayEvents = events.toPersistentList(),
-                                isLoadingDayEvents = false
-                            )
-                        }
-                        Log.d(TAG, "Day events updated: ${events.size} events (dayCode=$dayCode)")
-                    }
-            } catch (e: CancellationException) {
-                // Normal cancellation when day changes - don't log as error
-                throw e
-            } catch (e: Exception) {
-                Log.e(TAG, "Error observing events for day", e)
-                _uiState.update { it.copy(isLoadingDayEvents = false) }
-            }
         }
     }
 
@@ -1347,36 +1275,14 @@ class HomeViewModel @Inject constructor(
     fun loadEventsForDayPagerRange(centerDateMs: Long) {
         dayEventsCacheJob?.cancel()
 
-        val rangeStart = centerDateMs - (3 * DayPagerUtils.DAY_MS)
-        val rangeEnd = centerDateMs + (4 * DayPagerUtils.DAY_MS) // +4 to include 3 days after
-
         Log.d(TAG, "Day pager cache: loading range centered on ${DayPagerUtils.msToDayCode(centerDateMs)}")
 
         dayEventsCacheJob = viewModelScope.launch {
             try {
-                // Use reactive method that auto-filters by visibility via combine()
-                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd)
-                    .collect { visible ->
-                        // Group by dayCode for O(1) lookup
-                        // Use pre-calculated startDay/endDay (already UTC-aware for all-day events)
-                        // Expand multi-day events to all days they span
-                        val grouped = visible
-                            .flatMap { item ->
-                                val startDay = item.occurrence.startDay
-                                val endDay = item.occurrence.endDay
-                                if (startDay == endDay) {
-                                    listOf(startDay to item)
-                                } else {
-                                    // Multi-day: generate entry for each day in span
-                                    generateDayCodesInRange(startDay, endDay).map { dayCode -> dayCode to item }
-                                }
-                            }
-                            .groupBy({ it.first }, { it.second })
-                            .mapValues { (_, list) ->
-                                list.sortedBy { it.occurrence.startTs }.toPersistentList()
-                            }
-                            .toPersistentMap()
-
+                // DisplayEventRepository merges Room + device calendar events,
+                // handles multi-day expansion, grouping by dayCode, and sorting
+                displayEventRepository.getDisplayEventsForDayRange(centerDateMs)
+                    .collect { grouped ->
                         // Track which dayCodes were loaded (even if empty)
                         val loadedCodes = (-3..3).map { offset ->
                             DayPagerUtils.msToDayCode(centerDateMs + (offset * DayPagerUtils.DAY_MS))
@@ -1390,7 +1296,7 @@ class HomeViewModel @Inject constructor(
                             )
                         }
 
-                        Log.d(TAG, "Day pager cache: loaded ${visible.size} events across ${grouped.size} days")
+                        Log.d(TAG, "Day pager cache: loaded events across ${grouped.size} days")
                     }
             } catch (e: CancellationException) {
                 throw e
@@ -1425,27 +1331,6 @@ class HomeViewModel @Inject constructor(
     private fun formatDateLabel(dateMillis: Long): String {
         val format = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
         return format.format(dateMillis)
-    }
-
-    /**
-     * Generate all day codes between start and end (inclusive).
-     * Uses Occurrence.incrementDayCode for calendar-correct month/year boundaries.
-     *
-     * @param startDay Start day code (YYYYMMDD format)
-     * @param endDay End day code (YYYYMMDD format)
-     * @return List of day codes from start to end inclusive
-     */
-    private fun generateDayCodesInRange(startDay: Int, endDay: Int): List<Int> {
-        if (startDay == endDay) return listOf(startDay)
-        if (startDay > endDay) return emptyList() // Invalid range guard
-
-        val result = mutableListOf<Int>()
-        var current = startDay
-        while (current <= endDay) {
-            result.add(current)
-            current = Occurrence.incrementDayCode(current)
-        }
-        return result
     }
 
     // ==================== Search ====================
@@ -1623,23 +1508,59 @@ class HomeViewModel @Inject constructor(
             try {
                 val dateFilter = _uiState.value.searchDateFilter
                 val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault(), _uiState.value.firstDayOfWeek)
+                val calendarMap = _uiState.value.calendars.associateBy { it.id }
 
-                // Use new search methods that return EventWithNextOccurrence
-                val results = withContext(ioDispatcher) {
-                    when {
-                        // Date filter active - use combined FTS + date range query
-                        timeRange != null -> {
-                            eventReader.searchEventsInRangeWithNextOccurrence(query, timeRange.first, timeRange.second)
-                        }
-                        // No date filter, include past - use basic FTS
-                        _uiState.value.searchIncludePast -> {
-                            eventReader.searchEventsWithNextOccurrence(query)
-                        }
-                        // No date filter, exclude past - use future-only FTS
-                        else -> {
-                            eventReader.searchEventsExcludingPastWithNextOccurrence(query)
-                        }
+                // Compute day code range for device calendar search
+                val today = LocalDate.now()
+                val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+                val (searchStartDayCode, searchEndDayCode) = when {
+                    timeRange != null -> {
+                        DayPagerUtils.msToDayCode(timeRange.first) to DayPagerUtils.msToDayCode(timeRange.second)
                     }
+                    _uiState.value.searchIncludePast -> {
+                        val pastDate = today.minusYears(1)
+                        val futureDate = today.plusYears(2)
+                        (pastDate.year * 10000 + pastDate.monthValue * 100 + pastDate.dayOfMonth) to
+                            (futureDate.year * 10000 + futureDate.monthValue * 100 + futureDate.dayOfMonth)
+                    }
+                    else -> {
+                        val futureDate = today.plusYears(2)
+                        todayCode to (futureDate.year * 10000 + futureDate.monthValue * 100 + futureDate.dayOfMonth)
+                    }
+                }
+
+                // Room search lambda: wraps EventReader methods, converts to SearchResult
+                val roomSearcher: suspend (String) -> List<SearchResult> = { q ->
+                    val ewnoResults = when {
+                        timeRange != null -> eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
+                        _uiState.value.searchIncludePast -> eventReader.searchEventsWithNextOccurrence(q)
+                        else -> eventReader.searchEventsExcludingPastWithNextOccurrence(q)
+                    }
+                    ewnoResults.map { ewno ->
+                        val event = ewno.event
+                        val calendar = calendarMap[event.calendarId]
+                        val syntheticOcc = Occurrence(
+                            eventId = event.id,
+                            calendarId = event.calendarId,
+                            startTs = event.startTs,
+                            endTs = event.endTs,
+                            startDay = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay),
+                            endDay = DateTimeUtils.eventTsToDayCode(event.endTs, event.isAllDay),
+                            isCancelled = false,
+                            exceptionEventId = null
+                        )
+                        SearchResult(
+                            displayEvent = DisplayEvent.Room(event, syntheticOcc, calendar),
+                            displayTs = ewno.nextOccurrenceTs ?: event.startTs
+                        )
+                    }
+                }
+
+                // Merge Room + device results via DisplayEventRepository
+                val results = withContext(ioDispatcher) {
+                    displayEventRepository.searchDisplayEvents(
+                        query, searchStartDayCode, searchEndDayCode, roomSearcher
+                    )
                 }
 
                 // Filter by visible calendars (using Calendar.isVisible as source of truth)
@@ -1647,7 +1568,12 @@ class HomeViewModel @Inject constructor(
                     .filter { it.isVisible }
                     .map { it.id }
                     .toSet()
-                val filteredResults = results.filter { it.event.calendarId in visibleCalendarIds }
+                val filteredResults = results.filter { result ->
+                    when (val de = result.displayEvent) {
+                        is DisplayEvent.Room -> de.event.calendarId in visibleCalendarIds
+                        is DisplayEvent.Device -> true // already filtered by CalendarProviderRepository
+                    }
+                }
 
                 _uiState.update { it.copy(searchResults = filteredResults.toPersistentList()) }
 
@@ -1661,13 +1587,12 @@ class HomeViewModel @Inject constructor(
     // ==================== Agenda ====================
 
     /**
-     * Observe agenda events - upcoming 30 days of occurrences using reactive Flow.
+     * Observe agenda events - upcoming 30 days using reactive Flow.
+     * Merges Room + device calendar events via DisplayEventRepository.
      * Each recurring event instance is shown separately.
-     * Respects calendar visibility settings.
      *
      * PROGRESSIVE LOADING: Events appear as they sync because this uses Flow
-     * collection instead of one-shot query. Room Flow emits updates when
-     * occurrences table changes.
+     * collection. DisplayEventRepository combines Room Flow + changeSignal.
      */
     private fun loadAgendaEvents() {
         // Cancel any previous agenda observation
@@ -1678,20 +1603,19 @@ class HomeViewModel @Inject constructor(
         val now = System.currentTimeMillis()
         val oneMonthLater = now + (30L * 24 * 60 * 60 * 1000) // 30 days
 
-        // Start observing agenda events (reactive - updates as sync progresses)
-        // Uses combine() so visibility changes also trigger updates
+        // DisplayEventRepository merges Room + device calendar events,
+        // sorted by startTs, with SecurityException fallback to Room-only
         agendaEventsJob = viewModelScope.launch {
             try {
-                eventReader.getVisibleOccurrencesWithEventsInRangeFlow(now, oneMonthLater)
-                    .map { visible -> visible.sortedBy { it.occurrence.startTs } }
-                    .collect { filteredOccurrences ->
+                displayEventRepository.getDisplayEventsForRange(now, oneMonthLater)
+                    .collect { displayEvents ->
                         _uiState.update {
                             it.copy(
-                                agendaOccurrences = filteredOccurrences.toPersistentList(),
+                                agendaEvents = displayEvents,
                                 isLoadingAgenda = false
                             )
                         }
-                        Log.d(TAG, "Agenda updated: ${filteredOccurrences.size} occurrences")
+                        Log.d(TAG, "Agenda updated: ${displayEvents.size} events")
                     }
             } catch (e: CancellationException) {
                 // Normal cancellation when panel closes - don't log as error
@@ -1840,19 +1764,22 @@ class HomeViewModel @Inject constructor(
     // ==================== Refresh ====================
 
     /**
-     * Reload the current view (dots and selected day).
+     * Reload the current view (dots, day pager cache, and active view).
      *
-     * Note: loadEventsForSelectedDay now uses Flow, so calling it restarts
-     * the observation which will emit current data and continue auto-updating.
-     * This is intentionally kept for explicit refresh scenarios like:
+     * Called for explicit refresh scenarios like:
      * - Calendar visibility toggle
      * - Event CRUD operations
      * - Sync completion
      */
     private fun reloadCurrentView() {
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        if (_uiState.value.selectedDate != 0L) {
-            loadEventsForSelectedDay(_uiState.value.selectedDate)
+        // Reload day pager cache (replaces old loadEventsForSelectedDay)
+        if (_uiState.value.cacheRangeCenter != 0L) {
+            loadEventsForDayPagerRange(_uiState.value.cacheRangeCenter)
+        }
+        // Reload agenda if agenda view is active
+        if (_uiState.value.viewMode == ViewMode.AGENDA) {
+            loadAgendaEvents()
         }
         // Also reload week view if 3-day view is active
         if (_uiState.value.viewMode == ViewMode.THREE_DAYS &&

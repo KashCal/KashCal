@@ -76,7 +76,7 @@ class PullStrategy @Inject constructor(
         private const val MAX_PARSE_RETRIES = 3
 
         // Batched multiget: max hrefs per calendar-multiget request (v22.5.11)
-        private const val MULTIGET_BATCH_SIZE = 50
+        private const val MULTIGET_BATCH_SIZE = 20
 
         // DB retry configuration
         private const val MAX_DB_RETRIES = 3
@@ -209,10 +209,6 @@ class PullStrategy @Inject constructor(
             // Rethrow cancellation to properly handle coroutine cancellation
             Log.d(TAG, "Pull cancelled")
             throw e
-        } catch (e: SyncBatchException) {
-            // Defensive: catch SyncBatchException that escapes a caller's try/catch
-            Log.e(TAG, "Batch fetch failed: code=${e.code}, retryable=${e.isRetryable}")
-            PullResult.Error(code = e.code, message = e.message, isRetryable = e.isRetryable)
         } catch (e: Exception) {
             Log.e(TAG, "Pull failed: ${e.message}", e)
             PullResult.Error(
@@ -330,11 +326,7 @@ class PullStrategy @Inject constructor(
         sessionBuilder?.setHrefsReported(changedHrefs.size)
 
         // Fetch events in batched concurrent multiget (v22.5.11)
-        val fetchResult = try {
-            fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs)
-        } catch (e: SyncBatchException) {
-            return PullResult.Error(e.code, e.message, e.isRetryable)
-        }
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -495,11 +487,7 @@ class PullStrategy @Inject constructor(
             )
         }
 
-        val fetchResult = try {
-            fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
-        } catch (e: SyncBatchException) {
-            return PullResult.Error(e.code, e.message, e.isRetryable)
-        }
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -656,11 +644,7 @@ class PullStrategy @Inject constructor(
         sessionBuilder?.setHrefsReported(hrefsToFetch.size)
 
         // Fetch events in batched concurrent multiget (v22.5.11)
-        val fetchResult = try {
-            fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
-        } catch (e: SyncBatchException) {
-            return PullResult.Error(e.code, e.message, e.isRetryable)
-        }
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -722,10 +706,10 @@ class PullStrategy @Inject constructor(
         for (serverEvent in serverEvents) {
             val parseResult = try {
                 icalParser.parseAllEvents(serverEvent.icalData)
-            } catch (e: Throwable) {
-                // Catch Throwable to catch Errors too (OutOfMemoryError, etc.)
-                Log.e(TAG, "Parse exception for ${serverEvent.url}: ${e.javaClass.name}: ${e.message}")
-                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Parse exception for ${serverEvent.url}: ${e.javaClass.simpleName}: ${e.message}")
+                sessionBuilder?.incrementSkipParseError()
+                continue
             }
 
             // Check for parse success
@@ -853,9 +837,9 @@ class PullStrategy @Inject constructor(
                     uidToMasterEvent[meta.parsed.uid] = existing
                     continue
                 }
-                // Not a duplicate — FK or other constraint error. Skip to prevent sync abort loop (issue #55)
-                Log.w(TAG, "Constraint error for master ${meta.parsed.uid} (${meta.caldavUrl}), skipping: ${e.message}")
-                sessionBuilder?.incrementSkipConstraintError()
+                // Not a duplicate — already synced in a prior session. Skip to prevent sync abort loop (issue #55)
+                Log.d(TAG, "Skipped already-synced master ${meta.parsed.uid} (${meta.caldavUrl})")
+                sessionBuilder?.incrementSkipAlreadySynced()
                 continue
             }
 
@@ -981,10 +965,10 @@ class PullStrategy @Inject constructor(
                     }
                 }
             } catch (e: SQLiteConstraintException) {
-                // FK or other constraint error on exception event. Skip to prevent sync abort loop (issue #55)
-                Log.w(TAG, "Constraint error for exception ${meta.parsed.uid} " +
-                    "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp}), skipping: ${e.message}")
-                sessionBuilder?.incrementSkipConstraintError()
+                // Already synced in a prior session. Skip to prevent sync abort loop (issue #55)
+                Log.d(TAG, "Skipped already-synced exception ${meta.parsed.uid} " +
+                    "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp})")
+                sessionBuilder?.incrementSkipAlreadySynced()
                 continue
             }
 
@@ -1028,25 +1012,15 @@ class PullStrategy @Inject constructor(
     )
 
     /**
-     * Exception for propagating batch fetch errors through coroutineScope.
-     */
-    private class SyncBatchException(
-        val code: Int,
-        override val message: String,
-        val isRetryable: Boolean
-    ) : Exception(message)
-
-    /**
      * Fetch events in batched concurrent multiget requests (v22.5.11).
      *
      * Splits hrefs into batches of [MULTIGET_BATCH_SIZE] and fetches them concurrently.
      * OkHttp Dispatcher throttles to 5 concurrent requests per host.
-     * Fails fast on any batch error — WorkManager retries the entire sync.
      *
-     * Empty-response fallback: if a batch returns 0 events for >1 hrefs (Zoho returns
-     * HTTP 200 empty body for multi-href calendar-multiget), falls back to concurrent
-     * single-href fetches for that batch. This also serves as a safety net for any
-     * server with transient empty-response issues.
+     * Per-batch resilience: if a batch multiget fails, falls back to individual
+     * single-href fetches for that batch via [fetchSingleHrefConcurrent]. Other
+     * batches continue normally. This also handles Zoho's empty-response quirk
+     * (HTTP 200 empty body for multi-href calendar-multiget).
      */
     private suspend fun fetchEventsBatched(
         client: CalDavClient,
@@ -1065,7 +1039,11 @@ class PullStrategy @Inject constructor(
                     val result = client.fetchEventsByHref(calendarUrl, batch)
                     if (result.isError()) {
                         val error = result as CalDavResult.Error
-                        throw SyncBatchException(error.code, error.message, error.isRetryable)
+                        Log.w(TAG, "fetchEventsBatched: batch ${index + 1} multiget failed " +
+                            "(code=${error.code}): ${error.message}, falling back to individual fetches")
+                        val recovered = fetchSingleHrefConcurrent(client, calendarUrl, batch)
+                        Log.d(TAG, "fetchEventsBatched: recovered ${recovered.size} of ${batch.size} events via individual fallback")
+                        return@async recovered
                     }
                     val events = (result as CalDavResult.Success).data
                     if (events.isEmpty() && batch.size > 1) {

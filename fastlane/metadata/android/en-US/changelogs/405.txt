@@ -1,0 +1,9 @@
+v22.8.1
+
+What's New:
+- Device Calendar Integration: See your phone's calendar in KashCal alongside iCloud, CalDAV, and ICS
+- Zoho CalDAV: Zoho calendar verified working
+- Reminder Options: "At time of event" and "5 minutes before" now available
+- Multi-Home-Set: Support for CalDAV servers with multiple calendar-home-set URLs
+
+Plus many bug fixes and performance improvements.

@@ -33,6 +33,8 @@ data class ReminderOption(
  */
 val TIMED_REMINDER_OPTIONS = listOf(
     ReminderOption("No reminder", REMINDER_OFF),
+    ReminderOption("At time of event", 0),
+    ReminderOption("5 minutes before", 5),
     ReminderOption("15 minutes before", 15),
     ReminderOption("30 minutes before", 30),
     ReminderOption("1 hour before", 60),

@@ -54,6 +54,8 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayManager
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -90,6 +92,8 @@ class AccountSettingsViewModelTest {
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactBirthdayManager: ContactBirthdayManager
+    private lateinit var calendarProviderManager: CalendarProviderManager
+    private lateinit var calendarProviderRepository: CalendarProviderRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var widgetUpdateManager: WidgetUpdateManager
 
@@ -154,6 +158,8 @@ class AccountSettingsViewModelTest {
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
         contactBirthdayManager = mockk(relaxed = true)
+        calendarProviderManager = mockk(relaxed = true)
+        calendarProviderRepository = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
 
@@ -215,6 +221,8 @@ class AccountSettingsViewModelTest {
             eventCoordinator = eventCoordinator,
             syncLogReader = syncLogReader,
             contactBirthdayManager = contactBirthdayManager,
+            calendarProviderManager = calendarProviderManager,
+            calendarProviderRepository = calendarProviderRepository,
             dataStore = dataStore,
             widgetUpdateManager = widgetUpdateManager
         )

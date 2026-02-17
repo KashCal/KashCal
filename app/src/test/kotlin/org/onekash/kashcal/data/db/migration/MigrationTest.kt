@@ -1,5 +1,6 @@
 package org.onekash.kashcal.data.db.migration
 
+import android.database.sqlite.SQLiteConstraintException
 import android.database.sqlite.SQLiteDatabase
 import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
@@ -108,6 +109,17 @@ class MigrationTest {
     private fun triggerExists(triggerName: String): Boolean {
         db.query("SELECT name FROM sqlite_master WHERE type='trigger' AND name=?", arrayOf(triggerName)).use { cursor ->
             return cursor.count > 0
+        }
+    }
+
+    private fun isIndexUnique(indexName: String): Boolean {
+        db.query(
+            "SELECT sql FROM sqlite_master WHERE type='index' AND name=?",
+            arrayOf(indexName)
+        ).use { cursor ->
+            if (!cursor.moveToFirst()) return false
+            val sql = cursor.getString(0) ?: return false
+            return sql.contains("UNIQUE", ignoreCase = true)
         }
     }
 
@@ -563,11 +575,240 @@ class MigrationTest {
         }
     }
 
+    // ==================== Migration 13 to 14: exception event unique index swap ====================
+
+    /**
+     * Chains all migrations 1→13 and creates the unique index that createV1Schema() omits.
+     * Migration 13→14 expects index_events_original_event_id_original_instance_time to exist.
+     */
+    private fun setupV13Schema() {
+        createV1Schema()
+        // createV1Schema() omits Room-generated unique index that migration 13->14 drops
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
+            "ON events (original_event_id, original_instance_time)"
+        )
+        Migrations.MIGRATION_1_2.migrate(db)
+        Migrations.MIGRATION_2_3.migrate(db)
+        Migrations.MIGRATION_4_5.migrate(db)
+        Migrations.MIGRATION_5_6.migrate(db)
+        Migrations.MIGRATION_6_7.migrate(db)
+        Migrations.MIGRATION_7_8.migrate(db)
+        Migrations.MIGRATION_8_9.migrate(db)
+        Migrations.MIGRATION_9_10.migrate(db)
+        Migrations.MIGRATION_10_11.migrate(db)
+        Migrations.MIGRATION_11_12.migrate(db)
+        Migrations.MIGRATION_12_13.migrate(db)
+    }
+
+    /**
+     * Minimal v13 schema for dedup tests: base tables + both target indices, but
+     * WITHOUT the master dedup trigger (created by migration 6→7). This simulates
+     * pre-v6 databases that may have orphan exceptions with original_event_id = NULL
+     * coexisting with masters of the same UID — the exact pattern the dedup cleans.
+     */
+    private fun setupV13SchemaMinimal() {
+        createV1Schema()
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
+            "ON events (original_event_id, original_instance_time)"
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS index_events_calendar_id_uid_original_instance_time " +
+            "ON events (calendar_id, uid, original_instance_time)"
+        )
+    }
+
+    /** Insert test account + calendar for migration 13→14 tests. Returns calendar id. */
+    private fun insertTestAccountAndCalendar(): Long {
+        db.execSQL("INSERT INTO accounts (id, provider, email, home_set_url, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 'https://caldav.icloud.com/', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://caldav.icloud.com/cal/', 'Test', -1)")
+        return 1
+    }
+
+    @Test
+    fun `migration 13 to 14 swaps unique index`() {
+        setupV13Schema()
+
+        // Before: original_event_id_original_instance_time is unique
+        assertTrue(isIndexUnique("index_events_original_event_id_original_instance_time"))
+        // Before: calendar_id_uid_original_instance_time is non-unique
+        assertTrue(indexExists("index_events_calendar_id_uid_original_instance_time"))
+        assertFalse(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        // After: original_event_id_original_instance_time is non-unique
+        assertTrue(indexExists("index_events_original_event_id_original_instance_time"))
+        assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
+        // After: calendar_id_uid_original_instance_time is unique
+        assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
+    }
+
+    @Test
+    fun `migration 13 to 14 dedup removes orphan when linked exists`() {
+        // Use minimal schema (no master dedup trigger from migration 6→7) to allow
+        // inserting orphan exceptions. This simulates pre-v6 databases that may have
+        // accumulated orphan duplicates before the trigger existed.
+        setupV13SchemaMinimal()
+        val calId = insertTestAccountAndCalendar()
+
+        // Insert master event
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (1, 'master-uid', $calId, 'Master', 1000, 2000, 0, 0, 0)"
+        )
+        // Insert linked exception (has original_event_id)
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (2, 'master-uid', $calId, 'Exception Linked', 3000, 4000, 0, 0, 0, 1, 3000)"
+        )
+        // Insert orphan exception (same uid + instance_time but original_event_id = NULL)
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (3, 'master-uid', $calId, 'Exception Orphan', 3000, 4000, 0, 0, 0, NULL, 3000)"
+        )
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        // Orphan (id=3) deleted, linked (id=2) survives
+        db.query("SELECT id FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
+            assertEquals(1, cursor.count)
+            cursor.moveToFirst()
+            assertEquals(2, cursor.getInt(0))
+        }
+        // Master untouched
+        db.query("SELECT COUNT(*) FROM events WHERE original_instance_time IS NULL").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(1, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 13 to 14 dedup keeps highest id for duplicate orphans`() {
+        // Use minimal schema (no master dedup trigger) — see dedup orphan test above.
+        setupV13SchemaMinimal()
+        val calId = insertTestAccountAndCalendar()
+
+        // Insert master
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (1, 'master-uid', $calId, 'Master', 1000, 2000, 0, 0, 0)"
+        )
+        // Two orphan exceptions with same (calendar_id, uid, original_instance_time)
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (2, 'master-uid', $calId, 'Orphan Old', 3000, 4000, 0, 0, 0, NULL, 3000)"
+        )
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (3, 'master-uid', $calId, 'Orphan New', 3000, 4000, 0, 0, 0, NULL, 3000)"
+        )
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        // Highest id (3) survives
+        db.query("SELECT id, title FROM events WHERE original_instance_time IS NOT NULL").use { cursor ->
+            assertEquals(1, cursor.count)
+            cursor.moveToFirst()
+            assertEquals(3, cursor.getInt(0))
+            assertEquals("Orphan New", cursor.getString(1))
+        }
+    }
+
+    @Test
+    fun `migration 13 to 14 does not delete masters`() {
+        setupV13Schema()
+        val calId = insertTestAccountAndCalendar()
+
+        // Insert 3 masters (original_instance_time IS NULL — protected by dedup filter)
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (1, 'uid-a', $calId, 'Master A', 1000, 2000, 0, 0, 0)"
+        )
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (2, 'uid-b', $calId, 'Master B', 3000, 4000, 0, 0, 0)"
+        )
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (3, 'uid-c', $calId, 'Master C', 5000, 6000, 0, 0, 0)"
+        )
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        db.query("SELECT COUNT(*) FROM events").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(3, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 13 to 14 is idempotent`() {
+        setupV13Schema()
+
+        Migrations.MIGRATION_13_14.migrate(db)
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        assertTrue(indexExists("index_events_original_event_id_original_instance_time"))
+        assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
+        assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
+    }
+
+    @Test
+    fun `migration 13 to 14 handles empty table`() {
+        setupV13Schema()
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        db.query("SELECT COUNT(*) FROM events").use { cursor ->
+            cursor.moveToFirst()
+            assertEquals(0, cursor.getInt(0))
+        }
+        assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
+        assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
+    }
+
+    @Test(expected = SQLiteConstraintException::class)
+    fun `migration 13 to 14 new unique index blocks duplicate exceptions`() {
+        setupV13Schema()
+        val calId = insertTestAccountAndCalendar()
+
+        Migrations.MIGRATION_13_14.migrate(db)
+
+        // Insert master
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
+            "VALUES (1, 'master-uid', $calId, 'Master', 1000, 2000, 0, 0, 0)"
+        )
+        // First exception — succeeds
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (2, 'master-uid', $calId, 'Exception', 3000, 4000, 0, 0, 0, 1, 3000)"
+        )
+        // Second exception with same (calendar_id, uid, original_instance_time) — must throw
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
+            "original_event_id, original_instance_time) " +
+            "VALUES (3, 'master-uid', $calId, 'Duplicate', 3000, 4000, 0, 0, 0, 1, 3000)"
+        )
+    }
+
     // ==================== Full Migration Chain ====================
 
     @Test
-    fun `full migration chain 1 to 13 executes without error`() {
+    fun `full migration chain 1 to 14 executes without error`() {
         createV1Schema()
+        // createV1Schema() omits Room-generated unique index; add it for migration 13→14
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
+            "ON events (original_event_id, original_instance_time)"
+        )
         // Also create ics_subscriptions for migration 7→8 (needs it for boolean index)
         Migrations.MIGRATION_1_2.migrate(db)
 
@@ -583,6 +824,7 @@ class MigrationTest {
         Migrations.MIGRATION_10_11.migrate(db)
         Migrations.MIGRATION_11_12.migrate(db)
         Migrations.MIGRATION_12_13.migrate(db)
+        Migrations.MIGRATION_13_14.migrate(db)
 
         // Verify final schema has all expected tables
         assertTrue(tableExists("accounts"))
@@ -604,13 +846,17 @@ class MigrationTest {
         assertTrue(columnExists("pending_operations", "source_calendar_id"))
         assertTrue(columnExists("pending_operations", "lifetime_reset_at"))
         assertTrue(columnExists("pending_operations", "failed_at"))
+
+        // Verify migration 13→14 index swap
+        assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
+        assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
     }
 
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(11, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(12, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -639,12 +885,14 @@ class MigrationTest {
         assertEquals(12, migrations[9].endVersion)
         assertEquals(12, migrations[10].startVersion)
         assertEquals(13, migrations[10].endVersion)
+        assertEquals(13, migrations[11].startVersion)
+        assertEquals(14, migrations[11].endVersion)
     }
 
     @Test
     fun `migration versions form valid chain with gaps`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
-        // Manual: 1→2, 2→3, 4→5, ..., 12→13 (AutoMigration: 3→4)
+        // Manual: 1→2, 2→3, 4→5, ..., 12→13, 13→14 (AutoMigration: 3→4)
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         assertTrue(migrations[2].startVersion == 4) // gap at 3→4
         for (i in 2 until migrations.size - 1) {

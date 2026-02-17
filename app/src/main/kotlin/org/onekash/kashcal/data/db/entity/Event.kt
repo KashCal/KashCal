@@ -39,11 +39,11 @@ import androidx.room.PrimaryKey
         Index(value = ["import_id"]),
         Index(value = ["calendar_id", "import_id"]),
         Index(value = ["original_event_id"]),
-        Index(value = ["original_event_id", "original_instance_time"], unique = true),
+        Index(value = ["original_event_id", "original_instance_time"]),
         Index(value = ["sync_status"]),
         Index(value = ["calendar_id", "sync_status"]),
         Index(value = ["caldav_url"]),
-        Index(value = ["calendar_id", "uid", "original_instance_time"])
+        Index(value = ["calendar_id", "uid", "original_instance_time"], unique = true)
     ]
 )
 data class Event(

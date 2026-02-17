@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.contacts.ContactBirthdayManager
 import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -67,6 +68,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     lateinit var contactBirthdayManager: ContactBirthdayManager
 
     @Inject
+    lateinit var calendarProviderManager: CalendarProviderManager
+
+    @Inject
     lateinit var dataStore: KashCalDataStore
 
     @Inject
@@ -113,6 +117,9 @@ class KashCalApplication : Application(), Configuration.Provider {
 
         // Initialize contact birthday observer (if enabled)
         contactBirthdayManager.initialize()
+
+        // Initialize device calendar observer (if enabled)
+        calendarProviderManager.initialize()
 
         // Schedule periodic reminder refresh (catches events entering window)
         ReminderRefreshWorker.schedule(this)

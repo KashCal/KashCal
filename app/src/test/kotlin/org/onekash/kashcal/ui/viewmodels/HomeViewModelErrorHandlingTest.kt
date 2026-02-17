@@ -25,6 +25,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.error.ErrorActionCallback
@@ -53,6 +54,7 @@ class HomeViewModelErrorHandlingTest {
     // Mocks
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var eventReader: EventReader
+    private lateinit var displayEventRepository: DisplayEventRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
@@ -78,6 +80,7 @@ class HomeViewModelErrorHandlingTest {
 
         eventCoordinator = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
+        displayEventRepository = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
@@ -107,6 +110,9 @@ class HomeViewModelErrorHandlingTest {
         coEvery { eventReader.getVisibleOccurrencesInRange(any(), any()) } returns flowOf(emptyList())
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(emptyList())
         every { eventReader.getVisibleOccurrencesWithEventsForDay(any()) } returns flowOf(emptyList())
+
+        // Device calendar change signal (starts at 0, no changes)
+        every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
     }
 
     @After
@@ -118,6 +124,7 @@ class HomeViewModelErrorHandlingTest {
         return HomeViewModel(
             eventCoordinator = eventCoordinator,
             eventReader = eventReader,
+            displayEventRepository = displayEventRepository,
             dataStore = dataStore,
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,

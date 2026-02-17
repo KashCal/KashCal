@@ -66,12 +66,24 @@ class ReminderPickerTest {
     }
 
     // ==================== TIMED EVENT OPTIONS ====================
-    // Options: None, 15m, 30m, 1h, 4h, 1d, 1w
+    // Options: None, 0m, 5m, 15m, 30m, 1h, 4h, 1d, 1w
 
     @Test
     fun `timed event has No reminder option`() {
         val options = getReminderOptionsForEventType(isAllDay = false)
         assertTrue(options.any { it.minutes == REMINDER_OFF })
+    }
+
+    @Test
+    fun `timed event has at time of event option`() {
+        val options = getReminderOptionsForEventType(isAllDay = false)
+        assertTrue(options.any { it.minutes == 0 })
+    }
+
+    @Test
+    fun `timed event has 5 minutes before option`() {
+        val options = getReminderOptionsForEventType(isAllDay = false)
+        assertTrue(options.any { it.minutes == 5 })
     }
 
     @Test
@@ -108,9 +120,8 @@ class ReminderPickerTest {
     fun `timed event no longer has legacy options in picker`() {
         // Legacy options removed from picker but still work via grandfather clause
         // Note: 30 minutes was restored as a valid option in v14.2.13
+        // Note: 0 (at event) and 5 minutes restored in v22.5.16
         val options = getReminderOptionsForEventType(isAllDay = false)
-        assertFalse("0 (at event) removed from picker", options.any { it.minutes == 0 })
-        assertFalse("5 minutes removed from picker", options.any { it.minutes == 5 })
         assertFalse("10 minutes removed from picker", options.any { it.minutes == 10 })
         assertFalse("120 (2 hours) removed from picker", options.any { it.minutes == 120 })
     }

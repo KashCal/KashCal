@@ -5,6 +5,7 @@ import org.junit.Assert.*
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -72,6 +73,11 @@ class EventPositioningTest {
         )
     }
 
+    // Helper to wrap Event + Occurrence into DisplayEvent.Room
+    private fun toDisplayEvent(event: Event, occurrence: Occurrence): DisplayEvent.Room {
+        return DisplayEvent.Room(event = event, occurrence = occurrence, calendar = null)
+    }
+
     // ==================== Single Event Tests ====================
 
     @Test
@@ -83,7 +89,7 @@ class EventPositioningTest {
             endHour = 10
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -106,7 +112,7 @@ class EventPositioningTest {
             endHour = 11
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -128,7 +134,7 @@ class EventPositioningTest {
             endMinute = 15
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -149,7 +155,7 @@ class EventPositioningTest {
         val occ1 = createTestOccurrence(eventId = 1, startHour = 9, endHour = 10)
         val occ2 = createTestOccurrence(eventId = 2, startHour = 9, endHour = 10)
 
-        val events = listOf(event1 to occ1, event2 to occ2)
+        val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(2, positioned.size)
@@ -169,8 +175,10 @@ class EventPositioningTest {
     @Test
     fun `three overlapping events shows 3 in overlap total`() {
         val events = (1..3).map { id ->
-            createTestEvent(id = id.toLong(), title = "Event $id") to
-            createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10)
+            toDisplayEvent(
+                createTestEvent(id = id.toLong(), title = "Event $id"),
+                createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10)
+            )
         }
 
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
@@ -193,7 +201,7 @@ class EventPositioningTest {
         val occ1 = createTestOccurrence(eventId = 1, startHour = 9, endHour = 10)
         val occ2 = createTestOccurrence(eventId = 2, startHour = 11, endHour = 12)
 
-        val events = listOf(event1 to occ1, event2 to occ2)
+        val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(2, positioned.size)
@@ -215,7 +223,7 @@ class EventPositioningTest {
         val occ1 = createTestOccurrence(eventId = 1, startHour = 9, endHour = 11)
         val occ2 = createTestOccurrence(eventId = 2, startHour = 10, endHour = 12)
 
-        val events = listOf(event1 to occ1, event2 to occ2)
+        val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(2, positioned.size)
@@ -238,7 +246,7 @@ class EventPositioningTest {
             endHour = 8
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -262,7 +270,7 @@ class EventPositioningTest {
             endMinute = 59
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -283,7 +291,7 @@ class EventPositioningTest {
             endHour = 17
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -310,7 +318,7 @@ class EventPositioningTest {
             endHour = 7
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -330,7 +338,7 @@ class EventPositioningTest {
             endHour = 23
         )
 
-        val events = listOf(event to occurrence)
+        val events = listOf(toDisplayEvent(event, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
@@ -342,8 +350,7 @@ class EventPositioningTest {
     // ==================== Exception Event Tests ====================
 
     @Test
-    fun `uses exception event when present`() {
-        val masterEvent = createTestEvent(id = 100, title = "Master Event")
+    fun `uses display event data correctly`() {
         val exceptionEvent = createTestEvent(id = 101, title = "Exception Event")
 
         val date = LocalDate.now()
@@ -352,7 +359,6 @@ class EventPositioningTest {
         val endTs = date.atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
         val startDay = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
 
-        // Occurrence links to master but has exception
         val occurrence = Occurrence(
             eventId = 100,
             calendarId = testCalendarId,
@@ -361,14 +367,13 @@ class EventPositioningTest {
             startDay = startDay,
             endDay = startDay,
             isCancelled = false,
-            exceptionEventId = 101  // Points to exception
+            exceptionEventId = 101
         )
 
-        // Pass exception event (which should be used for display)
-        val events = listOf(exceptionEvent to occurrence)
+        val events = listOf(toDisplayEvent(exceptionEvent, occurrence))
         val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
 
         assertEquals(1, positioned.size)
-        assertEquals(exceptionEvent, positioned[0].event)
+        assertEquals("Exception Event", positioned[0].displayEvent.title)
     }
 }

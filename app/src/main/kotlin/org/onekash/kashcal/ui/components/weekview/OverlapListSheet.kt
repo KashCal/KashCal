@@ -16,8 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.model.DisplayEvent
 
 /**
  * Bottom sheet showing a list of overlapping events.
@@ -25,20 +24,18 @@ import org.onekash.kashcal.data.db.entity.Occurrence
  * Displayed when user taps "+N more" badge on overlapping events.
  * Shows all events in the overlap group with compact format.
  *
- * @param events List of (Event, Occurrence) pairs to display
- * @param calendarColors Map of calendar ID to color
+ * @param events List of DisplayEvent to display
  * @param onDismiss Called when sheet is dismissed
  * @param onEventClick Called when an event is tapped (dismisses sheet)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverlapListSheet(
-    events: List<Pair<Event, Occurrence>>,
-    calendarColors: Map<Long, Int>,
+    events: List<DisplayEvent>,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     onDismiss: () -> Unit,
-    onEventClick: (Event, Occurrence) -> Unit
+    onEventClick: (DisplayEvent) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState()
 
@@ -65,16 +62,11 @@ fun OverlapListSheet(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(events) { (event, occurrence) ->
-                    val color = calendarColors[event.calendarId]
-                        ?: DEFAULT_EVENT_COLOR
-
+                items(events) { displayEvent ->
                     CompactEventBlock(
-                        event = event,
-                        occurrence = occurrence,
-                        color = color,
+                        displayEvent = displayEvent,
                         onClick = {
-                            onEventClick(event, occurrence)
+                            onEventClick(displayEvent)
                             onDismiss()
                         },
                         showEventEmojis = showEventEmojis,
@@ -88,5 +80,3 @@ fun OverlapListSheet(
         }
     }
 }
-
-private const val DEFAULT_EVENT_COLOR = 0xFF6200EE.toInt()

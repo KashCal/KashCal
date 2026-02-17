@@ -492,8 +492,9 @@ class CalDavSyncWorkerTest {
     // ==================== Exception Handling Tests ====================
 
     @Test
-    fun `unhandled exception produces retry`() = runTest {
-        // Given
+    fun `syncAll account exception records failure and continues`() = runTest {
+        // A2: When syncEngine throws for one account, record failure and continue
+        // to next account instead of aborting the entire sync.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -502,11 +503,49 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
             RuntimeException("Unexpected error")
 
+        // After recording failure
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount.copy(consecutiveSyncFailures = 1)
+
         // When
         val result = worker.doWork()
 
-        // Then
-        assertTrue(result is ListenableWorker.Result.Retry)
+        // Then - Exception is caught, failure recorded, result is success (with errors)
+        assertTrue(result is ListenableWorker.Result.Success)
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+    }
+
+    @Test
+    fun `syncAll first account exception does not block second account`() = runTest {
+        // A2: Two accounts — first throws, second succeeds. Both should be processed.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val account1 = createTestAccount(id = 1L)
+        val account2 = createTestAccount(id = 2L).copy(
+            email = "test2@icloud.com",
+            displayName = "Test Account 2"
+        )
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(account1, account2)
+
+        // Account 1 throws exception
+        coEvery { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Account 1 crashed")
+        // Account 2 succeeds
+        coEvery { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 2, durationMs = 500)
+
+        // After recording failure for account 1
+        coEvery { accountRepository.getAccountById(1L) } returns account1.copy(consecutiveSyncFailures = 1)
+
+        // When
+        val result = worker.doWork()
+
+        // Then - Both accounts processed, first failure recorded, second succeeds
+        assertTrue(result is ListenableWorker.Result.Success)
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        coVerify { accountRepository.recordSyncSuccess(2L, any()) }
+        // Verify second account was actually synced (not skipped)
+        coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
     }
 
     // ==================== Input Data Helper Tests ====================
@@ -1220,6 +1259,125 @@ class CalDavSyncWorkerTest {
         // Then - BOTH accounts get their metadata recorded
         coVerify { accountRepository.recordSyncSuccess(1L, any()) }
         coVerify { accountRepository.recordSyncFailure(2L, any()) }
+    }
+
+    // ==================== A2: Adverse Tests — All Accounts Fail ====================
+
+    @Test
+    fun `syncAll all accounts throw exceptions — returns success with errors`() = runTest {
+        // A2 adverse: When EVERY account throws an exception, syncAll should still
+        // return Result.Success (with error data) — not crash or return Failure.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val account1 = createTestAccount(id = 1L)
+        val account2 = createTestAccount(id = 2L).copy(
+            email = "test2@icloud.com",
+            displayName = "Test Account 2"
+        )
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(account1, account2)
+
+        // Both accounts throw
+        coEvery { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Account 1 server unreachable")
+        coEvery { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Account 2 auth failure")
+
+        // After recording failures
+        coEvery { accountRepository.getAccountById(1L) } returns account1.copy(consecutiveSyncFailures = 1)
+        coEvery { accountRepository.getAccountById(2L) } returns account2.copy(consecutiveSyncFailures = 1)
+
+        // When
+        val result = worker.doWork()
+
+        // Then — returns success (with errors in output data), not Failure
+        assertTrue("Should be Result.Success even when all accounts fail", result is ListenableWorker.Result.Success)
+        // Both failures recorded
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        coVerify { accountRepository.recordSyncFailure(2L, any()) }
+        // Both accounts were attempted (second wasn't skipped)
+        coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `syncAll exception message propagates to error output`() = runTest {
+        // A2: Verify the exception message is captured in the allErrors list
+        // so it surfaces in the home banner via PartialSuccess.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Connection timed out after 30s")
+
+        coEvery { accountRepository.getAccountById(1L) } returns testAccount.copy(consecutiveSyncFailures = 1)
+
+        val result = worker.doWork()
+
+        // Result should be Success (PartialSuccess maps to Result.success with error in output)
+        assertTrue(result is ListenableWorker.Result.Success)
+        // Verify failure was recorded (the exception path records failure metadata)
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+    }
+
+    @Test
+    fun `syncAll exception triggers checkSyncFailureThreshold`() = runTest {
+        // A2: After an exception, checkSyncFailureThreshold should be called
+        // to potentially trigger a notification if the account hits 3 consecutive failures.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val testAccount = createTestAccount()
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Unexpected error")
+
+        // Account now at exactly 3 failures — should trigger notification
+        val accountAfterFailure = testAccount.copy(consecutiveSyncFailures = 3)
+        coEvery { accountRepository.getAccountById(1L) } returns accountAfterFailure
+
+        worker.doWork()
+
+        // Failure recorded AND threshold check triggered
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        verify { notificationManager.showSyncFailureThresholdNotification(any(), 3) }
+    }
+
+    @Test
+    fun `syncAll three accounts — first and third throw, second succeeds`() = runTest {
+        // A2: Verify isolation with 3 accounts — exceptions don't affect other accounts.
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+        val account1 = createTestAccount(id = 1L)
+        val account2 = createTestAccount(id = 2L).copy(email = "test2@icloud.com", displayName = "Account 2")
+        val account3 = createTestAccount(id = 3L).copy(email = "test3@icloud.com", displayName = "Account 3")
+
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(account1, account2, account3)
+
+        coEvery { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Account 1 crashed")
+        coEvery { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 3, durationMs = 1000)
+        coEvery { syncEngine.syncAccountWithQuirks(account3, any(), any(), any(), any(), any()) } throws
+            RuntimeException("Account 3 network error")
+
+        coEvery { accountRepository.getAccountById(1L) } returns account1.copy(consecutiveSyncFailures = 1)
+        coEvery { accountRepository.getAccountById(3L) } returns account3.copy(consecutiveSyncFailures = 1)
+
+        val result = worker.doWork()
+
+        assertTrue(result is ListenableWorker.Result.Success)
+        // Account 1: failure recorded
+        coVerify { accountRepository.recordSyncFailure(1L, any()) }
+        // Account 2: success recorded
+        coVerify { accountRepository.recordSyncSuccess(2L, any()) }
+        // Account 3: failure recorded (was not skipped despite account 1 failing)
+        coVerify { accountRepository.recordSyncFailure(3L, any()) }
+        // All three accounts were attempted
+        coVerify { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
+        coVerify { syncEngine.syncAccountWithQuirks(account3, any(), any(), any(), any(), any()) }
     }
 
     // ==================== Account Detail: Sync Recording & isEnabled Guard ====================

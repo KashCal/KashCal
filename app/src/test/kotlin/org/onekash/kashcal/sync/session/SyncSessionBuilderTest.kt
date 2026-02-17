@@ -48,7 +48,7 @@ class SyncSessionBuilderTest {
         assertEquals(0, session.skippedPendingLocal)
         assertEquals(0, session.skippedEtagUnchanged)
         assertEquals(0, session.skippedOrphanedException)
-        assertEquals(0, session.skippedConstraintError)
+        assertEquals(0, session.skippedAlreadySynced)
         assertEquals(0, session.skippedRecentlyPushed)
         assertEquals(0, session.abandonedParseErrors)
         assertTrue(session.tokenAdvanced)
@@ -129,7 +129,7 @@ class SyncSessionBuilderTest {
         repeat(3) { builder.incrementSkipPendingLocal() }
         repeat(1) { builder.incrementSkipEtagUnchanged() }
         repeat(4) { builder.incrementSkipOrphanedException() }
-        repeat(2) { builder.incrementSkipConstraintError() }
+        repeat(2) { builder.incrementSkipAlreadySynced() }
         repeat(5) { builder.incrementSkipRecentlyPushed() }
 
         val session = builder.build()
@@ -137,7 +137,7 @@ class SyncSessionBuilderTest {
         assertEquals(3, session.skippedPendingLocal)
         assertEquals(1, session.skippedEtagUnchanged)
         assertEquals(4, session.skippedOrphanedException)
-        assertEquals(2, session.skippedConstraintError)
+        assertEquals(2, session.skippedAlreadySynced)
         assertEquals(5, session.skippedRecentlyPushed)
     }
 
@@ -248,7 +248,7 @@ class SyncSessionBuilderTest {
             .incrementSkipPendingLocal()
             .incrementSkipEtagUnchanged()
             .incrementSkipOrphanedException()
-            .incrementSkipConstraintError()
+            .incrementSkipAlreadySynced()
             .incrementSkipRecentlyPushed()
             .setAbandonedParseErrors(0)
             .setTokenAdvanced(true)

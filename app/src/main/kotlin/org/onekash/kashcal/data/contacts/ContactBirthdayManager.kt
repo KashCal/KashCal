@@ -1,11 +1,14 @@
 package org.onekash.kashcal.data.contacts
 
+import android.Manifest
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.provider.ContactsContract
 import android.util.Log
+import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,14 +49,19 @@ class ContactBirthdayManager @Inject constructor(
 
     /**
      * Initialize on app startup.
-     *
      * Checks if contact birthdays feature is enabled and registers
      * the ContentObserver if so.
+     * If permission was revoked since the feature was enabled, auto-disables it.
      */
     fun initialize() {
         scope.launch {
             val enabled = dataStore.contactBirthdaysEnabled.first()
             if (enabled) {
+                if (!hasPermission()) {
+                    Log.w(TAG, "READ_CONTACTS permission revoked, auto-disabling contact birthdays")
+                    dataStore.setContactBirthdaysEnabled(false)
+                    return@launch
+                }
                 Log.d(TAG, "Contact birthdays enabled on startup, registering observer")
                 registerObserver()
             }
@@ -82,9 +90,19 @@ class ContactBirthdayManager @Inject constructor(
         ContactBirthdayWorker.cancelSync(context)
     }
 
+    private fun hasPermission(): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) ==
+            PackageManager.PERMISSION_GRANTED
+
     private fun registerObserver() {
         if (observer != null) {
             Log.d(TAG, "Observer already registered")
+            return
+        }
+
+        if (!hasPermission()) {
+            Log.w(TAG, "READ_CONTACTS permission revoked, auto-disabling contact birthdays")
+            scope.launch { dataStore.setContactBirthdaysEnabled(false) }
             return
         }
 
@@ -97,13 +115,18 @@ class ContactBirthdayManager @Inject constructor(
             ContactBirthdayWorker.requestImmediateSync(context)
         }
 
-        contentResolver.registerContentObserver(
-            ContactsContract.Contacts.CONTENT_URI,
-            true, // notifyForDescendants
-            observer!!
-        )
-
-        Log.i(TAG, "Registered contact birthday observer")
+        try {
+            contentResolver.registerContentObserver(
+                ContactsContract.Contacts.CONTENT_URI,
+                true, // notifyForDescendants
+                observer!!
+            )
+            Log.i(TAG, "Registered contact birthday observer")
+        } catch (e: SecurityException) {
+            Log.w(TAG, "SecurityException registering observer, auto-disabling contact birthdays", e)
+            observer = null
+            scope.launch { dataStore.setContactBirthdaysEnabled(false) }
+        }
     }
 
     private fun unregisterObserver() {

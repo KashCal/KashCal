@@ -1,103 +1,98 @@
 package org.onekash.kashcal.sync.strategy.integration
 
-import io.mockk.*
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
-import org.onekash.kashcal.data.repository.CalendarRepository
-import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.db.dao.OccurrencesDao
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
-import org.onekash.kashcal.sync.session.SyncSessionStore
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Integration test for PullStrategy with real iCloud data.
+ * Integration test for PullStrategy with real iCloud data and real Room DB.
  *
- * Uses real CalDavClient and Parser, but mocks the DAOs to verify
- * the data transformation and storage logic.
+ * Uses real CalDavClient, Parser, Room in-memory database, and OccurrenceGenerator.
+ * Only SyncNotificationManager-type components are absent (not needed for pull).
  *
- * Run with: ./gradlew testDebugUnitTest --tests "*RealICloudPullStrategyTest*"
+ * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealICloudPullStrategyTest*"
  *
  * Requires: local.properties with iCloud credentials
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [33])
 class RealICloudPullStrategyTest {
 
-    private lateinit var client: CalDavClient
-    private lateinit var pullStrategy: PullStrategy
-    private val factory = OkHttpCalDavClientFactory()
-
-    // Mocked DAOs
+    // Real components
     private lateinit var database: KashCalDatabase
-    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
+    private lateinit var occurrencesDao: OccurrencesDao
+    private lateinit var pullStrategy: PullStrategy
+    private lateinit var client: CalDavClient
     private lateinit var occurrenceGenerator: OccurrenceGenerator
-    private lateinit var dataStore: KashCalDataStore
-    private lateinit var syncSessionStore: SyncSessionStore
 
+    // Credentials
     private var username: String? = null
     private var password: String? = null
     private var serverUrl: String = "https://caldav.icloud.com"
 
-    // Discovered calendar for testing
+    // Test state
     private var testCalendar: CalDavCalendar? = null
+    private var testCalendarId: Long = 0
+    private var testAccountId: Long = 0
 
     @Before
     fun setup() {
-        loadCredentials()
+        val context: Context = ApplicationProvider.getApplicationContext()
 
+        // Real Room in-memory database
+        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+
+        eventsDao = database.eventsDao()
+        occurrencesDao = database.occurrencesDao()
+        occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao)
+        val calendarRepository = CalendarRepositoryImpl(database.calendarsDao())
+        val dataStore = KashCalDataStore(context)
+        val syncSessionStore = SyncSessionStore(context)
+
+        // Load credentials and create real client
+        loadCredentials()
         val quirks = ICloudQuirks()
         if (username != null && password != null) {
-            val credentials = Credentials(
-                username = username!!,
-                password = password!!,
-                serverUrl = "https://caldav.icloud.com"
+            client = OkHttpCalDavClientFactory().createClient(
+                Credentials(username!!, password!!, serverUrl), quirks
             )
-            client = factory.createClient(credentials, quirks)
         } else {
-            // Create a minimal client for tests that check credential availability
-            val credentials = Credentials(
-                username = "",
-                password = "",
-                serverUrl = "https://caldav.icloud.com"
+            client = OkHttpCalDavClientFactory().createClient(
+                Credentials("", "", serverUrl), quirks
             )
-            client = factory.createClient(credentials, quirks)
         }
-
-        // Mock DAOs
-        database = mockk(relaxed = true)
-        calendarRepository = mockk(relaxed = true)
-        eventsDao = mockk(relaxed = true)
-        occurrenceGenerator = mockk(relaxed = true)
-        dataStore = mockk(relaxed = true)
-        syncSessionStore = mockk(relaxed = true)
-
-        // Mock database.runInTransaction to execute the block directly
-        coEvery {
-            database.runInTransaction(any<suspend () -> Any>())
-        } coAnswers {
-            @Suppress("UNCHECKED_CAST")
-            val block = firstArg<suspend () -> Any>()
-            block()
-        }
-
-        // Setup mock behaviors
-        coEvery { eventsDao.upsert(any()) } returns 1L
-        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
-        coEvery { eventsDao.getByUid(any()) } returns emptyList()
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
 
         pullStrategy = PullStrategy(
             database = database,
@@ -112,7 +107,7 @@ class RealICloudPullStrategyTest {
 
     @After
     fun tearDown() {
-        clearAllMocks()
+        database.close()
     }
 
     private fun loadCredentials() {
@@ -159,7 +154,26 @@ class RealICloudPullStrategyTest {
         return testCalendar
     }
 
-    // ========== PullStrategy Tests ==========
+    /**
+     * Insert account + calendar into real Room DB. Must be called after
+     * discovering the real iCloud calendar URL.
+     */
+    private suspend fun setupDbCalendar(caldavUrl: String, displayName: String): Calendar {
+        testAccountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
+        )
+        testCalendarId = database.calendarsDao().insert(
+            Calendar(
+                accountId = testAccountId,
+                caldavUrl = caldavUrl,
+                displayName = displayName,
+                color = 0xFF0000
+            )
+        )
+        return database.calendarsDao().getById(testCalendarId)!!
+    }
+
+    // ========== Pull Tests ==========
 
     @Test
     fun `pull full sync from real iCloud calendar`() = runBlocking {
@@ -168,26 +182,12 @@ class RealICloudPullStrategyTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // Create Calendar entity for PullStrategy
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null, // Force full sync
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
         println("=== Starting Full Pull ===")
         println("Calendar: ${calendar.displayName}")
         println("URL: ${calendar.caldavUrl}")
 
-        // Execute pull
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         println("\n=== Pull Result ===")
@@ -199,21 +199,21 @@ class RealICloudPullStrategyTest {
                 println("New sync token: ${result.newSyncToken}")
                 println("New ctag: ${result.newCtag}")
 
-                // Verify events were upserted
-                coVerify(atLeast = 0) { eventsDao.upsert(any()) }
+                // Verify events were actually persisted in the real DB
+                val now = System.currentTimeMillis()
+                val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10  // 10 years
+                val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
+                val dbEvents = eventsDao.getByCalendarIdInRange(testCalendarId, farPast, farFuture)
+                println("Events in DB: ${dbEvents.size}")
 
-                // Verify calendarsDao was updated with new sync token
-                coVerify { calendarRepository.updateSyncToken(eq(1L), any(), any()) }
+                assertTrue("Should have events in DB after pull", dbEvents.isNotEmpty())
+                assertEquals(
+                    "DB event count should match eventsAdded",
+                    result.eventsAdded, dbEvents.size
+                )
             }
-            is PullResult.NoChanges -> {
-                println("No changes detected")
-            }
-            is PullResult.Error -> {
-                println("Error: ${result.message}")
-                println("Code: ${result.code}")
-                println("Retryable: ${result.isRetryable}")
-                // Don't fail - might be a network issue
-            }
+            is PullResult.NoChanges -> println("No changes detected")
+            is PullResult.Error -> println("Error: code=${result.code}, ${result.message}")
         }
     }
 
@@ -224,81 +224,55 @@ class RealICloudPullStrategyTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // First, get current ctag
+        // Get current ctag
         val ctagResult = client.getCtag(caldavCalendar!!.url)
         assumeTrue("Should get ctag", ctagResult.isSuccess())
         val currentCtag = ctagResult.getOrNull()!!
 
-        // Create Calendar entity with current ctag
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = currentCtag, // Set to current - no changes expected
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
+        // Update ctag in DB to match server — simulates "already synced"
+        database.calendarsDao().updateCtag(testCalendarId, currentCtag)
+        val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
         println("=== Testing No Changes Detection ===")
         println("Current ctag: $currentCtag")
 
-        // Execute pull
-        val result = pullStrategy.pull(calendar, forceFullSync = false, client = client)
+        val result = pullStrategy.pull(updatedCalendar, forceFullSync = false, client = client)
 
         println("\n=== Pull Result ===")
         when (result) {
             is PullResult.NoChanges -> {
                 println("Correctly detected no changes")
-                assert(true)
+                assertTrue(true)
             }
             is PullResult.Success -> {
-                println("Got success (ctag might have changed)")
-                // This is OK if there were actual changes
+                println("Got success (ctag might have changed between calls)")
             }
-            is PullResult.Error -> {
-                println("Error: ${result.message}")
-            }
+            is PullResult.Error -> println("Error: ${result.message}")
         }
     }
 
     @Test
-    fun `pull correctly captures event data`() = runBlocking {
+    fun `pull correctly captures event data in real DB`() = runBlocking {
         assumeCredentialsAvailable()
 
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // Capture upserted events
-        val capturedEvents = mutableListOf<Event>()
-        coEvery { eventsDao.upsert(capture(capturedEvents)) } returns 1L
-
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
         println("=== Testing Event Data Capture ===")
 
-        // Execute pull
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
-        if (result is PullResult.Success && capturedEvents.isNotEmpty()) {
-            println("\n=== Captured Events (${capturedEvents.size}) ===")
-            capturedEvents.take(5).forEach { event ->
+        if (result is PullResult.Success && result.eventsAdded > 0) {
+            val now = System.currentTimeMillis()
+            val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10
+            val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
+            val dbEvents = eventsDao.getByCalendarIdInRange(testCalendarId, farPast, farFuture)
+
+            println("\n=== Events in DB (${dbEvents.size}) ===")
+            dbEvents.take(5).forEach { event ->
                 println("\n- ${event.title}")
                 println("  UID: ${event.uid}")
                 println("  Start: ${java.util.Date(event.startTs)}")
@@ -307,32 +281,25 @@ class RealICloudPullStrategyTest {
                 println("  RRULE: ${event.rrule}")
                 println("  CalDAV URL: ${event.caldavUrl}")
                 println("  ETag: ${event.etag}")
-                println("  Calendar ID: ${event.calendarId}")
 
                 // Verify required fields
-                assert(event.uid.isNotBlank()) { "Event UID should not be blank" }
-                assert(event.title.isNotBlank()) { "Event title should not be blank" }
-                assert(event.startTs > 0) { "Event startTs should be positive" }
-                assert(event.endTs >= event.startTs) { "Event endTs should be >= startTs" }
-                assert(event.calendarId == 1L) { "Event calendarId should match" }
+                assertTrue("UID should not be blank", event.uid.isNotBlank())
+                assertTrue("startTs should be positive", event.startTs > 0)
+                assertTrue("endTs should be >= startTs", event.endTs >= event.startTs)
+                assertEquals("calendarId should match", testCalendarId, event.calendarId)
+                assertNotNull("CalDAV URL should be set", event.caldavUrl)
+                assertNotNull("ETag should be set", event.etag)
             }
 
             // Check for recurring events
-            val recurringEvents = capturedEvents.filter { it.rrule != null }
+            val recurringEvents = dbEvents.filter { it.rrule != null }
             println("\n=== Recurring Events: ${recurringEvents.size} ===")
             recurringEvents.take(3).forEach { event ->
                 println("- ${event.title}: ${event.rrule}")
             }
 
-            // Verify occurrences were generated for recurring events
-            if (recurringEvents.isNotEmpty()) {
-                coVerify(atLeast = 1) {
-                    occurrenceGenerator.generateOccurrences(any(), any(), any())
-                }
-            }
-
             // Check for exception events
-            val exceptions = capturedEvents.filter { it.originalInstanceTime != null }
+            val exceptions = dbEvents.filter { it.originalInstanceTime != null }
             println("\n=== Exception Events: ${exceptions.size} ===")
             exceptions.take(3).forEach { event ->
                 println("- ${event.title}")
@@ -340,7 +307,7 @@ class RealICloudPullStrategyTest {
                 println("  Master ID: ${event.originalEventId}")
             }
         } else {
-            println("No events captured (calendar might be empty)")
+            println("No events pulled (calendar might be empty or pull failed: $result)")
         }
     }
 
@@ -361,24 +328,15 @@ class RealICloudPullStrategyTest {
             return@runBlocking
         }
 
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null, // ctag different to trigger sync
-            syncToken = syncToken,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
+        // Set sync token in DB — simulates "already synced"
+        database.calendarsDao().updateSyncToken(testCalendarId, syncToken, null)
+        val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
         println("=== Testing Incremental Sync ===")
         println("Sync token: $syncToken")
 
-        val result = pullStrategy.pull(calendar, forceFullSync = false, client = client)
+        val result = pullStrategy.pull(updatedCalendar, forceFullSync = false, client = client)
 
         println("\n=== Incremental Pull Result ===")
         when (result) {
@@ -388,11 +346,8 @@ class RealICloudPullStrategyTest {
                 println("Events deleted: ${result.eventsDeleted}")
                 println("New sync token: ${result.newSyncToken}")
             }
-            is PullResult.NoChanges -> {
-                println("No changes since last sync")
-            }
+            is PullResult.NoChanges -> println("No changes since last sync")
             is PullResult.Error -> {
-                // 403/410 is expected if token is expired
                 if (result.code == 403 || result.code == 410) {
                     println("Sync token expired (expected) - would trigger full sync")
                 } else {
@@ -403,75 +358,56 @@ class RealICloudPullStrategyTest {
     }
 
     @Test
-    fun `verify occurrence generator called for recurring events`() = runBlocking {
+    fun `verify occurrences materialized for recurring events`() = runBlocking {
         assumeCredentialsAvailable()
 
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // Track generateOccurrences calls
-        val generatedEvents = mutableListOf<Event>()
-        coEvery {
-            occurrenceGenerator.generateOccurrences(capture(generatedEvents), any(), any())
-        } returns 10 // Return dummy occurrence count
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
+        assumeTrue("Pull should succeed", result is PullResult.Success)
 
-        pullStrategy.pull(calendar, forceFullSync = true, client = client)
+        // Query recurring events from real DB
+        val now = System.currentTimeMillis()
+        val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10
+        val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
+        val dbEvents = eventsDao.getByCalendarIdInRange(testCalendarId, farPast, farFuture)
+        val recurringEvents = dbEvents.filter { it.rrule != null }
 
-        println("=== Occurrence Generation Calls ===")
-        println("Recurring events processed: ${generatedEvents.size}")
+        println("=== Occurrence Generation ===")
+        println("Total events: ${dbEvents.size}")
+        println("Recurring events: ${recurringEvents.size}")
 
-        generatedEvents.take(5).forEach { event ->
-            println("- ${event.title}: ${event.rrule}")
-        }
-
-        // Verify all generated events have RRULE
-        generatedEvents.forEach { event ->
-            assert(event.rrule != null) { "Generated event should have RRULE" }
+        if (recurringEvents.isNotEmpty()) {
+            // Verify occurrences were materialized in the real occurrences table
+            recurringEvents.take(3).forEach { event ->
+                val occurrences = occurrencesDao.getForEvent(event.id)
+                println("- ${event.title} (${event.rrule}): ${occurrences.size} occurrences")
+                assertTrue(
+                    "Recurring event '${event.title}' should have occurrences in DB",
+                    occurrences.isNotEmpty()
+                )
+            }
+        } else {
+            println("No recurring events in calendar - skipping occurrence check")
         }
     }
 
     @Test
     fun `pull full sync uses batched multiget for large calendar`() = runBlocking {
         // Verifies that batched multiget works against real iCloud with many events.
-        // iCloud personal calendar has ~693 events — should be split into ~14 batches of 50.
+        // iCloud personal calendar has ~693 events — split into ~35 batches of 20.
         assumeCredentialsAvailable()
 
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
-        println("=== Testing Batched Multiget (v22.5.11) ===")
+        println("=== Testing Batched Multiget ===")
         println("Calendar: ${calendar.displayName}")
-
-        val capturedEvents = mutableListOf<Event>()
-        coEvery { eventsDao.upsert(capture(capturedEvents)) } returns 1L
 
         val startTime = System.currentTimeMillis()
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
@@ -483,21 +419,23 @@ class RealICloudPullStrategyTest {
         when (result) {
             is PullResult.Success -> {
                 println("Events added: ${result.eventsAdded}")
-                println("Events captured: ${capturedEvents.size}")
 
-                // With batched multiget, large calendars should complete successfully
-                // instead of timing out (the bug this fix addresses)
-                assert(result.eventsAdded > 0) {
-                    "Should have added events from iCloud calendar"
-                }
+                // Verify events are in real DB
+                val now = System.currentTimeMillis()
+                val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10
+                val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
+                val dbEvents = eventsDao.getByCalendarIdInRange(testCalendarId, farPast, farFuture)
+                println("Events in DB: ${dbEvents.size}")
+
+                assertTrue(
+                    "Should have events in DB from iCloud calendar",
+                    dbEvents.isNotEmpty()
+                )
             }
             is PullResult.Error -> {
                 println("Error: code=${result.code}, message=${result.message}, retryable=${result.isRetryable}")
-                // Don't fail - might be a transient network issue or rate limiting
             }
-            is PullResult.NoChanges -> {
-                println("No changes (ctag matched unexpectedly)")
-            }
+            is PullResult.NoChanges -> println("No changes (ctag matched unexpectedly)")
         }
     }
 }

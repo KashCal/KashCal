@@ -33,7 +33,7 @@ class SyncSessionBuilder(
     private var skippedPendingLocal = 0
     private var skippedEtagUnchanged = 0
     private var skippedOrphanedException = 0
-    private var skippedConstraintError = 0
+    private var skippedAlreadySynced = 0
     private var skippedRecentlyPushed = 0
 
     // Token tracking
@@ -65,7 +65,7 @@ class SyncSessionBuilder(
     fun incrementSkipPendingLocal() = apply { skippedPendingLocal++ }
     fun incrementSkipEtagUnchanged() = apply { skippedEtagUnchanged++ }
     fun incrementSkipOrphanedException() = apply { skippedOrphanedException++ }
-    fun incrementSkipConstraintError() = apply { skippedConstraintError++ }
+    fun incrementSkipAlreadySynced() = apply { skippedAlreadySynced++ }
     fun incrementSkipRecentlyPushed() = apply { skippedRecentlyPushed++ }
 
     // Accessor for parse error count (for retry logic)
@@ -114,7 +114,7 @@ class SyncSessionBuilder(
             skippedPendingLocal = skippedPendingLocal,
             skippedEtagUnchanged = skippedEtagUnchanged,
             skippedOrphanedException = skippedOrphanedException,
-            skippedConstraintError = skippedConstraintError,
+            skippedAlreadySynced = skippedAlreadySynced,
             skippedRecentlyPushed = skippedRecentlyPushed,
             hasMissingEvents = missingCount > 0,
             missingCount = missingCount,

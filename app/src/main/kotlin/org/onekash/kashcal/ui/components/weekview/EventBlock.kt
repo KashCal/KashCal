@@ -19,9 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
+import org.onekash.kashcal.domain.model.DisplayEvent
 
 /**
  * Displays a single event block in the week view time grid.
@@ -35,10 +34,8 @@ import org.onekash.kashcal.domain.EmojiMatcher
  * - "^ starts 5:30am" if event starts before 6am
  * - "v ends 12:00am" if event ends after 11pm
  *
- * @param event The event to display
- * @param occurrence The occurrence for this event instance
+ * @param displayEvent The event to display
  * @param height Height of the block (determines what content is shown)
- * @param color Calendar color for the background
  * @param clampedStart True if event starts before visible range
  * @param clampedEnd True if event ends after visible range
  * @param originalStartMinutes Original start time in minutes (for clamp indicator)
@@ -50,10 +47,8 @@ import org.onekash.kashcal.domain.EmojiMatcher
  */
 @Composable
 fun EventBlock(
-    event: Event,
-    occurrence: Occurrence,
+    displayEvent: DisplayEvent,
     height: Dp,
-    color: Int,
     clampedStart: Boolean = false,
     clampedEnd: Boolean = false,
     originalStartMinutes: Int = 0,
@@ -64,6 +59,8 @@ fun EventBlock(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val color = displayEvent.calendarColor
+
     // Solid fill with contrasting text for readability (cached per color)
     val (backgroundColor, textColor) = remember(color) {
         val bg = Color(color)
@@ -73,7 +70,7 @@ fun EventBlock(
 
     // Determine what content fits based on height
     val showTime = height >= HEIGHT_THRESHOLD_TIME
-    val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !event.location.isNullOrBlank()
+    val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
     val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
 
     Box(
@@ -100,7 +97,7 @@ fun EventBlock(
 
             // Title (always shown)
             Text(
-                text = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis),
+                text = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis),
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
@@ -111,7 +108,7 @@ fun EventBlock(
             // Time (if height >= 36dp)
             if (showTime) {
                 Text(
-                    text = WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs, timePattern),
+                    text = WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern),
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.7f),
                     maxLines = 1,
@@ -122,7 +119,7 @@ fun EventBlock(
             // Location (if height >= 56dp)
             if (showLocation) {
                 Text(
-                    text = event.location!!,
+                    text = displayEvent.location!!,
                     style = MaterialTheme.typography.labelSmall,
                     color = textColor.copy(alpha = 0.6f),
                     maxLines = 1,
@@ -152,19 +149,17 @@ fun EventBlock(
  */
 @Composable
 fun CompactEventBlock(
-    event: Event,
-    occurrence: Occurrence,
-    color: Int,
+    displayEvent: DisplayEvent,
     onClick: () -> Unit,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = Color(color)
+    val backgroundColor = Color(displayEvent.calendarColor)
     // Calculate luminance to determine text color
     val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
     val textColor = if (luminance > 0.5f) Color.Black else Color.White
-    val formattedTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
+    val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
 
     Box(
         modifier = modifier
@@ -174,7 +169,7 @@ fun CompactEventBlock(
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
-            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(occurrence.startTs, occurrence.endTs, timePattern)}",
+            text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)}",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
             maxLines = 1,

@@ -2,8 +2,7 @@ package org.onekash.kashcal.ui.components.weekview
 
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -139,13 +138,13 @@ object WeekViewUtils {
      * - LATE: Event starts at or after 11pm
      * - NORMAL: Event overlaps with 6am-11pm range
      *
-     * @param occurrence The occurrence to classify
+     * @param displayEvent The event to classify
      * @return TimeSlot indicating where the event belongs
      */
-    fun classifyTimeSlot(occurrence: Occurrence): TimeSlot {
-        val startTime = Instant.ofEpochMilli(occurrence.startTs)
+    fun classifyTimeSlot(displayEvent: DisplayEvent): TimeSlot {
+        val startTime = Instant.ofEpochMilli(displayEvent.startTs)
             .atZone(ZoneId.systemDefault())
-        val endTime = Instant.ofEpochMilli(occurrence.endTs)
+        val endTime = Instant.ofEpochMilli(displayEvent.endTs)
             .atZone(ZoneId.systemDefault())
 
         val startMinutes = startTime.hour * MINUTES_PER_HOUR + startTime.minute
@@ -463,8 +462,7 @@ object WeekViewUtils {
      * Positioned event for rendering in the week view.
      */
     data class PositionedEvent(
-        val event: Event,
-        val occurrence: Occurrence,
+        val displayEvent: DisplayEvent,
         /** Top offset from grid start (relative to 6am) */
         val topOffset: Dp,
         /** Height of the event block */
@@ -497,13 +495,13 @@ object WeekViewUtils {
      * 3. Group transitively overlapping events into clusters
      * 4. Calculate width based on slots used in each cluster
      *
-     * @param events List of (Event, Occurrence) pairs for the day
+     * @param events List of DisplayEvent for the day
      * @param dayIndex Day index (0-6)
      * @param hourHeight Height of one hour
      * @return List of positioned events
      */
     fun positionEventsForDay(
-        events: List<Pair<Event, Occurrence>>,
+        events: List<DisplayEvent>,
         dayIndex: Int,
         hourHeight: Dp = HOUR_HEIGHT
     ): List<PositionedEvent> {
@@ -511,14 +509,14 @@ object WeekViewUtils {
 
         // Step 1: Sort by start time, then by duration (longer events first for better stacking)
         val sorted = events.sortedWith(compareBy(
-            { it.second.startTs },
-            { -(it.second.endTs - it.second.startTs) }
+            { it.startTs },
+            { -(it.endTs - it.startTs) }
         ))
 
         // Step 2: Convert to time spans
-        val timeSpans = sorted.map { (_, occ) ->
-            val start = Instant.ofEpochMilli(occ.startTs).atZone(ZoneId.systemDefault())
-            val end = Instant.ofEpochMilli(occ.endTs).atZone(ZoneId.systemDefault())
+        val timeSpans = sorted.map { displayEvent ->
+            val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
+            val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(ZoneId.systemDefault())
             EventTimeSpan(
                 startMinutes = start.hour * MINUTES_PER_HOUR + start.minute,
                 endMinutes = end.hour * MINUTES_PER_HOUR + end.minute
@@ -548,7 +546,7 @@ object WeekViewUtils {
         val clusters = findConnectedClusters(timeSpans)
 
         // Step 5: Build positioned events with correct layout fractions
-        return sorted.mapIndexedNotNull { i, (event, occurrence) ->
+        return sorted.mapIndexedNotNull { i, displayEvent ->
             val span = timeSpans[i]
             val slotIndex = slotAssignments[i]
 
@@ -577,8 +575,7 @@ object WeekViewUtils {
             )
 
             PositionedEvent(
-                event = event,
-                occurrence = occurrence,
+                displayEvent = displayEvent,
                 topOffset = topOffset,
                 height = height,
                 leftFraction = leftFraction,

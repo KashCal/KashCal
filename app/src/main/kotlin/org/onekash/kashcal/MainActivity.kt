@@ -27,6 +27,10 @@ import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalendarVisibilitySheet
 import org.onekash.kashcal.ui.components.EventFormSheet
+import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.buildShareText
+import org.onekash.kashcal.domain.model.toEventForDuplicate
+import org.onekash.kashcal.ui.components.DeviceEventQuickViewSheet
 import org.onekash.kashcal.ui.components.EventQuickViewSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
@@ -128,6 +132,10 @@ class MainActivity : ComponentActivity() {
                 var showQuickViewSheet by remember { mutableStateOf(false) }
                 var quickViewEvent by remember { mutableStateOf<Event?>(null) }
                 var quickViewOccurrenceTs by remember { mutableStateOf<Long?>(null) }
+
+                // Device event quick view sheet state
+                var showDeviceQuickViewSheet by remember { mutableStateOf(false) }
+                var deviceQuickViewEvent by remember { mutableStateOf<DisplayEvent.Device?>(null) }
 
                 // Calendar visibility sheet state
                 var showCalendarVisibilitySheet by remember { mutableStateOf(false) }
@@ -249,7 +257,7 @@ class MainActivity : ComponentActivity() {
                     homeViewModel.refreshCalendars()
                 }
 
-                Log.d(TAG, "Composing with ${uiState.selectedDayEvents.size} day events")
+                Log.d(TAG, "Composing with ${uiState.dayEventsCache.values.sumOf { it.size }} cached day events")
 
                 HomeScreen(
                     uiState = uiState,
@@ -266,6 +274,11 @@ class MainActivity : ComponentActivity() {
                         quickViewEvent = event
                         quickViewOccurrenceTs = occurrenceTs
                         showQuickViewSheet = true
+                    },
+                    onDeviceEventClick = { deviceEvent ->
+                        Log.d(TAG, "Device event clicked: ${deviceEvent.title}")
+                        deviceQuickViewEvent = deviceEvent
+                        showDeviceQuickViewSheet = true
                     },
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
@@ -568,6 +581,44 @@ class MainActivity : ComponentActivity() {
                                 quickViewEvent = null
                                 quickViewOccurrenceTs = null
                             }
+                        },
+                        timeFormat = uiState.timeFormat
+                    )
+                }
+
+                // Device Event Quick View Sheet
+                if (showDeviceQuickViewSheet && deviceQuickViewEvent != null) {
+                    DeviceEventQuickViewSheet(
+                        displayEvent = deviceQuickViewEvent!!,
+                        showEventEmojis = uiState.showEventEmojis,
+                        onDismiss = {
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                        },
+                        onDuplicate = {
+                            val event = deviceQuickViewEvent!!
+                            duplicateFromEvent = event.toEventForDuplicate()
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                            editingEventId = null
+                            newEventStartTs = event.startTs
+                            eventOccurrenceTs = null
+                            showEventFormSheet = true
+                        },
+                        onShare = {
+                            val event = deviceQuickViewEvent!!
+                            val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
+                            val timePattern = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
+                            val shareText = event.buildShareText(timePattern)
+
+                            val intent = Intent(Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                            }
+                            startActivity(Intent.createChooser(intent, "Share Event"))
+
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
                         },
                         timeFormat = uiState.timeFormat
                     )

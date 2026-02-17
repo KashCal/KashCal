@@ -4,6 +4,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 
 /**
  * Type-safe keys for DataStore preferences.
@@ -121,6 +122,14 @@ object PreferencesKeys {
 
     /** Birthday reminder minutes (uses ALL_DAY_REMINDER_OPTIONS values, default: 540 = 9 AM day of) */
     val BIRTHDAY_REMINDER = intPreferencesKey("birthday_reminder")
+
+    // ========== Device Calendars ==========
+
+    /** Device calendars integration enabled */
+    val DEVICE_CALENDARS_ENABLED = booleanPreferencesKey("device_calendars_enabled")
+
+    /** Enabled device calendar IDs (stored as Set<String>, converted to Set<Long>) */
+    val ENABLED_DEVICE_CALENDAR_IDS = stringSetPreferencesKey("enabled_device_calendar_ids")
 
     // ========== Parse Failure Retry (v16.7.0) ==========
 

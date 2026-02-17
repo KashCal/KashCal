@@ -46,7 +46,7 @@ class SyncSessionStoreTest {
         eventsPushedUpdated: Int = 0,
         eventsPushedDeleted: Int = 0,
         skippedParseError: Int = 0,
-        skippedConstraintError: Int = 0,
+        skippedAlreadySynced: Int = 0,
         errorType: ErrorType? = null,
         errorMessage: String? = null
     ): SyncSession {
@@ -69,7 +69,7 @@ class SyncSessionStoreTest {
             eventsPushedUpdated = eventsPushedUpdated,
             eventsPushedDeleted = eventsPushedDeleted,
             skippedParseError = skippedParseError,
-            skippedConstraintError = skippedConstraintError,
+            skippedAlreadySynced = skippedAlreadySynced,
             errorType = effectiveErrorType,
             errorMessage = errorMessage,
             timestamp = timestamp

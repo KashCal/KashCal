@@ -57,7 +57,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -133,6 +133,8 @@ abstract class KashCalDatabase : RoomDatabase() {
          * Database callback to create triggers for master event duplicate prevention.
          * Uses triggers instead of partial unique index (Room doesn't validate triggers).
          */
+        fun testCallback(): RoomDatabase.Callback = databaseCallback
+
         private val databaseCallback = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)

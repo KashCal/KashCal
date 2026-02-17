@@ -4,6 +4,8 @@ import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import org.onekash.kashcal.data.calendar_provider.AndroidCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.credential.CredentialManager
 import org.onekash.kashcal.data.credential.UnifiedCredentialManager
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -45,4 +47,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCalendarRepository(impl: CalendarRepositoryImpl): CalendarRepository
+
+    /**
+     * Bind CalendarProviderRepository interface to Android implementation.
+     * Provides read access to device calendars via ContentResolver.
+     */
+    @Binds
+    @Singleton
+    abstract fun bindCalendarProviderRepository(
+        impl: AndroidCalendarProviderRepository
+    ): CalendarProviderRepository
 }

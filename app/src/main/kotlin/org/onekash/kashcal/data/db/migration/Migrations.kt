@@ -597,6 +597,91 @@ object Migrations {
     }
 
     /**
+     * Migration from version 13 to 14.
+     *
+     * Swaps unique index on exception events from local FK-based
+     * UNIQUE(original_event_id, original_instance_time) to RFC 5545 natural key
+     * UNIQUE(calendar_id, uid, original_instance_time).
+     *
+     * The old index uses local IDs and cannot deduplicate orphan exceptions
+     * (original_event_id = NULL makes SQLite treat each row as distinct).
+     * The new index uses non-NULL columns and correctly identifies exceptions
+     * per RFC 5545 §3.8.4.4 + RFC 4791 §4.1.
+     *
+     * Includes two-step dedup to clean any existing duplicates before creating
+     * the unique index. See docs/DB_CONSTRAINT_ANALYSIS.md for full analysis.
+     */
+    val MIGRATION_13_14 = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                // Step 1: Delete orphan exceptions that have a properly linked counterpart.
+                // Keeps the linked version (original_event_id IS NOT NULL) which has the FK to the master.
+                val orphanLinkedDedup = db.compileStatement("""
+                    DELETE FROM events WHERE id IN (
+                        SELECT e1.id FROM events e1
+                        INNER JOIN events e2
+                            ON e1.calendar_id = e2.calendar_id
+                            AND e1.uid = e2.uid
+                            AND e1.original_instance_time = e2.original_instance_time
+                        WHERE e1.original_event_id IS NULL
+                            AND e2.original_event_id IS NOT NULL
+                            AND e1.original_instance_time IS NOT NULL
+                    )
+                """)
+                val step1Deleted = orphanLinkedDedup.executeUpdateDelete()
+                if (step1Deleted > 0) {
+                    Log.d(TAG, "Migration 13->14: dedup step 1 deleted $step1Deleted orphan exceptions with linked counterparts")
+                }
+
+                // Step 2: Generic dedup for any remaining duplicates (two orphans,
+                // two linked with different masters, etc.). Keeps the highest id
+                // (most recently written) per (calendar_id, uid, original_instance_time).
+                val genericDedup = db.compileStatement("""
+                    DELETE FROM events
+                    WHERE original_instance_time IS NOT NULL
+                    AND id NOT IN (
+                        SELECT MAX(id) FROM events
+                        WHERE original_instance_time IS NOT NULL
+                        GROUP BY calendar_id, uid, original_instance_time
+                    )
+                """)
+                val step2Deleted = genericDedup.executeUpdateDelete()
+                if (step2Deleted > 0) {
+                    Log.d(TAG, "Migration 13->14: dedup step 2 deleted $step2Deleted remaining duplicate exceptions")
+                }
+
+                // Step 3: Drop old unique index on local FK columns
+                dropIndexIfExists(db, "index_events_original_event_id_original_instance_time")
+
+                // Step 4: Create non-unique replacement (still useful for FK lookups)
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
+                    "ON events (original_event_id, original_instance_time)"
+                )
+
+                // Step 5: Drop current non-unique composite index
+                dropIndexIfExists(db, "index_events_calendar_id_uid_original_instance_time")
+
+                // Step 6: Create RFC-correct unique index
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_events_calendar_id_uid_original_instance_time " +
+                    "ON events (calendar_id, uid, original_instance_time)"
+                )
+
+                // Verify
+                if (indexExists(db, "index_events_calendar_id_uid_original_instance_time")) {
+                    Log.d(TAG, "Migration 13->14 completed: unique index swapped to (calendar_id, uid, original_instance_time)")
+                } else {
+                    Log.w(TAG, "Migration 13->14: new unique index verification FAILED")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in migration 13->14: ${e.message}", e)
+                throw e
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -611,6 +696,7 @@ object Migrations {
         MIGRATION_9_10,
         MIGRATION_10_11,
         MIGRATION_11_12,
-        MIGRATION_12_13
+        MIGRATION_12_13,
+        MIGRATION_13_14
     )
 }

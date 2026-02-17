@@ -6,8 +6,11 @@ import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
-import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 import java.util.Locale
@@ -40,10 +43,16 @@ class AgendaWidget : GlanceAppWidget() {
      *
      * This runs in a coroutine context, so database queries are safe.
      */
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AgendaWidgetEntryPoint {
+        fun widgetDataRepository(): WidgetDataRepository
+    }
+
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Get data from database
-        val database = KashCalDatabase.getInstance(context)
-        val repository = WidgetDataRepository(database)
+        // Get data via Hilt EntryPoint (Glance widgets can't use standard @Inject)
+        val entryPoint = EntryPointAccessors.fromApplication(context, AgendaWidgetEntryPoint::class.java)
+        val repository = entryPoint.widgetDataRepository()
         val events = repository.getTodayEvents()
 
         // Get display preferences

@@ -178,8 +178,8 @@ class SyncSessionStore @Inject constructor(
                 if (session.hasParseFailures) {
                     appendLine("   ⚠ ${session.skippedParseError} failed to parse")
                 }
-                if (session.hasConstraintErrors) {
-                    appendLine("   ⚠ ${session.skippedConstraintError} skipped (constraint error)")
+                if (session.hasAlreadySynced) {
+                    appendLine("   ${session.skippedAlreadySynced} already synced")
                 }
                 appendLine()
             }

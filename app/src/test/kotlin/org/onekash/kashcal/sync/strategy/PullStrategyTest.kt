@@ -504,14 +504,15 @@ class PullStrategyTest {
     }
 
     @Test
-    fun `pullFull multiget batch error fails fast`() = runTest {
-        // When batched multiget fails, pull should return Error (fail fast, no fallback).
-        // WorkManager retries the entire sync with exponential backoff.
+    fun `pullFull multiget batch error falls back to individual fetches`() = runTest {
+        // A3: When batched multiget fails, fall back to individual fetches per href.
+        // If individual fetches also fail, events are skipped (not the entire sync).
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
+        // All fetches fail (batch and individual)
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.error(500, "Server error", isRetryable = true)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -519,12 +520,11 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        assertTrue("Expected Error but got $result", result is PullResult.Error)
-        val error = result as PullResult.Error
-        assertEquals(500, error.code)
-        assertTrue(error.isRetryable)
-        // Should be called exactly once — no retry, no fallback
-        coVerify(exactly = 1) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+        // A3: Sync completes (with 0 events) instead of returning Error
+        assertTrue("Expected Success but got $result", result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsAdded)
+        // Called twice: batch multiget (fails) + individual fallback (also fails)
+        coVerify(exactly = 2) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     // ========== Force Full Sync Tests ==========
@@ -1866,9 +1866,9 @@ class PullStrategyTest {
     }
 
     @Test
-    fun `FK constraint error increments session skip counter`() = runTest {
-        // After fix: sessionBuilder.incrementSkipConstraintError() should be called
-        // for each FK error, so the counter appears in Sync History UI.
+    fun `FK constraint error increments session already-synced counter`() = runTest {
+        // After fix: sessionBuilder.incrementSkipAlreadySynced() should be called
+        // for each constraint skip, so the counter appears in Sync History UI.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
@@ -1881,9 +1881,9 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
 
-        // Both events throw FK violations
+        // Both events throw constraint violations (already synced in prior session)
         coEvery { eventsDao.upsert(any()) } throws
-            android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
+            android.database.sqlite.SQLiteConstraintException("UNIQUE constraint failed")
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
         val sessionBuilder = SyncSessionBuilder(
@@ -1897,17 +1897,17 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
 
-        // Build the session and verify the constraint error counter
+        // Build the session and verify the already-synced counter
         val session = sessionBuilder.build()
-        assertTrue("Session should have constraint errors", session.hasConstraintErrors)
-        assertEquals("Should have 2 constraint errors", 2, session.skippedConstraintError)
+        assertTrue("Session should have already-synced skips", session.hasAlreadySynced)
+        assertEquals("Should have 2 already-synced skips", 2, session.skippedAlreadySynced)
     }
 
     // ========== Batched Concurrent Multiget Tests (v22.5.11) ==========
 
     @Test
-    fun `batched multiget chunks hrefs into batches of 50`() = runTest {
-        // 120 hrefs should be split into 3 batches: [50, 50, 20]
+    fun `batched multiget chunks hrefs into batches of 20`() = runTest {
+        // 120 hrefs should be split into 6 batches: [20, 20, 20, 20, 20, 20]
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 120
         val serverEvents = (1..eventCount).map { i ->
@@ -1930,14 +1930,14 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
-        // 120 hrefs / 50 per batch = 3 batches
-        coVerify(exactly = 3) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+        // 120 hrefs / 20 per batch = 6 batches
+        coVerify(exactly = 6) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     @Test
-    fun `batched multiget with fewer than 50 hrefs sends single batch`() = runTest {
+    fun `batched multiget with fewer than 20 hrefs sends single batch`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        val eventCount = 30
+        val eventCount = 15
         val serverEvents = (1..eventCount).map { i ->
             CalDavEvent("event-$i.ics", "${calendar.caldavUrl}event-$i.ics", "etag-$i",
                 createSimpleIcal("uid-$i", "Event $i"))
@@ -1956,7 +1956,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
-        // 30 hrefs < 50 batch size → 1 call
+        // 15 hrefs < 20 batch size → 1 call
         coVerify(exactly = 1) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
@@ -1991,10 +1991,11 @@ class PullStrategyTest {
     }
 
     @Test
-    fun `batched multiget fails fast on batch error`() = runTest {
-        // When one batch fails, entire pull should fail (no partial recovery)
+    fun `batched multiget error falls back to individual for all batches`() = runTest {
+        // A3: When all batches fail, each falls back to individual fetches.
+        // If individual fetches also fail, sync completes with 0 events (not Error).
         val calendar = createCalendar(ctag = null, syncToken = null)
-        val eventCount = 120
+        val eventCount = 40  // 40 / 20 = 2 batches
         val serverEvents = (1..eventCount).map { i ->
             CalDavEvent("event-$i.ics", "${calendar.caldavUrl}event-$i.ics", "etag-$i",
                 createSimpleIcal("uid-$i", "Event $i"))
@@ -2003,7 +2004,7 @@ class PullStrategyTest {
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
-        // All batches fail with server error
+        // All fetches fail (batch and individual)
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.error(500, "Server error", isRetryable = true)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -2011,10 +2012,9 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        assertTrue("Expected Error but got $result", result is PullResult.Error)
-        val error = result as PullResult.Error
-        assertEquals(500, error.code)
-        assertTrue(error.isRetryable)
+        // A3: Sync completes with 0 events (individual fallbacks also failed)
+        assertTrue("Expected Success but got $result", result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
@@ -2038,7 +2038,7 @@ class PullStrategyTest {
     fun `batched multiget concurrent batches all execute`() = runTest {
         // Verify all batches are launched by checking call count matches expected batches
         val calendar = createCalendar(ctag = null, syncToken = null)
-        val eventCount = 200  // 200 / 50 = 4 batches
+        val eventCount = 200  // 200 / 20 = 10 batches
         val serverEvents = (1..eventCount).map { i ->
             CalDavEvent("event-$i.ics", "${calendar.caldavUrl}event-$i.ics", "etag-$i",
                 createSimpleIcal("uid-$i", "Event $i"))
@@ -2060,8 +2060,8 @@ class PullStrategyTest {
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         assertEquals(200, (result as PullResult.Success).eventsAdded)
-        // 200 / 50 = 4 batches, all should execute
-        coVerify(exactly = 4) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
+        // 200 / 20 = 10 batches, all should execute
+        coVerify(exactly = 10) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     // ========== Empty Multiget Fallback Tests (Zoho compatibility) ==========
@@ -2180,24 +2180,40 @@ class PullStrategyTest {
     }
 
     @Test
-    fun `batched multiget error preserves retryable flag`() = runTest {
-        // When batched multiget returns a retryable error, PullResult should preserve it
-        // so WorkManager knows to retry.
+    fun `batched multiget error with individual fallback recovery`() = runTest {
+        // A3: When batch multiget returns error, individual fallback recovers events.
+        // This replaces the old "error preserves retryable flag" test since batch
+        // errors no longer produce PullResult.Error.
         val calendar = createCalendar(ctag = null, syncToken = null)
+        val href1 = "event1.ics"
+        val href2 = "event2.ics"
+        val url1 = "${calendar.caldavUrl}event1.ics"
+        val url2 = "${calendar.caldavUrl}event2.ics"
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
-            CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
-        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
+        // Batch (multi-href) fails
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
             CalDavResult.error(503, "Service Unavailable", isRetryable = true)
+        // Individual fetches succeed
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href2)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href2, url2, "etag-2", createSimpleIcal("uid-2", "Event 2"))
+            ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        assertTrue("Expected Error but got $result", result is PullResult.Error)
-        val error = result as PullResult.Error
-        assertEquals(503, error.code)
-        assertTrue("Error should be retryable", error.isRetryable)
+        assertTrue("Expected Success but got $result", result is PullResult.Success)
+        assertEquals(2, (result as PullResult.Success).eventsAdded)
     }
 
     // ========== Parse Failure Retry Logic (GAP 6) ==========
@@ -2639,5 +2655,427 @@ class PullStrategyTest {
         val session = sessionBuilder.build()
         assertEquals("VTODO should NOT be counted as parse error", 0, session.skippedParseError)
         assertEquals("Session should be SUCCESS", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
+    }
+
+    // ========== A1: Parse Exception Resilience Tests ==========
+
+    @Test
+    fun `parser exception skips event and continues to next`() = runTest {
+        // A1: Verify that an Exception thrown by icalParser.parseAllEvents() is caught
+        // and the event is skipped, rather than aborting processEvents().
+        // ICalParser internally catches Exception and returns ParseResult.Error, so this
+        // is defense-in-depth. We use mockkConstructor to force a throw for testing.
+        mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        try {
+            val calendar = createCalendar(ctag = null, syncToken = null)
+            val badUrl = "${calendar.caldavUrl}bad.ics"
+            val goodUrl = "${calendar.caldavUrl}good.ics"
+
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            val badIcal = "CRASH-TRIGGER-DATA"
+            val goodIcal = createSimpleIcal("uid-good", "Good Event")
+            val serverEvents = listOf(
+                CalDavEvent("bad.ics", badUrl, "etag-bad", badIcal),
+                CalDavEvent("good.ics", goodUrl, "etag-good", goodIcal)
+            )
+            mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+            coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+            coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+            coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+            coEvery { eventsDao.upsert(any()) } returns 1L
+
+            // Mock parser: crash on bad data, real parser for good data
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(badIcal)
+            } throws RuntimeException("Unexpected parser crash")
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(neq(badIcal))
+            } answers { callOriginal() }
+
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = calendar.id,
+                calendarName = calendar.displayName,
+                syncType = SyncType.FULL,
+                triggerSource = SyncTrigger.FOREGROUND_MANUAL
+            )
+
+            val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+            // Verify: sync completes successfully (bad event skipped, good event processed)
+            assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+            assertEquals(1, (result as PullResult.Success).eventsAdded)
+            val session = sessionBuilder.build()
+            assertEquals("Bad event should be counted as parse error", 1, session.skippedParseError)
+        } finally {
+            unmockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        }
+    }
+
+    // ========== A3: Batch Fallback Resilience Tests ==========
+
+    @Test
+    fun `batch multiget failure falls back to individual fetches`() = runTest {
+        // A3: When a multiget batch fails, fall back to fetchSingleHrefConcurrent
+        // for that batch. Other batches (if any) continue normally.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val href1 = "event1.ics"
+        val href2 = "event2.ics"
+        val url1 = "${calendar.caldavUrl}event1.ics"
+        val url2 = "${calendar.caldavUrl}event2.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        // Step 1: fetchEtagsInRange returns two hrefs
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
+
+        // Step 2: multiget batch FAILS
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
+            CalDavResult.error(500, "Internal Server Error")
+
+        // Step 3: individual fetches succeed
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href2)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href2, url2, "etag-2", createSimpleIcal("uid-2", "Event 2"))
+            ))
+
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // Verify: both events recovered via individual fallback
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(2, (result as PullResult.Success).eventsAdded)
+    }
+
+    @Test
+    fun `batch multiget failure with one bad individual event recovers the rest`() = runTest {
+        // A3 + individual fallback: batch fails, individual fetches recover all except one bad event
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val href1 = "event1.ics"
+        val href2 = "bad-event.ics"
+        val url1 = "${calendar.caldavUrl}event1.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
+
+        // Multiget batch fails
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
+            CalDavResult.error(500, "Internal Server Error")
+
+        // Individual: first succeeds, second fails
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Good Event"))
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href2)) } returns
+            CalDavResult.error(404, "Not Found")
+
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        // Verify: good event recovered, bad event silently skipped
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+    }
+
+    @Test
+    fun `MULTIGET_BATCH_SIZE is 20`() {
+        // Verify batch size was reduced from 50 to 20
+        val field = PullStrategy::class.java.getDeclaredField("MULTIGET_BATCH_SIZE")
+        field.isAccessible = true
+        assertEquals(20, field.getInt(null))
+    }
+
+    // ========== A1: Adverse Tests — All Events Fail Parse ==========
+
+    @Test
+    fun `all events have parse exceptions — returns Success with zero events`() = runTest {
+        // A1 adverse: When EVERY event throws a parse exception, sync should still
+        // complete with Success(eventsAdded=0), not abort or return Error.
+        mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        try {
+            val calendar = createCalendar(ctag = null, syncToken = null)
+
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            val serverEvents = (1..3).map { i ->
+                CalDavEvent("bad-$i.ics", "${calendar.caldavUrl}bad-$i.ics", "etag-$i", "BAD-DATA-$i")
+            }
+            mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+            coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+            coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+
+            // All events crash the parser
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(any())
+            } throws RuntimeException("Corrupt ICS data")
+
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = calendar.id,
+                calendarName = calendar.displayName,
+                syncType = SyncType.FULL,
+                triggerSource = SyncTrigger.FOREGROUND_MANUAL
+            )
+
+            val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+            assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+            assertEquals(0, (result as PullResult.Success).eventsAdded)
+            val session = sessionBuilder.build()
+            assertEquals("All 3 events should be counted as parse errors", 3, session.skippedParseError)
+        } finally {
+            unmockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        }
+    }
+
+    @Test
+    fun `multiple parse exceptions counts each one in session stats`() = runTest {
+        // A1: Verify session.skippedParseError accurately counts multiple failures
+        mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        try {
+            val calendar = createCalendar(ctag = null, syncToken = null)
+
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            val goodIcal = createSimpleIcal("uid-good", "Good Event")
+            val serverEvents = listOf(
+                CalDavEvent("bad-1.ics", "${calendar.caldavUrl}bad-1.ics", "etag-1", "BAD-1"),
+                CalDavEvent("bad-2.ics", "${calendar.caldavUrl}bad-2.ics", "etag-2", "BAD-2"),
+                CalDavEvent("good.ics", "${calendar.caldavUrl}good.ics", "etag-3", goodIcal),
+                CalDavEvent("bad-3.ics", "${calendar.caldavUrl}bad-3.ics", "etag-4", "BAD-3")
+            )
+            mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+            coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+            coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+            coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+            coEvery { eventsDao.upsert(any()) } returns 1L
+
+            // Bad data crashes, good data uses real parser
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(match { it.startsWith("BAD-") })
+            } throws RuntimeException("Corrupt")
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(match { !it.startsWith("BAD-") })
+            } answers { callOriginal() }
+
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = calendar.id,
+                calendarName = calendar.displayName,
+                syncType = SyncType.FULL,
+                triggerSource = SyncTrigger.FOREGROUND_MANUAL
+            )
+
+            val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+            assertTrue("Expected PullResult.Success", result is PullResult.Success)
+            assertEquals("Good event should be added", 1, (result as PullResult.Success).eventsAdded)
+            val session = sessionBuilder.build()
+            assertEquals("3 bad events should be counted", 3, session.skippedParseError)
+        } finally {
+            unmockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        }
+    }
+
+    @Test
+    fun `parser exception in incremental pull skips event and continues`() = runTest {
+        // A1 on incremental path: parse exception during pullIncremental should
+        // skip the event and continue, same as pullFull.
+        mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        try {
+            val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
+            val badHref = "bad-event.ics"
+            val goodHref = "good-event.ics"
+            val badUrl = "${calendar.caldavUrl}bad-event.ics"
+            val goodUrl = "${calendar.caldavUrl}good-event.ics"
+
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+            coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
+                CalDavResult.success(SyncReport(
+                    syncToken = "new-token",
+                    changed = listOf(
+                        SyncItem(badHref, "etag-bad", SyncItemStatus.OK),
+                        SyncItem(goodHref, "etag-good", SyncItemStatus.OK)
+                    ),
+                    deleted = emptyList()
+                ))
+
+            val badIcal = "CRASH-DATA"
+            val goodIcal = createSimpleIcal("uid-good", "Good Event")
+            coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+                CalDavResult.success(listOf(
+                    CalDavEvent(badHref, badUrl, "etag-bad", badIcal),
+                    CalDavEvent(goodHref, goodUrl, "etag-good", goodIcal)
+                ))
+
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(badIcal)
+            } throws RuntimeException("Parser crash on bad data")
+            every {
+                anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(neq(badIcal))
+            } answers { callOriginal() }
+
+            coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+            coEvery { eventsDao.upsert(any()) } returns 1L
+            coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+            coEvery { dataStore.getParseFailureRetryCount(calendar.id) } returns 0
+            coEvery { dataStore.incrementParseFailureRetry(calendar.id) } returns 1
+
+            val sessionBuilder = SyncSessionBuilder(
+                calendarId = calendar.id,
+                calendarName = calendar.displayName,
+                syncType = SyncType.INCREMENTAL,
+                triggerSource = SyncTrigger.BACKGROUND_PERIODIC
+            )
+
+            val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+            assertTrue("Expected PullResult.Success", result is PullResult.Success)
+            assertEquals("Good event should be added", 1, (result as PullResult.Success).eventsAdded)
+            val session = sessionBuilder.build()
+            assertEquals("Bad event should be counted as parse error", 1, session.skippedParseError)
+        } finally {
+            unmockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
+        }
+    }
+
+    // ========== A3: Adverse Tests — Multi-Batch Partial Failure ==========
+
+    @Test
+    fun `multi-batch sync with middle batch failing recovers via fallback`() = runTest {
+        // A3 adverse: 60 events = 3 batches of 20. Batch 2 fails, batches 1 and 3 succeed.
+        // Events from batch 2 should be recovered via individual fallback.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventCount = 60
+        val serverEvents = (1..eventCount).map { i ->
+            CalDavEvent("event-$i.ics", "${calendar.caldavUrl}event-$i.ics", "etag-$i",
+                createSimpleIcal("uid-$i", "Event $i"))
+        }
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
+
+        // Track which batch call this is
+        var batchCallCount = 0
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
+            val hrefs = secondArg<List<String>>()
+            if (hrefs.size > 1) {
+                // Multi-href batch call
+                batchCallCount++
+                if (batchCallCount == 2) {
+                    // Batch 2 fails
+                    CalDavResult.error(500, "Internal Server Error")
+                } else {
+                    // Batches 1 and 3 succeed
+                    CalDavResult.success(serverEvents.filter { it.href in hrefs })
+                }
+            } else {
+                // Single-href fallback call (for batch 2 events)
+                val href = hrefs[0]
+                val event = serverEvents.find { it.href == href }
+                CalDavResult.success(listOfNotNull(event))
+            }
+        }
+
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        // All 60 events should be processed: 40 from successful batches + 20 from fallback
+        assertEquals(60, (result as PullResult.Success).eventsAdded)
+    }
+
+    @Test
+    fun `incremental pull batch failure falls back to individual fetches`() = runTest {
+        // A3 on incremental path: batch multiget failure during pullIncremental
+        // should fall back to individual fetches, same as pullFull.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
+        val href1 = "event1.ics"
+        val href2 = "event2.ics"
+        val url1 = "${calendar.caldavUrl}event1.ics"
+        val url2 = "${calendar.caldavUrl}event2.ics"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
+            CalDavResult.success(SyncReport(
+                syncToken = "new-token",
+                changed = listOf(
+                    SyncItem(href1, "etag-1", SyncItemStatus.OK),
+                    SyncItem(href2, "etag-2", SyncItemStatus.OK)
+                ),
+                deleted = emptyList()
+            ))
+
+        // Batch fetch fails
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
+            CalDavResult.error(500, "Internal Server Error")
+
+        // Individual fetches succeed
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
+            ))
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href2)) } returns
+            CalDavResult.success(listOf(
+                CalDavEvent(href2, url2, "etag-2", createSimpleIcal("uid-2", "Event 2"))
+            ))
+
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
+        coEvery { dataStore.getParseFailureRetryCount(calendar.id) } returns 0
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals("Both events should be recovered via fallback", 2, (result as PullResult.Success).eventsAdded)
+    }
+
+    @Test
+    fun `batch fallback with all individual fetches failing returns Success with zero events`() = runTest {
+        // A3 adverse: batch fails AND every individual fallback also fails.
+        // Sync should still complete with Success(eventsAdded=0).
+        val calendar = createCalendar(ctag = null, syncToken = null)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(
+                Pair("event1.ics", "etag-1"),
+                Pair("event2.ics", "etag-2"),
+                Pair("event3.ics", "etag-3")
+            ))
+        // All fetches fail — batch and individual
+        coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
+            CalDavResult.error(503, "Service Unavailable", isRetryable = true)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsAdded)
+        // Verify fetchEventsByHref was called: 1 batch + 3 individual fallbacks = 4
+        coVerify(atLeast = 2) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 }

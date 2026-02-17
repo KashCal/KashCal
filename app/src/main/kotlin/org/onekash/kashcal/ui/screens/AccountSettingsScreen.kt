@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
@@ -52,6 +53,7 @@ import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
+import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
@@ -184,6 +186,15 @@ fun AccountSettingsScreen(
     onNavigateToSubscriptions: () -> Unit = {},
     // Contact birthdays (for subscription count)
     contactBirthdaysEnabled: Boolean = false,
+    // Device calendars
+    deviceCalendarsEnabled: Boolean = false,
+    hasCalendarPermission: Boolean = false,
+    deviceCalendars: List<DeviceCalendar> = emptyList(),
+    enabledDeviceCalendarIds: Set<Long> = emptySet(),
+    onToggleDeviceCalendars: (Boolean) -> Unit = {},
+    onToggleDeviceCalendar: (Long, Boolean) -> Unit = { _, _ -> },
+    showDeclinedEvents: Boolean = false,
+    onToggleShowDeclinedEvents: (Boolean) -> Unit = {},
     // Display settings
     showEventEmojis: Boolean = true,
     onShowEventEmojisChange: (Boolean) -> Unit = {},
@@ -249,6 +260,14 @@ fun AccountSettingsScreen(
                     onExportCalendar = onExportCalendar,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
                     contactBirthdaysEnabled = contactBirthdaysEnabled,
+                    deviceCalendarsEnabled = deviceCalendarsEnabled,
+                    hasCalendarPermission = hasCalendarPermission,
+                    deviceCalendars = deviceCalendars,
+                    enabledDeviceCalendarIds = enabledDeviceCalendarIds,
+                    onToggleDeviceCalendars = onToggleDeviceCalendars,
+                    onToggleDeviceCalendar = onToggleDeviceCalendar,
+                    showDeclinedEvents = showDeclinedEvents,
+                    onToggleShowDeclinedEvents = onToggleShowDeclinedEvents,
                     showEventEmojis = showEventEmojis,
                     onShowEventEmojisChange = onShowEventEmojisChange,
                     timeFormat = timeFormat,
@@ -357,6 +376,14 @@ private fun FlatSettingsContent(
     onExportCalendar: (Long) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
     contactBirthdaysEnabled: Boolean,
+    deviceCalendarsEnabled: Boolean,
+    hasCalendarPermission: Boolean,
+    deviceCalendars: List<DeviceCalendar>,
+    enabledDeviceCalendarIds: Set<Long>,
+    onToggleDeviceCalendars: (Boolean) -> Unit,
+    onToggleDeviceCalendar: (Long, Boolean) -> Unit,
+    showDeclinedEvents: Boolean,
+    onToggleShowDeclinedEvents: (Boolean) -> Unit,
     showEventEmojis: Boolean,
     onShowEventEmojisChange: (Boolean) -> Unit,
     timeFormat: String,
@@ -380,6 +407,7 @@ private fun FlatSettingsContent(
     var showEventDurationSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
+    var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
 
     val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
@@ -458,7 +486,17 @@ private fun FlatSettingsContent(
                     1 -> stringResource(R.string.subscriptions_count_one)
                     else -> stringResource(R.string.subscriptions_count_other, subscriptionCount)
                 },
-                onClick = onNavigateToSubscriptions,
+                onClick = onNavigateToSubscriptions
+            )
+
+            // Device Calendars row
+            SettingsRow(
+                icon = Icons.Default.CalendarMonth,
+                label = "Device Calendars",
+                subtitle = if (deviceCalendarsEnabled) {
+                    "${enabledDeviceCalendarIds.size} enabled"
+                } else null,
+                onClick = { showDeviceCalendarsSheet = true },
                 showDivider = false
             )
         }
@@ -602,6 +640,21 @@ private fun FlatSettingsContent(
             onShowAllCalendars = onShowAllCalendars,
             onHideAllCalendars = onHideAllCalendars,
             onDismiss = { showVisibleCalendarsSheet = false }
+        )
+    }
+
+    // Device Calendars Sheet
+    if (showDeviceCalendarsSheet) {
+        DeviceCalendarsSheet(
+            isEnabled = deviceCalendarsEnabled,
+            hasPermission = hasCalendarPermission,
+            deviceCalendars = deviceCalendars,
+            enabledCalendarIds = enabledDeviceCalendarIds,
+            showDeclinedEvents = showDeclinedEvents,
+            onDismiss = { showDeviceCalendarsSheet = false },
+            onToggle = onToggleDeviceCalendars,
+            onToggleCalendar = onToggleDeviceCalendar,
+            onToggleShowDeclined = onToggleShowDeclinedEvents
         )
     }
 

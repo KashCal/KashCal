@@ -28,6 +28,9 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.contacts.ContactBirthdayManager
 import org.onekash.kashcal.data.contacts.ContactBirthdayWorker
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
@@ -116,6 +119,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val eventCoordinator: EventCoordinator,
     private val syncLogReader: SyncLogReader,
     private val contactBirthdayManager: ContactBirthdayManager,
+    private val calendarProviderManager: CalendarProviderManager,
+    private val calendarProviderRepository: CalendarProviderRepository,
     private val dataStore: KashCalDataStore,
     private val widgetUpdateManager: WidgetUpdateManager
 ) : AndroidViewModel(application) {
@@ -204,6 +209,22 @@ class AccountSettingsViewModel @Inject constructor(
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
 
+    // Device Calendars
+    private val _deviceCalendarsEnabled = MutableStateFlow(false)
+    val deviceCalendarsEnabled: StateFlow<Boolean> = _deviceCalendarsEnabled.asStateFlow()
+
+    private val _hasCalendarPermission = MutableStateFlow(false)
+    val hasCalendarPermission: StateFlow<Boolean> = _hasCalendarPermission.asStateFlow()
+
+    private val _deviceCalendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
+    val deviceCalendars: StateFlow<List<DeviceCalendar>> = _deviceCalendars.asStateFlow()
+
+    private val _enabledDeviceCalendarIds = MutableStateFlow<Set<Long>>(emptySet())
+    val enabledDeviceCalendarIds: StateFlow<Set<Long>> = _enabledDeviceCalendarIds.asStateFlow()
+
+    private val _showDeclinedEvents = MutableStateFlow(false)
+    val showDeclinedEvents: StateFlow<Boolean> = _showDeclinedEvents.asStateFlow()
+
     // Display settings
     private val _showEventEmojis = MutableStateFlow(true)
     val showEventEmojis: StateFlow<Boolean> = _showEventEmojis.asStateFlow()
@@ -223,9 +244,11 @@ class AccountSettingsViewModel @Inject constructor(
         observeIcsSubscriptions()
         observeContactBirthdays()
         observeUserPreferences()
+        observeDeviceCalendars()
         observeDisplaySettings()
         checkNotificationPermission()
         checkContactsPermission()
+        checkCalendarPermission()
     }
 
     private fun loadInitialState() {
@@ -385,6 +408,46 @@ class AccountSettingsViewModel @Inject constructor(
                 _contactBirthdaysColor.value = color
             }
         }
+    }
+
+    private fun observeDeviceCalendars() {
+        viewModelScope.launch {
+            dataStore.deviceCalendarsEnabled.collect { enabled ->
+                _deviceCalendarsEnabled.value = enabled
+                if (enabled && _hasCalendarPermission.value) {
+                    loadDeviceCalendars()
+                }
+            }
+        }
+        viewModelScope.launch {
+            dataStore.enabledDeviceCalendarIds.collect { ids ->
+                _enabledDeviceCalendarIds.value = ids
+            }
+        }
+        viewModelScope.launch {
+            dataStore.showDeclinedEvents.collect { show ->
+                _showDeclinedEvents.value = show
+            }
+        }
+    }
+
+    private suspend fun loadDeviceCalendars() {
+        try {
+            calendarProviderRepository.pruneStaleCalendarIds(dataStore)
+            val calendars = calendarProviderRepository.getDeviceCalendars()
+            _deviceCalendars.value = calendars
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Calendar permission revoked", e)
+            _deviceCalendars.value = emptyList()
+        }
+    }
+
+    private fun checkCalendarPermission() {
+        val context = getApplication<Application>()
+        _hasCalendarPermission.value = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
     }
 
     private fun observeUserPreferences() {
@@ -1353,6 +1416,60 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             Log.i(TAG, "Birthday reminder change: $minutes minutes")
             dataStore.setBirthdayReminder(minutes)
+        }
+    }
+
+    // ==================== Device Calendars ====================
+
+    /**
+     * Toggle device calendars feature.
+     * Permission should be checked by the caller before enabling.
+     */
+    fun onToggleDeviceCalendars(enabled: Boolean) {
+        viewModelScope.launch {
+            Log.i(TAG, "Toggle device calendars: enabled=$enabled")
+            dataStore.setDeviceCalendarsEnabled(enabled)
+            if (enabled) {
+                calendarProviderManager.onEnabled()
+                loadDeviceCalendars()
+            } else {
+                calendarProviderManager.onDisabled()
+                _deviceCalendars.value = emptyList()
+            }
+        }
+    }
+
+    /**
+     * Toggle "show declined events" preference for device calendars.
+     */
+    fun onToggleShowDeclinedEvents(show: Boolean) {
+        viewModelScope.launch {
+            dataStore.setShowDeclinedEvents(show)
+            // Increment change signal so views refresh with updated filter
+            calendarProviderManager.onEnabled()
+        }
+    }
+
+    /**
+     * Toggle a specific device calendar on/off.
+     */
+    fun onToggleDeviceCalendar(calendarId: Long, enabled: Boolean) {
+        viewModelScope.launch {
+            val currentIds = _enabledDeviceCalendarIds.value.toMutableSet()
+            if (enabled) currentIds.add(calendarId) else currentIds.remove(calendarId)
+            dataStore.setEnabledDeviceCalendarIds(currentIds)
+            // Increment change signal so day view refreshes
+            calendarProviderManager.onEnabled()
+        }
+    }
+
+    /**
+     * Refresh calendar permission state (call from Activity onResume or after permission result).
+     */
+    fun refreshCalendarPermission() {
+        checkCalendarPermission()
+        if (_hasCalendarPermission.value && _deviceCalendarsEnabled.value) {
+            viewModelScope.launch { loadDeviceCalendars() }
         }
     }
 

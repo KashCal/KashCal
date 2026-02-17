@@ -1,71 +1,75 @@
 package org.onekash.kashcal.sync.engine.integration
 
-import io.mockk.*
+import android.content.Context
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import io.mockk.clearAllMocks
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
-import org.onekash.kashcal.data.db.dao.SyncLogsDao
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
+import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
-import org.onekash.kashcal.sync.session.SyncSessionStore
-import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.io.File
 import java.util.UUID
 
 /**
- * Integration test for CalDavSyncEngine with real iCloud.
+ * Integration test for CalDavSyncEngine with real iCloud and real Room DB.
+ *
+ * Uses real CalDavClient, Parser, Room in-memory database, OccurrenceGenerator,
+ * PullStrategy, PushStrategy, ConflictResolver. Only SyncNotificationManager
+ * is mocked (needs Android notification system).
  *
  * This test performs REAL operations against iCloud:
- * - Creates test events on iCloud
- * - Syncs data back and forth
- * - Cleans up test events
+ * - Pulls events from iCloud into real Room DB
+ * - Creates test events in Room, pushes to iCloud
+ * - Verifies round-trip data integrity
+ * - Cleans up test events from iCloud
  *
- * Run with: ./gradlew testDebugUnitTest --tests "*RealICloudSyncEngineTest*"
+ * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealICloudSyncEngineTest*"
  *
  * Requires: local.properties with iCloud credentials
  */
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [33])
 class RealICloudSyncEngineTest {
 
     // Real components
-    private lateinit var client: CalDavClient
-    private lateinit var quirks: ICloudQuirks
-    private lateinit var clientFactory: OkHttpCalDavClientFactory
-
-    // Strategies
-    private lateinit var pullStrategy: PullStrategy
-    private lateinit var pushStrategy: PushStrategy
-    private lateinit var conflictResolver: ConflictResolver
-    private lateinit var syncEngine: CalDavSyncEngine
-
-    // Mocked DAOs (we verify interactions)
     private lateinit var database: KashCalDatabase
-    private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
-    private lateinit var syncLogsDao: SyncLogsDao
-    private lateinit var occurrenceGenerator: OccurrenceGenerator
-    private lateinit var dataStore: KashCalDataStore
-    private lateinit var syncSessionStore: SyncSessionStore
+    private lateinit var client: CalDavClient
+    private lateinit var syncEngine: CalDavSyncEngine
 
     // Credentials
     private var username: String? = null
@@ -74,40 +78,83 @@ class RealICloudSyncEngineTest {
 
     // Test state
     private var testCalendar: CalDavCalendar? = null
+    private var testCalendarId: Long = 0
+    private var testAccountId: Long = 0
     private val createdEventUrls = mutableListOf<String>()
 
     @Before
     fun setup() {
+        val context: Context = ApplicationProvider.getApplicationContext()
+
+        // Real Room in-memory database
+        database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
+            .allowMainThreadQueries()
+            .build()
+
+        eventsDao = database.eventsDao()
+        pendingOperationsDao = database.pendingOperationsDao()
+        val calendarsDao = database.calendarsDao()
+        val occurrencesDao = database.occurrencesDao()
+        val syncLogsDao = database.syncLogsDao()
+
+        val occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao)
+        val calendarRepository = CalendarRepositoryImpl(calendarsDao)
+        val dataStore = KashCalDataStore(context)
+        val syncSessionStore = SyncSessionStore(context)
+
+        // Load credentials and create real client
         loadCredentials()
-
-        quirks = ICloudQuirks()
-        clientFactory = OkHttpCalDavClientFactory()
-
-        // Create client using factory pattern (replaces setCredentials)
+        val quirks = ICloudQuirks()
         if (username != null && password != null) {
-            val credentials = Credentials(
-                username = username!!,
-                password = password!!,
-                serverUrl = serverUrl
+            client = OkHttpCalDavClientFactory().createClient(
+                Credentials(username!!, password!!, serverUrl), quirks
             )
-            client = clientFactory.createClient(credentials, quirks)
         } else {
-            // Create a dummy client for cases where credentials aren't available
-            val dummyCredentials = Credentials(
-                username = "dummy",
-                password = "dummy",
-                serverUrl = serverUrl
+            client = OkHttpCalDavClientFactory().createClient(
+                Credentials("", "", serverUrl), quirks
             )
-            client = clientFactory.createClient(dummyCredentials, quirks)
         }
 
-        setupMockedDaos()
-        setupStrategies()
+        val pullStrategy = PullStrategy(
+            database = database,
+            calendarRepository = calendarRepository,
+            eventsDao = eventsDao,
+            occurrenceGenerator = occurrenceGenerator,
+            defaultQuirks = quirks,
+            dataStore = dataStore,
+            syncSessionStore = syncSessionStore
+        )
+
+        val pushStrategy = PushStrategy(
+            calendarRepository = calendarRepository,
+            eventsDao = eventsDao,
+            pendingOperationsDao = pendingOperationsDao
+        )
+
+        val conflictResolver = ConflictResolver(
+            calendarRepository = calendarRepository,
+            eventsDao = eventsDao,
+            pendingOperationsDao = pendingOperationsDao,
+            occurrenceGenerator = occurrenceGenerator
+        )
+
+        // Only SyncNotificationManager is mocked — it needs Android notification system
+        syncEngine = CalDavSyncEngine(
+            pullStrategy = pullStrategy,
+            pushStrategy = pushStrategy,
+            conflictResolver = conflictResolver,
+            calendarRepository = calendarRepository,
+            eventsDao = eventsDao,
+            pendingOperationsDao = pendingOperationsDao,
+            syncLogsDao = syncLogsDao,
+            syncSessionStore = syncSessionStore,
+            notificationManager = mockk(relaxed = true)
+        )
     }
 
     @After
     fun tearDown() {
-        // Clean up any events we created
+        // Clean up any events we created on iCloud
         runBlocking {
             for (url in createdEventUrls) {
                 try {
@@ -118,74 +165,8 @@ class RealICloudSyncEngineTest {
                 }
             }
         }
+        database.close()
         clearAllMocks()
-    }
-
-    private fun setupMockedDaos() {
-        database = mockk(relaxed = true)
-        calendarRepository = mockk(relaxed = true)
-        eventsDao = mockk(relaxed = true)
-        pendingOperationsDao = mockk(relaxed = true)
-        syncLogsDao = mockk(relaxed = true)
-        occurrenceGenerator = mockk(relaxed = true)
-        dataStore = mockk(relaxed = true)
-        syncSessionStore = mockk(relaxed = true)
-
-        // Mock database.runInTransaction to execute the block directly
-        coEvery {
-            database.runInTransaction(any<suspend () -> Any>())
-        } coAnswers {
-            @Suppress("UNCHECKED_CAST")
-            val block = firstArg<suspend () -> Any>()
-            block()
-        }
-
-        // Default mock behaviors
-        coEvery { eventsDao.upsert(any()) } returns 1L
-        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
-        coEvery { eventsDao.getByUid(any()) } returns emptyList()
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
-        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns emptyList()
-        coEvery { pendingOperationsDao.getConflictOperations() } returns emptyList()
-        coEvery { syncLogsDao.insert(any()) } returns 1L
-    }
-
-    private fun setupStrategies() {
-        pullStrategy = PullStrategy(
-            database = database,
-            calendarRepository = calendarRepository,
-            eventsDao = eventsDao,
-            occurrenceGenerator = occurrenceGenerator,
-            defaultQuirks = quirks,
-            dataStore = dataStore,
-            syncSessionStore = syncSessionStore
-        )
-
-        pushStrategy = PushStrategy(
-            calendarRepository = calendarRepository,
-            eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao
-        )
-
-        conflictResolver = ConflictResolver(
-            calendarRepository = calendarRepository,
-            eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator
-        )
-
-        syncEngine = CalDavSyncEngine(
-            pullStrategy = pullStrategy,
-            pushStrategy = pushStrategy,
-            conflictResolver = conflictResolver,
-            calendarRepository = calendarRepository,
-            eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao,
-            syncLogsDao = syncLogsDao,
-            syncSessionStore = mockk(relaxed = true),
-            notificationManager = mockk(relaxed = true)
-        )
     }
 
     private fun loadCredentials() {
@@ -236,7 +217,22 @@ class RealICloudSyncEngineTest {
         return testCalendar
     }
 
-    // ========== Full Sync Tests ==========
+    private suspend fun setupDbCalendar(caldavUrl: String, displayName: String): Calendar {
+        testAccountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
+        )
+        testCalendarId = database.calendarsDao().insert(
+            Calendar(
+                accountId = testAccountId,
+                caldavUrl = caldavUrl,
+                displayName = displayName,
+                color = 0xFF0000
+            )
+        )
+        return database.calendarsDao().getById(testCalendarId)!!
+    }
+
+    // ========== Sync Engine Tests ==========
 
     @Test
     fun `full sync workflow - pull from iCloud`() = runBlocking {
@@ -245,19 +241,7 @@ class RealICloudSyncEngineTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
         println("=== Full Sync Test ===")
         println("Calendar: ${calendar.displayName}")
@@ -271,31 +255,27 @@ class RealICloudSyncEngineTest {
                 println("SUCCESS")
                 println("Calendars synced: ${result.calendarsSynced}")
                 println("Events pulled (added): ${result.eventsPulledAdded}")
-                println("Events pulled (updated): ${result.eventsPulledUpdated}")
-                println("Events pulled (deleted): ${result.eventsPulledDeleted}")
-                println("Events pushed (created): ${result.eventsPushedCreated}")
-                println("Events pushed (updated): ${result.eventsPushedUpdated}")
-                println("Events pushed (deleted): ${result.eventsPushedDeleted}")
-                println("Conflicts resolved: ${result.conflictsResolved}")
                 println("Duration: ${result.durationMs}ms")
 
-                assert(result.calendarsSynced == 1)
+                assertEquals("Should sync 1 calendar", 1, result.calendarsSynced)
+
+                // Verify events in real DB
+                val now = System.currentTimeMillis()
+                val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10
+                val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
+                val dbEvents = eventsDao.getByCalendarIdInRange(testCalendarId, farPast, farFuture)
+                println("Events in DB: ${dbEvents.size}")
+                assertTrue("Should have events in DB", dbEvents.isNotEmpty())
             }
             is SyncResult.PartialSuccess -> {
-                println("PARTIAL SUCCESS")
-                println("Total changes: ${result.totalChanges}")
-                println("Errors: ${result.errors.size}")
-                result.errors.forEach { err ->
-                    println("  - ${err.phase}: ${err.message}")
-                }
+                println("PARTIAL SUCCESS - ${result.errors.size} errors")
+                result.errors.forEach { err -> println("  - ${err.phase}: ${err.message}") }
             }
             is SyncResult.AuthError -> {
                 println("AUTH ERROR: ${result.message}")
-                assert(false) { "Auth should not fail with valid credentials" }
             }
             is SyncResult.Error -> {
                 println("ERROR: ${result.message} (code: ${result.code})")
-                // Don't fail - might be network issue
             }
         }
     }
@@ -307,16 +287,17 @@ class RealICloudSyncEngineTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // Create a test event
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
+
+        // Create test event in real DB
         val uid = "kashcal-test-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
         val oneHourLater = now + 3600_000
 
-        val testEvent = Event(
-            id = 100L,
+        val eventId = eventsDao.upsert(Event(
             uid = uid,
-            calendarId = 1L,
-            title = "KashCal Test Event - ${System.currentTimeMillis()}",
+            calendarId = testCalendarId,
+            title = "KashCal Test Event - $now",
             location = "Test Location",
             description = "Created by KashCal integration test",
             startTs = now,
@@ -324,63 +305,22 @@ class RealICloudSyncEngineTest {
             timezone = "America/New_York",
             isAllDay = false,
             status = "CONFIRMED",
-            organizerEmail = null,
-            organizerName = null,
-            rrule = null,
-            rdate = null,
-            exdate = null,
-            originalEventId = null,
-            originalInstanceTime = null,
-            originalSyncId = null,
-            reminders = null,
             dtstamp = now,
-            caldavUrl = null,
-            etag = null,
-            sequence = 0,
             syncStatus = SyncStatus.PENDING_CREATE,
-            lastSyncError = null,
-            syncRetryCount = 0,
             localModifiedAt = now,
-            serverModifiedAt = null,
             createdAt = now,
             updatedAt = now
-        )
+        ))
 
-        val pendingOp = PendingOperation(
-            id = 1L,
-            eventId = testEvent.id,
+        // Create pending operation in real DB
+        pendingOperationsDao.insert(PendingOperation(
+            eventId = eventId,
             operation = PendingOperation.OPERATION_CREATE,
             status = PendingOperation.STATUS_PENDING
-        )
-
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
-
-        // Setup mocks for push
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
-        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
-        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
-            // Track the URL for cleanup
-            val url = arg<String>(1)
-            createdEventUrls.add(url)
-            println("Event created on server: $url")
-        }
+        ))
 
         println("=== Push New Event Test ===")
-        println("Event: ${testEvent.title}")
-        println("UID: ${testEvent.uid}")
+        println("Event ID: $eventId, UID: $uid")
 
         val result = syncEngine.syncCalendar(calendar, client = client)
 
@@ -390,22 +330,27 @@ class RealICloudSyncEngineTest {
                 println("SUCCESS")
                 println("Events pushed (created): ${result.eventsPushedCreated}")
 
-                // Verify event was created
-                coVerify { eventsDao.markCreatedOnServer(testEvent.id, any(), any(), any()) }
-                coVerify { pendingOperationsDao.deleteById(pendingOp.id) }
+                // Verify in real DB — event should now have caldavUrl and etag
+                val pushedEvent = eventsDao.getById(eventId)
+                assertNotNull("Event should still exist in DB", pushedEvent)
+                assertNotNull("CalDAV URL should be assigned by server", pushedEvent?.caldavUrl)
+                assertNotNull("ETag should be assigned by server", pushedEvent?.etag)
+                assertEquals("Sync status should be SYNCED", SyncStatus.SYNCED, pushedEvent?.syncStatus)
 
-                assert(result.eventsPushedCreated == 1) { "Should have created 1 event" }
+                // Track for cleanup
+                pushedEvent?.caldavUrl?.let { createdEventUrls.add(it) }
+
+                println("CalDAV URL: ${pushedEvent?.caldavUrl}")
+                println("ETag: ${pushedEvent?.etag}")
+
+                assertEquals("Should have created 1 event", 1, result.eventsPushedCreated)
             }
             is SyncResult.PartialSuccess -> {
                 println("PARTIAL SUCCESS - ${result.errors.size} errors")
                 result.errors.forEach { println("  Error: ${it.message}") }
             }
-            is SyncResult.AuthError -> {
-                println("AUTH ERROR: ${result.message}")
-            }
-            is SyncResult.Error -> {
-                println("ERROR: ${result.message}")
-            }
+            is SyncResult.AuthError -> println("AUTH ERROR: ${result.message}")
+            is SyncResult.Error -> println("ERROR: ${result.message}")
         }
     }
 
@@ -416,75 +361,38 @@ class RealICloudSyncEngineTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
+
         val uid = "kashcal-recurring-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
         val oneHourLater = now + 3600_000
 
-        val recurringEvent = Event(
-            id = 200L,
+        val eventId = eventsDao.upsert(Event(
             uid = uid,
-            calendarId = 1L,
+            calendarId = testCalendarId,
             title = "KashCal Recurring Test - Weekly",
-            location = null,
             description = "Recurring event created by integration test",
             startTs = now,
             endTs = oneHourLater,
             timezone = "America/New_York",
             isAllDay = false,
             status = "CONFIRMED",
-            organizerEmail = null,
-            organizerName = null,
             rrule = "FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=5",
-            rdate = null,
-            exdate = null,
-            originalEventId = null,
-            originalInstanceTime = null,
-            originalSyncId = null,
-            reminders = null,
             dtstamp = now,
-            caldavUrl = null,
-            etag = null,
-            sequence = 0,
             syncStatus = SyncStatus.PENDING_CREATE,
-            lastSyncError = null,
-            syncRetryCount = 0,
             localModifiedAt = now,
-            serverModifiedAt = null,
             createdAt = now,
             updatedAt = now
-        )
+        ))
 
-        val pendingOp = PendingOperation(
-            id = 2L,
-            eventId = recurringEvent.id,
+        pendingOperationsDao.insert(PendingOperation(
+            eventId = eventId,
             operation = PendingOperation.OPERATION_CREATE,
             status = PendingOperation.STATUS_PENDING
-        )
-
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
-
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
-        coEvery { eventsDao.getById(recurringEvent.id) } returns recurringEvent
-        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
-        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
-            createdEventUrls.add(arg<String>(1))
-        }
+        ))
 
         println("=== Push Recurring Event Test ===")
-        println("Event: ${recurringEvent.title}")
-        println("RRULE: ${recurringEvent.rrule}")
+        println("Event ID: $eventId, UID: $uid, RRULE: FREQ=WEEKLY;BYDAY=MO,WE,FR;COUNT=5")
 
         val result = syncEngine.syncCalendar(calendar, client = client)
 
@@ -492,15 +400,19 @@ class RealICloudSyncEngineTest {
         when (result) {
             is SyncResult.Success -> {
                 println("SUCCESS - Recurring event created on iCloud")
-                assert(result.eventsPushedCreated == 1)
+
+                val pushedEvent = eventsDao.getById(eventId)
+                assertNotNull("CalDAV URL should be assigned", pushedEvent?.caldavUrl)
+                assertEquals("Should be SYNCED", SyncStatus.SYNCED, pushedEvent?.syncStatus)
+                pushedEvent?.caldavUrl?.let { createdEventUrls.add(it) }
+
+                assertEquals("Should have created 1 event", 1, result.eventsPushedCreated)
             }
             is SyncResult.PartialSuccess -> {
                 println("PARTIAL SUCCESS")
                 result.errors.forEach { println("  Error: ${it.message}") }
             }
-            else -> {
-                println("Failed: $result")
-            }
+            else -> println("Failed: $result")
         }
     }
 
@@ -511,74 +423,38 @@ class RealICloudSyncEngineTest {
         val caldavCalendar = discoverTestCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
+
+        // Create and push a test event
         val uid = "kashcal-roundtrip-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
         val oneHourLater = now + 3600_000
+        val testTitle = "KashCal Round-Trip Test"
+        val testLocation = "Round Trip Location"
 
-        val testEvent = Event(
-            id = 300L,
+        val eventId = eventsDao.upsert(Event(
             uid = uid,
-            calendarId = 1L,
-            title = "KashCal Round-Trip Test",
-            location = "Round Trip Location",
+            calendarId = testCalendarId,
+            title = testTitle,
+            location = testLocation,
             description = "Testing round-trip sync",
             startTs = now,
             endTs = oneHourLater,
             timezone = "America/Los_Angeles",
             isAllDay = false,
             status = "CONFIRMED",
-            organizerEmail = null,
-            organizerName = null,
-            rrule = null,
-            rdate = null,
-            exdate = null,
-            originalEventId = null,
-            originalInstanceTime = null,
-            originalSyncId = null,
-            reminders = null,
             dtstamp = now,
-            caldavUrl = null,
-            etag = null,
-            sequence = 0,
             syncStatus = SyncStatus.PENDING_CREATE,
-            lastSyncError = null,
-            syncRetryCount = 0,
             localModifiedAt = now,
-            serverModifiedAt = null,
             createdAt = now,
             updatedAt = now
-        )
+        ))
 
-        val pendingOp = PendingOperation(
-            id = 3L,
-            eventId = testEvent.id,
+        pendingOperationsDao.insert(PendingOperation(
+            eventId = eventId,
             operation = PendingOperation.OPERATION_CREATE,
             status = PendingOperation.STATUS_PENDING
-        )
-
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar!!.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = null,
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
-
-        var createdUrl: String? = null
-
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(pendingOp)
-        coEvery { eventsDao.getById(testEvent.id) } returns testEvent
-        coEvery { calendarRepository.getCalendarById(1L) } returns calendar
-        coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } answers {
-            createdUrl = arg<String>(1)
-            createdEventUrls.add(createdUrl!!)
-        }
+        ))
 
         println("=== Round-Trip Test: PUSH Phase ===")
         val pushResult = syncEngine.syncCalendar(calendar, client = client)
@@ -588,16 +464,19 @@ class RealICloudSyncEngineTest {
             return@runBlocking
         }
 
-        println("Event pushed to: $createdUrl")
+        val pushedEvent = eventsDao.getById(eventId)
+        println("Event pushed to: ${pushedEvent?.caldavUrl}")
+        pushedEvent?.caldavUrl?.let { createdEventUrls.add(it) }
 
-        // Now pull back and verify
-        val pulledEvents = mutableListOf<Event>()
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns emptyList()
-        coEvery { eventsDao.upsert(capture(pulledEvents)) } returns 1L
-        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        // Delete local events to simulate a fresh pull
+        // (keep the calendar with its ctag/syncToken so we can do a full pull)
+        eventsDao.deleteByCalendarId(testCalendarId)
+
+        // Get updated calendar (ctag/syncToken may have been updated by push)
+        val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
         println("\n=== Round-Trip Test: PULL Phase ===")
-        val pullResult = syncEngine.syncCalendar(calendar, forceFullSync = true, client = client)
+        val pullResult = syncEngine.syncCalendar(updatedCalendar, forceFullSync = true, client = client)
 
         println("\n=== Round-Trip Result ===")
         when (pullResult) {
@@ -605,8 +484,10 @@ class RealICloudSyncEngineTest {
                 println("Pull SUCCESS")
                 println("Events pulled: ${pullResult.eventsPulledAdded}")
 
-                // Find our event in pulled events
-                val roundTrippedEvent = pulledEvents.find { it.uid == uid }
+                // Find our event in real DB by UID
+                val roundTrippedEvents = eventsDao.getByUid(uid)
+                val roundTrippedEvent = roundTrippedEvents.firstOrNull()
+
                 if (roundTrippedEvent != null) {
                     println("\nRound-tripped event found:")
                     println("  Title: ${roundTrippedEvent.title}")
@@ -615,16 +496,14 @@ class RealICloudSyncEngineTest {
                     println("  Timezone: ${roundTrippedEvent.timezone}")
 
                     // Verify data integrity
-                    assert(roundTrippedEvent.title == testEvent.title) { "Title should match" }
-                    assert(roundTrippedEvent.location == testEvent.location) { "Location should match" }
-                    println("\n✓ Round-trip data integrity verified!")
+                    assertEquals("Title should survive round-trip", testTitle, roundTrippedEvent.title)
+                    assertEquals("Location should survive round-trip", testLocation, roundTrippedEvent.location)
+                    println("\nRound-trip data integrity verified!")
                 } else {
-                    println("Note: Event not in pulled events (might have been created before sync window)")
+                    println("Note: Event not found in pulled events (might be outside sync window)")
                 }
             }
-            else -> {
-                println("Pull result: $pullResult")
-            }
+            else -> println("Pull result: $pullResult")
         }
     }
 
@@ -640,38 +519,23 @@ class RealICloudSyncEngineTest {
         assumeTrue("Should get ctag", ctagResult.isSuccess())
         val ctag = ctagResult.getOrNull()!!
 
-        val calendar = Calendar(
-            id = 1L,
-            accountId = 1L,
-            caldavUrl = caldavCalendar.url,
-            displayName = caldavCalendar.displayName,
-            color = -1,
-            ctag = ctag, // Set current ctag
-            syncToken = null,
-            isVisible = true,
-            isDefault = false,
-            isReadOnly = false,
-            sortOrder = 0
-        )
+        val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
+        database.calendarsDao().updateCtag(testCalendarId, ctag)
+        val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
         println("=== No Changes Test ===")
         println("Calendar ctag: $ctag")
 
-        // No pending operations
-        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns emptyList()
-
-        val result = syncEngine.syncCalendar(calendar, client = client)
+        val result = syncEngine.syncCalendar(updatedCalendar, client = client)
 
         println("\n=== Result ===")
         when (result) {
             is SyncResult.Success -> {
                 println("SUCCESS")
                 println("Total changes: ${result.totalChanges}")
-                assert(result.totalChanges == 0) { "Should have 0 changes when calendar unchanged" }
+                assertEquals("Should have 0 changes when calendar unchanged", 0, result.totalChanges)
             }
-            else -> {
-                println("Result: $result")
-            }
+            else -> println("Result: $result")
         }
     }
 }

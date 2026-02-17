@@ -108,6 +108,13 @@ class SettingsActivity : ComponentActivity() {
                 val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
                 val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
 
+                // Device calendars state
+                val deviceCalendarsEnabled by viewModel.deviceCalendarsEnabled.collectAsStateWithLifecycle()
+                val hasCalendarPermission by viewModel.hasCalendarPermission.collectAsStateWithLifecycle()
+                val deviceCalendars by viewModel.deviceCalendars.collectAsStateWithLifecycle()
+                val enabledDeviceCalendarIds by viewModel.enabledDeviceCalendarIds.collectAsStateWithLifecycle()
+                val showDeclinedEvents by viewModel.showDeclinedEvents.collectAsStateWithLifecycle()
+
                 // iCloud account for AccountsScreen — derived from uiState (single source of truth)
                 val iCloudAccount = remember(uiState.iCloudState) {
                     (uiState.iCloudState as? ICloudConnectionState.Connected)?.let {
@@ -129,6 +136,16 @@ class SettingsActivity : ComponentActivity() {
                     if (isGranted) {
                         // Permission granted, enable contact birthdays
                         viewModel.onToggleContactBirthdays(true)
+                    }
+                }
+
+                // Calendar permission launcher (for Device Calendars)
+                val calendarPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { isGranted ->
+                    viewModel.refreshCalendarPermission()
+                    if (isGranted) {
+                        viewModel.onToggleDeviceCalendars(true)
                     }
                 }
 
@@ -350,6 +367,21 @@ class SettingsActivity : ComponentActivity() {
                             onNavigateToSubscriptions = { showSubscriptionsScreen = true },
                             // Contact birthdays (for subscription count)
                             contactBirthdaysEnabled = contactBirthdaysEnabled,
+                            // Device calendars
+                            deviceCalendarsEnabled = deviceCalendarsEnabled,
+                            hasCalendarPermission = hasCalendarPermission,
+                            deviceCalendars = deviceCalendars,
+                            enabledDeviceCalendarIds = enabledDeviceCalendarIds,
+                            onToggleDeviceCalendars = { enabled ->
+                                if (enabled && !hasCalendarPermission) {
+                                    calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                                } else {
+                                    viewModel.onToggleDeviceCalendars(enabled)
+                                }
+                            },
+                            onToggleDeviceCalendar = viewModel::onToggleDeviceCalendar,
+                            showDeclinedEvents = showDeclinedEvents,
+                            onToggleShowDeclinedEvents = viewModel::onToggleShowDeclinedEvents,
                             // Display settings
                             showEventEmojis = showEventEmojis,
                             onShowEventEmojisChange = viewModel::setShowEventEmojis,
@@ -475,5 +507,6 @@ class SettingsActivity : ComponentActivity() {
         Log.d(TAG, "onResume - refreshing permissions")
         viewModel.refreshNotificationPermission()
         viewModel.refreshContactsPermission()
+        viewModel.refreshCalendarPermission()
     }
 }

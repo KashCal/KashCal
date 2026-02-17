@@ -668,7 +668,14 @@ class CalDavSyncWorker @AssistedInject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "syncEngine threw exception for account ${account.email.maskEmail()}", e)
-                throw e  // Re-throw to be caught by outer handler
+                val now = System.currentTimeMillis()
+                accountRepository.recordSyncFailure(account.id, now)
+                checkSyncFailureThreshold(account.id)
+                allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
+                    phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,
+                    message = e.message ?: "Unknown error"
+                ))
+                continue
             }
 
             // Record per-account sync metadata (same as single-account path)
