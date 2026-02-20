@@ -68,7 +68,7 @@ object IcsPatcher {
             description = event.description,
             location = event.location,
             dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(event.endTs, zone, event.isAllDay),
+            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(event), zone, event.isAllDay),
             isAllDay = event.isAllDay,
             status = EventStatus.fromString(event.status),
             transparency = Transparency.fromString(event.transp),
@@ -139,14 +139,14 @@ object IcsPatcher {
             description = event.description,
             location = event.location,
             dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(event.endTs, zone, event.isAllDay),
+            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(event), zone, event.isAllDay),
             duration = null, // We use dtEnd, not duration
             isAllDay = event.isAllDay,
             status = EventStatus.fromString(event.status),
             sequence = event.sequence,
             rrule = event.rrule?.let { RRule.parse(it) },
             exdates = parseExdates(event.exdate, zone, event.isAllDay),
-            rdates = emptyList(),
+            rdates = parseExdates(event.rdate, zone, event.isAllDay),
             classification = Classification.fromString(event.classification),
             recurrenceId = null,
             alarms = alarms,
@@ -275,7 +275,7 @@ object IcsPatcher {
             description = exception.description,
             location = exception.location,
             dtStart = ICalDateTime.fromTimestamp(exception.startTs, zone, exception.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(exception.endTs, zone, exception.isAllDay),
+            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(exception), zone, exception.isAllDay),
             duration = null,
             isAllDay = exception.isAllDay,
             status = EventStatus.fromString(exception.status),
@@ -402,6 +402,19 @@ object IcsPatcher {
             ts.trim().toLongOrNull()?.let {
                 ICalDateTime.fromTimestamp(it, zone, isDate)
             }
+        }
+    }
+
+    /**
+     * Convert inclusive endTs to exclusive for RFC 5545 serialization.
+     * All-day events are stored with inclusive end (23:59:59.999 UTC).
+     * RFC 5545 requires exclusive DTEND (next day 00:00:00 UTC).
+     */
+    private fun exclusiveEndTs(event: Event): Long {
+        return if (event.isAllDay && event.endTs >= event.startTs) {
+            event.endTs + 1
+        } else {
+            event.endTs
         }
     }
 

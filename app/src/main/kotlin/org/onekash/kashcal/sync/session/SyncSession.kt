@@ -57,7 +57,12 @@ data class SyncSession(
     val errorMessage: String? = null,  // Detailed error message (v16.8.0)
 
     // RFC 6578 Section 3.6: Server truncated results (507)
-    val truncated: Boolean = false      // True if server returned 507 (will continue on next sync)
+    val truncated: Boolean = false,      // True if server returned 507 (will continue on next sync)
+
+    // Diagnostic warnings for silently handled issues (v23.1.0)
+    // Privacy: Uses .ics filenames (opaque server IDs), never event titles or UIDs
+    // Nullable for Gson backward compat: old sessions without this field deserialize as null
+    val warnings: List<String>? = null
 ) {
     /**
      * Overall status derived from session data.
@@ -90,6 +95,11 @@ data class SyncSession(
      * Whether this session skipped events that were already synced in a prior session.
      */
     val hasAlreadySynced: Boolean get() = skippedAlreadySynced > 0
+
+    /**
+     * Whether this session has diagnostic warnings to show.
+     */
+    val hasWarnings: Boolean get() = !warnings.isNullOrEmpty()
 
     /**
      * Total events pushed to server (local → server).

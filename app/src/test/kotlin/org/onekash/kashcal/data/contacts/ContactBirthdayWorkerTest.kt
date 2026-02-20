@@ -154,6 +154,17 @@ class ContactBirthdayWorkerTest {
         assertTrue("Should fail after max retries: $result", result != Result.retry())
     }
 
+    @Test
+    fun `doWork exception with null message uses class name not Unknown error`() = runTest {
+        coEvery { dataStore.getContactBirthdaysEnabled() } returns true
+        coEvery { repository.syncBirthdays() } throws NullPointerException()
+
+        val worker = createWorker(runAttemptCount = 3) // At max, will produce failure
+        val result = worker.doWork()
+
+        assertTrue("Should fail after max retries: $result", result != Result.retry())
+    }
+
     // ========== Constants ==========
 
     @Test

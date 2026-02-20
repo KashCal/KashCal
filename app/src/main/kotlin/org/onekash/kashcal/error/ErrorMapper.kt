@@ -348,7 +348,7 @@ object ErrorMapper {
         412 -> CalendarError.Server.Conflict(message)
         429 -> CalendarError.Server.RateLimited
         in 500..599 -> CalendarError.Server.TemporarilyUnavailable
-        else -> CalendarError.Unknown("HTTP $code: ${message ?: "Unknown error"}")
+        else -> CalendarError.Unknown(if (message != null) "HTTP $code: $message" else "HTTP $code")
     }
 
     /**
@@ -375,7 +375,7 @@ object ErrorMapper {
             CalendarError.Storage.StorageFull
         is android.database.sqlite.SQLiteDatabaseCorruptException ->
             CalendarError.Storage.DatabaseCorruption
-        else -> CalendarError.Unknown(e.message ?: "Unknown error", e)
+        else -> CalendarError.Unknown(e.message ?: e.javaClass.simpleName, e)
     }
 
     /**

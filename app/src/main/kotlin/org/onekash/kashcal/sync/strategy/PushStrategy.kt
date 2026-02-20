@@ -34,6 +34,19 @@ class PushStrategy @Inject constructor(
 ) {
     companion object {
         private const val TAG = "PushStrategy"
+
+        /** Extract .ics filename from caldavUrl for privacy-safe warning messages. */
+        private fun filenameOf(url: String?): String =
+            url?.substringAfterLast('/')?.ifEmpty { url } ?: "unknown"
+
+        /** Human-readable operation name for warnings. */
+        private fun operationName(op: String): String = when (op) {
+            PendingOperation.OPERATION_CREATE -> "CREATE"
+            PendingOperation.OPERATION_UPDATE -> "UPDATE"
+            PendingOperation.OPERATION_DELETE -> "DELETE"
+            PendingOperation.OPERATION_MOVE -> "MOVE"
+            else -> op
+        }
     }
 
     /**
@@ -68,11 +81,13 @@ class PushStrategy @Inject constructor(
         var deleted = 0
         var failed = 0
         val pushedEventIds = mutableSetOf<Long>()
+        val warnings = mutableListOf<String>()
 
         for (operation in readyOperations) {
             // Mark as in progress
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
+            val event = eventsCache[operation.eventId]
             val result = processOperation(operation, eventsCache, calendarsCache, effectiveClient)
 
             when (result) {
@@ -92,6 +107,8 @@ class PushStrategy @Inject constructor(
                         PendingOperation.OPERATION_DELETE -> deleted++
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
+                    // Forward any warnings from the operation (e.g., MOVE orphan)
+                    result.warning?.let { warnings.add(it) }
                 }
                 is SinglePushResult.PhaseAdvanced -> {
                     // MOVE operation advanced from DELETE to CREATE phase
@@ -105,6 +122,7 @@ class PushStrategy @Inject constructor(
                     // For now, reschedule and let ConflictResolver handle it
                     scheduleRetry(operation, "Conflict: server has newer version")
                     failed++
+                    warnings.add("Push ${operationName(operation.operation)} conflict (412) for ${filenameOf(event?.caldavUrl)}")
                 }
                 is SinglePushResult.Error -> {
                     if (result.isRetryable && operation.shouldRetry) {
@@ -118,6 +136,7 @@ class PushStrategy @Inject constructor(
                         )
                     }
                     failed++
+                    warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
                 }
             }
         }
@@ -130,7 +149,8 @@ class PushStrategy @Inject constructor(
             eventsDeleted = deleted,
             operationsProcessed = readyOperations.size,
             operationsFailed = failed,
-            pushedEventIds = pushedEventIds
+            pushedEventIds = pushedEventIds,
+            pushWarnings = warnings
         )
     }
 
@@ -188,10 +208,12 @@ class PushStrategy @Inject constructor(
         var deleted = 0
         var failed = 0
         val pushedEventIds = mutableSetOf<Long>()
+        val warnings = mutableListOf<String>()
 
         for (operation in calendarOperations) {
             pendingOperationsDao.markInProgress(operation.id, System.currentTimeMillis())
 
+            val event = eventsCache[operation.eventId]
             val result = processOperation(operation, eventsCache, emptyMap(), effectiveClient)
 
             when (result) {
@@ -209,6 +231,7 @@ class PushStrategy @Inject constructor(
                         PendingOperation.OPERATION_DELETE -> deleted++
                         PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
                     }
+                    result.warning?.let { warnings.add(it) }
                 }
                 is SinglePushResult.PhaseAdvanced -> {
                     // MOVE operation advanced from DELETE to CREATE phase
@@ -217,6 +240,7 @@ class PushStrategy @Inject constructor(
                 is SinglePushResult.Conflict -> {
                     scheduleRetry(operation, "Conflict: server has newer version")
                     failed++
+                    warnings.add("Push ${operationName(operation.operation)} conflict (412) for ${filenameOf(event?.caldavUrl)}")
                 }
                 is SinglePushResult.Error -> {
                     if (result.isRetryable && operation.shouldRetry) {
@@ -229,6 +253,7 @@ class PushStrategy @Inject constructor(
                         )
                     }
                     failed++
+                    warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
                 }
             }
         }
@@ -239,7 +264,8 @@ class PushStrategy @Inject constructor(
             eventsDeleted = deleted,
             operationsProcessed = calendarOperations.size,
             operationsFailed = failed,
-            pushedEventIds = pushedEventIds
+            pushedEventIds = pushedEventIds,
+            pushWarnings = warnings
         )
     }
 
@@ -614,6 +640,7 @@ class PushStrategy @Inject constructor(
                 Log.d(TAG, "MOVE Phase 1: Event created successfully at $url")
 
                 // Now DELETE from source (after CREATE succeeded - safe order)
+                var moveOrphanWarning: String? = null
                 val sourceUrl = operation.targetUrl
                 if (sourceUrl != null) {
                     Log.d(TAG, "MOVE Phase 1: Deleting from source: $sourceUrl")
@@ -628,11 +655,12 @@ class PushStrategy @Inject constructor(
                             val delError = deleteResult as? CalDavResult.Error
                             Log.w(TAG, "MOVE: DELETE from source failed (${delError?.code}): ${delError?.message}")
                             Log.w(TAG, "Event exists in target but may remain in source as orphan")
+                            moveOrphanWarning = "MOVE: event may be duplicated — DELETE from source failed (${delError?.code})"
                         }
                     }
                 }
 
-                SinglePushResult.Success(newEtag = etag, newUrl = url)
+                SinglePushResult.Success(newEtag = etag, newUrl = url, warning = moveOrphanWarning)
             }
             createResult.isConflict() -> {
                 Log.w(TAG, "MOVE Phase 1: Conflict creating in new calendar (UID exists)")
@@ -643,7 +671,7 @@ class PushStrategy @Inject constructor(
                 Log.e(TAG, "MOVE Phase 1: Failed to create in new calendar: ${error?.message}")
                 SinglePushResult.Error(
                     error?.code ?: -1,
-                    error?.message ?: "Unknown error",
+                    error?.message ?: "MOVE failed",
                     error?.isRetryable ?: true
                 )
             }

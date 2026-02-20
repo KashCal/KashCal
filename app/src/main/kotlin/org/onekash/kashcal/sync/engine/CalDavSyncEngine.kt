@@ -120,6 +120,9 @@ class CalDavSyncEngine @Inject constructor(
                     pushUpdated = pushResult.eventsUpdated
                     pushDeleted = pushResult.eventsDeleted
 
+                    // Forward per-operation warnings to session
+                    pushResult.pushWarnings.forEach { sessionBuilder.addWarning(it) }
+
                     if (pushResult.operationsFailed > 0) {
                         // Some operations failed - try to resolve conflicts
                         Log.d(TAG, "Step 1b: Resolving ${pushResult.operationsFailed} push conflicts")
@@ -145,6 +148,7 @@ class CalDavSyncEngine @Inject constructor(
                                         eventId = op.eventId,
                                         message = "Conflict resolution failed (cycle ${op.retryCount}/$MAX_CONFLICT_SYNC_CYCLES)"
                                     ))
+                                    sessionBuilder.addWarning("Conflict resolution pending (attempt ${op.retryCount}/$MAX_CONFLICT_SYNC_CYCLES)")
                                 }
                             }
                         }
@@ -161,6 +165,7 @@ class CalDavSyncEngine @Inject constructor(
                 }
                 is PushResult.Error -> {
                     Log.e(TAG, "Push failed: ${pushResult.message}")
+                    sessionBuilder.addWarning("Push failed (${pushResult.code}): ${pushResult.message}")
                     errors.add(SyncError(
                         phase = SyncPhase.PUSH,
                         code = pushResult.code,
@@ -303,7 +308,7 @@ class CalDavSyncEngine @Inject constructor(
 
             return SyncResult.Error(
                 code = -1,
-                message = e.message ?: "Unknown error",
+                message = e.message ?: e.javaClass.simpleName,
                 isRetryable = true
             )
         }

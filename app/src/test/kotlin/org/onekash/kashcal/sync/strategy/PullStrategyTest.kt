@@ -601,6 +601,19 @@ class PullStrategyTest {
         assertTrue(result.isRetryable)
     }
 
+    @Test
+    fun `pull exception with null message uses class name not Unknown error`() = runTest {
+        val calendar = createCalendar(syncToken = null)
+        // NullPointerException() has null message
+        coEvery { client.getCtag(calendar.caldavUrl) } throws NullPointerException()
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Error)
+        val error = result as PullResult.Error
+        assertEquals("NullPointerException", error.message)
+    }
+
     // ========== Recurring Events Tests ==========
 
     @Test

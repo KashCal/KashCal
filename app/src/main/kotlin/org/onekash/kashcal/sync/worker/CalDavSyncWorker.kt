@@ -310,6 +310,8 @@ class CalDavSyncWorker @AssistedInject constructor(
             Log.e(TAG, "Sync failed with exception", e)
             notificationManager.cancelProgressNotification()
 
+            val errorMessage = e.message ?: e.javaClass.simpleName
+
             // Record failure in sync session for debugging
             // Use placeholder values for calendar since error happened before reaching sync engine
             val sessionBuilder = SyncSessionBuilder(
@@ -323,15 +325,19 @@ class CalDavSyncWorker @AssistedInject constructor(
                 is java.io.IOException -> ErrorType.NETWORK
                 else -> ErrorType.SERVER  // Generic server/unknown error
             }
-            sessionBuilder.setError(errorType, "worker_exception", e.message)
+            sessionBuilder.setError(errorType, "worker_exception", errorMessage)
             syncSessionStore.add(sessionBuilder.build())
             Log.d(TAG, "Recorded sync session with error: ${errorType.name}")
 
             if (showNotification) {
-                notificationManager.showErrorNotification("Sync Failed", e.message ?: "Unknown error")
+                notificationManager.showErrorNotification("Sync Failed", errorMessage)
             }
 
-            Result.retry()
+            if (runAttemptCount >= MAX_RETRY_ATTEMPTS) {
+                Result.failure(createErrorOutput(errorMessage))
+            } else {
+                Result.retry()
+            }
         }
     }
 
@@ -673,7 +679,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 checkSyncFailureThreshold(account.id)
                 allErrors.add(org.onekash.kashcal.sync.engine.SyncError(
                     phase = org.onekash.kashcal.sync.engine.SyncPhase.SYNC,
-                    message = e.message ?: "Unknown error"
+                    message = e.message ?: e.javaClass.simpleName
                 ))
                 continue
             }

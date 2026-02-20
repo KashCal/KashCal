@@ -36,6 +36,10 @@ class SyncSessionBuilder(
     private var skippedAlreadySynced = 0
     private var skippedRecentlyPushed = 0
 
+    // Diagnostic warnings (capped to prevent unbounded growth)
+    private val warnings = mutableListOf<String>()
+    private val maxWarnings = 20
+
     // Token tracking
     private var tokenAdvanced = true
 
@@ -70,6 +74,15 @@ class SyncSessionBuilder(
 
     // Accessor for parse error count (for retry logic)
     fun getSkippedParseError(): Int = skippedParseError
+
+    // Warning accumulation (synchronized for concurrent fetch coroutines)
+    fun addWarning(message: String) = apply {
+        synchronized(warnings) {
+            if (warnings.size < maxWarnings) {
+                warnings.add(message)
+            }
+        }
+    }
 
     // Parse failure retry tracking (v16.7.0)
     private var abandonedParseErrors = 0
@@ -123,7 +136,8 @@ class SyncSessionBuilder(
             errorType = errorType,
             errorStage = errorStage,
             errorMessage = errorMessage,
-            truncated = truncated
+            truncated = truncated,
+            warnings = synchronized(warnings) { warnings.toList() }
         )
     }
 }

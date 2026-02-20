@@ -181,6 +181,11 @@ class SyncSessionStore @Inject constructor(
                 if (session.hasAlreadySynced) {
                     appendLine("   ${session.skippedAlreadySynced} already synced")
                 }
+                if (session.hasWarnings) {
+                    session.warnings?.forEach { warning ->
+                        appendLine("   • $warning")
+                    }
+                }
                 appendLine()
             }
         }

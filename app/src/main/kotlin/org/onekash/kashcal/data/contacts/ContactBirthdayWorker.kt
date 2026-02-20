@@ -149,7 +149,7 @@ class ContactBirthdayWorker @AssistedInject constructor(
             } else {
                 Result.failure(
                     Data.Builder()
-                        .putString(KEY_ERROR_MESSAGE, e.message ?: "Unknown error")
+                        .putString(KEY_ERROR_MESSAGE, e.message ?: e.javaClass.simpleName)
                         .build()
                 )
             }

@@ -1030,7 +1030,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         }
                     }
                     else ->
-                        "Connection failed: ${e.message ?: "Unknown error"}"
+                        "Connection failed: ${e.message ?: e.javaClass.simpleName}"
                 }
             }
         }

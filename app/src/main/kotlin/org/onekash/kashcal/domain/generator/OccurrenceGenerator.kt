@@ -322,20 +322,40 @@ class OccurrenceGenerator @Inject constructor(
                 else -> TimeZone.getDefault()
             }
             val dtstartSeconds = event.startTs / MILLISECONDS_PER_SECOND
-            val startDateTime = timestampToDateTime(dtstartSeconds, tz)
             val eventDurationMs = event.endTs - event.startTs
 
-            // Extract time components from DTSTART for RDATE/EXDATE matching
-            val dtstartHour = startDateTime.hours
-            val dtstartMinute = startDateTime.minutes
-            val dtstartSecond = startDateTime.seconds
-
             // Parse RDATE and EXDATE
-            val rdates = parseMultiValueField(event.rdate)
-            val exdates = parseMultiValueField(event.exdate)
+            val rdates = parseMultiValueField(event.rdate, event.isAllDay)
+            val exdates = parseMultiValueField(event.exdate, event.isAllDay)
 
             // Step 1: Build base set (DTSTART ∪ RRULE)
-            val rule = RecurrenceRule(rrule)
+            // RFC 5545: COUNT and UNTIL MUST NOT both appear. lib-recur returns 0 occurrences
+            // when both are present. Strip UNTIL when COUNT exists (COUNT is more deterministic).
+            val sanitizedRrule = if (rrule.contains("COUNT=") && rrule.contains("UNTIL=")) {
+                rrule.split(";").filter { !it.startsWith("UNTIL=") }.joinToString(";")
+            } else {
+                rrule
+            }
+            val rule = RecurrenceRule(sanitizedRrule)
+
+            // CRITICAL: lib-recur requires DTSTART and UNTIL to match in isAllDay()/isFloating().
+            // DATE-format UNTIL (e.g., "20350927") is parsed as all-day — DTSTART must also
+            // be date-only. Using DateTime(tz, y, m, d, 0, 0, 0) creates a timed DateTime
+            // that mismatches, causing: "floating start times with absolute until values not allowed"
+            // Only use date-only DateTime when UNTIL is actually all-day; rules with
+            // DATETIME UNTIL (e.g., "20260615T000000Z") or COUNT/no-limit need timed DateTime.
+            val untilIsAllDay = rule.until?.isAllDay == true
+            val startDateTime = if (event.isAllDay && untilIsAllDay) {
+                timestampToAllDayDateTime(dtstartSeconds)
+            } else {
+                timestampToDateTime(dtstartSeconds, tz)
+            }
+
+            // Extract time components from DTSTART for RDATE/EXDATE matching
+            val dtstartHour = if (event.isAllDay) 0 else startDateTime.hours
+            val dtstartMinute = if (event.isAllDay) 0 else startDateTime.minutes
+            val dtstartSecond = if (event.isAllDay) 0 else startDateTime.seconds
+
             val baseSet: RecurrenceSet = OfRuleAndFirst(rule, startDateTime)
 
             // Step 2: Union with RDATE
@@ -373,7 +393,12 @@ class OccurrenceGenerator @Inject constructor(
             val optimizedSet: RecurrenceSet = if (rangeStartMs > event.startTs + 30 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND) {
                 // Range starts well after DTSTART - use FastForwarded for performance
                 val fastForwardSeconds = rangeStartSeconds - 30 * SECONDS_PER_DAY
-                val rangeStartDateTime = timestampToDateTime(fastForwardSeconds.coerceAtLeast(0), tz)
+                // Must use same DateTime type as DTSTART (all-day vs timed) for lib-recur consistency
+                val rangeStartDateTime = if (event.isAllDay && untilIsAllDay) {
+                    timestampToAllDayDateTime(fastForwardSeconds.coerceAtLeast(0))
+                } else {
+                    timestampToDateTime(fastForwardSeconds.coerceAtLeast(0), tz)
+                }
                 FastForwarded(rangeStartDateTime, finalSet)
             } else {
                 // Range starts at/near DTSTART - don't fast-forward to ensure DTSTART is included
@@ -455,7 +480,7 @@ class OccurrenceGenerator @Inject constructor(
      *   "20251225T100000Z" -> ["20251225"]
      *   "1737331200000,20260127" -> ["20260120", "20260127"] (mixed format - backward compat)
      */
-    private fun parseMultiValueField(field: String?): List<String> {
+    private fun parseMultiValueField(field: String?, isAllDay: Boolean = false): List<String> {
         if (field.isNullOrBlank()) return emptyList()
 
         return field.split(",")
@@ -467,7 +492,7 @@ class OccurrenceGenerator @Inject constructor(
                     // Milliseconds format: 10+ digit number (timestamps are 13 digits for 2020s)
                     dateValue.length >= 10 && dateValue.all { it.isDigit() } -> {
                         dateValue.toLongOrNull()?.let { ms ->
-                            Occurrence.toDayFormat(ms, false).toString()
+                            Occurrence.toDayFormat(ms, isAllDay).toString()
                         }
                     }
                     // DateTime format: has T separator
@@ -500,6 +525,24 @@ class OccurrenceGenerator @Inject constructor(
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * Convert timestamp (seconds) to lib-recur all-day DateTime (date-only, no time components).
+     *
+     * All-day events stored as UTC midnight must produce a date-only DateTime so that
+     * lib-recur's RRULE UNTIL matching works. DATE-format UNTIL values (e.g., "20350927")
+     * are all-day — the DTSTART must also be all-day, otherwise lib-recur throws:
+     * "using floating start times with absolute until values is not allowed"
+     */
+    private fun timestampToAllDayDateTime(timestampSeconds: Long): DateTime {
+        val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        calendar.timeInMillis = timestampSeconds * MILLISECONDS_PER_SECOND
+        return DateTime(
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH), // 0-indexed
+            calendar.get(Calendar.DAY_OF_MONTH)
+        )
     }
 
     /**
@@ -618,13 +661,21 @@ class OccurrenceGenerator @Inject constructor(
                 else -> TimeZone.getDefault()
             }
             val dtstartSeconds = dtstartMs / MILLISECONDS_PER_SECOND
-            val startDateTime = timestampToDateTime(dtstartSeconds, tz)
 
-            val dtstartHour = startDateTime.hours
-            val dtstartMinute = startDateTime.minutes
-            val dtstartSecond = startDateTime.seconds
-
+            // CRITICAL: lib-recur requires DTSTART and UNTIL to match in isAllDay()/isFloating().
+            // Same fix as expandRRule(): use date-only DateTime when UNTIL is DATE-format.
             val rule = RecurrenceRule(rrule)
+            val untilIsAllDay = rule.until?.isAllDay == true
+            val startDateTime = if (isAllDay && untilIsAllDay) {
+                timestampToAllDayDateTime(dtstartSeconds)
+            } else {
+                timestampToDateTime(dtstartSeconds, tz)
+            }
+
+            val dtstartHour = if (isAllDay) 0 else startDateTime.hours
+            val dtstartMinute = if (isAllDay) 0 else startDateTime.minutes
+            val dtstartSecond = if (isAllDay) 0 else startDateTime.seconds
+
             val baseSet: RecurrenceSet = OfRuleAndFirst(rule, startDateTime)
 
             val finalSet: RecurrenceSet = if (exdates.isNotEmpty()) {
@@ -643,7 +694,12 @@ class OccurrenceGenerator @Inject constructor(
             val rangeStartSeconds = rangeStartMs / MILLISECONDS_PER_SECOND
             val rangeEndSeconds = rangeEndMs / MILLISECONDS_PER_SECOND
             val fastForwardSeconds = rangeStartSeconds - 30 * SECONDS_PER_DAY
-            val rangeStartDateTime = timestampToDateTime(fastForwardSeconds.coerceAtLeast(0), tz)
+            // Must use same DateTime type as DTSTART for lib-recur consistency
+            val rangeStartDateTime = if (isAllDay && untilIsAllDay) {
+                timestampToAllDayDateTime(fastForwardSeconds.coerceAtLeast(0))
+            } else {
+                timestampToDateTime(fastForwardSeconds.coerceAtLeast(0), tz)
+            }
             val optimizedSet = FastForwarded(rangeStartDateTime, finalSet)
 
             val occurrences = mutableListOf<Long>()

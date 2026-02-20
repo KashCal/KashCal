@@ -264,4 +264,42 @@ class SyncSessionBuilderTest {
         val session = createBuilder().build()
         assertTrue("durationMs should be >= 0", session.durationMs >= 0)
     }
+
+    // Warning tests
+
+    @Test
+    fun `default build has empty warnings`() {
+        val session = createBuilder().build()
+        assertTrue(session.warnings?.isEmpty() == true)
+    }
+
+    @Test
+    fun `addWarning accumulates warnings`() {
+        val session = createBuilder()
+            .addWarning("Parse error for event1.ics")
+            .addWarning("No VEVENT found in event2.ics")
+            .build()
+
+        assertEquals(2, session.warnings!!.size)
+        assertEquals("Parse error for event1.ics", session.warnings!![0])
+        assertEquals("No VEVENT found in event2.ics", session.warnings!![1])
+    }
+
+    @Test
+    fun `addWarning capped at 20`() {
+        val builder = createBuilder()
+        repeat(25) { i -> builder.addWarning("Warning $i") }
+
+        val session = builder.build()
+        assertEquals(20, session.warnings!!.size)
+        assertEquals("Warning 0", session.warnings!!.first())
+        assertEquals("Warning 19", session.warnings!!.last())
+    }
+
+    @Test
+    fun `addWarning returns builder for chaining`() {
+        val builder = createBuilder()
+        val result = builder.addWarning("test warning")
+        assertTrue(result === builder)
+    }
 }

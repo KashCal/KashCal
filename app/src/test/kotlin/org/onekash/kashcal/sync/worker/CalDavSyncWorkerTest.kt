@@ -548,6 +548,73 @@ class CalDavSyncWorkerTest {
         coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
     }
 
+    // ==================== Top-Level Exception Propagation Tests ====================
+
+    @Test
+    fun `top-level exception returns retry when under max attempts`() = runTest {
+        // Given - attempt 0 (first try), exception thrown before sync engine
+        every { workerParams.runAttemptCount } returns 0
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } throws NullPointerException("test NPE")
+
+        // When
+        val result = worker.doWork()
+
+        // Then - should retry (under max attempts)
+        assertTrue(result is ListenableWorker.Result.Retry)
+    }
+
+    @Test
+    fun `top-level exception returns failure when max retries exceeded`() = runTest {
+        // Given - attempt 3 (4th try, exceeds MAX_RETRY_ATTEMPTS=3)
+        every { workerParams.runAttemptCount } returns 3
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } throws RuntimeException("Database locked")
+
+        // When
+        val result = worker.doWork()
+
+        // Then - should fail (not retry) with error message in output
+        assertTrue("Expected Failure but got ${result.javaClass.simpleName}",
+            result is ListenableWorker.Result.Failure)
+    }
+
+    @Test
+    fun `top-level exception returns retry on last allowed attempt`() = runTest {
+        // Given - attempt 2 (3rd try, still under MAX_RETRY_ATTEMPTS=3)
+        every { workerParams.runAttemptCount } returns 2
+        val inputData = CalDavSyncWorker.createFullSyncInput()
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } throws RuntimeException("Transient error")
+
+        // When
+        val result = worker.doWork()
+
+        // Then - attempt 2 < MAX_RETRY_ATTEMPTS (3), should still retry
+        assertTrue(result is ListenableWorker.Result.Retry)
+    }
+
+    @Test
+    fun `top-level exception notification uses class name when message is null`() = runTest {
+        // Given - showNotification=true, exception with null message
+        every { workerParams.runAttemptCount } returns 0
+        val inputData = CalDavSyncWorker.createFullSyncInput(showNotification = true)
+        val worker = createWorker(inputData)
+
+        coEvery { accountRepository.getEnabledAccounts() } throws NullPointerException()
+
+        // When
+        worker.doWork()
+
+        // Then - notification should show "NullPointerException" not "Unknown error"
+        verify { notificationManager.showErrorNotification("Sync Failed", "NullPointerException") }
+    }
+
     // ==================== Input Data Helper Tests ====================
 
     @Test

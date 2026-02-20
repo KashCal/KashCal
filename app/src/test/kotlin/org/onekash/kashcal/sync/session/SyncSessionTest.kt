@@ -181,6 +181,26 @@ class SyncSessionTest {
         assertFalse(session.hasAnyChanges)
     }
 
+    // Warnings tests
+
+    @Test
+    fun `hasWarnings is false when warnings is null (default)`() {
+        val session = createSession()
+        assertFalse(session.hasWarnings)
+    }
+
+    @Test
+    fun `hasWarnings is false when warnings is empty list`() {
+        val session = createSession().copy(warnings = emptyList())
+        assertFalse(session.hasWarnings)
+    }
+
+    @Test
+    fun `hasWarnings is true when warnings list is not empty`() {
+        val session = createSession().copy(warnings = listOf("Parse error for event.ics"))
+        assertTrue(session.hasWarnings)
+    }
+
     // Backward compatibility tests
 
     @Test

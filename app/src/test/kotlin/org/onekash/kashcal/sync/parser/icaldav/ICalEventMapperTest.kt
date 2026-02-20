@@ -820,18 +820,18 @@ class ICalEventMapperTest {
 
     @Test
     fun `multi-day all-day event has correct endTs - 5 day event`() {
-        // Simulates "Ellie: No School" Mar 16-20 (5 days)
+        // Simulates "Alex: No School" Mar 16-20 (5 days)
         // iCloud sends DTEND=20260321 (exclusive per RFC 5545)
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
             PRODID:-//Apple Inc.//iPhone OS 18.7.2//EN
             BEGIN:VEVENT
-            UID:ellie-no-school@test
+            UID:no-school-test@test
             DTSTAMP:20250813T013400Z
             DTSTART;VALUE=DATE:20260316
             DTEND;VALUE=DATE:20260321
-            SUMMARY:Ellie: No School
+            SUMMARY:Alex: No School
             END:VEVENT
             END:VCALENDAR
         """.trimIndent()

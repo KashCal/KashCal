@@ -319,6 +319,24 @@ private fun SyncSessionCard(session: SyncSession) {
                         DetailRow("Events skipped", session.skippedAlreadySynced.toString())
                     }
 
+                    // Warnings (silently handled issues)
+                    if (session.hasWarnings) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Warnings",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFFA000)
+                        )
+                        session.warnings?.forEach { warning ->
+                            Text(
+                                text = "• $warning",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2
+                            )
+                        }
+                    }
+
                     // Error details
                     if (session.errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))

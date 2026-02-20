@@ -289,7 +289,7 @@ class IcsRefreshWorker @AssistedInject constructor(
             if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
                 Result.retry()
             } else {
-                Result.failure(createErrorOutput(e.message ?: "Unknown error"))
+                Result.failure(createErrorOutput(e.message ?: e.javaClass.simpleName))
             }
         }
     }

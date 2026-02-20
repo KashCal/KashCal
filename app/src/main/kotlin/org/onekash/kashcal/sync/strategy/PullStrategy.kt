@@ -65,6 +65,10 @@ class PullStrategy @Inject constructor(
     companion object {
         private const val TAG = "PullStrategy"
 
+        /** Extract .ics filename from caldavUrl for privacy-safe warning messages. */
+        private fun filenameOf(caldavUrl: String): String =
+            caldavUrl.substringAfterLast('/').ifEmpty { caldavUrl }
+
         // Sync window: 1 year back, unlimited future (far-future date for CalDAV spec compliance)
         private const val PAST_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
         private const val FUTURE_END_MS = 4102444800000L  // Jan 1, 2100 UTC
@@ -213,7 +217,7 @@ class PullStrategy @Inject constructor(
             Log.e(TAG, "Pull failed: ${e.message}", e)
             PullResult.Error(
                 code = -1,
-                message = e.message ?: "Unknown error",
+                message = e.message ?: e.javaClass.simpleName,
                 isRetryable = false
             )
         }
@@ -326,7 +330,7 @@ class PullStrategy @Inject constructor(
         sessionBuilder?.setHrefsReported(changedHrefs.size)
 
         // Fetch events in batched concurrent multiget (v22.5.11)
-        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs)
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs, sessionBuilder)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -487,7 +491,7 @@ class PullStrategy @Inject constructor(
             )
         }
 
-        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch, sessionBuilder)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -644,7 +648,7 @@ class PullStrategy @Inject constructor(
         sessionBuilder?.setHrefsReported(hrefsToFetch.size)
 
         // Fetch events in batched concurrent multiget (v22.5.11)
-        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch)
+        val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch, sessionBuilder)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
@@ -709,6 +713,7 @@ class PullStrategy @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Parse exception for ${serverEvent.url}: ${e.javaClass.simpleName}: ${e.message}")
                 sessionBuilder?.incrementSkipParseError()
+                sessionBuilder?.addWarning("Failed to parse ${filenameOf(serverEvent.url)}: ${e.javaClass.simpleName}: ${e.message}")
                 continue
             }
 
@@ -718,6 +723,7 @@ class PullStrategy @Inject constructor(
                 is ParseResult.Error -> {
                     Log.w(TAG, "Parse error for ${serverEvent.url}: ${parseResult.error.message}")
                     sessionBuilder?.incrementSkipParseError()
+                    sessionBuilder?.addWarning("Parse error for ${filenameOf(serverEvent.url)}: ${parseResult.error.message}")
                     continue
                 }
             }
@@ -729,6 +735,7 @@ class PullStrategy @Inject constructor(
                 }
                 Log.w(TAG, "Failed to parse event at ${serverEvent.url}: no VEVENT components found")
                 sessionBuilder?.incrementSkipParseError()
+                sessionBuilder?.addWarning("No VEVENT found in ${filenameOf(serverEvent.url)}")
                 continue
             }
 
@@ -834,6 +841,7 @@ class PullStrategy @Inject constructor(
                 val existing = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
                 if (existing != null) {
                     Log.w(TAG, "Duplicate UID detected for ${meta.parsed.uid}, using existing event")
+                    sessionBuilder?.addWarning("Duplicate event skipped at ${filenameOf(meta.caldavUrl)}")
                     uidToMasterEvent[meta.parsed.uid] = existing
                     continue
                 }
@@ -887,6 +895,7 @@ class PullStrategy @Inject constructor(
                     |  Possible causes: Master outside sync window, master deleted, or sync order issue.
                 """.trimMargin())
                 sessionBuilder?.incrementSkipOrphanedException()
+                sessionBuilder?.addWarning("Orphaned exception at ${filenameOf(meta.caldavUrl)} (master not found)")
                 continue
             }
 
@@ -969,6 +978,7 @@ class PullStrategy @Inject constructor(
                 Log.d(TAG, "Skipped already-synced exception ${meta.parsed.uid} " +
                     "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp})")
                 sessionBuilder?.incrementSkipAlreadySynced()
+                sessionBuilder?.addWarning("Already-synced exception skipped at ${filenameOf(meta.caldavUrl)}")
                 continue
             }
 
@@ -1025,7 +1035,8 @@ class PullStrategy @Inject constructor(
     private suspend fun fetchEventsBatched(
         client: CalDavClient,
         calendarUrl: String,
-        hrefs: List<String>
+        hrefs: List<String>,
+        sessionBuilder: SyncSessionBuilder? = null
     ): FetchResult {
         if (hrefs.isEmpty()) return FetchResult(emptyList())
 
@@ -1041,7 +1052,8 @@ class PullStrategy @Inject constructor(
                         val error = result as CalDavResult.Error
                         Log.w(TAG, "fetchEventsBatched: batch ${index + 1} multiget failed " +
                             "(code=${error.code}): ${error.message}, falling back to individual fetches")
-                        val recovered = fetchSingleHrefConcurrent(client, calendarUrl, batch)
+                        sessionBuilder?.addWarning("Batch fetch failed (${error.code}): ${error.message}, retrying individually")
+                        val recovered = fetchSingleHrefConcurrent(client, calendarUrl, batch, sessionBuilder)
                         Log.d(TAG, "fetchEventsBatched: recovered ${recovered.size} of ${batch.size} events via individual fallback")
                         return@async recovered
                     }
@@ -1049,7 +1061,7 @@ class PullStrategy @Inject constructor(
                     if (events.isEmpty() && batch.size > 1) {
                         Log.w(TAG, "fetchEventsBatched: batch ${index + 1} returned 0 events " +
                             "for ${batch.size} hrefs, falling back to single-href fetches")
-                        fetchSingleHrefConcurrent(client, calendarUrl, batch)
+                        fetchSingleHrefConcurrent(client, calendarUrl, batch, sessionBuilder)
                     } else {
                         events
                     }
@@ -1070,7 +1082,8 @@ class PullStrategy @Inject constructor(
     private suspend fun fetchSingleHrefConcurrent(
         client: CalDavClient,
         calendarUrl: String,
-        hrefs: List<String>
+        hrefs: List<String>,
+        sessionBuilder: SyncSessionBuilder? = null
     ): List<CalDavEvent> = coroutineScope {
         hrefs.map { href ->
             async {
@@ -1081,6 +1094,7 @@ class PullStrategy @Inject constructor(
                     val error = result as CalDavResult.Error
                     Log.w(TAG, "fetchSingleHrefConcurrent: failed for $href " +
                         "(code=${error.code}): ${error.message}")
+                    sessionBuilder?.addWarning("Fetch failed for ${filenameOf(href)} (${error.code}): ${error.message}")
                     emptyList()
                 }
             }

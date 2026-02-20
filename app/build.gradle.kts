@@ -131,7 +131,7 @@ android {
             all {
                 // Disable C2 JIT compiler - crashes on Robolectric's SQLite shadow bytecode
                 // See: https://github.com/corretto/corretto-17/issues
-                it.jvmArgs("-XX:TieredStopAtLevel=1")
+                it.jvmArgs("-XX:TieredStopAtLevel=1", "-XX:ReservedCodeCacheSize=512m")
                 it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 
                 // Exclude integration tests (real servers) by default.

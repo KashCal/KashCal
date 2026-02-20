@@ -415,6 +415,17 @@ class CalDavSyncEngineTest {
         assert(error.isRetryable)
     }
 
+    @Test
+    fun `syncCalendar exception with null message uses class name not Unknown error`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar, client) } throws NullPointerException()
+
+        val result = syncEngine.syncCalendar(testCalendar, client = client)
+
+        assert(result is SyncResult.Error)
+        val error = result as SyncResult.Error
+        assert(error.message == "NullPointerException") { "Expected 'NullPointerException' but got '${error.message}'" }
+    }
+
     // ========== Total Changes Tests ==========
 
     @Test

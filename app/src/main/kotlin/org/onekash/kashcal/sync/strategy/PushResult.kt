@@ -18,7 +18,8 @@ sealed class PushResult {
         val eventsDeleted: Int,
         val operationsProcessed: Int,
         val operationsFailed: Int,
-        val pushedEventIds: Set<Long> = emptySet()
+        val pushedEventIds: Set<Long> = emptySet(),
+        val pushWarnings: List<String> = emptyList()
     ) : PushResult()
 
     /**
@@ -50,7 +51,8 @@ sealed class SinglePushResult {
      */
     data class Success(
         val newEtag: String? = null,
-        val newUrl: String? = null
+        val newUrl: String? = null,
+        val warning: String? = null
     ) : SinglePushResult()
 
     /**

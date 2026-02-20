@@ -238,7 +238,7 @@ class MainActivity : ComponentActivity() {
                         } catch (e: Exception) {
                             homeViewModel.clearPendingAction()  // Clear on error too
                             Log.e(TAG, "Error processing pending action: $action", e)
-                            val message = e.message?.take(50) ?: "Unknown error"
+                            val message = (e.message ?: e.javaClass.simpleName).take(50)
                             homeViewModel.showSnackbar("Action failed: $message")
                         }
                     }

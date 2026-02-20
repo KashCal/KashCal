@@ -275,7 +275,7 @@ class ContactBirthdayRepository @Inject constructor(
             SyncResult.Error("Contacts permission denied")
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing birthdays", e)
-            SyncResult.Error(e.message ?: "Unknown error")
+            SyncResult.Error(e.message ?: e.javaClass.simpleName)
         }
     }
 

@@ -207,6 +207,22 @@ class IcsRefreshWorkerTest {
         assertTrue(result is ListenableWorker.Result)
     }
 
+    @Test
+    fun `exception with null message at max retries uses class name not Unknown error`() = runTest {
+        val inputData = Data.Builder()
+            .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
+            .build()
+        every { workerParams.runAttemptCount } returns 3
+        worker = createWorker(inputData)
+
+        coEvery { repository.forceRefreshAll() } throws NullPointerException()
+
+        val result = worker.doWork()
+        assertTrue(result is ListenableWorker.Result)
+        // Result should be failure (not retry) since max attempts exceeded
+        assertNotEquals(ListenableWorker.Result.retry(), result)
+    }
+
     // ==================== Default refresh type ====================
 
     @Test

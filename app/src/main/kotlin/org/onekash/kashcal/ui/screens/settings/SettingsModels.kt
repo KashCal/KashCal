@@ -187,7 +187,7 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
 
         FetchCalendarState.Success(name, eventCount)
     } catch (e: Exception) {
-        FetchCalendarState.Error(e.message ?: "Unknown error")
+        FetchCalendarState.Error(e.message ?: e.javaClass.simpleName)
     }
 }
 

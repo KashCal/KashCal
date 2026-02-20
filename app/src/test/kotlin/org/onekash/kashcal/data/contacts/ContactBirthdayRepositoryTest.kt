@@ -224,6 +224,23 @@ class ContactBirthdayRepositoryTest {
     }
 
     @Test
+    fun `syncBirthdays exception with null message uses class name not Unknown error`() = runTest {
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactBirthdayRepository.ACCOUNT_EMAIL)
+        } returns testAccount
+        coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
+        coEvery { calendarsDao.getById(20L) } returns testCalendar
+        coEvery { dataStore.getBirthdayReminder() } returns 0
+
+        // Throw exception with null message
+        every { contentResolver.query(any(), any(), any(), any(), any()) } throws NullPointerException()
+
+        val result = repository.syncBirthdays()
+        assertTrue(result is ContactBirthdayRepository.SyncResult.Error)
+        assertEquals("NullPointerException", (result as ContactBirthdayRepository.SyncResult.Error).message)
+    }
+
+    @Test
     fun `syncBirthdays returns Success with zero counts when no contacts`() = runTest {
         coEvery {
             accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactBirthdayRepository.ACCOUNT_EMAIL)

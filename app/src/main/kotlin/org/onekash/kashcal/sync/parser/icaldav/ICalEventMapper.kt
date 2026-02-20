@@ -91,7 +91,7 @@ object ICalEventMapper {
             uid = icalEvent.uid,
             importId = importId,
             calendarId = calendarId,
-            title = icalEvent.summary ?: "Untitled",
+            title = icalEvent.summary?.ifEmpty { null } ?: "Untitled",
             location = icalEvent.location,
             description = icalEvent.description,
             startTs = icalEvent.dtStart.timestamp,
@@ -194,8 +194,13 @@ object ICalEventMapper {
      */
     private fun parseColorToArgb(color: String?): Int? {
         if (color.isNullOrBlank()) return null
+        // Expand 3-digit CSS hex (#RGB → #RRGGBB) since Color.parseColor doesn't support it
+        val expanded = if (color.length == 4 && color.startsWith("#")) {
+            val r = color[1]; val g = color[2]; val b = color[3]
+            "#$r$r$g$g$b$b"
+        } else color
         return try {
-            Color.parseColor(color)
+            Color.parseColor(expanded)
         } catch (e: IllegalArgumentException) {
             null // Unsupported format, ignore
         }

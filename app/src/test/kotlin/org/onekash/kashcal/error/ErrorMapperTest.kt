@@ -126,6 +126,20 @@ class ErrorMapperTest {
         assertEquals("Something broke", (error as CalendarError.Unknown).message)
     }
 
+    @Test
+    fun `fromException with null message uses class name not Unknown error`() {
+        val error = ErrorMapper.fromException(NullPointerException())
+        assertTrue(error is CalendarError.Unknown)
+        assertEquals("NullPointerException", (error as CalendarError.Unknown).message)
+    }
+
+    @Test
+    fun `fromHttpCode with null message uses Unknown error with code`() {
+        val error = ErrorMapper.fromHttpCode(418, null)
+        assertTrue(error is CalendarError.Unknown)
+        assertEquals("HTTP 418", (error as CalendarError.Unknown).message)
+    }
+
     // ==================== Presentation Mapping ====================
 
     @Test

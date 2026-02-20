@@ -79,7 +79,7 @@ class AccountsDaoTest : BaseDaoTest() {
     fun `getByProviderAndEmail returns null for no match`() = runTest {
         accountsDao.insert(createAccount())
 
-        val result = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "other@gmail.com")
+        val result = accountsDao.getByProviderAndEmail(AccountProvider.CALDAV, "other@example.com")
         assertNull(result)
     }
 

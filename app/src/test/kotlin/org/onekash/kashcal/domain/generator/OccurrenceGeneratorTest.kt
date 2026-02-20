@@ -1192,6 +1192,59 @@ class OccurrenceGeneratorTest {
         assertEquals(0, database.occurrencesDao().getTotalCount())
     }
 
+    // ========== expandForPreview All-Day DATE UNTIL Tests (Issue #62) ==========
+    // expandForPreview() had the same bug as expandRRule(): always using timed DateTime
+    // for DTSTART, which throws when UNTIL is DATE-format (all-day).
+
+    @Test
+    fun `expandForPreview with all-day DATE UNTIL returns occurrences`() {
+        // Same bug as expandRRule: FREQ=YEARLY;UNTIL=20350927 with all-day DTSTART
+        val dtstartMs = parseDate("2012-02-21 00:00")
+        val occurrences = occurrenceGenerator.expandForPreview(
+            rrule = "FREQ=YEARLY;UNTIL=20350927",
+            dtstartMs = dtstartMs,
+            rangeStartMs = parseDate("2025-01-01 00:00"),
+            rangeEndMs = parseDate("2028-12-31 23:59"),
+            isAllDay = true
+        )
+
+        // Should have 2025, 2026, 2027, 2028
+        assertEquals("Should have 4 yearly preview occurrences", 4, occurrences.size)
+    }
+
+    @Test
+    fun `expandForPreview with all-day DATE UNTIL and EXDATE excludes correctly`() {
+        val dtstartMs = parseDate("2026-01-05 00:00") // Mon Jan 5
+        val occurrences = occurrenceGenerator.expandForPreview(
+            rrule = "FREQ=WEEKLY;UNTIL=20260202",
+            dtstartMs = dtstartMs,
+            rangeStartMs = parseDate("2025-01-01 00:00"),
+            rangeEndMs = parseDate("2026-12-31 23:59"),
+            exdates = listOf("20260112", "20260126"),
+            isAllDay = true
+        )
+
+        // Full set: Jan 5, 12, 19, 26, Feb 2 (5 weeks, UNTIL inclusive)
+        // After EXDATE: Jan 5, 19, Feb 2 = 3
+        assertEquals("Should have 3 preview occurrences after exclusions", 3, occurrences.size)
+    }
+
+    @Test
+    fun `expandForPreview with all-day DATETIME UNTIL still works`() {
+        // Ensure DATETIME UNTIL still works after the fix
+        val dtstartMs = parseDate("2026-01-15 00:00")
+        val occurrences = occurrenceGenerator.expandForPreview(
+            rrule = "FREQ=MONTHLY;UNTIL=20260615T000000Z",
+            dtstartMs = dtstartMs,
+            rangeStartMs = parseDate("2025-01-01 00:00"),
+            rangeEndMs = parseDate("2027-12-31 23:59"),
+            isAllDay = true
+        )
+
+        // Jan, Feb, Mar, Apr, May, Jun = 6
+        assertEquals("Should have 6 monthly preview occurrences", 6, occurrences.size)
+    }
+
     // ========== Day Format ==========
 
     @Test
@@ -1376,7 +1429,7 @@ class OccurrenceGeneratorTest {
         val event = createAndInsertAllDayEvent(
             startTs, endTs,
             rrule = "FREQ=YEARLY;COUNT=3",
-            title = "Ellie Birthday"
+            title = "Test Birthday"
         )
 
         occurrenceGenerator.generateOccurrences(
@@ -1441,6 +1494,161 @@ class OccurrenceGeneratorTest {
         assertEquals(20260106, occurrences[0].endDay)
         assertEquals(20270106, occurrences[1].startDay)
         assertEquals(20270106, occurrences[1].endDay)
+    }
+
+    // ========== All-Day UNTIL Tests (Issue #62) ==========
+    // These test the fix for lib-recur requiring DTSTART and UNTIL to match in
+    // isAllDay()/isFloating(). DATE-format UNTIL (e.g., "20350927") is all-day —
+    // DTSTART must also be created as date-only DateTime, not timed DateTime.
+
+    @Test
+    fun `all-day yearly event with DATE-format UNTIL generates occurrences`() = runTest {
+        // Reproduces: RRULE:FREQ=YEARLY;UNTIL=20350927 with DTSTART;VALUE=DATE:20120221
+        // Before fix: lib-recur threw "floating start times with absolute until values"
+        // and expandRRule returned emptyList(), leaving event invisible.
+        val startTs = parseDate("2012-02-21 00:00") // Feb 21, 2012 UTC midnight
+        val endTs = parseDate("2012-02-21 23:59")
+        val event = createAndInsertAllDayEvent(
+            startTs, endTs,
+            rrule = "FREQ=YEARLY;UNTIL=20350927",
+            title = "Anniversary"
+        )
+
+        val count = occurrenceGenerator.generateOccurrences(
+            event,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2028-12-31 23:59")
+        )
+
+        assertTrue("Should generate occurrences (got $count)", count > 0)
+
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        // Should have occurrences for 2025, 2026, 2027, 2028
+        assertTrue("Should have 4 yearly occurrences in range, got ${occurrences.size}", occurrences.size == 4)
+
+        // All should be Feb 21
+        assertEquals(20250221, occurrences[0].startDay)
+        assertEquals(20260221, occurrences[1].startDay)
+        assertEquals(20270221, occurrences[2].startDay)
+        assertEquals(20280221, occurrences[3].startDay)
+
+        // Each should be single-day
+        occurrences.forEach { occ ->
+            assertEquals("All-day yearly should be single-day", occ.startDay, occ.endDay)
+        }
+    }
+
+    @Test
+    fun `all-day weekly event with DATE-format UNTIL generates occurrences`() = runTest {
+        // Weekly all-day event with DATE UNTIL — same type mismatch bug
+        val startTs = parseDate("2026-01-05 00:00") // Mon Jan 5, 2026 UTC
+        val endTs = parseDate("2026-01-05 23:59")
+        val event = createAndInsertAllDayEvent(
+            startTs, endTs,
+            rrule = "FREQ=WEEKLY;UNTIL=20260202",
+            title = "Weekly All-Day"
+        )
+
+        val count = occurrenceGenerator.generateOccurrences(
+            event,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2026-12-31 23:59")
+        )
+
+        assertTrue("Should generate occurrences (got $count)", count > 0)
+
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        // Jan 5, 12, 19, 26, Feb 2 (5 Mondays — UNTIL is inclusive per RFC 5545)
+        assertEquals("Should have 5 weekly occurrences", 5, occurrences.size)
+        assertEquals(20260105, occurrences[0].startDay)
+        assertEquals(20260112, occurrences[1].startDay)
+        assertEquals(20260119, occurrences[2].startDay)
+        assertEquals(20260126, occurrences[3].startDay)
+        assertEquals(20260202, occurrences[4].startDay)
+    }
+
+    @Test
+    fun `all-day monthly event with DATETIME-format UNTIL still works`() = runTest {
+        // DATETIME-format UNTIL should also work (already worked before fix)
+        val startTs = parseDate("2026-01-15 00:00")
+        val endTs = parseDate("2026-01-15 23:59")
+        val event = createAndInsertAllDayEvent(
+            startTs, endTs,
+            rrule = "FREQ=MONTHLY;UNTIL=20260615T000000Z",
+            title = "Monthly All-Day"
+        )
+
+        val count = occurrenceGenerator.generateOccurrences(
+            event,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2027-12-31 23:59")
+        )
+
+        assertTrue("Should generate occurrences (got $count)", count > 0)
+
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        // Jan 15, Feb 15, Mar 15, Apr 15, May 15, Jun 15 (6 months)
+        assertEquals("Should have 6 monthly occurrences", 6, occurrences.size)
+        assertEquals(20260115, occurrences[0].startDay)
+        assertEquals(20260615, occurrences[5].startDay)
+    }
+
+    // ========== All-Day DATE UNTIL + EXDATE Tests (Issue #62) ==========
+    // These test that EXDATE correctly excludes occurrences when DTSTART is date-only.
+    // parseDateCode() must create date-only DateTime matching the RRULE's date-only
+    // occurrences — otherwise lib-recur's Difference falls back to timestamp comparison
+    // and EXDATE silently fails to exclude.
+
+    @Test
+    fun `all-day event with DATE UNTIL and EXDATE excludes correctly`() = runTest {
+        // All-day yearly event with DATE UNTIL, plus EXDATE for one year
+        val startTs = parseDate("2020-03-15 00:00")
+        val endTs = parseDate("2020-03-15 23:59")
+        val event = createAndInsertAllDayEvent(
+            startTs, endTs,
+            rrule = "FREQ=YEARLY;UNTIL=20280315",
+            exdate = "20250315", // Exclude 2025 occurrence
+            title = "All-Day EXDATE Test"
+        )
+
+        val count = occurrenceGenerator.generateOccurrences(
+            event,
+            parseDate("2024-01-01 00:00"),
+            parseDate("2028-12-31 23:59")
+        )
+
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        // Range 2024-2028: should have 2024, 2026, 2027, 2028 (4 occurrences, 2025 excluded)
+        val years = occurrences.map { it.startDay / 10000 }
+        assertFalse("2025 should be excluded by EXDATE", years.contains(2025))
+        assertEquals("Should have 4 occurrences (2025 excluded)", 4, occurrences.size)
+    }
+
+    @Test
+    fun `all-day event with DATE UNTIL and multiple EXDATE excludes correctly`() = runTest {
+        // Weekly all-day with DATE UNTIL, multiple EXDATE
+        val startTs = parseDate("2026-01-05 00:00") // Mon Jan 5
+        val endTs = parseDate("2026-01-05 23:59")
+        val event = createAndInsertAllDayEvent(
+            startTs, endTs,
+            rrule = "FREQ=WEEKLY;UNTIL=20260209",
+            exdate = "20260112,20260126", // Exclude Jan 12 and Jan 26
+            title = "Weekly EXDATE Test"
+        )
+
+        val count = occurrenceGenerator.generateOccurrences(
+            event,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2026-12-31 23:59")
+        )
+
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        val days = occurrences.map { it.startDay }
+        // Full set: Jan 5, 12, 19, 26, Feb 2, 9 (6 weeks, UNTIL inclusive)
+        // After EXDATE: Jan 5, 19, Feb 2, 9 = 4
+        assertFalse("Jan 12 should be excluded", days.contains(20260112))
+        assertFalse("Jan 26 should be excluded", days.contains(20260126))
+        assertEquals("Should have 4 occurrences after exclusions", 4, occurrences.size)
     }
 
     // ========== Data Loss Prevention Tests ==========

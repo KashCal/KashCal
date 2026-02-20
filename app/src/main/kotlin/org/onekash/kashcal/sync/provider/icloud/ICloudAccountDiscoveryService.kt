@@ -266,7 +266,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     message.contains("ssl") || message.contains("certificate") ->
                         "Secure connection failed. Please check your network settings."
                     else ->
-                        "Connection failed: ${e.message ?: "Unknown error"}"
+                        "Connection failed: ${e.message ?: e.javaClass.simpleName}"
                 }
             }
         }

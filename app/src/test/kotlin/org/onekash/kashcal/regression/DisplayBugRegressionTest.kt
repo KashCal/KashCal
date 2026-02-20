@@ -173,7 +173,7 @@ class DisplayBugRegressionTest {
             UID:birthday-regression@icloud.com
             DTSTART;VALUE=DATE:20260106
             DTEND;VALUE=DATE:20260107
-            SUMMARY:Ellie Birthday
+            SUMMARY:Test Birthday
             RRULE:FREQ=YEARLY
             END:VEVENT
             END:VCALENDAR
