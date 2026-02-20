@@ -19,7 +19,7 @@ import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.domain.reader.EventReader.OccurrenceWithEvent
+import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.text.SimpleDateFormat
@@ -550,8 +550,8 @@ class HomeScreenComposeTest {
 
         // Create test occurrences with events
         val nowMs = System.currentTimeMillis()
-        val testOccurrences = persistentListOf(
-            OccurrenceWithEvent(
+        val testOccurrences = persistentListOf<DisplayEvent>(
+            DisplayEvent.Room(
                 occurrence = Occurrence(
                     id = 1L,
                     eventId = 1L,
@@ -564,7 +564,7 @@ class HomeScreenComposeTest {
                 event = testEvents[0],
                 calendar = testCalendars[0]
             ),
-            OccurrenceWithEvent(
+            DisplayEvent.Room(
                 occurrence = Occurrence(
                     id = 2L,
                     eventId = 2L,
