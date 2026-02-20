@@ -209,7 +209,9 @@ data class HomeUiState(
     /** Time format preference: "system", "12h", or "24h" */
     val timeFormat: String = "system",
     /** First day of week: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
-    val firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+    val firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    /** Show week numbers in month calendar grid */
+    val showWeekNumbers: Boolean = false
 ) {
     /**
      * Format the current viewing month/year for display.

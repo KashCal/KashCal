@@ -90,7 +90,9 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 import java.time.temporal.ChronoUnit
+import java.time.temporal.WeekFields
 import java.util.*
 import java.util.Calendar as JavaCalendar
 
@@ -478,7 +480,10 @@ fun HomeScreen(
                                     )
 
                                     // Day of week headers
-                                    DayOfWeekHeaders(firstDayOfWeek = uiState.firstDayOfWeek)
+                                    DayOfWeekHeaders(
+                                        firstDayOfWeek = uiState.firstDayOfWeek,
+                                        showWeekNumbers = uiState.showWeekNumbers
+                                    )
                                     Spacer(modifier = Modifier.height(4.dp))
 
                                     // Calendar grid
@@ -489,7 +494,8 @@ fun HomeScreen(
                                         eventDots = uiState.eventDots,
                                         onDateSelected = onDateSelected,
                                         firstDayOfWeekPref = uiState.firstDayOfWeek,
-                                        refreshKey = refreshKey
+                                        refreshKey = refreshKey,
+                                        showWeekNumbers = uiState.showWeekNumbers
                                     )
                                 }
                             }
@@ -710,8 +716,11 @@ private fun MonthNavHeader(
 }
 
 @Composable
-private fun DayOfWeekHeaders(firstDayOfWeek: Int) {
+private fun DayOfWeekHeaders(firstDayOfWeek: Int, showWeekNumbers: Boolean = false) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
+        if (showWeekNumbers) {
+            Spacer(modifier = Modifier.width(24.dp))
+        }
         val daysOfWeek = remember(firstDayOfWeek) {
             DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
         }
@@ -738,7 +747,8 @@ private fun CalendarGrid(
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
     onDateSelected: (Long) -> Unit,
     firstDayOfWeekPref: Int = java.util.Calendar.SUNDAY,
-    refreshKey: Int = 0
+    refreshKey: Int = 0,
+    showWeekNumbers: Boolean = false
 ) {
     val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
@@ -752,6 +762,21 @@ private fun CalendarGrid(
         DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeekPref)
     }
 
+    // WeekFields for week number calculation — respects user's first-day-of-week preference
+    val weekFields = remember(firstDayOfWeekPref) {
+        if (firstDayOfWeekPref == 0) {
+            WeekFields.of(Locale.getDefault())
+        } else {
+            val dow = when (firstDayOfWeekPref) {
+                1 -> java.time.DayOfWeek.SUNDAY
+                2 -> java.time.DayOfWeek.MONDAY
+                7 -> java.time.DayOfWeek.SATURDAY
+                else -> java.time.DayOfWeek.MONDAY
+            }
+            WeekFields.of(dow, WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek)
+        }
+    }
+
     val today = remember(refreshKey) { JavaCalendar.getInstance() }
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
     val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
@@ -763,6 +788,22 @@ private fun CalendarGrid(
             if (dayCounter > daysInMonth) break
 
             Row(modifier = Modifier.fillMaxWidth()) {
+                if (showWeekNumbers) {
+                    val firstDayOfRow = 1 + (week * 7) - gridOffset
+                    val clampedDay = firstDayOfRow.coerceIn(1, daysInMonth)
+                    val weekDate = LocalDate.of(year, month + 1, clampedDay)
+                    val weekNumber = weekDate.get(weekFields.weekOfWeekBasedYear())
+                    Box(
+                        modifier = Modifier.width(24.dp).height(44.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = weekNumber.toString(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        )
+                    }
+                }
                 for (dayOfWeekIdx in 0..6) {
                     if (week == 0 && dayOfWeekIdx < gridOffset || dayCounter > daysInMonth) {
                         Box(modifier = Modifier.weight(1f).height(44.dp))

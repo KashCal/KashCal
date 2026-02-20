@@ -275,6 +275,66 @@ class CalDavXmlParserTest {
         assertEquals(emptyList<Any>(), parser.extractCalendars("<broken"))
     }
 
+    @Test
+    fun `decodeXmlEntities decodes all five standard XML entities`() {
+        assertEquals("Friends & Family", CalDavXmlParser.decodeXmlEntities("Friends &amp; Family"))
+        assertEquals("Work <2024>", CalDavXmlParser.decodeXmlEntities("Work &lt;2024&gt;"))
+        assertEquals("He said \"hello\"", CalDavXmlParser.decodeXmlEntities("He said &quot;hello&quot;"))
+        assertEquals("It's mine", CalDavXmlParser.decodeXmlEntities("It&apos;s mine"))
+    }
+
+    @Test
+    fun `decodeXmlEntities is no-op when no entities present`() {
+        assertEquals("Normal Calendar", CalDavXmlParser.decodeXmlEntities("Normal Calendar"))
+        assertEquals("", CalDavXmlParser.decodeXmlEntities(""))
+    }
+
+    @Test
+    fun `decodeXmlEntities handles amp-last ordering to avoid double decode`() {
+        // If text contains "&amp;lt;" it should become "&lt;", not "<"
+        assertEquals("&lt;tag&gt;", CalDavXmlParser.decodeXmlEntities("&amp;lt;tag&amp;gt;"))
+    }
+
+    @Test
+    fun `extractCalendars decodes XML entities in displayName`() {
+        val xml = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <multistatus xmlns="DAV:">
+                <response>
+                    <href>/calendars/user/friends/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Friends &amp; Family</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                        </prop>
+                        <status>HTTP/1.1 200 OK</status>
+                    </propstat>
+                </response>
+                <response>
+                    <href>/calendars/user/work/</href>
+                    <propstat>
+                        <prop>
+                            <displayname>Work &lt;2024&gt; &amp; Personal</displayname>
+                            <resourcetype><collection/><calendar xmlns="urn:ietf:params:xml:ns:caldav"/></resourcetype>
+                        </prop>
+                        <status>HTTP/1.1 200 OK</status>
+                    </propstat>
+                </response>
+            </multistatus>
+        """.trimIndent()
+
+        val calendars = parser.extractCalendars(xml)
+        assertEquals(2, calendars.size)
+
+        val friends = calendars.find { it.href == "/calendars/user/friends/" }
+        assertNotNull("Should find friends calendar", friends)
+        assertEquals("Friends & Family", friends!!.displayName)
+
+        val work = calendars.find { it.href == "/calendars/user/work/" }
+        assertNotNull("Should find work calendar", work)
+        assertEquals("Work <2024> & Personal", work!!.displayName)
+    }
+
     // ========== extractSyncToken ==========
 
     @Test

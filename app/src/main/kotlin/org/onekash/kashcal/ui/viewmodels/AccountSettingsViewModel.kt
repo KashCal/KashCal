@@ -235,6 +235,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _firstDayOfWeek = MutableStateFlow(java.util.Calendar.SUNDAY)
     val firstDayOfWeek: StateFlow<Int> = _firstDayOfWeek.asStateFlow()
 
+    private val _showWeekNumbers = MutableStateFlow(false)
+    val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
+
     init {
         loadInitialState()
         observeCalendars()
@@ -494,6 +497,11 @@ class AccountSettingsViewModel @Inject constructor(
                 _firstDayOfWeek.value = day
             }
         }
+        viewModelScope.launch {
+            dataStore.showWeekNumbers.collect { show ->
+                _showWeekNumbers.value = show
+            }
+        }
     }
 
     /**
@@ -522,6 +530,15 @@ class AccountSettingsViewModel @Inject constructor(
     fun setFirstDayOfWeek(day: Int) {
         viewModelScope.launch {
             dataStore.setFirstDayOfWeek(day)
+        }
+    }
+
+    /**
+     * Update the show week numbers preference.
+     */
+    fun setShowWeekNumbers(show: Boolean) {
+        viewModelScope.launch {
+            dataStore.setShowWeekNumbers(show)
         }
     }
 

@@ -431,6 +431,11 @@ class HomeViewModel @Inject constructor(
                 _uiState.update { it.copy(defaultViewMode = ViewMode.fromKey(viewKey)) }
             }
         }
+        viewModelScope.launch {
+            dataStore.showWeekNumbers.collect { show ->
+                _uiState.update { it.copy(showWeekNumbers = show) }
+            }
+        }
     }
 
     /**

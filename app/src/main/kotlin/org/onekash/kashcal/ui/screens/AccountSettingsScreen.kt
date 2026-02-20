@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Check
@@ -202,6 +203,8 @@ fun AccountSettingsScreen(
     onTimeFormatChange: (String) -> Unit = {},
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     onFirstDayOfWeekChange: (Int) -> Unit = {},
+    showWeekNumbers: Boolean = false,
+    onShowWeekNumbersChange: (Boolean) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = ""
 ) {
@@ -274,6 +277,8 @@ fun AccountSettingsScreen(
                     onTimeFormatChange = onTimeFormatChange,
                     firstDayOfWeek = firstDayOfWeek,
                     onFirstDayOfWeekChange = onFirstDayOfWeekChange,
+                    showWeekNumbers = showWeekNumbers,
+                    onShowWeekNumbersChange = onShowWeekNumbersChange,
                     showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
                     prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
                     onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
@@ -390,6 +395,8 @@ private fun FlatSettingsContent(
     onTimeFormatChange: (String) -> Unit,
     firstDayOfWeek: Int,
     onFirstDayOfWeekChange: (Int) -> Unit,
+    showWeekNumbers: Boolean,
+    onShowWeekNumbersChange: (Boolean) -> Unit,
     showAddSubscriptionDialogFromIntent: Boolean,
     prefillSubscriptionUrl: String?,
     onHideAddSubscriptionDialog: () -> Unit,
@@ -547,6 +554,12 @@ private fun FlatSettingsContent(
                     else -> "System default"
                 },
                 onClick = { showFirstDayOfWeekSheet = true }
+            )
+            SettingsRow(
+                icon = Icons.Default.DateRange,
+                label = "Week Numbers",
+                subtitle = if (showWeekNumbers) "On" else "Off",
+                onClick = { onShowWeekNumbersChange(!showWeekNumbers) }
             )
             SettingsRow(
                 icon = Icons.Default.Schedule,

@@ -24,6 +24,26 @@ class CalDavXmlParser {
 
     companion object {
         private const val TAG = "CalDavXmlParser"
+
+        /**
+         * Decode the 5 standard XML entities.
+         *
+         * XmlPullParser.next() should decode these automatically, but Android's
+         * KXmlParser may not in all cases (e.g., CDATA sections, certain runtime
+         * versions). This is a defensive no-op when entities are already decoded.
+         *
+         * IMPORTANT: &amp; must be decoded LAST to avoid double-decoding.
+         * e.g., "&amp;lt;" should become "&lt;", not "<".
+         */
+        internal fun decodeXmlEntities(text: String): String {
+            if (!text.contains('&')) return text
+            return text
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&apos;", "'")
+                .replace("&amp;", "&")
+        }
     }
 
     private val factory = XmlPullParserFactory.newInstance().apply {
@@ -251,6 +271,7 @@ class CalDavXmlParser {
                             }
                             "displayname" -> {
                                 currentDisplayName = readText(parser)?.takeIf { it.isNotBlank() }
+                                    ?.let { decodeXmlEntities(it) }
                             }
                             "calendar-color" -> {
                                 currentColor = readText(parser)?.takeIf { it.isNotBlank() }
