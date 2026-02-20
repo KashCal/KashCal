@@ -52,7 +52,7 @@ class ContactBirthdayManagerTest {
     }
 
     @Test
-    fun `initialize with disabled does not register observer`() = runTest {
+    fun `initialize with disabled does not register observer`() = runTest(testDispatcher) {
         dataStore.setContactBirthdaysEnabled(false)
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
@@ -60,7 +60,7 @@ class ContactBirthdayManagerTest {
     }
 
     @Test
-    fun `onDisabled is safe to call without prior onEnabled`() = runTest {
+    fun `onDisabled is safe to call without prior onEnabled`() = runTest(testDispatcher) {
         manager.onDisabled()
         // No crash = success
     }
@@ -68,7 +68,7 @@ class ContactBirthdayManagerTest {
     // ========== Permission Revocation ==========
 
     @Test
-    fun `initialize with enabled but no permission does not crash and auto-disables feature`() = runTest {
+    fun `initialize with enabled but no permission does not crash and auto-disables feature`() = runTest(testDispatcher) {
         // Simulate: user enabled contact birthdays, then revoked READ_CONTACTS in system settings
         dataStore.setContactBirthdaysEnabled(true)
 
