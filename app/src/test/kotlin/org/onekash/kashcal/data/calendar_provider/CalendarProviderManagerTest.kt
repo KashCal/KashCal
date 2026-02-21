@@ -81,7 +81,7 @@ class CalendarProviderManagerTest {
     }
 
     @Test
-    fun `initialize with disabled does not register observer`() = runTest {
+    fun `initialize with disabled does not register observer`() = runTest(testDispatcher) {
         // Default is disabled, so initialize should not register observer
         dataStore.setDeviceCalendarsEnabled(false)
         manager.initialize()
@@ -90,7 +90,7 @@ class CalendarProviderManagerTest {
     }
 
     @Test
-    fun `onDisabled is safe to call without prior onEnabled`() = runTest {
+    fun `onDisabled is safe to call without prior onEnabled`() = runTest(testDispatcher) {
         // Should not throw even if observer was never registered
         manager.onDisabled()
     }
@@ -145,7 +145,7 @@ class CalendarProviderManagerTest {
     // ========== Permission Revocation ==========
 
     @Test
-    fun `initialize with enabled but no permission does not crash and auto-disables feature`() = runTest {
+    fun `initialize with enabled but no permission does not crash and auto-disables feature`() = runTest(testDispatcher) {
         // Simulate: user enabled device calendars, then revoked READ_CALENDAR in system settings
         dataStore.setDeviceCalendarsEnabled(true)
 
