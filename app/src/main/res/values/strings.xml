@@ -80,7 +80,7 @@
     <string name="label_location">Location</string>
     <string name="label_location_hint">Address, room, or meeting link</string>
     <string name="label_notes">Notes</string>
-    <string name="label_apple_id">Apple ID</string>
+    <string name="label_apple_id" translatable="false">Apple ID</string>
     <string name="label_app_password">App-Specific Password</string>
     <!-- Placeholder showing expected format -->
     <string name="placeholder_email" translatable="false">email@icloud.com</string>
@@ -327,7 +327,7 @@
     <!-- Placeholder showing expected format -->
     <string name="placeholder_username" translatable="false">user@example.com</string>
     <!-- Placeholder showing expected format -->
-    <string name="placeholder_display_name" translatable="false">My CalDAV Account</string>
+    <string name="placeholder_display_name">My CalDAV Account</string>
     <string name="placeholder_search_events">Search events…</string>
 
     <!-- ==================== Hints ==================== -->
