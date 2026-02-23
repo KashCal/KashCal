@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Agenda du jour</string>
+    <string name="widget_description">Affiche les évènements de calendrier d\'aujourd\'hui</string>
+    <string name="week_widget_name">Vue semaine</string>
+    <string name="week_widget_description">Affiche les évènements des 7 prochains jours</string>
+    <string name="date_widget_name">Date</string>
+    <string name="date_widget_description">Affiche la date du jour comme une icône d\'application</string>
+    <string name="widget_no_events_today">Aucun évènement aujourd\'hui</string>
+    <string name="widget_add_event">+ Ajouter un évènement</string>
+    <string name="widget_more_count">+ %1$d de plus</string>
+    <string name="widget_no_events">Aucun évènement</string>
+    <string name="widget_event_count">%1$d évènement</string>
+    <string name="widget_events_count">%1$d évènements</string>
+    <string name="widget_this_week">Cette semaine</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Nouvel évènement</string>
+    <string name="shortcut_new_event_long">Créer un nouvel Évènement</string>
+    <string name="shortcut_today">Aujourd\'hui</string>
+    <string name="shortcut_today_long">Aller à aujourd\'hui</string>
+    <string name="shortcut_search">Rechercher</string>
+    <string name="shortcut_search_long">Rechercher des évènements</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Réessayer</string>
+    <string name="action_try_again">Réessayer</string>
+    <string name="action_cancel">Annuler</string>
+    <string name="action_close">Fermer</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Pas maintenant</string>
+    <string name="action_sign_in">Se connecter</string>
+    <string name="action_select">Sélectionner</string>
+    <string name="action_import">Importer</string>
+    <string name="action_show_password">Afficher le mot de passe</string>
+    <string name="action_hide_password">Masquer le mot de passe</string>
+    <string name="action_sign_out">Se déconnecter</string>
+    <string name="action_learn_more">En savoir plus</string>
+    <string name="action_open_apple_id">Ouvrir Apple ID</string>
+    <string name="action_open_settings">Ouvrir les paramètres</string>
+    <string name="action_force_sync">Forcer la synchronisation</string>
+    <string name="action_sync_now">Synchroniser maintenant</string>
+    <string name="action_details">Détails</string>
+    <string name="action_set_up">Configurer</string>
+    <string name="action_contact_support">Contacter le support</string>
+    <string name="action_report_issue">Signaler un problème</string>
+    <string name="action_view">Afficher</string>
+    <string name="action_enable">Activer</string>
+    <string name="action_done">Terminé</string>
+    <string name="action_save">Enregistrer</string>
+    <string name="action_add">Ajouter</string>
+    <string name="action_edit">Modifier</string>
+    <string name="action_delete">Supprimer</string>
+    <string name="action_confirm">Confirmer</string>
+    <string name="action_discard">Ignorer</string>
+    <string name="action_dismiss">Fermer</string>
+    <string name="action_show_all">Tout afficher</string>
+    <string name="action_connect">Connecter</string>
+    <string name="action_duplicate">Dupliquer</string>
+    <string name="action_share">Partager</string>
+    <string name="action_export_ics">Exporter en .ics</string>
+    <string name="action_go_to_today">Aller à Aujourd\'hui</string>
+    <string name="action_confirm_delete">Confirmer la Suppression</string>
+    <string name="action_delete_event">Supprimer l\'Évènement</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Uniquement celui‑ci</string>
+    <string name="recurring_this_and_future">Celui‑ci et tous les suivants</string>
+    <string name="recurring_just_occurrence">Uniquement cette occurrence</string>
+    <string name="recurring_all_occurrences">Toutes les occurrences</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Titre de l\'évènement</string>
+    <string name="label_location">Lieu</string>
+    <string name="label_location_hint">Adresse, salle ou lien de réunion</string>
+    <string name="label_notes">Notes</string>
+    <string name="label_app_password">Mot de passe spécifique à l’application</string>
+    <string name="label_password_hint">16 caractères, tirets facultatifs</string>
+    <string name="label_calendar_url">URL du calendrier</string>
+    <string name="label_calendar_name">Nom du calendrier</string>
+    <string name="label_name">Nom</string>
+    <string name="label_search">Rechercher…</string>
+    <string name="label_hex_color">Couleur hexadécimale</string>
+    <string name="label_enter_hex">Saisir 6 caractères hexadécimaux (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Tous</string>
+    <string name="view_week">Semaine</string>
+    <string name="view_month">Mois</string>
+    <string name="label_all_day">Toute la journée</string>
+    <string name="label_today">Aujourd\'hui</string>
+    <string name="label_go_to_date">Aller à une date</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Paramètres</string>
+    <string name="settings_time_format">Format de l\'heure</string>
+    <string name="settings_start_week_on">Début de la semaine</string>
+    <string name="settings_event_emojis">Émojis d\'évènement</string>
+    <string name="settings_emoji_subtitle">Afficher des émojis en fonction des titres d\'évènement</string>
+    <string name="settings_force_sync">Forcer la synchronisation complète</string>
+    <string name="settings_force_sync_subtitle">Re‑télécharger toutes les données du calendrier</string>
+    <string name="settings_sync_history">Historique de synchronisation</string>
+    <string name="settings_sync_history_subtitle">Voir les sessions de synchronisation (48 dernières heures)</string>
+    <string name="settings_subscriptions">Abonnements</string>
+    <string name="settings_import">Importer</string>
+    <string name="settings_import_subtitle">Importer un fichier .ics</string>
+    <string name="settings_export">Exporter</string>
+    <string name="settings_export_subtitle">Sauvegarder dans un fichier .ics</string>
+    <string name="settings_birthday_reminder">Rappel d\'anniversaire</string>
+    <string name="settings_use_device_timezone">Utiliser le fuseau horaire de l\'appareil</string>
+    <string name="settings_section_my_calendars">Mes calendriers</string>
+    <string name="settings_section_display">Affichage</string>
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_data">Données</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Calendrier Apple ?</string>
+    <string name="onboarding_got_you">On s’en occupe.</string>
+    <string name="onboarding_connect_prompt">Connectez iCloud pour voir vos évènements ici</string>
+    <string name="onboarding_connect_icloud">Connecter iCloud</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Connecter iCloud</string>
+    <string name="signin_caldav_title">Ajouter un compte CalDAV</string>
+    <string name="signin_auto_generated">Généré automatiquement depuis le serveur</string>
+    <string name="signin_connected_to">Connecté à %1$s</string>
+    <string name="signin_found_calendars">%1$d calendrier(s) trouvés pour %2$s. Synchronisation…</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_force_sync_title">Forcer une synchro complète ?</string>
+    <string name="dialog_force_sync_message">Cela va re‑télécharger toutes les données de calendrier depuis le serveur. Les modifications locales seront conservées.</string>
+    <string name="dialog_enable_notifications">Activer les notifications ?</string>
+    <string name="dialog_delete_title">Supprimer « %1$s »</string>
+    <string name="dialog_edit_title">Modifier « %1$s »</string>
+    <string name="dialog_action_required">Cette action est requise pour continuer.</string>
+    <string name="dialog_add_to_calendar">Ajouter au calendrier</string>
+    <string name="dialog_select_calendar">Sélectionner un calendrier</string>
+    <string name="dialog_choose_color">Choisir une couleur</string>
+    <string name="dialog_add_event">Ajouter un évènement</string>
+    <string name="dialog_import_events">Importer %1$d évènements</string>
+    <string name="dialog_add_subscription">Ajouter un abonnement</string>
+    <string name="dialog_edit_subscription">Modifier l\'abonnement</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Aucun évènement cette semaine</string>
+    <string name="status_more_events">+%1$d de plus</string>
+    <string name="status_no_sync_sessions">Aucune session de synchronisation pour l\'instant.  Lancez une synchronisation en tirant vers le bas dans la vue calendrier.</string>
+    <string name="status_no_writable_calendars">Aucun calendrier modifiable disponible</string>
+    <string name="status_and_more">…et %1$d de plus</string>
+    <string name="status_events_count">%1$d évènements</string>
+    <string name="status_sync_changes">Synchroniser les changements</string>
+    <string name="status_sync_history">Historique de synchronisation</string>
+    <string name="status_parse_failures">Erreurs d\'analyse</string>
+    <string name="status_fallback_mode">Mode dégradé</string>
+    <string name="status_error">Erreur</string>
+    <string name="status_failed_to_parse">⚠ %1$d n\'ont pas pu être analysés</string>
+    <string name="status_built_with_love">Fait avec amour</string>
+    <string name="status_in_austin">à Austin</string>
+    <string name="status_version">v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Synchronisation terminée</string>
+    <string name="success_event_saved">Évènement enregistré</string>
+    <string name="success_event_deleted">Évènement supprimé</string>
+    <string name="success_import_complete">%1$d évènements importés</string>
+    <string name="success_export_complete">Calendrier exporté</string>
+    <string name="success_changes_saved_offline">Modifications enregistrées. Elles seront synchronisées lorsque vous serez en ligne.</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Échec de la connexion</string>
+    <string name="error_auth_invalid_credentials">Apple ID ou mot de passe spécifique à l’app invalide. Vérifiez vos identifiants et réessayez.</string>
+    <string name="error_auth_app_specific_password_required">iCloud exige un mot de passe spécifique à l’app. Votre mot de passe Apple ID habituel ne fonctionnera pas ici.</string>
+    <string name="error_auth_session_expired_title">Session expirée</string>
+    <string name="error_auth_session_expired">Votre session iCloud a expiré. Veuillez vous reconnecter pour continuer la synchronisation.</string>
+    <string name="error_auth_account_locked">Votre identifiant Apple est verrouillé. Veuillez visiter appleid.apple.com pour le déverrouiller.</string>
+
+    <string name="error_network_offline">Vous êtes hors ligne. Les changements seront synchronisés lorsque vous serez de nouveau en ligne.</string>
+    <string name="error_network_timeout">Délai de connexion dépassé. Vérifiez votre connexion Internet et réessayez.</string>
+    <string name="error_network_ssl">Échec de la connexion sécurisée. Vérifiez vos paramètres réseau.</string>
+    <string name="error_network_unknown_host">Impossible de joindre iCloud. Vérifiez votre connexion Internet.</string>
+    <string name="error_network_connection_failed">Connexion échouée. Veuillez réessayer.</string>
+
+    <string name="error_server_unavailable">iCloud est temporairement indisponible. Veuillez réessayer plus tard.</string>
+    <string name="error_server_rate_limited">Trop de requêtes. Veuillez patienter un instant et réessayer.</string>
+    <string name="error_server_forbidden">Accès refusé. Vous n\'avez peut‑être pas l\'autorisation pour ce calendrier.</string>
+    <string name="error_server_not_found">L’élément demandé est introuvable sur le serveur.</string>
+    <string name="error_conflict_title">Conflit de synchronisation</string>
+    <string name="error_conflict_generic">Cet évènement a été modifié sur un autre appareil. Forcez la synchronisation pour obtenir la dernière version.</string>
+    <string name="error_conflict_with_event">« %1$s » a été modifié sur un autre appareil. Forcez la synchronisation pour obtenir la dernière version.</string>
+    <string name="error_sync_token_expired">Données de synchronisation expirées. Synchronisation complète en cours…</string>
+
+    <string name="error_event_not_found">Évènement introuvable.</string>
+    <string name="error_calendar_not_found">Calendrier introuvable.</string>
+    <string name="error_calendar_read_only">Impossible de modifier les évènements dans « %1$s » (calendrier en lecture seule).</string>
+    <string name="error_event_invalid_data">Données d\'évènement invalides. Vérifiez les heures de début et de fin.</string>
+    <string name="error_event_invalid_recurrence">Modèle de répétition invalide.</string>
+    <string name="error_delete_failed">Échec de la suppression : %1$s</string>
+
+    <string name="error_display_name_exists">Un compte nommé « %1$s » existe déjà.</string>
+
+    <string name="error_import_file_not_found">Fichier introuvable ou illisible.</string>
+    <string name="error_import_invalid_format">Format de fichier de calendrier invalide.</string>
+    <string name="error_import_partial">%1$d évènements importés, %2$d en échec.</string>
+    <string name="error_export_failed">Échec de l’export des évènements.</string>
+    <string name="error_export_no_events">Aucun évènement à exporter.</string>
+
+    <string name="error_storage_full_title">Stockage plein</string>
+    <string name="error_storage_full">Espace de stockage insuffisant. Libérez de l’espace et réessayez.</string>
+    <string name="error_database_corruption_title">Erreur de données</string>
+    <string name="error_database_corruption">Vos données de calendrier peuvent être corrompues. Contactez le support.</string>
+    <string name="error_migration_title">Erreur de mise à jour</string>
+    <string name="error_migration_failed">Échec de la mise à jour des données de l’application. Veuillez réinstaller l’application.</string>
+
+    <string name="error_permission_notification_title">Activer les notifications ?</string>
+    <string name="error_permission_notification">KashCal a besoin de l’autorisation de notification pour vous rappeler les évènements à venir.</string>
+    <string name="error_permission_alarm_title">Activer les alarmes exactes ?</string>
+    <string name="error_permission_alarm">KashCal a besoin de l’autorisation d’alarme exacte pour des rappels précis.</string>
+    <string name="error_permission_storage">Autorisation de stockage requise pour l’import/export.</string>
+
+    <string name="error_sync_no_accounts">Aucun compte iCloud configuré. Configurez iCloud pour synchroniser vos calendriers.</string>
+    <string name="error_sync_partial">%1$d calendriers synchronisés, %2$d en échec.</string>
+
+    <string name="error_unknown">Une erreur est survenue. Veuillez réessayer.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Sélectionné</string>
+    <string name="cd_back">Retour</string>
+    <string name="cd_close">Fermer</string>
+    <string name="cd_search">Rechercher</string>
+    <string name="cd_create_event">Créer un évènement</string>
+    <string name="cd_agenda">Agenda</string>
+    <string name="cd_settings">Paramètres</string>
+    <string name="cd_today">Aujourd\'hui</string>
+    <string name="cd_previous_week">Semaine précédente</string>
+    <string name="cd_next_week">Semaine suivante</string>
+    <string name="cd_previous_year">Année précédente</string>
+    <string name="cd_next_year">Année suivante</string>
+    <string name="cd_delete">Supprimer</string>
+    <string name="cd_refresh">Actualiser</string>
+    <string name="cd_add_subscription">Ajouter un abonnement</string>
+    <string name="cd_more_options">Plus d’options</string>
+    <string name="cd_duplicate">Dupliquer</string>
+    <string name="cd_share">Partager</string>
+    <string name="cd_export_ics">Exporter en ICS</string>
+    <string name="cd_open_maps">Ouvrir dans Maps</string>
+    <string name="cd_copy_clipboard">Copier dans le presse‑papiers</string>
+    <string name="cd_clear_history">Effacer l’historique</string>
+    <string name="cd_recurring">Récurrent</string>
+    <string name="cd_enabled">Activé</string>
+    <string name="cd_sync_error">Erreur de synchronisation</string>
+    <string name="cd_change_timezone">Changer de fuseau horaire</string>
+    <string name="cd_select_option">Sélectionner une option</string>
+    <string name="cd_year_picker">Superposition de sélecteur d’année</string>
+    <string name="cd_month_selector">Sélecteur du mois %1$s</string>
+    <string name="cd_select_label">Sélectionner %1$s</string>
+    <string name="cd_wheel_picker">Sélecteur à roue avec %1$d options</string>
+    <string name="cd_version_info">KashCal version %1$s. Appui long pour les options de débogage.</string>
+    <string name="cd_color_slider">Curseur de couleur, actuellement %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d degrés</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Calendrier</string>
+    <string name="label_color">Couleur :</string>
+    <string name="label_repeat">Répéter</string>
+    <string name="label_sync_interval">Intervalle de synchro :</string>
+    <string name="label_first_alert">Première alerte</string>
+    <string name="label_second_alert">Deuxième alerte</string>
+    <string name="label_scheduled_events">Évènements planifiés</string>
+    <string name="label_all_day_events">Évènements sur la journée</string>
+    <string name="label_server_url">URL du serveur</string>
+    <string name="label_username">Nom d’utilisateur</string>
+    <string name="label_password">Mot de passe</string>
+    <string name="label_display_name_optional">Nom d’affichage (optionnel)</string>
+
+    <!-- ==================== Placeholders (Additional) ==================== -->
+    <string name="placeholder_display_name" translatable="false">Mon compte CalDAV</string>
+    <string name="placeholder_search_events">Rechercher des évènements…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Par défaut, https:// si non spécifié</string>
+    <string name="hint_name_shown_in_settings">Nom affiché dans les paramètres</string>
+    <string name="caldav_trust_insecure_subtitle">Pour les certificats auto‑signés ou les serveurs HTTP locaux</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Après</string>
+    <string name="label_recurrence_occurrences">occurrences</string>
+    <string name="label_recurrence_on_date">À la date</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Calendriers visibles</string>
+    <string name="settings_default_calendar">Calendrier par défaut</string>
+    <string name="settings_default_event_length">Durée par défaut de l\'évènement</string>
+    <string name="settings_default_alerts">Alertes par défaut</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_new_events">Nouveaux évènements</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Par défaut du système</string>
+    <string name="option_12_hour">12 heures</string>
+    <string name="option_24_hour">24 heures</string>
+    <string name="option_sunday">Dimanche</string>
+    <string name="option_monday">Lundi</string>
+    <string name="option_saturday">Samedi</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Aucun évènement trouvé</string>
+    <string name="empty_no_upcoming_events">Aucun évènement à venir</string>
+    <string name="empty_no_calendars">Aucun calendrier disponible</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Connexion…</string>
+    <string name="status_fetching">Récupération…</string>
+    <string name="status_discovering">Découverte…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Récupérer le calendrier</string>
+    <string name="action_discover_calendars">Découvrir les calendriers</string>
+    <string name="action_import_from_file">Importer depuis un fichier</string>
+    <string name="action_export_local_calendar">Exporter le calendrier local</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Les mots de passe spécifiques à l’app vous permettent de vous connecter aux apps tierces sans partager votre mot de passe Apple ID principal.</string>
+    <string name="help_app_password_steps_header">Pour en créer un :</string>
+    <string name="help_app_password_step_1">1. Allez sur appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Connectez‑vous avec votre Apple ID</string>
+    <string name="help_app_password_step_3">3. Allez dans Connexion et sécurité</string>
+    <string name="help_app_password_step_4">4. Cliquez sur Mots de passe spécifiques à l’app</string>
+    <string name="help_app_password_step_5">5. Cliquez sur Générer et copiez‑le ici</string>
+    <string name="help_caldav_description">CalDAV est un standard ouvert de synchronisation de calendriers. De nombreux services le prennent en charge :</string>
+    <string name="help_caldav_instructions">Saisissez l’URL du serveur et vos identifiants pour découvrir vos calendriers.</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal a besoin de l’autorisation de notification pour vous rappeler les évènements à venir.</string>
+    <string name="dialog_notification_permission_settings_hint">Vous pourrez modifier cela plus tard dans les paramètres.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Comptes</string>
+    <string name="accounts_section_connected">Connectés</string>
+    <string name="accounts_section_add">Ajouter un compte</string>
+    <string name="accounts_count_zero">Comptes</string>
+    <string name="accounts_count_one">1 compte</string>
+    <string name="accounts_count_other">%1$d comptes</string>
+    <string name="accounts_empty_title">Aucun compte connecté</string>
+    <string name="accounts_empty_subtitle">Ajoutez un compte pour synchroniser vos calendriers sur tous vos appareils</string>
+    <string name="accounts_tap_to_add">Touchez pour ajouter iCloud ou CalDAV</string>
+    <string name="accounts_row_label">iCloud, Nextcloud et plus</string>
+    <string name="accounts_add_icloud">Ajouter iCloud</string>
+    <string name="accounts_add_caldav">Ajouter CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail et plus</string>
+    <string name="accounts_caldav_help_title">Qu’est‑ce que CalDAV ?</string>
+    <string name="accounts_caldav_help_description">CalDAV est un standard ouvert de synchronisation de calendriers. Pris en charge par :</string>
+    <string name="accounts_caldav_help_more">et plus</string>
+    <string name="accounts_calendars_syncing">Synchronisation…</string>
+    <string name="accounts_calendar_count_one">%1$s · 1 calendrier</string>
+    <string name="accounts_calendar_count_other">%1$s · %2$d calendriers</string>
+    <string name="accounts_cd_icloud_icon">Compte iCloud</string>
+    <string name="accounts_cd_caldav_icon">Compte CalDAV</string>
+    <string name="accounts_cd_back">Revenir en arrière</string>
+    <string name="accounts_sync_issue">Problème de synchronisation</string>
+    <string name="accounts_cd_sync_warning">Avertissement de synchronisation</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Abonnements</string>
+    <string name="subscriptions_section_contact_birthdays">Anniversaires des contacts</string>
+    <string name="subscriptions_section_ics_calendars">Calendriers ICS</string>
+    <string name="subscriptions_section_add">Ajouter</string>
+    <string name="subscriptions_empty_ics">Aucun abonnement ICS</string>
+    <string name="subscriptions_empty_ics_hint">Ajoutez un flux de calendrier pour voir les évènements</string>
+    <string name="subscriptions_add_ics">Ajouter un calendrier ICS</string>
+    <string name="subscriptions_add_birthdays">Anniversaires des contacts</string>
+    <string name="subscriptions_birthdays_enabled">Activé</string>
+    <string name="subscriptions_birthdays_disabled">Désactivé</string>
+    <string name="subscriptions_count_zero">Abonnements</string>
+    <string name="subscriptions_count_one">1 abonnement</string>
+    <string name="subscriptions_count_other">%1$d abonnements</string>
+    <string name="subscriptions_row_label">Anniversaires, jours fériés et plus</string>
+    <string name="subscriptions_summary_birthdays_only">Anniversaires des contacts</string>
+    <string name="subscriptions_cd_back">Revenir en arrière</string>
+    <string name="subscriptions_cd_add">Ajouter un abonnement</string>
+    <string name="subscriptions_cd_birthdays_icon">Anniversaires des contacts</string>
+    <string name="subscriptions_cd_refresh">Actualiser l’abonnement</string>
+    <string name="subscriptions_cd_delete">Supprimer l’abonnement</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">SYNCHRO</string>
+    <string name="account_detail_section_calendars">CALENDRIERS</string>
+    <string name="account_detail_section_account">COMPTE</string>
+    <string name="account_detail_enabled">Activé</string>
+    <string name="account_detail_enabled_subtitle">Synchroniser ce compte automatiquement</string>
+    <string name="account_detail_sync_now">Synchroniser maintenant</string>
+    <string name="account_detail_syncing">Synchronisation…</string>
+    <string name="account_detail_discovering">Découverte…</string>
+    <string name="account_detail_discover_calendars">Découvrir de nouveaux calendriers</string>
+    <string name="account_detail_change_password">Changer le mot de passe</string>
+    <string name="account_detail_sign_out">Se déconnecter</string>
+    <string name="account_detail_never_synced">Jamais synchronisé</string>
+    <string name="account_detail_last_success">Dernier succès : %1$s</string>
+    <string name="account_detail_failure_one">Synchronisation échouée (%1$d tentative)</string>
+    <string name="account_detail_failure_other">Synchronisation échouée (%1$d tentatives)</string>
+    <string name="account_detail_calendar_count_one">1 calendrier</string>
+    <string name="account_detail_calendar_count_other">%1$d calendriers</string>
+    <string name="account_detail_calendar_count_new">%1$d calendriers (%2$d nouveaux)</string>
+    <string name="account_detail_cd_rename">Renommer</string>
+    <string name="account_detail_cd_show_password">Afficher le mot de passe</string>
+    <string name="account_detail_cd_hide_password">Masquer le mot de passe</string>
+
+    <!-- Sync failure notification -->
+    <string name="sync_failure_notification_title">Problème de synchronisation avec %1$s</string>
+    <string name="sync_failure_notification_text">La synchronisation du calendrier a échoué %1$d fois</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Renommer le compte</string>
+    <string name="rename_account_label">Nom du compte</string>
+    <string name="rename_account_cancel">Annuler</string>
+    <string name="rename_account_save">Enregistrer</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Changer le mot de passe</string>
+    <string name="change_password_label_icloud">Mot de passe spécifique à l’app</string>
+    <string name="change_password_label_default">Mot de passe</string>
+    <string name="change_password_cancel">Annuler</string>
+    <string name="change_password_save">Enregistrer</string>
+</resources>
+
