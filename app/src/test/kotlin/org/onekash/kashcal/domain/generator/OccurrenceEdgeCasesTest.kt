@@ -1,4 +1,5 @@
 package org.onekash.kashcal.domain.generator
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -6,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -51,7 +53,7 @@ class OccurrenceEdgeCasesTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         // Setup test calendar
         val accountId = database.accountsDao().insert(
@@ -934,6 +936,561 @@ class OccurrenceEdgeCasesTest {
         // Dec 30, 31 + Jan 1, 2, 3
         assertTrue("Should include Dec days", days.any { it in 20241230..20241231 })
         assertTrue("Should include Jan days", days.any { it in 20250101..20250103 })
+    }
+
+    // ==================== Past Extension DAO Tests ====================
+
+    @Test
+    fun `getMinStartTs returns earliest occurrence time`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024 00:00 UTC
+
+        val event = Event(
+            uid = "min-start@test.com",
+            calendarId = testCalendarId,
+            title = "Min Start Test",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY;COUNT=10",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            startTs - 86400000,
+            startTs + 20 * 86400000L
+        )
+
+        val minTs = database.occurrencesDao().getMinStartTs(eventId)
+        assertNotNull(minTs)
+        assertEquals(startTs, minTs)
+    }
+
+    @Test
+    fun `getMinStartTs returns null for event with no occurrences`() = runTest {
+        val event = createRecurringEvent("No Occs", "FREQ=DAILY")
+        val eventId = database.eventsDao().insert(event)
+
+        val minTs = database.occurrencesDao().getMinStartTs(eventId)
+        assertNull(minTs)
+    }
+
+    @Test
+    fun `needingPastExtension finds events with gap before target`() = runTest {
+        // Event starts Jan 1, 2020 but occurrences only from Jan 2024
+        val eventStartTs = 1577836800000L // Jan 1, 2020 00:00 UTC
+        val occWindowStart = 1704067200000L // Jan 1, 2024 00:00 UTC
+
+        val event = Event(
+            uid = "past-gap@test.com",
+            calendarId = testCalendarId,
+            title = "Past Gap Event",
+            startTs = eventStartTs,
+            endTs = eventStartTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate occurrences only for Jan 2024 - Feb 2024 (simulate partial window)
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            occWindowStart,
+            occWindowStart + 30 * 86400000L
+        )
+
+        // Target: July 2023 — event started before, but MIN(occ) is Jan 2024
+        val targetTs = 1688169600000L // July 1, 2023 00:00 UTC
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(targetTs)
+        assertTrue("Should find event needing past extension", needsExtension.contains(eventId))
+    }
+
+    @Test
+    fun `needingPastExtension excludes events where DTSTART is after target`() = runTest {
+        val eventStartTs = 1704067200000L // Jan 1, 2024
+
+        val event = Event(
+            uid = "future-start@test.com",
+            calendarId = testCalendarId,
+            title = "Future Start Event",
+            startTs = eventStartTs,
+            endTs = eventStartTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY;COUNT=10",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            eventStartTs - 86400000,
+            eventStartTs + 20 * 86400000L
+        )
+
+        // Target: June 2023 — before event even starts
+        val targetTs = 1685577600000L // June 1, 2023
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(targetTs)
+        assertFalse("Should NOT include event starting after target", needsExtension.contains(eventId))
+    }
+
+    @Test
+    fun `needingPastExtension excludes events already covering target`() = runTest {
+        val eventStartTs = 1577836800000L // Jan 1, 2020
+
+        val event = Event(
+            uid = "already-covered@test.com",
+            calendarId = testCalendarId,
+            title = "Already Covered",
+            startTs = eventStartTs,
+            endTs = eventStartTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate from Jan 2020 — covers everything
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            eventStartTs,
+            eventStartTs + 365 * 86400000L
+        )
+
+        // Target: June 2020 — MIN(occ) is Jan 2020, which is before target
+        val targetTs = 1590969600000L // June 1, 2020
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(targetTs)
+        assertFalse("Should NOT include event already covering target", needsExtension.contains(eventId))
+    }
+
+    @Test
+    fun `needingPastExtension excludes non-recurring events`() = runTest {
+        val eventStartTs = 1704067200000L // Jan 1, 2024
+
+        val event = Event(
+            uid = "non-recurring@test.com",
+            calendarId = testCalendarId,
+            title = "Non-Recurring",
+            startTs = eventStartTs,
+            endTs = eventStartTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            eventStartTs - 86400000,
+            eventStartTs + 86400000
+        )
+
+        val targetTs = 1701388800000L // Dec 1, 2023
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(targetTs)
+        assertFalse("Should NOT include non-recurring event", needsExtension.contains(eventId))
+    }
+
+    @Test
+    fun `needingPastExtension excludes exception events`() = runTest {
+        val masterStartTs = 1577836800000L // Jan 1, 2020
+
+        // Create master event
+        val masterEvent = Event(
+            uid = "master-exc@test.com",
+            calendarId = testCalendarId,
+            title = "Master",
+            startTs = masterStartTs,
+            endTs = masterStartTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val masterId = database.eventsDao().insert(masterEvent)
+        val savedMaster = database.eventsDao().getById(masterId)!!
+
+        occurrenceGenerator.generateOccurrences(
+            savedMaster,
+            1704067200000L, // Jan 2024
+            1704067200000L + 30 * 86400000L
+        )
+
+        // Create exception event with originalEventId set
+        val exceptionEvent = Event(
+            uid = "master-exc@test.com", // Same UID per RFC 5545
+            calendarId = testCalendarId,
+            title = "Exception",
+            startTs = 1704153600000L, // Jan 2, 2024
+            endTs = 1704153600000L + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            originalEventId = masterId,
+            originalInstanceTime = 1704153600000L,
+            rrule = "FREQ=DAILY", // Exception with rrule shouldn't be picked up
+            syncStatus = SyncStatus.SYNCED
+        )
+        val exceptionId = database.eventsDao().insert(exceptionEvent)
+
+        // Insert an occurrence for the exception event so it shows up in occurrences table
+        database.occurrencesDao().insert(
+            Occurrence(
+                eventId = exceptionId,
+                calendarId = testCalendarId,
+                startTs = 1704153600000L,
+                endTs = 1704153600000L + 3600000,
+                startDay = 20240102,
+                endDay = 20240102
+            )
+        )
+
+        val targetTs = 1688169600000L // July 2023
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(targetTs)
+        // Should include master but NOT exception
+        assertTrue("Should include master event", needsExtension.contains(masterId))
+        assertFalse("Should NOT include exception event", needsExtension.contains(exceptionId))
+    }
+
+    // ==================== Past Extension (OccurrenceGenerator) Tests ====================
+
+    @Test
+    fun `extendPastOccurrences adds occurrences before current range`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024 00:00 UTC
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "past-ext@test.com",
+            calendarId = testCalendarId,
+            title = "Past Extension",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate occurrences only for Jun-Jul 2024 (simulate partial window)
+        val junStart = startTs + 152 * DAY // ~Jun 1, 2024
+        occurrenceGenerator.generateOccurrences(savedEvent, junStart, junStart + 60 * DAY)
+
+        val initialCount = database.occurrencesDao().getForEvent(eventId).size
+        val initialMinTs = database.occurrencesDao().getMinStartTs(eventId)!!
+
+        // Extend past to March 2024
+        val marchStart = startTs + 59 * DAY // ~Mar 1, 2024
+        val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, marchStart)
+
+        assertTrue("Should have extended some occurrences", extended > 0)
+        val newCount = database.occurrencesDao().getForEvent(eventId).size
+        assertTrue("Total count should increase", newCount > initialCount)
+
+        val newMinTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        assertTrue("Min occurrence should be earlier", newMinTs < initialMinTs)
+        assertTrue("Min occurrence should be >= marchStart", newMinTs >= marchStart)
+    }
+
+    @Test
+    fun `extendPastOccurrences returns 0 for non-recurring event`() = runTest {
+        val event = createTestEvent("Non-Recurring Past")
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            savedEvent.startTs - 86400000,
+            savedEvent.startTs + 86400000
+        )
+
+        val extended = occurrenceGenerator.extendPastOccurrences(
+            savedEvent,
+            savedEvent.startTs - 100 * 86400000L
+        )
+        assertEquals(0, extended)
+    }
+
+    @Test
+    fun `extendPastOccurrences does not go before event startTs`() = runTest {
+        val startTs = 1709251200000L // Mar 1, 2024 00:00 UTC
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "dtstart-bound@test.com",
+            calendarId = testCalendarId,
+            title = "DTSTART Bound",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate occurrences for Jun-Jul 2024
+        val junStart = startTs + 92 * DAY // ~Jun 1, 2024
+        occurrenceGenerator.generateOccurrences(savedEvent, junStart, junStart + 60 * DAY)
+
+        // Try to extend past to Jan 2024 (before event DTSTART of Mar 2024)
+        val janStart = 1704067200000L // Jan 1, 2024
+        occurrenceGenerator.extendPastOccurrences(savedEvent, janStart)
+
+        // Earliest occurrence should be at event startTs, not Jan
+        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        assertTrue("Earliest occurrence should be >= event startTs", minTs >= startTs)
+    }
+
+    @Test
+    fun `extendPastOccurrences returns 0 when already extended past enough`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "already-past@test.com",
+            calendarId = testCalendarId,
+            title = "Already Extended",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY;COUNT=180",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate from Jan 1 (covers everything from startTs forward)
+        occurrenceGenerator.generateOccurrences(savedEvent, startTs, startTs + 200 * DAY)
+
+        // Target is June 2024 — but min is already Jan 1, well before June
+        val juneTarget = startTs + 152 * DAY
+        val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, juneTarget)
+        assertEquals(0, extended)
+    }
+
+    @Test
+    fun `extendPastOccurrences returns 0 when currentMinTs equals effectiveExtendTo`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "exact-boundary@test.com",
+            calendarId = testCalendarId,
+            title = "Exact Boundary",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate from Mar 1 onward
+        val marStart = startTs + 60 * DAY
+        occurrenceGenerator.generateOccurrences(savedEvent, marStart, marStart + 60 * DAY)
+
+        // Get exact min and extend to that exact value
+        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, minTs)
+        assertEquals("Should return 0 when extending to exact current boundary", 0, extended)
+    }
+
+    @Test
+    fun `extendPastOccurrences does not duplicate existing occurrences`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "no-dup@test.com",
+            calendarId = testCalendarId,
+            title = "No Duplicates",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate Jun-Aug 2024
+        val junStart = startTs + 152 * DAY
+        occurrenceGenerator.generateOccurrences(savedEvent, junStart, junStart + 90 * DAY)
+
+        val junOccsBefore = database.occurrencesDao().getForEvent(eventId)
+            .filter { it.startTs >= junStart }
+        val junCountBefore = junOccsBefore.size
+
+        // Extend past to Mar 2024
+        val marStart = startTs + 59 * DAY
+        occurrenceGenerator.extendPastOccurrences(savedEvent, marStart)
+
+        // Original Jun-Aug occurrences should still be there, unchanged
+        val junOccsAfter = database.occurrencesDao().getForEvent(eventId)
+            .filter { it.startTs >= junStart }
+        assertEquals("Original occurrences should be unchanged", junCountBefore, junOccsAfter.size)
+    }
+
+    @Test
+    fun `extendPastOccurrences preserves exception links`() = runTest {
+        val startTs = 1704067200000L // Jan 1, 2024
+        val DAY = 86400000L
+
+        val event = Event(
+            uid = "preserve-exc@test.com",
+            calendarId = testCalendarId,
+            title = "Exception Preserve",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate Jun-Aug 2024
+        val junStart = startTs + 152 * DAY
+        occurrenceGenerator.generateOccurrences(savedEvent, junStart, junStart + 90 * DAY)
+
+        // Link an exception to a July occurrence
+        val occs = database.occurrencesDao().getForEvent(eventId).sortedBy { it.startTs }
+        val julyOcc = occs[30] // ~July occurrence
+        val exceptionEvent = Event(
+            uid = "preserve-exc@test.com",
+            calendarId = testCalendarId,
+            title = "Modified July",
+            startTs = julyOcc.startTs,
+            endTs = julyOcc.endTs,
+            dtstamp = System.currentTimeMillis(),
+            originalEventId = eventId,
+            originalInstanceTime = julyOcc.startTs,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val exceptionId = database.eventsDao().insert(exceptionEvent)
+        occurrenceGenerator.linkException(eventId, julyOcc.startTs, exceptionId)
+
+        // Verify link exists
+        val linkedBefore = database.occurrencesDao().getForEvent(eventId)
+            .find { it.exceptionEventId == exceptionId }
+        assertNotNull("Exception should be linked before past extension", linkedBefore)
+
+        // Extend past to Mar 2024
+        val marStart = startTs + 59 * DAY
+        occurrenceGenerator.extendPastOccurrences(savedEvent, marStart)
+
+        // Verify link is still intact
+        val linkedAfter = database.occurrencesDao().getForEvent(eventId)
+            .find { it.exceptionEventId == exceptionId }
+        assertNotNull("Exception link should be preserved after past extension", linkedAfter)
+    }
+
+    @Test
+    fun `extendPastOccurrences returns 0 when event has no occurrences`() = runTest {
+        val event = createRecurringEvent("No Occs Past", "FREQ=DAILY")
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Don't generate any occurrences
+        val extended = occurrenceGenerator.extendPastOccurrences(
+            savedEvent,
+            savedEvent.startTs - 100 * 86400000L
+        )
+        assertEquals(0, extended)
+    }
+
+    @Test
+    fun `extendPastOccurrences skips EXDATE occurrences in past window`() = runTest {
+        // Use relative dates to stay within 2-year lookback window
+        // Second-align timestamps to match lib-recur's precision
+        val DAY = 86400000L
+        val now = (System.currentTimeMillis() / 1000) * 1000 // Second-aligned
+        val startTs = now - 90 * DAY // 90 days ago
+
+        // EXDATE on day 15 of the event — should be skipped when extending past
+        val exdateTs = startTs + 14 * DAY // 15th day of event
+        // Calculate day code for EXDATE
+        val exdateDayCode = java.time.Instant.ofEpochMilli(exdateTs)
+            .atZone(java.time.ZoneId.systemDefault())
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))
+
+        val event = Event(
+            uid = "exdate-past@test.com",
+            calendarId = testCalendarId,
+            title = "EXDATE Past",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=DAILY",
+            exdate = exdateDayCode,
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate days 60-120 initially (relative to event start)
+        val laterStart = startTs + 59 * DAY
+        occurrenceGenerator.generateOccurrences(savedEvent, laterStart, laterStart + 60 * DAY)
+
+        // Extend past to event start
+        occurrenceGenerator.extendPastOccurrences(savedEvent, startTs)
+
+        // EXDATE day should NOT have an occurrence
+        val exdateOcc = database.occurrencesDao().getOccurrenceAtTime(eventId, exdateTs)
+        assertNull("EXDATE occurrence should not be generated in past extension", exdateOcc)
+
+        // But day before and after EXDATE should exist
+        val dayBeforeOcc = database.occurrencesDao().getOccurrenceAtTime(eventId, exdateTs - DAY)
+        val dayAfterOcc = database.occurrencesDao().getOccurrenceAtTime(eventId, exdateTs + DAY)
+        assertNotNull("Day before EXDATE should exist", dayBeforeOcc)
+        assertNotNull("Day after EXDATE should exist", dayAfterOcc)
+    }
+
+    @Test
+    fun `extendPastOccurrences works with weekly recurrence`() = runTest {
+        // Use relative dates to stay within 2-year lookback window
+        // Second-align timestamps to match lib-recur's precision
+        val DAY = 86400000L
+        val WEEK = 7 * DAY
+        val now = (System.currentTimeMillis() / 1000) * 1000 // Second-aligned
+        val startTs = now - 180 * DAY // 180 days ago (within lookback)
+
+        val event = Event(
+            uid = "weekly-past@test.com",
+            calendarId = testCalendarId,
+            title = "Weekly Past",
+            startTs = startTs,
+            endTs = startTs + 3600000,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=WEEKLY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate from 90 days after start (days 90-210)
+        val laterStart = startTs + 90 * DAY
+        occurrenceGenerator.generateOccurrences(savedEvent, laterStart, laterStart + 120 * DAY)
+
+        val initialCount = database.occurrencesDao().getForEvent(eventId).size
+
+        // Extend past to event start + 31 days (day 31)
+        val extendTarget = startTs + 31 * DAY
+        val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, extendTarget)
+
+        assertTrue("Should have extended weekly occurrences", extended > 0)
+        val newCount = database.occurrencesDao().getForEvent(eventId).size
+        assertTrue("Total count should increase", newCount > initialCount)
+
+        // Verify occurrences are ~7 days apart
+        val allOccs = database.occurrencesDao().getForEvent(eventId).sortedBy { it.startTs }
+        for (i in 1 until allOccs.size) {
+            val gap = allOccs[i].startTs - allOccs[i - 1].startTs
+            assertEquals("Weekly occurrences should be 7 days apart", WEEK, gap)
+        }
     }
 
     // ==================== Helper Methods ====================

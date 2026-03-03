@@ -1,4 +1,5 @@
 package org.onekash.kashcal.util
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -60,7 +61,7 @@ class ImportExportTest {
             .build()
 
         exporter = IcsExporter()
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
         eventReader = EventReader(database)
 

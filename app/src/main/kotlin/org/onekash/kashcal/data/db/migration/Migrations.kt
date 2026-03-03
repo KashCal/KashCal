@@ -682,6 +682,86 @@ object Migrations {
     }
 
     /**
+     * Migration from version 14 to 15.
+     *
+     * Adds linked operation support for cross-account calendar moves:
+     * - linked_move_id: UUID linking CREATE and DELETE operations in cross-account moves
+     *
+     * DELETE operations with a linkedMoveId are blocked by a guard query until
+     * no pending CREATE with the same linkedMoveId exists. This prevents event loss
+     * when DELETE runs before CREATE completes on a different account's sync cycle.
+     *
+     * IMPORTANT: In-flight cross-account moves (existing CREATE + DELETE pairs without
+     * linkedMoveId) cannot be safely linked post-hoc because we can't determine which
+     * CREATE belongs to which DELETE. These are left as-is and may result in:
+     * - Duplication if CREATE succeeds and DELETE fails (recoverable)
+     * - Event loss if DELETE runs first (rare: requires DELETE account to sync before
+     *   CREATE account, which is unlikely for same-user accounts)
+     *
+     * New cross-account moves after this migration use the linked mechanism.
+     */
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+        private val INDEX_NAME = "index_pending_operations_linked_move_id"
+
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                // Step 1: Add linked_move_id column (idempotent via helper)
+                addColumnIfNotExists(
+                    db, "pending_operations", "linked_move_id",
+                    "TEXT DEFAULT NULL"
+                )
+
+                // Step 2: Create index for efficient guard query in getReadyOperations()
+                // The guard query uses: WHERE linked.linked_move_id = po.linked_move_id
+                if (!indexExists(db, INDEX_NAME)) {
+                    db.execSQL("""
+                        CREATE INDEX $INDEX_NAME
+                        ON pending_operations(linked_move_id)
+                    """.trimIndent())
+                    Log.d(TAG, "Created index $INDEX_NAME for linked operation guard query")
+                } else {
+                    Log.d(TAG, "Index $INDEX_NAME already exists, skipping")
+                }
+
+                // Step 3: Log any in-flight cross-account moves for visibility
+                // These are CREATE+DELETE pairs for the same event without linkedMoveId.
+                // We don't modify them - just log for awareness.
+                val inFlightCrossAccountMoves = db.query("""
+                    SELECT COUNT(DISTINCT po1.event_id) FROM pending_operations po1
+                    INNER JOIN pending_operations po2 ON po1.event_id = po2.event_id
+                    WHERE po1.operation = 'CREATE'
+                      AND po2.operation = 'DELETE'
+                      AND po1.status = 'PENDING'
+                      AND po2.status = 'PENDING'
+                      AND po1.linked_move_id IS NULL
+                      AND po2.linked_move_id IS NULL
+                """.trimIndent()).use { cursor ->
+                    if (cursor.moveToFirst()) cursor.getInt(0) else 0
+                }
+
+                if (inFlightCrossAccountMoves > 0) {
+                    Log.w(TAG, "Found $inFlightCrossAccountMoves in-flight cross-account move(s) " +
+                        "without linkedMoveId. These will use legacy (unlinked) behavior.")
+                }
+
+                // Step 4: Verify migration completed
+                val columnOk = columnExists(db, "pending_operations", "linked_move_id")
+                val indexOk = indexExists(db, INDEX_NAME)
+
+                if (columnOk && indexOk) {
+                    Log.d(TAG, "Migration 14->15 completed: linked_move_id column and index added")
+                } else {
+                    Log.w(TAG, "Migration 14->15 verification: column=$columnOk, index=$indexOk")
+                }
+
+            } catch (e: Exception) {
+                Log.e(TAG, "Error in migration 14->15: ${e.message}", e)
+                throw e  // Let Room handle the failure
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -697,6 +777,7 @@ object Migrations {
         MIGRATION_10_11,
         MIGRATION_11_12,
         MIGRATION_12_13,
-        MIGRATION_13_14
+        MIGRATION_13_14,
+        MIGRATION_14_15
     )
 }

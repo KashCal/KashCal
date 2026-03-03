@@ -1,4 +1,5 @@
 package org.onekash.kashcal.domain.generator
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -50,7 +51,7 @@ class RRuleAdversarialTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         // Setup test calendar
         val accountId = database.accountsDao().insert(
@@ -272,8 +273,8 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 100 * 365 * 24 * 60 * 60 * 1000L // 100 years
         )
 
-        // MAX_ITERATIONS is 1000 - should not exceed
-        assertTrue("Should be limited by MAX_ITERATIONS", count <= 1000)
+        // MAX_ITERATIONS is 10000 - should not exceed
+        assertTrue("Should be limited by MAX_ITERATIONS", count <= 10000)
     }
 
     @Test
@@ -290,7 +291,7 @@ class RRuleAdversarialTest {
         )
 
         // Should be capped at MAX_ITERATIONS
-        assertTrue("Should be limited", count <= 1000)
+        assertTrue("Should be limited", count <= 10000)
     }
 
     @Test
@@ -305,7 +306,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        assertTrue("Should be limited", count <= 1000)
+        assertTrue("Should be limited", count <= 10000)
     }
 
     // ==================== UNTIL Edge Cases ====================

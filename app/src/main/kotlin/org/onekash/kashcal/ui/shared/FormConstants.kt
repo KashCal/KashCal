@@ -214,6 +214,56 @@ val SYNC_OPTIONS = listOf(
 )
 
 /**
+ * Represents a sync lookback option with display label and days.
+ *
+ * @property label Human-readable description (e.g., "3 months")
+ * @property days Number of days to look back. Use [Int.MAX_VALUE] for all events.
+ */
+data class SyncLookbackOption(
+    val label: String,
+    val days: Int
+)
+
+/**
+ * Available sync lookback options for how far back to sync calendar events.
+ */
+val SYNC_LOOKBACK_OPTIONS = listOf(
+    SyncLookbackOption("3 months", 90),
+    SyncLookbackOption("6 months", 180),
+    SyncLookbackOption("1 year", 365),
+    SyncLookbackOption("2 years", 730),
+    SyncLookbackOption("5 years", 1825),
+    SyncLookbackOption("All events", Int.MAX_VALUE)
+)
+
+/**
+ * Format sync lookback days for display.
+ * Handles both known options and arbitrary values.
+ *
+ * @param days Sync lookback in days
+ * @return Human-readable label
+ */
+fun formatSyncLookback(days: Int): String {
+    if (days == Int.MAX_VALUE) return "All events"
+    SYNC_LOOKBACK_OPTIONS.find { it.days == days }?.let { return it.label }
+    return when {
+        days >= 365 && days % 365 == 0 -> {
+            val years = days / 365
+            if (years == 1) "1 year" else "$years years"
+        }
+        days >= 30 && days % 30 == 0 -> {
+            val months = days / 30
+            if (months == 1) "1 month" else "$months months"
+        }
+        days >= 7 && days % 7 == 0 -> {
+            val weeks = days / 7
+            if (weeks == 1) "1 week" else "$weeks weeks"
+        }
+        else -> "$days days"
+    }
+}
+
+/**
  * Mask an email address for privacy display.
  * Shows first character, masked middle, and domain.
  *

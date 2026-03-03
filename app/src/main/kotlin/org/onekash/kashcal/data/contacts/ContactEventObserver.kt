@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
  * - Syncing contacts is relatively expensive
  * - We want to batch rapid changes into a single sync
  */
-class ContactBirthdayObserver(
+class ContactEventObserver(
     handler: Handler,
     private val scope: CoroutineScope,
     private val debounceMs: Long = 500L,
@@ -27,7 +27,7 @@ class ContactBirthdayObserver(
 ) : ContentObserver(handler) {
 
     companion object {
-        private const val TAG = "ContactBirthdayObserver"
+        private const val TAG = "ContactEventObserver"
     }
 
     private var debounceJob: Job? = null
@@ -41,7 +41,7 @@ class ContactBirthdayObserver(
         // Schedule debounced callback
         debounceJob = scope.launch {
             delay(debounceMs)
-            Log.d(TAG, "Debounce complete, triggering birthday sync")
+            Log.d(TAG, "Debounce complete, triggering contact event sync")
             onContactsChanged()
         }
     }

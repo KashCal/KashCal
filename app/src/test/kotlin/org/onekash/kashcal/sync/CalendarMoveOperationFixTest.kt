@@ -1,4 +1,5 @@
 package org.onekash.kashcal.sync
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -67,7 +68,7 @@ class CalendarMoveOperationFixTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
         // Create test accounts and calendars
@@ -551,5 +552,182 @@ class CalendarMoveOperationFixTest {
             endTs = now + 86400000 + 3600000,
             dtstamp = now
         )
+    }
+
+    // ==================== Linked Operations Tests (v23.2.0) ====================
+    // TDD Pre-Tests: These tests should FAIL before implementation
+
+    @Test
+    fun `cross-account move queues linked CREATE and DELETE with same linkedMoveId`() = runTest {
+        // TDD Pre-Test: This should FAIL because linkedMoveId field doesn't exist yet
+        val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
+
+        eventWriter.moveEventToCalendar(event.id, nextcloudCalendarId)
+
+        val ops = database.pendingOperationsDao().getForEvent(event.id)
+        assertEquals("Should have two operations", 2, ops.size)
+
+        val createOp = ops.find { it.operation == PendingOperation.OPERATION_CREATE }!!
+        val deleteOp = ops.find { it.operation == PendingOperation.OPERATION_DELETE }!!
+
+        // Both should share same linkedMoveId (non-null UUID)
+        assertNotNull("CREATE should have linkedMoveId", createOp.linkedMoveId)
+        assertNotNull("DELETE should have linkedMoveId", deleteOp.linkedMoveId)
+        assertEquals("Both should share same linkedMoveId", createOp.linkedMoveId, deleteOp.linkedMoveId)
+
+        // DELETE has source info for filtering
+        assertEquals(iCloudPersonalCalendarId, deleteOp.sourceCalendarId)
+        assertEquals("https://caldav.icloud.com/123/personal/event.ics", deleteOp.targetUrl)
+    }
+
+    @Test
+    fun `same-account MOVE does not use linkedMoveId`() = runTest {
+        // Regression test: same-account moves should NOT use linked CREATE+DELETE
+        val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
+
+        eventWriter.moveEventToCalendar(event.id, iCloudWorkCalendarId)
+
+        val ops = database.pendingOperationsDao().getForEvent(event.id)
+        assertEquals("Should have 1 operation (MOVE)", 1, ops.size)
+        assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
+        assertNull("MOVE should NOT have linkedMoveId", ops[0].linkedMoveId)
+    }
+
+    @Test
+    fun `DELETE blocked while linked CREATE is pending`() = runTest {
+        // TDD Pre-Test: Guard query in getReadyOperations() should block DELETE
+        val linkedId = "test-linked-id-${System.nanoTime()}"
+        val now = System.currentTimeMillis()
+
+        // Insert linked CREATE (ready)
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 9999L,
+                operation = PendingOperation.OPERATION_CREATE,
+                linkedMoveId = linkedId,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+
+        // Insert linked DELETE (also ready time-wise, but should be blocked)
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 9999L,
+                operation = PendingOperation.OPERATION_DELETE,
+                linkedMoveId = linkedId,
+                targetUrl = "https://source/event.ics",
+                createdAt = now + 1,  // Created after CREATE
+                updatedAt = now + 1
+            )
+        )
+
+        // getReadyOperations should return CREATE but NOT DELETE
+        val ready = database.pendingOperationsDao().getReadyOperations(System.currentTimeMillis())
+        val readyCreate = ready.find { it.linkedMoveId == linkedId && it.operation == PendingOperation.OPERATION_CREATE }
+        val readyDelete = ready.find { it.linkedMoveId == linkedId && it.operation == PendingOperation.OPERATION_DELETE }
+
+        assertNotNull("CREATE should be ready", readyCreate)
+        assertNull("DELETE should be BLOCKED by linked CREATE", readyDelete)
+    }
+
+    @Test
+    fun `DELETE unblocks after linked CREATE is removed`() = runTest {
+        // When CREATE completes (removed from queue), DELETE should become ready
+        val linkedId = "test-linked-id-${System.nanoTime()}"
+        val now = System.currentTimeMillis()
+
+        // Only DELETE exists (CREATE was completed and removed)
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 9999L,
+                operation = PendingOperation.OPERATION_DELETE,
+                linkedMoveId = linkedId,
+                targetUrl = "https://source/event.ics",
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+
+        // DELETE should now be ready (no pending CREATE with same linkedMoveId)
+        val ready = database.pendingOperationsDao().getReadyOperations(System.currentTimeMillis())
+        val readyDelete = ready.find { it.linkedMoveId == linkedId && it.operation == PendingOperation.OPERATION_DELETE }
+
+        assertNotNull("DELETE should be ready when no linked CREATE exists", readyDelete)
+    }
+
+    @Test
+    fun `app restart - DELETE still blocked by pending CREATE`() = runTest {
+        // Guard must be DB-based, not in-memory. Simulates state after app restart.
+        val linkedId = "test-linked-id-restart-${System.nanoTime()}"
+        val now = System.currentTimeMillis()
+
+        // Directly insert to DB (simulating state after restart)
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 8888L,
+                operation = PendingOperation.OPERATION_CREATE,
+                linkedMoveId = linkedId,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 8888L,
+                operation = PendingOperation.OPERATION_DELETE,
+                linkedMoveId = linkedId,
+                targetUrl = "https://source/event.ics",
+                sourceCalendarId = iCloudPersonalCalendarId,
+                createdAt = now + 1,
+                updatedAt = now + 1
+            )
+        )
+
+        // Fresh query (as if after restart) - DELETE must still be blocked
+        val ready = database.pendingOperationsDao().getReadyOperations(System.currentTimeMillis())
+        val readyDelete = ready.find {
+            it.operation == PendingOperation.OPERATION_DELETE && it.linkedMoveId == linkedId
+        }
+
+        assertNull("DELETE should be blocked by pending CREATE even after app restart", readyDelete)
+    }
+
+    @Test
+    fun `deleteLinkedDelete removes DELETE with matching linkedMoveId`() = runTest {
+        // TDD Pre-Test: DAO method deleteLinkedDelete doesn't exist yet
+        val linkedId = "test-linked-cleanup-${System.nanoTime()}"
+        val now = System.currentTimeMillis()
+
+        // Insert CREATE and DELETE with same linkedMoveId
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 7777L,
+                operation = PendingOperation.OPERATION_CREATE,
+                linkedMoveId = linkedId,
+                createdAt = now,
+                updatedAt = now
+            )
+        )
+        database.pendingOperationsDao().insert(
+            PendingOperation(
+                eventId = 7777L,
+                operation = PendingOperation.OPERATION_DELETE,
+                linkedMoveId = linkedId,
+                targetUrl = "https://source/event.ics",
+                createdAt = now + 1,
+                updatedAt = now + 1
+            )
+        )
+
+        // Simulate CREATE permanent failure - should clean up linked DELETE
+        database.pendingOperationsDao().deleteLinkedDelete(linkedId)
+
+        // Verify DELETE is removed
+        val remainingOps = database.pendingOperationsDao().getForEvent(7777L)
+        val remainingDelete = remainingOps.find { it.operation == PendingOperation.OPERATION_DELETE }
+
+        assertNull("Linked DELETE should be removed after deleteLinkedDelete", remainingDelete)
+        assertEquals("Only CREATE should remain", 1, remainingOps.size)
     }
 }

@@ -9,7 +9,9 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import java.util.UUID
+import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
+import org.onekash.kashcal.data.contacts.ContactEventSyncResult
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
@@ -57,6 +59,7 @@ class EventCoordinator @Inject constructor(
     private val localCalendarInitializer: LocalCalendarInitializer,
     private val icsSubscriptionRepository: IcsSubscriptionRepository,
     private val contactBirthdayRepository: ContactBirthdayRepository,
+    private val contactAnniversaryRepository: ContactAnniversaryRepository,
     private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val reminderScheduler: ReminderScheduler,
@@ -707,6 +710,36 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
+     * Extend occurrences into the past.
+     * Called when user scrolls far into the past.
+     */
+    suspend fun extendPastOccurrences(eventId: Long, extendToMs: Long): Int {
+        val event = requireNotNull(eventReader.getEventById(eventId)) {
+            "Event not found: $eventId"
+        }
+        return occurrenceGenerator.extendPastOccurrences(event, extendToMs)
+    }
+
+    /**
+     * Extend past occurrences for all recurring events that need it.
+     * Called when user navigates far into the past.
+     *
+     * @param targetDateMs The date user is navigating to
+     * @param bufferMonths How far beyond target to extend (default 6)
+     * @return Number of events that were extended
+     */
+    suspend fun extendPastOccurrencesIfNeeded(targetDateMs: Long, bufferMonths: Int = 6): Int {
+        val extendToMs = targetDateMs - (bufferMonths * 30L * 24 * 60 * 60 * 1000)
+        val eventIds = eventReader.getRecurringEventsNeedingPastExtension(extendToMs)
+
+        var totalExtended = 0
+        for (eventId in eventIds) {
+            totalExtended += extendPastOccurrences(eventId, extendToMs)
+        }
+        return totalExtended
+    }
+
+    /**
      * Parse RRULE for display.
      */
     fun parseRRule(rrule: String): OccurrenceGenerator.RRuleInfo? {
@@ -992,9 +1025,9 @@ class EventCoordinator @Inject constructor(
      *
      * @return Sync result
      */
-    suspend fun syncContactBirthdays(): ContactBirthdayRepository.SyncResult {
+    suspend fun syncContactBirthdays(): ContactEventSyncResult {
         val result = contactBirthdayRepository.syncBirthdays()
-        if (result is ContactBirthdayRepository.SyncResult.Success) {
+        if (result is ContactEventSyncResult.Success) {
             triggerWidgetUpdate()
         }
         return result
@@ -1012,6 +1045,77 @@ class EventCoordinator @Inject constructor(
      */
     suspend fun getContactBirthdaysColor(): Int? {
         return contactBirthdayRepository.getCalendarColor()
+    }
+
+    // ========== Contact Anniversaries ==========
+
+    /**
+     * Enable contact anniversaries calendar.
+     *
+     * Creates the calendar if it doesn't exist.
+     *
+     * @param color Calendar color
+     * @return Calendar ID
+     */
+    suspend fun enableContactAnniversaries(color: Int): Long {
+        return contactAnniversaryRepository.ensureCalendarExists(color)
+    }
+
+    /**
+     * Disable contact anniversaries calendar.
+     *
+     * Removes the calendar and all anniversary events.
+     */
+    suspend fun disableContactAnniversaries() {
+        contactAnniversaryRepository.removeCalendar()
+        triggerWidgetUpdate()
+    }
+
+    /**
+     * Sync contact anniversaries.
+     *
+     * Reads anniversaries from phone contacts and syncs to calendar.
+     *
+     * @return Sync result
+     */
+    suspend fun syncContactAnniversaries(): ContactEventSyncResult {
+        val result = contactAnniversaryRepository.syncAnniversaries()
+        if (result is ContactEventSyncResult.Success) {
+            triggerWidgetUpdate()
+        }
+        return result
+    }
+
+    /**
+     * Update contact anniversaries calendar color.
+     */
+    suspend fun updateContactAnniversariesColor(color: Int) {
+        contactAnniversaryRepository.updateCalendarColor(color)
+    }
+
+    /**
+     * Get contact anniversaries calendar color.
+     */
+    suspend fun getContactAnniversariesColor(): Int? {
+        return contactAnniversaryRepository.getCalendarColor()
+    }
+
+    // ========== Contact Event Counts ==========
+
+    /**
+     * Get the number of birthday events.
+     */
+    suspend fun getContactBirthdayEventCount(): Int {
+        val calendarId = contactBirthdayRepository.getBirthdayCalendarId() ?: return 0
+        return eventReader.getEventCountForCalendar(calendarId)
+    }
+
+    /**
+     * Get the number of anniversary events.
+     */
+    suspend fun getContactAnniversaryEventCount(): Int {
+        val calendarId = contactAnniversaryRepository.getAnniversaryCalendarId() ?: return 0
+        return eventReader.getEventCountForCalendar(calendarId)
     }
 
     companion object {

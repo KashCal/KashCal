@@ -856,7 +856,7 @@ class MigrationTest {
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(12, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(13, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test

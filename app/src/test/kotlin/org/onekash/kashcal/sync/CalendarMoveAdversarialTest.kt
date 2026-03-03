@@ -1,4 +1,5 @@
 package org.onekash.kashcal.sync
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -51,7 +52,7 @@ class CalendarMoveAdversarialTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         // Setup test account and calendars
         testAccountId = database.accountsDao().insert(

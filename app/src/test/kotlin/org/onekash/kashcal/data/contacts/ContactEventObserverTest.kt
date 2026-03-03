@@ -11,12 +11,12 @@ import org.junit.Test
 import io.mockk.mockk
 
 /**
- * Unit tests for ContactBirthdayObserver.
+ * Unit tests for ContactEventObserver.
  *
  * Tests debounce behavior and callback dispatching.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class ContactBirthdayObserverTest {
+class ContactEventObserverTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
@@ -27,7 +27,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `onChange triggers callback after debounce period`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,
@@ -45,7 +45,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `rapid onChange calls are debounced to single callback`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,
@@ -72,7 +72,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `onChange with custom debounce period`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 1000L,
@@ -90,7 +90,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `cancelPending prevents pending callback from firing`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,
@@ -108,7 +108,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `onChange triggers new callback after previous completes`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,
@@ -128,7 +128,7 @@ class ContactBirthdayObserverTest {
 
     @Test
     fun `cancelPending is safe to call without pending job`() = testScope.runTest {
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,
@@ -143,7 +143,7 @@ class ContactBirthdayObserverTest {
     @Test
     fun `onChange with selfChange true still triggers callback`() = testScope.runTest {
         var callCount = 0
-        val observer = ContactBirthdayObserver(
+        val observer = ContactEventObserver(
             handler = handler,
             scope = this,
             debounceMs = 500L,

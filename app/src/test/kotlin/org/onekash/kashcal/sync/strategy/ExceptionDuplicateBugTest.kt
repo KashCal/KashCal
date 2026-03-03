@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.strategy
 
 import io.mockk.*
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
@@ -59,6 +60,9 @@ class ExceptionDuplicateBugTest {
         occurrenceGenerator = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         syncSessionStore = mockk(relaxed = true)
+
+        // Mock syncPastDays to return all events (no time filtering)
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         // Mock database.runInTransaction
         coEvery {

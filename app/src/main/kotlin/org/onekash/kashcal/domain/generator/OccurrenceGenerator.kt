@@ -8,11 +8,13 @@ import org.dmfs.rfc5545.recurrenceset.FastForwarded
 import org.dmfs.rfc5545.recurrenceset.Merged
 import org.dmfs.rfc5545.recurrenceset.OfList
 import org.dmfs.rfc5545.recurrenceset.OfRuleAndFirst
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import java.util.Calendar
 import java.util.TimeZone
 import javax.inject.Inject
@@ -36,10 +38,11 @@ import androidx.room.withTransaction
 class OccurrenceGenerator @Inject constructor(
     private val database: KashCalDatabase,
     private val occurrencesDao: OccurrencesDao,
-    private val eventsDao: EventsDao
+    private val eventsDao: EventsDao,
+    private val dataStore: KashCalDataStore
 ) {
     companion object {
-        private const val MAX_ITERATIONS = 1000 // Safety limit per expansion
+        private const val MAX_ITERATIONS = 10000 // Safety limit per expansion
         private const val DEFAULT_EXPANSION_MONTHS = 24 // 2 years - consistent with PullStrategy
         private const val MILLISECONDS_PER_SECOND = 1000L
         private const val SECONDS_PER_DAY = 86400L
@@ -153,12 +156,37 @@ class OccurrenceGenerator @Inject constructor(
 
     /**
      * Regenerate occurrences for an event (e.g., after RRULE change).
-     * Uses default horizon of 12 months from now.
+     *
+     * Past window: Respects user's sync lookback setting (via DataStore).
+     * Future window: Always DEFAULT_EXPANSION_MONTHS (24 = 2 years).
+     *
+     * When sync lookback is "All events" (Int.MAX_VALUE), uses DEFAULT_EXPANSION_MONTHS
+     * for both past and future windows.
+     *
+     * For old events, bounds rangeStart to (now - window) so FastForwarded
+     * activates instead of iterating from DTSTART.
      */
     suspend fun regenerateOccurrences(event: Event): Int {
         val now = System.currentTimeMillis()
-        val rangeStart = event.startTs.coerceAtMost(now) // Include past if event starts in past
-        val rangeEnd = now + (DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND)
+
+        // Past window: use sync lookback setting, falling back to 2 years for "All events"
+        val syncPastDays = dataStore.syncPastDays.first()
+        val pastWindowMs = if (syncPastDays == Int.MAX_VALUE) {
+            // "All events" - use default 2 year window
+            DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
+        } else {
+            // User-specified lookback in days
+            syncPastDays.toLong() * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
+        }
+
+        // Future window: always 2 years regardless of sync lookback
+        val futureWindowMs = DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
+
+        // Truncate to second boundary to match lib-recur's precision (avoids off-by-ms skip
+        // where first occurrence at floor(startTs/1000)*1000 falls before rangeStart)
+        val eventStartAligned = (event.startTs / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND
+        val rangeStart = (now - pastWindowMs).coerceAtLeast(eventStartAligned)
+        val rangeEnd = now + futureWindowMs
         return generateOccurrences(event, rangeStart, rangeEnd)
     }
 
@@ -187,6 +215,64 @@ class OccurrenceGenerator @Inject constructor(
                 event,
                 currentMaxTs + 1, // Start after current max
                 extendToMs
+            )
+
+            if (newOccurrences.isNotEmpty()) {
+                occurrencesDao.insertAll(newOccurrences)
+            }
+
+            newOccurrences.size
+        }
+    }
+
+    /**
+     * Extend occurrences for an event into the past.
+     * Used for lazy loading when user scrolls far into the past.
+     *
+     * @param event The event to extend backwards
+     * @param extendToMs Target start date in milliseconds (how far back to extend)
+     * @return Number of new occurrences added
+     */
+    suspend fun extendPastOccurrences(
+        event: Event,
+        extendToMs: Long
+    ): Int {
+        if (event.rrule.isNullOrBlank()) {
+            return 0 // Non-recurring events don't need extension
+        }
+
+        return database.withTransaction {
+            // Find current min occurrence
+            val currentMinTs = occurrencesDao.getMinStartTs(event.id) ?: return@withTransaction 0
+
+            // Respect sync lookback setting - don't extend beyond the lookback window
+            val now = System.currentTimeMillis()
+            val syncPastDays = dataStore.syncPastDays.first()
+            val lookbackCutoff = if (syncPastDays == Int.MAX_VALUE) {
+                // "All events" - use default 2 year window
+                now - (DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND)
+            } else {
+                now - (syncPastDays.toLong() * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND)
+            }
+
+            // Clamp to event start — can't go before DTSTART
+            // Also clamp to sync lookback cutoff — respect user's setting
+            // Second-align to match lib-recur precision (same as regenerateOccurrences)
+            val effectiveExtendTo = extendToMs
+                .coerceAtLeast((event.startTs / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND)
+                .coerceAtLeast(lookbackCutoff)
+
+            // Already extended far enough
+            if (currentMinTs <= effectiveExtendTo) {
+                return@withTransaction 0
+            }
+
+            // expandRRule uses exclusive end (>= rangeEndMs breaks),
+            // so currentMinTs won't duplicate the existing boundary occurrence
+            val newOccurrences = expandRRule(
+                event,
+                effectiveExtendTo,
+                currentMinTs
             )
 
             if (newOccurrences.isNotEmpty()) {

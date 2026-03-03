@@ -123,6 +123,17 @@ object PreferencesKeys {
     /** Birthday reminder minutes (uses ALL_DAY_REMINDER_OPTIONS values, default: 540 = 9 AM day of) */
     val BIRTHDAY_REMINDER = intPreferencesKey("birthday_reminder")
 
+    // ========== Contact Anniversaries ==========
+
+    /** Contact anniversaries calendar enabled */
+    val CONTACT_ANNIVERSARIES_ENABLED = booleanPreferencesKey("contact_anniversaries_enabled")
+
+    /** Last sync time for contact anniversaries */
+    val CONTACT_ANNIVERSARIES_LAST_SYNC = longPreferencesKey("contact_anniversaries_last_sync")
+
+    /** Anniversary reminder minutes (uses ALL_DAY_REMINDER_OPTIONS values, default: 540 = 9 AM day of) */
+    val ANNIVERSARY_REMINDER = intPreferencesKey("anniversary_reminder")
+
     // ========== Device Calendars ==========
 
     /** Device calendars integration enabled */

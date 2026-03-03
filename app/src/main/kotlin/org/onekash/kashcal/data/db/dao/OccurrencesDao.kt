@@ -208,10 +208,16 @@ interface OccurrencesDao {
     suspend fun getCountForEvent(eventId: Long): Int
 
     /**
-     * Get latest occurrence time for event (for expansion boundary).
+     * Get latest occurrence time for event (for forward expansion boundary).
      */
     @Query("SELECT MAX(start_ts) FROM occurrences WHERE event_id = :eventId")
     suspend fun getMaxStartTs(eventId: Long): Long?
+
+    /**
+     * Get earliest occurrence time for event (for past expansion boundary).
+     */
+    @Query("SELECT MIN(start_ts) FROM occurrences WHERE event_id = :eventId")
+    suspend fun getMinStartTs(eventId: Long): Long?
 
     /**
      * Find recurring master events whose occurrences don't extend to target date.
@@ -229,6 +235,27 @@ interface OccurrencesDao {
         HAVING MAX(o.start_ts) < :targetTs
     """)
     suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long>
+
+    /**
+     * Find recurring master events whose occurrences don't extend back to target date.
+     * Used for on-demand past occurrence extension when user navigates far into the past.
+     *
+     * Only returns events whose DTSTART is before targetTs (there are potential
+     * un-materialized occurrences in the gap between DTSTART and earliest occurrence).
+     *
+     * @param targetTs Target timestamp - events with min occurrence after this need past extension
+     * @return List of event IDs that need past occurrence extension
+     */
+    @Query("""
+        SELECT DISTINCT o.event_id FROM occurrences o
+        INNER JOIN events e ON o.event_id = e.id
+        WHERE e.rrule IS NOT NULL
+        AND e.original_event_id IS NULL
+        AND e.start_ts < :targetTs
+        GROUP BY o.event_id
+        HAVING MIN(o.start_ts) > :targetTs
+    """)
+    suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 
     /**
      * Get occurrence at specific time for event.
@@ -274,6 +301,16 @@ interface OccurrencesDao {
      */
     @Query("DELETE FROM occurrences WHERE calendar_id = :calendarId")
     suspend fun deleteForCalendar(calendarId: Long)
+
+    /**
+     * Delete occurrences before a cutoff timestamp.
+     * Used when shrinking sync lookback to remove old occurrences.
+     *
+     * @param cutoffTs Timestamp cutoff - occurrences ending before this are deleted
+     * @return Number of occurrences deleted
+     */
+    @Query("DELETE FROM occurrences WHERE end_ts < :cutoffTs")
+    suspend fun deleteBeforeCutoff(cutoffTs: Long): Int
 
     // ========== Exception Handling ==========
 

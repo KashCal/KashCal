@@ -7,6 +7,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -182,7 +183,7 @@ class PullStrategy @Inject constructor(
                 pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds)
             } else {
                 // Full sync - fetch all events in time window
-                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds)
+                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds, forceFullSync = forceFullSync)
             }
 
             // Step 3: Update calendar metadata on success
@@ -419,7 +420,8 @@ class PullStrategy @Inject constructor(
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet()
+        recentlyPushedEventIds: Set<Long> = emptySet(),
+        forceFullSync: Boolean = false
     ): PullResult {
         // Clean up any duplicate master events before processing
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
@@ -427,8 +429,12 @@ class PullStrategy @Inject constructor(
             Log.d(TAG, "Cleaned up $dedupedCount duplicate master events")
         }
 
+        // Read configurable lookback window (matches pullWithEtagComparison pattern)
+        val syncPastDays = dataStore.syncPastDays.first()
+        val isAllLookback = syncPastDays == Int.MAX_VALUE
         val now = System.currentTimeMillis()
-        val startMs = now - PAST_WINDOW_MS
+        val pastWindowMs = if (isAllLookback) Long.MAX_VALUE else syncPastDays.toLong() * 24 * 60 * 60 * 1000
+        val startMs = if (isAllLookback) 0L else now - pastWindowMs
         val endMs = FUTURE_END_MS  // Unlimited future - fetch all future events
 
         // Step 1: Fetch etags only (lightweight calendar-query, no calendar-data)
@@ -440,42 +446,75 @@ class PullStrategy @Inject constructor(
         val serverEtags = (etagResult as CalDavResult.Success).data
         sessionBuilder?.setHrefsReported(serverEtags.size)
 
-        // Build server URL set for deletion detection (href → full URL)
-        val serverUrls = serverEtags.map { (href, _) ->
-            quirks.buildEventUrl(href, calendar.caldavUrl)
-        }.toSet()
-
-        // Find local events not on server anymore (within sync window)
-        // LOCAL-FIRST: Exclude events with pending local changes from deletion
-        val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
-        val toDelete = localEvents.filter { event ->
-            event.caldavUrl != null &&
-            event.caldavUrl !in serverUrls &&
-            !event.hasPendingChanges()  // Don't delete events with pending local changes
-        }
-
-        // Delete stale local events (only those SYNCED with server, not pending)
+        // Delete local events not on server (skip when forceFullSync to prevent data loss).
+        // Force full sync may get a truncated server response (time-range REPORT limitations,
+        // RRULE expansion bugs, URL mismatches). Ghost events from server-side deletions
+        // are a less harmful failure mode than losing events that exist on the server.
+        // The next incremental sync will handle reconciliation properly.
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
-        for (event in toDelete) {
-            Log.d(TAG, "Deleting stale event: ${event.caldavUrl}")
-            // Track deletion for UI notification before deleting
-            deletedChanges.add(SyncChange(
-                type = ChangeType.DELETED,
-                eventId = null,
-                eventTitle = event.title,
-                eventStartTs = event.startTs,
-                isAllDay = event.isAllDay,
-                isRecurring = !event.rrule.isNullOrBlank(),
-                calendarName = calendar.displayName,
-                calendarColor = calendar.color ?: 0xFF2196F3.toInt()
-            ))
-            eventsDao.deleteById(event.id)
-            deleted++
+        if (forceFullSync) {
+            // Build server URL set to log how many events *would have been* deleted
+            val serverUrls = serverEtags.map { (href, _) ->
+                quirks.buildEventUrl(href, calendar.caldavUrl)
+            }.toSet()
+            val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
+            val wouldDelete = localEvents.count { event ->
+                event.caldavUrl != null &&
+                event.caldavUrl !in serverUrls &&
+                !event.hasPendingChanges()
+            }
+            if (wouldDelete > 0) {
+                Log.d(TAG, "forceFullSync: skipping deletion of $wouldDelete local events not in server response")
+            }
+        } else {
+            // Normal path: delete stale local events
+            val serverUrls = serverEtags.map { (href, _) ->
+                quirks.buildEventUrl(href, calendar.caldavUrl)
+            }.toSet()
+            val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
+            val toDelete = localEvents.filter { event ->
+                event.caldavUrl != null &&
+                event.caldavUrl !in serverUrls &&
+                !event.hasPendingChanges()
+            }
+            for (event in toDelete) {
+                Log.d(TAG, "Deleting stale event: ${event.caldavUrl}")
+                deletedChanges.add(SyncChange(
+                    type = ChangeType.DELETED,
+                    eventId = null,
+                    eventTitle = event.title,
+                    eventStartTs = event.startTs,
+                    isAllDay = event.isAllDay,
+                    isRecurring = !event.rrule.isNullOrBlank(),
+                    calendarName = calendar.displayName,
+                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                ))
+                eventsDao.deleteById(event.id)
+                deleted++
+            }
         }
 
-        // Step 2: Fetch all event data via calendar-multiget
-        val hrefsToFetch = serverEtags.map { it.first }
+        // Step 2: Compare etags to skip unchanged events (bandwidth optimization)
+        val localEtagEntries = eventsDao.getEtagMapForCalendar(calendar.id, startMs, endMs)
+        val localEtagMap = localEtagEntries.associate { it.caldavUrl to it.etag }
+
+        val hrefsToFetch = mutableListOf<String>()
+        var skippedCount = 0
+
+        for ((href, serverEtag) in serverEtags) {
+            val eventUrl = quirks.buildEventUrl(href, calendar.caldavUrl)
+            val localEtag = localEtagMap[eventUrl]
+            if (localEtag == null || localEtag != serverEtag) {
+                hrefsToFetch.add(href)
+            } else {
+                skippedCount++
+            }
+        }
+
+        if (skippedCount > 0) {
+            Log.d(TAG, "Etag comparison: skipped $skippedCount unchanged, downloading ${hrefsToFetch.size}")
+        }
 
         if (hrefsToFetch.isEmpty()) {
             // No events on server — only deletions
@@ -533,8 +572,23 @@ class PullStrategy @Inject constructor(
     ): PullResult? {
         Log.d(TAG, "Attempting etag-based fallback sync for calendar: ${calendar.displayName}")
 
+        // Read configurable lookback window
+        val syncPastDays = dataStore.syncPastDays.first()
+        val isAllLookback = syncPastDays == Int.MAX_VALUE
+        val now = System.currentTimeMillis()
+        val pastWindowMs = if (isAllLookback) Long.MAX_VALUE else syncPastDays.toLong() * 24 * 60 * 60 * 1000
+        val startMs = if (isAllLookback) 0L else now - pastWindowMs
+        val endMs = FUTURE_END_MS
+
         // Step 1: Load local etags
-        val localEtags = eventsDao.getEtagsByCalendarId(calendar.id)
+        // When lookback is "All", use unfiltered query (matches server which also has no time filter).
+        // Otherwise, use time-filtered query matching the server's window to prevent
+        // asymmetric deletion of events outside the lookback (issue #87, bug 2).
+        val localEtags = if (isAllLookback) {
+            eventsDao.getEtagsByCalendarId(calendar.id)
+        } else {
+            eventsDao.getEtagsByCalendarIdInRange(calendar.id, startMs, endMs)
+        }
         if (localEtags.isEmpty()) {
             Log.d(TAG, "No local events with etags - falling through to pullFull")
             return null  // No local data to compare, fall through to full sync
@@ -542,13 +596,9 @@ class PullStrategy @Inject constructor(
 
         // Build local lookup map (caldavUrl -> etag)
         val localEtagMap = localEtags.associate { it.caldavUrl to it.etag }
-        Log.d(TAG, "Local etags loaded: ${localEtagMap.size} events")
+        Log.d(TAG, "Local etags loaded: ${localEtagMap.size} events (lookback=${if (isAllLookback) "All" else "${syncPastDays}d"})")
 
         // Step 2: Fetch server etags (lightweight - no iCal data)
-        val now = System.currentTimeMillis()
-        val startMs = now - PAST_WINDOW_MS
-        val endMs = FUTURE_END_MS
-
         val etagResult = clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
         if (etagResult.isError()) {
             val error = etagResult as CalDavResult.Error
@@ -807,7 +857,10 @@ class PullStrategy @Inject constructor(
                 event = event.copy(
                     id = existingEvent.id,
                     createdAt = existingEvent.createdAt,
-                    localModifiedAt = existingEvent.localModifiedAt
+                    localModifiedAt = existingEvent.localModifiedAt,
+                    // Preserve existing etag when server omits <getetag> from response
+                    // (RFC 4791 says SHOULD include etag, but some servers/CDN may omit it)
+                    etag = meta.etag ?: existingEvent.etag
                 )
             }
 
@@ -946,7 +999,9 @@ class PullStrategy @Inject constructor(
                 event = event.copy(
                     id = existingException.id,
                     createdAt = existingException.createdAt,
-                    localModifiedAt = existingException.localModifiedAt
+                    localModifiedAt = existingException.localModifiedAt,
+                    // Preserve existing etag when server omits <getetag> from response
+                    etag = meta.etag ?: existingException.etag
                 )
             }
 

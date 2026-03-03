@@ -4,34 +4,44 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Data class representing a parsed birthday from a contact.
+ * Data class representing a parsed date from a contact event (birthday or anniversary).
  *
  * @param month Month (1-12)
  * @param day Day of month (1-31)
- * @param year Birth year (null if not available)
+ * @param year Event year (null if not available)
  */
-data class BirthdayInfo(
+data class ContactEventDate(
     val month: Int,
     val day: Int,
     val year: Int?
 )
 
 /**
- * Utility functions for contact birthday parsing and formatting.
+ * Shared sync result for contact event repositories (birthday and anniversary).
+ */
+sealed class ContactEventSyncResult {
+    data class Success(val added: Int, val updated: Int, val deleted: Int) : ContactEventSyncResult()
+    data class Error(val message: String) : ContactEventSyncResult()
+}
+
+/**
+ * Utility functions for contact event parsing and formatting.
  *
  * Handles:
- * - Parsing birthday strings from Android Contacts (multiple formats)
- * - Age calculation from birth year and occurrence date
- * - Birthday event title formatting with ordinal suffixes
- * - Birth year encoding/decoding in event description
+ * - Parsing date strings from Android Contacts (multiple formats)
+ * - Year calculation from event year and occurrence date
+ * - Birthday and anniversary event title formatting with ordinal suffixes
+ * - Event year encoding/decoding in event description
  */
-object ContactBirthdayUtils {
+object ContactEventUtils {
 
-    // Description field format for storing birth year
-    private const val BIRTH_YEAR_PREFIX = "birthYear:"
+    // Description field format for storing event year.
+    // Retained as "birthYear:" for backward compatibility with existing birthday events.
+    // Anniversary events also use this prefix — semantically odd but functionally correct.
+    private const val EVENT_YEAR_PREFIX = "birthYear:"
 
     /**
-     * Parse a birthday string from Android Contacts.
+     * Parse a date string from Android Contacts.
      *
      * Supports formats:
      * - "--MM-DD" (no year, RFC 6350 vCard format)
@@ -40,13 +50,13 @@ object ContactBirthdayUtils {
      * - "MM/DD/YYYY" (US format)
      * - "DD/MM/YYYY" (European format - ambiguous, assumes US)
      *
-     * @param birthdayString The birthday string from contacts
-     * @return Parsed BirthdayInfo or null if unparseable
+     * @param dateString The date string from contacts
+     * @return Parsed ContactEventDate or null if unparseable
      */
-    fun parseBirthday(birthdayString: String?): BirthdayInfo? {
-        if (birthdayString.isNullOrBlank()) return null
+    fun parseContactDate(dateString: String?): ContactEventDate? {
+        if (dateString.isNullOrBlank()) return null
 
-        val trimmed = birthdayString.trim()
+        val trimmed = dateString.trim()
 
         // Format: --MM-DD (no year, RFC 6350)
         if (trimmed.startsWith("--")) {
@@ -55,7 +65,7 @@ object ContactBirthdayUtils {
                 val month = parts[0].toIntOrNull()
                 val day = parts[1].toIntOrNull()
                 if (month != null && day != null && isValidMonthDay(month, day)) {
-                    return BirthdayInfo(month, day, null)
+                    return ContactEventDate(month, day, null)
                 }
             }
             return null
@@ -68,7 +78,7 @@ object ContactBirthdayUtils {
             val month = match.groupValues[2].toIntOrNull()
             val day = match.groupValues[3].toIntOrNull()
             if (year != null && month != null && day != null && isValidDate(year, month, day)) {
-                return BirthdayInfo(month, day, year)
+                return ContactEventDate(month, day, year)
             }
         }
 
@@ -79,7 +89,7 @@ object ContactBirthdayUtils {
             val day = match.groupValues[2].toIntOrNull()
             val year = match.groupValues[3].toIntOrNull()
             if (year != null && month != null && day != null && isValidDate(year, month, day)) {
-                return BirthdayInfo(month, day, year)
+                return ContactEventDate(month, day, year)
             }
         }
 
@@ -87,17 +97,17 @@ object ContactBirthdayUtils {
     }
 
     /**
-     * Calculate age from birth year and occurrence timestamp.
+     * Calculate years elapsed from an event year to the occurrence timestamp.
      *
-     * @param birthYear The year of birth
+     * @param eventYear The year of the event (birth year, anniversary year, etc.)
      * @param occurrenceTs Occurrence timestamp in milliseconds
-     * @return Age at the time of the occurrence
+     * @return Years elapsed at the time of the occurrence
      */
-    fun calculateAge(birthYear: Int, occurrenceTs: Long): Int {
+    fun calculateYearsSince(eventYear: Int, occurrenceTs: Long): Int {
         val calendar = Calendar.getInstance(TimeZone.getDefault())
         calendar.timeInMillis = occurrenceTs
         val occurrenceYear = calendar.get(Calendar.YEAR)
-        return occurrenceYear - birthYear
+        return occurrenceYear - eventYear
     }
 
     /**
@@ -126,7 +136,7 @@ object ContactBirthdayUtils {
      */
     fun formatBirthdayTitle(displayName: String, birthYear: Int?, occurrenceTs: Long): String {
         return if (birthYear != null) {
-            val age = calculateAge(birthYear, occurrenceTs)
+            val age = calculateYearsSince(birthYear, occurrenceTs)
             if (age > 0 && age < 150) {
                 "$displayName's ${formatOrdinal(age)} Birthday"
             } else {
@@ -138,24 +148,45 @@ object ContactBirthdayUtils {
     }
 
     /**
-     * Encode birth year into event description.
+     * Format anniversary event title with optional year count.
      *
-     * @param birthYear The birth year (null if unknown)
-     * @return Description string with encoded birth year, or null
+     * @param displayName Contact display name
+     * @param anniversaryYear Anniversary year (null if unknown)
+     * @param occurrenceTs Occurrence timestamp for year calculation
+     * @return Formatted title like "Alice's 10th Anniversary" or "Alice's Anniversary"
      */
-    fun encodeBirthYear(birthYear: Int?): String? {
-        return birthYear?.let { "$BIRTH_YEAR_PREFIX$it" }
+    fun formatAnniversaryTitle(displayName: String, anniversaryYear: Int?, occurrenceTs: Long): String {
+        return if (anniversaryYear != null) {
+            val years = calculateYearsSince(anniversaryYear, occurrenceTs)
+            if (years > 0 && years < 150) {
+                "$displayName's ${formatOrdinal(years)} Anniversary"
+            } else {
+                "$displayName's Anniversary"
+            }
+        } else {
+            "$displayName's Anniversary"
+        }
     }
 
     /**
-     * Decode birth year from event description.
+     * Encode event year into event description.
      *
-     * @param description Event description that may contain birth year
-     * @return Extracted birth year or null
+     * @param eventYear The event year (null if unknown)
+     * @return Description string with encoded year, or null
      */
-    fun decodeBirthYear(description: String?): Int? {
+    fun encodeEventYear(eventYear: Int?): String? {
+        return eventYear?.let { "$EVENT_YEAR_PREFIX$it" }
+    }
+
+    /**
+     * Decode event year from event description.
+     *
+     * @param description Event description that may contain event year
+     * @return Extracted year or null
+     */
+    fun decodeEventYear(description: String?): Int? {
         if (description == null) return null
-        val prefix = BIRTH_YEAR_PREFIX
+        val prefix = EVENT_YEAR_PREFIX
         val index = description.indexOf(prefix)
         if (index == -1) return null
 
@@ -165,21 +196,21 @@ object ContactBirthdayUtils {
     }
 
     /**
-     * Generate RRULE for yearly birthday recurrence.
+     * Generate RRULE for yearly recurrence (birthdays, anniversaries).
      */
-    fun generateBirthdayRRule(): String = "FREQ=YEARLY;INTERVAL=1"
+    fun generateYearlyRRule(): String = "FREQ=YEARLY;INTERVAL=1"
 
     /**
-     * Calculate the timestamp for a birthday in a given year.
+     * Calculate the timestamp for a date in a given year.
      *
-     * All-day event: returns midnight UTC of the birthday date.
+     * All-day event: returns midnight UTC of the date.
      *
-     * @param month Birthday month (1-12)
-     * @param day Birthday day (1-31)
+     * @param month Month (1-12)
+     * @param day Day (1-31)
      * @param year The year to calculate for
      * @return Timestamp in milliseconds
      */
-    fun getBirthdayTimestamp(month: Int, day: Int, year: Int): Long {
+    fun getEventTimestamp(month: Int, day: Int, year: Int): Long {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         calendar.clear()
         calendar.set(Calendar.YEAR, year)
@@ -193,35 +224,60 @@ object ContactBirthdayUtils {
     }
 
     /**
-     * Get the next upcoming birthday timestamp from today.
+     * Get the next upcoming event timestamp from today.
      *
      * Uses local timezone for date comparison to correctly determine if
-     * today's birthday has passed. The returned timestamp is still UTC
+     * today's date has passed. The returned timestamp is still UTC
      * midnight (correct for all-day events per RFC 5545).
      *
-     * @param month Birthday month (1-12)
-     * @param day Birthday day (1-31)
-     * @return Timestamp of the next birthday occurrence (UTC midnight)
+     * @param month Month (1-12)
+     * @param day Day (1-31)
+     * @return Timestamp of the next occurrence (UTC midnight)
      */
-    fun getNextBirthdayTimestamp(month: Int, day: Int): Long {
+    fun getNextEventTimestamp(month: Int, day: Int): Long {
         val now = Calendar.getInstance()  // Local timezone for date comparison
         val currentYear = now.get(Calendar.YEAR)
         val currentMonth = now.get(Calendar.MONTH) + 1  // Calendar.MONTH is 0-based
         val currentDay = now.get(Calendar.DAY_OF_MONTH)
 
         // Compare calendar dates in local time (not timestamps)
-        // This ensures today's birthday shows up even late in the day
-        val isBirthdayTodayOrLater = when {
+        // This ensures today's event shows up even late in the day
+        val isDateTodayOrLater = when {
             month > currentMonth -> true
             month < currentMonth -> false
             else -> day >= currentDay  // Same month, compare days
         }
 
-        return if (isBirthdayTodayOrLater) {
-            getBirthdayTimestamp(month, day, currentYear)
+        return if (isDateTodayOrLater) {
+            getEventTimestamp(month, day, currentYear)
         } else {
-            // Birthday already passed this year, use next year
-            getBirthdayTimestamp(month, day, currentYear + 1)
+            // Date already passed this year, use next year
+            getEventTimestamp(month, day, currentYear + 1)
+        }
+    }
+
+    /**
+     * Convert reminder minutes to ISO 8601 duration format.
+     * Positive minutes = before event (negative trigger in iCal).
+     */
+    fun minutesToIsoDuration(minutes: Int): String {
+        return when {
+            minutes <= 0 -> "PT0M"
+            minutes < 60 -> "-PT${minutes}M"
+            minutes < 1440 -> {
+                val hours = minutes / 60
+                val mins = minutes % 60
+                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
+            }
+            minutes < 10080 -> { // Less than 1 week
+                val days = minutes / 1440
+                val hours = (minutes % 1440) / 60
+                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
+            }
+            else -> {
+                val weeks = minutes / 10080
+                "-P${weeks}W"
+            }
         }
     }
 

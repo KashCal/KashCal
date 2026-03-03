@@ -623,6 +623,179 @@ class OccurrencesDaoTest {
         ))
     }
 
+    // ==================== Delete Before Cutoff Tests ====================
+
+    @Test
+    fun `deleteBeforeCutoff deletes occurrences ending before cutoff`() = runTest {
+        // Occurrence ending before cutoff
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            startDay = 20240115
+        ))
+
+        // Occurrence ending after cutoff
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-03-15 10:00"),
+            endTs = parseDate("2024-03-15 11:00"),
+            startDay = 20240315
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(1, deleted)
+        assertEquals(1, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff preserves occurrences ending exactly at cutoff`() = runTest {
+        // Occurrence ending exactly at cutoff (should be preserved)
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-01-31 23:00"),
+            endTs = parseDate("2024-02-01 00:00"),  // Ends exactly at cutoff
+            startDay = 20240131
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(0, deleted)  // end_ts < cutoff, not <=
+        assertEquals(1, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff handles multi-day occurrences correctly`() = runTest {
+        // Multi-day event starting before cutoff but ending after
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-01-30 10:00"),
+            endTs = parseDate("2024-02-02 18:00"),  // Ends after cutoff
+            startDay = 20240130,
+            endDay = 20240202
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(0, deleted)  // Preserved because endTs > cutoff
+        assertEquals(1, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff deletes cancelled occurrences too`() = runTest {
+        // Cancelled occurrence before cutoff
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            startDay = 20240115,
+            isCancelled = true
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(1, deleted)
+        assertEquals(0, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff deletes occurrences with exception links`() = runTest {
+        // Create exception event first (to satisfy FK constraint)
+        val exceptionId = eventsDao.insert(Event(
+            uid = "exception@test.com",
+            calendarId = calendarId,
+            title = "Exception Event",
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            dtstamp = System.currentTimeMillis(),
+            originalEventId = eventId,
+            syncStatus = SyncStatus.SYNCED
+        ))
+
+        // Occurrence with exception event linked
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            startDay = 20240115,
+            exceptionEventId = exceptionId
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(1, deleted)
+        assertEquals(0, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff returns count of deleted occurrences`() = runTest {
+        // Insert 7 occurrences before cutoff
+        repeat(7) { i ->
+            occurrencesDao.insert(createOccurrence(
+                startTs = parseDate("2024-01-${10 + i} 10:00"),
+                endTs = parseDate("2024-01-${10 + i} 11:00"),
+                startDay = 20240110 + i
+            ))
+        }
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(7, deleted)
+    }
+
+    @Test
+    fun `deleteBeforeCutoff with no matching occurrences returns zero`() = runTest {
+        // All occurrences after cutoff
+        occurrencesDao.insert(createOccurrence(
+            startTs = parseDate("2024-03-15 10:00"),
+            endTs = parseDate("2024-03-15 11:00"),
+            startDay = 20240315
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(0, deleted)
+        assertEquals(1, occurrencesDao.getTotalCount())
+    }
+
+    @Test
+    fun `deleteBeforeCutoff deletes from multiple events and calendars`() = runTest {
+        // Occurrence from first event/calendar before cutoff
+        occurrencesDao.insert(createOccurrence(
+            eventId = eventId,
+            calendarId = calendarId,
+            startTs = parseDate("2024-01-10 10:00"),
+            endTs = parseDate("2024-01-10 11:00"),
+            startDay = 20240110
+        ))
+
+        // Occurrence from second event/calendar before cutoff
+        occurrencesDao.insert(createOccurrence(
+            eventId = secondEventId,
+            calendarId = secondCalendarId,
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            startDay = 20240115
+        ))
+
+        // Occurrence from first event after cutoff (should remain)
+        occurrencesDao.insert(createOccurrence(
+            eventId = eventId,
+            calendarId = calendarId,
+            startTs = parseDate("2024-03-10 10:00"),
+            endTs = parseDate("2024-03-10 11:00"),
+            startDay = 20240310
+        ))
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = occurrencesDao.deleteBeforeCutoff(cutoff)
+
+        assertEquals(2, deleted)
+        assertEquals(1, occurrencesDao.getTotalCount())
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createOccurrence(

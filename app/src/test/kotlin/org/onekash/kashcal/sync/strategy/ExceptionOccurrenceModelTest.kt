@@ -1,4 +1,5 @@
 package org.onekash.kashcal.sync.strategy
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -72,7 +73,7 @@ class ExceptionOccurrenceModelTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         testAccountId = database.accountsDao().insert(
             Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")

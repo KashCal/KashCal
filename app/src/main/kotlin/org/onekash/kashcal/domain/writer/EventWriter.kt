@@ -593,22 +593,28 @@ class EventWriter @Inject constructor(
                     )
                 }
 
-                // Cross account (synced): CREATE + DELETE as independent operations
+                // Cross account (synced): Linked CREATE + DELETE
+                // DELETE is blocked by guard query until CREATE completes (success or permanent failure).
+                // If CREATE fails, event stays in source (safe). If DELETE fails, event is duplicated (recoverable).
                 !sourceIsLocal && !targetIsLocal && !isSameAccount && wasSynced -> {
-                    // DELETE runs on source account's sync cycle
+                    val linkedMoveId = UUID.randomUUID().toString()
+
+                    // CREATE on target account (runs first due to guard query)
+                    pendingOpsDao.insert(
+                        PendingOperation(
+                            eventId = eventId,
+                            operation = PendingOperation.OPERATION_CREATE,
+                            linkedMoveId = linkedMoveId
+                        )
+                    )
+                    // DELETE on source account - blocked until CREATE completes
                     pendingOpsDao.insert(
                         PendingOperation(
                             eventId = eventId,
                             operation = PendingOperation.OPERATION_DELETE,
                             targetUrl = oldCaldavUrl,
-                            sourceCalendarId = event.calendarId // Source for filtering
-                        )
-                    )
-                    // CREATE runs on target account's sync cycle
-                    pendingOpsDao.insert(
-                        PendingOperation(
-                            eventId = eventId,
-                            operation = PendingOperation.OPERATION_CREATE
+                            sourceCalendarId = event.calendarId, // Source for filtering
+                            linkedMoveId = linkedMoveId
                         )
                     )
                 }
@@ -624,6 +630,44 @@ class EventWriter @Inject constructor(
                 }
             }
         }
+    }
+
+    // ========== Lookback Cleanup ==========
+
+    /**
+     * Delete CalDAV events outside the sync lookback window.
+     * Called when user shrinks the lookback setting.
+     *
+     * @param cutoffTs Timestamp cutoff - events ending before this are deleted (epoch ms)
+     * @return Number of events deleted
+     */
+    suspend fun cleanupEventsOutsideLookback(cutoffTs: Long): Int {
+        return eventsDao.deleteOutsideLookback(cutoffTs)
+    }
+
+    /**
+     * Full cleanup when shrinking sync lookback window.
+     * Deletes:
+     * 1. Non-recurring CalDAV events outside window (via deleteOutsideLookback)
+     * 2. Old occurrences of recurring events
+     * 3. Old exception events (modified single occurrences)
+     *
+     * @param cutoffTs Timestamp cutoff
+     * @return CleanupResult with counts of deleted items
+     */
+    suspend fun cleanupForShrinkingLookback(cutoffTs: Long): CleanupResult {
+        val deletedEvents = eventsDao.deleteOutsideLookback(cutoffTs)
+        val deletedOccurrences = occurrencesDao.deleteBeforeCutoff(cutoffTs)
+        val deletedExceptions = eventsDao.deleteExceptionEventsBeforeCutoff(cutoffTs)
+        return CleanupResult(deletedEvents, deletedOccurrences, deletedExceptions)
+    }
+
+    data class CleanupResult(
+        val deletedEvents: Int,
+        val deletedOccurrences: Int,
+        val deletedExceptions: Int
+    ) {
+        val totalDeleted: Int get() = deletedEvents + deletedOccurrences + deletedExceptions
     }
 
     // ========== Helper Functions ==========

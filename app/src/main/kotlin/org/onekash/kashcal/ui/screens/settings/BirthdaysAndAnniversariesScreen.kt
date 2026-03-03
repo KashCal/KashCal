@@ -1,0 +1,345 @@
+package org.onekash.kashcal.ui.screens.settings
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
+import org.onekash.kashcal.ui.components.pickers.argbToHex
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.formatReminderOption
+
+/**
+ * Dedicated screen for managing Contact Birthdays and Anniversaries.
+ *
+ * Two-card layout with Birthdays section and Anniversaries section.
+ * Each section has: enable toggle, color picker, reminder picker, event count.
+ * Footer shows contacts permission info.
+ *
+ * @param birthdaysEnabled Whether contact birthdays is enabled
+ * @param birthdaysColor Current birthday calendar color
+ * @param birthdaysReminder Current birthday reminder (minutes)
+ * @param birthdayCount Number of birthday events
+ * @param anniversariesEnabled Whether contact anniversaries is enabled
+ * @param anniversariesColor Current anniversary calendar color
+ * @param anniversariesReminder Current anniversary reminder (minutes)
+ * @param anniversaryCount Number of anniversary events
+ * @param hasPermission Whether READ_CONTACTS permission is granted
+ * @param onToggleBirthdays Callback to enable/disable birthdays
+ * @param onBirthdaysColorChange Callback for birthday color change
+ * @param onBirthdaysReminderChange Callback for birthday reminder change
+ * @param onToggleAnniversaries Callback to enable/disable anniversaries
+ * @param onAnniversariesColorChange Callback for anniversary color change
+ * @param onAnniversariesReminderChange Callback for anniversary reminder change
+ * @param onNavigateBack Callback to navigate back
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BirthdaysAndAnniversariesScreen(
+    birthdaysEnabled: Boolean,
+    birthdaysColor: Int,
+    birthdaysReminder: Int,
+    birthdayCount: Int,
+    anniversariesEnabled: Boolean,
+    anniversariesColor: Int,
+    anniversariesReminder: Int,
+    anniversaryCount: Int,
+    hasPermission: Boolean,
+    onToggleBirthdays: (Boolean) -> Unit,
+    onBirthdaysColorChange: (Int) -> Unit,
+    onBirthdaysReminderChange: (Int) -> Unit,
+    onToggleAnniversaries: (Boolean) -> Unit,
+    onAnniversariesColorChange: (Int) -> Unit,
+    onAnniversariesReminderChange: (Int) -> Unit,
+    onNavigateBack: () -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Birthdays & Anniversaries") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(padding)
+        ) {
+            // ==================== Birthdays Section ====================
+            SectionHeader("Birthdays")
+            SettingsCard {
+                ContactEventSection(
+                    label = "Contact Birthdays",
+                    description = "Show birthdays from your phone contacts as all-day calendar events.",
+                    isEnabled = birthdaysEnabled,
+                    calendarColor = birthdaysColor,
+                    reminderMinutes = birthdaysReminder,
+                    eventCount = birthdayCount,
+                    reminderTitle = "Birthday Reminder",
+                    onToggle = onToggleBirthdays,
+                    onColorChange = onBirthdaysColorChange,
+                    onReminderChange = onBirthdaysReminderChange
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // ==================== Anniversaries Section ====================
+            SectionHeader("Anniversaries")
+            SettingsCard {
+                ContactEventSection(
+                    label = "Contact Anniversaries",
+                    description = "Show anniversaries from your phone contacts as all-day calendar events.",
+                    isEnabled = anniversariesEnabled,
+                    calendarColor = anniversariesColor,
+                    reminderMinutes = anniversariesReminder,
+                    eventCount = anniversaryCount,
+                    reminderTitle = "Anniversary Reminder",
+                    onToggle = onToggleAnniversaries,
+                    onColorChange = onAnniversariesColorChange,
+                    onReminderChange = onAnniversariesReminderChange
+                )
+            }
+
+            // ==================== Footer ====================
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "Reads from your device contacts. Requires Contacts permission.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+
+            if ((birthdaysEnabled || anniversariesEnabled) && !hasPermission) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    "Contacts permission required",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+/**
+ * Reusable section for a contact event type (birthday or anniversary).
+ * Contains toggle, color picker, reminder picker, and event count.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ContactEventSection(
+    label: String,
+    description: String,
+    isEnabled: Boolean,
+    calendarColor: Int,
+    reminderMinutes: Int,
+    eventCount: Int,
+    reminderTitle: String,
+    onToggle: (Boolean) -> Unit,
+    onColorChange: (Int) -> Unit,
+    onReminderChange: (Int) -> Unit
+) {
+    var selectedColor by remember(calendarColor) { mutableIntStateOf(calendarColor) }
+    var showReminderPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        // Toggle row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                if (isEnabled && eventCount > 0) {
+                    Text(
+                        when (eventCount) {
+                            1 -> "1 event"
+                            else -> "$eventCount events"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            Switch(
+                checked = isEnabled,
+                onCheckedChange = onToggle
+            )
+        }
+
+        // Description
+        Text(
+            description,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        // Color and Reminder (visible when enabled)
+        AnimatedVisibility(
+            visible = isEnabled,
+            enter = expandVertically(),
+            exit = shrinkVertically()
+        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+
+                // Color picker row
+                Text(
+                    "Calendar Color",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showColorPicker = true }
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(Color(selectedColor))
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    )
+                    Text(
+                        "#${argbToHex(selectedColor)}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        "Change",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Reminder row
+                Text(
+                    "Default Reminder",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showReminderPicker = true }
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        formatReminderOption(reminderMinutes, isAllDay = true),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        "Change",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+    }
+
+    // Reminder picker sheet
+    if (showReminderPicker) {
+        val reminderSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        SingleAlertPickerSheet(
+            sheetState = reminderSheetState,
+            title = reminderTitle,
+            options = ALL_DAY_REMINDER_OPTIONS,
+            currentValue = reminderMinutes,
+            onSelect = { minutes ->
+                onReminderChange(minutes)
+                showReminderPicker = false
+            },
+            onDismiss = { showReminderPicker = false }
+        )
+    }
+
+    // Color picker sheet
+    if (showColorPicker) {
+        ColorPickerSheet(
+            sheetState = colorPickerSheetState,
+            currentColor = selectedColor,
+            onColorSelected = { color ->
+                selectedColor = color
+                onColorChange(color)
+                showColorPicker = false
+            },
+            onDismiss = { showColorPicker = false }
+        )
+    }
+}

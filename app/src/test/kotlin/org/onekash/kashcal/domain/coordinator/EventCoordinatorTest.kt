@@ -14,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -51,6 +52,7 @@ class EventCoordinatorTest {
     private lateinit var localCalendarInitializer: LocalCalendarInitializer
     private lateinit var icsSubscriptionRepository: IcsSubscriptionRepository
     private lateinit var contactBirthdayRepository: ContactBirthdayRepository
+    private lateinit var contactAnniversaryRepository: ContactAnniversaryRepository
     private lateinit var accountRepository: AccountRepository
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var reminderScheduler: ReminderScheduler
@@ -115,6 +117,7 @@ class EventCoordinatorTest {
         localCalendarInitializer = mockk(relaxed = true)
         icsSubscriptionRepository = mockk(relaxed = true)
         contactBirthdayRepository = mockk(relaxed = true)
+        contactAnniversaryRepository = mockk(relaxed = true)
         accountRepository = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
@@ -138,6 +141,7 @@ class EventCoordinatorTest {
             localCalendarInitializer = localCalendarInitializer,
             icsSubscriptionRepository = icsSubscriptionRepository,
             contactBirthdayRepository = contactBirthdayRepository,
+            contactAnniversaryRepository = contactAnniversaryRepository,
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             reminderScheduler = reminderScheduler,
@@ -536,6 +540,65 @@ class EventCoordinatorTest {
         val count = coordinator.extendOccurrences(recurringEvent.id, extendTo)
 
         assertEquals(26, count)
+    }
+
+    @Test
+    fun `extendPastOccurrences extends past range`() = runTest {
+        val extendTo = 1672531200000L // Jan 1, 2023
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) } returns 15
+
+        val count = coordinator.extendPastOccurrences(recurringEvent.id, extendTo)
+
+        assertEquals(15, count)
+        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendTo) }
+    }
+
+    @Test
+    fun `extendPastOccurrencesIfNeeded finds and extends events`() = runTest {
+        val targetMs = 1672531200000L // Jan 1, 2023
+        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
+        val extendToMs = targetMs - bufferMs
+
+        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns listOf(recurringEvent.id)
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) } returns 20
+
+        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
+
+        assertEquals(20, count)
+        coVerify { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) }
+        coVerify { occurrenceGenerator.extendPastOccurrences(recurringEvent, extendToMs) }
+    }
+
+    @Test
+    fun `extendPastOccurrencesIfNeeded returns 0 when no events need extension`() = runTest {
+        val targetMs = 1672531200000L
+        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
+        val extendToMs = targetMs - bufferMs
+
+        coEvery { eventReader.getRecurringEventsNeedingPastExtension(extendToMs) } returns emptyList()
+
+        val count = coordinator.extendPastOccurrencesIfNeeded(targetMs)
+
+        assertEquals(0, count)
+    }
+
+    @Test
+    fun `extendOccurrencesIfNeeded finds and extends events`() = runTest {
+        val targetMs = 1767225600000L // Jan 1, 2026
+        val bufferMs = 6 * 30L * 24 * 60 * 60 * 1000
+        val extendToMs = targetMs + bufferMs
+
+        coEvery { eventReader.getRecurringEventsNeedingExtension(extendToMs) } returns listOf(recurringEvent.id)
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) } returns 30
+
+        val count = coordinator.extendOccurrencesIfNeeded(targetMs)
+
+        assertEquals(30, count)
+        coVerify { eventReader.getRecurringEventsNeedingExtension(extendToMs) }
+        coVerify { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) }
     }
 
     @Test

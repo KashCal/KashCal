@@ -1,5 +1,6 @@
 package org.onekash.kashcal.widget
 
+import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.util.DateTimeUtils
@@ -90,7 +91,12 @@ class WidgetDataRepository @Inject constructor(
                 is DisplayEvent.Device -> displayEvent.instance.eventId
             },
             occurrenceStartTs = displayEvent.startTs,
-            title = displayEvent.title,
+            title = when (displayEvent) {
+                is DisplayEvent.Room -> ContactEventTitleFormatter.format(
+                    displayEvent.event, displayEvent.startTs
+                )
+                is DisplayEvent.Device -> displayEvent.title
+            },
             startTs = displayEvent.startTs,
             endTs = displayEvent.endTs,
             isAllDay = displayEvent.isAllDay,

@@ -202,8 +202,8 @@ class ContactBirthdayRepositoryTest {
         } returns null
 
         val result = repository.syncBirthdays()
-        assertTrue(result is ContactBirthdayRepository.SyncResult.Error)
-        assertTrue((result as ContactBirthdayRepository.SyncResult.Error).message.contains("not created"))
+        assertTrue(result is ContactEventSyncResult.Error)
+        assertTrue((result as ContactEventSyncResult.Error).message.contains("not created"))
     }
 
     @Test
@@ -219,8 +219,8 @@ class ContactBirthdayRepositoryTest {
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws SecurityException("No permission")
 
         val result = repository.syncBirthdays()
-        assertTrue(result is ContactBirthdayRepository.SyncResult.Error)
-        assertTrue((result as ContactBirthdayRepository.SyncResult.Error).message.contains("permission"))
+        assertTrue(result is ContactEventSyncResult.Error)
+        assertTrue((result as ContactEventSyncResult.Error).message.contains("permission"))
     }
 
     @Test
@@ -236,8 +236,8 @@ class ContactBirthdayRepositoryTest {
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws NullPointerException()
 
         val result = repository.syncBirthdays()
-        assertTrue(result is ContactBirthdayRepository.SyncResult.Error)
-        assertEquals("NullPointerException", (result as ContactBirthdayRepository.SyncResult.Error).message)
+        assertTrue(result is ContactEventSyncResult.Error)
+        assertEquals("NullPointerException", (result as ContactEventSyncResult.Error).message)
     }
 
     @Test
@@ -254,8 +254,8 @@ class ContactBirthdayRepositoryTest {
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
         val result = repository.syncBirthdays()
-        assertTrue(result is ContactBirthdayRepository.SyncResult.Success)
-        val success = result as ContactBirthdayRepository.SyncResult.Success
+        assertTrue(result is ContactEventSyncResult.Success)
+        val success = result as ContactEventSyncResult.Success
         assertEquals(0, success.added)
         assertEquals(0, success.updated)
         assertEquals(0, success.deleted)
@@ -287,8 +287,8 @@ class ContactBirthdayRepositoryTest {
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
         val result = repository.syncBirthdays()
-        assertTrue(result is ContactBirthdayRepository.SyncResult.Success)
-        val success = result as ContactBirthdayRepository.SyncResult.Success
+        assertTrue(result is ContactEventSyncResult.Success)
+        val success = result as ContactEventSyncResult.Success
         assertEquals(1, success.deleted)
 
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
@@ -298,13 +298,52 @@ class ContactBirthdayRepositoryTest {
     // ==================== getCaldavUrl ====================
 
     @Test
-    fun `getCaldavUrl produces correct format`() {
-        assertEquals("contact_birthday:abc123", ContactBirthdayRepository.getCaldavUrl("abc123"))
+    fun `getCaldavUrl includes date for unique key per birthday`() {
+        assertEquals(
+            "contact_birthday:abc123:3-14",
+            ContactBirthdayRepository.getCaldavUrl("abc123", 3, 14)
+        )
     }
 
     @Test
-    fun `getCaldavUrl with special characters`() {
-        assertEquals("contact_birthday:key/with/slashes", ContactBirthdayRepository.getCaldavUrl("key/with/slashes"))
+    fun `getCaldavUrl with special characters in lookupKey`() {
+        assertEquals(
+            "contact_birthday:key/with/slashes:12-25",
+            ContactBirthdayRepository.getCaldavUrl("key/with/slashes", 12, 25)
+        )
+    }
+
+    // ==================== Multiple birthdays per contact ====================
+
+    @Test
+    fun `syncBirthdays deletes old-format caldavUrl events as orphans`() = runTest {
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactBirthdayRepository.ACCOUNT_EMAIL)
+        } returns testAccount
+        coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
+        coEvery { calendarsDao.getById(20L) } returns testCalendar
+        coEvery { dataStore.getBirthdayReminder() } returns 0
+
+        // Existing event with OLD format caldavUrl (no date suffix)
+        val oldFormatEvent = Event(
+            id = 100L,
+            uid = "test-uid",
+            calendarId = 20L,
+            title = "Alice",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 86400000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = "contact_birthday:alice_key"  // Old format: no date
+        )
+        coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(oldFormatEvent)
+
+        // No contacts returned — old event should be deleted as orphan
+        every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
+
+        val result = repository.syncBirthdays()
+        assertTrue(result is ContactEventSyncResult.Success)
+        assertEquals(1, (result as ContactEventSyncResult.Success).deleted)
+        coVerify { eventsDao.deleteById(100L) }
     }
 
     // ==================== Calendar color operations ====================

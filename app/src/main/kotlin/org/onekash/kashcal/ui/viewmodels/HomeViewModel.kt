@@ -967,13 +967,15 @@ class HomeViewModel @Inject constructor(
                     set(Calendar.DAY_OF_MONTH, 1)
                 }.timeInMillis
 
-                val extended = withContext(ioDispatcher) {
-                    eventCoordinator.extendOccurrencesIfNeeded(targetMs)
+                val (forwardExtended, pastExtended) = withContext(ioDispatcher) {
+                    val forward = eventCoordinator.extendOccurrencesIfNeeded(targetMs)
+                    val past = eventCoordinator.extendPastOccurrencesIfNeeded(targetMs)
+                    forward to past
                 }
 
                 // Reload dots if we actually extended anything
-                if (extended > 0) {
-                    Log.d(TAG, "Extended occurrences for $extended events (navigated to $year-${month + 1})")
+                if (forwardExtended > 0 || pastExtended > 0) {
+                    Log.d(TAG, "Extended occurrences: $forwardExtended forward, $pastExtended past (navigated to $year-${month + 1})")
                     loadDotsForMonth(year, month)
                 }
             } catch (e: CancellationException) {

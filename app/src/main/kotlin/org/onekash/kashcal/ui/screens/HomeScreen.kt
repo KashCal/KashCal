@@ -68,8 +68,7 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.MonthPagerUtils
 import androidx.compose.foundation.pager.PagerState
-import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
-import org.onekash.kashcal.data.contacts.ContactBirthdayUtils
+import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.data.db.entity.Calendar
 import android.content.Intent
@@ -1520,50 +1519,18 @@ private fun AgendaCard(
 }
 
 /**
- * Format event title, adding age for birthday events and optional emoji.
+ * Format event title for contact events (birthdays, anniversaries) with optional emoji.
  *
- * For contact birthday events (caldavUrl starts with "contact_birthday:"):
- * - Decodes birth year from event description
- * - Calculates age at the occurrence date
- * - Returns "Name's Xth Birthday" format
- *
- * For all other events, returns the original title with optional emoji prefix.
+ * Delegates to [ContactEventTitleFormatter] for contact event formatting (age/year info),
+ * then applies emoji decoration via [EmojiMatcher].
  *
  * @param event The event to format title for
- * @param occurrenceTs The occurrence timestamp for age calculation
+ * @param occurrenceTs The occurrence timestamp for age/year calculation
  * @param showEmojis Whether to prefix auto-detected emoji to the title
  * @return Formatted title string
  */
 private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
-    // Check if this is a contact birthday event
-    val isBirthdayEvent = event.caldavUrl?.startsWith("${ContactBirthdayRepository.SOURCE_PREFIX}:") == true
-
-    val baseTitle = if (!isBirthdayEvent || occurrenceTs == null) {
-        event.title
-    } else {
-        // Decode birth year from description
-        val birthYear = ContactBirthdayUtils.decodeBirthYear(event.description)
-
-        // Display name is the raw title (e.g., "John Smith")
-        val displayName = event.title
-
-        if (birthYear == null) {
-            // No birth year - show "Name's Birthday" without age
-            "$displayName's Birthday"
-        } else {
-            // Calculate age and format title
-            val age = ContactBirthdayUtils.calculateAge(birthYear, occurrenceTs)
-
-            if (age > 0 && age < 150) {
-                "$displayName's ${ContactBirthdayUtils.formatOrdinal(age)} Birthday"
-            } else {
-                // Invalid age - show "Name's Birthday" without age
-                "$displayName's Birthday"
-            }
-        }
-    }
-
-    // Apply emoji formatting if enabled
+    val baseTitle = ContactEventTitleFormatter.format(event, occurrenceTs)
     return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
 }
 

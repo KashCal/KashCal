@@ -1,0 +1,4 @@
+New Features:
+• Contact anniversaries: automatically sync anniversaries from your contacts with customizable reminders
+• Configurable sync lookback: choose how far back to sync events (90 days, 6 months, 1 year, 2 years, or all)
+• Week numbers: optional week numbers in the month calendar grid

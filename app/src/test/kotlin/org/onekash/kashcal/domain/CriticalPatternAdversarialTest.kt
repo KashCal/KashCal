@@ -1,4 +1,5 @@
 package org.onekash.kashcal.domain
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -52,7 +53,7 @@ class CriticalPatternAdversarialTest {
             .build()
 
         eventsDao = database.eventsDao()
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         // Setup test calendar
         val accountId = database.accountsDao().insert(

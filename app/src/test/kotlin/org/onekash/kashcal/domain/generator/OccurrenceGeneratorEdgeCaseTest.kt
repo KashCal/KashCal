@@ -1,4 +1,5 @@
 package org.onekash.kashcal.domain.generator
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -48,7 +49,7 @@ class OccurrenceGeneratorEdgeCaseTest {
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         runTest {
             val accountId = database.accountsDao().insert(
@@ -412,8 +413,8 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2100-12-31 23:59") // 75+ years
         )
 
-        // MAX_ITERATIONS is 1000, so should cap at that
-        assertTrue("Expected at most 1000 due to MAX_ITERATIONS", count <= 1000)
+        // MAX_ITERATIONS is 10000, so should cap at that
+        assertTrue("Expected at most 10000 due to MAX_ITERATIONS", count <= 10000)
     }
 
     // ==================== parseRule Edge Cases ====================

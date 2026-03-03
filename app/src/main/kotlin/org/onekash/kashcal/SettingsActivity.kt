@@ -44,6 +44,7 @@ import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.AccountsScreen
+import org.onekash.kashcal.ui.screens.settings.BirthdaysAndAnniversariesScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
@@ -101,13 +102,20 @@ class SettingsActivity : ComponentActivity() {
                 val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
                 val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
                 val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
+                val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
 
                 // Contact birthdays state
                 val contactBirthdaysEnabled by viewModel.contactBirthdaysEnabled.collectAsStateWithLifecycle()
                 val contactBirthdaysColor by viewModel.contactBirthdaysColor.collectAsStateWithLifecycle()
                 val contactBirthdaysReminder by viewModel.contactBirthdaysReminder.collectAsStateWithLifecycle()
-                val contactBirthdaysLastSync by viewModel.contactBirthdaysLastSync.collectAsStateWithLifecycle()
                 val hasContactsPermission by viewModel.hasContactsPermission.collectAsStateWithLifecycle()
+                val birthdayCount by viewModel.birthdayCount.collectAsStateWithLifecycle()
+
+                // Contact anniversaries state
+                val contactAnniversariesEnabled by viewModel.contactAnniversariesEnabled.collectAsStateWithLifecycle()
+                val contactAnniversariesColor by viewModel.contactAnniversariesColor.collectAsStateWithLifecycle()
+                val contactAnniversariesReminder by viewModel.contactAnniversariesReminder.collectAsStateWithLifecycle()
+                val anniversaryCount by viewModel.anniversaryCount.collectAsStateWithLifecycle()
 
                 // Device calendars state
                 val deviceCalendarsEnabled by viewModel.deviceCalendarsEnabled.collectAsStateWithLifecycle()
@@ -129,15 +137,23 @@ class SettingsActivity : ComponentActivity() {
                     }
                 }
 
+                // Track which toggle triggered contacts permission request
+                var pendingContactPermissionAction by remember {
+                    mutableStateOf<String?>(null) // "birthdays" or "anniversaries"
+                }
+
                 // Contacts permission launcher
                 val contactsPermissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission()
                 ) { isGranted ->
                     viewModel.refreshContactsPermission()
                     if (isGranted) {
-                        // Permission granted, enable contact birthdays
-                        viewModel.onToggleContactBirthdays(true)
+                        when (pendingContactPermissionAction) {
+                            "birthdays" -> viewModel.onToggleContactBirthdays(true)
+                            "anniversaries" -> viewModel.onToggleContactAnniversaries(true)
+                        }
                     }
+                    pendingContactPermissionAction = null
                 }
 
                 // Calendar permission launcher (for Device Calendars)
@@ -156,6 +172,7 @@ class SettingsActivity : ComponentActivity() {
                 // Navigation state for detail screens (rememberSaveable for config change survival)
                 var showAccountsScreen by rememberSaveable { mutableStateOf(false) }
                 var showSubscriptionsScreen by rememberSaveable { mutableStateOf(false) }
+                var showBirthdaysAnniversariesScreen by rememberSaveable { mutableStateOf(false) }
 
                 // ICS import state
                 var showIcsImportSheet by remember { mutableStateOf(false) }
@@ -239,31 +256,50 @@ class SettingsActivity : ComponentActivity() {
                                 onDiscoverCalendars = viewModel::discoverNewCalendars
                             )
                         }
+                        showBirthdaysAnniversariesScreen -> {
+                            BirthdaysAndAnniversariesScreen(
+                                birthdaysEnabled = contactBirthdaysEnabled,
+                                birthdaysColor = contactBirthdaysColor,
+                                birthdaysReminder = contactBirthdaysReminder,
+                                birthdayCount = birthdayCount,
+                                anniversariesEnabled = contactAnniversariesEnabled,
+                                anniversariesColor = contactAnniversariesColor,
+                                anniversariesReminder = contactAnniversariesReminder,
+                                anniversaryCount = anniversaryCount,
+                                hasPermission = hasContactsPermission,
+                                onToggleBirthdays = { enabled ->
+                                    if (enabled && !hasContactsPermission) {
+                                        pendingContactPermissionAction = "birthdays"
+                                        contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                    } else {
+                                        viewModel.onToggleContactBirthdays(enabled)
+                                    }
+                                },
+                                onBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
+                                onBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange,
+                                onToggleAnniversaries = { enabled ->
+                                    if (enabled && !hasContactsPermission) {
+                                        pendingContactPermissionAction = "anniversaries"
+                                        contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+                                    } else {
+                                        viewModel.onToggleContactAnniversaries(enabled)
+                                    }
+                                },
+                                onAnniversariesColorChange = viewModel::onContactAnniversariesColorChange,
+                                onAnniversariesReminderChange = viewModel::onContactAnniversariesReminderChange,
+                                onNavigateBack = { showBirthdaysAnniversariesScreen = false }
+                            )
+                        }
                         showSubscriptionsScreen -> {
                             SubscriptionsScreen(
-                            subscriptions = subscriptions,
-                            contactBirthdaysEnabled = contactBirthdaysEnabled,
-                            contactBirthdaysColor = contactBirthdaysColor,
-                            contactBirthdaysReminder = contactBirthdaysReminder,
-                            contactBirthdaysLastSync = contactBirthdaysLastSync,
-                            hasContactsPermission = hasContactsPermission,
-                            onNavigateBack = { showSubscriptionsScreen = false },
-                            onAddSubscription = viewModel::onAddSubscription,
-                            onToggleSubscription = viewModel::onToggleSubscription,
-                            onDeleteSubscription = viewModel::onDeleteSubscription,
-                            onRefreshSubscription = viewModel::onRefreshSubscription,
-                            onUpdateSubscription = viewModel::onUpdateSubscription,
-                            onToggleContactBirthdays = { enabled ->
-                                if (enabled && !hasContactsPermission) {
-                                    // Request permission first
-                                    contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-                                } else {
-                                    viewModel.onToggleContactBirthdays(enabled)
-                                }
-                            },
-                            onContactBirthdaysColorChange = viewModel::onContactBirthdaysColorChange,
-                            onContactBirthdaysReminderChange = viewModel::onContactBirthdaysReminderChange
-                        )
+                                subscriptions = subscriptions,
+                                onNavigateBack = { showSubscriptionsScreen = false },
+                                onAddSubscription = viewModel::onAddSubscription,
+                                onToggleSubscription = viewModel::onToggleSubscription,
+                                onDeleteSubscription = viewModel::onDeleteSubscription,
+                                onRefreshSubscription = viewModel::onRefreshSubscription,
+                                onUpdateSubscription = viewModel::onUpdateSubscription
+                            )
                         }
                         else -> {
                             AccountSettingsScreen(
@@ -296,6 +332,8 @@ class SettingsActivity : ComponentActivity() {
                             syncIntervalMs = syncIntervalMs,
                             onSyncIntervalChange = viewModel::onSyncIntervalChange,
                             onForceFullSync = viewModel::forceFullSync,
+                            syncLookbackDays = syncLookbackDays,
+                            onSyncLookbackChange = viewModel::onSyncLookbackChange,
                             // Default calendar
                             defaultCalendarId = defaultCalendarId,
                             onDefaultCalendarSelect = viewModel::onDefaultCalendarSelect,
@@ -366,8 +404,11 @@ class SettingsActivity : ComponentActivity() {
                             },
                             // Navigate to Subscriptions detail screen
                             onNavigateToSubscriptions = { showSubscriptionsScreen = true },
-                            // Contact birthdays (for subscription count)
-                            contactBirthdaysEnabled = contactBirthdaysEnabled,
+                            // Navigate to Birthdays & Anniversaries detail screen
+                            onNavigateToBirthdaysAnniversaries = { showBirthdaysAnniversariesScreen = true },
+                            // Contact event counts (for B&A row subtitle)
+                            birthdayCount = birthdayCount,
+                            anniversaryCount = anniversaryCount,
                             // Device calendars
                             deviceCalendarsEnabled = deviceCalendarsEnabled,
                             hasCalendarPermission = hasCalendarPermission,

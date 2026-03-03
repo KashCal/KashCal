@@ -97,9 +97,9 @@ class RealICloudSyncEngineTest {
         val occurrencesDao = database.occurrencesDao()
         val syncLogsDao = database.syncLogsDao()
 
-        val occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao)
         val calendarRepository = CalendarRepositoryImpl(calendarsDao)
         val dataStore = KashCalDataStore(context)
+        val occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao, dataStore)
         val syncSessionStore = SyncSessionStore(context)
 
         // Load credentials and create real client

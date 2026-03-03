@@ -12,7 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
-import org.onekash.kashcal.data.contacts.ContactBirthdayManager
+import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -65,7 +65,7 @@ class KashCalApplication : Application(), Configuration.Provider {
     lateinit var widgetUpdateManager: WidgetUpdateManager
 
     @Inject
-    lateinit var contactBirthdayManager: ContactBirthdayManager
+    lateinit var contactEventManager: ContactEventManager
 
     @Inject
     lateinit var calendarProviderManager: CalendarProviderManager
@@ -115,8 +115,8 @@ class KashCalApplication : Application(), Configuration.Provider {
         widgetUpdateManager.schedulePeriodicUpdates()
         widgetUpdateManager.scheduleMidnightUpdate()
 
-        // Initialize contact birthday observer (if enabled)
-        contactBirthdayManager.initialize()
+        // Initialize contact event observers (birthdays and anniversaries, if enabled)
+        contactEventManager.initialize()
 
         // Initialize device calendar observer (if enabled)
         calendarProviderManager.initialize()

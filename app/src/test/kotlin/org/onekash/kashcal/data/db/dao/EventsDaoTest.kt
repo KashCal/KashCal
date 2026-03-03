@@ -1300,6 +1300,635 @@ class EventsDaoTest {
         assertEquals(parseDate("2025-01-15 14:00"), results[2].occurrenceStartTs)
     }
 
+    // ==================== deleteOutsideLookback Tests ====================
+
+    @Test
+    fun `deleteOutsideLookback deletes synced events before cutoff`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // Event ending before cutoff - should be deleted
+        val oldEvent = createTestEvent(
+            uid = "old-event",
+            startTs = parseDate("2025-01-10 10:00"),
+            endTs = parseDate("2025-01-10 11:00"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://caldav.example.com/cal/old.ics"
+        )
+        val oldEventId = eventsDao.insert(oldEvent)
+
+        // Event ending after cutoff - should be preserved
+        val newEvent = createTestEvent(
+            uid = "new-event",
+            startTs = parseDate("2025-01-20 10:00"),
+            endTs = parseDate("2025-01-20 11:00"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://caldav.example.com/cal/new.ics"
+        )
+        val newEventId = eventsDao.insert(newEvent)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(1, deleted)
+        assertNull(eventsDao.getById(oldEventId))
+        assertNotNull(eventsDao.getById(newEventId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback preserves events with pending sync status`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // PENDING_CREATE - should be preserved
+        val pendingCreate = createTestEvent(
+            uid = "pending-create",
+            startTs = parseDate("2025-01-10 10:00"),
+            endTs = parseDate("2025-01-10 11:00"),
+            syncStatus = SyncStatus.PENDING_CREATE,
+            caldavUrl = "https://caldav.example.com/cal/pending.ics"
+        )
+        val pendingCreateId = eventsDao.insert(pendingCreate)
+
+        // PENDING_UPDATE - should be preserved
+        val pendingUpdate = createTestEvent(
+            uid = "pending-update",
+            startTs = parseDate("2025-01-10 10:00"),
+            endTs = parseDate("2025-01-10 11:00"),
+            syncStatus = SyncStatus.PENDING_UPDATE,
+            caldavUrl = "https://caldav.example.com/cal/pending2.ics"
+        )
+        val pendingUpdateId = eventsDao.insert(pendingUpdate)
+
+        // PENDING_DELETE - should be preserved
+        val pendingDelete = createTestEvent(
+            uid = "pending-delete",
+            startTs = parseDate("2025-01-10 10:00"),
+            endTs = parseDate("2025-01-10 11:00"),
+            syncStatus = SyncStatus.PENDING_DELETE,
+            caldavUrl = "https://caldav.example.com/cal/pending3.ics"
+        )
+        val pendingDeleteId = eventsDao.insert(pendingDelete)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(0, deleted)
+        assertNotNull(eventsDao.getById(pendingCreateId))
+        assertNotNull(eventsDao.getById(pendingUpdateId))
+        assertNotNull(eventsDao.getById(pendingDeleteId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback preserves recurring master events`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // Recurring event with rrule - should be preserved even if old
+        val recurringEvent = createTestEvent(
+            uid = "recurring-event",
+            startTs = parseDate("2025-01-01 10:00"),
+            endTs = parseDate("2025-01-01 11:00"),
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://caldav.example.com/cal/recurring.ics"
+        )
+        val recurringId = eventsDao.insert(recurringEvent)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(0, deleted)
+        assertNotNull(eventsDao.getById(recurringId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback preserves exception events`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // First create a master event
+        val masterEvent = createTestEvent(
+            uid = "master-event",
+            startTs = parseDate("2025-01-01 10:00"),
+            endTs = parseDate("2025-01-01 11:00"),
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://caldav.example.com/cal/master.ics"
+        )
+        val masterId = eventsDao.insert(masterEvent)
+
+        // Exception event linked to master - should be preserved
+        val exceptionEvent = createTestEvent(
+            uid = "master-event", // Same UID as master per RFC 5545
+            startTs = parseDate("2025-01-08 14:00"), // Moved from original 10:00
+            endTs = parseDate("2025-01-08 15:00"),
+            syncStatus = SyncStatus.SYNCED,
+            originalEventId = masterId,
+            originalInstanceTime = parseDate("2025-01-08 10:00"),
+            caldavUrl = "https://caldav.example.com/cal/master.ics"
+        )
+        val exceptionId = eventsDao.insert(exceptionEvent)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(0, deleted)
+        assertNotNull(eventsDao.getById(exceptionId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback preserves local calendar events`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // Local event without caldav_url - should be preserved
+        val localEvent = createTestEvent(
+            uid = "local-event",
+            startTs = parseDate("2025-01-10 10:00"),
+            endTs = parseDate("2025-01-10 11:00"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = null
+        )
+        val localEventId = eventsDao.insert(localEvent)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(0, deleted)
+        assertNotNull(eventsDao.getById(localEventId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback preserves birthday events`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // Birthday event - should be preserved
+        val birthdayEvent = createTestEvent(
+            uid = "birthday-event",
+            title = "John's Birthday",
+            startTs = parseDate("2025-01-10 00:00"),
+            endTs = parseDate("2025-01-10 23:59"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "contact_birthday:12345:2025"
+        )
+        val birthdayId = eventsDao.insert(birthdayEvent)
+
+        // Anniversary event - should be preserved
+        val anniversaryEvent = createTestEvent(
+            uid = "anniversary-event",
+            title = "Wedding Anniversary",
+            startTs = parseDate("2025-01-10 00:00"),
+            endTs = parseDate("2025-01-10 23:59"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "contact_anniversary:12345:2025"
+        )
+        val anniversaryId = eventsDao.insert(anniversaryEvent)
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(0, deleted)
+        assertNotNull(eventsDao.getById(birthdayId))
+        assertNotNull(eventsDao.getById(anniversaryId))
+    }
+
+    @Test
+    fun `deleteOutsideLookback returns count of deleted events`() = runTest {
+        val cutoffTs = parseDate("2025-01-15 00:00")
+
+        // Create 3 old synced events that should be deleted
+        repeat(3) { i ->
+            eventsDao.insert(createTestEvent(
+                uid = "old-event-$i",
+                startTs = parseDate("2025-01-0${i + 1} 10:00"),
+                endTs = parseDate("2025-01-0${i + 1} 11:00"),
+                syncStatus = SyncStatus.SYNCED,
+                caldavUrl = "https://caldav.example.com/cal/old$i.ics"
+            ))
+        }
+
+        // Create 2 new events that should be preserved
+        repeat(2) { i ->
+            eventsDao.insert(createTestEvent(
+                uid = "new-event-$i",
+                startTs = parseDate("2025-01-2${i} 10:00"),
+                endTs = parseDate("2025-01-2${i} 11:00"),
+                syncStatus = SyncStatus.SYNCED,
+                caldavUrl = "https://caldav.example.com/cal/new$i.ics"
+            ))
+        }
+
+        val deleted = eventsDao.deleteOutsideLookback(cutoffTs)
+
+        assertEquals(3, deleted)
+    }
+
+    // ==================== getEtagMapForCalendar Tests ====================
+
+    @Test
+    fun `getEtagMapForCalendar returns etag entries in time range`() = runTest {
+        // Event in range with etag
+        val event1 = createTestEvent(
+            uid = "event-1",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/event1.ics"
+        )
+        val id1 = eventsDao.insert(event1)
+        eventsDao.updateEtag(id1, "etag-1")
+
+        // Event in range with different etag
+        val event2 = createTestEvent(
+            uid = "event-2",
+            startTs = parseDate("2025-01-16 10:00"),
+            endTs = parseDate("2025-01-16 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/event2.ics"
+        )
+        val id2 = eventsDao.insert(event2)
+        eventsDao.updateEtag(id2, "etag-2")
+
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-14 00:00"),
+            parseDate("2025-01-17 00:00")
+        )
+
+        assertEquals(2, entries.size)
+        val etags = entries.associate { it.caldavUrl to it.etag }
+        assertEquals("etag-1", etags["https://caldav.example.com/cal/event1.ics"])
+        assertEquals("etag-2", etags["https://caldav.example.com/cal/event2.ics"])
+    }
+
+    @Test
+    fun `getEtagMapForCalendar excludes events outside time range`() = runTest {
+        // Event before range
+        val oldEvent = createTestEvent(
+            uid = "old-event",
+            startTs = parseDate("2025-01-01 10:00"),
+            endTs = parseDate("2025-01-01 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/old.ics"
+        )
+        val oldId = eventsDao.insert(oldEvent)
+        eventsDao.updateEtag(oldId, "etag-old")
+
+        // Event in range
+        val inRangeEvent = createTestEvent(
+            uid = "in-range-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/inrange.ics"
+        )
+        val inRangeId = eventsDao.insert(inRangeEvent)
+        eventsDao.updateEtag(inRangeId, "etag-inrange")
+
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-10 00:00"),
+            parseDate("2025-01-20 00:00")
+        )
+
+        assertEquals(1, entries.size)
+        assertEquals("etag-inrange", entries[0].etag)
+    }
+
+    @Test
+    fun `getEtagMapForCalendar excludes events without caldavUrl or etag`() = runTest {
+        // Event without caldavUrl
+        val localEvent = createTestEvent(
+            uid = "local-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            caldavUrl = null
+        )
+        eventsDao.insert(localEvent)
+
+        // Event with caldavUrl but no etag
+        val noEtagEvent = createTestEvent(
+            uid = "no-etag-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/noetag.ics"
+        )
+        eventsDao.insert(noEtagEvent) // etag is null by default
+
+        // Event with both caldavUrl and etag
+        val goodEvent = createTestEvent(
+            uid = "good-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/good.ics"
+        )
+        val goodId = eventsDao.insert(goodEvent)
+        eventsDao.updateEtag(goodId, "etag-good")
+
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-14 00:00"),
+            parseDate("2025-01-16 00:00")
+        )
+
+        assertEquals(1, entries.size)
+        assertEquals("etag-good", entries[0].etag)
+    }
+
+    @Test
+    fun `getEtagMapForCalendar excludes PENDING_DELETE events`() = runTest {
+        // PENDING_DELETE event - should be excluded
+        val deletingEvent = createTestEvent(
+            uid = "deleting-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            syncStatus = SyncStatus.PENDING_DELETE,
+            caldavUrl = "https://caldav.example.com/cal/deleting.ics"
+        )
+        val deletingId = eventsDao.insert(deletingEvent)
+        eventsDao.updateEtag(deletingId, "etag-deleting")
+
+        // SYNCED event - should be included
+        val syncedEvent = createTestEvent(
+            uid = "synced-event",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://caldav.example.com/cal/synced.ics"
+        )
+        val syncedId = eventsDao.insert(syncedEvent)
+        eventsDao.updateEtag(syncedId, "etag-synced")
+
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-14 00:00"),
+            parseDate("2025-01-16 00:00")
+        )
+
+        assertEquals(1, entries.size)
+        assertEquals("etag-synced", entries[0].etag)
+    }
+
+    @Test
+    fun `getEtagMapForCalendar includes recurring events regardless of time range`() = runTest {
+        // Recurring event that started BEFORE the query range
+        // This simulates a weekly meeting that started 2 years ago
+        // CalDAV servers return it if ANY occurrence is in range, so we should too
+        val recurringEvent = createTestEvent(
+            uid = "recurring-old",
+            startTs = parseDate("2023-01-01 10:00"),  // 2 years before range
+            endTs = parseDate("2023-01-01 11:00"),
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            caldavUrl = "https://caldav.example.com/cal/recurring.ics"
+        )
+        val recurringId = eventsDao.insert(recurringEvent)
+        eventsDao.updateEtag(recurringId, "etag-recurring")
+
+        // Non-recurring event BEFORE range - should be excluded
+        val oldEvent = createTestEvent(
+            uid = "old-single",
+            startTs = parseDate("2023-01-01 10:00"),
+            endTs = parseDate("2023-01-01 11:00"),
+            caldavUrl = "https://caldav.example.com/cal/old.ics"
+        )
+        val oldId = eventsDao.insert(oldEvent)
+        eventsDao.updateEtag(oldId, "etag-old")
+
+        // Query for 2025 range - recurring should be included, old single should not
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-01 00:00"),
+            parseDate("2025-12-31 00:00")
+        )
+
+        assertEquals(1, entries.size)
+        assertEquals("etag-recurring", entries[0].etag)
+    }
+
+    @Test
+    fun `getEtagMapForCalendar includes recurring events in range and outside range`() = runTest {
+        // Recurring event IN the range
+        val recurringInRange = createTestEvent(
+            uid = "recurring-inrange",
+            startTs = parseDate("2025-01-15 10:00"),
+            endTs = parseDate("2025-01-15 11:00"),
+            rrule = "FREQ=DAILY",
+            caldavUrl = "https://caldav.example.com/cal/recurring-inrange.ics"
+        )
+        val inRangeId = eventsDao.insert(recurringInRange)
+        eventsDao.updateEtag(inRangeId, "etag-inrange")
+
+        // Recurring event BEFORE the range (should still be included)
+        val recurringOutside = createTestEvent(
+            uid = "recurring-outside",
+            startTs = parseDate("2020-01-01 10:00"),
+            endTs = parseDate("2020-01-01 11:00"),
+            rrule = "FREQ=YEARLY",
+            caldavUrl = "https://caldav.example.com/cal/recurring-outside.ics"
+        )
+        val outsideId = eventsDao.insert(recurringOutside)
+        eventsDao.updateEtag(outsideId, "etag-outside")
+
+        val entries = eventsDao.getEtagMapForCalendar(
+            calendarId,
+            parseDate("2025-01-14 00:00"),
+            parseDate("2025-01-16 00:00")
+        )
+
+        // Both recurring events should be included
+        assertEquals(2, entries.size)
+        val etags = entries.map { it.etag }.toSet()
+        assertTrue(etags.contains("etag-inrange"))
+        assertTrue(etags.contains("etag-outside"))
+    }
+
+    // ==================== Exception Events Cleanup Tests ====================
+
+    @Test
+    fun `deleteExceptionEventsBeforeCutoff deletes exception events before cutoff`() = runTest {
+        // Create master recurring event
+        val masterEvent = createTestEvent(
+            uid = "master-weekly",
+            startTs = parseDate("2024-01-01 10:00"),
+            endTs = parseDate("2024-01-01 11:00"),
+            rrule = "FREQ=WEEKLY",
+            caldavUrl = "https://caldav.example.com/master.ics"
+        )
+        val masterId = eventsDao.insert(masterEvent)
+
+        // Create exception event BEFORE cutoff (Jan 8 occurrence modified)
+        val oldException = createTestEvent(
+            uid = "master-weekly",  // Same UID as master (RFC 5545)
+            startTs = parseDate("2024-01-08 11:00"),  // Modified time
+            endTs = parseDate("2024-01-08 12:00"),
+            originalEventId = masterId,
+            originalInstanceTime = parseDate("2024-01-08 10:00"),  // Original time
+            caldavUrl = null  // Exceptions don't have caldavUrl
+        )
+        eventsDao.insert(oldException)
+
+        // Create exception event AFTER cutoff (Mar 11 occurrence modified)
+        val newException = createTestEvent(
+            uid = "master-weekly",
+            startTs = parseDate("2024-03-11 11:00"),
+            endTs = parseDate("2024-03-11 12:00"),
+            originalEventId = masterId,
+            originalInstanceTime = parseDate("2024-03-11 10:00"),
+            caldavUrl = null
+        )
+        eventsDao.insert(newException)
+
+        // Cutoff at Feb 1 - should delete Jan exception, keep Mar exception
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
+
+        assertEquals(1, deleted)
+
+        // Verify: master and new exception remain, old exception deleted
+        val remaining = eventsDao.getByCalendarId(calendarId).first()
+        assertEquals(2, remaining.size)
+        assertTrue(remaining.any { it.originalEventId == null })  // Master
+        assertTrue(remaining.any { it.originalInstanceTime == parseDate("2024-03-11 10:00") })  // New exception
+        assertFalse(remaining.any { it.originalInstanceTime == parseDate("2024-01-08 10:00") })  // Old deleted
+    }
+
+    @Test
+    fun `deleteExceptionEventsBeforeCutoff preserves non-exception events`() = runTest {
+        // Non-recurring event before cutoff
+        val regularEvent = createTestEvent(
+            uid = "regular-event",
+            startTs = parseDate("2024-01-15 10:00"),
+            endTs = parseDate("2024-01-15 11:00"),
+            caldavUrl = "https://caldav.example.com/regular.ics"
+        )
+        eventsDao.insert(regularEvent)
+
+        // Recurring master before cutoff
+        val masterEvent = createTestEvent(
+            uid = "master-event",
+            startTs = parseDate("2024-01-01 10:00"),
+            endTs = parseDate("2024-01-01 11:00"),
+            rrule = "FREQ=DAILY",
+            caldavUrl = "https://caldav.example.com/master.ics"
+        )
+        eventsDao.insert(masterEvent)
+
+        // Cutoff after both events
+        val cutoff = parseDate("2024-06-01 00:00")
+        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
+
+        // No exception events, so nothing deleted
+        assertEquals(0, deleted)
+
+        // Both events preserved
+        val remaining = eventsDao.getByCalendarId(calendarId).first()
+        assertEquals(2, remaining.size)
+    }
+
+    @Test
+    fun `deleteExceptionEventsBeforeCutoff handles multiple master events`() = runTest {
+        // Master 1
+        val master1 = createTestEvent(
+            uid = "master1",
+            startTs = parseDate("2024-01-01 10:00"),
+            endTs = parseDate("2024-01-01 11:00"),
+            rrule = "FREQ=WEEKLY",
+            caldavUrl = "https://caldav.example.com/master1.ics"
+        )
+        val master1Id = eventsDao.insert(master1)
+
+        // Master 2
+        val master2 = createTestEvent(
+            uid = "master2",
+            startTs = parseDate("2024-01-02 10:00"),
+            endTs = parseDate("2024-01-02 11:00"),
+            rrule = "FREQ=WEEKLY",
+            caldavUrl = "https://caldav.example.com/master2.ics"
+        )
+        val master2Id = eventsDao.insert(master2)
+
+        // Old exception for master1 (should be deleted)
+        eventsDao.insert(createTestEvent(
+            uid = "master1",
+            startTs = parseDate("2024-01-08 11:00"),
+            endTs = parseDate("2024-01-08 12:00"),
+            originalEventId = master1Id,
+            originalInstanceTime = parseDate("2024-01-08 10:00")
+        ))
+
+        // New exception for master1 (should be kept)
+        eventsDao.insert(createTestEvent(
+            uid = "master1",
+            startTs = parseDate("2024-03-04 11:00"),
+            endTs = parseDate("2024-03-04 12:00"),
+            originalEventId = master1Id,
+            originalInstanceTime = parseDate("2024-03-04 10:00")
+        ))
+
+        // Old exception for master2 (should be deleted)
+        eventsDao.insert(createTestEvent(
+            uid = "master2",
+            startTs = parseDate("2024-01-09 11:00"),
+            endTs = parseDate("2024-01-09 12:00"),
+            originalEventId = master2Id,
+            originalInstanceTime = parseDate("2024-01-09 10:00")
+        ))
+
+        // Cutoff at Feb 1
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
+
+        assertEquals(2, deleted)  // Two old exceptions from both masters
+
+        val remaining = eventsDao.getByCalendarId(calendarId).first()
+        assertEquals(3, remaining.size)  // 2 masters + 1 new exception
+    }
+
+    @Test
+    fun `deleteExceptionEventsBeforeCutoff uses originalInstanceTime not startTs`() = runTest {
+        // Master event
+        val master = createTestEvent(
+            uid = "master",
+            startTs = parseDate("2024-01-01 10:00"),
+            endTs = parseDate("2024-01-01 11:00"),
+            rrule = "FREQ=WEEKLY"
+        )
+        val masterId = eventsDao.insert(master)
+
+        // Exception: original time is Jan 8, but moved to Mar 1 (after cutoff)
+        // originalInstanceTime is before cutoff, so should be deleted
+        val movedException = createTestEvent(
+            uid = "master",
+            startTs = parseDate("2024-03-01 10:00"),  // Moved to March
+            endTs = parseDate("2024-03-01 11:00"),
+            originalEventId = masterId,
+            originalInstanceTime = parseDate("2024-01-08 10:00")  // Original was January
+        )
+        eventsDao.insert(movedException)
+
+        // Cutoff Feb 1 - originalInstanceTime (Jan 8) is before, so delete
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
+
+        assertEquals(1, deleted)
+
+        val remaining = eventsDao.getByCalendarId(calendarId).first()
+        assertEquals(1, remaining.size)  // Only master remains
+    }
+
+    @Test
+    fun `deleteExceptionEventsBeforeCutoff returns count of deleted events`() = runTest {
+        val master = createTestEvent(
+            uid = "master",
+            startTs = parseDate("2024-01-01 10:00"),
+            endTs = parseDate("2024-01-01 11:00"),
+            rrule = "FREQ=DAILY"
+        )
+        val masterId = eventsDao.insert(master)
+
+        // Create 5 exception events, all before cutoff
+        repeat(5) { i ->
+            eventsDao.insert(createTestEvent(
+                uid = "master",
+                startTs = parseDate("2024-01-${10 + i} 11:00"),
+                endTs = parseDate("2024-01-${10 + i} 12:00"),
+                originalEventId = masterId,
+                originalInstanceTime = parseDate("2024-01-${10 + i} 10:00")
+            ))
+        }
+
+        val cutoff = parseDate("2024-02-01 00:00")
+        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
+
+        assertEquals(5, deleted)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createTestEvent(

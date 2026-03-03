@@ -21,12 +21,30 @@ interface PendingOperationsDao {
 
     /**
      * Get all operations ready for processing.
-     * Ready = PENDING status AND next_retry_at <= now.
+     *
+     * Ready = PENDING status AND next_retry_at <= now, with an additional guard:
+     * DELETE operations with a linkedMoveId are excluded if a pending CREATE
+     * with the same linkedMoveId exists. This ensures cross-account moves
+     * complete CREATE before DELETE runs (prevents event loss).
+     *
+     * @see PendingOperation.linkedMoveId
      */
     @Query("""
-        SELECT * FROM pending_operations
+        SELECT * FROM pending_operations po
         WHERE status = 'PENDING'
-        AND next_retry_at <= :now
+          AND next_retry_at <= :now
+          AND (
+            -- Not a linked DELETE, OR
+            po.linked_move_id IS NULL
+            OR po.operation != 'DELETE'
+            -- Linked DELETE: only ready if no pending CREATE with same linkedMoveId
+            OR NOT EXISTS (
+                SELECT 1 FROM pending_operations linked
+                WHERE linked.linked_move_id = po.linked_move_id
+                  AND linked.operation = 'CREATE'
+                  AND linked.status = 'PENDING'
+            )
+          )
         ORDER BY created_at ASC
     """)
     suspend fun getReadyOperations(now: Long): List<PendingOperation>
@@ -357,4 +375,22 @@ interface PendingOperationsDao {
      */
     @Query("UPDATE pending_operations SET target_url = :targetUrl WHERE id = :id")
     suspend fun updateTargetUrl(id: Long, targetUrl: String)
+
+    // ========== Cross-Account Move Linked Operations (v23.2.0) ==========
+
+    /**
+     * Remove linked DELETE when CREATE permanently fails.
+     *
+     * In cross-account moves, CREATE and DELETE are queued with the same linkedMoveId.
+     * If CREATE permanently fails (e.g., auth error after max retries), the DELETE
+     * becomes orphaned. This method cleans it up to prevent queue pollution.
+     *
+     * @param linkedMoveId The UUID linking the CREATE and DELETE operations
+     */
+    @Query("""
+        DELETE FROM pending_operations
+        WHERE linked_move_id = :linkedMoveId
+          AND operation = 'DELETE'
+    """)
+    suspend fun deleteLinkedDelete(linkedMoveId: String)
 }

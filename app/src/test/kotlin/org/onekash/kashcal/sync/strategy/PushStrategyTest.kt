@@ -927,6 +927,266 @@ class PushStrategyTest {
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
     }
 
+    // ========== Null Etag PROPFIND Recovery (v23.2.0) ==========
+
+    @Test
+    fun `pushAll recovers null etag via PROPFIND and updates successfully`() = runTest {
+        // Given: event with caldavUrl but etag=null (server omitted <getetag> during pull)
+        val eventNullEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = null,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventNullEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // PROPFIND recovers the etag
+        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returns CalDavResult.success("recovered-etag")
+        coEvery { eventsDao.updateEtag(eventNullEtag.id, "recovered-etag") } just Runs
+        // PUT with recovered etag succeeds
+        coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
+            CalDavResult.success("new-etag")
+        coEvery { eventsDao.markSynced(eventNullEtag.id, "new-etag", any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assert(success.eventsUpdated == 1)
+        assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
+
+        // Verify PROPFIND was called to recover etag
+        coVerify { client.fetchEtag(eventNullEtag.caldavUrl!!) }
+        // Verify recovered etag was persisted to DB
+        coVerify { eventsDao.updateEtag(eventNullEtag.id, "recovered-etag") }
+        // Verify PUT used recovered etag
+        coVerify { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) }
+        // Verify final markSynced
+        coVerify { eventsDao.markSynced(eventNullEtag.id, "new-etag", any()) }
+    }
+
+    @Test
+    fun `pushAll retries when null etag and PROPFIND fails with network error`() = runTest {
+        // Given: event with caldavUrl but etag=null, PROPFIND returns networkError (isRetryable=true)
+        // TDD Pre-Test: This test should FAIL before the fix is implemented
+        // because the current code returns isRetryable=false unconditionally.
+        val eventNullEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = null,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventNullEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // PROPFIND fails with network error (should be retryable)
+        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returns CalDavResult.networkError("Connection failed")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 1)
+
+        // Verify PROPFIND was attempted
+        coVerify { client.fetchEtag(eventNullEtag.caldavUrl!!) }
+        // Verify scheduleRetry was called (network error IS retryable)
+        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), any(), any()) }
+        // Verify markFailed was NOT called
+        coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
+        // Verify no updateEvent call was made (can't update without etag)
+        coVerify(exactly = 0) { client.updateEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `pushAll fails permanently when null etag and PROPFIND fails with auth error`() = runTest {
+        // Given: event with caldavUrl but etag=null, PROPFIND returns authError (isRetryable=false)
+        // Auth errors should NOT be retried - they need user intervention
+        val eventNullEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = null,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventNullEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // PROPFIND fails with auth error (should NOT be retryable)
+        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returns CalDavResult.authError("Invalid credentials")
+        coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        assert((result as PushResult.Success).operationsFailed == 1)
+
+        // Verify PROPFIND was attempted
+        coVerify { client.fetchEtag(eventNullEtag.caldavUrl!!) }
+        // Verify markFailed was called (auth error is NOT retryable)
+        coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
+        // Verify scheduleRetry was NOT called
+        coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `pushAll triggers PROPFIND when etag is empty string`() = runTest {
+        // Given: event with empty string etag (edge case from Zoho servers)
+        // TDD Pre-Test: This test should FAIL before the fix is implemented
+        // because current code only checks `!= null`, not `isNullOrEmpty()`.
+        val eventEmptyEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "",  // Empty string, not null
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventEmptyEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(any()) } just Runs
+        coEvery { eventsDao.getById(eventEmptyEtag.id) } returns eventEmptyEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // PROPFIND recovers the etag
+        coEvery { client.fetchEtag(eventEmptyEtag.caldavUrl!!) } returns CalDavResult.success("recovered-etag")
+        coEvery { eventsDao.updateEtag(eventEmptyEtag.id, "recovered-etag") } just Runs
+        // PUT with recovered etag succeeds
+        coEvery { client.updateEvent(eventEmptyEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
+            CalDavResult.success("new-etag")
+        coEvery { eventsDao.markSynced(eventEmptyEtag.id, "new-etag", any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assert(success.eventsUpdated == 1) { "Expected 1 update but got ${success.eventsUpdated}" }
+        assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
+
+        // Verify PROPFIND was called (empty string should trigger recovery like null)
+        coVerify { client.fetchEtag(eventEmptyEtag.caldavUrl!!) }
+        // Verify recovered etag was persisted to DB
+        coVerify { eventsDao.updateEtag(eventEmptyEtag.id, "recovered-etag") }
+        // Verify PUT used recovered etag
+        coVerify { client.updateEvent(eventEmptyEtag.caldavUrl!!, any(), eq("recovered-etag")) }
+    }
+
+    @Test
+    fun `pushAll with empty etag and PROPFIND network error schedules retry`() = runTest {
+        // Combined test: empty string etag (Chunk 2) + PROPFIND network failure (Chunk 1)
+        // Verifies both fixes work together
+        val eventEmptyEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = "",  // Empty string
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventEmptyEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventEmptyEtag.id) } returns eventEmptyEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // PROPFIND fails with network error
+        coEvery { client.fetchEtag(eventEmptyEtag.caldavUrl!!) } returns CalDavResult.networkError("Timeout")
+        coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+
+        // Empty etag should trigger PROPFIND (Chunk 2)
+        coVerify { client.fetchEtag(eventEmptyEtag.caldavUrl!!) }
+        // Network error should schedule retry (Chunk 1)
+        coVerify { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
+        // Should NOT mark as failed
+        coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
+    }
+
+    @Test
+    fun `pushAll recovers null etag via PROPFIND then handles 412 retry`() = runTest {
+        // Given: null etag → PROPFIND recovers → PUT gets 412 → normal 412 retry flow
+        val eventNullEtag = testEvent.copy(
+            caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
+            etag = null,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 2L,
+            eventId = eventNullEtag.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
+        coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        // 1st PROPFIND: recover null etag → "recovered-etag"
+        // 2nd fetchEtag: 412 retry → "fresh-etag"
+        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returnsMany listOf(
+            CalDavResult.success("recovered-etag"),
+            CalDavResult.success("fresh-etag")
+        )
+        coEvery { eventsDao.updateEtag(eventNullEtag.id, any()) } just Runs
+        // PUT with recovered etag → 412
+        coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
+            CalDavResult.conflictError("Modified on server")
+        // 412 retry PUT with fresh etag → success
+        coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("fresh-etag")) } returns
+            CalDavResult.success("final-etag")
+        coEvery { eventsDao.markSynced(eventNullEtag.id, "final-etag", any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assert(success.eventsUpdated == 1)
+        assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
+
+        // Verify the full sequence: PROPFIND → PUT(412) → PROPFIND → PUT(success)
+        coVerify(exactly = 2) { client.fetchEtag(eventNullEtag.caldavUrl!!) }
+        coVerify { eventsDao.markSynced(eventNullEtag.id, "final-etag", any()) }
+    }
+
     // ========== Batch Query Optimization (v16.5.5) ==========
 
     @Test

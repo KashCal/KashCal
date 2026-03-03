@@ -193,6 +193,34 @@ interface EventsDao {
     """)
     suspend fun getInRange(startTs: Long, endTs: Long): List<Event>
 
+    /**
+     * Get etag map for calendar events in time range.
+     * Memory-efficient alternative to loading full Event objects.
+     * Used by pullFull() for etag-based comparison to skip unchanged events.
+     *
+     * Includes recurring events regardless of their first occurrence time because
+     * CalDAV servers return recurring events if ANY occurrence is in the range
+     * (RFC 4791 time-range filter). Without this, recurring events that started
+     * before the lookback window would be re-downloaded unnecessarily.
+     *
+     * @param calendarId Calendar to query
+     * @param startTs Range start (epoch ms)
+     * @param endTs Range end (epoch ms)
+     * @return List of (caldavUrl, etag) pairs for events with both values non-null
+     */
+    @Query("""
+        SELECT caldav_url, etag FROM events
+        WHERE calendar_id = :calendarId
+        AND (
+            (end_ts >= :startTs AND start_ts <= :endTs)
+            OR rrule IS NOT NULL
+        )
+        AND caldav_url IS NOT NULL
+        AND etag IS NOT NULL
+        AND sync_status != 'PENDING_DELETE'
+    """)
+    suspend fun getEtagMapForCalendar(calendarId: Long, startTs: Long, endTs: Long): List<EtagEntry>
+
     // ========== Read Operations - Recurring Events ==========
 
     /**
@@ -318,6 +346,30 @@ interface EventsDao {
         AND sync_status != 'PENDING_DELETE'
     """)
     suspend fun getEtagsByCalendarId(calendarId: Long): List<EtagEntry>
+
+    /**
+     * Get etags for synced events in a calendar within a time range (recurring-safe).
+     *
+     * Used by etag-based fallback sync to match the server's time-windowed query,
+     * preventing false deletions of events outside the sync window.
+     *
+     * Recurring events (rrule IS NOT NULL) are always included regardless of time range
+     * because their start_ts/end_ts represent only the first occurrence (CLAUDE.md Pattern 5),
+     * while CalDAV servers expand recurrences in their time-range filter.
+     *
+     * @param calendarId Calendar to get etags for
+     * @param startTs Start of time window (epoch ms)
+     * @param endTs End of time window (epoch ms)
+     * @return List of (caldavUrl, etag) pairs
+     */
+    @Query("""
+        SELECT caldav_url, etag FROM events
+        WHERE calendar_id = :calendarId
+        AND caldav_url IS NOT NULL
+        AND sync_status != 'PENDING_DELETE'
+        AND (rrule IS NOT NULL OR (end_ts >= :startTs AND start_ts <= :endTs))
+    """)
+    suspend fun getEtagsByCalendarIdInRange(calendarId: Long, startTs: Long, endTs: Long): List<EtagEntry>
 
     // ========== Write Operations ==========
 
@@ -819,6 +871,54 @@ interface EventsDao {
         )
     """)
     suspend fun deleteDuplicateMasterEvents(): Int
+
+    // ========== Lookback Cleanup ==========
+
+    /**
+     * Delete synced CalDAV events outside the lookback window.
+     *
+     * Uses end_ts for all events. For all-day events stored in UTC, there may be
+     * up to 24 hours of fuzziness at the boundary, but this is acceptable for
+     * lookback windows of weeks/months.
+     *
+     * Preserves:
+     * - Events with pending sync status (need to sync first)
+     * - Recurring master events (would orphan occurrences)
+     * - Exception events (linked to master via original_event_id)
+     * - Local calendar events (caldav_url IS NULL)
+     * - Birthday/anniversary events (caldav_url starts with contact_birthday: or contact_anniversary:)
+     *
+     * @param cutoffTs Timestamp cutoff - events ending before this are deleted (epoch ms)
+     * @return Number of events deleted
+     */
+    @Query("""
+        DELETE FROM events
+        WHERE sync_status = 'SYNCED'
+        AND rrule IS NULL
+        AND original_event_id IS NULL
+        AND caldav_url IS NOT NULL
+        AND caldav_url NOT LIKE 'contact_birthday:%'
+        AND caldav_url NOT LIKE 'contact_anniversary:%'
+        AND end_ts < :cutoffTs
+    """)
+    suspend fun deleteOutsideLookback(cutoffTs: Long): Int
+
+    /**
+     * Delete exception events (modified single occurrences) before a cutoff.
+     * Called when shrinking sync lookback to clean up orphaned exception events.
+     *
+     * Exception events have original_instance_time which is the timestamp of
+     * the original occurrence they modify. This is used as the cutoff check.
+     *
+     * @param cutoffTs Timestamp cutoff - exceptions before this are deleted
+     * @return Number of exception events deleted
+     */
+    @Query("""
+        DELETE FROM events
+        WHERE original_event_id IS NOT NULL
+        AND original_instance_time < :cutoffTs
+    """)
+    suspend fun deleteExceptionEventsBeforeCutoff(cutoffTs: Long): Int
 
     // ========== iCloud URL Migration ==========
 

@@ -17,7 +17,8 @@ import androidx.room.PrimaryKey
     tableName = "pending_operations",
     indices = [
         Index(value = ["event_id"]),
-        Index(value = ["status", "next_retry_at"])
+        Index(value = ["status", "next_retry_at"]),
+        Index(value = ["linked_move_id"])  // For guard query in getReadyOperations()
     ]
 )
 data class PendingOperation(
@@ -157,7 +158,23 @@ data class PendingOperation(
      * Added in v21.5.3.
      */
     @ColumnInfo(name = "failed_at")
-    val failedAt: Long? = null
+    val failedAt: Long? = null,
+
+    /**
+     * Links CREATE and DELETE operations in cross-account calendar moves.
+     *
+     * DELETE operations with a linkedMoveId are blocked by a guard query in
+     * getReadyOperations() until no pending CREATE with the same linkedMoveId exists.
+     * This prevents event loss when DELETE runs before CREATE completes on a
+     * different account's sync cycle.
+     *
+     * UUID generated at queue time, shared by both operations in the pair.
+     * Null for non-cross-account operations (same-account MOVE, regular CRUD).
+     *
+     * Added in v23.2.0.
+     */
+    @ColumnInfo(name = "linked_move_id")
+    val linkedMoveId: String? = null
 ) {
     // ========== Computed Properties ==========
 

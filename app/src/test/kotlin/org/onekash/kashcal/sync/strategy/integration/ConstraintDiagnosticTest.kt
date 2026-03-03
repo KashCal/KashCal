@@ -135,9 +135,9 @@ class ConstraintDiagnosticTest {
 
         val eventsDao = db.eventsDao()
         val occurrencesDao = db.occurrencesDao()
-        val occurrenceGenerator = OccurrenceGenerator(db, occurrencesDao, eventsDao)
         val calendarRepository = CalendarRepositoryImpl(db.calendarsDao())
         val dataStore = KashCalDataStore(context)
+        val occurrenceGenerator = OccurrenceGenerator(db, occurrencesDao, eventsDao, dataStore)
         val syncSessionStore = SyncSessionStore(context)
 
         val pullStrategy = PullStrategy(

@@ -32,7 +32,7 @@ private const val TAG = "ContactBirthdayRepo"
 data class ContactBirthday(
     val lookupKey: String,
     val displayName: String,
-    val birthday: BirthdayInfo
+    val birthday: ContactEventDate
 )
 
 /**
@@ -62,8 +62,9 @@ class ContactBirthdayRepository @Inject constructor(
         const val CALENDAR_DISPLAY_NAME = "Contact Birthdays"
         const val SOURCE_PREFIX = "contact_birthday"
 
-        // Caldav URL format: "contact_birthday:{lookupKey}"
-        fun getCaldavUrl(lookupKey: String): String = "$SOURCE_PREFIX:$lookupKey"
+        // Caldav URL format: "contact_birthday:{lookupKey}:{month}-{day}"
+        fun getCaldavUrl(lookupKey: String, month: Int, day: Int): String =
+            "$SOURCE_PREFIX:$lookupKey:$month-$day"
     }
 
     // ========== Calendar Management ==========
@@ -165,25 +166,17 @@ class ContactBirthdayRepository @Inject constructor(
     // ========== Sync Operations ==========
 
     /**
-     * Sync result from birthday sync operation.
-     */
-    sealed class SyncResult {
-        data class Success(val added: Int, val updated: Int, val deleted: Int) : SyncResult()
-        data class Error(val message: String) : SyncResult()
-    }
-
-    /**
      * Sync birthdays from phone contacts.
      *
-     * @return SyncResult indicating success or failure
+     * @return ContactEventSyncResult indicating success or failure
      */
-    suspend fun syncBirthdays(): SyncResult = withContext(Dispatchers.IO) {
+    suspend fun syncBirthdays(): ContactEventSyncResult = withContext(Dispatchers.IO) {
         try {
             val calendarId = getBirthdayCalendarId()
-                ?: return@withContext SyncResult.Error("Birthday calendar not created")
+                ?: return@withContext ContactEventSyncResult.Error("Birthday calendar not created")
 
             val calendar = calendarsDao.getById(calendarId)
-                ?: return@withContext SyncResult.Error("Calendar not found")
+                ?: return@withContext ContactEventSyncResult.Error("Calendar not found")
 
             // Read birthday reminder setting
             val reminderMinutes = dataStore.getBirthdayReminder()
@@ -194,8 +187,8 @@ class ContactBirthdayRepository @Inject constructor(
 
             // Get existing birthday events
             val existingEvents = eventsDao.getAllMasterEventsForCalendar(calendarId)
-            val existingByLookupKey = existingEvents.associateBy { event ->
-                event.caldavUrl?.removePrefix("$SOURCE_PREFIX:")
+            val existingByCaldavUrl = existingEvents.associateBy { event ->
+                event.caldavUrl
             }
 
             var added = 0
@@ -203,15 +196,16 @@ class ContactBirthdayRepository @Inject constructor(
             var deleted = 0
 
             // Process each contact birthday
-            val processedLookupKeys = mutableSetOf<String>()
+            val processedCaldavUrls = mutableSetOf<String>()
             for (contact in contactBirthdays) {
-                processedLookupKeys.add(contact.lookupKey)
+                val caldavUrl = getCaldavUrl(contact.lookupKey, contact.birthday.month, contact.birthday.day)
+                processedCaldavUrls.add(caldavUrl)
 
-                val existingEvent = existingByLookupKey[contact.lookupKey]
+                val existingEvent = existingByCaldavUrl[caldavUrl]
                 if (existingEvent != null) {
                     // Update if changed (including reminder changes)
                     val expectedReminders = if (reminderMinutes > 0) {
-                        listOf(minutesToIsoDuration(reminderMinutes))
+                        listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
                     } else {
                         null
                     }
@@ -226,7 +220,7 @@ class ContactBirthdayRepository @Inject constructor(
                     val startTsNeedsMigration = existingYear > currentYear
 
                     val needsUpdate = existingEvent.title != contact.displayName ||
-                            ContactBirthdayUtils.decodeBirthYear(existingEvent.description) != contact.birthday.year ||
+                            ContactEventUtils.decodeEventYear(existingEvent.description) != contact.birthday.year ||
                             existingEvent.reminders != expectedReminders ||
                             startTsNeedsMigration
 
@@ -258,8 +252,8 @@ class ContactBirthdayRepository @Inject constructor(
             }
 
             // Delete orphaned events (contacts removed or birthday removed)
-            for ((lookupKey, event) in existingByLookupKey) {
-                if (lookupKey != null && lookupKey !in processedLookupKeys) {
+            for ((caldavUrl, event) in existingByCaldavUrl) {
+                if (caldavUrl != null && caldavUrl !in processedCaldavUrls) {
                     reminderScheduler.cancelRemindersForEvent(event.id)
                     eventsDao.deleteById(event.id)
                     deleted++
@@ -268,14 +262,14 @@ class ContactBirthdayRepository @Inject constructor(
             }
 
             Log.i(TAG, "Sync complete: $added added, $updated updated, $deleted deleted")
-            SyncResult.Success(added, updated, deleted)
+            ContactEventSyncResult.Success(added, updated, deleted)
 
         } catch (e: SecurityException) {
             Log.e(TAG, "Permission denied reading contacts", e)
-            SyncResult.Error("Contacts permission denied")
+            ContactEventSyncResult.Error("Contacts permission denied")
         } catch (e: Exception) {
             Log.e(TAG, "Error syncing birthdays", e)
-            SyncResult.Error(e.message ?: e.javaClass.simpleName)
+            ContactEventSyncResult.Error(e.message ?: e.javaClass.simpleName)
         }
     }
 
@@ -321,7 +315,7 @@ class ContactBirthdayRepository @Inject constructor(
                     val birthdayString = it.getString(birthdayIndex)
 
                     if (lookupKey != null && displayName != null) {
-                        val birthdayInfo = ContactBirthdayUtils.parseBirthday(birthdayString)
+                        val birthdayInfo = ContactEventUtils.parseContactDate(birthdayString)
                         if (birthdayInfo != null) {
                             birthdays.add(ContactBirthday(lookupKey, displayName, birthdayInfo))
                         }
@@ -350,13 +344,13 @@ class ContactBirthdayRepository @Inject constructor(
         reminderMinutes: Int = KashCalDataStore.REMINDER_OFF
     ): Event {
         val birthday = contact.birthday
-        val startTs = ContactBirthdayUtils.getNextBirthdayTimestamp(birthday.month, birthday.day)
+        val startTs = ContactEventUtils.getNextEventTimestamp(birthday.month, birthday.day)
         // All-day event: end is same as start (Room handles all-day correctly)
         val endTs = startTs + (24 * 60 * 60 * 1000) - 1 // End of day
 
         // Convert reminder minutes to ISO 8601 duration format
         val reminders = if (reminderMinutes > 0) {
-            listOf(minutesToIsoDuration(reminderMinutes))
+            listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
         } else {
             null
         }
@@ -366,42 +360,17 @@ class ContactBirthdayRepository @Inject constructor(
             uid = if (existingId == 0L) "${UUID.randomUUID()}@kashcal.birthday" else "",
             calendarId = calendarId,
             title = contact.displayName,
-            description = ContactBirthdayUtils.encodeBirthYear(birthday.year),
+            description = ContactEventUtils.encodeEventYear(birthday.year),
             startTs = startTs,
             endTs = endTs,
             timezone = "UTC",
             isAllDay = true,
-            rrule = ContactBirthdayUtils.generateBirthdayRRule(),
-            caldavUrl = getCaldavUrl(contact.lookupKey),
+            rrule = ContactEventUtils.generateYearlyRRule(),
+            caldavUrl = getCaldavUrl(contact.lookupKey, birthday.month, birthday.day),
             syncStatus = SyncStatus.SYNCED, // Read-only, no push needed
             dtstamp = System.currentTimeMillis(),
             reminders = reminders
         )
-    }
-
-    /**
-     * Convert reminder minutes to ISO 8601 duration format.
-     * Positive minutes = before event (negative trigger in iCal).
-     */
-    private fun minutesToIsoDuration(minutes: Int): String {
-        return when {
-            minutes <= 0 -> "PT0M"
-            minutes < 60 -> "-PT${minutes}M"
-            minutes < 1440 -> {
-                val hours = minutes / 60
-                val mins = minutes % 60
-                if (mins == 0) "-PT${hours}H" else "-PT${hours}H${mins}M"
-            }
-            minutes < 10080 -> { // Less than 1 week
-                val days = minutes / 1440
-                val hours = (minutes % 1440) / 60
-                if (hours == 0) "-P${days}D" else "-P${days}DT${hours}H"
-            }
-            else -> {
-                val weeks = minutes / 10080
-                "-P${weeks}W"
-            }
-        }
     }
 
     /**

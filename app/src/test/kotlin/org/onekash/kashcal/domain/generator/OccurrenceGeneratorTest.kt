@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.util.TimeZone
@@ -48,7 +49,7 @@ class OccurrenceGeneratorTest {
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         // Create test account and calendar
         runTest {
@@ -1736,6 +1737,89 @@ class OccurrenceGeneratorTest {
             "Garbage RRULE should not delete existing occurrences",
             5,
             occurrencesAfter.size
+        )
+    }
+
+    // ========== Old Recurring Event Tests ==========
+
+    @Test
+    fun `regenerateOccurrences generates current occurrences for old daily event`() = runTest {
+        // Create daily event that started 10 years ago (3650+ days).
+        // Bug: old code starts RRULE iteration from DTSTART, hits MAX_ITERATIONS=1000
+        // at ~2.7 years, never reaches the present.
+        val tenYearsAgo = System.currentTimeMillis() - (10L * 365 * 24 * 60 * 60 * 1000)
+        val event = createAndInsertEvent(
+            startTs = tenYearsAgo,
+            endTs = tenYearsAgo + 3600000,  // 1 hour duration
+            rrule = "FREQ=DAILY"
+        )
+
+        val count = occurrenceGenerator.regenerateOccurrences(event)
+
+        // Must have occurrences near today (within last 30 days)
+        val thirtyDaysAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000)
+        val recentOccurrences = database.occurrencesDao().getForEvent(event.id)
+            .filter { it.startTs >= thirtyDaysAgo }
+        assertTrue(
+            "Expected recent occurrences but got none (total=$count)",
+            recentOccurrences.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `regenerateOccurrences handles high frequency within expansion window`() = runTest {
+        // Hourly event started 1 year ago — within the past expansion window.
+        // 365 days × 24 hours = 8,760 occurrences in past year alone.
+        // With MAX_ITERATIONS=10000, should exceed old 1000 cap AND reach present.
+        val oneYearAgo = System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)
+        val event = createAndInsertEvent(
+            startTs = oneYearAgo,
+            endTs = oneYearAgo + 1800000,  // 30 min duration
+            rrule = "FREQ=HOURLY"
+        )
+
+        val count = occurrenceGenerator.regenerateOccurrences(event)
+
+        assertTrue(
+            "Expected > 1000 occurrences for hourly event but got $count",
+            count > 1000
+        )
+        // Must also have occurrences near today (proves window reaches present)
+        val thirtyDaysAgo = System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000)
+        val recentOccurrences = database.occurrencesDao().getForEvent(event.id)
+            .filter { it.startTs >= thirtyDaysAgo }
+        assertTrue(
+            "Expected recent occurrences for hourly event but got none",
+            recentOccurrences.isNotEmpty()
+        )
+    }
+
+    @Test
+    fun `regenerateOccurrences preserves full range for recent event`() = runTest {
+        // 6-month-old daily event — within the 24-month window.
+        // coerceAtLeast(event.startTs) should keep rangeStart = event.startTs,
+        // so occurrences start from the actual event start, not now-24months.
+        val sixMonthsAgo = System.currentTimeMillis() - (180L * 24 * 60 * 60 * 1000)
+        val event = createAndInsertEvent(
+            startTs = sixMonthsAgo,
+            endTs = sixMonthsAgo + 3600000,
+            rrule = "FREQ=DAILY"
+        )
+
+        val count = occurrenceGenerator.regenerateOccurrences(event)
+
+        // Should have ~180 past + ~720 future ≈ 900 occurrences
+        assertTrue(
+            "Expected >= 180 occurrences but got $count",
+            count >= 180
+        )
+        // Verify oldest occurrence is near the event start (not clipped to now-24months)
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        val oldest = occurrences.minByOrNull { it.startTs }!!
+        val diffFromStart = oldest.startTs - sixMonthsAgo
+        assertTrue(
+            "Oldest occurrence should be within 2 days of event start, but was ${diffFromStart / 86400000}d away",
+            diffFromStart < 2 * 24 * 60 * 60 * 1000
         )
     }
 

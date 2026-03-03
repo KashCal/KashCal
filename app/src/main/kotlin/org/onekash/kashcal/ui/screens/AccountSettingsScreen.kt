@@ -13,12 +13,14 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
@@ -66,12 +68,14 @@ import org.onekash.kashcal.ui.screens.settings.SectionHeader
 import org.onekash.kashcal.ui.screens.settings.SettingsCard
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
+import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.formatDuration
+import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.ui.shared.formatReminderShort
 import org.onekash.kashcal.ui.shared.maskEmail
 
@@ -154,6 +158,8 @@ fun AccountSettingsScreen(
     syncIntervalMs: Long = 24 * 60 * 60 * 1000L,
     onSyncIntervalChange: (Long) -> Unit = {},
     onForceFullSync: () -> Unit = {},
+    syncLookbackDays: Int = KashCalDataStore.DEFAULT_SYNC_PAST_DAYS,
+    onSyncLookbackChange: (Int) -> Unit = {},
     // Default calendar
     defaultCalendarId: Long? = null,
     onDefaultCalendarSelect: (Long) -> Unit = {},
@@ -185,8 +191,10 @@ fun AccountSettingsScreen(
     // Navigation to detail screens
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
-    // Contact birthdays (for subscription count)
-    contactBirthdaysEnabled: Boolean = false,
+    onNavigateToBirthdaysAnniversaries: () -> Unit = {},
+    // Contact event counts (for B&A row subtitle)
+    birthdayCount: Int = 0,
+    anniversaryCount: Int = 0,
     // Device calendars
     deviceCalendarsEnabled: Boolean = false,
     hasCalendarPermission: Boolean = false,
@@ -240,6 +248,8 @@ fun AccountSettingsScreen(
                     syncIntervalMs = syncIntervalMs,
                     onSyncIntervalChange = onSyncIntervalChange,
                     onForceFullSync = onForceFullSync,
+                    syncLookbackDays = syncLookbackDays,
+                    onSyncLookbackChange = onSyncLookbackChange,
                     defaultCalendarId = defaultCalendarId,
                     onDefaultCalendarSelect = onDefaultCalendarSelect,
                     subscriptions = subscriptions,
@@ -262,7 +272,9 @@ fun AccountSettingsScreen(
                     onImportCalendarFile = onImportCalendarFile,
                     onExportCalendar = onExportCalendar,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
-                    contactBirthdaysEnabled = contactBirthdaysEnabled,
+                    onNavigateToBirthdaysAnniversaries = onNavigateToBirthdaysAnniversaries,
+                    birthdayCount = birthdayCount,
+                    anniversaryCount = anniversaryCount,
                     deviceCalendarsEnabled = deviceCalendarsEnabled,
                     hasCalendarPermission = hasCalendarPermission,
                     deviceCalendars = deviceCalendars,
@@ -358,6 +370,8 @@ private fun FlatSettingsContent(
     syncIntervalMs: Long,
     onSyncIntervalChange: (Long) -> Unit,
     onForceFullSync: () -> Unit,
+    syncLookbackDays: Int,
+    onSyncLookbackChange: (Int) -> Unit,
     defaultCalendarId: Long?,
     onDefaultCalendarSelect: (Long) -> Unit,
     subscriptions: List<IcsSubscriptionUiModel>,
@@ -380,7 +394,9 @@ private fun FlatSettingsContent(
     onImportCalendarFile: () -> Unit,
     onExportCalendar: (Long) -> Unit,
     onNavigateToSubscriptions: () -> Unit,
-    contactBirthdaysEnabled: Boolean,
+    onNavigateToBirthdaysAnniversaries: () -> Unit,
+    birthdayCount: Int,
+    anniversaryCount: Int,
     deviceCalendarsEnabled: Boolean,
     hasCalendarPermission: Boolean,
     deviceCalendars: List<DeviceCalendar>,
@@ -415,6 +431,7 @@ private fun FlatSettingsContent(
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
     var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
+    var showSyncLookbackSheet by remember { mutableStateOf(false) }
 
     val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
@@ -423,6 +440,7 @@ private fun FlatSettingsContent(
     val timeFormatSheetState = rememberModalBottomSheetState()
     val firstDayOfWeekSheetState = rememberModalBottomSheetState()
     val eventDurationSheetState = rememberModalBottomSheetState()
+    val syncLookbackSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
 
     // Derived values
@@ -482,8 +500,21 @@ private fun FlatSettingsContent(
                 onClick = onNavigateToAccounts
             )
 
+            // Birthdays & Anniversaries row
+            val baSubtitle = buildList {
+                if (birthdayCount > 0) add("$birthdayCount birthday${if (birthdayCount != 1) "s" else ""}")
+                if (anniversaryCount > 0) add("$anniversaryCount anniversar${if (anniversaryCount != 1) "ies" else "y"}")
+            }.joinToString(", ").ifEmpty { null }
+
+            SettingsRow(
+                icon = Icons.Default.Cake,
+                label = stringResource(R.string.birthdays_anniversaries_row_label),
+                subtitle = baSubtitle,
+                onClick = onNavigateToBirthdaysAnniversaries
+            )
+
             // Subscriptions row
-            val subscriptionCount = subscriptions.size + (if (contactBirthdaysEnabled) 1 else 0)
+            val subscriptionCount = subscriptions.size
 
             SettingsRow(
                 icon = Icons.Default.Link,
@@ -605,6 +636,18 @@ private fun FlatSettingsContent(
                     }
                 } else null,
                 showDivider = false  // Last item in card
+            )
+        }
+
+        // ==================== SYNC Section ====================
+        SectionHeader(stringResource(R.string.settings_section_sync))
+        SettingsCard {
+            SettingsRow(
+                icon = Icons.Default.Refresh,
+                label = "Sync Lookback",
+                subtitle = formatSyncLookback(syncLookbackDays),
+                onClick = { showSyncLookbackSheet = true },
+                showDivider = false  // Only item in card
             )
         }
 
@@ -740,6 +783,16 @@ private fun FlatSettingsContent(
             defaultEventDuration = defaultEventDuration,
             onEventDurationChange = onDefaultEventDurationChange,
             onDismiss = { showEventDurationSheet = false }
+        )
+    }
+
+    // Sync Lookback Sheet
+    if (showSyncLookbackSheet) {
+        SyncLookbackSheet(
+            sheetState = syncLookbackSheetState,
+            currentDays = syncLookbackDays,
+            onSelect = onSyncLookbackChange,
+            onDismiss = { showSyncLookbackSheet = false }
         )
     }
 

@@ -310,28 +310,32 @@ class DateFilterTest {
     fun `NextWeek with monday first starts 7 days after ThisWeek with monday first`() {
         val thisWeekRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
         val nextWeekRange = DateFilter.NextWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
-        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
 
-        assertEquals(thisWeekRange.first + sevenDaysMs, nextWeekRange.first)
+        // Convert to LocalDate to compare dates (avoids DST millisecond issues)
+        val thisWeekStart = java.time.Instant.ofEpochMilli(thisWeekRange.first)
+            .atZone(testZone).toLocalDate()
+        val nextWeekStart = java.time.Instant.ofEpochMilli(nextWeekRange.first)
+            .atZone(testZone).toLocalDate()
+
+        assertEquals(thisWeekStart.plusDays(7), nextWeekStart)
     }
 
     @Test
     fun `ThisWeek spans 7 days regardless of first day`() {
-        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
+        // During DST transitions, 7 calendar days may be 167 or 169 hours in milliseconds
+        // Use date comparison instead of millisecond duration
+        fun verifySevenDaySpan(firstDay: Int, label: String) {
+            val range = DateFilter.ThisWeek.getTimeRange(testZone, firstDay)!!
+            val startDate = java.time.Instant.ofEpochMilli(range.first)
+                .atZone(testZone).toLocalDate()
+            val endDate = java.time.Instant.ofEpochMilli(range.second)
+                .atZone(testZone).toLocalDate()
+            // End is inclusive (23:59:59.999), so endDate should be startDate + 6 days
+            assertEquals("$label week should span 7 days", startDate.plusDays(6), endDate)
+        }
 
-        // Test Sunday first
-        val sundayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SUNDAY)!!
-        val sundayDuration = sundayRange.second - sundayRange.first
-        assertTrue("Sunday-first week should be ~7 days", sundayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
-
-        // Test Monday first
-        val mondayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.MONDAY)!!
-        val mondayDuration = mondayRange.second - mondayRange.first
-        assertTrue("Monday-first week should be ~7 days", mondayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
-
-        // Test Saturday first
-        val saturdayRange = DateFilter.ThisWeek.getTimeRange(testZone, java.util.Calendar.SATURDAY)!!
-        val saturdayDuration = saturdayRange.second - saturdayRange.first
-        assertTrue("Saturday-first week should be ~7 days", saturdayDuration in (sevenDaysMs - 1000)..(sevenDaysMs))
+        verifySevenDaySpan(java.util.Calendar.SUNDAY, "Sunday-first")
+        verifySevenDaySpan(java.util.Calendar.MONDAY, "Monday-first")
+        verifySevenDaySpan(java.util.Calendar.SATURDAY, "Saturday-first")
     }
 }

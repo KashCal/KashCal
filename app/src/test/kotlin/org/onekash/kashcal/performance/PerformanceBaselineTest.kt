@@ -1,4 +1,5 @@
 package org.onekash.kashcal.performance
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -62,7 +63,7 @@ class PerformanceBaselineTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventReader = EventReader(database)
 
         val accountId = database.accountsDao().insert(

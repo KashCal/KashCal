@@ -2,6 +2,7 @@ package org.onekash.kashcal.sync.strategy
 
 import io.mockk.*
 import io.mockk.impl.annotations.MockK
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.*
@@ -70,6 +71,10 @@ class PullStrategyEtagFallbackTest {
 
         // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
+
+        // Default: "All" lookback routes to existing getEtagsByCalendarId() (unfiltered).
+        // Tests that verify time-filtered behavior override this with a specific day count.
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         pullStrategy = PullStrategy(
             database = database,
@@ -394,6 +399,158 @@ class PullStrategyEtagFallbackTest {
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         // Should NOT have deleted the pending event
         coVerify(exactly = 0) { eventsDao.deleteById(100L) }
+    }
+
+    @Test
+    fun `etag fallback uses unfiltered query when sync lookback is All`() = runTest {
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val eventHref = "/calendars/home/event1.ics"
+        val eventUrl = "https://caldav.example.com$eventHref"
+
+        // Configure "All" lookback (Int.MAX_VALUE)
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        // Local has event
+        coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
+            EtagEntry(eventUrl, "etag-1")
+        )
+
+        // Server returns same event (no changes)
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        // "All" should use unfiltered getEtagsByCalendarId, NOT getEtagsByCalendarIdInRange
+        coVerify { eventsDao.getEtagsByCalendarId(calendar.id) }
+        coVerify(exactly = 0) { eventsDao.getEtagsByCalendarIdInRange(any(), any(), any()) }
+    }
+
+    @Test
+    fun `etag fallback does not delete events outside sync window`() = runTest {
+        // Issue #87 Bug 2: When sync lookback is bounded (e.g., 180 days), local events
+        // outside that window should NOT be deleted just because the server's time-range
+        // REPORT didn't return them. The time-filtered DAO query excludes them from comparison.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val recentHref = "/calendars/home/recent.ics"
+        val recentUrl = "https://caldav.example.com$recentHref"
+        val oldUrl = "https://caldav.example.com/calendars/home/old.ics"
+
+        // Configure 180-day lookback
+        every { dataStore.syncPastDays } returns flowOf(180)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        // Time-filtered local etags: only the recent event (old one excluded by DAO)
+        coEvery { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(
+            EtagEntry(recentUrl, "etag-recent")
+        )
+
+        // Server returns empty (recent event deleted on server)
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(emptyList())
+
+        val recentEvent = createEvent(id = 10L, caldavUrl = recentUrl)
+        coEvery { eventsDao.getByCaldavUrl(recentUrl) } returns recentEvent
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        // Recent event deleted (it's in the window and not on server)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        coVerify { eventsDao.deleteById(10L) }
+        // Old event was never considered for deletion (excluded by time-filtered DAO query)
+        // Verify time-filtered query was used, NOT unfiltered
+        coVerify { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) }
+        coVerify(exactly = 0) { eventsDao.getEtagsByCalendarId(any()) }
+    }
+
+    @Test
+    fun `etag fallback preserves recurring events outside time window`() = runTest {
+        // CLAUDE.md Pattern 5: Recurring events' start_ts/end_ts represent only the
+        // first occurrence. The DAO query includes them via "rrule IS NOT NULL" bypass.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val recurringHref = "/calendars/home/weekly.ics"
+        val recurringUrl = "https://caldav.example.com$recurringHref"
+
+        // Configure 180-day lookback
+        every { dataStore.syncPastDays } returns flowOf(180)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        // Time-filtered DAO returns recurring event (rrule IS NOT NULL bypass includes it
+        // even though first occurrence is outside window)
+        coEvery { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(
+            EtagEntry(recurringUrl, "etag-recurring")
+        )
+
+        // Server's time-range filter expands recurrences and returns the event
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(recurringHref, "etag-recurring")))
+
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue(result is PullResult.Success)
+        // Recurring event NOT deleted (both local and server have it)
+        assertEquals(0, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 0) { eventsDao.deleteById(any()) }
+    }
+
+    @Test
+    fun `etag fallback uses configurable sync lookback from preferences`() = runTest {
+        // Verify that fetchEtagsInRange is called with start time ~180 days ago
+        // when dataStore.syncPastDays = 180
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val eventHref = "/calendars/home/event1.ics"
+        val eventUrl = "https://caldav.example.com$eventHref"
+
+        // Configure 180-day lookback
+        every { dataStore.syncPastDays } returns flowOf(180)
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        coEvery { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(
+            EtagEntry(eventUrl, "etag-1")
+        )
+
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        pullStrategy.pull(calendar, client = client)
+
+        // Verify fetchEtagsInRange was called with start time ~180 days ago
+        val expectedPastMs = 180L * 24 * 60 * 60 * 1000
+        coVerify {
+            client.fetchEtagsInRange(
+                calendar.caldavUrl,
+                match { startMs ->
+                    val now = System.currentTimeMillis()
+                    val expected = now - expectedPastMs
+                    // Allow 5-second tolerance for test execution time
+                    kotlin.math.abs(startMs - expected) < 5000
+                },
+                any()
+            )
+        }
+        // Should use time-filtered DAO query, not unfiltered
+        coVerify { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) }
+        coVerify(exactly = 0) { eventsDao.getEtagsByCalendarId(any()) }
     }
 
     // ========== URL Normalization Tests ==========

@@ -1,4 +1,5 @@
 package org.onekash.kashcal.domain.generator
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -60,7 +61,7 @@ class RRuleDSTInteractionTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
@@ -254,8 +255,9 @@ class RRuleDSTInteractionTest {
 
     @Test
     fun `yearly recurring on DST transition day should handle correctly`() = runTest {
-        // Event on March 9 (DST spring forward day) at 3:00 AM
-        val march9_3am = createEasternDateTime(2024, 3, 10, 3, 0) // 2024's DST day
+        // Event on DST spring forward day at 3:00 AM
+        // Use 2025's DST day (March 9) so all 3 occurrences fall within 24-month window
+        val march9_3am = createEasternDateTime(2025, 3, 9, 3, 0) // 2025's DST day
 
         val event = createAndInsertRecurringEvent(
             title = "Yearly DST Day Event",

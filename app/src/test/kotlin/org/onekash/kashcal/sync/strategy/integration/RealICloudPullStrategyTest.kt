@@ -76,9 +76,9 @@ class RealICloudPullStrategyTest {
 
         eventsDao = database.eventsDao()
         occurrencesDao = database.occurrencesDao()
-        occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao)
         val calendarRepository = CalendarRepositoryImpl(database.calendarsDao())
         val dataStore = KashCalDataStore(context)
+        occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao, dataStore)
         val syncSessionStore = SyncSessionStore(context)
 
         // Load credentials and create real client

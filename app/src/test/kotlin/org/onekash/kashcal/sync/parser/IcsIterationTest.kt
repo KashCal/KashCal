@@ -1,4 +1,5 @@
 package org.onekash.kashcal.sync.parser
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -46,7 +47,7 @@ class IcsIterationTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         icalParser = ICalParser()
 
         val accountId = database.accountsDao().insert(

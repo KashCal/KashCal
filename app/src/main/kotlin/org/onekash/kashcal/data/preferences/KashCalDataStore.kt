@@ -408,6 +408,46 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.BIRTHDAY_REMINDER, minutes)
     }
 
+    // ========== Contact Anniversaries ==========
+
+    /**
+     * Whether contact anniversaries calendar is enabled.
+     */
+    val contactAnniversariesEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED, false)
+
+    suspend fun getContactAnniversariesEnabled(): Boolean = contactAnniversariesEnabled.first()
+
+    suspend fun setContactAnniversariesEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED, enabled)
+    }
+
+    /**
+     * Last sync time for contact anniversaries.
+     */
+    val contactAnniversariesLastSync: Flow<Long>
+        get() = getPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC, 0L)
+
+    suspend fun getContactAnniversariesLastSync(): Long = contactAnniversariesLastSync.first()
+
+    suspend fun setContactAnniversariesLastSync(timeMillis: Long) {
+        setPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC, timeMillis)
+    }
+
+    /**
+     * Anniversary reminder minutes.
+     * Uses ALL_DAY_REMINDER_OPTIONS values (540 = 9 AM day of, 1440 = 1 day before, etc.)
+     * Default: 540 (9 AM on day of anniversary)
+     */
+    val anniversaryReminder: Flow<Int>
+        get() = getPreference(PreferencesKeys.ANNIVERSARY_REMINDER, DEFAULT_ANNIVERSARY_REMINDER_MINUTES)
+
+    suspend fun getAnniversaryReminder(): Int = anniversaryReminder.first()
+
+    suspend fun setAnniversaryReminder(minutes: Int) {
+        setPreference(PreferencesKeys.ANNIVERSARY_REMINDER, minutes)
+    }
+
     // ========== Device Calendars ==========
 
     /**
@@ -591,12 +631,13 @@ class KashCalDataStore(private val context: Context) {
         const val DEFAULT_REMINDER_MINUTES = 15
         const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 12 * 60 // 12 hours before (720)
         const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = 9 * 60 // 9 AM day of birthday (540)
+        const val DEFAULT_ANNIVERSARY_REMINDER_MINUTES = 9 * 60 // 9 AM day of anniversary (540)
 
         // Sync constants
         const val DEFAULT_SYNC_INTERVAL_MINUTES = 60  // 1 hour
         const val DEFAULT_SYNC_INTERVAL_MS = 1L * 60 * 60 * 1000 // 1 hour in ms
         const val MIN_SYNC_INTERVAL_MS = 15L * 60 * 1000 // 15 minutes in ms
-        const val DEFAULT_SYNC_PAST_DAYS = 30
+        const val DEFAULT_SYNC_PAST_DAYS = 365
         const val DEFAULT_SYNC_FUTURE_DAYS = 365
 
         // Other defaults

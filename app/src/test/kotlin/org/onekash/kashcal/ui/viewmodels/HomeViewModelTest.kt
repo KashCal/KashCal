@@ -2963,6 +2963,26 @@ class HomeViewModelTest {
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.defaultViewMode)
     }
 
+    // ==================== Occurrence Extension Tests ====================
+
+    @Test
+    fun `setViewingMonth calls both forward and past extension`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Setup specific return values to verify both are called
+        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
+        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
+
+        // Navigate to a past month
+        viewModel.setViewingMonth(2020, 2) // March 2020
+        advanceUntilIdle()
+
+        // Both forward and past extension should be called
+        coVerify { eventCoordinator.extendOccurrencesIfNeeded(any()) }
+        coVerify { eventCoordinator.extendPastOccurrencesIfNeeded(any()) }
+    }
+
     // ==================== Helper Functions ====================
 
     private fun getTimestamp(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {

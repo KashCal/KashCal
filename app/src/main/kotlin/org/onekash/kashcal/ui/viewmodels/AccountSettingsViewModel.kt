@@ -31,13 +31,14 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
-import org.onekash.kashcal.data.contacts.ContactBirthdayManager
-import org.onekash.kashcal.data.contacts.ContactBirthdayWorker
+import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
@@ -117,8 +118,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val discoveryService: AccountDiscoveryService,
     private val calDavDiscoveryService: CalDavAccountDiscoveryService,
     private val eventCoordinator: EventCoordinator,
+    private val eventWriter: EventWriter,
     private val syncLogReader: SyncLogReader,
-    private val contactBirthdayManager: ContactBirthdayManager,
+    private val contactEventManager: ContactEventManager,
     private val calendarProviderManager: CalendarProviderManager,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val dataStore: KashCalDataStore,
@@ -174,6 +176,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _syncIntervalMs = MutableStateFlow(24 * 60 * 60 * 1000L)
     val syncIntervalMs: StateFlow<Long> = _syncIntervalMs.asStateFlow()
 
+    private val _syncLookbackDays = MutableStateFlow(KashCalDataStore.DEFAULT_SYNC_PAST_DAYS)
+    val syncLookbackDays: StateFlow<Int> = _syncLookbackDays.asStateFlow()
+
     // Notification permission
     private val _notificationsEnabled = MutableStateFlow(true)
     val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
@@ -200,11 +205,25 @@ class AccountSettingsViewModel @Inject constructor(
     private val _contactBirthdaysColor = MutableStateFlow(SubscriptionColors.Purple)
     val contactBirthdaysColor: StateFlow<Int> = _contactBirthdaysColor.asStateFlow()
 
-    private val _contactBirthdaysLastSync = MutableStateFlow(0L)
-    val contactBirthdaysLastSync: StateFlow<Long> = _contactBirthdaysLastSync.asStateFlow()
-
     private val _contactBirthdaysReminder = MutableStateFlow(KashCalDataStore.DEFAULT_BIRTHDAY_REMINDER_MINUTES)
     val contactBirthdaysReminder: StateFlow<Int> = _contactBirthdaysReminder.asStateFlow()
+
+    // Contact Anniversaries
+    private val _contactAnniversariesEnabled = MutableStateFlow(false)
+    val contactAnniversariesEnabled: StateFlow<Boolean> = _contactAnniversariesEnabled.asStateFlow()
+
+    private val _contactAnniversariesColor = MutableStateFlow(SubscriptionColors.Pink)
+    val contactAnniversariesColor: StateFlow<Int> = _contactAnniversariesColor.asStateFlow()
+
+    private val _contactAnniversariesReminder = MutableStateFlow(KashCalDataStore.DEFAULT_BIRTHDAY_REMINDER_MINUTES)
+    val contactAnniversariesReminder: StateFlow<Int> = _contactAnniversariesReminder.asStateFlow()
+
+    // Event counts
+    private val _birthdayCount = MutableStateFlow(0)
+    val birthdayCount: StateFlow<Int> = _birthdayCount.asStateFlow()
+
+    private val _anniversaryCount = MutableStateFlow(0)
+    val anniversaryCount: StateFlow<Int> = _anniversaryCount.asStateFlow()
 
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
@@ -246,6 +265,8 @@ class AccountSettingsViewModel @Inject constructor(
         observeCalDavAccounts()
         observeIcsSubscriptions()
         observeContactBirthdays()
+        observeContactAnniversaries()
+        refreshContactEventCounts()
         observeUserPreferences()
         observeDeviceCalendars()
         observeDisplaySettings()
@@ -393,9 +414,9 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            // Observe last sync time
-            dataStore.contactBirthdaysLastSync.collect { lastSync ->
-                _contactBirthdaysLastSync.value = lastSync
+            // Refresh event counts when birthday sync completes
+            dataStore.contactBirthdaysLastSync.collect {
+                refreshContactEventCounts()
             }
         }
         viewModelScope.launch {
@@ -410,6 +431,38 @@ class AccountSettingsViewModel @Inject constructor(
             if (color != null) {
                 _contactBirthdaysColor.value = color
             }
+        }
+    }
+
+    private fun observeContactAnniversaries() {
+        viewModelScope.launch {
+            dataStore.contactAnniversariesEnabled.collect { enabled ->
+                _contactAnniversariesEnabled.value = enabled
+            }
+        }
+        viewModelScope.launch {
+            dataStore.contactAnniversariesLastSync.collect { lastSync ->
+                // Refresh event counts when sync completes
+                refreshContactEventCounts()
+            }
+        }
+        viewModelScope.launch {
+            dataStore.anniversaryReminder.collect { reminder ->
+                _contactAnniversariesReminder.value = reminder
+            }
+        }
+        viewModelScope.launch {
+            val color = eventCoordinator.getContactAnniversariesColor()
+            if (color != null) {
+                _contactAnniversariesColor.value = color
+            }
+        }
+    }
+
+    private fun refreshContactEventCounts() {
+        viewModelScope.launch {
+            _birthdayCount.value = eventCoordinator.getContactBirthdayEventCount()
+            _anniversaryCount.value = eventCoordinator.getContactAnniversaryEventCount()
         }
     }
 
@@ -500,6 +553,11 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.showWeekNumbers.collect { show ->
                 _showWeekNumbers.value = show
+            }
+        }
+        viewModelScope.launch {
+            dataStore.syncPastDays.collect { days ->
+                _syncLookbackDays.value = days
             }
         }
     }
@@ -1404,14 +1462,15 @@ class AccountSettingsViewModel @Inject constructor(
                 val color = _contactBirthdaysColor.value
                 eventCoordinator.enableContactBirthdays(color)
                 dataStore.setContactBirthdaysEnabled(true)
-                contactBirthdayManager.onEnabled()
+                contactEventManager.onBirthdaysEnabled()
             } else {
                 // Disable: delete calendar + stop observer
                 dataStore.setContactBirthdaysEnabled(false)
                 dataStore.setContactBirthdaysLastSync(0L)
-                contactBirthdayManager.onDisabled()
+                contactEventManager.onBirthdaysDisabled()
                 eventCoordinator.disableContactBirthdays()
             }
+            refreshContactEventCounts()
         }
     }
 
@@ -1433,6 +1492,53 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             Log.i(TAG, "Birthday reminder change: $minutes minutes")
             dataStore.setBirthdayReminder(minutes)
+        }
+    }
+
+    // ==================== Contact Anniversaries ====================
+
+    /**
+     * Toggle contact anniversaries feature.
+     *
+     * Note: Permission should be checked by the caller before enabling.
+     */
+    fun onToggleContactAnniversaries(enabled: Boolean) {
+        viewModelScope.launch {
+            Log.i(TAG, "Toggle contact anniversaries: enabled=$enabled")
+
+            if (enabled) {
+                val color = _contactAnniversariesColor.value
+                eventCoordinator.enableContactAnniversaries(color)
+                dataStore.setContactAnniversariesEnabled(true)
+                contactEventManager.onAnniversariesEnabled()
+            } else {
+                dataStore.setContactAnniversariesEnabled(false)
+                dataStore.setContactAnniversariesLastSync(0L)
+                contactEventManager.onAnniversariesDisabled()
+                eventCoordinator.disableContactAnniversaries()
+            }
+            refreshContactEventCounts()
+        }
+    }
+
+    /**
+     * Update contact anniversaries calendar color.
+     */
+    fun onContactAnniversariesColorChange(color: Int) {
+        viewModelScope.launch {
+            Log.i(TAG, "Contact anniversaries color change: $color")
+            _contactAnniversariesColor.value = color
+            eventCoordinator.updateContactAnniversariesColor(color)
+        }
+    }
+
+    /**
+     * Update anniversary reminder setting.
+     */
+    fun onContactAnniversariesReminderChange(minutes: Int) {
+        viewModelScope.launch {
+            Log.i(TAG, "Anniversary reminder change: $minutes minutes")
+            dataStore.setAnniversaryReminder(minutes)
         }
     }
 
@@ -1502,6 +1608,48 @@ class AccountSettingsViewModel @Inject constructor(
                 syncScheduler.updatePeriodicSyncInterval(intervalMinutes)
             } else {
                 syncScheduler.cancelPeriodicSync()
+            }
+        }
+    }
+
+    /**
+     * Update how far back to sync calendar events.
+     *
+     * When expanding the window (new > old), forces a full sync so older events
+     * are actually fetched from the server. The sync uses etag comparison to skip
+     * unchanged events (bandwidth optimization).
+     *
+     * When shrinking the window (new < old), deletes CalDAV events outside the new
+     * window before syncing. Preserves: pending sync events, recurring masters,
+     * exception events, local calendar events, and birthday/anniversary events.
+     * Widgets are refreshed after cleanup.
+     */
+    fun onSyncLookbackChange(days: Int) {
+        val safeDays = if (days == Int.MAX_VALUE) days else days.coerceAtLeast(1)
+        val oldDays = _syncLookbackDays.value
+        val isExpanding = safeDays > oldDays || safeDays == Int.MAX_VALUE
+        val isShrinking = !isExpanding && safeDays != oldDays
+
+        viewModelScope.launch {
+            dataStore.setSyncPastDays(safeDays)
+
+            // Cleanup events, occurrences, and exceptions outside new window when shrinking
+            if (isShrinking && safeDays != Int.MAX_VALUE) {
+                val now = System.currentTimeMillis()
+                val cutoffTs = now - (safeDays.toLong() * 24 * 60 * 60 * 1000)
+
+                val result = eventWriter.cleanupForShrinkingLookback(cutoffTs)
+                if (result.totalDeleted > 0) {
+                    Log.i(TAG, "Lookback cleanup: ${result.deletedEvents} events, " +
+                        "${result.deletedOccurrences} occurrences, ${result.deletedExceptions} exceptions")
+                    widgetUpdateManager.updateAllWidgets("lookback_shrink_cleanup")
+                }
+            }
+
+            if (isExpanding) {
+                syncScheduler.requestImmediateSync(forceFullSync = true)
+            } else {
+                syncScheduler.requestImmediateSync()
             }
         }
     }

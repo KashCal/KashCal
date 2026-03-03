@@ -125,6 +125,7 @@
     <string name="settings_section_my_calendars">My Calendars</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Data</string>
 
     <!-- ==================== Onboarding ==================== -->
@@ -434,8 +435,11 @@
     <string name="subscriptions_count_one">1 subscription</string>
     <string name="subscriptions_count_other">%1$d subscriptions</string>
     <!-- Summary row for Settings screen -->
-    <string name="subscriptions_row_label">Birthdays, Holidays &amp; More</string>
+    <string name="subscriptions_row_label">Holidays, School &amp; More</string>
     <string name="subscriptions_summary_birthdays_only">Contact Birthdays</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Birthdays &amp; Anniversaries</string>
     <!-- Content descriptions -->
     <string name="subscriptions_cd_back">Navigate back</string>
     <string name="subscriptions_cd_add">Add subscription</string>

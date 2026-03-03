@@ -223,6 +223,17 @@ class EventReader @Inject constructor(
     }
 
     /**
+     * Find recurring events that need past occurrence extension to reach target date.
+     * Used for on-demand expansion when user navigates far into the past.
+     *
+     * @param targetTs Target timestamp - events with min occurrence after this need past extension
+     * @return List of event IDs that need past occurrence extension
+     */
+    suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long> {
+        return occurrencesDao.getRecurringEventsNeedingPastExtension(targetTs)
+    }
+
+    /**
      * Get occurrences for specific calendar in range.
      */
     fun getOccurrencesForCalendar(

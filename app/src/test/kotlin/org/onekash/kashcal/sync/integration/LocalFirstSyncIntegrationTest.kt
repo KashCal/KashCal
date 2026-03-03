@@ -1,4 +1,5 @@
 package org.onekash.kashcal.sync.integration
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
@@ -65,7 +66,7 @@ class LocalFirstSyncIntegrationTest {
             .allowMainThreadQueries()
             .build()
 
-        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao())
+        occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         client = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         syncSessionStore = mockk(relaxed = true)

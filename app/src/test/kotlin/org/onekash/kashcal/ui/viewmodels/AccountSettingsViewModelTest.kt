@@ -51,12 +51,13 @@ import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import java.util.UUID
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
-import org.onekash.kashcal.data.contacts.ContactBirthdayManager
+import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import kotlinx.coroutines.delay
@@ -91,11 +92,12 @@ class AccountSettingsViewModelTest {
     private lateinit var calDavDiscoveryService: CalDavAccountDiscoveryService
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var syncLogReader: SyncLogReader
-    private lateinit var contactBirthdayManager: ContactBirthdayManager
+    private lateinit var contactEventManager: ContactEventManager
     private lateinit var calendarProviderManager: CalendarProviderManager
     private lateinit var calendarProviderRepository: CalendarProviderRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var widgetUpdateManager: WidgetUpdateManager
+    private lateinit var eventWriter: EventWriter
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -108,6 +110,10 @@ class AccountSettingsViewModelTest {
     private lateinit var syncLogsFlow: MutableStateFlow<List<SyncLog>>
     private lateinit var contactBirthdaysEnabledFlow: MutableStateFlow<Boolean>
     private lateinit var contactBirthdaysLastSyncFlow: MutableStateFlow<Long>
+    private lateinit var contactAnniversariesEnabledFlow: MutableStateFlow<Boolean>
+    private lateinit var contactAnniversariesLastSyncFlow: MutableStateFlow<Long>
+    private lateinit var birthdayReminderFlow: MutableStateFlow<Int>
+    private lateinit var anniversaryReminderFlow: MutableStateFlow<Int>
     private lateinit var defaultEventDurationFlow: MutableStateFlow<Int>
 
     // Test data
@@ -157,11 +163,12 @@ class AccountSettingsViewModelTest {
         calDavDiscoveryService = mockk(relaxed = true)
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
-        contactBirthdayManager = mockk(relaxed = true)
+        contactEventManager = mockk(relaxed = true)
         calendarProviderManager = mockk(relaxed = true)
         calendarProviderRepository = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
+        eventWriter = mockk(relaxed = true)
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -174,6 +181,10 @@ class AccountSettingsViewModelTest {
         syncLogsFlow = MutableStateFlow(emptyList())
         contactBirthdaysEnabledFlow = MutableStateFlow(false)
         contactBirthdaysLastSyncFlow = MutableStateFlow(0L)
+        contactAnniversariesEnabledFlow = MutableStateFlow(false)
+        contactAnniversariesLastSyncFlow = MutableStateFlow(0L)
+        birthdayReminderFlow = MutableStateFlow(540)
+        anniversaryReminderFlow = MutableStateFlow(540)
         defaultEventDurationFlow = MutableStateFlow(60) // Default 60 minutes
 
         // Setup default behaviors - EventCoordinator for calendars (architecture compliant)
@@ -202,7 +213,16 @@ class AccountSettingsViewModelTest {
         // Mock contact birthdays flows
         every { dataStore.contactBirthdaysEnabled } returns contactBirthdaysEnabledFlow
         every { dataStore.contactBirthdaysLastSync } returns contactBirthdaysLastSyncFlow
+        every { dataStore.birthdayReminder } returns birthdayReminderFlow
         coEvery { eventCoordinator.getContactBirthdaysColor() } returns null
+
+        // Mock contact anniversaries flows
+        every { dataStore.contactAnniversariesEnabled } returns contactAnniversariesEnabledFlow
+        every { dataStore.contactAnniversariesLastSync } returns contactAnniversariesLastSyncFlow
+        every { dataStore.anniversaryReminder } returns anniversaryReminderFlow
+        coEvery { eventCoordinator.getContactAnniversariesColor() } returns null
+        coEvery { eventCoordinator.getContactBirthdayEventCount() } returns 0
+        coEvery { eventCoordinator.getContactAnniversaryEventCount() } returns 0
     }
 
     @After
@@ -220,11 +240,12 @@ class AccountSettingsViewModelTest {
             calDavDiscoveryService = calDavDiscoveryService,
             eventCoordinator = eventCoordinator,
             syncLogReader = syncLogReader,
-            contactBirthdayManager = contactBirthdayManager,
+            contactEventManager = contactEventManager,
             calendarProviderManager = calendarProviderManager,
             calendarProviderRepository = calendarProviderRepository,
             dataStore = dataStore,
-            widgetUpdateManager = widgetUpdateManager
+            widgetUpdateManager = widgetUpdateManager,
+            eventWriter = eventWriter
         )
     }
 
@@ -1393,7 +1414,7 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleContactBirthdays(true)
         advanceUntilIdle()
 
-        verify { contactBirthdayManager.onEnabled() }
+        verify { contactEventManager.onBirthdaysEnabled() }
     }
 
     @Test
@@ -1404,7 +1425,59 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleContactBirthdays(false)
         advanceUntilIdle()
 
-        verify { contactBirthdayManager.onDisabled() }
+        verify { contactEventManager.onBirthdaysDisabled() }
+    }
+
+    // ==================== Contact Anniversaries Tests ====================
+
+    @Test
+    fun `onToggleContactAnniversaries enable creates calendar and calls manager`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactAnniversaries(true)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.enableContactAnniversaries(any()) }
+        coVerify { dataStore.setContactAnniversariesEnabled(true) }
+        verify { contactEventManager.onAnniversariesEnabled() }
+    }
+
+    @Test
+    fun `onToggleContactAnniversaries disable removes calendar and calls manager`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactAnniversaries(false)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setContactAnniversariesEnabled(false) }
+        coVerify { dataStore.setContactAnniversariesLastSync(0L) }
+        verify { contactEventManager.onAnniversariesDisabled() }
+        coVerify { eventCoordinator.disableContactAnniversaries() }
+    }
+
+    @Test
+    fun `onContactAnniversariesColorChange updates color via coordinator`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val newColor = 0xFFE91E63.toInt()
+        viewModel.onContactAnniversariesColorChange(newColor)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.updateContactAnniversariesColor(newColor) }
+    }
+
+    @Test
+    fun `onContactAnniversariesReminderChange updates DataStore`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactAnniversariesReminderChange(1440)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAnniversaryReminder(1440) }
     }
 
     // ==================== UI Sheet State Tests ====================

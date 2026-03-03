@@ -134,6 +134,13 @@ class PushStrategy @Inject constructor(
                             result.message,
                             System.currentTimeMillis()
                         )
+                        // If linked CREATE permanently failed, remove the linked DELETE
+                        // (cross-account move: prevents orphan DELETE after CREATE gives up)
+                        if (operation.operation == PendingOperation.OPERATION_CREATE &&
+                            operation.linkedMoveId != null) {
+                            pendingOperationsDao.deleteLinkedDelete(operation.linkedMoveId)
+                            Log.d(TAG, "Removed linked DELETE for failed CREATE (linkedMoveId=${operation.linkedMoveId})")
+                        }
                     }
                     failed++
                     warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
@@ -251,6 +258,13 @@ class PushStrategy @Inject constructor(
                             result.message,
                             System.currentTimeMillis()
                         )
+                        // If linked CREATE permanently failed, remove the linked DELETE
+                        // (cross-account move: prevents orphan DELETE after CREATE gives up)
+                        if (operation.operation == PendingOperation.OPERATION_CREATE &&
+                            operation.linkedMoveId != null) {
+                            pendingOperationsDao.deleteLinkedDelete(operation.linkedMoveId)
+                            Log.d(TAG, "Removed linked DELETE for failed CREATE (linkedMoveId=${operation.linkedMoveId})")
+                        }
                     }
                     failed++
                     warnings.add("Push ${operationName(operation.operation)} failed (${result.code}) for ${filenameOf(event?.caldavUrl)}: ${result.message}")
@@ -387,24 +401,50 @@ class PushStrategy @Inject constructor(
             return processCreate(operation, eventsCache, emptyMap(), clientToUse)
         }
 
-        if (event.etag == null) {
-            Log.w(TAG, "Event has no etag, cannot update safely")
-            return SinglePushResult.Error(-1, "No etag for update", false)
+        val caldavUrl = event.caldavUrl!! // Guaranteed non-null (guard at line 384)
+
+        // Recover etag via PROPFIND if null or empty (server may have omitted <getetag> during pull)
+        val effectiveEtag: String
+        if (!event.etag.isNullOrEmpty()) {
+            effectiveEtag = event.etag!!
+        } else {
+            // Same recovery pattern as 412 conflict retry below.
+            Log.w(TAG, "Event has no etag, fetching via PROPFIND for ${filenameOf(caldavUrl)}")
+            val fetchResult = clientToUse.fetchEtag(caldavUrl)
+            when (fetchResult) {
+                is CalDavResult.Success -> {
+                    val fetched = fetchResult.data
+                    if (fetched != null) {
+                        // Note: the in-memory `event` object still has etag=null.
+                        // We use `effectiveEtag` directly for the PUT, not event.etag.
+                        eventsDao.updateEtag(event.id, fetched)
+                        Log.d(TAG, "Recovered etag via PROPFIND: ${fetched.take(8)}...")
+                        effectiveEtag = fetched
+                    } else {
+                        // Server returned success but no etag - non-retryable
+                        Log.e(TAG, "PROPFIND returned null etag for event ${event.id}")
+                        return SinglePushResult.Error(-1, "No etag for update", false)
+                    }
+                }
+                is CalDavResult.Error -> {
+                    // Propagate error's retryability (network errors retry, auth errors don't)
+                    Log.e(TAG, "PROPFIND failed for event ${event.id}: ${fetchResult.message}")
+                    return SinglePushResult.Error(
+                        fetchResult.code,
+                        "PROPFIND fallback failed: ${fetchResult.message}",
+                        fetchResult.isRetryable
+                    )
+                }
+            }
         }
 
         // Serialize event to iCal (captures exceptions at this point in time)
         val (icalData, serializedExceptions) = serializeEventWithExceptions(event)
 
-        // Safe access - we've already checked these aren't null above
-        val caldavUrl = event.caldavUrl
-            ?: return SinglePushResult.Error(-1, "Event has no CalDAV URL", false)
-        val etag = event.etag
-            ?: return SinglePushResult.Error(-1, "Event has no ETag", false)
-
-        Log.d(TAG, "Updating event on server: ${event.title} with etag='$etag'")
+        Log.d(TAG, "Updating event on server: ${event.title} with etag='$effectiveEtag'")
 
         // Update on server with If-Match
-        val result = clientToUse.updateEvent(caldavUrl, icalData, etag)
+        val result = clientToUse.updateEvent(caldavUrl, icalData, effectiveEtag)
 
         return when {
             result.isSuccess() -> {
