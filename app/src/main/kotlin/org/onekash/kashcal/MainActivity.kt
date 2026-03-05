@@ -530,7 +530,15 @@ class MainActivity : ComponentActivity() {
                                     // Timed event: Use local timezone
                                     val startDate = java.util.Date(event.startTs)
                                     val endDate = java.util.Date(event.endTs)
-                                    appendLine("${dateFormat.format(startDate)} ${timeFormat.format(startDate)} - ${timeFormat.format(endDate)}")
+                                    val startDateStr = dateFormat.format(startDate)
+                                    val endDateStr = dateFormat.format(endDate)
+                                    if (startDateStr != endDateStr) {
+                                        // Multi-day timed event: show both dates
+                                        appendLine("$startDateStr ${timeFormat.format(startDate)} - $endDateStr ${timeFormat.format(endDate)}")
+                                    } else {
+                                        // Same-day timed event: show date once
+                                        appendLine("$startDateStr ${timeFormat.format(startDate)} - ${timeFormat.format(endDate)}")
+                                    }
                                 }
 
                                 if (!event.location.isNullOrEmpty()) {

@@ -267,6 +267,7 @@ class SettingsActivity : ComponentActivity() {
                                 anniversariesReminder = contactAnniversariesReminder,
                                 anniversaryCount = anniversaryCount,
                                 hasPermission = hasContactsPermission,
+                                timeFormat = timeFormat,
                                 onToggleBirthdays = { enabled ->
                                     if (enabled && !hasContactsPermission) {
                                         pendingContactPermissionAction = "birthdays"

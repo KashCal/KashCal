@@ -721,6 +721,52 @@ class WheelTimePickerComposeTest {
         assertNotEquals("Selection should have changed from 12", 12, selectedValue)
     }
 
+    // ==================== Visible Items Configuration (Issue #88) ====================
+
+    @Test
+    fun wheelTimePicker_displays_with_5_visible_items() {
+        // Verify WheelTimePicker works correctly with visibleItems=5
+        // This is the new default for better touch targets on small screens
+        composeTestRule.setContent {
+            MaterialTheme {
+                WheelTimePicker(
+                    selectedHour = 12,
+                    selectedMinute = 30,
+                    onTimeSelected = { _, _ -> },
+                    use24Hour = true,
+                    visibleItems = 5
+                )
+            }
+        }
+
+        composeTestRule.waitForIdle()
+
+        // Should display center item (12) and adjacent items
+        composeTestRule.onNodeWithText("12").assertIsDisplayed()
+        composeTestRule.onNodeWithText("30").assertIsDisplayed()
+    }
+
+    @Test
+    fun wheelTimePicker_12h_mode_with_5_visible_items_no_crash() {
+        // AM/PM wheel (2 items) must work with visibleItems=5
+        // Tests the coerceAtLeast fix for small item counts
+        composeTestRule.setContent {
+            MaterialTheme {
+                WheelTimePicker(
+                    selectedHour = 9, // 9 AM
+                    selectedMinute = 0,
+                    onTimeSelected = { _, _ -> },
+                    use24Hour = false,
+                    visibleItems = 5
+                )
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("9").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
+    }
+
     @Test
     fun wheelTimePicker_swipe_hour_selects_correct_value() {
         var lastSelectedHour = 10

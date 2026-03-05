@@ -77,6 +77,8 @@ class CalDavSyncWorkerTest {
     private lateinit var syncSessionStore: SyncSessionStore
     private lateinit var syncLogsDao: SyncLogsDao
     private lateinit var iCloudUrlMigration: ICloudUrlMigration
+    private lateinit var eventsDao: org.onekash.kashcal.data.db.dao.EventsDao
+    private lateinit var dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -107,6 +109,12 @@ class CalDavSyncWorkerTest {
         syncSessionStore = mockk(relaxed = true)
         syncLogsDao = mockk(relaxed = true)
         iCloudUrlMigration = mockk(relaxed = true)
+        eventsDao = mockk(relaxed = true)
+        dataStore = mockk(relaxed = true)
+
+        // Default: dataStore returns reasonable default values
+        coEvery { dataStore.defaultReminderMinutes } returns kotlinx.coroutines.flow.flowOf(15)
+        coEvery { dataStore.defaultAllDayReminder } returns kotlinx.coroutines.flow.flowOf(720)
 
         // Default: iCloud URL migration returns false (already completed)
         coEvery { iCloudUrlMigration.migrateIfNeeded() } returns false
@@ -157,7 +165,9 @@ class CalDavSyncWorkerTest {
             pendingOperationsDao = pendingOperationsDao,
             syncSessionStore = syncSessionStore,
             syncLogsDao = syncLogsDao,
-            iCloudUrlMigration = iCloudUrlMigration
+            iCloudUrlMigration = iCloudUrlMigration,
+            eventsDao = eventsDao,
+            dataStore = dataStore
         )
     }
 
@@ -820,7 +830,7 @@ class CalDavSyncWorkerTest {
     }
 
     @Test
-    fun `sync skips reminder scheduling for events without reminders`() = runTest {
+    fun `sync skips reminder scheduling for events without reminders on initial sync`() = runTest {
         // Given
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -828,7 +838,9 @@ class CalDavSyncWorkerTest {
         val eventId = 100L
         val calendarId = 1L
 
-        val syncChange = createTestSyncChange(ChangeType.NEW, eventId)
+        // Use isFromInitialSync = true to test the skip behavior
+        // (on initial sync, no defaults are applied, so events without reminders are skipped)
+        val syncChange = createTestSyncChange(ChangeType.NEW, eventId).copy(isFromInitialSync = true)
         val syncResult = SyncResult.Success(
             calendarsSynced = 1,
             eventsPulledAdded = 1,
@@ -846,7 +858,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - No reminder scheduling for events without reminders
+        // Then - No reminder scheduling for events without reminders on initial sync
         coVerify(exactly = 0) { eventReader.getCalendarById(any()) }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }

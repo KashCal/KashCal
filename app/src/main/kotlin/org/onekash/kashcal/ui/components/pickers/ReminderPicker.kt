@@ -34,11 +34,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.ReminderOption
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
-import org.onekash.kashcal.ui.shared.getReminderOptionsForEventType
+import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
@@ -56,6 +55,7 @@ import org.onekash.kashcal.util.DateTimeUtils
  * @param reminder1Minutes First reminder in minutes before event (-1 = off)
  * @param reminder2Minutes Second reminder in minutes before event (-1 = off)
  * @param isAllDay Whether the event is all-day (affects available options)
+ * @param use24Hour Whether to use 24-hour format for time-based labels
  * @param onReminder1Change Callback when first reminder changes
  * @param onReminder2Change Callback when second reminder changes
  * @param modifier Modifier for the card
@@ -65,6 +65,7 @@ fun ReminderPickerCard(
     reminder1Minutes: Int,
     reminder2Minutes: Int,
     isAllDay: Boolean,
+    use24Hour: Boolean,
     onReminder1Change: (Int) -> Unit,
     onReminder2Change: (Int) -> Unit,
     modifier: Modifier = Modifier
@@ -72,15 +73,15 @@ fun ReminderPickerCard(
     var expanded by remember { mutableStateOf(false) }
     var expandedReminder by remember { mutableStateOf<Int?>(null) } // 1 or 2
 
-    // Get the correct options based on event type (THIS FIXES THE BUG)
-    val options = getReminderOptionsForEventType(isAllDay)
+    // Get the correct options based on event type, with time-format-aware labels
+    val options = if (isAllDay) getAllDayReminderOptions(use24Hour) else TIMED_REMINDER_OPTIONS
 
     // Build summary text
     val summaryText = buildString {
-        val r1Label = DateTimeUtils.formatReminderShort(reminder1Minutes)
+        val r1Label = DateTimeUtils.formatReminderShort(reminder1Minutes, use24Hour)
         append(r1Label)
         if (reminder1Minutes != REMINDER_OFF && reminder2Minutes != REMINDER_OFF) {
-            append(", ${DateTimeUtils.formatReminderShort(reminder2Minutes)}")
+            append(", ${DateTimeUtils.formatReminderShort(reminder2Minutes, use24Hour)}")
         }
     }
 

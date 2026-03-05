@@ -49,6 +49,8 @@ val TIMED_REMINDER_OPTIONS = listOf(
  *
  * Note: Legacy value (2880 - 2 days before) is still valid for existing events
  * from external calendars or older app versions - it just isn't shown in the picker.
+ *
+ * For time-format-aware labels, use [getAllDayReminderOptions] instead.
  */
 val ALL_DAY_REMINDER_OPTIONS = listOf(
     ReminderOption("No reminder", REMINDER_OFF),
@@ -57,6 +59,25 @@ val ALL_DAY_REMINDER_OPTIONS = listOf(
     ReminderOption("1 day before", 1440),
     ReminderOption("1 week before", 10080)
 )
+
+/**
+ * Returns all-day reminder options with time-format-aware labels.
+ *
+ * The 540-minute option ("9 AM day of event") label changes based on [use24Hour]:
+ * - 24-hour format: "09:00 day of event"
+ * - 12-hour format: "9 AM day of event"
+ *
+ * @param use24Hour Whether to use 24-hour time format
+ * @return List of [ReminderOption] with appropriate labels
+ */
+fun getAllDayReminderOptions(use24Hour: Boolean): List<ReminderOption> =
+    ALL_DAY_REMINDER_OPTIONS.map { option ->
+        if (option.minutes == 540) {
+            option.copy(label = if (use24Hour) "09:00 day of event" else "9 AM day of event")
+        } else {
+            option
+        }
+    }
 
 /**
  * Returns the appropriate reminder options based on event type.
@@ -74,10 +95,12 @@ fun getReminderOptionsForEventType(isAllDay: Boolean): List<ReminderOption> =
  *
  * @param minutes Reminder minutes value
  * @param isAllDay Whether the event is all-day
+ * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
  * @return Human-readable label for the reminder
  */
-fun formatReminderOption(minutes: Int, isAllDay: Boolean): String {
-    val options = if (isAllDay) ALL_DAY_REMINDER_OPTIONS else TIMED_REMINDER_OPTIONS
+fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false): String {
+    // For all-day events, use time-format-aware options
+    val options = if (isAllDay) getAllDayReminderOptions(use24Hour) else TIMED_REMINDER_OPTIONS
     // Try to find in current options first
     options.find { it.minutes == minutes }?.let { return it.label }
     // Handle legacy and arbitrary values
@@ -114,14 +137,15 @@ fun formatReminderOption(minutes: Int, isAllDay: Boolean): String {
  * Handles both current and legacy values, plus arbitrary values from external calendars.
  *
  * @param minutes Reminder minutes value
- * @return Short label (e.g., "15m", "1h", "1d")
+ * @param use24Hour Whether to use 24-hour format for the 540-minute option (default: false)
+ * @return Short label (e.g., "15m", "1h", "1d", "09:00" or "9AM")
  */
-fun formatReminderShort(minutes: Int): String {
+fun formatReminderShort(minutes: Int, use24Hour: Boolean = false): String {
     return when (minutes) {
         // Known preset values
         REMINDER_OFF -> "Off"
         0 -> "At event"
-        540 -> "9AM"  // Special case for all-day events "9 AM day of"
+        540 -> if (use24Hour) "09:00" else "9AM"  // All-day events "9 AM day of"
         // For arbitrary values, show in most readable unit
         else -> when {
             minutes >= 10080 && minutes % 10080 == 0 -> "${minutes / 10080}w"

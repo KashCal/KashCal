@@ -766,6 +766,7 @@ fun EventFormSheet(
                         reminder1Minutes = state.reminder1Minutes,
                         reminder2Minutes = state.reminder2Minutes,
                         isAllDay = state.isAllDay,
+                        use24Hour = use24Hour,
                         onReminder1Change = { minutes ->
                             state = state.copy(reminder1Minutes = minutes)
                         },

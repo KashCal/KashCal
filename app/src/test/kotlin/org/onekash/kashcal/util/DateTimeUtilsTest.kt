@@ -795,6 +795,31 @@ class DateTimeUtilsTest {
         assertEquals("2w", DateTimeUtils.formatReminderShort(20160)) // 2 weeks
     }
 
+    @Test
+    fun `formatReminderShort 540 use24Hour true returns 09 colon 00`() {
+        assertEquals("09:00", DateTimeUtils.formatReminderShort(540, use24Hour = true))
+    }
+
+    @Test
+    fun `formatReminderShort 540 use24Hour false returns 9AM`() {
+        assertEquals("9AM", DateTimeUtils.formatReminderShort(540, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderLabel 540 allDay use24Hour true returns 09 colon 00 day of event`() {
+        assertEquals("09:00 day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = true))
+    }
+
+    @Test
+    fun `formatReminderLabel 540 allDay use24Hour false returns 9 AM day of event`() {
+        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderLabel 540 allDay default returns 9 AM day of event for backward compat`() {
+        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true))
+    }
+
     // ==================== Format Sync Interval Tests ====================
 
     @Test

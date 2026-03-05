@@ -23,7 +23,12 @@ data class SyncChange(
     /** Calendar name for context */
     val calendarName: String,
     /** Calendar color for visual indicator */
-    val calendarColor: Int
+    val calendarColor: Int,
+    /**
+     * Whether this change originated from an initial sync (calendar's first-ever sync).
+     * Used to skip applying default reminders to events during initial sync.
+     */
+    val isFromInitialSync: Boolean = false
 )
 
 /**

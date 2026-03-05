@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -321,11 +322,12 @@ fun DateTimeSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Time picker wheels - hidden when timezone search is open
+                    // Issue #88: Changed visibleItems 3→5 for better touch targets on small screens
                     AnimatedVisibility(
                         visible = !isTimezoneSearchOpen,
                         enter = fadeIn(),
                         exit = fadeOut(),
-                        modifier = Modifier.weight(0.70f)
+                        modifier = Modifier.weight(1f)
                     ) {
                         WheelTimePicker(
                             selectedHour = localHour,
@@ -335,13 +337,14 @@ fun DateTimeSheet(
                                 localMinute = m
                             },
                             use24Hour = use24Hour,
-                            visibleItems = 3,
+                            visibleItems = 5,
                             itemHeight = 32.dp,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
 
-                    // Timezone picker - expands to full width when search is open
+                    // Timezone picker - compact icon when closed, expands when search is open
+                    // Issue #88: Fixed width (56dp) instead of weight(0.30f) to save space
                     TimezonePickerChip(
                         selectedTimezone = localTimezone,
                         onTimezoneSelected = { newTimezone ->
@@ -374,7 +377,7 @@ fun DateTimeSheet(
                         modifier = if (isTimezoneSearchOpen) {
                             Modifier.fillMaxWidth()
                         } else {
-                            Modifier.weight(0.30f)
+                            Modifier.width(56.dp)
                         },
                         onSearchOpenChange = { isTimezoneSearchOpen = it }
                     )

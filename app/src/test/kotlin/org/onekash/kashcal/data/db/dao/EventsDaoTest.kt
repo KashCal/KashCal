@@ -1929,6 +1929,76 @@ class EventsDaoTest {
         assertEquals(5, deleted)
     }
 
+    // ==================== updateReminders Tests ====================
+
+    @Test
+    fun `updateReminders updates only reminders and updated_at fields`() = runTest {
+        val originalTs = System.currentTimeMillis() - 10000
+        val event = createTestEvent(
+            title = "Original Title",
+            reminders = listOf("-PT15M")
+        ).copy(updatedAt = originalTs)
+        val eventId = eventsDao.insert(event)
+
+        // Update reminders
+        val newRemindersJson = """["-PT30M", "-PT1H"]"""
+        val updateTime = System.currentTimeMillis()
+        eventsDao.updateReminders(eventId, newRemindersJson, updateTime)
+
+        // Verify
+        val updated = eventsDao.getById(eventId)
+        assertNotNull(updated)
+        assertEquals("Original Title", updated!!.title) // Title unchanged
+        assertEquals(listOf("-PT30M", "-PT1H"), updated.reminders) // Reminders updated
+        assertEquals(updateTime, updated.updatedAt) // updated_at changed
+    }
+
+    @Test
+    fun `updateReminders can set reminders to null`() = runTest {
+        val event = createTestEvent(reminders = listOf("-PT15M"))
+        val eventId = eventsDao.insert(event)
+
+        eventsDao.updateReminders(eventId, null, System.currentTimeMillis())
+
+        val updated = eventsDao.getById(eventId)
+        // Room's Converter converts null to empty list
+        assertTrue(updated?.reminders?.isEmpty() == true)
+    }
+
+    @Test
+    fun `updateReminders can set empty list`() = runTest {
+        val event = createTestEvent(reminders = listOf("-PT15M"))
+        val eventId = eventsDao.insert(event)
+
+        eventsDao.updateReminders(eventId, "[]", System.currentTimeMillis())
+
+        val updated = eventsDao.getById(eventId)
+        assertTrue(updated?.reminders?.isEmpty() == true)
+    }
+
+    @Test
+    fun `updateReminders does not change other fields`() = runTest {
+        val event = createTestEvent(
+            title = "Test Event",
+            description = "Test Description",
+            syncStatus = SyncStatus.SYNCED,
+            caldavUrl = "https://example.com/event.ics",
+            reminders = null
+        )
+        val eventId = eventsDao.insert(event)
+        val beforeUpdate = eventsDao.getById(eventId)!!
+
+        eventsDao.updateReminders(eventId, """["-PT15M"]""", System.currentTimeMillis())
+
+        val afterUpdate = eventsDao.getById(eventId)!!
+        assertEquals(beforeUpdate.title, afterUpdate.title)
+        assertEquals(beforeUpdate.description, afterUpdate.description)
+        assertEquals(beforeUpdate.syncStatus, afterUpdate.syncStatus)
+        assertEquals(beforeUpdate.caldavUrl, afterUpdate.caldavUrl)
+        assertEquals(beforeUpdate.startTs, afterUpdate.startTs)
+        assertEquals(beforeUpdate.endTs, afterUpdate.endTs)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createTestEvent(

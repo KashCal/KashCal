@@ -67,6 +67,21 @@ object DateTimeUtils {
         return getTimePattern(TimeFormatPreference.fromString(preferenceString), is24HourDevice)
     }
 
+    /**
+     * Determine if 24-hour format should be used based on preference and device setting.
+     *
+     * @param timeFormat Time format preference string ("system", "12h", or "24h")
+     * @param is24HourDevice Whether the device is set to 24-hour format
+     * @return True if 24-hour format should be used
+     */
+    fun isUse24Hour(timeFormat: String, is24HourDevice: Boolean): Boolean {
+        return when (TimeFormatPreference.fromString(timeFormat)) {
+            TimeFormatPreference.TWENTY_FOUR_HOUR -> true
+            TimeFormatPreference.TWELVE_HOUR -> false
+            TimeFormatPreference.SYSTEM -> is24HourDevice
+        }
+    }
+
     // ==================== First Day of Week Preference ====================
 
     /**
@@ -446,13 +461,14 @@ object DateTimeUtils {
      *
      * @param minutes Minutes before event (-1 for off, 0 for at event time)
      * @param isAllDay True for all-day events (shows different options)
+     * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
      * @return Full display label (e.g., "15 minutes before", "1 day before")
      */
-    fun formatReminderLabel(minutes: Int, isAllDay: Boolean): String {
+    fun formatReminderLabel(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false): String {
         return if (isAllDay) {
             when (minutes) {
                 org.onekash.kashcal.ui.shared.REMINDER_OFF -> "No reminder"
-                540 -> "9 AM day of event"
+                540 -> if (use24Hour) "09:00 day of event" else "9 AM day of event"
                 720 -> "12 hours before"
                 1440 -> "1 day before"
                 2880 -> "2 days before"
@@ -479,10 +495,11 @@ object DateTimeUtils {
      * Delegates to FormConstants.formatReminderShort for single source of truth.
      *
      * @param minutes Minutes before event (-1 for off)
-     * @return Short display label (e.g., "15m", "1d", "Off", "15h")
+     * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
+     * @return Short display label (e.g., "15m", "1d", "Off", "09:00" or "9AM")
      */
-    fun formatReminderShort(minutes: Int): String =
-        org.onekash.kashcal.ui.shared.formatReminderShort(minutes)
+    fun formatReminderShort(minutes: Int, use24Hour: Boolean = false): String =
+        org.onekash.kashcal.ui.shared.formatReminderShort(minutes, use24Hour)
 
     /**
      * Format sync interval for display.

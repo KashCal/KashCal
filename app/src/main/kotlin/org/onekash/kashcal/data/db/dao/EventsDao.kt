@@ -541,6 +541,29 @@ interface EventsDao {
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, now: Long)
 
     /**
+     * Update only the reminders field for an event.
+     *
+     * Used by CalDavSyncWorker to apply user's default reminder to NEW events
+     * that arrive from the server without VALARM (because the creator used
+     * client-local default reminders like Apple Calendar).
+     *
+     * Does NOT change sync_status - reminders are local-only preference,
+     * not pushed back to server.
+     *
+     * @param id Event ID
+     * @param remindersJson JSON-encoded list of ISO 8601 durations (e.g., '["-PT15M"]')
+     * @param now Timestamp for updated_at
+     */
+    @Query("""
+        UPDATE events
+        SET reminders = :remindersJson,
+            updated_at = :now
+        WHERE id = :id
+    """
+    )
+    suspend fun updateReminders(id: Long, remindersJson: String?, now: Long)
+
+    /**
      * Clear all etags to force re-parsing on next sync.
      *
      * Used when parser version changes (e.g., timezone fix) to ensure

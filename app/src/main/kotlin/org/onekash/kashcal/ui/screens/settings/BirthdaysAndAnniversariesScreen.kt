@@ -37,15 +37,18 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.text.format.DateFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
 import org.onekash.kashcal.ui.components.pickers.argbToHex
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.formatReminderOption
+import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Dedicated screen for managing Contact Birthdays and Anniversaries.
@@ -63,6 +66,7 @@ import org.onekash.kashcal.ui.shared.formatReminderOption
  * @param anniversariesReminder Current anniversary reminder (minutes)
  * @param anniversaryCount Number of anniversary events
  * @param hasPermission Whether READ_CONTACTS permission is granted
+ * @param timeFormat Time format preference ("system", "12h", or "24h")
  * @param onToggleBirthdays Callback to enable/disable birthdays
  * @param onBirthdaysColorChange Callback for birthday color change
  * @param onBirthdaysReminderChange Callback for birthday reminder change
@@ -83,6 +87,7 @@ fun BirthdaysAndAnniversariesScreen(
     anniversariesReminder: Int,
     anniversaryCount: Int,
     hasPermission: Boolean,
+    timeFormat: String,
     onToggleBirthdays: (Boolean) -> Unit,
     onBirthdaysColorChange: (Int) -> Unit,
     onBirthdaysReminderChange: (Int) -> Unit,
@@ -91,6 +96,9 @@ fun BirthdaysAndAnniversariesScreen(
     onAnniversariesReminderChange: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
+    // Compute use24Hour from timeFormat
+    val context = LocalContext.current
+    val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
     Scaffold(
         topBar = {
             TopAppBar(
@@ -123,6 +131,7 @@ fun BirthdaysAndAnniversariesScreen(
                     reminderMinutes = birthdaysReminder,
                     eventCount = birthdayCount,
                     reminderTitle = "Birthday Reminder",
+                    use24Hour = use24Hour,
                     onToggle = onToggleBirthdays,
                     onColorChange = onBirthdaysColorChange,
                     onReminderChange = onBirthdaysReminderChange
@@ -142,6 +151,7 @@ fun BirthdaysAndAnniversariesScreen(
                     reminderMinutes = anniversariesReminder,
                     eventCount = anniversaryCount,
                     reminderTitle = "Anniversary Reminder",
+                    use24Hour = use24Hour,
                     onToggle = onToggleAnniversaries,
                     onColorChange = onAnniversariesColorChange,
                     onReminderChange = onAnniversariesReminderChange
@@ -186,6 +196,7 @@ private fun ContactEventSection(
     reminderMinutes: Int,
     eventCount: Int,
     reminderTitle: String,
+    use24Hour: Boolean,
     onToggle: (Boolean) -> Unit,
     onColorChange: (Int) -> Unit,
     onReminderChange: (Int) -> Unit
@@ -300,7 +311,7 @@ private fun ContactEventSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        formatReminderOption(reminderMinutes, isAllDay = true),
+                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -319,7 +330,7 @@ private fun ContactEventSection(
         SingleAlertPickerSheet(
             sheetState = reminderSheetState,
             title = reminderTitle,
-            options = ALL_DAY_REMINDER_OPTIONS,
+            options = getAllDayReminderOptions(use24Hour),
             currentValue = reminderMinutes,
             onSelect = { minutes ->
                 onReminderChange(minutes)

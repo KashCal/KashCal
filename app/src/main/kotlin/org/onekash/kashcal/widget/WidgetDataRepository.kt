@@ -12,7 +12,7 @@ import javax.inject.Singleton
  * Repository for fetching widget data.
  *
  * Queries today's events for the agenda widget, respecting calendar visibility.
- * Events are sorted with timed events first (by start time), all-day events last.
+ * Events are sorted with all-day events first, then timed events by start time.
  * Past events are marked for visual differentiation (grayed/strikethrough).
  *
  * Uses [DisplayEventRepository] to merge Room + device calendar events.
@@ -38,7 +38,7 @@ class WidgetDataRepository @Inject constructor(
     /**
      * Get today's events for the widget.
      *
-     * @return List of events for today, sorted by time with all-day events at the end.
+     * @return List of events for today, sorted with all-day events first, then by start time.
      *         Past events are marked with isPast=true.
      */
     suspend fun getTodayEvents(): List<WidgetEvent> {
@@ -49,14 +49,14 @@ class WidgetDataRepository @Inject constructor(
         val todayEvents = eventsMap[todayCode] ?: return emptyList()
 
         return todayEvents.map { toWidgetEvent(it) }
-            .sortedWith(compareBy({ it.isAllDay }, { it.startTs }))
+            .sortedWith(compareBy({ !it.isAllDay }, { it.startTs }))
     }
 
     /**
      * Get events for the next 7 days (today + 6 days).
      *
      * Multi-day events appear on each day they span within the 7-day window.
-     * Events are sorted within each day: timed events by start time, all-day at end.
+     * Events are sorted within each day: all-day events first, then timed by start time.
      *
      * @return Map of dayCode (YYYYMMDD) to list of events for that day.
      *         Always returns exactly 7 entries, one for each day.
@@ -77,7 +77,7 @@ class WidgetDataRepository @Inject constructor(
         return dayCodes.associateWith { dayCode ->
             (eventsMap[dayCode] ?: emptyList())
                 .map { toWidgetEvent(it) }
-                .sortedWith(compareBy({ it.isAllDay }, { it.startTs }))
+                .sortedWith(compareBy({ !it.isAllDay }, { it.startTs }))
         }
     }
 

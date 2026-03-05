@@ -8,8 +8,13 @@ import androidx.work.Data
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.data.contacts.ContactEventUtils
+import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
@@ -72,7 +77,9 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val pendingOperationsDao: PendingOperationsDao,
     private val syncSessionStore: SyncSessionStore,
     private val syncLogsDao: SyncLogsDao,
-    private val iCloudUrlMigration: ICloudUrlMigration
+    private val iCloudUrlMigration: ICloudUrlMigration,
+    private val eventsDao: EventsDao,
+    private val dataStore: KashCalDataStore
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -822,6 +829,11 @@ class CalDavSyncWorker @AssistedInject constructor(
     private suspend fun scheduleRemindersForSyncedEvents(changes: List<SyncChange>) {
         var scheduled = 0
         var skipped = 0
+        var defaultsApplied = 0
+
+        // Read default reminder settings ONCE before the loop
+        val defaultTimedMinutes = dataStore.defaultReminderMinutes.first()
+        val defaultAllDayMinutes = dataStore.defaultAllDayReminder.first()
 
         for (change in changes) {
             // Skip DELETED events (reminders already cleaned up)
@@ -831,7 +843,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
 
             try {
-                val event = eventReader.getEventById(change.eventId)
+                var event = eventReader.getEventById(change.eventId)
                 if (event == null) {
                     Log.w(TAG, "Event ${change.eventId} not found for reminder scheduling")
                     skipped++
@@ -844,7 +856,30 @@ class CalDavSyncWorker @AssistedInject constructor(
                     reminderScheduler.cancelRemindersForEvent(event.id)
                 }
 
-                // Skip events without reminders
+                // For NEW events without reminders, apply user's default reminder
+                // (only during incremental sync, not initial sync)
+                if (change.type == ChangeType.NEW && !change.isFromInitialSync) {
+                    val defaultMinutes = if (event.isAllDay) defaultAllDayMinutes else defaultTimedMinutes
+                    val shouldApplyDefaults = event.reminders.isNullOrEmpty() &&
+                        (event.alarmCount ?: 0) == 0 &&
+                        defaultMinutes != KashCalDataStore.REMINDER_OFF
+
+                    if (shouldApplyDefaults) {
+                        try {
+                            val reminder = ContactEventUtils.minutesToIsoDuration(defaultMinutes)
+                            val remindersJson = Gson().toJson(listOf(reminder))
+                            eventsDao.updateReminders(event.id, remindersJson, System.currentTimeMillis())
+                            event = event.copy(reminders = listOf(reminder))
+                            defaultsApplied++
+                            Log.d(TAG, "Applied default reminder ($defaultMinutes min) to new event ${event.id}: ${event.title}")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to apply default reminder to event ${event.id}", e)
+                            // Continue without failing - event just won't have reminder
+                        }
+                    }
+                }
+
+                // Skip events without reminders (after potential default application)
                 if (event.reminders.isNullOrEmpty()) {
                     skipped++
                     continue
@@ -884,7 +919,11 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
         }
 
-        Log.i(TAG, "Reminder scheduling complete: $scheduled scheduled, $skipped skipped")
+        if (defaultsApplied > 0) {
+            Log.i(TAG, "Reminder scheduling complete: $scheduled scheduled, $skipped skipped, $defaultsApplied defaults applied")
+        } else {
+            Log.i(TAG, "Reminder scheduling complete: $scheduled scheduled, $skipped skipped")
+        }
     }
 
     private fun createSuccessOutput(result: SyncResult.Success): Data {

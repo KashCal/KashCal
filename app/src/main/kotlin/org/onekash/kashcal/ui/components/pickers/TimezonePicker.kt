@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,7 +25,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -46,6 +47,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -103,50 +106,66 @@ fun TimezonePickerChip(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Chip or Search Box
+        // Compact view: 160dp Box with all elements positioned from center
+        // Globe always centered, text above/below with fixed offsets
         AnimatedVisibility(
             visible = !isSearchOpen,
             enter = fadeIn(),
             exit = fadeOut()
         ) {
-            // Timezone chip - styled to match time picker's center selection highlight (32.dp height)
             Box(
-                modifier = Modifier
-                    .height(32.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-                        RoundedCornerShape(8.dp)
-                    )
-                    .clickable { isSearchOpen = true },
+                modifier = Modifier.height(160.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                // Globe icon button - always centered
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+                            RoundedCornerShape(8.dp)
+                        )
+                        .clickable { isSearchOpen = true }
+                        .semantics {
+                            contentDescription = "Timezone: $abbreviation, tap to change"
+                        },
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Dynamic text size based on abbreviation length
-                    // Short (3-4 chars like "EST"): labelLarge
-                    // Medium (5-7 chars like "GMT+5"): labelMedium
-                    // Long (8+ chars like "GMT+11:00"): labelSmall
-                    val textStyle = when {
-                        abbreviation.length <= 4 -> MaterialTheme.typography.labelLarge
-                        abbreviation.length <= 7 -> MaterialTheme.typography.labelMedium
-                        else -> MaterialTheme.typography.labelSmall
-                    }
-                    Text(
-                        text = abbreviation,
-                        style = textStyle,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
                     Icon(
-                        Icons.Default.Schedule,
-                        contentDescription = "Change timezone",
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        Icons.Default.Public,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                // Abbreviation - above globe, offset from center
+                val textStyle = when {
+                    abbreviation.length <= 4 -> MaterialTheme.typography.labelSmall
+                    else -> MaterialTheme.typography.labelSmall.copy(
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize * 0.85f
+                    )
+                }
+                Text(
+                    text = abbreviation,
+                    style = textStyle,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    modifier = Modifier.offset(y = (-36).dp)
+                )
+
+                // Local time preview - below globe, offset from center
+                if (localPreview != null) {
+                    Text(
+                        text = localPreview,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        modifier = Modifier.offset(y = 36.dp)
                     )
                 }
             }
@@ -280,17 +299,6 @@ fun TimezonePickerChip(
             }
         }
 
-        // Local time preview (shown below chip when timezone differs from device)
-        if (!isSearchOpen && localPreview != null) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = localPreview,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 2
-            )
-        }
     }
 }
 

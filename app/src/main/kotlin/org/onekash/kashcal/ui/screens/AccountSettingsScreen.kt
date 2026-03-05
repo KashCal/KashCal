@@ -40,8 +40,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import android.text.format.DateFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -78,6 +80,7 @@ import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.ui.shared.formatReminderShort
 import org.onekash.kashcal.ui.shared.maskEmail
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * UI state for the account settings screen.
@@ -445,6 +448,8 @@ private fun FlatSettingsContent(
 
     // Derived values
     val isConnected = iCloudState is ICloudConnectionState.Connected
+    val context = LocalContext.current
+    val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
 
     // Memoized: only recompute when calendars list changes
     val visibleCalendarCount = remember(calendars) {
@@ -609,7 +614,7 @@ private fun FlatSettingsContent(
                 SettingsRow(
                     icon = Icons.Default.Notifications,
                     label = "Default Alerts",
-                    subtitle = "${formatReminderShort(defaultReminderTimed)} · ${formatReminderShort(defaultReminderAllDay)}",
+                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour)} · ${formatReminderShort(defaultReminderAllDay, use24Hour)}",
                     onClick = { showAlertsSheet = true }
                 )
             }
@@ -740,6 +745,7 @@ private fun FlatSettingsContent(
             sheetState = alertsSheetState,
             defaultReminderTimed = defaultReminderTimed,
             defaultReminderAllDay = defaultReminderAllDay,
+            use24Hour = use24Hour,
             onTimedReminderChange = onDefaultReminderTimedChange,
             onAllDayReminderChange = onDefaultReminderAllDayChange,
             onDismiss = { showAlertsSheet = false }

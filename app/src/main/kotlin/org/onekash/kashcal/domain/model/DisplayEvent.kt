@@ -112,9 +112,18 @@ fun DisplayEvent.Device.buildShareText(timePattern: String = "h:mm a"): String =
             appendLine("$startStr (All day)")
         }
     } else {
+        // Timed event
         val startDate = Date(startTs)
         val endDate = Date(endTs)
-        appendLine("${dateFormat.format(startDate)} ${timeFormat.format(startDate)} - ${timeFormat.format(endDate)}")
+        val startDateStr = dateFormat.format(startDate)
+        val endDateStr = dateFormat.format(endDate)
+        if (startDateStr != endDateStr) {
+            // Multi-day timed event: show both dates
+            appendLine("$startDateStr ${timeFormat.format(startDate)} - $endDateStr ${timeFormat.format(endDate)}")
+        } else {
+            // Same-day timed event: show date once
+            appendLine("$startDateStr ${timeFormat.format(startDate)} - ${timeFormat.format(endDate)}")
+        }
     }
 
     if (!location.isNullOrEmpty()) {

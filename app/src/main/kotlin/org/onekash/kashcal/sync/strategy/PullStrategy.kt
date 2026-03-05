@@ -345,7 +345,8 @@ class PullStrategy @Inject constructor(
             Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}, missing: $missingHrefs")
         }
 
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
+        // Incremental sync: syncToken exists, so this is never initial sync
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, isInitialSync = false)
 
         // Clean up any duplicate master events that may have accumulated
         // This handles edge cases where duplicates were created due to:
@@ -535,7 +536,11 @@ class PullStrategy @Inject constructor(
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
         // Process server events
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
+        // Skip default reminders for:
+        // - Initial sync (syncToken == null): first time syncing, don't spam defaults
+        // - Force sync (forceFullSync == true): user is refreshing, not seeing truly new events
+        val skipDefaultReminders = (calendar.syncToken == null) || forceFullSync
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, skipDefaultReminders)
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
@@ -705,7 +710,8 @@ class PullStrategy @Inject constructor(
         Log.d(TAG, "Fetched ${serverEvents.size} events via multiget (requested ${hrefsToFetch.size})")
 
         // Step 6: Process fetched events
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds)
+        // Etag fallback is only called during incremental sync attempts, so isInitialSync = false
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, isInitialSync = false)
 
         // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
@@ -747,7 +753,8 @@ class PullStrategy @Inject constructor(
         calendar: Calendar,
         serverEvents: List<CalDavEvent>,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet()
+        recentlyPushedEventIds: Set<Long> = emptySet(),
+        isInitialSync: Boolean = false
     ): ProcessEventsResult {
         var added = 0
         var updated = 0
@@ -926,7 +933,8 @@ class PullStrategy @Inject constructor(
                 isAllDay = savedEvent.isAllDay,
                 isRecurring = !savedEvent.rrule.isNullOrBlank(),
                 calendarName = calendar.displayName,
-                calendarColor = calendar.color ?: 0xFF2196F3.toInt() // Default blue
+                calendarColor = calendar.color ?: 0xFF2196F3.toInt(), // Default blue
+                isFromInitialSync = isInitialSync
             ))
         }
 
@@ -1055,7 +1063,8 @@ class PullStrategy @Inject constructor(
                 isAllDay = savedExceptionEvent.isAllDay,
                 isRecurring = true, // Exception events are always from recurring series
                 calendarName = calendar.displayName,
-                calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                calendarColor = calendar.color ?: 0xFF2196F3.toInt(),
+                isFromInitialSync = isInitialSync
             ))
         }
 

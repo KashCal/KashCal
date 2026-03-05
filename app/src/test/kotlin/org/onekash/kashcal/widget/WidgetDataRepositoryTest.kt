@@ -23,7 +23,7 @@ import java.time.ZoneId
  *
  * Tests cover:
  * - Empty state (no events today)
- * - Event sorting (timed by start time, all-day last)
+ * - Event sorting (all-day first, then timed by start time)
  * - Past event detection
  * - DisplayEvent → WidgetEvent mapping
  * - Multi-day event display (via DisplayEventRepository grouping)
@@ -88,7 +88,7 @@ class WidgetDataRepositoryTest {
     }
 
     @Test
-    fun `getTodayEvents sorts all-day events after timed events`() = runTest {
+    fun `getTodayEvents sorts all-day events before timed events`() = runTest {
         val today = LocalDate.now()
         val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
         val zone = ZoneId.systemDefault()
@@ -109,10 +109,10 @@ class WidgetDataRepositoryTest {
 
         val result = repository.getTodayEvents()
         assertEquals(2, result.size)
-        assertEquals("Timed Event", result[0].title)
-        assertFalse(result[0].isAllDay)
-        assertEquals("All Day Event", result[1].title)
-        assertTrue(result[1].isAllDay)
+        assertEquals("All Day Event", result[0].title)
+        assertTrue(result[0].isAllDay)
+        assertEquals("Timed Event", result[1].title)
+        assertFalse(result[1].isAllDay)
     }
 
     // ========== Past Event Detection Tests ==========

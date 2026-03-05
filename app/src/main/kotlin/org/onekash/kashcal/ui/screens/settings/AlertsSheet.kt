@@ -26,6 +26,7 @@ import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.ReminderOption
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.shared.formatReminderShort
+import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
 
 /**
  * Bottom sheet for selecting default alerts/reminders.
@@ -36,6 +37,7 @@ import org.onekash.kashcal.ui.shared.formatReminderShort
  * @param sheetState Material3 sheet state
  * @param defaultReminderTimed Current default for timed events (minutes)
  * @param defaultReminderAllDay Current default for all-day events (minutes)
+ * @param use24Hour Whether to use 24-hour format for time-based labels
  * @param onTimedReminderChange Callback when timed reminder changes
  * @param onAllDayReminderChange Callback when all-day reminder changes
  * @param onDismiss Callback when sheet is dismissed
@@ -46,15 +48,19 @@ fun AlertsSheet(
     sheetState: SheetState,
     defaultReminderTimed: Int,
     defaultReminderAllDay: Int,
+    use24Hour: Boolean,
     onTimedReminderChange: (Int) -> Unit,
     onAllDayReminderChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Get time-format-aware all-day options
+    val allDayOptions = getAllDayReminderOptions(use24Hour)
+
     // Find selected options
     val selectedTimedOption = TIMED_REMINDER_OPTIONS.find { it.minutes == defaultReminderTimed }
         ?: TIMED_REMINDER_OPTIONS[1]  // Default to 15 minutes
-    val selectedAllDayOption = ALL_DAY_REMINDER_OPTIONS.find { it.minutes == defaultReminderAllDay }
-        ?: ALL_DAY_REMINDER_OPTIONS[2]  // Default to 12 hours
+    val selectedAllDayOption = allDayOptions.find { it.minutes == defaultReminderAllDay }
+        ?: allDayOptions[2]  // Default to 12 hours
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -87,7 +93,7 @@ fun AlertsSheet(
                 // All-Day Events dropdown
                 SettingsDropdownRow(
                     label = "All-Day Events",
-                    options = ALL_DAY_REMINDER_OPTIONS,
+                    options = allDayOptions,
                     selectedOption = selectedAllDayOption,
                     onOptionSelected = { onAllDayReminderChange(it.minutes) },
                     optionLabel = { it.label },
