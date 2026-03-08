@@ -41,7 +41,7 @@ icaldav = "3.2.0"
 okhttp = "4.12.0"
 
 # DataStore & Security
-datastore = "1.1.1"
+datastore = "1.2.0"
 securityCrypto = "1.1.0-alpha06"
 
 # WorkManager
