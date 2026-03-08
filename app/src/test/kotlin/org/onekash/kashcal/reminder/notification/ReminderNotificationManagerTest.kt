@@ -6,7 +6,13 @@ import android.util.Log
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import androidx.datastore.preferences.core.edit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -39,10 +45,12 @@ import java.util.TimeZone
  * Note: The actual intent creation is tested indirectly through the notification
  * content intent. Integration testing (manual) verifies the deep link flow.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
 class ReminderNotificationManagerTest {
 
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var channels: ReminderNotificationChannels
     private lateinit var dataStore: KashCalDataStore
@@ -56,6 +64,8 @@ class ReminderNotificationManagerTest {
         originalLocale = Locale.getDefault()
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"))
         Locale.setDefault(Locale.US)
+
+        Dispatchers.setMain(testDispatcher)
 
         mockkStatic(Log::class)
         every { Log.i(any(), any()) } returns 0
@@ -71,7 +81,9 @@ class ReminderNotificationManagerTest {
     }
 
     @After
-    fun tearDown() {
+    fun tearDown() = runTest {
+        dataStore.dataStore.edit { it.clear() }
+        Dispatchers.resetMain()
         TimeZone.setDefault(originalTimeZone)
         Locale.setDefault(originalLocale)
         unmockkAll()
