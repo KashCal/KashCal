@@ -19,7 +19,7 @@ room = "2.7.0"
 coroutines = "1.10.2"
 
 # Collections
-collectionsImmutable = "0.3.8"
+collectionsImmutable = "0.4.0"
 
 # DI
 hilt = "2.53.1"
