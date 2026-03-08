@@ -6,7 +6,7 @@ ksp = "2.1.0-1.0.29"
 
 # AndroidX
 coreKtx = "1.15.0"
-lifecycleRuntimeKtx = "2.8.7"
+lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.9.3"
 
 # Compose
