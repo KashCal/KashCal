@@ -13,7 +13,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.12.01"
 
 # Room (2.8.x has kotlinx.serialization incompatibility with KSP - https://issuetracker.google.com/issues/478659001)
-room = "2.7.0"
+room = "2.8.4"
 
 # Coroutines
 coroutines = "1.10.2"
