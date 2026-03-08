@@ -45,7 +45,7 @@ datastore = "1.1.1"
 securityCrypto = "1.1.0-alpha06"
 
 # WorkManager
-workManager = "2.10.0"
+workManager = "2.11.1"
 hiltWork = "1.2.0"
 
 # Glance (App Widgets)
