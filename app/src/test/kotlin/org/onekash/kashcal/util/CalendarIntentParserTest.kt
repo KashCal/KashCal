@@ -63,13 +63,53 @@ class CalendarIntentParserTest {
     }
 
     @Test
-    fun `isCalendarInsertIntent returns false for null mime type`() {
+    fun `isCalendarInsertIntent returns false for null mime type and null data`() {
         val intent = Intent(Intent.ACTION_INSERT)
 
         assertFalse(CalendarIntentParser.isCalendarInsertIntent(intent))
     }
 
+    @Test
+    fun `isCalendarInsertIntent returns true for ACTION_INSERT with CalendarContract data URI`() {
+        // Standard Android pattern: Intent(ACTION_INSERT).setData(Events.CONTENT_URI)
+        // setData() clears type, so intent.type is null — must match via URI
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns false for ACTION_INSERT with non-events CalendarContract URI`() {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = Uri.parse("content://com.android.calendar/calendars")
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
     // ==================== parse Tests ====================
+
+    @Test
+    fun `parse extracts extras from ACTION_INSERT with data URI`() {
+        // Simulates what Öffi, Google Maps, etc. send
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+            putExtra(CalendarContract.Events.TITLE, "Train to Berlin")
+            putExtra(CalendarContract.Events.EVENT_LOCATION, "Platform 5")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1741356000000L)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, 1741359600000L)
+        }
+
+        val result = CalendarIntentParser.parse(intent)
+
+        assertNotNull("parse should succeed for ACTION_INSERT with data URI", result)
+        assertEquals("Train to Berlin", result!!.first.title)
+        assertEquals("Platform 5", result.first.location)
+        assertEquals(1741356000000L, result.first.startTimeMillis)
+        assertEquals(1741359600000L, result.first.endTimeMillis)
+    }
 
     @Test
     fun `parse extracts title correctly`() {

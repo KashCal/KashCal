@@ -1,0 +1,13 @@
+# Require review for sensitive files
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# CI/CD workflows and GitHub config
+/.github/                @one-kash
+
+# Build configuration and dependencies
+/app/build.gradle.kts    @one-kash
+/build.gradle.kts        @one-kash
+/settings.gradle.kts     @one-kash
+
+# Signing configuration
+/version.properties      @one-kash

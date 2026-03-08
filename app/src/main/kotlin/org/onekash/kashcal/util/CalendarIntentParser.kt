@@ -81,8 +81,13 @@ object CalendarIntentParser {
      */
     fun isCalendarInsertIntent(intent: Intent?): Boolean {
         if (intent == null) return false
-        return intent.action == Intent.ACTION_INSERT &&
-            intent.type == "vnd.android.cursor.dir/event"
+        if (intent.action != Intent.ACTION_INSERT) return false
+        // Match explicit MIME type (apps using setType() or setDataAndType())
+        if (intent.type == "vnd.android.cursor.dir/event") return true
+        // Match CalendarContract data URI (apps using setData() — type resolved by
+        // ContentProvider during intent filter matching, but not stored on intent)
+        val uri = intent.data ?: return false
+        return uri.authority == CALENDAR_AUTHORITY && uri.lastPathSegment == "events"
     }
 
     /**

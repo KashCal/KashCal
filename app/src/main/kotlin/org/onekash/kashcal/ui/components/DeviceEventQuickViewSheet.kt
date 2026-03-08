@@ -21,19 +21,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Launch
+import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,7 +53,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.location.looksLikeAddress
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
@@ -54,12 +65,19 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
 /**
  * Quick view sheet for device calendar events.
  *
- * Shows event details in the same visual style as [EventQuickViewSheet]
- * with Duplicate and Share actions (matching the read-only calendar pattern).
+ * Shows event details in the same visual style as [EventQuickViewSheet].
+ * When the calendar is writable and WRITE_CALENDAR permission is granted,
+ * shows Edit/Delete buttons. Otherwise shows Duplicate/Share (read-only mode).
  *
  * @param displayEvent The device calendar event to display
  * @param showEventEmojis Whether to prefix auto-detected emoji to the title
+ * @param hasWritePermission Whether WRITE_CALENDAR permission is granted
+ * @param isWritableCalendar Whether the calendar allows write access
  * @param onDismiss Called when sheet is dismissed
+ * @param onEdit Called to edit all occurrences (or single event if not recurring)
+ * @param onEditOccurrence Called to edit just this occurrence (recurring events)
+ * @param onDelete Called to delete all occurrences (or single event if not recurring)
+ * @param onDeleteOccurrence Called to delete just this occurrence (recurring events)
  * @param onDuplicate Called to duplicate this event into a KashCal calendar
  * @param onShare Called to share event details as text
  * @param timeFormat Time format preference: "system", "12h", or "24h"
@@ -69,13 +87,23 @@ import org.onekash.kashcal.util.text.shouldOpenExternally
 fun DeviceEventQuickViewSheet(
     displayEvent: DisplayEvent.Device,
     showEventEmojis: Boolean = true,
+    hasWritePermission: Boolean = false,
+    isWritableCalendar: Boolean = false,
     onDismiss: () -> Unit,
+    onEdit: () -> Unit = {},
+    onEditOccurrence: () -> Unit = {},
+    onDelete: () -> Unit = {},
+    onDeleteOccurrence: () -> Unit = {},
+    onDeleteFuture: () -> Unit = {},
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
+    onExportIcs: () -> Unit = {},
     timeFormat: String = "system"
 ) {
-    val hasExpandableContent = remember(displayEvent.description) {
-        !displayEvent.description.isNullOrBlank()
+    val canWrite = hasWritePermission && isWritableCalendar
+    val isRecurring = displayEvent.isPartOfRecurringSeries
+    val hasExpandableContent = remember(displayEvent.description, displayEvent.reminders) {
+        !displayEvent.description.isNullOrBlank() || displayEvent.reminders.isNotEmpty()
     }
 
     val sheetState = rememberModalBottomSheetState(
@@ -209,8 +237,17 @@ fun DeviceEventQuickViewSheet(
 
                     // Repeat info
                     if (displayEvent.hasRrule) {
+                        val repeatText = remember(displayEvent.rrule) {
+                            displayEvent.rrule?.let { rrule ->
+                                try {
+                                    RruleBuilder.formatForDisplay(rrule)
+                                } catch (_: Exception) {
+                                    "Recurring" // Fallback for malformed RRULE
+                                }
+                            } ?: "Recurring"
+                        }
                         Text(
-                            text = "\uD83D\uDD01 Recurring",
+                            text = "\uD83D\uDD01 $repeatText",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -238,34 +275,290 @@ fun DeviceEventQuickViewSheet(
                 }
             }
 
-            // Description section
+            // Description and reminders section
             if (hasExpandableContent) {
                 DeviceEventDescriptionSection(
                     description = displayEvent.description,
+                    reminders = displayEvent.reminders,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons (matches EventQuickViewSheet read-only layout)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            // Action buttons
+            DeviceEventActionButtons(
+                canWrite = canWrite,
+                isRecurring = isRecurring,
+                onEdit = onEdit,
+                onEditOccurrence = onEditOccurrence,
+                onDelete = onDelete,
+                onDeleteOccurrence = onDeleteOccurrence,
+                onDeleteFuture = onDeleteFuture,
+                onDuplicate = onDuplicate,
+                onShare = onShare,
+                onExportIcs = onExportIcs
+            )
+        }
+    }
+}
+
+/**
+ * Action buttons for device event quick view.
+ * Shows Edit/Delete when writable, Duplicate/Share when read-only.
+ */
+@Composable
+private fun DeviceEventActionButtons(
+    canWrite: Boolean,
+    isRecurring: Boolean,
+    onEdit: () -> Unit,
+    onEditOccurrence: () -> Unit,
+    onDelete: () -> Unit,
+    onDeleteOccurrence: () -> Unit,
+    onDeleteFuture: () -> Unit,
+    onDuplicate: () -> Unit,
+    onShare: () -> Unit,
+    onExportIcs: () -> Unit
+) {
+    var showEditConfirmation by remember { mutableStateOf(false) }
+    var editAllOccurrences by remember { mutableStateOf(true) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var deleteAllFuture by remember { mutableStateOf(false) }
+    var showMoreMenu by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        if (!canWrite) {
+            // Read-only: show Duplicate and Share
+            FilledTonalButton(
+                onClick = onDuplicate,
+                modifier = Modifier.weight(1f)
             ) {
-                FilledTonalButton(
-                    onClick = onDuplicate,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Duplicate")
+                Text("Duplicate")
+            }
+            FilledTonalButton(
+                onClick = onShare,
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Share")
+            }
+        } else {
+            // Writable: show Edit, Delete, More menu
+            // Edit button / inline confirmation
+            if (!showDeleteConfirmation) {
+                if (!showEditConfirmation) {
+                    FilledTonalButton(
+                        onClick = {
+                            if (isRecurring) {
+                                showEditConfirmation = true
+                            } else {
+                                onEdit()
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Edit")
+                    }
+                } else {
+                    // Inline edit confirmation for recurring events
+                    FilledTonalButton(
+                        onClick = {
+                            showEditConfirmation = false
+                            editAllOccurrences = true
+                        },
+                        modifier = Modifier.weight(0.5f)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledTonalButton(
+                        onClick = {
+                            showEditConfirmation = false
+                            if (editAllOccurrences) {
+                                onEdit()
+                            } else {
+                                onEditOccurrence()
+                            }
+                        },
+                        modifier = Modifier.weight(0.5f)
+                    ) {
+                        Text("Edit")
+                    }
                 }
-                FilledTonalButton(
-                    onClick = onShare,
-                    modifier = Modifier.weight(1f)
+            }
+
+            // Delete button / inline confirmation
+            if (!showEditConfirmation) {
+                if (!showDeleteConfirmation) {
+                    FilledTonalButton(
+                        onClick = { showDeleteConfirmation = true },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Text("Delete")
+                    }
+                } else {
+                    // Inline delete confirmation
+                    FilledTonalButton(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            deleteAllFuture = false
+                        },
+                        modifier = Modifier.weight(0.5f)
+                    ) {
+                        Text("Cancel")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    FilledTonalButton(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            if (isRecurring) {
+                                if (deleteAllFuture) {
+                                    onDeleteFuture()
+                                } else {
+                                    onDeleteOccurrence()
+                                }
+                            } else {
+                                onDelete()
+                            }
+                        },
+                        modifier = Modifier.weight(0.5f),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer
+                        )
+                    ) {
+                        Text("Delete")
+                    }
+                }
+            }
+
+            // More menu (only visible when not in confirmation mode)
+            if (!showEditConfirmation && !showDeleteConfirmation) {
+                Box {
+                    FilledTonalButton(
+                        onClick = { showMoreMenu = true }
+                    ) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = "More options"
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = showMoreMenu,
+                        onDismissRequest = { showMoreMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Duplicate") },
+                            onClick = {
+                                showMoreMenu = false
+                                onDuplicate()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Share") },
+                            onClick = {
+                                showMoreMenu = false
+                                onShare()
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export as .ics") },
+                            onClick = {
+                                showMoreMenu = false
+                                onExportIcs()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Recurring event edit/delete option selection
+    if (isRecurring && (showEditConfirmation || showDeleteConfirmation)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(top = 12.dp)
+        ) {
+            if (showEditConfirmation) {
+                Text(
+                    "Edit recurring event",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { editAllOccurrences = false }
+                        .padding(vertical = 4.dp)
                 ) {
-                    Text("Share")
+                    RadioButton(
+                        selected = !editAllOccurrences,
+                        onClick = { editAllOccurrences = false }
+                    )
+                    Text("This occurrence only")
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { editAllOccurrences = true }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = editAllOccurrences,
+                        onClick = { editAllOccurrences = true }
+                    )
+                    Text("All occurrences")
+                }
+            }
+
+            if (showDeleteConfirmation) {
+                Text(
+                    "Delete recurring event",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { deleteAllFuture = false }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = !deleteAllFuture,
+                        onClick = { deleteAllFuture = false }
+                    )
+                    Text("This occurrence only")
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { deleteAllFuture = true }
+                        .padding(vertical = 4.dp)
+                ) {
+                    RadioButton(
+                        selected = deleteAllFuture,
+                        onClick = { deleteAllFuture = true }
+                    )
+                    Text("This and all future")
                 }
             }
         }
@@ -273,14 +566,17 @@ fun DeviceEventQuickViewSheet(
 }
 
 /**
- * Description section for device events.
+ * Description and reminders section for device events.
  */
 @Composable
 private fun DeviceEventDescriptionSection(
     description: String?,
+    reminders: List<Int>,
     modifier: Modifier = Modifier
 ) {
-    if (description.isNullOrBlank()) return
+    val hasDescription = !description.isNullOrBlank()
+    val hasReminders = reminders.isNotEmpty()
+    if (!hasDescription && !hasReminders) return
 
     val scrollState = rememberScrollState()
 
@@ -296,11 +592,45 @@ private fun DeviceEventDescriptionSection(
             modifier = Modifier.padding(vertical = 4.dp)
         )
 
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        // Notes section (with linkified text)
+        if (hasDescription) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Notes",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LinkifiedText(
+                    text = description!!,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            }
+        }
+
+        // Reminders section
+        val formattedReminders = remember(reminders) {
+            formatRemindersFromMinutes(reminders)
+        }
+        if (formattedReminders != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "\uD83D\uDD14", // Bell emoji
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = formattedReminders,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     }
 }
 

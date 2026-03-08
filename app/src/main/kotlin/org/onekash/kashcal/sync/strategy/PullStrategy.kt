@@ -274,8 +274,12 @@ class PullStrategy @Inject constructor(
             if (event != null) {
                 // LOCAL-FIRST: Don't delete events with pending local changes
                 // They may have been modified/recreated locally while offline
-                if (event.hasPendingChanges()) {
-                    Log.d(TAG, "Skipping deletion of $url - has pending local changes (${event.syncStatus})")
+                // RFC 4791: Don't delete recently pushed events — server may not
+                // have indexed them yet (no immediate visibility guarantee after PUT)
+                if (event.hasPendingChanges() || event.id in recentlyPushedEventIds) {
+                    Log.d(TAG, "Skipping deletion of $url - " +
+                        if (event.hasPendingChanges()) "has pending local changes (${event.syncStatus})"
+                        else "recently pushed in this sync cycle")
                     continue
                 }
                 // Track deletion for UI notification before deleting
@@ -463,7 +467,8 @@ class PullStrategy @Inject constructor(
             val wouldDelete = localEvents.count { event ->
                 event.caldavUrl != null &&
                 event.caldavUrl !in serverUrls &&
-                !event.hasPendingChanges()
+                !event.hasPendingChanges() &&
+                event.id !in recentlyPushedEventIds
             }
             if (wouldDelete > 0) {
                 Log.d(TAG, "forceFullSync: skipping deletion of $wouldDelete local events not in server response")
@@ -477,7 +482,8 @@ class PullStrategy @Inject constructor(
             val toDelete = localEvents.filter { event ->
                 event.caldavUrl != null &&
                 event.caldavUrl !in serverUrls &&
-                !event.hasPendingChanges()
+                !event.hasPendingChanges() &&
+                event.id !in recentlyPushedEventIds
             }
             for (event in toDelete) {
                 Log.d(TAG, "Deleting stale event: ${event.caldavUrl}")
@@ -651,8 +657,12 @@ class PullStrategy @Inject constructor(
             val event = eventsDao.getByCaldavUrl(url)
             if (event != null) {
                 // LOCAL-FIRST: Don't delete events with pending local changes
-                if (event.hasPendingChanges()) {
-                    Log.d(TAG, "Skipping deletion of $url - has pending local changes (${event.syncStatus})")
+                // RFC 4791: Don't delete recently pushed events — server may not
+                // have indexed them yet (no immediate visibility guarantee after PUT)
+                if (event.hasPendingChanges() || event.id in recentlyPushedEventIds) {
+                    Log.d(TAG, "Skipping deletion of $url - " +
+                        if (event.hasPendingChanges()) "has pending local changes (${event.syncStatus})"
+                        else "recently pushed in this sync cycle")
                     continue
                 }
                 deletedChanges.add(SyncChange(

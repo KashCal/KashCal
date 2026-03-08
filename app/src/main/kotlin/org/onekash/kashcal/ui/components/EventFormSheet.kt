@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components
 
 import android.util.Log
+import org.onekash.kashcal.domain.mapper.toFormState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
@@ -72,6 +73,7 @@ import org.onekash.kashcal.util.location.AddressSuggestion
 import org.onekash.kashcal.util.location.LocationSuggestionService
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.util.CalendarIntentData
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -86,6 +88,7 @@ import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.PickerCalendar
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
@@ -144,9 +147,16 @@ data class EventFormState(
 
     // UI state
     val calendarGroups: List<CalendarGroup> = emptyList(),
+    val deviceCalendarGroups: List<CalendarGroup> = emptyList(),
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
     val error: String? = null,
+
+    // Device calendar state
+    val isDeviceCalendar: Boolean = false,
+    val editingDeviceEventId: Long? = null,
+    /** Number of reminders truncated when loading device event (>2 reminders) */
+    val truncatedReminderCount: Int = 0,
 
     // Edit mode
     val editingEventId: Long? = null,
@@ -164,7 +174,7 @@ data class EventFormState(
  * @param initialStartTs Initial start timestamp (epoch milliseconds) for new events
  * @param occurrenceTs Occurrence timestamp when editing single occurrence of recurring event
  * @param calendars Available calendars
- * @param defaultCalendarId Default calendar ID for new events
+ * @param defaultCalendar Default calendar for new events (supports Room and Device)
  * @param onDismiss Called when sheet is dismissed
  * @param onSave Called to save the event with form state
  * @param onDelete Called to delete the event (edit mode only)
@@ -187,7 +197,7 @@ fun EventFormSheet(
     calendarIntentInvitees: List<String> = emptyList(),
     calendars: List<Calendar>,
     calendarGroups: List<CalendarGroup>,
-    defaultCalendarId: Long?,
+    defaultCalendar: DefaultCalendar?,
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
     onDelete: (suspend (Long) -> Result<Unit>)? = null,
@@ -198,7 +208,14 @@ fun EventFormSheet(
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null,
     timeFormat: String = "system",
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    // Device calendar edit support
+    deviceEventId: Long? = null,
+    deviceOccurrenceTs: Long? = null,
+    onLoadDeviceEvent: (suspend (Long) -> org.onekash.kashcal.ui.viewmodels.DeviceEventEditData?)? = null,
+    onSaveDeviceEvent: (suspend (EventFormState) -> Result<Long>)? = null,
+    onDeleteDeviceEvent: (suspend (Long) -> Result<Unit>)? = null,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList()
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -242,7 +259,12 @@ fun EventFormSheet(
             coroutineScope.launch {
                 state = state.copy(isSaving = true, error = null)
                 try {
-                    val result = onSave(state)
+                    // Route to device event save if applicable
+                    val result: Result<*> = if (state.isDeviceCalendar && onSaveDeviceEvent != null) {
+                        onSaveDeviceEvent(state)
+                    } else {
+                        onSave(state)
+                    }
                     result.fold(
                         onSuccess = { onDismiss() },
                         onFailure = { e ->
@@ -276,7 +298,7 @@ fun EventFormSheet(
     }
 
     // Load data on first composition
-    LaunchedEffect(eventId) {
+    LaunchedEffect(eventId, deviceEventId) {
         // Filter out read-only calendars (ICS subscriptions) for event creation/editing
         val writableCalendars = calendars.filter { !it.isReadOnly }
         val writableGroups = calendarGroups.mapNotNull { group ->
@@ -284,16 +306,91 @@ fun EventFormSheet(
             if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
         }
 
-        // Default calendar: prefer user's choice, fall back to first writable calendar
-        val defaultCalendar = writableCalendars.find { it.id == defaultCalendarId }
-            ?: writableCalendars.firstOrNull()
+        // Default calendar: handle both Room and Device calendars
+        val defaultCalId: Long?
+        val defaultCalName: String
+        val defaultCalColor: Int?
+        val defaultIsDevice: Boolean
+
+        when (defaultCalendar) {
+            is DefaultCalendar.Room -> {
+                val cal = writableCalendars.find { it.id == defaultCalendar.calendarId }
+                if (cal != null) {
+                    defaultCalId = cal.id
+                    defaultCalName = cal.displayName
+                    defaultCalColor = cal.color
+                    defaultIsDevice = false
+                } else {
+                    // Room calendar unavailable - fallback to first writable
+                    val fallback = writableCalendars.firstOrNull()
+                    defaultCalId = fallback?.id
+                    defaultCalName = fallback?.displayName ?: ""
+                    defaultCalColor = fallback?.color
+                    defaultIsDevice = false
+                }
+            }
+            is DefaultCalendar.Device -> {
+                val deviceCal = deviceCalendarGroups
+                    .flatMap { it.pickerCalendars }
+                    .filterIsInstance<PickerCalendar.Device>()
+                    .map { it.calendar }
+                    .find { it.id == defaultCalendar.calendarId }
+                if (deviceCal != null) {
+                    defaultCalId = deviceCal.id
+                    defaultCalName = deviceCal.displayName
+                    defaultCalColor = deviceCal.color
+                    defaultIsDevice = true
+                } else {
+                    // Device calendar unavailable - fallback to first writable Room calendar
+                    val fallback = writableCalendars.firstOrNull()
+                    defaultCalId = fallback?.id
+                    defaultCalName = fallback?.displayName ?: ""
+                    defaultCalColor = fallback?.color
+                    defaultIsDevice = false
+                }
+            }
+            null -> {
+                val fallback = writableCalendars.firstOrNull()
+                defaultCalId = fallback?.id
+                defaultCalName = fallback?.displayName ?: ""
+                defaultCalColor = fallback?.color
+                defaultIsDevice = false
+            }
+        }
 
         var newState = state.copy(
             calendarGroups = writableGroups,
+            deviceCalendarGroups = deviceCalendarGroups,
             isLoading = false
         )
 
-        if (eventId != null && onLoadEvent != null) {
+        if (deviceEventId != null && onLoadDeviceEvent != null) {
+            // Device calendar edit mode - load device event
+            val editData = onLoadDeviceEvent(deviceEventId)
+            if (editData != null) {
+                // Use the mapper to convert DeviceEvent to EventFormState
+                val mappedState = editData.event.toFormState(
+                    reminders = editData.reminders,
+                    calendarColor = editData.calendarColor,
+                    calendarName = editData.calendarName,
+                    deviceCalendarGroups = deviceCalendarGroups,
+                    occurrenceTs = deviceOccurrenceTs
+                )
+                // Merge with writable groups and set occurrence timestamp if editing single occurrence
+                newState = mappedState.copy(
+                    calendarGroups = writableGroups,
+                    deviceCalendarGroups = deviceCalendarGroups,
+                    editingOccurrenceTs = deviceOccurrenceTs
+                )
+            } else {
+                // Event not found (deleted externally)
+                newState = newState.copy(
+                    error = "Event no longer exists",
+                    isLoading = false
+                )
+                // Will show error, user can dismiss
+            }
+        } else if (eventId != null && onLoadEvent != null) {
             // Edit mode - load event
             val event = onLoadEvent(eventId)
             if (event != null) {
@@ -367,9 +464,10 @@ fun EventFormSheet(
             val computedEndMinute = if (endTotalMinutes >= 24 * 60) 59 else endTotalMinutes % 60
 
             newState = newState.copy(
-                selectedCalendarId = defaultCalendar?.id,
-                selectedCalendarName = defaultCalendar?.displayName ?: "",
-                selectedCalendarColor = defaultCalendar?.color,
+                selectedCalendarId = defaultCalId,
+                selectedCalendarName = defaultCalName,
+                selectedCalendarColor = defaultCalColor,
+                isDeviceCalendar = defaultIsDevice,
                 reminder1Minutes = defaultReminderTimed,
                 endHour = computedEndHour,
                 endMinute = computedEndMinute
@@ -412,9 +510,11 @@ fun EventFormSheet(
                 // Parse reminders from event
                 val (reminder1, reminder2) = parseRemindersFromEvent(duplicateFrom.reminders)
 
-                // Use source calendar if writable, otherwise fall back to default
+                // Use source calendar if writable, otherwise fall back to resolved default
                 val sourceCalendar = writableCalendars.find { it.id == duplicateFrom.calendarId }
-                    ?: defaultCalendar
+                val sourceCalId = sourceCalendar?.id ?: defaultCalId
+                val sourceCalName = sourceCalendar?.displayName ?: defaultCalName
+                val sourceCalColor = sourceCalendar?.color ?: defaultCalColor
 
                 newState = newState.copy(
                     title = duplicateFrom.title,
@@ -427,9 +527,10 @@ fun EventFormSheet(
                     startMinute = startCal.get(JavaCalendar.MINUTE),
                     endHour = endCal.get(JavaCalendar.HOUR_OF_DAY),
                     endMinute = endCal.get(JavaCalendar.MINUTE),
-                    selectedCalendarId = sourceCalendar?.id,
-                    selectedCalendarName = sourceCalendar?.displayName ?: "",
-                    selectedCalendarColor = sourceCalendar?.color,
+                    selectedCalendarId = sourceCalId,
+                    selectedCalendarName = sourceCalName,
+                    selectedCalendarColor = sourceCalColor,
+                    isDeviceCalendar = sourceCalendar == null && defaultIsDevice,
                     reminder1Minutes = reminder1,
                     reminder2Minutes = reminder2,
                     rrule = null  // Don't copy recurrence (creates independent event)
@@ -740,19 +841,41 @@ fun EventFormSheet(
 
                     // Calendar picker
                     // Disabled for single occurrence edits (CalDAV doesn't support moving exception to different calendar)
+                    // When editing, restrict to same data store (Room or Device)
                     CalendarPickerCard(
                         selectedCalendarId = state.selectedCalendarId,
                         selectedCalendarName = state.selectedCalendarName,
                         selectedCalendarColor = state.selectedCalendarColor,
-                        calendarGroups = state.calendarGroups,
+                        calendarGroups = if (state.isEditMode && state.isDeviceCalendar) {
+                            // Editing device event - only show device calendars
+                            emptyList()
+                        } else if (state.isEditMode && !state.isDeviceCalendar) {
+                            // Editing Room event - only show Room calendars
+                            state.calendarGroups
+                        } else {
+                            // Creating new event - show Room calendars
+                            state.calendarGroups
+                        },
+                        deviceCalendarGroups = if (state.isEditMode && !state.isDeviceCalendar) {
+                            // Editing Room event - no device calendars
+                            emptyList()
+                        } else if (state.isEditMode && state.isDeviceCalendar) {
+                            // Editing device event - only show device calendars
+                            state.deviceCalendarGroups
+                        } else {
+                            // Creating new event - show device calendars
+                            state.deviceCalendarGroups
+                        },
+                        isSelectedDeviceCalendar = state.isDeviceCalendar,
                         isExpanded = expandedPicker == "calendar",
                         enabled = !(state.isEditMode && state.editingOccurrenceTs != null),
                         onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
-                        onSelect = { id, name, color ->
+                        onSelect = { id, name, color, isDevice ->
                             state = state.copy(
                                 selectedCalendarId = id,
                                 selectedCalendarName = name,
-                                selectedCalendarColor = color
+                                selectedCalendarColor = color,
+                                isDeviceCalendar = isDevice
                             )
                             expandedPicker = null
                         }
@@ -772,7 +895,8 @@ fun EventFormSheet(
                         },
                         onReminder2Change = { minutes ->
                             state = state.copy(reminder2Minutes = minutes)
-                        }
+                        },
+                        truncatedReminderCount = state.truncatedReminderCount
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -899,8 +1023,10 @@ fun EventFormSheet(
                         }
                     }
 
-                    // Delete button (edit mode only)
-                    if (state.isEditMode && eventId != null && onDelete != null) {
+                    // Delete button (edit mode only - Room or Device)
+                    val canDeleteRoom = eventId != null && onDelete != null
+                    val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
+                    if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
                         Spacer(modifier = Modifier.height(24.dp))
 
                         if (!showDeleteConfirmation) {
@@ -935,7 +1061,14 @@ fun EventFormSheet(
                                         coroutineScope.launch {
                                             state = state.copy(isSaving = true)
                                             try {
-                                                val result = onDelete(eventId)
+                                                // Route to device delete if applicable
+                                                val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
+                                                    onDeleteDeviceEvent!!(state.editingDeviceEventId!!)
+                                                } else if (canDeleteRoom && eventId != null) {
+                                                    onDelete!!(eventId)
+                                                } else {
+                                                    Result.failure(IllegalStateException("No delete handler"))
+                                                }
                                                 result.fold(
                                                     onSuccess = { onDismiss() },
                                                     onFailure = { e ->

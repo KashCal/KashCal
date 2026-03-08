@@ -34,8 +34,13 @@
     <!-- Contact birthdays: Read contacts to generate birthday calendar -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
-    <!-- Device calendars: Read events from sync adapters (DAVx5, etc.) -->
+    <!-- Device calendars: Read/write events from other calendar apps -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+
+    <!-- Sync adapter registration (for CalendarProvider intent routing) -->
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
     <!--
         Declare touchscreen as optional for Chromebook/tablet compatibility.
@@ -143,6 +148,14 @@
                 <data android:mimeType="vnd.android.cursor.dir/event" />
             </intent-filter>
 
+            <!-- Handle ACTION_INSERT with CalendarContract data URI -->
+            <!-- Apps using setData(Events.CONTENT_URI) instead of setType() -->
+            <intent-filter>
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="com.android.calendar" />
+            </intent-filter>
+
             <!-- Handle CalendarContract VIEW intents (launchers, clock widgets) -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
@@ -214,6 +227,25 @@
             </intent-filter>
         </receiver>
 
+        <!-- Device calendar reminder alarm receiver -->
+        <receiver
+            android:name=".reminder.device.DeviceCalendarAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.onekash.kashcal.DEVICE_REMINDER_ALARM" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Device calendar reminder action receiver: handles snooze/dismiss -->
+        <receiver
+            android:name=".reminder.device.DeviceCalendarReminderActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.onekash.kashcal.DEVICE_SNOOZE_REMINDER" />
+                <action android:name="org.onekash.kashcal.DEVICE_DISMISS_REMINDER" />
+            </intent-filter>
+        </receiver>
+
         <!-- Boot receiver: reschedule reminders after device boot or app update -->
         <receiver
             android:name=".reminder.receiver.BootCompletedReceiver"
@@ -272,6 +304,35 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/date_widget_info" />
         </receiver>
+
+        <!-- Account authenticator for CalendarProvider registration.
+             Registers org.onekash.kashcal account type with Android.
+             exported="false" — only the system account framework binds to this. -->
+        <service
+            android:name=".sync.adapter.KashCalAuthenticatorService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/kashcal_authenticator" />
+        </service>
+
+        <!-- Sync adapter stub linking account type to com.android.calendar.
+             Required for CalendarProvider URI intent routing on many devices.
+             Auto-sync disabled — real sync is via WorkManager. -->
+        <service
+            android:name=".sync.adapter.KashCalSyncAdapterService"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/kashcal_syncadapter" />
+        </service>
 
         <!--
             FileProvider for secure file sharing (ICS exports).

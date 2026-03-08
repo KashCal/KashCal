@@ -87,30 +87,56 @@ private fun WidgetHeader(date: String) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .clickable(
-                actionStartActivity<MainActivity>(
-                    parameters = actionParametersOf(
-                        ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
-                    )
-                )
-            ),
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            provider = ImageProvider(R.drawable.ic_widget_calendar),
-            contentDescription = "Calendar",
-            modifier = GlanceModifier.size(20.dp)
-        )
-        Spacer(modifier = GlanceModifier.width(8.dp))
-        Text(
-            text = date,
-            style = TextStyle(
-                color = WidgetTheme.primaryText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
+        // Left region: taps go to today
+        Row(
+            modifier = GlanceModifier
+                .defaultWeight()
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        parameters = actionParametersOf(
+                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
+                        )
+                    )
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_widget_calendar),
+                contentDescription = "Calendar",
+                modifier = GlanceModifier.size(20.dp)
             )
-        )
+            Spacer(modifier = GlanceModifier.width(8.dp))
+            Text(
+                text = date,
+                style = TextStyle(
+                    color = WidgetTheme.primaryText,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            )
+        }
+        // Right region: "+" button with 40dp touch target
+        Box(
+            modifier = GlanceModifier
+                .size(40.dp)
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        parameters = actionParametersOf(
+                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_widget_add),
+                contentDescription = "Add event",
+                modifier = GlanceModifier.size(20.dp)
+            )
+        }
     }
 }
 
@@ -164,7 +190,8 @@ private fun EventRow(
                     parameters = actionParametersOf(
                         ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_SHOW_EVENT,
                         ActionParameters.Key<Long>(EXTRA_EVENT_ID) to event.eventId,
-                        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs
+                        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs,
+                        ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
                     )
                 )
             ),
@@ -296,6 +323,7 @@ private fun formatEventTime(event: WidgetDataRepository.WidgetEvent, timePattern
 const val EXTRA_ACTION = "widget_action"
 const val EXTRA_EVENT_ID = "widget_event_id"
 const val EXTRA_OCCURRENCE_TS = "widget_occurrence_ts"
+const val EXTRA_IS_DEVICE_EVENT = "widget_is_device_event"
 
 const val ACTION_SHOW_EVENT = "show_event"
 const val ACTION_CREATE_EVENT = "create_event"

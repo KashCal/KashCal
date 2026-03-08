@@ -63,6 +63,8 @@ class DisplayEventTest {
         endDay = 20231117,
         isAllDay = false,
         hasRrule = true,
+        rrule = "FREQ=WEEKLY;BYDAY=MO",
+        reminders = listOf(15, 60),
         calendarId = 5L,
         calendarDisplayName = "Device Calendar",
         displayColor = 0xFFFF5722.toInt(),
@@ -70,7 +72,10 @@ class DisplayEventTest {
         availability = 0,
         hasAlarm = false,
         selfAttendeeStatus = 0,
-        isWritable = true
+        isWritable = true,
+        originalId = null,
+        originalInstanceTime = null,
+        timezone = "America/New_York"
     )
 
     // ========== Room Variant Tests ==========

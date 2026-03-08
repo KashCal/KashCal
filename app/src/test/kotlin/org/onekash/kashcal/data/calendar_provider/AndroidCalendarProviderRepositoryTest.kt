@@ -188,6 +188,8 @@ class AndroidCalendarProviderRepositoryTest {
         endDay = 20260215,
         isAllDay = false,
         hasRrule = false,
+        rrule = null,
+        reminders = emptyList(),
         calendarId = calendarId,
         calendarDisplayName = "Test Cal",
         displayColor = 0,
@@ -195,6 +197,9 @@ class AndroidCalendarProviderRepositoryTest {
         availability = 0,
         hasAlarm = false,
         selfAttendeeStatus = 0,
-        isWritable = true
+        isWritable = true,
+        originalId = null,
+        originalInstanceTime = null,
+        timezone = null
     )
 }

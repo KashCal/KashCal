@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import org.onekash.kashcal.util.DateTimeUtils
  * @param use24Hour Whether to use 24-hour format for time-based labels
  * @param onReminder1Change Callback when first reminder changes
  * @param onReminder2Change Callback when second reminder changes
+ * @param truncatedReminderCount Number of reminders that were truncated (device events with >2)
  * @param modifier Modifier for the card
  */
 @Composable
@@ -68,6 +70,7 @@ fun ReminderPickerCard(
     use24Hour: Boolean,
     onReminder1Change: (Int) -> Unit,
     onReminder2Change: (Int) -> Unit,
+    truncatedReminderCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -178,6 +181,30 @@ fun ReminderPickerCard(
                                 expandedReminder = null
                             }
                         )
+                    }
+
+                    // Warning when reminders were truncated (device events with >2 reminders)
+                    if (truncatedReminderCount > 0) {
+                        val totalReminders = 2 + truncatedReminderCount
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = "Warning",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                            Text(
+                                "$truncatedReminderCount reminder${if (truncatedReminderCount > 1) "s" else ""} will be removed on save ($totalReminders total, max 2)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
                 }
             }

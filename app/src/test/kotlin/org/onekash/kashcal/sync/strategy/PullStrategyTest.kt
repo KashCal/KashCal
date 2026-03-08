@@ -2695,6 +2695,60 @@ class PullStrategyTest {
         assertEquals("Should have 1 recently-pushed skip", 1, session.skippedRecentlyPushed)
     }
 
+    // ========== Recently Pushed Event Deletion Protection (v23.2.1) ==========
+    // RFC 4791 does not guarantee immediate visibility after PUT.
+    // Servers without sync-collection (e.g., Purelymail) always use pullFull.
+    // A just-pushed event may not appear in the server's etag response yet.
+
+    @Test
+    fun `pullFull does not delete recently pushed event missing from server etags`() = runTest {
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val pushedEventUrl = "${calendar.caldavUrl}pushed-event.ics"
+        val pushedEvent = createEvent(id = 42, caldavUrl = pushedEventUrl, title = "Just Pushed").copy(
+            uid = "uid-pushed",
+            etag = "etag-from-put",
+            syncStatus = SyncStatus.SYNCED
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        // Server returns empty etag list — event not indexed yet
+        mockTwoStepFetch(calendar.caldavUrl, emptyList())
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(pushedEvent)
+
+        val result = pullStrategy.pull(
+            calendar,
+            client = client,
+            recentlyPushedEventIds = setOf(42L)
+        )
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 0) { eventsDao.deleteById(42L) }
+    }
+
+    @Test
+    fun `pullFull still deletes stale events not in recentlyPushedEventIds`() = runTest {
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val staleUrl = "${calendar.caldavUrl}stale.ics"
+        val staleEvent = createEvent(id = 99, caldavUrl = staleUrl, title = "Stale Event")
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, emptyList())
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(staleEvent)
+
+        val result = pullStrategy.pull(
+            calendar,
+            client = client,
+            recentlyPushedEventIds = setOf(42L)  // Different ID
+        )
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 1) { eventsDao.deleteById(99L) }
+    }
+
     // ========== Non-Event Resource Handling (VTODO/VJOURNAL/VFREEBUSY) ==========
 
     private fun createVtodoIcal(uid: String, summary: String): String {

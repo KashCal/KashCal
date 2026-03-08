@@ -5,6 +5,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
+import androidx.glance.Image
+import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -29,6 +31,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import java.time.Instant
@@ -61,7 +64,7 @@ fun WeekWidgetContent(
             .background(WidgetTheme.contentBackground)
             .cornerRadius(16.dp)
     ) {
-        // Header: "This Week" with date range
+        // Header with date range
         WeekWidgetHeader(weekEvents.keys.toList())
 
         // Scrollable day list (LazyColumn for 7 days)
@@ -93,42 +96,54 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
     val firstDay = dayCodes.firstOrNull() ?: return
     val lastDay = dayCodes.lastOrNull() ?: return
 
-    val firstDate = DayPagerUtils.dayCodeToLocalDate(firstDay)
-    val lastDate = DayPagerUtils.dayCodeToLocalDate(lastDay)
-    val formatter = DateTimeFormatter.ofPattern("MMM d")
-
-    val headerText = "${firstDate.format(formatter)} - ${lastDate.format(formatter)}"
-
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(horizontal = 12.dp, vertical = 10.dp)
-            .clickable(
-                actionStartActivity<MainActivity>(
-                    parameters = actionParametersOf(
-                        ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
-                    )
-                )
-            ),
+            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = "This Week",
-            style = TextStyle(
-                color = WidgetTheme.primaryText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium
+        // Left region: taps go to today
+        Row(
+            modifier = GlanceModifier
+                .defaultWeight()
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        parameters = actionParametersOf(
+                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
+                        )
+                    )
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formatWeekHeaderRange(firstDay, lastDay),
+                style = TextStyle(
+                    color = WidgetTheme.accentColor,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Medium
+                )
             )
-        )
-        Spacer(modifier = GlanceModifier.defaultWeight())
-        Text(
-            text = headerText,
-            style = TextStyle(
-                color = WidgetTheme.secondaryText,
-                fontSize = 12.sp
+        }
+        // Right region: "+" button with 40dp touch target
+        Box(
+            modifier = GlanceModifier
+                .size(40.dp)
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        parameters = actionParametersOf(
+                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_CREATE_EVENT
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                provider = ImageProvider(R.drawable.ic_widget_add),
+                contentDescription = "Add event",
+                modifier = GlanceModifier.size(20.dp)
             )
-        )
+        }
     }
 }
 
@@ -146,7 +161,7 @@ private fun DaySection(
     Column(
         modifier = GlanceModifier.fillMaxWidth()
     ) {
-        // Day header (e.g., "Sun 19" or "Mon 20")
+        // Day header (e.g., "Saturday 7" or "Monday 9")
         DayHeader(dayCode, events.size, isToday)
 
         if (events.isEmpty()) {
@@ -169,10 +184,6 @@ private fun DaySection(
  */
 @Composable
 private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
-    val date = DayPagerUtils.dayCodeToLocalDate(dayCode)
-    val dayName = date.dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())
-    val dayNum = date.dayOfMonth
-
     val backgroundColor = if (isToday) {
         WidgetTheme.headerBackground
     } else {
@@ -195,7 +206,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "$dayName $dayNum",
+            text = formatDayHeaderText(dayCode),
             style = TextStyle(
                 color = WidgetTheme.primaryText,
                 fontSize = 13.sp,
@@ -280,7 +291,8 @@ private fun CompactEventRow(
                     parameters = actionParametersOf(
                         ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_SHOW_EVENT,
                         ActionParameters.Key<Long>(EXTRA_EVENT_ID) to event.eventId,
-                        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs
+                        ActionParameters.Key<Long>(EXTRA_OCCURRENCE_TS) to event.occurrenceStartTs,
+                        ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
                     )
                 )
             ),
@@ -365,6 +377,34 @@ private fun formatCompactTime(event: WidgetDataRepository.WidgetEvent, timePatte
             .format(formatter)
             .lowercase(Locale.getDefault())
     }
+}
+
+/**
+ * Format week header date range with full month names.
+ * Same month: "March 7 – 13"
+ * Cross-month: "March 28 – April 3"
+ * Cross-year: "December 28 – January 3" (year omitted — always current/next week)
+ */
+internal fun formatWeekHeaderRange(firstDay: Int, lastDay: Int): String {
+    val firstDate = DayPagerUtils.dayCodeToLocalDate(firstDay)
+    val lastDate = DayPagerUtils.dayCodeToLocalDate(lastDay)
+    val monthDay = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
+    // Note: uses en-dash (U+2013), not hyphen
+    return if (firstDate.month == lastDate.month) {
+        "${firstDate.format(monthDay)} \u2013 ${lastDate.dayOfMonth}"
+    } else {
+        "${firstDate.format(monthDay)} \u2013 ${lastDate.format(monthDay)}"
+    }
+}
+
+/**
+ * Format day name for day header. Full name + day number.
+ * e.g., "Monday 10", "Wednesday 12"
+ */
+internal fun formatDayHeaderText(dayCode: Int): String {
+    val date = DayPagerUtils.dayCodeToLocalDate(dayCode)
+    val dayName = date.dayOfWeek.getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
+    return "$dayName ${date.dayOfMonth}"
 }
 
 /** Check if dayCode is today */

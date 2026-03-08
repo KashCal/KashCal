@@ -15,6 +15,7 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import java.util.concurrent.TimeUnit
 
@@ -36,6 +37,7 @@ class ReminderRefreshWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val reminderScheduler: ReminderScheduler,
+    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
     private val dataStore: KashCalDataStore
 ) : CoroutineWorker(context, params) {
 
@@ -128,7 +130,15 @@ class ReminderRefreshWorker @AssistedInject constructor(
                 Log.w(TAG, "Cleanup failed, continuing", e)
             }
 
-            Log.i(TAG, "Reminder refresh complete: $scheduled new reminders scheduled")
+            // Schedule device calendar reminders (single-alarm model)
+            try {
+                deviceCalendarReminderScheduler.scheduleNextReminder()
+                Log.d(TAG, "Device calendar reminder scheduled")
+            } catch (e: Exception) {
+                Log.w(TAG, "Device calendar reminder scheduling failed, continuing", e)
+            }
+
+            Log.i(TAG, "Reminder refresh complete: $scheduled new Room reminders scheduled")
             Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Reminder refresh failed", e)

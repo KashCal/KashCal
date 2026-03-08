@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.Data
+import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -163,6 +164,17 @@ class CalDavSyncWorker @AssistedInject constructor(
                 .putString(KEY_SYNC_TRIGGER, trigger.name)
                 .build()
         }
+    }
+
+    /**
+     * Required for setExpedited() on API < 31 (Android 10-11).
+     * WorkManager falls back to a foreground service on older APIs,
+     * which calls getForegroundInfo() to get the notification.
+     */
+    override suspend fun getForegroundInfo(): ForegroundInfo {
+        return notificationManager.createForegroundInfo(
+            progress = "Syncing calendars..."
+        )
     }
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

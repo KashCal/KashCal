@@ -101,7 +101,7 @@ class HomeViewModelErrorHandlingTest {
         every { syncScheduler.clearSyncChanges() } returns Unit
 
         every { eventCoordinator.getAllCalendars() } returns flowOf(testCalendars)
-        coEvery { dataStore.defaultCalendarId } returns flowOf(null)
+        every { dataStore.defaultCalendar } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
         coEvery { dataStore.onboardingDismissed } returns flowOf(true)
@@ -129,6 +129,7 @@ class HomeViewModelErrorHandlingTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
+            calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
             ioDispatcher = testDispatcher
         )
     }

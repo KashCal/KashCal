@@ -19,6 +19,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
+import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -123,6 +124,12 @@ class KashCalApplication : Application(), Configuration.Provider {
 
         // Schedule periodic reminder refresh (catches events entering window)
         ReminderRefreshWorker.schedule(this)
+
+        // Register KashCal account for CalendarProvider intent routing (#76).
+        // Runs on IO thread to avoid blocking startup (AccountManager is IPC).
+        applicationScope.launch {
+            SystemAccountRegistrar(this@KashCalApplication).ensureAccount()
+        }
 
         Log.d(TAG, "KashCal application started")
     }

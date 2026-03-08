@@ -50,7 +50,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Instances.AVAILABILITY,     // 13
             Instances.HAS_ALARM,        // 14
             Instances.SELF_ATTENDEE_STATUS,  // 15
-            Instances.CALENDAR_ACCESS_LEVEL  // 16
+            Instances.CALENDAR_ACCESS_LEVEL, // 16
+            Instances.ORIGINAL_ID,       // 17 - Master event ID for exceptions
+            Instances.ORIGINAL_INSTANCE_TIME, // 18 - Original occurrence time for exceptions
+            Instances.EVENT_TIMEZONE     // 19 - Master event timezone
         )
 
         // Column indices
@@ -71,6 +74,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
         private const val COL_HAS_ALARM = 14
         private const val COL_SELF_ATTENDEE_STATUS = 15
         private const val COL_ACCESS_LEVEL = 16
+        private const val COL_ORIGINAL_ID = 17
+        private const val COL_ORIGINAL_INSTANCE_TIME = 18
+        private const val COL_EVENT_TIMEZONE = 19
 
         private const val SELECTION_VISIBLE = "${Calendars.VISIBLE} = 1"
         private const val SELECTION_HIDE_DECLINED = "$SELECTION_VISIBLE AND " +
@@ -135,10 +141,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
             val selection = if (hideDeclined) SELECTION_HIDE_DECLINED else SELECTION_VISIBLE
 
-            contentResolver.query(
+            val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 ?: emptyList()
+
+            // Batch fetch reminders to avoid N+1 queries
+            populateReminders(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
             emptyList()
@@ -164,6 +173,17 @@ class AndroidCalendarProviderRepository @Inject constructor(
             // Subtract 1ms to get inclusive end day code.
             val endDayMs = if (isAllDay && endMs > beginMs) endMs - 1 else endMs
 
+            // ORIGINAL_ID is null for regular events, non-null for exceptions
+            val originalId = if (!cursor.isNull(COL_ORIGINAL_ID)) {
+                cursor.getLong(COL_ORIGINAL_ID)
+            } else null
+
+            val originalInstanceTime = if (!cursor.isNull(COL_ORIGINAL_INSTANCE_TIME)) {
+                cursor.getLong(COL_ORIGINAL_INSTANCE_TIME)
+            } else null
+
+            val rruleString = cursor.getString(COL_RRULE)
+
             results.add(
                 DeviceCalendarInstance(
                     instanceId = cursor.getLong(COL_ID),
@@ -176,7 +196,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     startDay = DateTimeUtils.eventTsToDayCode(beginMs, isAllDay),
                     endDay = DateTimeUtils.eventTsToDayCode(endDayMs, isAllDay),
                     isAllDay = isAllDay,
-                    hasRrule = !cursor.getString(COL_RRULE).isNullOrEmpty(),
+                    hasRrule = !rruleString.isNullOrEmpty(),
+                    rrule = rruleString,
+                    reminders = emptyList(), // Populated by batch query after
                     calendarId = calendarId,
                     calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME) ?: "",
                     displayColor = cursor.getInt(COL_DISPLAY_COLOR),
@@ -184,7 +206,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     availability = cursor.getInt(COL_AVAILABILITY),
                     hasAlarm = cursor.getInt(COL_HAS_ALARM) == 1,
                     selfAttendeeStatus = cursor.getInt(COL_SELF_ATTENDEE_STATUS),
-                    isWritable = accessLevel >= 500 // CAL_ACCESS_CONTRIBUTOR
+                    isWritable = accessLevel >= 500, // CAL_ACCESS_CONTRIBUTOR
+                    originalId = originalId,
+                    originalInstanceTime = originalInstanceTime,
+                    timezone = cursor.getString(COL_EVENT_TIMEZONE)
                 )
             )
         }
@@ -212,13 +237,34 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
             val selection = if (hideDeclined) SELECTION_HIDE_DECLINED else SELECTION_VISIBLE
 
-            contentResolver.query(
+            val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 ?: emptyList()
+
+            // Batch fetch reminders to avoid N+1 queries
+            populateReminders(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
             emptyList()
+        }
+    }
+
+    /**
+     * Populate instances with reminder data via batch query.
+     * Returns new list with reminders field populated.
+     */
+    private suspend fun populateReminders(
+        instances: List<DeviceCalendarInstance>
+    ): List<DeviceCalendarInstance> {
+        if (instances.isEmpty()) return instances
+
+        val eventIds = instances.map { it.eventId }.toSet()
+        val remindersMap = getRemindersForEvents(eventIds)
+
+        return instances.map { instance ->
+            val reminders = remindersMap[instance.eventId] ?: emptyList()
+            instance.copy(reminders = reminders)
         }
     }
 
@@ -235,6 +281,750 @@ class AndroidCalendarProviderRepository @Inject constructor(
             dataStore.setEnabledDeviceCalendarIds(storedIds - staleIds)
         }
     }
+
+    // ==================== Write Operations (Phase 3) ====================
+
+    override suspend fun createEvent(
+        calendarId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long?,
+        isAllDay: Boolean,
+        rrule: String?,
+        duration: String?,
+        timezone: String,
+        reminders: List<Int>
+    ): Result<Long> = withContext(Dispatchers.IO) {
+        try {
+            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone)
+            values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
+
+            // Use batch operation for atomicity (event + reminders)
+            val ops = ArrayList<android.content.ContentProviderOperation>()
+
+            // Insert event
+            ops.add(
+                android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .build()
+            )
+
+            // Insert reminders (reference event by back-reference)
+            for (minutes in reminders) {
+                ops.add(
+                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
+                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
+                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
+                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                        .build()
+                )
+            }
+
+            val results = contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
+            val eventUri = results[0].uri
+            val eventId = ContentUris.parseId(eventUri!!)
+
+            Log.d(TAG, "Created device event: id=$eventId, title=${title.take(20)}...")
+            Result.success(eventId)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied creating event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun updateEvent(
+        eventId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long?,
+        isAllDay: Boolean,
+        rrule: String?,
+        duration: String?,
+        timezone: String,
+        reminders: List<Int>
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone)
+
+            val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
+            val rowsUpdated = contentResolver.update(eventUri, values, null, null)
+            if (rowsUpdated == 0) {
+                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+            }
+
+            // Clear existing reminders and rewrite
+            contentResolver.delete(
+                CalendarContract.Reminders.CONTENT_URI,
+                "${CalendarContract.Reminders.EVENT_ID} = ?",
+                arrayOf(eventId.toString())
+            )
+
+            for (minutes in reminders) {
+                val reminderValues = android.content.ContentValues().apply {
+                    put(CalendarContract.Reminders.EVENT_ID, eventId)
+                    put(CalendarContract.Reminders.MINUTES, minutes)
+                    put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                }
+                contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
+            }
+
+            Log.d(TAG, "Updated device event: id=$eventId")
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied updating event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun deleteEvent(eventId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
+            val rowsDeleted = contentResolver.delete(eventUri, null, null)
+            if (rowsDeleted == 0) {
+                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+            }
+
+            Log.d(TAG, "Deleted device event: id=$eventId")
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied deleting event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun createException(
+        calendarId: Long,
+        masterEventId: Long,
+        originalInstanceTime: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long,
+        isAllDay: Boolean,
+        timezone: String,
+        reminders: List<Int>
+    ): Result<Long> = withContext(Dispatchers.IO) {
+        try {
+            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, null, null, timezone)
+            values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
+            values.put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
+            val normalizedOrigTime = if (isAllDay)
+                DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
+            values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedOrigTime)
+            values.put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (isAllDay) 1 else 0)
+            values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CONFIRMED)
+
+            // Use batch for atomicity
+            val ops = ArrayList<android.content.ContentProviderOperation>()
+            ops.add(
+                android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
+                    .withValues(values)
+                    .build()
+            )
+
+            for (minutes in reminders) {
+                ops.add(
+                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
+                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
+                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
+                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                        .build()
+                )
+            }
+
+            val results = contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
+            val eventUri = results[0].uri
+            val eventId = ContentUris.parseId(eventUri!!)
+
+            Log.d(TAG, "Created exception event: id=$eventId, masterId=$masterEventId, origTime=$originalInstanceTime")
+            Result.success(eventId)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied creating exception", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating exception", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun deleteSingleOccurrence(
+        calendarId: Long,
+        masterEventId: Long,
+        originalInstanceTime: Long,
+        isAllDay: Boolean
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val existingExceptionId = findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
+
+            if (existingExceptionId != null) {
+                // UPDATE existing exception to CANCELED (avoids duplicate exception events)
+                val values = android.content.ContentValues().apply {
+                    put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
+                }
+                val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, existingExceptionId)
+                contentResolver.update(uri, values, null, null)
+                Log.d(TAG, "Updated exception $existingExceptionId to CANCELED: masterId=$masterEventId, origTime=$originalInstanceTime")
+            } else {
+                // INSERT new CANCELED exception to hide this occurrence
+                val values = buildCanceledExceptionValues(calendarId, masterEventId, originalInstanceTime, isAllDay)
+                contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                Log.d(TAG, "Inserted CANCELED exception: masterId=$masterEventId, origTime=$originalInstanceTime, isAllDay=$isAllDay")
+            }
+
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied deleting occurrence", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting occurrence", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun deleteThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isAllDay: Boolean
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val masterEvent = getDeviceEvent(masterEventId)
+                ?: return@withContext Result.failure(
+                    org.onekash.kashcal.error.CalendarErrorException(
+                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound
+                    )
+                )
+
+            // If deleting from the first occurrence, delete entire event
+            if (fromTimeMs <= masterEvent.startTs) {
+                return@withContext deleteEvent(masterEventId)
+            }
+
+            val rrule = masterEvent.rrule
+                ?: return@withContext Result.failure(
+                    org.onekash.kashcal.error.CalendarErrorException(
+                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed("Recurring event has no RRULE")
+                    )
+                )
+
+            val truncatedRrule = org.onekash.kashcal.util.RruleUtils.addUntilToRrule(
+                rrule, fromTimeMs - 1, isAllDay
+            )
+
+            val values = android.content.ContentValues().apply {
+                put(CalendarContract.Events.RRULE, truncatedRrule)
+            }
+            val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, masterEventId)
+            val rowsUpdated = contentResolver.update(eventUri, values, null, null)
+            if (rowsUpdated == 0) {
+                return@withContext Result.failure(
+                    org.onekash.kashcal.error.CalendarErrorException(
+                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound
+                    )
+                )
+            }
+
+            Log.d(TAG, "Truncated device event RRULE: id=$masterEventId, from=$fromTimeMs, isAllDay=$isAllDay")
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied truncating RRULE", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error truncating RRULE", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val values = android.content.ContentValues().apply {
+                put(CalendarContract.Events.CALENDAR_ID, newCalendarId)
+            }
+
+            val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
+            val rowsUpdated = contentResolver.update(eventUri, values, null, null)
+            if (rowsUpdated == 0) {
+                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+            }
+
+            Log.d(TAG, "Moved event $eventId to calendar $newCalendarId")
+            Result.success(Unit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied moving event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+        } catch (e: Exception) {
+            Log.e(TAG, "Error moving event", e)
+            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+        }
+    }
+
+    override suspend fun getMaxReminders(calendarId: Long): Int = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                arrayOf(CalendarContract.Calendars.MAX_REMINDERS),
+                "${CalendarContract.Calendars._ID} = ?",
+                arrayOf(calendarId.toString()),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    cursor.getInt(0).coerceAtLeast(1)
+                } else {
+                    5 // Default fallback
+                }
+            } ?: 5
+        } catch (e: Exception) {
+            Log.w(TAG, "Error getting max reminders", e)
+            5 // Default fallback
+        }
+    }
+
+    override suspend fun getDeviceEvent(eventId: Long): DeviceEvent? = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+                EVENTS_PROJECTION,
+                null, null, null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    mapToDeviceEvent(cursor)
+                } else null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied reading event", e)
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading event", e)
+            null
+        }
+    }
+
+    override suspend fun getReminders(eventId: Long): List<Int> = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                CalendarContract.Reminders.CONTENT_URI,
+                arrayOf(CalendarContract.Reminders.MINUTES),
+                "${CalendarContract.Reminders.EVENT_ID} = ?",
+                arrayOf(eventId.toString()),
+                "${CalendarContract.Reminders.MINUTES} ASC"
+            )?.use { cursor ->
+                val results = mutableListOf<Int>()
+                while (cursor.moveToNext()) {
+                    results.add(cursor.getInt(0))
+                }
+                results
+            } ?: emptyList()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error reading reminders", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Batch fetch reminders for multiple events in a single query.
+     * Avoids N+1 query problem when loading many instances.
+     *
+     * @param eventIds Set of event IDs to fetch reminders for
+     * @return Map of eventId to sorted list of reminder minutes
+     */
+    suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = withContext(Dispatchers.IO) {
+        if (eventIds.isEmpty()) return@withContext emptyMap()
+
+        try {
+            val results = mutableMapOf<Long, MutableList<Int>>()
+
+            // Chunk to avoid SQLite variable limit (default 999)
+            for (chunk in eventIds.toList().chunked(500)) {
+                val placeholders = chunk.joinToString(",") { "?" }
+                val selection = "${CalendarContract.Reminders.EVENT_ID} IN ($placeholders)"
+                val args = chunk.map { it.toString() }.toTypedArray()
+
+                contentResolver.query(
+                    CalendarContract.Reminders.CONTENT_URI,
+                    arrayOf(
+                        CalendarContract.Reminders.EVENT_ID,
+                        CalendarContract.Reminders.MINUTES
+                    ),
+                    selection,
+                    args,
+                    "${CalendarContract.Reminders.EVENT_ID} ASC, ${CalendarContract.Reminders.MINUTES} ASC"
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val eventId = cursor.getLong(0)
+                        val minutes = cursor.getInt(1)
+                        results.getOrPut(eventId) { mutableListOf() }.add(minutes)
+                    }
+                }
+            }
+
+            results
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission revoked during reminders batch query", e)
+            emptyMap()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error batch reading reminders", e)
+            emptyMap()
+        }
+    }
+
+    override suspend fun findExceptionEventId(
+        masterEventId: Long,
+        originalInstanceTime: Long,
+        isAllDay: Boolean
+    ): Long? = withContext(Dispatchers.IO) {
+        try {
+            val normalizedTime = if (isAllDay)
+                DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
+            contentResolver.query(
+                CalendarContract.Events.CONTENT_URI,
+                arrayOf(CalendarContract.Events._ID),
+                "${CalendarContract.Events.ORIGINAL_ID} = ? AND ${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} = ?",
+                arrayOf(masterEventId.toString(), normalizedTime.toString()),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getLong(0) else null
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied finding exception", e)
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error finding exception event", e)
+            null
+        }
+    }
+
+    // ==================== Reminder Operations (Phase 4) ====================
+
+    override suspend fun getNextUpcomingReminder(
+        enabledCalendarIds: Set<Long>,
+        afterMs: Long
+    ): UpcomingDeviceReminder? = withContext(Dispatchers.IO) {
+        if (enabledCalendarIds.isEmpty()) return@withContext null
+
+        try {
+            // Query instances for next 30 days that have alarms
+            val startMs = afterMs
+            val endMs = afterMs + (30L * DateUtils.DAY_IN_MILLIS)
+
+            val builder = Instances.CONTENT_URI.buildUpon()
+            ContentUris.appendId(builder, startMs)
+            ContentUris.appendId(builder, endMs)
+
+            // Query instances with alarms
+            val selection = "${Instances.HAS_ALARM} = 1 AND $SELECTION_VISIBLE"
+
+            val instancesWithAlarms = mutableListOf<InstanceWithAlarm>()
+
+            contentResolver.query(
+                builder.build(),
+                INSTANCES_PROJECTION,
+                selection,
+                null,
+                SORT_ORDER
+            )?.use { cursor ->
+                while (cursor.moveToNext()) {
+                    val calendarId = cursor.getLong(COL_CALENDAR_ID)
+                    if (calendarId !in enabledCalendarIds) continue
+
+                    val eventId = cursor.getLong(COL_EVENT_ID)
+                    val beginMs = cursor.getLong(COL_BEGIN)
+                    val isAllDay = cursor.getInt(COL_ALL_DAY) == 1
+                    val title = cursor.getString(COL_TITLE) ?: ""
+                    val location = cursor.getString(COL_LOCATION)
+                    val displayColor = cursor.getInt(COL_DISPLAY_COLOR)
+
+                    instancesWithAlarms.add(
+                        InstanceWithAlarm(
+                            eventId = eventId,
+                            occurrenceStartTs = beginMs,
+                            title = title,
+                            location = location,
+                            isAllDay = isAllDay,
+                            calendarColor = displayColor,
+                            calendarId = calendarId
+                        )
+                    )
+                }
+            }
+
+            if (instancesWithAlarms.isEmpty()) return@withContext null
+
+            // For each instance, get its reminders and calculate trigger times
+            var earliest: UpcomingDeviceReminder? = null
+
+            for (instance in instancesWithAlarms) {
+                val reminders = getReminders(instance.eventId)
+                for (reminderMinutes in reminders) {
+                    val triggerTime = calculateReminderTriggerTime(
+                        occurrenceStartTs = instance.occurrenceStartTs,
+                        reminderMinutes = reminderMinutes,
+                        isAllDay = instance.isAllDay
+                    )
+
+                    // Skip if trigger time is in the past
+                    if (triggerTime <= afterMs) continue
+
+                    // Check if this is the earliest
+                    if (earliest == null || triggerTime < earliest.triggerTime) {
+                        earliest = UpcomingDeviceReminder(
+                            eventId = instance.eventId,
+                            occurrenceStartTs = instance.occurrenceStartTs,
+                            title = instance.title,
+                            location = instance.location,
+                            isAllDay = instance.isAllDay,
+                            reminderMinutes = reminderMinutes,
+                            triggerTime = triggerTime,
+                            calendarColor = instance.calendarColor,
+                            calendarId = instance.calendarId
+                        )
+                    }
+                }
+            }
+
+            earliest
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Calendar permission revoked", e)
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting next upcoming reminder", e)
+            null
+        }
+    }
+
+    /**
+     * Calculate reminder trigger time.
+     *
+     * For timed events: occurrenceStartTs - (reminderMinutes * 60 * 1000)
+     * For all-day events: 9 AM local time, N days before (matches Room pattern)
+     */
+    private fun calculateReminderTriggerTime(
+        occurrenceStartTs: Long,
+        reminderMinutes: Int,
+        isAllDay: Boolean
+    ): Long {
+        val offsetMs = -reminderMinutes.toLong() * 60 * 1000
+
+        return if (isAllDay) {
+            // For all-day events, fire at 9 AM local, N days before
+            val localZone = java.time.ZoneId.systemDefault()
+            val eventDate = java.time.Instant.ofEpochMilli(occurrenceStartTs)
+                .atZone(java.time.ZoneOffset.UTC)
+                .toLocalDate()
+
+            val oneDayMs = 24 * 60 * 60 * 1000L
+            when {
+                // Sub-day offset (e.g., -540 min for "9 AM day of event")
+                offsetMs > -oneDayMs && offsetMs < 0 -> {
+                    val hours = (-offsetMs / (60 * 60 * 1000L)).toInt()
+                    val minutes = ((-offsetMs % (60 * 60 * 1000L)) / (60 * 1000L)).toInt()
+                    eventDate.atTime(hours, minutes)
+                        .atZone(localZone)
+                        .toInstant()
+                        .toEpochMilli()
+                }
+                // Day-based offset (e.g., -1440 min = 1 day before)
+                else -> {
+                    val days = (offsetMs / oneDayMs).toInt()
+                    eventDate.plusDays(days.toLong())
+                        .atTime(9, 0) // 9 AM local
+                        .atZone(localZone)
+                        .toInstant()
+                        .toEpochMilli()
+                }
+            }
+        } else {
+            // Timed events: simple subtraction
+            occurrenceStartTs + offsetMs
+        }
+    }
+
+    /** Helper class for intermediate instance data before joining with reminders */
+    private data class InstanceWithAlarm(
+        val eventId: Long,
+        val occurrenceStartTs: Long,
+        val title: String,
+        val location: String?,
+        val isAllDay: Boolean,
+        val calendarColor: Int,
+        val calendarId: Long
+    )
+
+    // ==================== Events Table Helpers ====================
+
+    private val EVENTS_PROJECTION = arrayOf(
+        CalendarContract.Events._ID,                    // 0
+        CalendarContract.Events.CALENDAR_ID,            // 1
+        CalendarContract.Events.TITLE,                  // 2
+        CalendarContract.Events.DESCRIPTION,            // 3
+        CalendarContract.Events.EVENT_LOCATION,         // 4
+        CalendarContract.Events.DTSTART,                // 5
+        CalendarContract.Events.DTEND,                  // 6
+        CalendarContract.Events.DURATION,               // 7
+        CalendarContract.Events.ALL_DAY,                // 8
+        CalendarContract.Events.RRULE,                  // 9
+        CalendarContract.Events.RDATE,                  // 10
+        CalendarContract.Events.EXDATE,                 // 11
+        CalendarContract.Events.EXRULE,                 // 12
+        CalendarContract.Events.EVENT_TIMEZONE,         // 13
+        CalendarContract.Events.ORIGINAL_ID,            // 14
+        CalendarContract.Events.ORIGINAL_INSTANCE_TIME, // 15
+        CalendarContract.Events.STATUS,                 // 16
+        CalendarContract.Events.AVAILABILITY,           // 17
+        CalendarContract.Events.ACCESS_LEVEL,           // 18
+        CalendarContract.Events.CALENDAR_COLOR,         // 19
+        CalendarContract.Events.EVENT_COLOR             // 20
+    )
+
+    private fun mapToDeviceEvent(cursor: android.database.Cursor): DeviceEvent {
+        val isAllDay = cursor.getInt(8) == 1
+        val endTs = if (cursor.isNull(6)) null else cursor.getLong(6)
+
+        return DeviceEvent(
+            id = cursor.getLong(0),
+            calendarId = cursor.getLong(1),
+            title = cursor.getString(2) ?: "",
+            description = cursor.getString(3),
+            location = cursor.getString(4),
+            startTs = cursor.getLong(5),
+            endTs = endTs,
+            duration = cursor.getString(7),
+            isAllDay = isAllDay,
+            rrule = cursor.getString(9),
+            rdate = cursor.getString(10),
+            exdate = cursor.getString(11),
+            exrule = cursor.getString(12),
+            timezone = cursor.getString(13) ?: java.util.TimeZone.getDefault().id,
+            originalId = if (cursor.isNull(14)) null else cursor.getLong(14),
+            originalInstanceTime = if (cursor.isNull(15)) null else cursor.getLong(15),
+            status = cursor.getInt(16),
+            availability = cursor.getInt(17),
+            accessLevel = cursor.getInt(18),
+            calendarColor = if (cursor.isNull(19)) null else cursor.getInt(19),
+            eventColor = if (cursor.isNull(20)) null else cursor.getInt(20)
+        )
+    }
+}
+
+/**
+ * Build ContentValues for CalendarProvider Events table.
+ *
+ * Handles:
+ * - All-day events: Uses UTC timezone, converts inclusive end to exclusive (+1 day)
+ * - Recurring events: Uses DURATION instead of DTEND (RFC 5545 format)
+ * - Single events: Uses DTEND
+ *
+ * @param title Event title
+ * @param description Event description (optional)
+ * @param location Event location (optional)
+ * @param startTs Start timestamp (UTC millis for all-day, local for timed)
+ * @param endTs End timestamp (inclusive for KashCal's internal format)
+ * @param isAllDay Whether event is all-day
+ * @param rrule Recurrence rule (null for single events)
+ * @param duration Duration string (optional, calculated from endTs if null)
+ * @param timezone Event timezone (ignored for all-day events, uses UTC)
+ */
+internal fun buildEventValues(
+    title: String,
+    description: String?,
+    location: String?,
+    startTs: Long,
+    endTs: Long?,
+    isAllDay: Boolean,
+    rrule: String?,
+    duration: String?,
+    timezone: String
+): android.content.ContentValues {
+    val values = android.content.ContentValues()
+
+    values.put(android.provider.CalendarContract.Events.TITLE, title)
+    if (description != null) {
+        values.put(android.provider.CalendarContract.Events.DESCRIPTION, description)
+    }
+    if (location != null) {
+        values.put(android.provider.CalendarContract.Events.EVENT_LOCATION, location)
+    }
+
+    values.put(android.provider.CalendarContract.Events.DTSTART, startTs)
+    values.put(android.provider.CalendarContract.Events.ALL_DAY, if (isAllDay) 1 else 0)
+
+    // Timezone handling: all-day events always use UTC
+    val effectiveTimezone = if (isAllDay) "UTC" else timezone
+    values.put(android.provider.CalendarContract.Events.EVENT_TIMEZONE, effectiveTimezone)
+
+    val isRecurring = !rrule.isNullOrEmpty()
+
+    if (isRecurring) {
+        // Recurring events use DURATION, not DTEND
+        values.put(android.provider.CalendarContract.Events.RRULE, rrule)
+
+        val effectiveDuration = duration ?: calculateDuration(startTs, endTs, isAllDay)
+        values.put(android.provider.CalendarContract.Events.DURATION, effectiveDuration)
+        // Explicitly set DTEND to null for recurring events
+        values.putNull(android.provider.CalendarContract.Events.DTEND)
+    } else {
+        // Single events use DTEND
+        if (isAllDay && endTs != null) {
+            // Convert inclusive end to exclusive:
+            // KashCal stores end as last ms of last day (23:59:59.999)
+            // CalendarProvider expects 00:00:00 of next day
+            // Add 1ms to cross into next day, then round to midnight
+            val endPlusOne = endTs + 1
+            // Round to start of day (midnight UTC)
+            val effectiveEndTs = (endPlusOne / 86_400_000) * 86_400_000
+            values.put(android.provider.CalendarContract.Events.DTEND, effectiveEndTs)
+        } else if (endTs != null) {
+            values.put(android.provider.CalendarContract.Events.DTEND, endTs)
+        }
+    }
+
+    return values
+}
+
+/**
+ * Calculate RFC 5545 duration string from start/end timestamps.
+ *
+ * Format: P[n]D for days, PT[n]H[n]M for hours/minutes
+ *
+ * @param startTs Start timestamp
+ * @param endTs End timestamp (null returns empty string)
+ * @param isAllDay Whether event is all-day
+ */
+private fun calculateDuration(startTs: Long, endTs: Long?, isAllDay: Boolean): String {
+    if (endTs == null) return "PT0M"
+
+    if (isAllDay) {
+        // For all-day events, calculate days
+        // endTs is inclusive (last ms of last day), so add 1ms to get exclusive end
+        val durationMs = (endTs + 1) - startTs
+        val days = (durationMs / 86_400_000).toInt().coerceAtLeast(1)
+        return "P${days}D"
+    } else {
+        // For timed events, calculate hours and minutes
+        val durationMs = endTs - startTs
+        val totalMinutes = (durationMs / 60_000).toInt()
+        val hours = totalMinutes / 60
+        val minutes = totalMinutes % 60
+
+        return buildString {
+            append("PT")
+            if (hours > 0) append("${hours}H")
+            if (minutes > 0) append("${minutes}M")
+            if (hours == 0 && minutes == 0) append("0M")
+        }
+    }
 }
 
 /**
@@ -247,6 +1037,39 @@ internal fun dayCodeToStartOfDayMs(dayCode: Int): Long {
     return LocalDate.of(year, month, day)
         .atStartOfDay(ZoneId.systemDefault())
         .toInstant().toEpochMilli()
+}
+
+/**
+ * Build ContentValues for a STATUS_CANCELED exception event.
+ *
+ * For all-day events, sets ALL_DAY=1, EVENT_TIMEZONE=UTC, ORIGINAL_ALL_DAY=1,
+ * normalizes ORIGINAL_INSTANCE_TIME to UTC midnight, and uses a 24h DTSTART/DTEND span.
+ * For timed events, uses raw timestamps with zero-duration DTSTART=DTEND.
+ */
+internal fun buildCanceledExceptionValues(
+    calendarId: Long,
+    masterEventId: Long,
+    originalInstanceTime: Long,
+    isAllDay: Boolean
+): android.content.ContentValues {
+    val normalizedOrigTime = if (isAllDay)
+        DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
+    return android.content.ContentValues().apply {
+        put(CalendarContract.Events.CALENDAR_ID, calendarId)
+        put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
+        put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedOrigTime)
+        put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
+        if (isAllDay) {
+            put(CalendarContract.Events.ALL_DAY, 1)
+            put(CalendarContract.Events.EVENT_TIMEZONE, "UTC")
+            put(CalendarContract.Events.ORIGINAL_ALL_DAY, 1)
+            put(CalendarContract.Events.DTSTART, normalizedOrigTime)
+            put(CalendarContract.Events.DTEND, normalizedOrigTime + 86_400_000L)
+        } else {
+            put(CalendarContract.Events.DTSTART, originalInstanceTime)
+            put(CalendarContract.Events.DTEND, originalInstanceTime)
+        }
+    }
 }
 
 /**

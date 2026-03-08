@@ -19,7 +19,9 @@ class DeviceEventActionsTest {
         startTs: Long = 1700000000000L,
         endTs: Long = 1700003600000L,
         isAllDay: Boolean = false,
-        hasRrule: Boolean = false
+        hasRrule: Boolean = false,
+        rrule: String? = null,
+        reminders: List<Int> = emptyList()
     ) = DeviceCalendarInstance(
         instanceId = 1L,
         eventId = 100L,
@@ -32,6 +34,8 @@ class DeviceEventActionsTest {
         endDay = 20231114,
         isAllDay = isAllDay,
         hasRrule = hasRrule,
+        rrule = rrule,
+        reminders = reminders,
         calendarId = 5L,
         calendarDisplayName = "Work Calendar",
         displayColor = 0xFF1976D2.toInt(),
@@ -39,7 +43,10 @@ class DeviceEventActionsTest {
         availability = 0,
         hasAlarm = false,
         selfAttendeeStatus = 0,
-        isWritable = true
+        isWritable = true,
+        originalId = null,
+        originalInstanceTime = null,
+        timezone = "America/New_York"
     )
 
     // ========== toEventForDuplicate ==========

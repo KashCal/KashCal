@@ -5,15 +5,83 @@ import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import java.io.File
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "IcsExporter"
+
+/**
+ * Build ICS content string for a device calendar event.
+ *
+ * Generates a minimal RFC 5545 compliant VCALENDAR with a single VEVENT.
+ * Used for exporting device calendar events via "Export as .ics" menu.
+ *
+ * @param event Device event to export
+ * @return ICS file content string
+ */
+fun buildIcsFromDeviceEvent(event: DisplayEvent.Device): String = buildString {
+    val instance = event.instance
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+    val dateOnlyFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+    appendLine("BEGIN:VCALENDAR")
+    appendLine("VERSION:2.0")
+    appendLine("PRODID:-//KashCal//Device Export//EN")
+    appendLine("BEGIN:VEVENT")
+    appendLine("UID:device-${instance.eventId}@kashcal")
+
+    // DTSTAMP (required)
+    val now = Instant.now().atZone(ZoneOffset.UTC)
+    appendLine("DTSTAMP:${dateFormatter.format(now)}")
+
+    // DTSTART/DTEND
+    if (event.isAllDay) {
+        val startDate = Instant.ofEpochMilli(event.startTs).atZone(ZoneOffset.UTC)
+        val endDate = Instant.ofEpochMilli(event.endTs + 1).atZone(ZoneOffset.UTC) // Convert inclusive to exclusive
+        appendLine("DTSTART;VALUE=DATE:${dateOnlyFormatter.format(startDate)}")
+        appendLine("DTEND;VALUE=DATE:${dateOnlyFormatter.format(endDate)}")
+    } else {
+        val startTime = Instant.ofEpochMilli(event.startTs).atZone(ZoneOffset.UTC)
+        val endTime = Instant.ofEpochMilli(event.endTs).atZone(ZoneOffset.UTC)
+        appendLine("DTSTART:${dateFormatter.format(startTime)}")
+        appendLine("DTEND:${dateFormatter.format(endTime)}")
+    }
+
+    appendLine("SUMMARY:${escapeIcsValue(event.title)}")
+
+    if (!event.description.isNullOrBlank()) {
+        appendLine("DESCRIPTION:${escapeIcsValue(event.description!!)}")
+    }
+    if (!event.location.isNullOrBlank()) {
+        appendLine("LOCATION:${escapeIcsValue(event.location!!)}")
+    }
+    if (event.rrule != null) {
+        appendLine("RRULE:${event.rrule}")
+    }
+
+    appendLine("END:VEVENT")
+    appendLine("END:VCALENDAR")
+}
+
+/**
+ * Escape special characters in ICS property values.
+ */
+private fun escapeIcsValue(text: String): String {
+    return text
+        .replace("\\", "\\\\")
+        .replace(";", "\\;")
+        .replace(",", "\\,")
+        .replace("\n", "\\n")
+}
 
 /**
  * Utility for exporting events to ICS files.

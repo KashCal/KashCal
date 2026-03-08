@@ -553,6 +553,78 @@ class PullStrategyEtagFallbackTest {
         coVerify(exactly = 0) { eventsDao.getEtagsByCalendarId(any()) }
     }
 
+    // ========== Recently Pushed Event Deletion Protection (v23.2.1) ==========
+    // RFC 4791 does not guarantee immediate visibility after PUT.
+
+    @Test
+    fun `etag fallback does not delete recently pushed event`() = runTest {
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val pushedHref = "/calendars/home/pushed.ics"
+        val pushedUrl = "https://caldav.example.com$pushedHref"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        // Local has event that was just pushed
+        coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
+            EtagEntry(pushedUrl, "etag-from-put")
+        )
+
+        // Server doesn't have it yet (not indexed)
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(emptyList())
+
+        val pushedEvent = createEvent(id = 42L, caldavUrl = pushedUrl).copy(
+            syncStatus = SyncStatus.SYNCED
+        )
+        coEvery { eventsDao.getByCaldavUrl(pushedUrl) } returns pushedEvent
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        val result = pullStrategy.pull(
+            calendar,
+            client = client,
+            recentlyPushedEventIds = setOf(42L)
+        )
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(0, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 0) { eventsDao.deleteById(42L) }
+    }
+
+    @Test
+    fun `etag fallback still deletes stale events not in recentlyPushedEventIds`() = runTest {
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val staleHref = "/calendars/home/stale.ics"
+        val staleUrl = "https://caldav.example.com$staleHref"
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+
+        coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
+            EtagEntry(staleUrl, "etag-stale")
+        )
+
+        // Server doesn't have this event
+        coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
+            CalDavResult.success(emptyList())
+
+        val staleEvent = createEvent(id = 99L, caldavUrl = staleUrl)
+        coEvery { eventsDao.getByCaldavUrl(staleUrl) } returns staleEvent
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+
+        val result = pullStrategy.pull(
+            calendar,
+            client = client,
+            recentlyPushedEventIds = setOf(42L)  // Different ID
+        )
+
+        assertTrue(result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsDeleted)
+        coVerify(exactly = 1) { eventsDao.deleteById(99L) }
+    }
+
     // ========== URL Normalization Tests ==========
 
     @Test

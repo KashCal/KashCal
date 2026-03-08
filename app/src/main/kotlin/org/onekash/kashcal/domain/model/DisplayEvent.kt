@@ -69,6 +69,15 @@ sealed interface DisplayEvent {
         override val calendarColor get() = instance.displayColor
         override val calendarName get() = instance.calendarDisplayName
         override val isReadOnly get() = !instance.isWritable
+
+        /** RFC 5545 RRULE string, null for non-recurring events. */
+        val rrule: String? get() = instance.rrule
+
+        /** Reminder minutes before event (e.g., [15, 60] = 15 min and 1 hour before). */
+        val reminders: List<Int> get() = instance.reminders
+
+        /** True if this instance is part of a recurring series (regular or exception occurrence). */
+        val isPartOfRecurringSeries: Boolean get() = instance.isPartOfRecurringSeries
     }
 }
 

@@ -214,6 +214,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("quick_view", result)
@@ -231,6 +232,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("create", result)
@@ -248,6 +250,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("search", result)
@@ -265,6 +268,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("today", result)
@@ -282,6 +286,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("go_to_date", result)
@@ -306,6 +311,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("import", result)
@@ -330,6 +336,7 @@ class PendingActionTest {
             is PendingAction.GoToDate -> "go_to_date"
             is PendingAction.ImportIcsFile -> "import"
             is PendingAction.CreateEventFromCalendarIntent -> "calendar_intent"
+            is PendingAction.ShowDeviceEventQuickView -> "device_quick_view"
         }
 
         assertEquals("calendar_intent", result)

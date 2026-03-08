@@ -722,40 +722,9 @@ class EventWriter @Inject constructor(
 
     /**
      * Add UNTIL parameter to RRULE.
-     * Handles existing UNTIL/COUNT parameters.
+     * Delegates to [RruleUtils] for shared logic between Room and CalendarProvider layers.
      */
     private fun addUntilToRrule(rrule: String, untilMs: Long): String {
-        val untilDate = formatUntilDate(untilMs)
-
-        return when {
-            // Remove existing UNTIL if present
-            rrule.contains("UNTIL=") -> {
-                rrule.replace(Regex("UNTIL=[^;]+"), "UNTIL=$untilDate")
-            }
-            // Remove COUNT and add UNTIL
-            rrule.contains("COUNT=") -> {
-                val withoutCount = rrule.replace(Regex(";?COUNT=\\d+"), "")
-                "$withoutCount;UNTIL=$untilDate"
-            }
-            // Just add UNTIL
-            else -> "$rrule;UNTIL=$untilDate"
-        }
-    }
-
-    /**
-     * Format timestamp as RRULE UNTIL value (UTC).
-     */
-    private fun formatUntilDate(timestampMs: Long): String {
-        val calendar = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
-        calendar.timeInMillis = timestampMs
-        return String.format(
-            "%04d%02d%02dT%02d%02d%02dZ",
-            calendar.get(java.util.Calendar.YEAR),
-            calendar.get(java.util.Calendar.MONTH) + 1,
-            calendar.get(java.util.Calendar.DAY_OF_MONTH),
-            calendar.get(java.util.Calendar.HOUR_OF_DAY),
-            calendar.get(java.util.Calendar.MINUTE),
-            calendar.get(java.util.Calendar.SECOND)
-        )
+        return org.onekash.kashcal.util.RruleUtils.addUntilToRrule(rrule, untilMs)
     }
 }

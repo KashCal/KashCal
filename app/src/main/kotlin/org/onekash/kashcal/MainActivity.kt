@@ -21,6 +21,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.data.ics.IcsParserService
@@ -46,6 +47,7 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.util.CalendarContractAction
 import org.onekash.kashcal.util.CalendarIntentData
@@ -127,6 +129,11 @@ class MainActivity : ComponentActivity() {
                 var duplicateFromEvent by remember { mutableStateOf<Event?>(null) }
                 var calendarIntentData by remember { mutableStateOf<CalendarIntentData?>(null) }
                 var calendarIntentInvitees by remember { mutableStateOf<List<String>>(emptyList()) }
+
+                // Device event edit state
+                var editingDeviceEventId by remember { mutableStateOf<Long?>(null) }
+                var deviceEventOccurrenceTs by remember { mutableStateOf<Long?>(null) }
+                var deviceEventIsAllDay by remember { mutableStateOf(false) }
 
                 // Event quick view sheet state
                 var showQuickViewSheet by remember { mutableStateOf(false) }
@@ -226,6 +233,18 @@ class MainActivity : ComponentActivity() {
                                     calendarIntentData = action.data
                                     calendarIntentInvitees = action.invitees
                                     showEventFormSheet = true
+                                }
+                                is PendingAction.ShowDeviceEventQuickView -> {
+                                    val deviceEvent = homeViewModel.getDeviceEventForQuickView(
+                                        action.eventId, action.occurrenceTs
+                                    )
+                                    if (deviceEvent != null) {
+                                        deviceQuickViewEvent = deviceEvent
+                                        showDeviceQuickViewSheet = true
+                                    } else {
+                                        Log.w(TAG, "Widget: Device event ${action.eventId} not found")
+                                        homeViewModel.showSnackbar("Event not found")
+                                    }
                                 }
                             }
                             // IMPORTANT: clearPendingAction() must be called AFTER all suspend work
@@ -596,12 +615,88 @@ class MainActivity : ComponentActivity() {
 
                 // Device Event Quick View Sheet
                 if (showDeviceQuickViewSheet && deviceQuickViewEvent != null) {
+                    val hasWriteCalendarPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+                        this@MainActivity,
+                        android.Manifest.permission.WRITE_CALENDAR
+                    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
                     DeviceEventQuickViewSheet(
                         displayEvent = deviceQuickViewEvent!!,
                         showEventEmojis = uiState.showEventEmojis,
+                        hasWritePermission = hasWriteCalendarPermission,
+                        isWritableCalendar = !deviceQuickViewEvent!!.isReadOnly,
                         onDismiss = {
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
+                        },
+                        onEdit = {
+                            // Edit all occurrences (or single event)
+                            val event = deviceQuickViewEvent!!
+                            // "Edit All" on exception -> still edits master event (matches Room behavior)
+                            editingDeviceEventId = event.instance.originalId ?: event.instance.eventId
+                            deviceEventOccurrenceTs = null // Edit all
+                            deviceEventIsAllDay = event.instance.isAllDay
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                            editingEventId = null // Clear Room edit state
+                            duplicateFromEvent = null
+                            showEventFormSheet = true
+                        },
+                        onEditOccurrence = {
+                            // Edit this occurrence only
+                            val event = deviceQuickViewEvent!!
+                            val masterEventId = event.instance.originalId ?: event.instance.eventId
+                            // originalInstanceTime: for existing exception use its value, for new exception use occurrence timestamp
+                            val occTs = event.instance.originalInstanceTime ?: event.startTs
+                            editingDeviceEventId = masterEventId
+                            deviceEventOccurrenceTs = occTs
+                            deviceEventIsAllDay = event.instance.isAllDay
+                            showDeviceQuickViewSheet = false
+                            deviceQuickViewEvent = null
+                            editingEventId = null // Clear Room edit state
+                            duplicateFromEvent = null
+                            showEventFormSheet = true
+                        },
+                        onDelete = {
+                            // Delete all occurrences (or single event)
+                            val event = deviceQuickViewEvent!!
+                            coroutineScope.launch {
+                                val masterEventId = event.instance.originalId ?: event.instance.eventId
+                                homeViewModel.deleteDeviceEvent(masterEventId)
+                                showDeviceQuickViewSheet = false
+                                deviceQuickViewEvent = null
+                            }
+                        },
+                        onDeleteOccurrence = {
+                            // Delete this occurrence only
+                            val event = deviceQuickViewEvent!!
+                            coroutineScope.launch {
+                                val masterEventId = event.instance.originalId ?: event.instance.eventId
+                                val originalInstanceTime = event.instance.originalInstanceTime ?: event.startTs
+                                homeViewModel.deleteDeviceSingleOccurrence(
+                                    calendarId = event.instance.calendarId,
+                                    masterEventId = masterEventId,
+                                    originalInstanceTime = originalInstanceTime,
+                                    isAllDay = event.instance.isAllDay
+                                )
+                                showDeviceQuickViewSheet = false
+                                deviceQuickViewEvent = null
+                            }
+                        },
+                        onDeleteFuture = {
+                            // Delete this and all future occurrences
+                            val event = deviceQuickViewEvent!!
+                            coroutineScope.launch {
+                                val masterEventId = event.instance.originalId ?: event.instance.eventId
+                                val fromTimeMs = event.instance.originalInstanceTime ?: event.startTs
+                                homeViewModel.deleteDeviceThisAndFuture(
+                                    masterEventId = masterEventId,
+                                    fromTimeMs = fromTimeMs,
+                                    isAllDay = event.instance.isAllDay
+                                )
+                                showDeviceQuickViewSheet = false
+                                deviceQuickViewEvent = null
+                            }
                         },
                         onDuplicate = {
                             val event = deviceQuickViewEvent!!
@@ -643,7 +738,7 @@ class MainActivity : ComponentActivity() {
                         calendarIntentInvitees = calendarIntentInvitees,
                         calendars = uiState.calendars,
                         calendarGroups = uiState.calendarGroups,
-                        defaultCalendarId = uiState.defaultCalendarId ?: uiState.calendars.firstOrNull()?.id,
+                        defaultCalendar = uiState.defaultCalendar,
                         onDismiss = {
                             showEventFormSheet = false
                             editingEventId = null
@@ -652,6 +747,10 @@ class MainActivity : ComponentActivity() {
                             duplicateFromEvent = null
                             calendarIntentData = null
                             calendarIntentInvitees = emptyList()
+                            // Clear device event state
+                            editingDeviceEventId = null
+                            deviceEventOccurrenceTs = null
+                            deviceEventIsAllDay = false
                         },
                         onSave = { formState ->
                             homeViewModel.saveEvent(formState)
@@ -692,7 +791,20 @@ class MainActivity : ComponentActivity() {
                         },
                         locationSuggestionService = locationSuggestionService,
                         timeFormat = uiState.timeFormat,
-                        firstDayOfWeek = uiState.firstDayOfWeek
+                        firstDayOfWeek = uiState.firstDayOfWeek,
+                        // Device calendar edit support
+                        deviceEventId = editingDeviceEventId,
+                        deviceOccurrenceTs = deviceEventOccurrenceTs,
+                        onLoadDeviceEvent = { eventId ->
+                            homeViewModel.getDeviceEventForEdit(eventId, deviceEventOccurrenceTs, deviceEventIsAllDay)
+                        },
+                        onSaveDeviceEvent = { formState ->
+                            homeViewModel.saveDeviceEvent(formState)
+                        },
+                        onDeleteDeviceEvent = { eventId ->
+                            homeViewModel.deleteDeviceEvent(eventId)
+                        },
+                        deviceCalendarGroups = uiState.deviceCalendarGroups
                     )
                 }
 
@@ -741,10 +853,12 @@ class MainActivity : ComponentActivity() {
 
                 // ICS Import Sheet
                 if (showIcsImportSheet && icsImportEvents.isNotEmpty()) {
+                    // ICS import only supports Room calendars, extract ID if Room type
+                    val defaultRoomCalendarId = (uiState.defaultCalendar as? DefaultCalendar.Room)?.calendarId
                     IcsImportSheet(
                         events = icsImportEvents,
                         calendars = uiState.calendars,
-                        defaultCalendarId = uiState.defaultCalendarId,
+                        defaultCalendarId = defaultRoomCalendarId,
                         onDismiss = {
                             showIcsImportSheet = false
                             icsImportEvents = emptyList()
@@ -872,6 +986,22 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        // Handle device calendar reminder notification tap
+        if (intent?.action == DeviceCalendarReminderNotificationManager.ACTION_DEVICE_SHOW_EVENT) {
+            val eventId = intent.getLongExtra(DeviceCalendarReminderNotificationManager.EXTRA_EVENT_ID, -1)
+            val occurrenceTs = intent.getLongExtra(DeviceCalendarReminderNotificationManager.EXTRA_OCCURRENCE_TS, -1)
+            if (eventId != -1L && occurrenceTs != -1L) {
+                Log.d(TAG, "Device reminder notification: showing event $eventId at $occurrenceTs")
+                homeViewModel.setPendingAction(
+                    PendingAction.ShowDeviceEventQuickView(
+                        eventId = eventId,
+                        occurrenceTs = occurrenceTs
+                    )
+                )
+            }
+            return
+        }
+
         // Handle widget actions (check extras first, before URI handling)
         intent?.getStringExtra(org.onekash.kashcal.widget.EXTRA_ACTION)?.let { action ->
             Log.d(TAG, "Handling widget action: $action")
@@ -879,15 +1009,25 @@ class MainActivity : ComponentActivity() {
                 org.onekash.kashcal.widget.ACTION_SHOW_EVENT -> {
                     val eventId = intent.getLongExtra(org.onekash.kashcal.widget.EXTRA_EVENT_ID, -1)
                     val occurrenceTs = intent.getLongExtra(org.onekash.kashcal.widget.EXTRA_OCCURRENCE_TS, -1)
+                    val isDeviceEvent = intent.getBooleanExtra(org.onekash.kashcal.widget.EXTRA_IS_DEVICE_EVENT, false)
                     if (eventId != -1L && occurrenceTs != -1L) {
-                        Log.d(TAG, "Widget: showing event $eventId at $occurrenceTs")
-                        homeViewModel.setPendingAction(
-                            PendingAction.ShowEventQuickView(
-                                eventId = eventId,
-                                occurrenceTs = occurrenceTs,
-                                source = PendingAction.ShowEventQuickView.Source.WIDGET
+                        Log.d(TAG, "Widget: showing event $eventId at $occurrenceTs (isDevice=$isDeviceEvent)")
+                        if (isDeviceEvent) {
+                            homeViewModel.setPendingAction(
+                                PendingAction.ShowDeviceEventQuickView(
+                                    eventId = eventId,
+                                    occurrenceTs = occurrenceTs
+                                )
                             )
-                        )
+                        } else {
+                            homeViewModel.setPendingAction(
+                                PendingAction.ShowEventQuickView(
+                                    eventId = eventId,
+                                    occurrenceTs = occurrenceTs,
+                                    source = PendingAction.ShowEventQuickView.Source.WIDGET
+                                )
+                            )
+                        }
                     }
                     return
                 }

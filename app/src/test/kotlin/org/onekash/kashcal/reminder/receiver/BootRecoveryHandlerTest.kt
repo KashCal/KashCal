@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
@@ -23,15 +24,18 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 class BootRecoveryHandlerTest {
 
     private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var handler: BootRecoveryHandler
 
     @Before
     fun setup() {
         mockkStatic(Log::class)
         every { Log.d(any(), any()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
 
         reminderScheduler = mockk(relaxed = true)
-        handler = BootRecoveryHandler(reminderScheduler)
+        deviceCalendarReminderScheduler = mockk(relaxed = true)
+        handler = BootRecoveryHandler(reminderScheduler, deviceCalendarReminderScheduler)
     }
 
     @After

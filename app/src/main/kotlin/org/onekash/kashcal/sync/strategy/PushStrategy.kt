@@ -105,7 +105,10 @@ class PushStrategy @Inject constructor(
                             pushedEventIds.add(operation.eventId)
                         }
                         PendingOperation.OPERATION_DELETE -> deleted++
-                        PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
+                        PendingOperation.OPERATION_MOVE -> {
+                            created++; deleted++
+                            pushedEventIds.add(operation.eventId)
+                        }
                     }
                     // Forward any warnings from the operation (e.g., MOVE orphan)
                     result.warning?.let { warnings.add(it) }
@@ -236,7 +239,10 @@ class PushStrategy @Inject constructor(
                             pushedEventIds.add(operation.eventId)
                         }
                         PendingOperation.OPERATION_DELETE -> deleted++
-                        PendingOperation.OPERATION_MOVE -> { created++; deleted++ }  // Counts as both
+                        PendingOperation.OPERATION_MOVE -> {
+                            created++; deleted++
+                            pushedEventIds.add(operation.eventId)
+                        }
                     }
                     result.warning?.let { warnings.add(it) }
                 }

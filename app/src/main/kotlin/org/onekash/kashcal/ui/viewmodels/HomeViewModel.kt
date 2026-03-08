@@ -27,8 +27,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -84,6 +86,7 @@ class HomeViewModel @Inject constructor(
     private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val networkMonitor: NetworkMonitor,
+    private val calendarProviderRepository: CalendarProviderRepository,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -569,24 +572,43 @@ class HomeViewModel @Inject constructor(
                 combine(
                     eventCoordinator.getAllCalendars(),
                     eventCoordinator.getAllAccounts(),
-                    dataStore.defaultCalendarId
-                ) { calendars, accounts, userPrefId ->
-                    // User preference takes priority, but validate it exists
-                    val defaultCalId = userPrefId?.takeIf { id -> calendars.any { it.id == id } }
-                        ?: calendars.find { it.isDefault }?.id  // Fallback to DB is_default
-                        ?: calendars.firstOrNull()?.id          // Fallback to first calendar
+                    dataStore.defaultCalendar
+                ) { calendars, accounts, userPrefDefault ->
+                    // Validate the default calendar exists
+                    val validatedDefault = when (userPrefDefault) {
+                        is DefaultCalendar.Room -> {
+                            // Validate Room calendar exists
+                            if (calendars.any { it.id == userPrefDefault.calendarId }) userPrefDefault
+                            else null
+                        }
+                        is DefaultCalendar.Device -> {
+                            // Device calendar validation happens at event creation time
+                            // For UI display, just pass through (picker handles availability)
+                            userPrefDefault
+                        }
+                        null -> null
+                    }
                     // Group calendars by account for UI display
                     val groups = CalendarGroup.fromCalendarsAndAccounts(calendars, accounts)
-                    Triple(calendars, groups, defaultCalId)
-                }.collect { (calendars, groups, defaultCalId) ->
+                    Triple(calendars, groups, validatedDefault)
+                }.collect { (calendars, groups, validatedDefault) ->
+                    // Also load device calendars for EventFormSheet picker
+                    val deviceCalendars = try {
+                        calendarProviderRepository.getDeviceCalendars()
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                    val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
+
                     _uiState.update {
                         it.copy(
                             calendars = calendars.toPersistentList(),
                             calendarGroups = groups.toPersistentList(),
-                            defaultCalendarId = defaultCalId
+                            deviceCalendarGroups = deviceGroups.toPersistentList(),
+                            defaultCalendar = validatedDefault
                         )
                     }
-                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, ${groups.size} groups, default=$defaultCalId")
+                    Log.d(TAG, "Calendars updated: ${calendars.size} calendars, ${groups.size} groups, ${deviceGroups.size} device groups, default=$validatedDefault")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error observing calendars", e)
@@ -601,26 +623,40 @@ class HomeViewModel @Inject constructor(
     private fun loadCalendars() {
         viewModelScope.launch {
             try {
-                val (calendars, groups, defaultCalId) = withContext(ioDispatcher) {
+                val (calendars, groups, validatedDefault) = withContext(ioDispatcher) {
                     val cals = eventCoordinator.getAllCalendars().first()
                     val accounts = eventCoordinator.getAllAccounts().first()
-                    // User preference > DB is_default > first calendar
-                    val userPrefId = dataStore.getDefaultCalendarId()
-                    val defaultId = userPrefId?.takeIf { id -> cals.any { it.id == id } }
-                        ?: cals.find { it.isDefault }?.id
-                        ?: cals.firstOrNull()?.id
+                    // Get default calendar preference and validate
+                    val userPrefDefault = dataStore.getDefaultCalendar()
+                    val validDefault = when (userPrefDefault) {
+                        is DefaultCalendar.Room -> {
+                            if (cals.any { it.id == userPrefDefault.calendarId }) userPrefDefault
+                            else null
+                        }
+                        is DefaultCalendar.Device -> userPrefDefault // Validated at event creation
+                        null -> null
+                    }
                     // Group calendars by account for UI
                     val calGroups = CalendarGroup.fromCalendarsAndAccounts(cals, accounts)
-                    Triple(cals, calGroups, defaultId)
+                    Triple(cals, calGroups, validDefault)
                 }
+                // Also load device calendars for EventFormSheet picker
+                val deviceCalendars = try {
+                    calendarProviderRepository.getDeviceCalendars()
+                } catch (e: Exception) {
+                    emptyList()
+                }
+                val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
+
                 _uiState.update {
                     it.copy(
                         calendars = calendars.toPersistentList(),
                         calendarGroups = groups.toPersistentList(),
-                        defaultCalendarId = defaultCalId
+                        deviceCalendarGroups = deviceGroups.toPersistentList(),
+                        defaultCalendar = validatedDefault
                     )
                 }
-                Log.d(TAG, "Loaded ${calendars.size} calendars, ${groups.size} groups, default=$defaultCalId")
+                Log.d(TAG, "Loaded ${calendars.size} calendars, ${groups.size} groups, ${deviceGroups.size} device groups, default=$validatedDefault")
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading calendars", e)
             }
@@ -1807,6 +1843,40 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Get device event for quick view from widget tap.
+     *
+     * Queries CalendarProvider for instances on the day of occurrenceTs,
+     * then finds the instance matching eventId and startTs.
+     *
+     * @param eventId CalendarProvider event ID
+     * @param occurrenceTs Timestamp of the specific occurrence
+     * @return DisplayEvent.Device if found, null otherwise
+     */
+    suspend fun getDeviceEventForQuickView(eventId: Long, occurrenceTs: Long): DisplayEvent.Device? {
+        return withContext(ioDispatcher) {
+            try {
+                // Compute day codes for both timed and all-day interpretations.
+                // All-day events use UTC midnight timestamps, which in negative UTC offsets
+                // map to the previous local day when interpreted as timed (isAllDay=false).
+                // Query both possible days to handle either case in a single call.
+                val timedDayCode = DateTimeUtils.eventTsToDayCode(occurrenceTs, isAllDay = false)
+                val allDayDayCode = DateTimeUtils.eventTsToDayCode(occurrenceTs, isAllDay = true)
+                val startDay = minOf(timedDayCode, allDayDayCode)
+                val endDay = maxOf(timedDayCode, allDayDayCode)
+
+                val eventsMap = displayEventRepository.getDisplayEventsGroupedByDayOnce(startDay, endDay)
+
+                eventsMap.values.flatten()
+                    .filterIsInstance<DisplayEvent.Device>()
+                    .find { it.instance.eventId == eventId && it.startTs == occurrenceTs }
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to get device event for quick view: eventId=$eventId, occurrenceTs=$occurrenceTs", e)
+                null
+            }
+        }
+    }
+
+    /**
      * Save event from form state.
      * Creates new event or updates existing one.
      *
@@ -2071,6 +2141,418 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Error deleting future occurrences", e)
                 showSnackbar("Failed to delete: ${e.message}")
+            }
+        }
+    }
+
+    // ==================== Device Calendar Write Operations ====================
+
+    /**
+     * Create a new event in a device calendar (CalendarProvider).
+     *
+     * @return Result containing created event ID on success
+     */
+    suspend fun createDeviceEvent(
+        calendarId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long,
+        isAllDay: Boolean,
+        rrule: String?,
+        timezone: String,
+        reminders: List<Int>
+    ): Result<Long> {
+        return withContext(ioDispatcher) {
+            // For recurring events, compute duration string
+            val duration = if (rrule != null) {
+                computeDurationString(startTs, endTs, isAllDay)
+            } else null
+
+            calendarProviderRepository.createEvent(
+                calendarId = calendarId,
+                title = title,
+                description = description,
+                location = location,
+                startTs = startTs,
+                endTs = if (rrule != null) null else endTs,
+                isAllDay = isAllDay,
+                rrule = rrule,
+                duration = duration,
+                timezone = timezone,
+                reminders = reminders
+            ).also { result ->
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to create device event", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+                result.onSuccess {
+                    Log.d(TAG, "Device event created: id=$it")
+                    reloadCurrentView()
+                }
+            }
+        }
+    }
+
+    /**
+     * Update an existing event in a device calendar.
+     */
+    suspend fun updateDeviceEvent(
+        eventId: Long,
+        title: String,
+        description: String?,
+        location: String?,
+        startTs: Long,
+        endTs: Long,
+        isAllDay: Boolean,
+        rrule: String?,
+        timezone: String,
+        reminders: List<Int>
+    ): Result<Unit> {
+        return withContext(ioDispatcher) {
+            val duration = if (rrule != null) {
+                computeDurationString(startTs, endTs, isAllDay)
+            } else null
+
+            calendarProviderRepository.updateEvent(
+                eventId = eventId,
+                title = title,
+                description = description,
+                location = location,
+                startTs = startTs,
+                endTs = if (rrule != null) null else endTs,
+                isAllDay = isAllDay,
+                rrule = rrule,
+                duration = duration,
+                timezone = timezone,
+                reminders = reminders
+            ).also { result ->
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to update device event: $eventId", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+                result.onSuccess {
+                    Log.d(TAG, "Device event updated: id=$eventId")
+                    reloadCurrentView()
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete an event from a device calendar.
+     */
+    suspend fun deleteDeviceEvent(eventId: Long): Result<Unit> {
+        return withContext(ioDispatcher) {
+            calendarProviderRepository.deleteEvent(eventId).also { result ->
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to delete device event: $eventId", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+                result.onSuccess {
+                    Log.d(TAG, "Device event deleted: id=$eventId")
+                    reloadCurrentView()
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete a single occurrence of a recurring device calendar event.
+     * Creates a STATUS_CANCELED exception in CalendarProvider.
+     */
+    suspend fun deleteDeviceSingleOccurrence(
+        calendarId: Long,
+        masterEventId: Long,
+        originalInstanceTime: Long,
+        isAllDay: Boolean = false
+    ): Result<Unit> {
+        return withContext(ioDispatcher) {
+            calendarProviderRepository.deleteSingleOccurrence(
+                calendarId = calendarId,
+                masterEventId = masterEventId,
+                originalInstanceTime = originalInstanceTime,
+                isAllDay = isAllDay
+            ).also { result ->
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to delete device occurrence: master=$masterEventId", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+                result.onSuccess {
+                    Log.d(TAG, "Device occurrence deleted: master=$masterEventId, ts=$originalInstanceTime")
+                    reloadCurrentView()
+                }
+            }
+        }
+    }
+
+    /**
+     * Delete this and all future occurrences of a recurring device calendar event.
+     * Truncates the master event's RRULE with an UNTIL clause.
+     */
+    suspend fun deleteDeviceThisAndFuture(
+        masterEventId: Long,
+        fromTimeMs: Long,
+        isAllDay: Boolean = false
+    ): Result<Unit> {
+        return withContext(ioDispatcher) {
+            calendarProviderRepository.deleteThisAndFuture(
+                masterEventId = masterEventId,
+                fromTimeMs = fromTimeMs,
+                isAllDay = isAllDay
+            ).also { result ->
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to delete device future occurrences: master=$masterEventId", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+                result.onSuccess {
+                    Log.d(TAG, "Device future occurrences deleted: master=$masterEventId, from=$fromTimeMs")
+                    reloadCurrentView()
+                }
+            }
+        }
+    }
+
+    // ==================== Device Calendar Edit Support ====================
+
+    /**
+     * Check if a device event can be edited.
+     *
+     * @param calendarId The calendar ID containing the event
+     * @return Pair of (canEdit, calendarName or null)
+     */
+    suspend fun canEditDeviceEvent(calendarId: Long): Pair<Boolean, String?> {
+        return withContext(ioDispatcher) {
+            val calendars = calendarProviderRepository.getDeviceCalendars()
+            val calendar = calendars.find { it.id == calendarId }
+            if (calendar != null && calendar.isWritable) {
+                true to calendar.displayName
+            } else {
+                false to null
+            }
+        }
+    }
+
+    /**
+     * Load a device event for editing.
+     *
+     * When occurrenceTs is provided, checks if an exception event exists for that occurrence.
+     * If so, loads the exception event (with its own reminders) instead of the master.
+     *
+     * @param eventId Event ID to load (master event ID for recurring)
+     * @param occurrenceTs Original occurrence timestamp (null for non-occurrence edits)
+     * @param isAllDay Whether the event is all-day (for UTC midnight normalization)
+     * @return DeviceEventEditData with event, reminders, and calendar info, or null if not found
+     */
+    suspend fun getDeviceEventForEdit(eventId: Long, occurrenceTs: Long? = null, isAllDay: Boolean = false): DeviceEventEditData? {
+        return withContext(ioDispatcher) {
+            val effectiveEventId = if (occurrenceTs != null) {
+                calendarProviderRepository.findExceptionEventId(eventId, occurrenceTs, isAllDay)
+                    ?: eventId
+            } else eventId
+            val event = calendarProviderRepository.getDeviceEvent(effectiveEventId) ?: return@withContext null
+            val calendars = calendarProviderRepository.getDeviceCalendars()
+            val calendar = calendars.find { it.id == event.calendarId } ?: return@withContext null
+            val reminders = calendarProviderRepository.getReminders(effectiveEventId)
+
+            DeviceEventEditData(
+                event = event,
+                reminders = reminders,
+                calendarName = calendar.displayName,
+                calendarColor = calendar.color,
+                isWritable = calendar.isWritable
+            )
+        }
+    }
+
+    /**
+     * Find an existing exception event for an occurrence.
+     *
+     * @param masterEventId Master recurring event ID
+     * @param originalInstanceTime Original occurrence timestamp
+     * @return Exception event ID if exists, null otherwise
+     */
+    suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean = false): Long? {
+        return withContext(ioDispatcher) {
+            calendarProviderRepository.findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
+        }
+    }
+
+    /**
+     * Save a device event from EventFormState.
+     *
+     * Routes to appropriate operation:
+     * - If editing occurrence (editingOccurrenceTs != null): create/update exception
+     * - If editing existing event: update event
+     * - Otherwise: create new event
+     *
+     * @param formState The form state to save
+     * @return Result containing event ID on success
+     */
+    suspend fun saveDeviceEvent(formState: org.onekash.kashcal.ui.components.EventFormState): Result<Long> {
+        return withContext(ioDispatcher) {
+            val calendarId = formState.selectedCalendarId
+                ?: return@withContext Result.failure(IllegalStateException("No calendar selected"))
+
+            // Compute timestamps from form state
+            val (startTs, endTs) = computeTimestampsFromFormState(formState)
+
+            // Build reminders list (just minutes, not ISO format)
+            val reminders = buildDeviceReminders(formState.reminder1Minutes, formState.reminder2Minutes)
+
+            val timezone = formState.timezone ?: java.util.TimeZone.getDefault().id
+
+            // Determine operation based on form state
+            when {
+                // Editing single occurrence of recurring event
+                formState.editingDeviceEventId != null && formState.editingOccurrenceTs != null -> {
+                    val masterEventId = formState.editingDeviceEventId!!
+                    val originalInstanceTime = formState.editingOccurrenceTs!!
+
+                    // Check if exception already exists
+                    val existingExceptionId = calendarProviderRepository.findExceptionEventId(
+                        masterEventId, originalInstanceTime, formState.isAllDay
+                    )
+
+                    if (existingExceptionId != null) {
+                        // Update existing exception
+                        calendarProviderRepository.updateEvent(
+                            eventId = existingExceptionId,
+                            title = formState.title,
+                            description = formState.description.ifBlank { null },
+                            location = formState.location.ifBlank { null },
+                            startTs = startTs,
+                            endTs = endTs,
+                            isAllDay = formState.isAllDay,
+                            rrule = null, // Exceptions don't have RRULE
+                            duration = null,
+                            timezone = timezone,
+                            reminders = reminders
+                        ).map { existingExceptionId }
+                    } else {
+                        // Create new exception
+                        calendarProviderRepository.createException(
+                            calendarId = calendarId,
+                            masterEventId = masterEventId,
+                            originalInstanceTime = originalInstanceTime,
+                            title = formState.title,
+                            description = formState.description.ifBlank { null },
+                            location = formState.location.ifBlank { null },
+                            startTs = startTs,
+                            endTs = endTs,
+                            isAllDay = formState.isAllDay,
+                            timezone = timezone,
+                            reminders = reminders
+                        )
+                    }
+                }
+
+                // Editing existing event (not occurrence)
+                formState.editingDeviceEventId != null -> {
+                    val eventId = formState.editingDeviceEventId!!
+                    calendarProviderRepository.updateEvent(
+                        eventId = eventId,
+                        title = formState.title,
+                        description = formState.description.ifBlank { null },
+                        location = formState.location.ifBlank { null },
+                        startTs = startTs,
+                        endTs = if (formState.rrule != null) null else endTs,
+                        isAllDay = formState.isAllDay,
+                        rrule = formState.rrule,
+                        duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
+                        timezone = timezone,
+                        reminders = reminders
+                    ).map { eventId }
+                }
+
+                // Creating new event
+                else -> {
+                    calendarProviderRepository.createEvent(
+                        calendarId = calendarId,
+                        title = formState.title,
+                        description = formState.description.ifBlank { null },
+                        location = formState.location.ifBlank { null },
+                        startTs = startTs,
+                        endTs = if (formState.rrule != null) null else endTs,
+                        isAllDay = formState.isAllDay,
+                        rrule = formState.rrule,
+                        duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
+                        timezone = timezone,
+                        reminders = reminders
+                    )
+                }
+            }.also { result ->
+                result.onSuccess { reloadCurrentView() }
+                result.onFailure { e ->
+                    Log.e(TAG, "Failed to save device event", e)
+                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+                }
+            }
+        }
+    }
+
+    /**
+     * Compute start/end timestamps from form state.
+     * Handles all-day UTC conversion.
+     */
+    private fun computeTimestampsFromFormState(formState: org.onekash.kashcal.ui.components.EventFormState): Pair<Long, Long> {
+        return if (formState.isAllDay) {
+            // All-day: convert local date to UTC midnight
+            val startTs = DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
+            val endTs = DateTimeUtils.localDateToUtcMidnight(formState.endDateMillis)
+            // End is inclusive, so add end-of-day
+            startTs to DateTimeUtils.utcMidnightToEndOfDay(endTs)
+        } else {
+            // Timed: combine date and time
+            val startCal = java.util.Calendar.getInstance().apply {
+                timeInMillis = formState.dateMillis
+                set(java.util.Calendar.HOUR_OF_DAY, formState.startHour)
+                set(java.util.Calendar.MINUTE, formState.startMinute)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            val endCal = java.util.Calendar.getInstance().apply {
+                timeInMillis = formState.endDateMillis
+                set(java.util.Calendar.HOUR_OF_DAY, formState.endHour)
+                set(java.util.Calendar.MINUTE, formState.endMinute)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            startCal.timeInMillis to endCal.timeInMillis
+        }
+    }
+
+    /**
+     * Build device reminders list from form minutes.
+     * Returns list of minutes (not ISO format like Room events).
+     */
+    private fun buildDeviceReminders(reminder1: Int, reminder2: Int): List<Int> {
+        val reminders = mutableListOf<Int>()
+        if (reminder1 >= 0) reminders.add(reminder1)
+        if (reminder2 >= 0) reminders.add(reminder2)
+        return reminders
+    }
+
+    /**
+     * Compute RFC 5545 duration string for CalendarProvider events.
+     * CalendarProvider requires DURATION instead of DTEND for recurring events.
+     */
+    private fun computeDurationString(startTs: Long, endTs: Long, isAllDay: Boolean): String {
+        val diffMs = endTs - startTs
+        return if (isAllDay) {
+            // All-day events: compute days
+            val days = (diffMs / (24 * 60 * 60 * 1000)).toInt().coerceAtLeast(1)
+            "P${days}D"
+        } else {
+            // Timed events: compute hours and minutes
+            val totalMinutes = (diffMs / (60 * 1000)).toInt()
+            val hours = totalMinutes / 60
+            val minutes = totalMinutes % 60
+            when {
+                hours > 0 && minutes > 0 -> "PT${hours}H${minutes}M"
+                hours > 0 -> "PT${hours}H"
+                else -> "PT${minutes}M"
             }
         }
     }

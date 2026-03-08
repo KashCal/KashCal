@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -36,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.PickerCalendar
 
 /**
  * Calendar picker card with color dot and expandable grouped list.
@@ -47,11 +50,13 @@ import org.onekash.kashcal.ui.model.CalendarGroup
  * @param selectedCalendarName Display name of selected calendar
  * @param selectedCalendarColor Color of selected calendar (nullable)
  * @param calendarGroups Calendars grouped by account
+ * @param deviceCalendarGroups Device calendars grouped by account (shown after separator)
+ * @param isSelectedDeviceCalendar True if selected calendar is from device
  * @param isExpanded Whether the picker list is expanded
  * @param enabled When false, the picker cannot be expanded or changed.
  *                Used to disable calendar changes for single occurrence edits.
  * @param onToggle Toggle expansion state
- * @param onSelect Called with (calendarId, displayName, color) when selection changes
+ * @param onSelect Called with (calendarId, displayName, color, isDeviceCalendar) when selection changes
  */
 @Composable
 fun CalendarPickerCard(
@@ -59,10 +64,12 @@ fun CalendarPickerCard(
     selectedCalendarName: String,
     selectedCalendarColor: Int?,
     calendarGroups: List<CalendarGroup>,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    isSelectedDeviceCalendar: Boolean = false,
     isExpanded: Boolean,
     enabled: Boolean = true,
     onToggle: () -> Unit,
-    onSelect: (Long, String, Int?) -> Unit,
+    onSelect: (Long, String, Int?, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val focusManager = LocalFocusManager.current
@@ -122,8 +129,11 @@ fun CalendarPickerCard(
                 ) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
 
-                    val allCalendars = calendarGroups.flatMap { it.calendars }
-                    if (allCalendars.isEmpty()) {
+                    val allRoomCalendars = calendarGroups.flatMap { it.calendars }
+                    val allDeviceCalendars = deviceCalendarGroups.flatMap { it.pickerCalendars }
+                    val hasAnyCalendars = allRoomCalendars.isNotEmpty() || allDeviceCalendars.isNotEmpty()
+
+                    if (!hasAnyCalendars) {
                         Text(
                             "No calendars available",
                             style = MaterialTheme.typography.bodyMedium,
@@ -131,6 +141,7 @@ fun CalendarPickerCard(
                             modifier = Modifier.padding(12.dp)
                         )
                     } else {
+                        // Room calendars first
                         calendarGroups.forEach { group ->
                             // Account header
                             Text(
@@ -147,9 +158,55 @@ fun CalendarPickerCard(
                             group.calendars.forEach { calendar ->
                                 CalendarItem(
                                     calendar = calendar,
-                                    isSelected = selectedCalendarId == calendar.id,
-                                    onClick = { onSelect(calendar.id, calendar.displayName, calendar.color) }
+                                    isSelected = !isSelectedDeviceCalendar && selectedCalendarId == calendar.id,
+                                    onClick = { onSelect(calendar.id, calendar.displayName, calendar.color, false) }
                                 )
+                            }
+                        }
+
+                        // Device calendars section
+                        if (allDeviceCalendars.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            Text(
+                                text = "Device Calendars",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+
+                            deviceCalendarGroups.forEach { group ->
+                                // Account header
+                                Text(
+                                    text = group.accountName,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        .padding(top = 4.dp)
+                                )
+                                // Calendars in group
+                                group.pickerCalendars.forEach { pickerCal ->
+                                    PickerCalendarItem(
+                                        pickerCalendar = pickerCal,
+                                        isSelected = isSelectedDeviceCalendar && selectedCalendarId == pickerCal.id,
+                                        onClick = {
+                                            onSelect(
+                                                pickerCal.id,
+                                                pickerCal.displayName,
+                                                pickerCal.color,
+                                                true
+                                            )
+                                        }
+                                    )
+                                }
                             }
                         }
                     }
@@ -157,6 +214,37 @@ fun CalendarPickerCard(
             }
         }
     }
+}
+
+/**
+ * Legacy overload for backward compatibility.
+ * Delegates to the new version with no device calendars.
+ */
+@Composable
+fun CalendarPickerCard(
+    selectedCalendarId: Long?,
+    selectedCalendarName: String,
+    selectedCalendarColor: Int?,
+    calendarGroups: List<CalendarGroup>,
+    isExpanded: Boolean,
+    enabled: Boolean = true,
+    onToggle: () -> Unit,
+    onSelect: (Long, String, Int?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    CalendarPickerCard(
+        selectedCalendarId = selectedCalendarId,
+        selectedCalendarName = selectedCalendarName,
+        selectedCalendarColor = selectedCalendarColor,
+        calendarGroups = calendarGroups,
+        deviceCalendarGroups = emptyList(),
+        isSelectedDeviceCalendar = false,
+        isExpanded = isExpanded,
+        enabled = enabled,
+        onToggle = onToggle,
+        onSelect = { id, name, color, _ -> onSelect(id, name, color) },
+        modifier = modifier
+    )
 }
 
 /**
@@ -192,6 +280,53 @@ private fun CalendarItem(
         )
         Text(
             calendar.displayName,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = "Selected",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Individual picker calendar item (supports both Room and Device calendars).
+ */
+@Composable
+private fun PickerCalendarItem(
+    pickerCalendar: PickerCalendar,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable { onClick() }
+            .background(
+                if (isSelected)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                else Color.Transparent
+            )
+            .padding(horizontal = 12.dp, vertical = 12.dp)
+            .padding(start = 8.dp), // Indent under account header
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(Color(pickerCalendar.color))
+        )
+        Text(
+            pickerCalendar.displayName,
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f)
         )

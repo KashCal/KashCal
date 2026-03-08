@@ -299,6 +299,48 @@ object ErrorMapper {
             messageResId = R.string.error_permission_storage
         )
 
+        // ==================== DEVICE CALENDAR ERRORS -> DIALOG ====================
+
+        is CalendarError.DeviceCalendar.WriteFailed -> ErrorPresentation.Dialog(
+            titleResId = R.string.error_device_calendar_title,
+            messageResId = R.string.error_device_calendar_write_failed,
+            primaryAction = DialogAction(
+                labelResId = R.string.action_retry,
+                callback = ErrorActionCallback.Retry
+            ),
+            secondaryAction = DialogAction(
+                labelResId = R.string.action_cancel,
+                callback = ErrorActionCallback.Dismiss,
+                isDismissAction = true
+            )
+        )
+
+        is CalendarError.DeviceCalendar.PermissionDenied -> ErrorPresentation.Dialog(
+            titleResId = R.string.error_device_calendar_title,
+            messageResId = R.string.error_device_calendar_permission,
+            primaryAction = DialogAction(
+                labelResId = R.string.action_open_settings,
+                callback = ErrorActionCallback.OpenAppSettings
+            ),
+            secondaryAction = DialogAction(
+                labelResId = R.string.action_cancel,
+                callback = ErrorActionCallback.Dismiss,
+                isDismissAction = true
+            )
+        )
+
+        is CalendarError.DeviceCalendar.CalendarNotFound -> ErrorPresentation.Snackbar(
+            messageResId = R.string.error_device_calendar_not_found
+        )
+
+        is CalendarError.DeviceCalendar.EventNotFound -> ErrorPresentation.Snackbar(
+            messageResId = R.string.error_device_event_not_found
+        )
+
+        is CalendarError.DeviceCalendar.ReadOnlyCalendar -> ErrorPresentation.Snackbar(
+            messageResId = R.string.error_device_calendar_read_only
+        )
+
         // ==================== SYNC ERRORS ====================
 
         is CalendarError.Sync.AlreadySyncing -> ErrorPresentation.Silent(

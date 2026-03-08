@@ -34,6 +34,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -124,7 +125,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val calendarProviderManager: CalendarProviderManager,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val dataStore: KashCalDataStore,
-    private val widgetUpdateManager: WidgetUpdateManager
+    private val widgetUpdateManager: WidgetUpdateManager,
+    private val deviceCalendarReminderScheduler: org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 ) : AndroidViewModel(application) {
 
     // Account connection state
@@ -161,9 +163,17 @@ class AccountSettingsViewModel @Inject constructor(
     private val _calendarGroups = MutableStateFlow<List<CalendarGroup>>(emptyList())
     val calendarGroups: StateFlow<List<CalendarGroup>> = _calendarGroups.asStateFlow()
 
-    // Default calendar
+    // Default calendar (legacy)
     private val _defaultCalendarId = MutableStateFlow<Long?>(null)
     val defaultCalendarId: StateFlow<Long?> = _defaultCalendarId.asStateFlow()
+
+    // Default calendar (new format supporting Room and Device)
+    private val _defaultCalendar = MutableStateFlow<DefaultCalendar?>(null)
+    val defaultCalendar: StateFlow<DefaultCalendar?> = _defaultCalendar.asStateFlow()
+
+    // Writable device calendars for default calendar picker (requires WRITE_CALENDAR)
+    private val _writableDeviceCalendarGroups = MutableStateFlow<List<CalendarGroup>>(emptyList())
+    val writableDeviceCalendarGroups: StateFlow<List<CalendarGroup>> = _writableDeviceCalendarGroups.asStateFlow()
 
     // ICS Subscriptions
     private val _subscriptions = MutableStateFlow<List<IcsSubscriptionUiModel>>(emptyList())
@@ -232,8 +242,14 @@ class AccountSettingsViewModel @Inject constructor(
     private val _deviceCalendarsEnabled = MutableStateFlow(false)
     val deviceCalendarsEnabled: StateFlow<Boolean> = _deviceCalendarsEnabled.asStateFlow()
 
-    private val _hasCalendarPermission = MutableStateFlow(false)
-    val hasCalendarPermission: StateFlow<Boolean> = _hasCalendarPermission.asStateFlow()
+    private val _hasReadCalendarPermission = MutableStateFlow(false)
+    val hasReadCalendarPermission: StateFlow<Boolean> = _hasReadCalendarPermission.asStateFlow()
+
+    private val _hasWriteCalendarPermission = MutableStateFlow(false)
+    val hasWriteCalendarPermission: StateFlow<Boolean> = _hasWriteCalendarPermission.asStateFlow()
+
+    // Legacy alias for backward compatibility
+    val hasCalendarPermission: StateFlow<Boolean> = _hasReadCalendarPermission.asStateFlow()
 
     private val _deviceCalendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
     val deviceCalendars: StateFlow<List<DeviceCalendar>> = _deviceCalendars.asStateFlow()
@@ -243,6 +259,10 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _showDeclinedEvents = MutableStateFlow(false)
     val showDeclinedEvents: StateFlow<Boolean> = _showDeclinedEvents.asStateFlow()
+
+    // Device calendar reminders
+    private val _deviceCalendarRemindersEnabled = MutableStateFlow(false)
+    val deviceCalendarRemindersEnabled: StateFlow<Boolean> = _deviceCalendarRemindersEnabled.asStateFlow()
 
     // Display settings
     private val _showEventEmojis = MutableStateFlow(true)
@@ -273,6 +293,7 @@ class AccountSettingsViewModel @Inject constructor(
         checkNotificationPermission()
         checkContactsPermission()
         checkCalendarPermission()
+        loadWritableDeviceCalendars()
     }
 
     private fun loadInitialState() {
@@ -470,7 +491,7 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.deviceCalendarsEnabled.collect { enabled ->
                 _deviceCalendarsEnabled.value = enabled
-                if (enabled && _hasCalendarPermission.value) {
+                if (enabled && _hasReadCalendarPermission.value) {
                     loadDeviceCalendars()
                 }
             }
@@ -483,6 +504,11 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.showDeclinedEvents.collect { show ->
                 _showDeclinedEvents.value = show
+            }
+        }
+        viewModelScope.launch {
+            dataStore.deviceCalendarRemindersEnabled.collect { enabled ->
+                _deviceCalendarRemindersEnabled.value = enabled
             }
         }
     }
@@ -500,9 +526,13 @@ class AccountSettingsViewModel @Inject constructor(
 
     private fun checkCalendarPermission() {
         val context = getApplication<Application>()
-        _hasCalendarPermission.value = ContextCompat.checkSelfPermission(
+        _hasReadCalendarPermission.value = ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+        _hasWriteCalendarPermission.value = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.WRITE_CALENDAR
         ) == PackageManager.PERMISSION_GRANTED
     }
 
@@ -522,6 +552,12 @@ class AccountSettingsViewModel @Inject constructor(
                 _defaultReminderTimed.value = prefs.defaultReminderTimed
                 _defaultReminderAllDay.value = prefs.defaultReminderAllDay
                 _defaultEventDuration.value = prefs.defaultEventDuration
+            }
+        }
+        // Observe new format DefaultCalendar
+        viewModelScope.launch {
+            userPreferences.defaultCalendar.collect { default ->
+                _defaultCalendar.value = default
             }
         }
     }
@@ -1325,12 +1361,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    fun onDefaultCalendarSelect(calendarId: Long) {
-        viewModelScope.launch {
-            userPreferences.setDefaultCalendarId(calendarId)
-        }
-    }
-
     // ==================== Subscription Actions ====================
 
     /**
@@ -1574,6 +1604,22 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
+     * Toggle device calendar reminders on/off.
+     * When enabled, schedules the next upcoming reminder.
+     * When disabled, cancels any pending alarm.
+     */
+    fun onToggleDeviceCalendarReminders(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setDeviceCalendarRemindersEnabled(enabled)
+            if (enabled) {
+                deviceCalendarReminderScheduler.scheduleNextReminder()
+            } else {
+                deviceCalendarReminderScheduler.cancelPendingAlarm()
+            }
+        }
+    }
+
+    /**
      * Toggle a specific device calendar on/off.
      */
     fun onToggleDeviceCalendar(calendarId: Long, enabled: Boolean) {
@@ -1591,8 +1637,53 @@ class AccountSettingsViewModel @Inject constructor(
      */
     fun refreshCalendarPermission() {
         checkCalendarPermission()
-        if (_hasCalendarPermission.value && _deviceCalendarsEnabled.value) {
+        if (_hasReadCalendarPermission.value && _deviceCalendarsEnabled.value) {
             viewModelScope.launch { loadDeviceCalendars() }
+        }
+        // Also reload writable device calendars for default calendar picker
+        loadWritableDeviceCalendars()
+    }
+
+    /**
+     * Manually refresh device calendars list.
+     * Use when user adds/removes calendar accounts and wants to see the updated list.
+     */
+    fun refreshDeviceCalendars() {
+        if (_hasReadCalendarPermission.value && _deviceCalendarsEnabled.value) {
+            viewModelScope.launch { loadDeviceCalendars() }
+        }
+    }
+
+    /**
+     * Load writable device calendars for the default calendar picker.
+     * Only loads if WRITE_CALENDAR permission is granted.
+     * Unlike loadDeviceCalendars(), this doesn't depend on deviceCalendarsEnabled setting
+     * since writable calendars should be available for default selection regardless.
+     */
+    private fun loadWritableDeviceCalendars() {
+        viewModelScope.launch {
+            val groups = if (_hasWriteCalendarPermission.value) {
+                try {
+                    val deviceCalendars = calendarProviderRepository.getDeviceCalendars()
+                    CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
+                } catch (e: SecurityException) {
+                    Log.w(TAG, "Calendar permission revoked while loading writable calendars", e)
+                    emptyList()
+                }
+            } else {
+                emptyList()
+            }
+            _writableDeviceCalendarGroups.value = groups
+        }
+    }
+
+    /**
+     * Set the default calendar for new events.
+     * Supports both Room calendars (local, iCloud, CalDAV) and device calendars.
+     */
+    fun onDefaultCalendarSelect(calendar: DefaultCalendar) {
+        viewModelScope.launch {
+            userPreferences.setDefaultCalendar(calendar)
         }
     }
 

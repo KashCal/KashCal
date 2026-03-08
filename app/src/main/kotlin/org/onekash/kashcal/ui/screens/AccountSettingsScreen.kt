@@ -75,6 +75,7 @@ import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
 import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatSyncLookback
@@ -164,8 +165,9 @@ fun AccountSettingsScreen(
     syncLookbackDays: Int = KashCalDataStore.DEFAULT_SYNC_PAST_DAYS,
     onSyncLookbackChange: (Int) -> Unit = {},
     // Default calendar
-    defaultCalendarId: Long? = null,
-    onDefaultCalendarSelect: (Long) -> Unit = {},
+    defaultCalendar: DefaultCalendar? = null,
+    writableDeviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    onDefaultCalendarSelect: (DefaultCalendar) -> Unit = {},
     // ICS Subscription callbacks
     subscriptions: List<IcsSubscriptionUiModel> = emptyList(),
     subscriptionSyncing: Boolean = false,
@@ -200,13 +202,18 @@ fun AccountSettingsScreen(
     anniversaryCount: Int = 0,
     // Device calendars
     deviceCalendarsEnabled: Boolean = false,
-    hasCalendarPermission: Boolean = false,
+    hasReadCalendarPermission: Boolean = false,
+    hasWriteCalendarPermission: Boolean = false,
     deviceCalendars: List<DeviceCalendar> = emptyList(),
     enabledDeviceCalendarIds: Set<Long> = emptySet(),
     onToggleDeviceCalendars: (Boolean) -> Unit = {},
     onToggleDeviceCalendar: (Long, Boolean) -> Unit = { _, _ -> },
+    onRequestWriteCalendarPermission: () -> Unit = {},
     showDeclinedEvents: Boolean = false,
     onToggleShowDeclinedEvents: (Boolean) -> Unit = {},
+    deviceCalendarRemindersEnabled: Boolean = false,
+    onToggleDeviceCalendarReminders: (Boolean) -> Unit = {},
+    onRefreshDeviceCalendars: () -> Unit = {},
     // Display settings
     showEventEmojis: Boolean = true,
     onShowEventEmojisChange: (Boolean) -> Unit = {},
@@ -253,7 +260,8 @@ fun AccountSettingsScreen(
                     onForceFullSync = onForceFullSync,
                     syncLookbackDays = syncLookbackDays,
                     onSyncLookbackChange = onSyncLookbackChange,
-                    defaultCalendarId = defaultCalendarId,
+                    defaultCalendar = defaultCalendar,
+                    writableDeviceCalendarGroups = writableDeviceCalendarGroups,
                     onDefaultCalendarSelect = onDefaultCalendarSelect,
                     subscriptions = subscriptions,
                     subscriptionSyncing = subscriptionSyncing,
@@ -279,13 +287,18 @@ fun AccountSettingsScreen(
                     birthdayCount = birthdayCount,
                     anniversaryCount = anniversaryCount,
                     deviceCalendarsEnabled = deviceCalendarsEnabled,
-                    hasCalendarPermission = hasCalendarPermission,
+                    hasReadCalendarPermission = hasReadCalendarPermission,
+                    hasWriteCalendarPermission = hasWriteCalendarPermission,
                     deviceCalendars = deviceCalendars,
                     enabledDeviceCalendarIds = enabledDeviceCalendarIds,
                     onToggleDeviceCalendars = onToggleDeviceCalendars,
                     onToggleDeviceCalendar = onToggleDeviceCalendar,
+                    onRequestWriteCalendarPermission = onRequestWriteCalendarPermission,
                     showDeclinedEvents = showDeclinedEvents,
                     onToggleShowDeclinedEvents = onToggleShowDeclinedEvents,
+                    deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
+                    onToggleDeviceCalendarReminders = onToggleDeviceCalendarReminders,
+                    onRefreshDeviceCalendars = onRefreshDeviceCalendars,
                     showEventEmojis = showEventEmojis,
                     onShowEventEmojisChange = onShowEventEmojisChange,
                     timeFormat = timeFormat,
@@ -375,8 +388,9 @@ private fun FlatSettingsContent(
     onForceFullSync: () -> Unit,
     syncLookbackDays: Int,
     onSyncLookbackChange: (Int) -> Unit,
-    defaultCalendarId: Long?,
-    onDefaultCalendarSelect: (Long) -> Unit,
+    defaultCalendar: DefaultCalendar?,
+    writableDeviceCalendarGroups: List<CalendarGroup>,
+    onDefaultCalendarSelect: (DefaultCalendar) -> Unit,
     subscriptions: List<IcsSubscriptionUiModel>,
     subscriptionSyncing: Boolean,
     onAddSubscription: (String, String, Int) -> Unit,
@@ -401,13 +415,18 @@ private fun FlatSettingsContent(
     birthdayCount: Int,
     anniversaryCount: Int,
     deviceCalendarsEnabled: Boolean,
-    hasCalendarPermission: Boolean,
+    hasReadCalendarPermission: Boolean,
+    hasWriteCalendarPermission: Boolean,
     deviceCalendars: List<DeviceCalendar>,
     enabledDeviceCalendarIds: Set<Long>,
     onToggleDeviceCalendars: (Boolean) -> Unit,
     onToggleDeviceCalendar: (Long, Boolean) -> Unit,
+    onRequestWriteCalendarPermission: () -> Unit,
     showDeclinedEvents: Boolean,
     onToggleShowDeclinedEvents: (Boolean) -> Unit,
+    deviceCalendarRemindersEnabled: Boolean,
+    onToggleDeviceCalendarReminders: (Boolean) -> Unit,
+    onRefreshDeviceCalendars: () -> Unit,
     showEventEmojis: Boolean,
     onShowEventEmojisChange: (Boolean) -> Unit,
     timeFormat: String,
@@ -457,9 +476,15 @@ private fun FlatSettingsContent(
     }
     val totalCalendarCount = calendars.size  // O(1), no memoization needed
 
-    // Memoized: recompute when calendars OR defaultCalendarId changes
-    val defaultCalendar = remember(calendars, defaultCalendarId) {
-        calendars.find { it.id == defaultCalendarId }
+    // Memoized: resolve default calendar name (supports both Room and Device)
+    val defaultCalendarName = remember(calendars, deviceCalendars, defaultCalendar) {
+        when (defaultCalendar) {
+            is DefaultCalendar.Room ->
+                calendars.find { it.id == defaultCalendar.calendarId }?.displayName
+            is DefaultCalendar.Device ->
+                deviceCalendars.find { it.id == defaultCalendar.calendarId }?.displayName
+            null -> null
+        }
     }
 
     // Memoized: find local calendar for export
@@ -537,8 +562,8 @@ private fun FlatSettingsContent(
                 icon = Icons.Default.CalendarMonth,
                 label = "Device Calendars",
                 subtitle = if (deviceCalendarsEnabled) {
-                    "${enabledDeviceCalendarIds.size} enabled"
-                } else null,
+                    "Beta · ${enabledDeviceCalendarIds.size} enabled"
+                } else "Beta",
                 onClick = { showDeviceCalendarsSheet = true },
                 showDivider = false
             )
@@ -560,7 +585,7 @@ private fun FlatSettingsContent(
                 SettingsRow(
                     icon = Icons.Default.Star,
                     label = "Default Calendar",
-                    subtitle = defaultCalendar?.displayName ?: "Not set",
+                    subtitle = defaultCalendarName ?: "Not set",
                     onClick = { showDefaultCalendarSheet = true }
                 )
             }
@@ -708,14 +733,19 @@ private fun FlatSettingsContent(
     if (showDeviceCalendarsSheet) {
         DeviceCalendarsSheet(
             isEnabled = deviceCalendarsEnabled,
-            hasPermission = hasCalendarPermission,
+            hasReadPermission = hasReadCalendarPermission,
+            hasWritePermission = hasWriteCalendarPermission,
             deviceCalendars = deviceCalendars,
             enabledCalendarIds = enabledDeviceCalendarIds,
             showDeclinedEvents = showDeclinedEvents,
+            deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
             onDismiss = { showDeviceCalendarsSheet = false },
             onToggle = onToggleDeviceCalendars,
             onToggleCalendar = onToggleDeviceCalendar,
-            onToggleShowDeclined = onToggleShowDeclinedEvents
+            onToggleShowDeclined = onToggleShowDeclinedEvents,
+            onToggleDeviceCalendarReminders = onToggleDeviceCalendarReminders,
+            onRequestWritePermission = onRequestWriteCalendarPermission,
+            onRefresh = onRefreshDeviceCalendars
         )
     }
 
@@ -733,7 +763,8 @@ private fun FlatSettingsContent(
         DefaultCalendarSheet(
             sheetState = defaultCalendarSheetState,
             calendarGroups = writableGroups,
-            currentDefaultId = defaultCalendarId,
+            deviceCalendarGroups = writableDeviceCalendarGroups,
+            currentDefault = defaultCalendar,
             onSelectDefault = onDefaultCalendarSelect,
             onDismiss = { showDefaultCalendarSheet = false }
         )

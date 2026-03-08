@@ -257,6 +257,14 @@
     <string name="error_permission_alarm">KashCal needs exact alarm permission for precise reminders.</string>
     <string name="error_permission_storage">Storage permission required for import/export.</string>
 
+    <!-- Device Calendar Errors -->
+    <string name="error_device_calendar_title">Calendar Error</string>
+    <string name="error_device_calendar_write_failed">Failed to save to device calendar. Please try again.</string>
+    <string name="error_device_calendar_permission">Calendar write permission required. Please grant permission in Settings.</string>
+    <string name="error_device_calendar_not_found">Calendar not found. It may have been removed.</string>
+    <string name="error_device_event_not_found">Event not found. It may have been deleted.</string>
+    <string name="error_device_calendar_read_only">This calendar is read-only.</string>
+
     <!-- Sync Errors -->
     <string name="error_sync_no_accounts">No iCloud account configured. Set up iCloud to sync your calendars.</string>
     <!-- %1$d = successful syncs, %2$d = failed syncs -->
@@ -487,4 +495,7 @@
     <string name="change_password_label_default">Password</string>
     <string name="change_password_cancel">Cancel</string>
     <string name="change_password_save">Save</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
 </resources>

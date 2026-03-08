@@ -1,0 +1,301 @@
+package org.onekash.kashcal.reminder.device
+
+import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder
+import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowAlarmManager
+
+/**
+ * Unit tests for DeviceCalendarReminderScheduler (Phase 4 - Chunk 3).
+ *
+ * Tests cover:
+ * - Does nothing when feature disabled
+ * - Does nothing when READ_CALENDAR permission missing
+ * - Does nothing when no upcoming reminders
+ * - Schedules alarm when reminder available
+ * - Stores event details in intent extras
+ * - Reschedules after fire
+ * - Cancel functionality
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [34])
+class DeviceCalendarReminderSchedulerTest {
+
+    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var context: Context
+    private lateinit var dataStore: KashCalDataStore
+    private lateinit var fakeRepository: FakeCalendarProviderRepository
+    private lateinit var scheduler: DeviceCalendarReminderScheduler
+    private lateinit var shadowAlarmManager: ShadowAlarmManager
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        context = ApplicationProvider.getApplicationContext()
+        dataStore = KashCalDataStore(context)
+        fakeRepository = FakeCalendarProviderRepository()
+
+        scheduler = DeviceCalendarReminderScheduler(
+            context = context,
+            calendarProviderRepository = fakeRepository,
+            dataStore = dataStore
+        )
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        shadowAlarmManager = shadowOf(alarmManager)
+
+        // Grant READ_CALENDAR permission by default
+        Shadows.shadowOf(context as android.app.Application).grantPermissions(Manifest.permission.READ_CALENDAR)
+    }
+
+    @After
+    fun teardown() = runTest {
+        Dispatchers.resetMain()
+        dataStore.dataStore.edit { it.clear() }
+    }
+
+    // ========== Feature Toggle ==========
+
+    @Test
+    fun `scheduleNextReminder does nothing when feature disabled`() = runTest {
+        // Feature is disabled by default
+        assertFalse(dataStore.getDeviceCalendarRemindersEnabled())
+
+        // Set up a reminder that would be scheduled if feature was enabled
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+
+        scheduler.scheduleNextReminder()
+
+        // No alarm should be scheduled
+        assertNull(shadowAlarmManager.nextScheduledAlarm)
+    }
+
+    @Test
+    fun `scheduleNextReminder schedules when feature enabled`() = runTest {
+        // Enable the feature
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+
+        scheduler.scheduleNextReminder()
+
+        // Alarm should be scheduled
+        assertNotNull(shadowAlarmManager.nextScheduledAlarm)
+    }
+
+    // ========== Permission Check ==========
+
+    @Test
+    fun `scheduleNextReminder does nothing when READ_CALENDAR permission missing`() = runTest {
+        // Enable the feature but revoke permission
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+
+        // Revoke permission
+        Shadows.shadowOf(context as android.app.Application).denyPermissions(Manifest.permission.READ_CALENDAR)
+
+        scheduler.scheduleNextReminder()
+
+        // No alarm should be scheduled
+        assertNull(shadowAlarmManager.nextScheduledAlarm)
+    }
+
+    // ========== No Reminders ==========
+
+    @Test
+    fun `scheduleNextReminder does nothing when no upcoming reminders`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = null
+
+        scheduler.scheduleNextReminder()
+
+        assertNull(shadowAlarmManager.nextScheduledAlarm)
+    }
+
+    @Test
+    fun `scheduleNextReminder does nothing when no enabled calendars`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(emptySet())
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+
+        scheduler.scheduleNextReminder()
+
+        assertNull(shadowAlarmManager.nextScheduledAlarm)
+    }
+
+    // ========== Alarm Scheduling ==========
+
+    @Test
+    fun `scheduleNextReminder sets correct trigger time`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+
+        val triggerTime = System.currentTimeMillis() + 60_000 // 1 minute from now
+        fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = triggerTime)
+
+        scheduler.scheduleNextReminder()
+
+        val alarm = shadowAlarmManager.nextScheduledAlarm
+        assertNotNull(alarm)
+        assertEquals(triggerTime, alarm!!.triggerAtTime)
+    }
+
+    @Test
+    fun `scheduleNextReminder stores eventId in intent extras`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+
+        val reminder = createTestReminder(eventId = 456L)
+        fakeRepository.nextUpcomingReminder = reminder
+
+        scheduler.scheduleNextReminder()
+
+        val alarm = shadowAlarmManager.nextScheduledAlarm
+        assertNotNull(alarm)
+
+        val intent = shadowOf(alarm!!.operation).savedIntent
+        assertEquals(456L, intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_EVENT_ID, -1))
+    }
+
+    @Test
+    fun `scheduleNextReminder stores occurrenceTs in intent extras`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+
+        val occurrenceTs = 1709251200000L
+        val reminder = createTestReminder(occurrenceStartTs = occurrenceTs)
+        fakeRepository.nextUpcomingReminder = reminder
+
+        scheduler.scheduleNextReminder()
+
+        val alarm = shadowAlarmManager.nextScheduledAlarm
+        assertNotNull(alarm)
+
+        val intent = shadowOf(alarm!!.operation).savedIntent
+        assertEquals(occurrenceTs, intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_OCCURRENCE_TS, -1))
+    }
+
+    @Test
+    fun `scheduleNextReminder stores title in intent extras`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+
+        val reminder = createTestReminder(title = "Team Meeting")
+        fakeRepository.nextUpcomingReminder = reminder
+
+        scheduler.scheduleNextReminder()
+
+        val alarm = shadowAlarmManager.nextScheduledAlarm
+        assertNotNull(alarm)
+
+        val intent = shadowOf(alarm!!.operation).savedIntent
+        assertEquals("Team Meeting", intent.getStringExtra(DeviceCalendarReminderScheduler.EXTRA_TITLE))
+    }
+
+    // ========== Cancel ==========
+
+    @Test
+    fun `cancelPendingAlarm cancels scheduled alarm`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+
+        scheduler.scheduleNextReminder()
+        assertNotNull(shadowAlarmManager.nextScheduledAlarm)
+
+        scheduler.cancelPendingAlarm()
+
+        // After cancel, the alarm list should be empty
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
+    // ========== Reschedule ==========
+
+    @Test
+    fun `rescheduleAfterFire re-queries and schedules next`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+
+        // Set up first reminder
+        val firstTrigger = System.currentTimeMillis() + 60_000
+        fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = firstTrigger)
+
+        scheduler.scheduleNextReminder()
+        assertNotNull(shadowAlarmManager.nextScheduledAlarm)
+
+        // Now simulate "after fire" - set up next reminder
+        val secondTrigger = System.currentTimeMillis() + 120_000
+        fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = secondTrigger)
+
+        // Cancel old and reschedule
+        scheduler.cancelPendingAlarm()
+        scheduler.rescheduleAfterFire()
+
+        val alarm = shadowAlarmManager.nextScheduledAlarm
+        assertNotNull(alarm)
+        assertEquals(secondTrigger, alarm!!.triggerAtTime)
+    }
+
+    // ========== Test Helpers ==========
+
+    private fun createTestReminder(
+        eventId: Long = 123L,
+        occurrenceStartTs: Long = System.currentTimeMillis() + 3600_000,
+        title: String = "Test Event",
+        location: String? = "Test Location",
+        isAllDay: Boolean = false,
+        reminderMinutes: Int = 15,
+        triggerTime: Long = System.currentTimeMillis() + 60_000,
+        calendarColor: Int = 0xFF0000,
+        calendarId: Long = 1L
+    ) = UpcomingDeviceReminder(
+        eventId = eventId,
+        occurrenceStartTs = occurrenceStartTs,
+        title = title,
+        location = location,
+        isAllDay = isAllDay,
+        reminderMinutes = reminderMinutes,
+        triggerTime = triggerTime,
+        calendarColor = calendarColor,
+        calendarId = calendarId
+    )
+}

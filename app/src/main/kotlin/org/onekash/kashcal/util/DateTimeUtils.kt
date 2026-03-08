@@ -427,6 +427,98 @@ object DateTimeUtils {
         return utcMidnightMillis + (24 * 60 * 60 * 1000) - 1
     }
 
+    // ==================== UTC Midnight Normalization ====================
+
+    /**
+     * Normalize a UTC timestamp to midnight of the same UTC day.
+     * Used for CalendarProvider all-day event ORIGINAL_INSTANCE_TIME normalization.
+     *
+     * @param utcMillis Timestamp in milliseconds (UTC)
+     * @return UTC midnight of the same day in milliseconds
+     */
+    fun normalizeToUtcMidnight(utcMillis: Long): Long = (utcMillis / 86_400_000L) * 86_400_000L
+
+    // ==================== RFC 5545 Duration Parsing ====================
+
+    /**
+     * Parse an RFC 5545 duration string to milliseconds.
+     *
+     * CalendarProvider stores duration instead of endTs for recurring events.
+     * Format: P[n]W or P[n]D or PT[n]H[n]M[n]S
+     *
+     * Examples:
+     * - "P1D" → 86,400,000 ms (1 day)
+     * - "P1W" → 604,800,000 ms (1 week)
+     * - "PT1H30M" → 5,400,000 ms (1.5 hours)
+     * - "PT30M" → 1,800,000 ms (30 minutes)
+     *
+     * @param duration RFC 5545 duration string (e.g., "PT1H30M", "P1D")
+     * @return Duration in milliseconds, or null if null/invalid
+     */
+    fun parseDurationToMillis(duration: String?): Long? {
+        if (duration.isNullOrEmpty()) return null
+        if (!duration.startsWith("P")) return null
+
+        try {
+            var totalMs = 0L
+            var remaining = duration.substring(1) // Remove 'P'
+
+            // Handle weeks (P1W)
+            val weekMatch = Regex("(\\d+)W").find(remaining)
+            if (weekMatch != null) {
+                val weeks = weekMatch.groupValues[1].toLong()
+                totalMs += weeks * 7 * 24 * 60 * 60 * 1000
+                remaining = remaining.replace(weekMatch.value, "")
+            }
+
+            // Handle days (P1D or P2DT...)
+            val dayMatch = Regex("(\\d+)D").find(remaining)
+            if (dayMatch != null) {
+                val days = dayMatch.groupValues[1].toLong()
+                totalMs += days * 24 * 60 * 60 * 1000
+                remaining = remaining.replace(dayMatch.value, "")
+            }
+
+            // Handle time component (T...)
+            if (remaining.startsWith("T")) {
+                remaining = remaining.substring(1) // Remove 'T'
+
+                // Hours
+                val hourMatch = Regex("(\\d+)H").find(remaining)
+                if (hourMatch != null) {
+                    val hours = hourMatch.groupValues[1].toLong()
+                    totalMs += hours * 60 * 60 * 1000
+                    remaining = remaining.replace(hourMatch.value, "")
+                }
+
+                // Minutes
+                val minMatch = Regex("(\\d+)M").find(remaining)
+                if (minMatch != null) {
+                    val minutes = minMatch.groupValues[1].toLong()
+                    totalMs += minutes * 60 * 1000
+                    remaining = remaining.replace(minMatch.value, "")
+                }
+
+                // Seconds
+                val secMatch = Regex("(\\d+)S").find(remaining)
+                if (secMatch != null) {
+                    val seconds = secMatch.groupValues[1].toLong()
+                    totalMs += seconds * 1000
+                }
+            }
+
+            // If we parsed nothing, return null
+            if (totalMs == 0L && duration != "PT0M" && duration != "PT0S" && duration != "P0D") {
+                // Check if this is actually a valid zero-duration
+                if (!duration.contains(Regex("\\d"))) return null
+            }
+
+            return totalMs
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
     // ==================== UI Display Formatters ====================
 
     /**

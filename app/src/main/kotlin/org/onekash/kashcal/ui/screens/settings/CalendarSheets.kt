@@ -1,11 +1,24 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -14,10 +27,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.ui.components.CalendarSelectionMode
 import org.onekash.kashcal.ui.components.GroupedCalendarList
 import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.PickerCalendar
 
 /**
  * Bottom sheet for toggling calendar visibility with account grouping.
@@ -109,10 +128,12 @@ fun VisibleCalendarsSheet(
  * Bottom sheet for selecting default calendar with account grouping.
  *
  * Shows all calendars grouped by account with radio-style selection.
+ * Supports both Room calendars (local, iCloud, CalDAV) and device calendars.
  *
  * @param sheetState Material3 sheet state
- * @param calendarGroups Calendars grouped by account
- * @param currentDefaultId Current default calendar ID
+ * @param calendarGroups Room calendars grouped by account
+ * @param deviceCalendarGroups Device calendars grouped by account (requires WRITE_CALENDAR)
+ * @param currentDefault Current default calendar selection
  * @param onSelectDefault Callback when default calendar is selected
  * @param onDismiss Callback when sheet is dismissed
  */
@@ -121,13 +142,22 @@ fun VisibleCalendarsSheet(
 fun DefaultCalendarSheet(
     sheetState: SheetState,
     calendarGroups: List<CalendarGroup>,
-    currentDefaultId: Long?,
-    onSelectDefault: (Long) -> Unit,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    currentDefault: DefaultCalendar?,
+    onSelectDefault: (DefaultCalendar) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val allCalendars = remember(calendarGroups) {
+    val allRoomCalendars = remember(calendarGroups) {
         calendarGroups.flatMap { it.calendars }
     }
+    val allDeviceCalendars = remember(deviceCalendarGroups) {
+        deviceCalendarGroups.flatMap { it.pickerCalendars }
+    }
+    val hasAnyCalendars = allRoomCalendars.isNotEmpty() || allDeviceCalendars.isNotEmpty()
+
+    // Track selection - which ID and which type
+    val selectedRoomId = (currentDefault as? DefaultCalendar.Room)?.calendarId
+    val selectedDeviceId = (currentDefault as? DefaultCalendar.Device)?.calendarId
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -157,8 +187,7 @@ fun DefaultCalendarSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Calendar list grouped by account
-            if (calendarGroups.isEmpty() || allCalendars.isEmpty()) {
+            if (!hasAnyCalendars) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -171,16 +200,150 @@ fun DefaultCalendarSheet(
                     )
                 }
             } else {
-                GroupedCalendarList(
-                    groups = calendarGroups,
-                    selectionMode = CalendarSelectionMode.RADIO,
-                    selectedCalendarId = currentDefaultId,
-                    onCalendarClick = { calendar ->
-                        onSelectDefault(calendar.id)
-                        onDismiss()
+                LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                    // Room calendars section
+                    calendarGroups.forEach { group ->
+                        // Account header
+                        item(key = "room_header_${group.accountId}") {
+                            Text(
+                                text = group.accountName,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    .padding(top = 8.dp)
+                            )
+                        }
+                        // Calendars in group
+                        items(
+                            items = group.calendars,
+                            key = { "room_cal_${it.id}" }
+                        ) { calendar ->
+                            DefaultCalendarItem(
+                                name = calendar.displayName,
+                                color = calendar.color,
+                                isSelected = selectedRoomId == calendar.id,
+                                onClick = {
+                                    onSelectDefault(DefaultCalendar.Room(calendar.id))
+                                    onDismiss()
+                                }
+                            )
+                        }
                     }
-                )
+
+                    // Device calendars section (if available)
+                    if (allDeviceCalendars.isNotEmpty()) {
+                        item(key = "device_section_header") {
+                            Column {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant
+                                )
+                                Text(
+                                    text = "Device Calendars",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                        }
+
+                        deviceCalendarGroups.forEach { group ->
+                            // Account header
+                            item(key = "device_header_${group.accountName}") {
+                                Text(
+                                    text = group.accountName,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                        .padding(top = 4.dp)
+                                )
+                            }
+                            // Calendars in group
+                            items(
+                                items = group.pickerCalendars,
+                                key = { "device_cal_${it.id}" }
+                            ) { pickerCal ->
+                                DefaultCalendarItem(
+                                    name = pickerCal.displayName,
+                                    color = pickerCal.color,
+                                    isSelected = selectedDeviceId == pickerCal.id,
+                                    onClick = {
+                                        onSelectDefault(DefaultCalendar.Device(pickerCal.id))
+                                        onDismiss()
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
             }
+        }
+    }
+}
+
+/**
+ * Calendar item for default calendar selection.
+ */
+@Composable
+private fun DefaultCalendarItem(
+    name: String,
+    color: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .background(
+                if (isSelected)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                else Color.Transparent
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .padding(start = 16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier.weight(1f)
+        ) {
+            // Color dot
+            Box(
+                modifier = Modifier
+                    .size(14.dp)
+                    .clip(CircleShape)
+                    .background(Color(color))
+            )
+            // Calendar name
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // Selection indicator
+        if (isSelected) {
+            Icon(
+                Icons.Default.Check,
+                contentDescription = "Selected",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }

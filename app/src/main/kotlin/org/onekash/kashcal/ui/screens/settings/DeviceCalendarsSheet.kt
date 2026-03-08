@@ -16,8 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -39,6 +44,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
  * Features:
  * - Enable/disable toggle
  * - Permission gate (shows warning if READ_CALENDAR not granted)
+ * - Write permission banner (shows if READ but not WRITE granted)
  * - Calendar list grouped by account with checkboxes
  * - Count footer
  *
@@ -49,14 +55,19 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 @Composable
 fun DeviceCalendarsSheet(
     isEnabled: Boolean,
-    hasPermission: Boolean,
+    hasReadPermission: Boolean,
+    hasWritePermission: Boolean,
     deviceCalendars: List<DeviceCalendar>,
     enabledCalendarIds: Set<Long>,
     showDeclinedEvents: Boolean,
+    deviceCalendarRemindersEnabled: Boolean,
     onDismiss: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onToggleCalendar: (Long, Boolean) -> Unit,
-    onToggleShowDeclined: (Boolean) -> Unit
+    onToggleShowDeclined: (Boolean) -> Unit,
+    onToggleDeviceCalendarReminders: (Boolean) -> Unit,
+    onRequestWritePermission: () -> Unit,
+    onRefresh: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true
@@ -74,11 +85,42 @@ fun DeviceCalendarsSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title
-            Text(
-                "Device Calendars",
-                style = MaterialTheme.typography.titleLarge
-            )
+            // Title with beta badge and refresh button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        "Device Calendars",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    Text(
+                        "Beta",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.tertiaryContainer,
+                                RoundedCornerShape(4.dp)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+                if (isEnabled && hasReadPermission) {
+                    IconButton(onClick = onRefresh) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh calendars",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
 
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
@@ -111,9 +153,9 @@ fun DeviceCalendarsSheet(
                 )
             }
 
-            // Permission warning (if enabled but no permission)
+            // Read permission warning (if enabled but no READ permission)
             AnimatedVisibility(
-                visible = isEnabled && !hasPermission,
+                visible = isEnabled && !hasReadPermission,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
@@ -124,9 +166,47 @@ fun DeviceCalendarsSheet(
                 )
             }
 
-            // Calendar list (only visible when enabled and has permission)
+            // Write permission banner (if has READ but not WRITE)
             AnimatedVisibility(
-                visible = isEnabled && hasPermission,
+                visible = isEnabled && hasReadPermission && !hasWritePermission,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            MaterialTheme.colorScheme.secondaryContainer,
+                            MaterialTheme.shapes.small
+                        )
+                        .clickable { onRequestWritePermission() }
+                        .padding(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            "Read-only access",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Text(
+                            "Grant write permission to edit device calendar events",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                    Text(
+                        "Grant",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            // Calendar list (only visible when enabled and has read permission)
+            AnimatedVisibility(
+                visible = isEnabled && hasReadPermission,
                 enter = expandVertically(),
                 exit = shrinkVertically()
             ) {
@@ -187,23 +267,16 @@ fun DeviceCalendarsSheet(
                                             }
                                         )
                                     }
-                                    // Read-only indicator (fixed/disabled — write support not yet available)
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(start = 24.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
+                                    // Read-only indicator
+                                    // Writable = has WRITE permission AND calendar has write access
+                                    val isWritable = hasWritePermission && calendar.isWritable
+                                    if (!isWritable) {
                                         Text(
-                                            "Read only",
+                                            if (!hasWritePermission) "Read only (no write permission)"
+                                            else "Read only (calendar is read-only)",
                                             style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Switch(
-                                            checked = true,
-                                            onCheckedChange = null,
-                                            enabled = false
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(start = 24.dp)
                                         )
                                     }
                                 }
@@ -237,6 +310,31 @@ fun DeviceCalendarsSheet(
                             Switch(
                                 checked = showDeclinedEvents,
                                 onCheckedChange = onToggleShowDeclined
+                            )
+                        }
+
+                        // Device calendar reminders toggle
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    "Reminders",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    "Get notified for device calendar events",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = deviceCalendarRemindersEnabled,
+                                onCheckedChange = onToggleDeviceCalendarReminders
                             )
                         }
                     }

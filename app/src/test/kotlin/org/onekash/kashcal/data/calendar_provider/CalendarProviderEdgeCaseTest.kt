@@ -264,7 +264,7 @@ class CalendarProviderEdgeCaseTest {
     // ========== DeviceCalendarInstance Field Preservation ==========
 
     @Test
-    fun `DeviceCalendarInstance preserves all 20 fields`() {
+    fun `DeviceCalendarInstance preserves all fields`() {
         val instance = DeviceCalendarInstance(
             instanceId = 42L,
             eventId = 100L,
@@ -277,6 +277,8 @@ class CalendarProviderEdgeCaseTest {
             endDay = 20260215,
             isAllDay = false,
             hasRrule = true,
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            reminders = listOf(15, 60),
             calendarId = 5L,
             calendarDisplayName = "Work Calendar",
             displayColor = -16711936, // Green
@@ -284,7 +286,10 @@ class CalendarProviderEdgeCaseTest {
             availability = 0,
             hasAlarm = true,
             selfAttendeeStatus = 1,
-            isWritable = true
+            isWritable = true,
+            originalId = 99L,
+            originalInstanceTime = 500000L,
+            timezone = "America/Los_Angeles"
         )
 
         assertEquals(42L, instance.instanceId)
@@ -298,6 +303,8 @@ class CalendarProviderEdgeCaseTest {
         assertEquals(20260215, instance.endDay)
         assertFalse(instance.isAllDay)
         assertTrue(instance.hasRrule)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO", instance.rrule)
+        assertEquals(listOf(15, 60), instance.reminders)
         assertEquals(5L, instance.calendarId)
         assertEquals("Work Calendar", instance.calendarDisplayName)
         assertEquals(-16711936, instance.displayColor)
@@ -306,6 +313,9 @@ class CalendarProviderEdgeCaseTest {
         assertTrue(instance.hasAlarm)
         assertEquals(1, instance.selfAttendeeStatus)
         assertTrue(instance.isWritable)
+        assertEquals(99L, instance.originalId)
+        assertEquals(500000L, instance.originalInstanceTime)
+        assertEquals("America/Los_Angeles", instance.timezone)
     }
 
     @Test
@@ -322,6 +332,8 @@ class CalendarProviderEdgeCaseTest {
             endDay = 20260215,
             isAllDay = false,
             hasRrule = false,
+            rrule = null,
+            reminders = emptyList(),
             calendarId = 1L,
             calendarDisplayName = "Cal",
             displayColor = 0,
@@ -329,7 +341,10 @@ class CalendarProviderEdgeCaseTest {
             availability = 0,
             hasAlarm = false,
             selfAttendeeStatus = 0,
-            isWritable = false
+            isWritable = false,
+            originalId = null,
+            originalInstanceTime = null,
+            timezone = null
         )
 
         val modified = original.copy(title = "Modified", isWritable = true)

@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.error.ErrorPresentation
@@ -77,8 +78,10 @@ data class HomeUiState(
     val calendars: ImmutableList<Calendar> = persistentListOf(),
     /** Calendars grouped by account for UI display */
     val calendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
-    /** Default calendar ID for new events */
-    val defaultCalendarId: Long? = null,
+    /** Device calendars grouped by account (for EventFormSheet picker) */
+    val deviceCalendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
+    /** Default calendar for new events (supports both Room and Device) */
+    val defaultCalendar: DefaultCalendar? = null,
     /** Show calendar visibility sheet */
     val showCalendarVisibility: Boolean = false,
 
@@ -310,6 +313,18 @@ sealed class PendingAction {
      * Navigate to today's date (from widget header tap).
      */
     data object GoToToday : PendingAction()
+
+    /**
+     * Show device event quick view sheet from widget tap.
+     * Queries CalendarProvider to find the device event instance.
+     *
+     * @param eventId CalendarProvider event ID
+     * @param occurrenceTs Timestamp of the specific occurrence
+     */
+    data class ShowDeviceEventQuickView(
+        val eventId: Long,
+        val occurrenceTs: Long
+    ) : PendingAction()
 
     /**
      * Navigate to a specific date (from week widget day tap).

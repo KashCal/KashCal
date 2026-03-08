@@ -1,19 +1,51 @@
 package org.onekash.kashcal.ui.model
 
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
+ * Unified calendar representation for the calendar picker.
+ * Wraps both Room Calendar and DeviceCalendar with common interface.
+ */
+sealed class PickerCalendar {
+    abstract val id: Long
+    abstract val displayName: String
+    abstract val color: Int
+    abstract val isWritable: Boolean
+
+    /** Room calendar (KashCal-managed) */
+    data class Room(val calendar: Calendar) : PickerCalendar() {
+        override val id: Long get() = calendar.id
+        override val displayName: String get() = calendar.displayName
+        override val color: Int get() = calendar.color
+        override val isWritable: Boolean get() = true // Room calendars are always writable
+    }
+
+    /** Device calendar (from CalendarProvider) */
+    data class Device(val calendar: DeviceCalendar) : PickerCalendar() {
+        override val id: Long get() = calendar.id
+        override val displayName: String get() = calendar.displayName
+        override val color: Int get() = calendar.color
+        override val isWritable: Boolean get() = calendar.isWritable
+    }
+}
+
+/**
  * Groups calendars by account for UI display.
+ * Supports both Room and Device calendars via PickerCalendar.
  *
  * @param accountName Display name for the account header
- * @param accountId Account ID for grouping
+ * @param accountId Account ID for grouping (Room) or synthetic ID (Device)
  * @param calendars List of calendars under this account
+ * @param isDeviceSection True for device calendar groups (shows after separator)
  */
 data class CalendarGroup(
     val accountName: String,
     val accountId: Long,
-    val calendars: List<Calendar>
+    val calendars: List<Calendar> = emptyList(),
+    val pickerCalendars: List<PickerCalendar> = emptyList(),
+    val isDeviceSection: Boolean = false
 ) {
     companion object {
         /**
@@ -40,7 +72,44 @@ data class CalendarGroup(
                     CalendarGroup(
                         accountName = accountName,
                         accountId = accountId,
-                        calendars = accountCalendars.sortedBy { it.displayName.lowercase() }
+                        calendars = accountCalendars.sortedBy { it.displayName.lowercase() },
+                        pickerCalendars = accountCalendars
+                            .sortedBy { it.displayName.lowercase() }
+                            .map { PickerCalendar.Room(it) }
+                    )
+                }
+                .sortedBy { it.accountName.lowercase() }
+        }
+
+        /**
+         * Groups device calendars by account for UI display.
+         * Only includes writable calendars for event creation.
+         *
+         * @param deviceCalendars List of device calendars
+         * @param writableOnly If true, only include writable calendars
+         * @return List of CalendarGroup for device calendars, sorted by account name
+         */
+        fun fromDeviceCalendars(
+            deviceCalendars: List<DeviceCalendar>,
+            writableOnly: Boolean = true
+        ): List<CalendarGroup> {
+            val filtered = if (writableOnly) {
+                deviceCalendars.filter { it.isWritable }
+            } else {
+                deviceCalendars
+            }
+
+            return filtered
+                .groupBy { it.accountName }
+                .map { (accountName, calendars) ->
+                    CalendarGroup(
+                        accountName = accountName.ifEmpty { "Local" },
+                        accountId = -1, // Synthetic ID for device groups
+                        calendars = emptyList(),
+                        pickerCalendars = calendars
+                            .sortedBy { it.displayName.lowercase() }
+                            .map { PickerCalendar.Device(it) },
+                        isDeviceSection = true
                     )
                 }
                 .sortedBy { it.accountName.lowercase() }

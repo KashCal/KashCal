@@ -23,13 +23,23 @@ class UserPreferencesRepository @Inject constructor(
     // ========== Default Calendar ==========
 
     /**
-     * Default calendar ID for new events.
+     * Default calendar ID for new events (legacy format).
      */
     val defaultCalendarId: Flow<Long?>
         get() = dataStore.defaultCalendarId
 
     suspend fun setDefaultCalendarId(calendarId: Long) {
         dataStore.setDefaultCalendarId(calendarId)
+    }
+
+    /**
+     * Default calendar for new events (new format supporting Room and Device).
+     */
+    val defaultCalendar: Flow<DefaultCalendar?>
+        get() = dataStore.defaultCalendar
+
+    suspend fun setDefaultCalendar(calendar: DefaultCalendar) {
+        dataStore.setDefaultCalendar(calendar)
     }
 
     // ========== Sync Settings ==========

@@ -1039,6 +1039,36 @@ class DateTimeUtilsTest {
         assertEquals(0, offset)
     }
 
+    // ==================== Normalize To UTC Midnight Tests ====================
+
+    @Test
+    fun `normalizeToUtcMidnight returns same value for already-midnight timestamp`() {
+        // 2024-03-01 00:00:00 UTC
+        val midnight = 1709251200000L
+        assertEquals(midnight, DateTimeUtils.normalizeToUtcMidnight(midnight))
+    }
+
+    @Test
+    fun `normalizeToUtcMidnight truncates mid-day timestamp`() {
+        // 2024-03-01 08:00:00 UTC
+        val midDay = 1709251200000L + (8 * 3600 * 1000)
+        val expectedMidnight = 1709251200000L
+        assertEquals(expectedMidnight, DateTimeUtils.normalizeToUtcMidnight(midDay))
+    }
+
+    @Test
+    fun `normalizeToUtcMidnight handles end-of-day`() {
+        // 2024-03-01 23:59:59.999 UTC
+        val endOfDay = 1709251200000L + (24 * 3600 * 1000) - 1
+        val expectedMidnight = 1709251200000L
+        assertEquals(expectedMidnight, DateTimeUtils.normalizeToUtcMidnight(endOfDay))
+    }
+
+    @Test
+    fun `normalizeToUtcMidnight handles epoch zero`() {
+        assertEquals(0L, DateTimeUtils.normalizeToUtcMidnight(0L))
+    }
+
     // ==================== Time Format Preference Tests ====================
 
     @Test

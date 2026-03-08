@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
@@ -24,16 +25,19 @@ class TimezoneChangeHandlerTest {
 
     private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var handler: TimezoneChangeHandler
 
     @Before
     fun setup() {
         mockkStatic(Log::class)
         every { Log.d(any(), any()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
 
         widgetUpdateManager = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
-        handler = TimezoneChangeHandler(widgetUpdateManager, reminderScheduler)
+        deviceCalendarReminderScheduler = mockk(relaxed = true)
+        handler = TimezoneChangeHandler(widgetUpdateManager, reminderScheduler, deviceCalendarReminderScheduler)
     }
 
     @After

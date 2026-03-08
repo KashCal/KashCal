@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.worker
 import android.content.Context
 import android.util.Log
 import androidx.work.Data
+import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
 import io.mockk.*
@@ -169,6 +170,22 @@ class CalDavSyncWorkerTest {
             eventsDao = eventsDao,
             dataStore = dataStore
         )
+    }
+
+    // ==================== getForegroundInfo (expedited fallback) ====================
+
+    @Test
+    fun `getForegroundInfo returns valid ForegroundInfo for expedited fallback`() = runTest {
+        // On API < 31, WorkManager calls getForegroundInfo() for setExpedited() fallback.
+        // Without this override, expedited sync silently fails on Android 10-11.
+        val mockForegroundInfo = mockk<ForegroundInfo>()
+        every { notificationManager.createForegroundInfo(any(), any()) } returns mockForegroundInfo
+
+        val worker = createWorker()
+        val result = worker.getForegroundInfo()
+
+        assertEquals(mockForegroundInfo, result)
+        verify { notificationManager.createForegroundInfo("Syncing calendars...", null) }
     }
 
     // ==================== Full Sync Tests ====================

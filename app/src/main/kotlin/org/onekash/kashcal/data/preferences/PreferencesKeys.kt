@@ -34,8 +34,15 @@ object PreferencesKeys {
 
     // ========== Event Defaults ==========
 
-    /** Default calendar ID for new events */
+    /** Default calendar ID for new events (legacy - plain Long) */
     val DEFAULT_CALENDAR_ID = longPreferencesKey("default_calendar_id")
+
+    /**
+     * Default calendar for new events (prefixed string format).
+     * Format: "room:123" or "device:456"
+     * See DefaultCalendar sealed class for parsing.
+     */
+    val DEFAULT_CALENDAR = stringPreferencesKey("default_calendar")
 
     /** Default reminder minutes before event (0 = no reminder) */
     val DEFAULT_REMINDER_MINUTES = intPreferencesKey("default_reminder_minutes")
@@ -141,6 +148,9 @@ object PreferencesKeys {
 
     /** Enabled device calendar IDs (stored as Set<String>, converted to Set<Long>) */
     val ENABLED_DEVICE_CALENDAR_IDS = stringSetPreferencesKey("enabled_device_calendar_ids")
+
+    /** Device calendar reminders enabled (KashCal fires reminders for device calendar events) */
+    val DEVICE_CALENDAR_REMINDERS_ENABLED = booleanPreferencesKey("device_calendar_reminders_enabled")
 
     // ========== Parse Failure Retry (v16.7.0) ==========
 

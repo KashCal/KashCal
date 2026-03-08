@@ -382,6 +382,8 @@ class DisplayEventRepositoryTest {
         endDay = endDay,
         isAllDay = false,
         hasRrule = false,
+        rrule = null,
+        reminders = emptyList(),
         calendarId = calendarId,
         calendarDisplayName = "Device Cal",
         displayColor = 0xFF00FF.toInt(),
@@ -389,6 +391,9 @@ class DisplayEventRepositoryTest {
         availability = 0,
         hasAlarm = false,
         selfAttendeeStatus = 0,
-        isWritable = true
+        isWritable = true,
+        originalId = null,
+        originalInstanceTime = null,
+        timezone = "America/New_York"
     )
 }

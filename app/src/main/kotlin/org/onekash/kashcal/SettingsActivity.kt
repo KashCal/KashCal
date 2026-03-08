@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
@@ -90,7 +91,8 @@ class SettingsActivity : ComponentActivity() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 val calendars by viewModel.calendars.collectAsStateWithLifecycle()
                 val calendarGroups by viewModel.calendarGroups.collectAsStateWithLifecycle()
-                val defaultCalendarId by viewModel.defaultCalendarId.collectAsStateWithLifecycle()
+                val defaultCalendar by viewModel.defaultCalendar.collectAsStateWithLifecycle()
+                val writableDeviceCalendarGroups by viewModel.writableDeviceCalendarGroups.collectAsStateWithLifecycle()
                 val syncIntervalMs by viewModel.syncIntervalMs.collectAsStateWithLifecycle()
                 val subscriptions by viewModel.subscriptions.collectAsStateWithLifecycle()
                 val subscriptionSyncing by viewModel.subscriptionSyncing.collectAsStateWithLifecycle()
@@ -119,10 +121,12 @@ class SettingsActivity : ComponentActivity() {
 
                 // Device calendars state
                 val deviceCalendarsEnabled by viewModel.deviceCalendarsEnabled.collectAsStateWithLifecycle()
-                val hasCalendarPermission by viewModel.hasCalendarPermission.collectAsStateWithLifecycle()
+                val hasReadCalendarPermission by viewModel.hasReadCalendarPermission.collectAsStateWithLifecycle()
+                val hasWriteCalendarPermission by viewModel.hasWriteCalendarPermission.collectAsStateWithLifecycle()
                 val deviceCalendars by viewModel.deviceCalendars.collectAsStateWithLifecycle()
                 val enabledDeviceCalendarIds by viewModel.enabledDeviceCalendarIds.collectAsStateWithLifecycle()
                 val showDeclinedEvents by viewModel.showDeclinedEvents.collectAsStateWithLifecycle()
+                val deviceCalendarRemindersEnabled by viewModel.deviceCalendarRemindersEnabled.collectAsStateWithLifecycle()
 
                 // iCloud account for AccountsScreen — derived from uiState (single source of truth)
                 val iCloudAccount = remember(uiState.iCloudState) {
@@ -156,13 +160,35 @@ class SettingsActivity : ComponentActivity() {
                     pendingContactPermissionAction = null
                 }
 
-                // Calendar permission launcher (for Device Calendars)
+                // Calendar permission launcher (for Device Calendars - READ + WRITE)
+                // Requests both permissions upfront so users can create/edit device calendar events
                 val calendarPermissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestMultiplePermissions()
+                ) { permissions ->
+                    viewModel.refreshCalendarPermission()
+                    // Enable if at least READ was granted (WRITE is optional but preferred)
+                    val readGranted = permissions[Manifest.permission.READ_CALENDAR] == true
+                    if (readGranted) {
+                        viewModel.onToggleDeviceCalendars(true)
+                    }
+                }
+
+                // Snackbar state (defined early for use in permission launchers)
+                val coroutineScope = rememberCoroutineScope()
+                val snackbarHostState = remember { SnackbarHostState() }
+
+                // Calendar permission launcher (for Device Calendars - WRITE)
+                val writeCalendarPermissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission()
                 ) { isGranted ->
                     viewModel.refreshCalendarPermission()
-                    if (isGranted) {
-                        viewModel.onToggleDeviceCalendars(true)
+                    if (!isGranted) {
+                        // Permission denied - show instructions to toggle Calendar permission in Settings
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = "Toggle Calendar permission off/on in Settings to grant write access"
+                            )
+                        }
                     }
                 }
 
@@ -177,10 +203,6 @@ class SettingsActivity : ComponentActivity() {
                 // ICS import state
                 var showIcsImportSheet by remember { mutableStateOf(false) }
                 var icsImportEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
-                val coroutineScope = rememberCoroutineScope()
-
-                // Snackbar state
-                val snackbarHostState = remember { SnackbarHostState() }
 
                 // Account connected success sheet state
                 @OptIn(ExperimentalMaterial3Api::class)
@@ -336,7 +358,8 @@ class SettingsActivity : ComponentActivity() {
                             syncLookbackDays = syncLookbackDays,
                             onSyncLookbackChange = viewModel::onSyncLookbackChange,
                             // Default calendar
-                            defaultCalendarId = defaultCalendarId,
+                            defaultCalendar = defaultCalendar,
+                            writableDeviceCalendarGroups = writableDeviceCalendarGroups,
                             onDefaultCalendarSelect = viewModel::onDefaultCalendarSelect,
                             // ICS Subscriptions
                             subscriptions = subscriptions,
@@ -412,19 +435,30 @@ class SettingsActivity : ComponentActivity() {
                             anniversaryCount = anniversaryCount,
                             // Device calendars
                             deviceCalendarsEnabled = deviceCalendarsEnabled,
-                            hasCalendarPermission = hasCalendarPermission,
+                            hasReadCalendarPermission = hasReadCalendarPermission,
+                            hasWriteCalendarPermission = hasWriteCalendarPermission,
                             deviceCalendars = deviceCalendars,
                             enabledDeviceCalendarIds = enabledDeviceCalendarIds,
                             onToggleDeviceCalendars = { enabled ->
-                                if (enabled && !hasCalendarPermission) {
-                                    calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                                if (enabled && !hasReadCalendarPermission) {
+                                    // Request both READ and WRITE permissions upfront
+                                    calendarPermissionLauncher.launch(arrayOf(
+                                        Manifest.permission.READ_CALENDAR,
+                                        Manifest.permission.WRITE_CALENDAR
+                                    ))
                                 } else {
                                     viewModel.onToggleDeviceCalendars(enabled)
                                 }
                             },
                             onToggleDeviceCalendar = viewModel::onToggleDeviceCalendar,
+                            onRequestWriteCalendarPermission = {
+                                writeCalendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+                            },
                             showDeclinedEvents = showDeclinedEvents,
                             onToggleShowDeclinedEvents = viewModel::onToggleShowDeclinedEvents,
+                            deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
+                            onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
+                            onRefreshDeviceCalendars = viewModel::refreshDeviceCalendars,
                             // Display settings
                             showEventEmojis = showEventEmojis,
                             onShowEventEmojisChange = viewModel::setShowEventEmojis,
@@ -452,10 +486,12 @@ class SettingsActivity : ComponentActivity() {
 
                     // ICS Import Sheet
                     if (showIcsImportSheet && icsImportEvents.isNotEmpty()) {
+                        // ICS import only supports Room calendars, extract ID if Room type
+                        val defaultRoomCalendarId = (defaultCalendar as? DefaultCalendar.Room)?.calendarId
                         IcsImportSheet(
                             events = icsImportEvents,
                             calendars = calendars,
-                            defaultCalendarId = defaultCalendarId,
+                            defaultCalendarId = defaultRoomCalendarId,
                             onDismiss = {
                                 showIcsImportSheet = false
                                 icsImportEvents = emptyList()

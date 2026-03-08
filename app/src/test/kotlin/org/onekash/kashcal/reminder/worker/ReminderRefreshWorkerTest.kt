@@ -12,6 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -32,6 +33,7 @@ class ReminderRefreshWorkerTest {
     private lateinit var context: Context
     private lateinit var workerParams: WorkerParameters
     private lateinit var reminderScheduler: ReminderScheduler
+    private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var dataStore: KashCalDataStore
     private lateinit var worker: ReminderRefreshWorker
 
@@ -48,6 +50,7 @@ class ReminderRefreshWorkerTest {
         context = mockk(relaxed = true)
         workerParams = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
+        deviceCalendarReminderScheduler = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
 
         every { workerParams.runAttemptCount } returns 0
@@ -59,7 +62,7 @@ class ReminderRefreshWorkerTest {
     }
 
     private fun createWorker(): ReminderRefreshWorker {
-        return ReminderRefreshWorker(context, workerParams, reminderScheduler, dataStore)
+        return ReminderRefreshWorker(context, workerParams, reminderScheduler, deviceCalendarReminderScheduler, dataStore)
     }
 
     @Test

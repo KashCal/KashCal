@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Application
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
@@ -35,6 +37,7 @@ class CalendarProviderManagerTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var manager: CalendarProviderManager
 
     @Before
@@ -44,7 +47,8 @@ class CalendarProviderManagerTest {
         // Grant READ_CALENDAR by default so lifecycle tests work
         Shadows.shadowOf(context as Application).grantPermissions(Manifest.permission.READ_CALENDAR)
         dataStore = KashCalDataStore(context)
-        manager = CalendarProviderManager(context, dataStore)
+        deviceCalendarReminderScheduler = mockk(relaxed = true)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler)
     }
 
     @After
@@ -153,7 +157,7 @@ class CalendarProviderManagerTest {
         Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CALENDAR)
 
         // Recreate manager so it picks up the denied permission state
-        manager = CalendarProviderManager(context, dataStore)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler)
         manager.initialize()
         // Pump dispatcher + real-time waits for DataStore IO to complete
         repeat(10) {

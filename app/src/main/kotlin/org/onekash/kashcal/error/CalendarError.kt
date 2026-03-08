@@ -164,6 +164,28 @@ sealed class CalendarError {
     }
 
     /**
+     * Device calendar (CalendarProvider) operation errors.
+     * Used for Phase 3 write support.
+     * Displayed as Dialog with retry option.
+     */
+    sealed class DeviceCalendar : CalendarError() {
+        /** Write operation failed */
+        data class WriteFailed(val message: String) : DeviceCalendar()
+
+        /** WRITE_CALENDAR permission denied or revoked */
+        data object PermissionDenied : DeviceCalendar()
+
+        /** Target calendar not found in CalendarProvider */
+        data object CalendarNotFound : DeviceCalendar()
+
+        /** Event not found in CalendarProvider */
+        data object EventNotFound : DeviceCalendar()
+
+        /** Calendar is read-only (ACCESS_LEVEL_READ or CALENDAR_ACCESS_LEVEL_FREEBUSY) */
+        data object ReadOnlyCalendar : DeviceCalendar()
+    }
+
+    /**
      * Sync operation errors.
      * Various presentations based on severity.
      */
@@ -194,3 +216,24 @@ sealed class CalendarError {
         val throwable: Throwable? = null
     ) : CalendarError()
 }
+
+/**
+ * Exception wrapper for [CalendarError] to use with [Result.failure].
+ *
+ * Kotlin's [Result] type requires a [Throwable] for the failure case.
+ * This wrapper allows CalendarError to be used with Result APIs.
+ *
+ * Usage:
+ * ```
+ * Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
+ * ```
+ *
+ * Unwrap:
+ * ```
+ * result.exceptionOrNull()?.let { exception ->
+ *     val error = (exception as? CalendarErrorException)?.error
+ *     // Handle error
+ * }
+ * ```
+ */
+class CalendarErrorException(val error: CalendarError) : Exception(error.toString())

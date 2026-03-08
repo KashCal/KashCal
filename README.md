@@ -8,11 +8,12 @@
 
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" height="80">](https://f-droid.org/packages/org.onekash.kashcal)
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" height="80">](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal)
+[<img src="https://github.com/ImranR98/Obtainium/blob/main/assets/graphics/badge_obtainium.png" height="55">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22:%22org.onekash.kashcal%22,%22url%22:%22https://github.com/KashCal/KashCal%22,%22author%22:%22KashCal%22,%22name%22:%22KashCal%22,%22additionalSettings%22:%22%7B%5C%22about%5C%22:%5C%22All%20your%20calendars%20in%20one%20private%20app%5C%22,%5C%22appAuthor%5C%22:%5C%22KashCal%5C%22%7D%22%7D)
 
 [<img src="https://img.shields.io/github/v/release/KashCal/KashCal?logo=github&label=GitHub&style=for-the-badge" height="36">](https://github.com/KashCal/KashCal/releases)
 [<img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge" height="36">](LICENSE)
 
-> **Official Repository:** This is the only official KashCal™ source. Only download from [F-Droid](https://f-droid.org/packages/org.onekash.kashcal), [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal), or [GitHub Releases](https://github.com/KashCal/KashCal/releases). Beware of copies distributing APKs from other sources.
+> **Official Repository:** This is the only official KashCal™ source. Only download from [F-Droid](https://f-droid.org/packages/org.onekash.kashcal), [IzzyOnDroid](https://apt.izzysoft.de/fdroid/index/apk/org.onekash.kashcal), [GitHub Releases](https://github.com/KashCal/KashCal/releases), or via [Obtainium](https://obtainium.imranr.dev/). Beware of copies distributing APKs from other sources.
 
 ---
 
@@ -48,7 +49,7 @@ Family stuff on iCloud. Holidays from some website. Birthdays buried in your con
 ## Your schedule, together
 
 - **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
-- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, FastMail, Zoho, and more. Native sync, no middleware.
+- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, FastMail, Zoho, and more. Native sync, no middleware.
 - **Device calendar**: See events from your phone's built-in calendar alongside everything else.
 - **Holidays & schedules**: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
 - **Birthdays**: Pulls from your contacts automatically.
@@ -81,6 +82,7 @@ No analytics, no tracking, no KashCal account required. Data is stored locally u
 | Stalwart | ✓ | [@OneCreek](https://github.com/OneCreek) |
 | FastMail | ✓ | [@mittensicle](https://github.com/mittensicle) |
 | [Davis](https://github.com/tchapi/davis) | ✓ | [@Ivan-Roger](https://github.com/Ivan-Roger) |
+| [Purelymail](https://purelymail.com/) | ✓ | [@babyhuehnchen](https://github.com/babyhuehnchen) |
 | Zoho | ✓ | [@jopacy](https://github.com/jopacy) |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!

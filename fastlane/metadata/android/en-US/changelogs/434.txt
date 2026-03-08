@@ -1,0 +1,4 @@
+• Device calendars: see your phone's built-in calendar events alongside KashCal events
+• Device calendar reminders with quick view and edit support
+• Widget "+" button to create events directly from home screen
+• Week widget compact layout with full day names and date range header

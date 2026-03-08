@@ -440,3 +440,41 @@ fun formatDuration(isoDuration: String): String? {
     val timeString = parts.joinToString(" ")
     return if (negative) "$timeString before" else "$timeString after"
 }
+
+// ========== Reminder Minutes Formatting (CalendarProvider) ==========
+
+/**
+ * Format reminder minutes list for display.
+ *
+ * Used for device calendar reminders which store minutes as integers,
+ * unlike Room events which use ISO duration strings.
+ *
+ * @param minutes List of reminder minutes before event (e.g., [15, 60, 1440])
+ * @return Formatted string (e.g., "15 min before, 1 hour before, 1 day before") or null if empty
+ */
+fun formatRemindersFromMinutes(minutes: List<Int>): String? {
+    if (minutes.isEmpty()) return null
+
+    return minutes.sorted().joinToString(", ") { rawMins ->
+        val mins = rawMins.coerceAtLeast(0) // Guard against negative values
+        when {
+            mins == 0 -> "At time of event"
+            mins < 60 -> if (mins == 1) "1 min before" else "$mins min before"
+            mins < 1440 -> {
+                val hours = mins / 60
+                val remainingMins = mins % 60
+                val hourPart = if (hours == 1) "1 hour" else "$hours hours"
+                if (remainingMins > 0) {
+                    val minPart = if (remainingMins == 1) "1 min" else "$remainingMins min"
+                    "$hourPart $minPart before"
+                } else {
+                    "$hourPart before"
+                }
+            }
+            else -> {
+                val days = mins / 1440
+                if (days == 1) "1 day before" else "$days days before"
+            }
+        }
+    }
+}

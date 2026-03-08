@@ -159,6 +159,59 @@ class KashCalDataStore(private val context: Context) {
         setPreference(PreferencesKeys.DEFAULT_CALENDAR_ID, calendarId)
     }
 
+    /**
+     * Default calendar for new events (prefixed string format).
+     *
+     * Supports both Room calendars (local/iCloud/CalDAV) and device calendars.
+     * Returns null if not set or if stored value has invalid format.
+     *
+     * Format: "room:123" or "device:456"
+     */
+    val defaultCalendar: Flow<DefaultCalendar?>
+        get() = getOptionalPreference(PreferencesKeys.DEFAULT_CALENDAR)
+            .map { value -> DefaultCalendar.parse(value) }
+
+    /**
+     * Get default calendar with legacy migration support.
+     *
+     * Priority:
+     * 1. New format (DEFAULT_CALENDAR key): "room:123" or "device:456"
+     * 2. Legacy format (DEFAULT_CALENDAR_ID key): Plain Long -> Room calendar
+     *
+     * @return DefaultCalendar or null if not set
+     */
+    suspend fun getDefaultCalendar(): DefaultCalendar? {
+        // Try new format first
+        val newValue = dataStore.data.first()[PreferencesKeys.DEFAULT_CALENDAR]
+        if (newValue != null) {
+            return DefaultCalendar.parse(newValue)
+        }
+
+        // Fall back to legacy format
+        val legacyId = dataStore.data.first()[PreferencesKeys.DEFAULT_CALENDAR_ID]
+        return if (legacyId != null && legacyId >= 0) {
+            DefaultCalendar.Room(legacyId)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * Set default calendar for new events.
+     *
+     * Stores in new prefixed format ("room:123" or "device:456").
+     */
+    suspend fun setDefaultCalendar(calendar: DefaultCalendar) {
+        setPreference(PreferencesKeys.DEFAULT_CALENDAR, calendar.toStorageString())
+    }
+
+    /**
+     * Clear default calendar preference.
+     */
+    suspend fun clearDefaultCalendar() {
+        removePreference(PreferencesKeys.DEFAULT_CALENDAR)
+    }
+
     val defaultReminderMinutes: Flow<Int>
         get() = getPreference(PreferencesKeys.DEFAULT_REMINDER_MINUTES, DEFAULT_REMINDER_MINUTES)
 
@@ -474,6 +527,19 @@ class KashCalDataStore(private val context: Context) {
 
     suspend fun setEnabledDeviceCalendarIds(ids: Set<Long>) {
         setPreference(PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS, ids.map { it.toString() }.toSet())
+    }
+
+    /**
+     * Whether KashCal should fire reminders for device calendar events.
+     * Default: false (opt-in feature to avoid duplicate notifications)
+     */
+    val deviceCalendarRemindersEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED, false)
+
+    suspend fun getDeviceCalendarRemindersEnabled(): Boolean = deviceCalendarRemindersEnabled.first()
+
+    suspend fun setDeviceCalendarRemindersEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED, enabled)
     }
 
     // ========== Parse Failure Retry (v16.7.0) ==========

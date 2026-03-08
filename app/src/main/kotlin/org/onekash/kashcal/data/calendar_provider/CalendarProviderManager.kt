@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -35,7 +36,8 @@ import javax.inject.Singleton
 @Singleton
 class CalendarProviderManager @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
 ) {
     companion object {
         private const val TAG = "CalProviderManager"
@@ -87,12 +89,31 @@ class CalendarProviderManager @Inject constructor(
 
     /**
      * Called when user disables device calendars.
-     * Unregisters observer. Device events stop appearing because
-     * DisplayEventRepository checks the enabled preference.
+     * Unregisters observer, cancels pending reminder alarms.
+     * Device events stop appearing because DisplayEventRepository checks the enabled preference.
      */
     fun onDisabled() {
         unregisterObserver()
+        deviceCalendarReminderScheduler.cancelPendingAlarm()
         _changeSignal.value++  // Trigger re-query so device events are removed from UI
+    }
+
+    /**
+     * Called when user disables device calendar reminders only.
+     * Cancels pending alarm but keeps observer running.
+     */
+    fun onRemindersDisabled() {
+        deviceCalendarReminderScheduler.cancelPendingAlarm()
+    }
+
+    /**
+     * Called when user enables device calendar reminders.
+     * Schedules the next upcoming reminder.
+     */
+    fun onRemindersEnabled() {
+        scope.launch {
+            deviceCalendarReminderScheduler.scheduleNextReminder()
+        }
     }
 
     private fun hasPermission(): Boolean =
@@ -117,6 +138,10 @@ class CalendarProviderManager @Inject constructor(
             debounceMs = 3000L
         ) {
             _changeSignal.value++
+            // Reschedule reminders when calendar data changes (event added/modified/deleted)
+            scope.launch {
+                deviceCalendarReminderScheduler.scheduleNextReminder()
+            }
         }
 
         try {

@@ -199,11 +199,11 @@ class HomeViewModelTest {
         every { syncScheduler.clearSyncChanges() } returns Unit
 
         // Setup default mock behavior - EventCoordinator provides calendars and accounts via Flow
-        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendarId
+        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendar
         // All three flows must emit for combine() to emit
         every { eventCoordinator.getAllCalendars() } returns flowOf(testCalendars)
         every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
-        coEvery { dataStore.defaultCalendarId } returns flowOf(null)
+        every { dataStore.defaultCalendar } returns flowOf(null)
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(1440)
         coEvery { accountRepository.getAllAccounts() } returns emptyList()
@@ -251,6 +251,7 @@ class HomeViewModelTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
+            calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
             ioDispatcher = testDispatcher
         )
     }

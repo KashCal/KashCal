@@ -11,7 +11,9 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.mockkObject
+import io.mockk.mockkStatic
 import io.mockk.unmockkObject
+import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -58,8 +60,11 @@ import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.contacts.ContactEventManager
+import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.widget.WidgetUpdateManager
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import kotlinx.coroutines.delay
 
 /**
@@ -98,12 +103,14 @@ class AccountSettingsViewModelTest {
     private lateinit var dataStore: KashCalDataStore
     private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var eventWriter: EventWriter
+    private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
     private lateinit var iCloudCalendarCountFlow: MutableStateFlow<Int>
     private lateinit var calDavAccountCountFlow: MutableStateFlow<Int>
     private lateinit var defaultCalendarIdFlow: MutableStateFlow<Long?>
+    private lateinit var defaultCalendarFlow: MutableStateFlow<DefaultCalendar?>
     private lateinit var syncIntervalFlow: MutableStateFlow<Long>
     private lateinit var defaultReminderTimedFlow: MutableStateFlow<Int>
     private lateinit var defaultReminderAllDayFlow: MutableStateFlow<Int>
@@ -169,12 +176,14 @@ class AccountSettingsViewModelTest {
         dataStore = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
         eventWriter = mockk(relaxed = true)
+        deviceCalendarReminderScheduler = mockk(relaxed = true)
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
         iCloudCalendarCountFlow = MutableStateFlow(0)
         calDavAccountCountFlow = MutableStateFlow(0)
         defaultCalendarIdFlow = MutableStateFlow(null)
+        defaultCalendarFlow = MutableStateFlow(null)
         syncIntervalFlow = MutableStateFlow(24 * 60 * 60 * 1000L) // 24 hours
         defaultReminderTimedFlow = MutableStateFlow(15)
         defaultReminderAllDayFlow = MutableStateFlow(1440)
@@ -194,6 +203,7 @@ class AccountSettingsViewModelTest {
         every { eventCoordinator.getICloudCalendarCount() } returns iCloudCalendarCountFlow
         every { eventCoordinator.getCalDavAccountCount() } returns calDavAccountCountFlow
         every { userPreferences.defaultCalendarId } returns defaultCalendarIdFlow
+        every { userPreferences.defaultCalendar } returns defaultCalendarFlow
         every { userPreferences.syncIntervalMs } returns syncIntervalFlow
         every { userPreferences.defaultReminderTimed } returns defaultReminderTimedFlow
         every { userPreferences.defaultReminderAllDay } returns defaultReminderAllDayFlow
@@ -245,7 +255,8 @@ class AccountSettingsViewModelTest {
             calendarProviderRepository = calendarProviderRepository,
             dataStore = dataStore,
             widgetUpdateManager = widgetUpdateManager,
-            eventWriter = eventWriter
+            eventWriter = eventWriter,
+            deviceCalendarReminderScheduler = deviceCalendarReminderScheduler
         )
     }
 
@@ -675,17 +686,6 @@ class AccountSettingsViewModelTest {
     }
 
     // ==================== Default Calendar Tests ====================
-
-    @Test
-    fun `onDefaultCalendarSelect updates preference`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.onDefaultCalendarSelect(2L)
-        advanceUntilIdle()
-
-        coVerify { userPreferences.setDefaultCalendarId(2L) }
-    }
 
     @Test
     fun `observes default calendar changes`() = runTest {
@@ -2220,5 +2220,178 @@ class AccountSettingsViewModelTest {
         val status = viewModel.uiState.value.accountDetailDiscoverStatus
         assertTrue(status is AccountDetailDiscoverStatus.Error)
         assertTrue((status as AccountDetailDiscoverStatus.Error).message.contains("Authentication failed"))
+    }
+
+    // ==================== Device Calendar Refresh Tests ====================
+
+    @Test
+    fun `refreshDeviceCalendars does nothing when permission not granted`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Permission is not granted by default in tests
+        viewModel.refreshDeviceCalendars()
+        advanceUntilIdle()
+
+        // Should not throw, just do nothing
+    }
+
+    @Test
+    fun `refreshDeviceCalendars does nothing when feature disabled`() = runTest {
+        coEvery { dataStore.deviceCalendarsEnabled } returns MutableStateFlow(false)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.refreshDeviceCalendars()
+        advanceUntilIdle()
+
+        // Should not throw, just do nothing (feature disabled)
+    }
+
+    // ==================== Default Calendar (DefaultCalendar type) Tests ====================
+
+    @Test
+    fun `writableDeviceCalendarGroups withWritePermission loadsWritableCalendars`() = runTest {
+        // Mock ContextCompat to grant WRITE_CALENDAR permission
+        mockkStatic(androidx.core.content.ContextCompat::class)
+        every {
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                any(),
+                eq(android.Manifest.permission.WRITE_CALENDAR)
+            )
+        } returns PackageManager.PERMISSION_GRANTED
+        every {
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                any(),
+                eq(android.Manifest.permission.READ_CALENDAR)
+            )
+        } returns PackageManager.PERMISSION_GRANTED
+
+        // Mock writable device calendars (accessLevel >= 500 = writable)
+        val deviceCalendars = listOf(
+            DeviceCalendar(
+                id = 100L,
+                displayName = "Personal",
+                color = 0xFF2196F3.toInt(),
+                accountName = "Google",
+                accountType = "com.google",
+                visible = true,
+                accessLevel = 700 // OWNER - writable
+            ),
+            DeviceCalendar(
+                id = 101L,
+                displayName = "Work",
+                color = 0xFF4CAF50.toInt(),
+                accountName = "Google",
+                accountType = "com.google",
+                visible = true,
+                accessLevel = 500 // CONTRIBUTOR - writable
+            ),
+            DeviceCalendar(
+                id = 102L,
+                displayName = "Holidays",
+                color = 0xFFFF9800.toInt(),
+                accountName = "Samsung",
+                accountType = "com.samsung",
+                visible = true,
+                accessLevel = 200 // READ - not writable
+            )
+        )
+        coEvery { calendarProviderRepository.getDeviceCalendars() } returns deviceCalendars
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.writableDeviceCalendarGroups.test {
+            val groups = expectMostRecentItem()
+            // Should have 1 group (Google) with 2 writable calendars
+            // Samsung Holiday has accessLevel 200 (READ), so not writable
+            assertEquals(1, groups.size)
+            assertEquals("Google", groups[0].accountName)
+            assertEquals(2, groups[0].pickerCalendars.size)
+        }
+
+        unmockkStatic(androidx.core.content.ContextCompat::class)
+    }
+
+    @Test
+    fun `writableDeviceCalendarGroups withoutWritePermission returnsEmpty`() = runTest {
+        // Mock ContextCompat to deny WRITE_CALENDAR permission
+        mockkStatic(androidx.core.content.ContextCompat::class)
+        every {
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                any(),
+                eq(android.Manifest.permission.WRITE_CALENDAR)
+            )
+        } returns PackageManager.PERMISSION_DENIED
+        every {
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                any(),
+                eq(android.Manifest.permission.READ_CALENDAR)
+            )
+        } returns PackageManager.PERMISSION_DENIED
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.writableDeviceCalendarGroups.test {
+            val groups = expectMostRecentItem()
+            assertTrue(groups.isEmpty())
+        }
+
+        unmockkStatic(androidx.core.content.ContextCompat::class)
+    }
+
+    @Test
+    fun `onDefaultCalendarSelect roomCalendar persistsRoomFormat`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDefaultCalendarSelect(DefaultCalendar.Room(calendarId = 42L))
+        advanceUntilIdle()
+
+        coVerify {
+            userPreferences.setDefaultCalendar(DefaultCalendar.Room(calendarId = 42L))
+        }
+    }
+
+    @Test
+    fun `onDefaultCalendarSelect deviceCalendar persistsDeviceFormat`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDefaultCalendarSelect(DefaultCalendar.Device(calendarId = 100L))
+        advanceUntilIdle()
+
+        coVerify {
+            userPreferences.setDefaultCalendar(DefaultCalendar.Device(calendarId = 100L))
+        }
+    }
+
+    @Test
+    fun `defaultCalendar observesNewFormat emitsCorrectType`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Emit Room type
+        defaultCalendarFlow.value = DefaultCalendar.Room(calendarId = 5L)
+        advanceUntilIdle()
+
+        viewModel.defaultCalendar.test {
+            val current = expectMostRecentItem()
+            assertTrue(current is DefaultCalendar.Room)
+            assertEquals(5L, (current as DefaultCalendar.Room).calendarId)
+        }
+
+        // Emit Device type
+        defaultCalendarFlow.value = DefaultCalendar.Device(calendarId = 200L)
+        advanceUntilIdle()
+
+        viewModel.defaultCalendar.test {
+            val current = expectMostRecentItem()
+            assertTrue(current is DefaultCalendar.Device)
+            assertEquals(200L, (current as DefaultCalendar.Device).calendarId)
+        }
     }
 }
