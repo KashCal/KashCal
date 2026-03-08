@@ -38,7 +38,7 @@ libRecur = "0.17.1"
 icaldav = "3.2.0"
 
 # HTTP Client
-okhttp = "4.12.0"
+okhttp = "5.3.2"
 
 # DataStore & Security
 datastore = "1.1.1"
