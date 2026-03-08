@@ -22,7 +22,7 @@ coroutines = "1.10.2"
 collectionsImmutable = "0.3.8"
 
 # DI
-hilt = "2.53.1"
+hilt = "2.59.2"
 hiltNavigationCompose = "1.2.0"
 
 # Material
