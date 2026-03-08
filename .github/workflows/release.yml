@@ -63,7 +63,7 @@ jobs:
 
     - name: Upload APK to Release
       if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: app/build/outputs/apk/release/KashCal-${{ steps.version.outputs.version }}-release.apk
       env:
