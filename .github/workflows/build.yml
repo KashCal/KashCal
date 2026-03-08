@@ -32,7 +32,7 @@ jobs:
 
     - name: Upload test results
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: test-results
         path: app/build/reports/tests/
@@ -77,7 +77,7 @@ jobs:
             ./gradlew connectedDebugAndroidTest --stacktrace
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: android-test-results
@@ -108,7 +108,7 @@ jobs:
         continue-on-error: true  # Lint has pre-existing issues; report but don't fail CI
 
       - name: Upload lint results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: lint-results
