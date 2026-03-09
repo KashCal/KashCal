@@ -62,6 +62,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
         Log.d(TAG, "Received alarm for event $maskedEventId at occurrence $occurrenceTs")
 
         // Use goAsync() for background work (10 second limit)
+        // Note: goAsync() can return null in Robolectric test environments
         val pendingResult = goAsync()
 
         // Create a scope that will complete within the broadcast window
@@ -91,7 +92,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
                 Log.e(TAG, "Error handling device calendar reminder", e)
             } finally {
                 // Must call finish() to signal completion
-                pendingResult.finish()
+                pendingResult?.finish()
             }
         }
     }
