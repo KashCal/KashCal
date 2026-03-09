@@ -3,7 +3,7 @@ name: "CodeQL"
 on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday at 6am UTC
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   analyze:

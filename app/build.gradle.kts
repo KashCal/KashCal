@@ -37,7 +37,7 @@ android {
 
     defaultConfig {
         applicationId = "org.onekash.kashcal"
-        minSdk = 26
+        minSdk = 31
         targetSdk = 35
         versionCode = versionProps.getProperty("VERSION_CODE").toInt()
         versionName = versionProps.getProperty("VERSION_NAME")

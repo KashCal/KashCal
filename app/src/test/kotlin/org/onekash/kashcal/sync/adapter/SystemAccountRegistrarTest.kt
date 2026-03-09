@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.adapter
 
 import android.accounts.AccountManager
+import android.accounts.AuthenticatorDescription
 import android.content.ContentResolver
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
@@ -9,6 +10,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 /**
@@ -20,7 +22,7 @@ import org.robolectric.annotation.Config
  * verified manually via the adb commands in the plan.
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [30])
+@Config(sdk = [31])
 class SystemAccountRegistrarTest {
 
     private lateinit var context: Context
@@ -31,6 +33,16 @@ class SystemAccountRegistrarTest {
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
         accountManager = AccountManager.get(context)
+
+        // Register authenticator type so Robolectric's ShadowAccountManager
+        // accepts addAccountExplicitly() calls for our account type.
+        val shadow = Shadows.shadowOf(accountManager)
+        shadow.addAuthenticator(AuthenticatorDescription(
+            KashCalAuthenticator.ACCOUNT_TYPE,
+            context.packageName,
+            0, 0, 0, 0
+        ))
+
         registrar = SystemAccountRegistrar(context)
     }
 

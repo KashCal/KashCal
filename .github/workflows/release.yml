@@ -53,7 +53,7 @@ jobs:
 
     - name: Verify APK signature
       run: |
-        $ANDROID_HOME/build-tools/34.0.0/apksigner verify -v \
+        $ANDROID_HOME/build-tools/35.0.0/apksigner verify -v \
           app/build/outputs/apk/release/app-release.apk
 
     - name: Rename APK

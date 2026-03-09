@@ -40,7 +40,7 @@ jobs:
         path: app/build/reports/tests/
 
   android-instrumented-tests:
-    name: Android Instrumented Tests (API 29)
+    name: Android Instrumented Tests (API 31)
     runs-on: ubuntu-latest
     needs: build
 
@@ -67,7 +67,7 @@ jobs:
       - name: Run Android Instrumented Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 31
           target: google_apis
           arch: x86_64
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim

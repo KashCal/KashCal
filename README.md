@@ -53,7 +53,7 @@ Family stuff on iCloud. Holidays from some website. Birthdays buried in your con
 ## Your schedule, together
 
 - **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
-- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, FastMail, Zoho, and more. Native sync, no middleware.
+- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, FastMail, Zoho, SOGo, and more. Native sync, no middleware.
 - **Device calendar**: See events from your phone's built-in calendar alongside everything else.
 - **Holidays & schedules**: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
 - **Birthdays**: Pulls from your contacts automatically.
@@ -88,6 +88,7 @@ No analytics, no tracking, no KashCal account required. Data is stored locally u
 | [Davis](https://github.com/tchapi/davis) | ✓ | [@Ivan-Roger](https://github.com/Ivan-Roger) |
 | [Purelymail](https://purelymail.com/) | ✓ | [@babyhuehnchen](https://github.com/babyhuehnchen) |
 | Zoho | ✓ | [@jopacy](https://github.com/jopacy) |
+| [SOGo](https://github.com/Alinto/sogo) | ✓ | [@mdonz](https://github.com/mdonz) |
 
 Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCal/KashCal/issues)!
 

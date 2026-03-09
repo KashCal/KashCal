@@ -131,7 +131,7 @@ class ReminderNotificationManagerTest {
     // ==================== Notification Building Tests ====================
 
     @Test
-    fun `buildNotification creates notification successfully`() = runTest {
+    fun `buildNotification creates notification successfully`() = testScope.runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -145,7 +145,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification sets auto-cancel flag`() = runTest {
+    fun `buildNotification sets auto-cancel flag`() = testScope.runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -164,7 +164,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification has content intent set`() = runTest {
+    fun `buildNotification has content intent set`() = testScope.runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -178,7 +178,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification includes two action buttons`() = runTest {
+    fun `buildNotification includes two action buttons`() = testScope.runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -192,7 +192,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification action buttons are Snooze and Dismiss`() = runTest {
+    fun `buildNotification action buttons are Snooze and Dismiss`() = testScope.runTest {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -209,7 +209,7 @@ class ReminderNotificationManagerTest {
     // ==================== Content Text Tests ====================
 
     @Test
-    fun `content text shows 12h absolute time for timed event`() = runTest {
+    fun `content text shows 12h absolute time for timed event`() = testScope.runTest {
         dataStore.setTimeFormat("12h")
 
         // Event at 10:30 AM today in pinned timezone
@@ -233,7 +233,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows 24h absolute time for timed event`() = runTest {
+    fun `content text shows 24h absolute time for timed event`() = testScope.runTest {
         dataStore.setTimeFormat("24h")
 
         val zone = ZoneId.of("America/New_York")
@@ -256,7 +256,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Starting now when diffMs is zero`() = runTest {
+    fun `content text shows Starting now when diffMs is zero`() = testScope.runTest {
         val eventTime = System.currentTimeMillis() + 60_000
 
         val reminder = createTestReminder(
@@ -274,7 +274,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Starting now when diffMs is negative for timed event`() = runTest {
+    fun `content text shows Starting now when diffMs is negative for timed event`() = testScope.runTest {
         val eventTime = System.currentTimeMillis() + 60_000
 
         val reminder = createTestReminder(
@@ -292,7 +292,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Today for all-day event with negative diffMs`() = runTest {
+    fun `content text shows Today for all-day event with negative diffMs`() = testScope.runTest {
         val eventTime = System.currentTimeMillis()
 
         val reminder = createTestReminder(
@@ -311,7 +311,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows duration for all-day event with positive diffMs`() = runTest {
+    fun `content text shows duration for all-day event with positive diffMs`() = testScope.runTest {
         val triggerTime = System.currentTimeMillis()
         val occurrenceTime = triggerTime + 24 * 60 * 60 * 1000L // 1 day later
 
@@ -333,7 +333,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Tomorrow qualifier for next-day event`() = runTest {
+    fun `content text shows Tomorrow qualifier for next-day event`() = testScope.runTest {
         dataStore.setTimeFormat("12h")
 
         val zone = ZoneId.of("America/New_York")
@@ -357,7 +357,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows weekday qualifier for further-out event`() = runTest {
+    fun `content text shows weekday qualifier for further-out event`() = testScope.runTest {
         dataStore.setTimeFormat("12h")
 
         val zone = ZoneId.of("America/New_York")
