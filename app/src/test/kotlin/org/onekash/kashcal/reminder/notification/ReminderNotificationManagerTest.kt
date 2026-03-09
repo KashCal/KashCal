@@ -7,12 +7,14 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -53,7 +55,7 @@ import java.util.TimeZone
 class ReminderNotificationManagerTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
+    private lateinit var dataStoreScope: CoroutineScope
     private lateinit var context: Context
     private lateinit var channels: ReminderNotificationChannels
     private lateinit var dataStore: KashCalDataStore
@@ -81,13 +83,14 @@ class ReminderNotificationManagerTest {
         channels = ReminderNotificationChannels(context)
         channels.createChannels()
 
-        // Use a test-scoped DataStore to prevent coroutine leaks between tests.
-        // The singleton preferencesDataStore delegate uses Dispatchers.IO internally,
-        // whose coroutines aren't controlled by the test dispatcher and can leak
-        // UncaughtExceptionsBeforeTest errors on CI.
+        // Use a dedicated CoroutineScope (not TestScope) for DataStore to avoid
+        // UncaughtExceptionsBeforeTest: runTest/testScope.runTest catches leaked
+        // coroutines from other test classes in the same JVM fork. Using a real
+        // scope + runBlocking sidesteps this entirely.
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
         val testPrefsDataStore = PreferenceDataStoreFactory.create(
-            scope = testScope.backgroundScope
+            scope = dataStoreScope
         ) { testDataStoreFile }
         dataStore = KashCalDataStore(context, testPrefsDataStore)
         manager = ReminderNotificationManager(context, channels, dataStore)
@@ -95,6 +98,7 @@ class ReminderNotificationManagerTest {
 
     @After
     fun tearDown() {
+        dataStoreScope.cancel()
         Dispatchers.resetMain()
         TimeZone.setDefault(originalTimeZone)
         Locale.setDefault(originalLocale)
@@ -131,7 +135,7 @@ class ReminderNotificationManagerTest {
     // ==================== Notification Building Tests ====================
 
     @Test
-    fun `buildNotification creates notification successfully`() = testScope.runTest {
+    fun `buildNotification creates notification successfully`() = runBlocking {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -145,7 +149,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification sets auto-cancel flag`() = testScope.runTest {
+    fun `buildNotification sets auto-cancel flag`() = runBlocking {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -164,7 +168,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification has content intent set`() = testScope.runTest {
+    fun `buildNotification has content intent set`() = runBlocking {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -178,7 +182,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification includes two action buttons`() = testScope.runTest {
+    fun `buildNotification includes two action buttons`() = runBlocking {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -192,7 +196,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `buildNotification action buttons are Snooze and Dismiss`() = testScope.runTest {
+    fun `buildNotification action buttons are Snooze and Dismiss`() = runBlocking {
         val reminder = createTestReminder(
             id = 1L,
             eventId = 100L,
@@ -209,7 +213,7 @@ class ReminderNotificationManagerTest {
     // ==================== Content Text Tests ====================
 
     @Test
-    fun `content text shows 12h absolute time for timed event`() = testScope.runTest {
+    fun `content text shows 12h absolute time for timed event`() = runBlocking {
         dataStore.setTimeFormat("12h")
 
         // Event at 10:30 AM today in pinned timezone
@@ -233,7 +237,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows 24h absolute time for timed event`() = testScope.runTest {
+    fun `content text shows 24h absolute time for timed event`() = runBlocking {
         dataStore.setTimeFormat("24h")
 
         val zone = ZoneId.of("America/New_York")
@@ -256,7 +260,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Starting now when diffMs is zero`() = testScope.runTest {
+    fun `content text shows Starting now when diffMs is zero`() = runBlocking {
         val eventTime = System.currentTimeMillis() + 60_000
 
         val reminder = createTestReminder(
@@ -274,7 +278,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Starting now when diffMs is negative for timed event`() = testScope.runTest {
+    fun `content text shows Starting now when diffMs is negative for timed event`() = runBlocking {
         val eventTime = System.currentTimeMillis() + 60_000
 
         val reminder = createTestReminder(
@@ -292,7 +296,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Today for all-day event with negative diffMs`() = testScope.runTest {
+    fun `content text shows Today for all-day event with negative diffMs`() = runBlocking {
         val eventTime = System.currentTimeMillis()
 
         val reminder = createTestReminder(
@@ -311,7 +315,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows duration for all-day event with positive diffMs`() = testScope.runTest {
+    fun `content text shows duration for all-day event with positive diffMs`() = runBlocking {
         val triggerTime = System.currentTimeMillis()
         val occurrenceTime = triggerTime + 24 * 60 * 60 * 1000L // 1 day later
 
@@ -333,7 +337,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows Tomorrow qualifier for next-day event`() = testScope.runTest {
+    fun `content text shows Tomorrow qualifier for next-day event`() = runBlocking {
         dataStore.setTimeFormat("12h")
 
         val zone = ZoneId.of("America/New_York")
@@ -357,7 +361,7 @@ class ReminderNotificationManagerTest {
     }
 
     @Test
-    fun `content text shows weekday qualifier for further-out event`() = testScope.runTest {
+    fun `content text shows weekday qualifier for further-out event`() = runBlocking {
         dataStore.setTimeFormat("12h")
 
         val zone = ZoneId.of("America/New_York")
