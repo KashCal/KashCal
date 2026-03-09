@@ -38,10 +38,13 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = "kashcal_preferences"
 )
 
-class KashCalDataStore(private val context: Context) {
+class KashCalDataStore(
+    private val context: Context,
+    private val overrideDataStore: DataStore<Preferences>? = null
+) {
 
     val dataStore: DataStore<Preferences>
-        get() = context.dataStore
+        get() = overrideDataStore ?: context.dataStore
 
     // ========== Generic Preference Access ==========
 

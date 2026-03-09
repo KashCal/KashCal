@@ -3,13 +3,14 @@ package org.onekash.kashcal.reminder.notification
 import android.app.Notification
 import android.content.Context
 import android.util.Log
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
-import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -26,6 +27,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
+import java.io.File
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -51,12 +53,14 @@ import java.util.TimeZone
 class ReminderNotificationManagerTest {
 
     private val testDispatcher = StandardTestDispatcher()
+    private val testScope = TestScope(testDispatcher)
     private lateinit var context: Context
     private lateinit var channels: ReminderNotificationChannels
     private lateinit var dataStore: KashCalDataStore
     private lateinit var manager: ReminderNotificationManager
     private lateinit var originalTimeZone: TimeZone
     private lateinit var originalLocale: Locale
+    private lateinit var testDataStoreFile: File
 
     @Before
     fun setup() {
@@ -76,17 +80,26 @@ class ReminderNotificationManagerTest {
         context = RuntimeEnvironment.getApplication()
         channels = ReminderNotificationChannels(context)
         channels.createChannels()
-        dataStore = KashCalDataStore(context)
+
+        // Use a test-scoped DataStore to prevent coroutine leaks between tests.
+        // The singleton preferencesDataStore delegate uses Dispatchers.IO internally,
+        // whose coroutines aren't controlled by the test dispatcher and can leak
+        // UncaughtExceptionsBeforeTest errors on CI.
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = testScope.backgroundScope
+        ) { testDataStoreFile }
+        dataStore = KashCalDataStore(context, testPrefsDataStore)
         manager = ReminderNotificationManager(context, channels, dataStore)
     }
 
     @After
-    fun tearDown() = runTest {
-        dataStore.dataStore.edit { it.clear() }
+    fun tearDown() {
         Dispatchers.resetMain()
         TimeZone.setDefault(originalTimeZone)
         Locale.setDefault(originalLocale)
         unmockkAll()
+        testDataStoreFile.delete()
     }
 
     // ==================== Constant Tests ====================

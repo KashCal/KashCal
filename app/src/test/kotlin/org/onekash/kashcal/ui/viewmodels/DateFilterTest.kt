@@ -5,6 +5,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -44,9 +45,10 @@ class DateFilterTest {
     @Test
     fun `Today range spans exactly one day`() {
         val range = DateFilter.Today.getTimeRange(testZone)!!
-        val duration = range.second - range.first
-        // Should be ~24 hours minus 1ms
-        assertTrue("Duration should be ~24 hours", duration in 86399000..86400000)
+        // Use date comparison to handle DST transitions (spring-forward = 23h, fall-back = 25h)
+        val startDate = Instant.ofEpochMilli(range.first).atZone(testZone).toLocalDate()
+        val endDate = Instant.ofEpochMilli(range.second).atZone(testZone).toLocalDate()
+        assertEquals("Today should span exactly 1 day", startDate, endDate)
     }
 
     // ==================== Tomorrow Tests ====================
@@ -84,10 +86,10 @@ class DateFilterTest {
     @Test
     fun `ThisWeek spans 7 days`() {
         val range = DateFilter.ThisWeek.getTimeRange(testZone)!!
-        val duration = range.second - range.first
-        // Should be ~7 days minus 1ms
-        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
-        assertTrue("Duration should be ~7 days", duration in (sevenDaysMs - 1000)..(sevenDaysMs))
+        // Use date comparison to handle DST transitions
+        val startDate = Instant.ofEpochMilli(range.first).atZone(testZone).toLocalDate()
+        val endDate = Instant.ofEpochMilli(range.second).atZone(testZone).toLocalDate()
+        assertEquals("Week should span 7 days", startDate.plusDays(6), endDate)
     }
 
     // ==================== NextWeek Tests ====================
@@ -104,9 +106,11 @@ class DateFilterTest {
     fun `NextWeek starts exactly 7 days after ThisWeek start`() {
         val thisWeekRange = DateFilter.ThisWeek.getTimeRange(testZone)!!
         val nextWeekRange = DateFilter.NextWeek.getTimeRange(testZone)!!
-        val sevenDaysMs = 7 * 24 * 60 * 60 * 1000L
+        // Use date comparison to handle DST transitions
+        val thisWeekStart = Instant.ofEpochMilli(thisWeekRange.first).atZone(testZone).toLocalDate()
+        val nextWeekStart = Instant.ofEpochMilli(nextWeekRange.first).atZone(testZone).toLocalDate()
 
-        assertEquals(thisWeekRange.first + sevenDaysMs, nextWeekRange.first)
+        assertEquals(thisWeekStart.plusDays(7), nextWeekStart)
     }
 
     // ==================== ThisMonth Tests ====================
