@@ -3,14 +3,19 @@ package org.onekash.kashcal.reminder.device
 import android.Manifest
 import android.app.AlarmManager
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import java.io.File
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,6 +54,8 @@ class DeviceCalendarReminderSchedulerTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var dataStoreScope: CoroutineScope
+    private lateinit var testDataStoreFile: File
     private lateinit var fakeRepository: FakeCalendarProviderRepository
     private lateinit var scheduler: DeviceCalendarReminderScheduler
     private lateinit var shadowAlarmManager: ShadowAlarmManager
@@ -57,7 +64,12 @@ class DeviceCalendarReminderSchedulerTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        dataStore = KashCalDataStore(context)
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        dataStore = KashCalDataStore(context, testPrefsDataStore)
         fakeRepository = FakeCalendarProviderRepository()
 
         scheduler = DeviceCalendarReminderScheduler(
@@ -74,9 +86,10 @@ class DeviceCalendarReminderSchedulerTest {
     }
 
     @After
-    fun teardown() = runTest {
+    fun teardown() {
+        dataStoreScope.cancel()
         Dispatchers.resetMain()
-        dataStore.dataStore.edit { it.clear() }
+        testDataStoreFile.delete()
     }
 
     // ========== Feature Toggle ==========

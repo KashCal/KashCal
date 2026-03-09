@@ -3,14 +3,19 @@ package org.onekash.kashcal.data.contacts
 import android.Manifest
 import android.app.Application
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import java.io.File
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -38,6 +43,8 @@ class ContactEventManagerTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var dataStoreScope: CoroutineScope
+    private lateinit var testDataStoreFile: File
     private lateinit var eventCoordinator: EventCoordinator
     private lateinit var manager: ContactEventManager
 
@@ -47,14 +54,21 @@ class ContactEventManagerTest {
         context = ApplicationProvider.getApplicationContext()
         // Grant READ_CONTACTS by default so lifecycle tests work
         Shadows.shadowOf(context as Application).grantPermissions(Manifest.permission.READ_CONTACTS)
-        dataStore = KashCalDataStore(context)
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        dataStore = KashCalDataStore(context, testPrefsDataStore)
         eventCoordinator = mockk(relaxed = true)
         manager = ContactEventManager(context, dataStore, eventCoordinator)
     }
 
     @After
     fun teardown() {
+        dataStoreScope.cancel()
         Dispatchers.resetMain()
+        testDataStoreFile.delete()
     }
 
     // ========== Original Birthday Tests ==========

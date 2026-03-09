@@ -1,10 +1,13 @@
 package org.onekash.kashcal.data.preferences
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -19,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 /**
  * Unit tests for device calendar preferences in KashCalDataStore.
@@ -34,18 +38,26 @@ class DeviceCalendarPreferencesTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var dataStoreScope: CoroutineScope
+    private lateinit var testDataStoreFile: File
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        dataStore = KashCalDataStore(context)
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        dataStore = KashCalDataStore(context, testPrefsDataStore)
     }
 
     @After
-    fun teardown() = runTest {
+    fun teardown() {
+        dataStoreScope.cancel()
         Dispatchers.resetMain()
-        dataStore.dataStore.edit { it.clear() }
+        testDataStoreFile.delete()
     }
 
     // ========== deviceCalendarsEnabled ==========

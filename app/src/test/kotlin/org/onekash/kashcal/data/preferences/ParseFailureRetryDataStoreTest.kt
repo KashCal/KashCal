@@ -1,10 +1,13 @@
 package org.onekash.kashcal.data.preferences
 
 import android.content.Context
-import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -16,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 /**
  * Unit tests for parse failure retry tracking in KashCalDataStore.
@@ -31,21 +35,26 @@ class ParseFailureRetryDataStoreTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
     private lateinit var dataStore: KashCalDataStore
+    private lateinit var dataStoreScope: CoroutineScope
+    private lateinit var testDataStoreFile: File
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        dataStore = KashCalDataStore(context)
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        dataStore = KashCalDataStore(context, testPrefsDataStore)
     }
 
     @After
-    fun teardown() = runTest {
-        // Clear DataStore BEFORE resetting Main — pending DataStore coroutines
-        // use Main, so resetting first causes uncaught exceptions that leak
-        // into the next test's runTest scope.
-        dataStore.dataStore.edit { it.clear() }
+    fun teardown() {
+        dataStoreScope.cancel()
         Dispatchers.resetMain()
+        testDataStoreFile.delete()
     }
 
     // ==================== incrementParseFailureRetry Tests ====================
@@ -207,8 +216,14 @@ class ParseFailureRetryDataStoreTest {
         dataStore.incrementParseFailureRetry(calendarId)
         dataStore.incrementParseFailureRetry(calendarId)
 
-        // Create new DataStore instance (simulates app restart)
-        val newDataStore = KashCalDataStore(context)
+        // Cancel existing scope to flush writes, then create new DataStore on same file
+        // (simulates app restart)
+        dataStoreScope.cancel()
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        val freshPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        val newDataStore = KashCalDataStore(context, freshPrefsDataStore)
 
         // Verify persistence
         val count = newDataStore.getParseFailureRetryCount(calendarId)
