@@ -1,8 +1,9 @@
 package org.onekash.kashcal.data.db.converter
 
 import androidx.room.TypeConverter
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -13,8 +14,6 @@ import org.onekash.kashcal.domain.model.AccountProvider
  * Handles conversion between Kotlin types and SQLite-compatible types.
  */
 class Converters {
-
-    private val gson = Gson()
 
     // ========== SyncStatus Enum ==========
 
@@ -89,7 +88,7 @@ class Converters {
      */
     @TypeConverter
     fun fromStringList(list: List<String>?): String? {
-        return list?.let { gson.toJson(it) }
+        return list?.let { Json.encodeToString(it) }
     }
 
     /**
@@ -100,8 +99,7 @@ class Converters {
     fun toStringList(value: String?): List<String> {
         if (value.isNullOrBlank()) return emptyList()
         return try {
-            val type = object : TypeToken<List<String>>() {}.type
-            gson.fromJson(value, type) ?: emptyList()
+            Json.decodeFromString<List<String>>(value)
         } catch (e: Exception) {
             emptyList()
         }
@@ -115,7 +113,7 @@ class Converters {
      */
     @TypeConverter
     fun fromStringMap(map: Map<String, String>?): String? {
-        return map?.let { gson.toJson(it) }
+        return map?.let { Json.encodeToString(it) }
     }
 
     /**
@@ -126,8 +124,7 @@ class Converters {
     fun toStringMap(value: String?): Map<String, String> {
         if (value.isNullOrBlank()) return emptyMap()
         return try {
-            val type = object : TypeToken<Map<String, String>>() {}.type
-            gson.fromJson(value, type) ?: emptyMap()
+            Json.decodeFromString<Map<String, String>>(value)
         } catch (e: Exception) {
             emptyMap()
         }

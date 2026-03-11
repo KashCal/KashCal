@@ -22,9 +22,9 @@ class EventTest {
         uid = "test-uid-123@example.com",
         calendarId = 1L,
         title = "Test Event",
-        startTs = System.currentTimeMillis(),
-        endTs = System.currentTimeMillis() + 3600000,
-        dtstamp = System.currentTimeMillis(),
+        startTs = 1704067200000L, // Jan 1, 2024 00:00 UTC
+        endTs = 1704070800000L, // Jan 1, 2024 01:00 UTC
+        dtstamp = 1704067200000L, // Jan 1, 2024 00:00 UTC
         rrule = rrule,
         originalEventId = originalEventId,
         syncStatus = syncStatus

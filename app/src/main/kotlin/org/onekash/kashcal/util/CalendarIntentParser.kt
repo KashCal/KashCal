@@ -3,6 +3,7 @@ package org.onekash.kashcal.util
 import android.content.Intent
 import android.net.Uri
 import android.provider.CalendarContract
+import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
@@ -12,6 +13,7 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
  * Used when other apps trigger "Add to Calendar" via standard Android intents.
  * Examples: Gmail calendar invites, browser event links, etc.
  */
+@Immutable
 data class CalendarIntentData(
     val title: String? = null,
     val description: String? = null,

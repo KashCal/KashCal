@@ -99,11 +99,7 @@ class ContactEventManagerTest {
         // Recreate manager so it picks up the denied permission state
         manager = ContactEventManager(context, dataStore, eventCoordinator)
         manager.initialize()
-        // Pump dispatcher + real-time waits for DataStore IO to complete
-        repeat(10) {
-            testDispatcher.scheduler.advanceUntilIdle()
-            Thread.sleep(50)
-        }
+        testDispatcher.scheduler.advanceUntilIdle()
 
         // Feature should be auto-disabled and calendar cleaned up
         assertFalse(

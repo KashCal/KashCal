@@ -425,8 +425,8 @@ class OccurrenceTest {
     private fun createOccurrence() = Occurrence(
         eventId = 1L,
         calendarId = 1L,
-        startTs = System.currentTimeMillis(),
-        endTs = System.currentTimeMillis() + 3600000,
+        startTs = 1704067200000L, // Jan 1, 2024 00:00 UTC
+        endTs = 1704070800000L, // Jan 1, 2024 01:00 UTC
         startDay = 20241225,
         endDay = 20241225
     )

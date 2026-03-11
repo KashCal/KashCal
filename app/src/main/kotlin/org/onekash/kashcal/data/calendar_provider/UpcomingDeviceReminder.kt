@@ -1,5 +1,7 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Data class representing an upcoming reminder for a device calendar event.
  *
@@ -9,6 +11,7 @@ package org.onekash.kashcal.data.calendar_provider
  * Key design: Uses (eventId, occurrenceStartTs) as stable composite key,
  * NOT instanceId (which is ephemeral and changes based on query range).
  */
+@Immutable
 data class UpcomingDeviceReminder(
     /** Event ID from CalendarContract.Events (stable) */
     val eventId: Long,

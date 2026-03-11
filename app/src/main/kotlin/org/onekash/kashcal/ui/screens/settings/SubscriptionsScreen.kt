@@ -97,12 +97,12 @@ fun SubscriptionsScreen(
             )
         ) {
             // ICS Subscriptions Section
-            item {
+            item(key = "ics_header", contentType = "section_header") {
                 SectionHeader(stringResource(R.string.subscriptions_section_ics_calendars))
             }
 
             if (subscriptions.isEmpty()) {
-                item {
+                item(key = "ics_empty", contentType = "empty_state") {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -123,29 +123,32 @@ fun SubscriptionsScreen(
             } else {
                 items(
                     items = subscriptions,
-                    key = { it.id ?: 0L }
+                    key = { it.id ?: 0L },
+                    contentType = { "subscription_item" }
                 ) { subscription ->
-                    SwipeableSubscriptionItem(
-                        subscription = subscription,
-                        onToggle = onToggleSubscription,
-                        onDelete = onDeleteSubscription,
-                        onRefresh = onRefreshSubscription,
-                        onEdit = { editingSubscriptionId = it.id ?: -1L }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 32.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                    Column(modifier = Modifier.animateItem()) {
+                        SwipeableSubscriptionItem(
+                            subscription = subscription,
+                            onToggle = onToggleSubscription,
+                            onDelete = onDeleteSubscription,
+                            onRefresh = onRefreshSubscription,
+                            onEdit = { editingSubscriptionId = it.id ?: -1L }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 32.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
                 }
             }
 
             // ADD Section
-            item {
+            item(key = "add_header", contentType = "section_header") {
                 Spacer(modifier = Modifier.height(16.dp))
                 SectionHeader(stringResource(R.string.subscriptions_section_add))
             }
 
-            item {
+            item(key = "add_button", contentType = "add_button") {
                 OutlinedButton(
                     onClick = { showAddDialog = true },
                     modifier = Modifier

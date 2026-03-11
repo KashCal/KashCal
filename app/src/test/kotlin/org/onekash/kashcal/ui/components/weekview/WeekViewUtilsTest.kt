@@ -266,16 +266,14 @@ class WeekViewUtilsTest {
     }
 
     @Test
-    fun `formatCompactRange cross month shows Dec 30 - Jan 1`() {
+    fun `formatCompactRange cross year shows both years`() {
         val start = LocalDate.of(2024, 12, 30)
         val end = LocalDate.of(2025, 1, 1)
 
         val result = WeekViewUtils.formatCompactRange(start, end)
 
-        // Cross-year always shows year
-        assertTrue(result.contains("Dec 30"))
-        assertTrue(result.contains("Jan 1"))
-        assertTrue(result.contains("2025"))
+        // Cross-year shows both years
+        assertEquals("Dec 30, 2024 - Jan 1, 2025", result)
     }
 
     @Test
@@ -397,6 +395,68 @@ class WeekViewUtilsTest {
         assertEquals(1380, result.displayEndMinutes)    // 11:00 PM
         assertTrue(result.clampedStart)
         assertTrue(result.clampedEnd)
+    }
+
+    // ==================== clampToVisibleRange with startHour/endHour Tests ====================
+
+    @Test
+    fun `clampToVisibleRange with 24h range does not clamp any event`() {
+        // 3am-5am event — would be clamped in 6-23 range, but not in 0-24
+        val result = WeekViewUtils.clampToVisibleRange(
+            startMinutes = 3 * 60,
+            endMinutes = 5 * 60,
+            startHour = 0,
+            endHour = 24
+        )
+
+        assertEquals(3 * 60, result.displayStartMinutes)
+        assertEquals(5 * 60, result.displayEndMinutes)
+        assertFalse(result.clampedStart)
+        assertFalse(result.clampedEnd)
+    }
+
+    @Test
+    fun `clampToVisibleRange with 24h range preserves midnight event`() {
+        // Midnight to 1am event
+        val result = WeekViewUtils.clampToVisibleRange(
+            startMinutes = 0,
+            endMinutes = 60,
+            startHour = 0,
+            endHour = 24
+        )
+
+        assertEquals(0, result.displayStartMinutes)
+        assertEquals(60, result.displayEndMinutes)
+        assertFalse(result.clampedStart)
+        assertFalse(result.clampedEnd)
+    }
+
+    @Test
+    fun `clampToVisibleRange with 24h range preserves late night event`() {
+        // 11pm-midnight event
+        val result = WeekViewUtils.clampToVisibleRange(
+            startMinutes = 23 * 60,
+            endMinutes = 24 * 60,
+            startHour = 0,
+            endHour = 24
+        )
+
+        assertEquals(23 * 60, result.displayStartMinutes)
+        assertEquals(24 * 60, result.displayEndMinutes)
+        assertFalse(result.clampedStart)
+        assertFalse(result.clampedEnd)
+    }
+
+    @Test
+    fun `clampToVisibleRange default params match 6am-11pm (backward compat)`() {
+        // 5am event — should still clamp with default params
+        val result = WeekViewUtils.clampToVisibleRange(
+            startMinutes = 5 * 60,
+            endMinutes = 8 * 60
+        )
+
+        assertEquals(6 * 60, result.displayStartMinutes)
+        assertTrue(result.clampedStart)
     }
 
     // ==================== Time Formatting Tests ====================
@@ -599,6 +659,205 @@ class WeekViewUtilsTest {
         val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Day 6 = Saturday Feb 1
 
         assertEquals("Feb 1", result)
+    }
+
+    // ==================== Week Pager Tests ====================
+
+    @Test
+    fun `weekPageToStartDate for CENTER_WEEK_PAGE returns current week start (Sunday)`() {
+        val today = LocalDate.now()
+        val expectedWeekStart = WeekViewUtils.getWeekStart(today, java.util.Calendar.SUNDAY)
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.SUNDAY,
+            referenceDate = today
+        )
+        assertEquals(expectedWeekStart, result)
+    }
+
+    @Test
+    fun `weekPageToStartDate for CENTER+1 returns next week start`() {
+        val today = LocalDate.now()
+        val expectedWeekStart = WeekViewUtils.getWeekStart(today, java.util.Calendar.SUNDAY).plusWeeks(1)
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE + 1,
+            java.util.Calendar.SUNDAY,
+            referenceDate = today
+        )
+        assertEquals(expectedWeekStart, result)
+    }
+
+    @Test
+    fun `weekPageToStartDate for CENTER-1 returns previous week start`() {
+        val today = LocalDate.now()
+        val expectedWeekStart = WeekViewUtils.getWeekStart(today, java.util.Calendar.SUNDAY).minusWeeks(1)
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE - 1,
+            java.util.Calendar.SUNDAY,
+            referenceDate = today
+        )
+        assertEquals(expectedWeekStart, result)
+    }
+
+    @Test
+    fun `weekPageToStartDate with Monday first returns Monday`() {
+        val ref = LocalDate.of(2026, 3, 11) // Wednesday
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        assertEquals(LocalDate.of(2026, 3, 9), result) // Monday Mar 9
+    }
+
+    @Test
+    fun `weekPageToStartDate with Saturday first returns Saturday`() {
+        val ref = LocalDate.of(2026, 3, 11) // Wednesday
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.SATURDAY,
+            referenceDate = ref
+        )
+        assertEquals(LocalDate.of(2026, 3, 7), result) // Saturday Mar 7
+    }
+
+    @Test
+    fun `weekPageToStartDate across year boundary`() {
+        val ref = LocalDate.of(2026, 1, 1) // Thursday
+        val result = WeekViewUtils.weekPageToStartDate(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        assertEquals(LocalDate.of(2025, 12, 29), result) // Monday Dec 29
+    }
+
+    @Test
+    fun `dateToWeekPage is inverse of weekPageToStartDate`() {
+        val ref = LocalDate.of(2026, 3, 11)
+        val firstDayOfWeek = java.util.Calendar.MONDAY
+
+        // Test round-trip for several week offsets
+        for (offset in listOf(-10, -1, 0, 1, 10, 52)) {
+            val page = WeekViewUtils.CENTER_WEEK_PAGE + offset
+            val date = WeekViewUtils.weekPageToStartDate(page, firstDayOfWeek, ref)
+            val roundTrip = WeekViewUtils.dateToWeekPage(date, firstDayOfWeek, ref)
+            assertEquals("Round trip failed for offset $offset", page, roundTrip)
+        }
+    }
+
+    @Test
+    fun `dateToWeekPage for mid-week date returns same page as week start`() {
+        val ref = LocalDate.of(2026, 3, 11) // Wednesday
+        val firstDayOfWeek = java.util.Calendar.MONDAY
+
+        val mondayPage = WeekViewUtils.dateToWeekPage(
+            LocalDate.of(2026, 3, 9), firstDayOfWeek, ref
+        ) // Monday
+        val wednesdayPage = WeekViewUtils.dateToWeekPage(
+            LocalDate.of(2026, 3, 11), firstDayOfWeek, ref
+        ) // Wednesday
+        val sundayPage = WeekViewUtils.dateToWeekPage(
+            LocalDate.of(2026, 3, 15), firstDayOfWeek, ref
+        ) // Sunday
+
+        assertEquals(mondayPage, wednesdayPage)
+        assertEquals(mondayPage, sundayPage)
+    }
+
+    // ==================== Week Range Formatting Tests ====================
+
+    @Test
+    fun `formatWeekRange same month`() {
+        val ref = LocalDate.of(2026, 3, 11)
+        val result = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        // Week of Mar 9-15, 2026 (Monday start)
+        assertEquals("Mar 9 - 15, 2026", result)
+    }
+
+    @Test
+    fun `formatWeekRange cross month`() {
+        // Find a week that crosses March -> April 2026
+        // Mar 30 is a Monday, so Mon-start week = Mar 30 - Apr 5
+        val ref = LocalDate.of(2026, 3, 30)
+        val result = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        assertEquals("Mar 30 - Apr 5, 2026", result)
+    }
+
+    @Test
+    fun `formatWeekRange cross year`() {
+        // Dec 29, 2025 is a Monday
+        val ref = LocalDate.of(2025, 12, 31) // Wednesday
+        val result = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        assertEquals("Dec 29, 2025 - Jan 4, 2026", result)
+    }
+
+    @Test
+    fun `formatWeekRange sunday firstDayOfWeek starts on Sunday`() {
+        // Mar 11 2026 is a Wednesday
+        // Sunday-start week containing Mar 11 = Mar 8 (Sun) - Mar 14 (Sat)
+        val ref = LocalDate.of(2026, 3, 11)
+        val result = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.SUNDAY,
+            referenceDate = ref
+        )
+        assertEquals("Mar 8 - 14, 2026", result)
+    }
+
+    @Test
+    fun `formatWeekRange different firstDayOfWeek produces different ranges`() {
+        // Mar 11 2026 is a Wednesday
+        val ref = LocalDate.of(2026, 3, 11)
+        val mondayResult = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.MONDAY,
+            referenceDate = ref
+        )
+        val sundayResult = WeekViewUtils.formatWeekRange(
+            WeekViewUtils.CENTER_WEEK_PAGE,
+            java.util.Calendar.SUNDAY,
+            referenceDate = ref
+        )
+        // Monday start: Mar 9-15, Sunday start: Mar 8-14
+        assertNotEquals(mondayResult, sundayResult)
+        assertEquals("Mar 9 - 15, 2026", mondayResult)
+        assertEquals("Mar 8 - 14, 2026", sundayResult)
+    }
+
+    // ==================== offsetToTime with startHour Tests ====================
+
+    @Test
+    fun `offsetToTime with startHour 0 at top returns midnight`() {
+        val (hour, minute) = WeekViewUtils.offsetToTime(0f, 60f, snap = false, startHour = 0)
+        assertEquals(0, hour)
+        assertEquals(0, minute)
+    }
+
+    @Test
+    fun `offsetToTime with startHour 6 at top returns 6am (backward compat)`() {
+        val (hour, minute) = WeekViewUtils.offsetToTime(0f, 60f, snap = false, startHour = WeekViewUtils.START_HOUR)
+        assertEquals(6, hour)
+        assertEquals(0, minute)
+    }
+
+    @Test
+    fun `offsetToTime with startHour 0 at 60px returns 1am`() {
+        val (hour, minute) = WeekViewUtils.offsetToTime(60f, 60f, snap = false, startHour = 0)
+        assertEquals(1, hour)
+        assertEquals(0, minute)
     }
 
     // ==================== 24-Hour Format Tests ====================

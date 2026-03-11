@@ -2593,6 +2593,34 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `onWeekViewDateSelected in WEEK mode uses dateToWeekPage`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Switch to WEEK mode
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+
+        // Select a date 5 days from today
+        val today = java.time.LocalDate.now()
+        val targetDate = today.plusDays(5)
+        val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
+            .plusHours(12)
+            .toInstant()
+            .toEpochMilli()
+
+        viewModel.onWeekViewDateSelected(targetMs)
+        advanceUntilIdle()
+
+        // In WEEK mode, should use dateToWeekPage (not dateToPage)
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.dateToWeekPage(
+            targetDate,
+            viewModel.uiState.value.firstDayOfWeek
+        )
+        assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
+    }
+
+    @Test
     fun `clearPendingWeekViewPagerPosition clears the pending position`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2805,6 +2833,48 @@ class HomeViewModelTest {
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE - 5
         assertEquals(expectedPage, resultPage)
         // Also updates weekViewPagerPosition via onDayPagerPageChanged
+        assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
+    }
+
+    @Test
+    fun `goToTodayInDayPager in WEEK mode returns CENTER_WEEK_PAGE`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+
+        val resultPage = viewModel.goToTodayInDayPager()
+        advanceUntilIdle()
+
+        val centerWeekPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_WEEK_PAGE
+        assertEquals(centerWeekPage, resultPage)
+        assertEquals(centerWeekPage, viewModel.uiState.value.weekViewPagerPosition)
+    }
+
+    @Test
+    fun `navigateDayPagerToDate in WEEK mode uses dateToWeekPage`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.WEEK)
+        advanceUntilIdle()
+
+        val today = java.time.LocalDate.now()
+        val targetDate = today.plusDays(10)
+        val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
+            .plusHours(12)
+            .toInstant()
+            .toEpochMilli()
+
+        val resultPage = viewModel.navigateDayPagerToDate(targetMs)
+        advanceUntilIdle()
+
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.dateToWeekPage(
+            targetDate,
+            viewModel.uiState.value.firstDayOfWeek
+        )
+        assertEquals(expectedPage, resultPage)
         assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 

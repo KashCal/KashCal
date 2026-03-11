@@ -6,7 +6,7 @@ ksp = "2.1.0-1.0.29"
 
 # AndroidX
 coreKtx = "1.15.0"
-lifecycleRuntimeKtx = "2.8.7"
+lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.9.3"
 
 # Compose
@@ -19,7 +19,7 @@ room = "2.7.0"
 coroutines = "1.10.2"
 
 # Collections
-collectionsImmutable = "0.3.8"
+collectionsImmutable = "0.4.0"
 
 # DI
 hilt = "2.53.1"
@@ -29,7 +29,7 @@ hiltNavigationCompose = "1.2.0"
 material = "1.12.0"
 
 # JSON
-gson = "2.11.0"
+kotlinxSerializationJson = "1.7.3"
 
 # RFC 5545 Recurrence
 libRecur = "0.17.1"
@@ -41,11 +41,11 @@ icaldav = "3.2.0"
 okhttp = "4.12.0"
 
 # DataStore & Security
-datastore = "1.1.1"
+datastore = "1.2.0"
 securityCrypto = "1.1.0-alpha06"
 
 # WorkManager
-workManager = "2.10.0"
+workManager = "2.11.1"
 hiltWork = "1.2.0"
 
 # Glance (App Widgets)
@@ -107,7 +107,7 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 google-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 # JSON
-gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # RFC 5545 Recurrence
 lib-recur = { group = "org.dmfs", name = "lib-recur", version.ref = "libRecur" }
@@ -154,3 +154,4 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

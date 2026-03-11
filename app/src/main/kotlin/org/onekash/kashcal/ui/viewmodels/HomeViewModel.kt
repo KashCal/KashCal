@@ -138,8 +138,14 @@ class HomeViewModel @Inject constructor(
     // Job for day events cache loading (cancel previous when cache refresh needed)
     private var dayEventsCacheJob: Job? = null
 
+    // Job for month events loading (cancel previous on month swipe)
+    private var monthEventsJob: Job? = null
+
     // Job for debounced day pager loading (cancel previous on fast swipe)
     private var dayPagerLoadJob: Job? = null
+
+    // Job for year dots loading (cancel previous on fast year swipe)
+    private var yearDotsJob: Job? = null
 
     // Track current loaded date range to avoid redundant loads
     private var currentLoadedRange: Pair<LocalDate, LocalDate>? = null
@@ -210,7 +216,10 @@ class HomeViewModel @Inject constructor(
             when (defaultView) {
                 ViewMode.AGENDA -> loadAgendaEvents()
                 ViewMode.THREE_DAYS -> {} // goToToday() below handles week initialization
-                ViewMode.MONTH -> {} // Default, no extra loading needed
+                ViewMode.WEEK -> {} // goToToday() below handles week initialization
+                ViewMode.MONTH -> {} // goToToday() below handles dot loading + day selection
+                ViewMode.MONTH_FULL -> loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+                ViewMode.YEAR -> loadYearDots(_uiState.value.viewingYear)
             }
 
             // Build event dots for current month ±6 months
@@ -872,6 +881,73 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // ==================== Year View Dots ====================
+
+    /**
+     * Load event dots for an entire year (Jan 1 to Dec 31).
+     * Cancels previous load if still running (fast-swipe protection).
+     * Merges into existing eventDots map (additive, not replacement).
+     */
+    private fun loadYearDots(year: Int) {
+        yearDotsJob?.cancel()
+
+        yearDotsJob = viewModelScope.launch {
+            try {
+                val startDayCode = year * 10000 + 101   // Jan 1
+                val endDayCode = year * 10000 + 1231    // Dec 31
+
+                val eventsMap = withContext(ioDispatcher) {
+                    displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
+                }
+
+                val dots = mutableMapOf<String, MutableMap<Int, MutableList<Int>>>()
+
+                for ((dayCode, events) in eventsMap) {
+                    val (occYear, occMonth, day) = parseDayFormat(dayCode)
+                    val key = String.format("%04d-%02d", occYear, occMonth + 1)
+
+                    val monthMap = dots.getOrPut(key) { mutableMapOf() }
+                    val dayColors = monthMap.getOrPut(day) { mutableListOf() }
+                    for (event in events) {
+                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
+                        if (!dayColors.contains(color)) {
+                            dayColors.add(color)
+                        }
+                    }
+                }
+
+                // Merge into existing cache (additive — month view dots unaffected)
+                val currentDots = _uiState.value.eventDots.toMutableMap()
+                for ((key, monthMap) in dots) {
+                    currentDots[key] = monthMap.mapValues { it.value.toPersistentList() }.toPersistentMap()
+                }
+
+                _uiState.update {
+                    it.copy(
+                        eventDots = currentDots.toPersistentMap(),
+                        loadedYears = it.loadedYears.add(year)
+                    )
+                }
+
+                Log.d(TAG, "Loaded year dots for $year, ${dots.size} months with events")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading year dots for $year", e)
+            }
+        }
+    }
+
+    /**
+     * Ensure dots are loaded for the given year.
+     * Loads on-demand if not cached.
+     */
+    fun ensureDotsForYear(year: Int) {
+        if (year !in _uiState.value.loadedYears) {
+            loadYearDots(year)
+        }
+    }
+
     // ==================== Navigation ====================
 
     /**
@@ -880,13 +956,13 @@ class HomeViewModel @Inject constructor(
      */
     fun goToToday() {
         when (_uiState.value.viewMode) {
-            ViewMode.THREE_DAYS -> {
+            ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                 goToTodayWeek()
             }
             ViewMode.AGENDA -> {
                 _uiState.update { it.copy(pendingScrollAgendaToTop = true) }
             }
-            ViewMode.MONTH -> {
+            ViewMode.MONTH, ViewMode.MONTH_FULL -> {
                 val today = Calendar.getInstance()
                 val year = today.get(Calendar.YEAR)
                 val month = today.get(Calendar.MONTH)
@@ -900,6 +976,9 @@ class HomeViewModel @Inject constructor(
                 }
 
                 selectDate(today.timeInMillis)
+            }
+            ViewMode.YEAR -> {
+                _uiState.update { it.copy(pendingNavigateToToday = true) }
             }
         }
     }
@@ -977,8 +1056,15 @@ class HomeViewModel @Inject constructor(
             )
         }
 
-        // Load dots if outside cached range (on-demand loading)
-        ensureDotsForMonth(year, month)
+        // Load dots if outside cached range (on-demand loading) — skip in MONTH_FULL mode (monthEventsMap has full data)
+        if (_uiState.value.viewMode != ViewMode.MONTH_FULL) {
+            ensureDotsForMonth(year, month)
+        }
+
+        // Load full month events for full-height grid
+        if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
+            loadMonthEvents(year, month)
+        }
 
         // Trigger occurrence extension if navigating far into future (debounced)
         triggerOccurrenceExtension(year, month)
@@ -1024,28 +1110,32 @@ class HomeViewModel @Inject constructor(
 
     // ==================== Week View Navigation ====================
 
-    /** Navigate backward by 3 days in the 3-day view (matches visible window). */
+    /** Navigate backward in the day/week pager (step depends on view mode). */
     fun navigateDaysPagerPrevious() {
         val currentPage = _uiState.value.weekViewPagerPosition
         if (currentPage <= 0) return
-        val targetPage = currentPage - WeekViewUtils.VISIBLE_DAYS
+        val step = if (_uiState.value.viewMode == ViewMode.WEEK) 1 else WeekViewUtils.VISIBLE_DAYS
+        val targetPage = currentPage - step
         _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
         onDayPagerPageChanged(targetPage)
     }
 
-    /** Navigate forward by 3 days in the 3-day view (matches visible window). */
+    /** Navigate forward in the day/week pager (step depends on view mode). */
     fun navigateDaysPagerNext() {
         val currentPage = _uiState.value.weekViewPagerPosition
-        val targetPage = currentPage + WeekViewUtils.VISIBLE_DAYS
+        val step = if (_uiState.value.viewMode == ViewMode.WEEK) 1 else WeekViewUtils.VISIBLE_DAYS
+        val targetPage = currentPage + step
         _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
         onDayPagerPageChanged(targetPage)
     }
 
     /**
-     * Navigate week view to today (infinite pager: today = CENTER_DAY_PAGE).
+     * Navigate week view to today.
+     * Uses CENTER_WEEK_PAGE for WEEK mode, CENTER_DAY_PAGE for THREE_DAYS.
      */
     fun goToTodayWeek() {
-        val targetPage = WeekViewUtils.CENTER_DAY_PAGE
+        val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
+            WeekViewUtils.CENTER_WEEK_PAGE else WeekViewUtils.CENTER_DAY_PAGE
 
         // Clear cached range to force reload
         currentLoadedRange = null
@@ -1127,9 +1217,22 @@ class HomeViewModel @Inject constructor(
             // Debounce: wait for scroll to settle
             delay(300)
 
-            // Get visible and loading date ranges
-            val (visibleStart, visibleEnd) = WeekViewUtils.getVisibleDateRange(currentPage)
-            val (loadStart, loadEnd) = WeekViewUtils.getLoadingDateRange(currentPage)
+            // Get visible and loading date ranges (week mode uses week pages, day mode uses day pages)
+            val isWeekMode = _uiState.value.viewMode == ViewMode.WEEK
+            val firstDayOfWeek = _uiState.value.firstDayOfWeek
+            val (visibleStart, visibleEnd) = if (isWeekMode) {
+                val start = WeekViewUtils.weekPageToStartDate(currentPage, firstDayOfWeek)
+                start to start.plusDays(6)
+            } else {
+                WeekViewUtils.getVisibleDateRange(currentPage)
+            }
+            val (loadStart, loadEnd) = if (isWeekMode) {
+                // Load current week + 1 week buffer on each side
+                val start = WeekViewUtils.weekPageToStartDate(currentPage, firstDayOfWeek)
+                start.minusDays(7) to start.plusDays(13)
+            } else {
+                WeekViewUtils.getLoadingDateRange(currentPage)
+            }
 
             // Skip if range already loaded
             currentLoadedRange?.let { (loadedStart, loadedEnd) ->
@@ -1204,7 +1307,8 @@ class HomeViewModel @Inject constructor(
      * Returns the target page for the pager to scroll to.
      */
     fun goToTodayInDayPager(): Int {
-        val targetPage = WeekViewUtils.CENTER_DAY_PAGE
+        val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
+            WeekViewUtils.CENTER_WEEK_PAGE else WeekViewUtils.CENTER_DAY_PAGE
 
         // Clear cached range to force reload
         currentLoadedRange = null
@@ -1223,7 +1327,9 @@ class HomeViewModel @Inject constructor(
      */
     fun navigateDayPagerToDate(dateMs: Long): Int {
         val date = WeekViewUtils.epochMsToDate(dateMs)
-        val targetPage = WeekViewUtils.dateToPage(date)
+        val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
+            WeekViewUtils.dateToWeekPage(date, _uiState.value.firstDayOfWeek)
+        else WeekViewUtils.dateToPage(date)
 
         // Clear cached range to force reload
         currentLoadedRange = null
@@ -1269,9 +1375,11 @@ class HomeViewModel @Inject constructor(
     fun onWeekViewDateSelected(dateMs: Long) {
         hideWeekViewDatePicker()
 
-        // Convert date to page in infinite pager
+        // Convert date to page in infinite pager (mode-aware)
         val date = WeekViewUtils.epochMsToDate(dateMs)
-        val targetPage = WeekViewUtils.dateToPage(date)
+        val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
+            WeekViewUtils.dateToWeekPage(date, _uiState.value.firstDayOfWeek)
+        else WeekViewUtils.dateToPage(date)
 
         // Clear cached range to force reload
         currentLoadedRange = null
@@ -1301,6 +1409,20 @@ class HomeViewModel @Inject constructor(
                 selectedDate = dateMillis,
                 selectedDayLabel = formatDateLabel(dateMillis)
             )
+        }
+    }
+
+    // ==================== Day Detail Sheet ====================
+
+    fun showDayDetail(dateMs: Long) {
+        _uiState.update {
+            it.copy(showDayDetailSheet = true, dayDetailDate = dateMs)
+        }
+    }
+
+    fun dismissDayDetail() {
+        _uiState.update {
+            it.copy(showDayDetailSheet = false, dayDetailDate = 0L)
         }
     }
 
@@ -1345,6 +1467,51 @@ class HomeViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading day pager cache", e)
+            }
+        }
+    }
+
+    // ==================== Month Events (Full-Height Grid) ====================
+
+    /**
+     * Load events for the month grid covering viewing month +/- 1 month.
+     * Uses Flow for reactive updates when events change during sync.
+     *
+     * The 3-month range ensures adjacent HorizontalPager pages have event data
+     * during mid-swipe transitions.
+     *
+     * @param year Viewing year
+     * @param month Viewing month (0-indexed, January = 0)
+     */
+    private fun loadMonthEvents(year: Int, month: Int) {
+        monthEventsJob?.cancel()
+
+        Log.d(TAG, "Month events: loading 3-month range centered on $year-${month + 1}")
+
+        monthEventsJob = viewModelScope.launch {
+            try {
+                // Compute 3-month range via LocalDate arithmetic
+                // Previous month first day minus max InDate offset (6 days)
+                val prevMonth = LocalDate.of(year, month + 1, 1).minusMonths(1)
+                val startDate = prevMonth.withDayOfMonth(1).minusDays(6)
+                // Next month last day plus max OutDate offset (13 days)
+                val nextMonth = LocalDate.of(year, month + 1, 1).plusMonths(1)
+                val endDate = nextMonth.withDayOfMonth(nextMonth.lengthOfMonth()).plusDays(13)
+
+                val startDayCode = startDate.year * 10000 + startDate.monthValue * 100 + startDate.dayOfMonth
+                val endDayCode = endDate.year * 10000 + endDate.monthValue * 100 + endDate.dayOfMonth
+
+                displayEventRepository.getDisplayEventsForDateRange(startDayCode, endDayCode)
+                    .collect { grouped ->
+                        _uiState.update {
+                            it.copy(monthEventsMap = grouped)
+                        }
+                        Log.d(TAG, "Month events: loaded events across ${grouped.size} days")
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error loading month events", e)
             }
         }
     }
@@ -1715,7 +1882,7 @@ class HomeViewModel @Inject constructor(
 
         when (mode) {
             ViewMode.AGENDA -> loadAgendaEvents()
-            ViewMode.THREE_DAYS -> {
+            ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                 // Cancel agenda observation since we're leaving agenda view
                 agendaEventsJob?.cancel()
                 if (currentLoadedRange == null) {
@@ -1724,6 +1891,15 @@ class HomeViewModel @Inject constructor(
             }
             ViewMode.MONTH -> {
                 agendaEventsJob?.cancel()
+            }
+            ViewMode.MONTH_FULL -> {
+                agendaEventsJob?.cancel()
+                loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+            }
+            ViewMode.YEAR -> {
+                agendaEventsJob?.cancel()
+                weekEventsJob?.cancel()
+                loadYearDots(_uiState.value.viewingYear)
             }
         }
     }
@@ -1807,6 +1983,18 @@ class HomeViewModel @Inject constructor(
     // ==================== Refresh ====================
 
     /**
+     * Handle app resume from background.
+     * Reloads events for THREE_DAYS/WEEK views which use one-shot loadEventsForWeek().
+     * Other views (MONTH, AGENDA) use Room Flow and auto-emit on DB changes.
+     */
+    fun onAppResume() {
+        if ((_uiState.value.viewMode == ViewMode.THREE_DAYS || _uiState.value.viewMode == ViewMode.WEEK) &&
+            _uiState.value.weekViewStartDate != 0L) {
+            loadEventsForWeek(_uiState.value.weekViewStartDate)
+        }
+    }
+
+    /**
      * Reload the current view (dots, day pager cache, and active view).
      *
      * Called for explicit refresh scenarios like:
@@ -1816,18 +2004,26 @@ class HomeViewModel @Inject constructor(
      */
     private fun reloadCurrentView() {
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        // Reload day pager cache (replaces old loadEventsForSelectedDay)
-        if (_uiState.value.cacheRangeCenter != 0L) {
+        // Reload month events if full-height month view is active
+        if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
+            loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
+        }
+        // Reload day pager cache — skip in MONTH_FULL mode (uses monthEventsMap instead)
+        if (_uiState.value.viewMode != ViewMode.MONTH_FULL && _uiState.value.cacheRangeCenter != 0L) {
             loadEventsForDayPagerRange(_uiState.value.cacheRangeCenter)
         }
         // Reload agenda if agenda view is active
         if (_uiState.value.viewMode == ViewMode.AGENDA) {
             loadAgendaEvents()
         }
-        // Also reload week view if 3-day view is active
-        if (_uiState.value.viewMode == ViewMode.THREE_DAYS &&
+        // Also reload week view if 3-day or week view is active
+        if ((_uiState.value.viewMode == ViewMode.THREE_DAYS || _uiState.value.viewMode == ViewMode.WEEK) &&
             _uiState.value.weekViewStartDate != 0L) {
             loadEventsForWeek(_uiState.value.weekViewStartDate)
+        }
+        // Reload year dots if year view is active
+        if (_uiState.value.viewMode == ViewMode.YEAR) {
+            loadYearDots(_uiState.value.viewingYear)
         }
     }
 

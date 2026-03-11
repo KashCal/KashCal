@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.ui.shared.maskEmail
@@ -10,6 +11,7 @@ import org.onekash.kashcal.ui.shared.maskEmail
  * Provides a display-ready view of an account with masked email,
  * sync status, and calendar count. Same layout for all providers.
  */
+@Immutable
 data class AccountDetailUiModel(
     val accountId: Long,
     val provider: AccountProvider,
@@ -25,6 +27,7 @@ data class AccountDetailUiModel(
 /**
  * Sync status for the account detail sheet's Sync Now action.
  */
+@Immutable
 sealed class AccountDetailSyncStatus {
     data object Idle : AccountDetailSyncStatus()
     data object Syncing : AccountDetailSyncStatus()
@@ -34,6 +37,7 @@ sealed class AccountDetailSyncStatus {
 /**
  * Discovery status for the account detail sheet's Discover Calendars action.
  */
+@Immutable
 sealed class AccountDetailDiscoverStatus {
     data object Idle : AccountDetailDiscoverStatus()
     data object Discovering : AccountDetailDiscoverStatus()

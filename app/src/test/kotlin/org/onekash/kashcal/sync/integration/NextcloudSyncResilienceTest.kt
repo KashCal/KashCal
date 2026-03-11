@@ -5,6 +5,7 @@ import io.mockk.every
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.encodeToString
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
@@ -712,19 +713,17 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * THEORY 2: SyncSessionStore Gson round-trip silently drops sessions.
+     * THEORY 2: SyncSession serialization round-trip preserves all fields.
      *
-     * Gson bypasses Kotlin constructors (uses sun.misc.Unsafe), so:
-     * - Default parameter values are NOT applied
-     * - Non-nullable fields can be set to null
-     * - init blocks don't run
-     *
-     * If a SyncSession field was added/changed and old JSON is loaded,
-     * Gson could produce a corrupt object that causes NPE later.
+     * kotlinx.serialization uses the Kotlin constructor, so default values
+     * are applied correctly and type safety is preserved at compile time.
      */
     @Test
-    fun `THEORY 2 - SyncSession Gson round-trip preserves all fields`() {
-        val gson = com.google.gson.GsonBuilder().create()
+    fun `THEORY 2 - SyncSession serialization round-trip preserves all fields`() {
+        val json = kotlinx.serialization.json.Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
 
         // Create a session with ALL fields populated (worst case for round-trip)
         val original = org.onekash.kashcal.sync.session.SyncSession(
@@ -759,13 +758,13 @@ class NextcloudSyncResilienceTest {
             truncated = true
         )
 
-        // Round-trip: serialize → deserialize
-        val json = gson.toJson(listOf(original))
-        println("Serialized JSON size: ${json.length} chars")
-        println("JSON sample: ${json.take(200)}...")
+        // Round-trip: serialize -> deserialize
+        val jsonStr = json.encodeToString(listOf(original))
+        println("Serialized JSON size: ${jsonStr.length} chars")
+        println("JSON sample: ${jsonStr.take(200)}...")
 
-        val type = object : com.google.gson.reflect.TypeToken<List<org.onekash.kashcal.sync.session.SyncSession>>() {}.type
-        val deserialized: List<org.onekash.kashcal.sync.session.SyncSession> = gson.fromJson(json, type)
+        val deserialized: List<org.onekash.kashcal.sync.session.SyncSession> =
+            json.decodeFromString(jsonStr)
 
         assertEquals("Should deserialize 1 session", 1, deserialized.size)
         val restored = deserialized.first()
@@ -806,19 +805,22 @@ class NextcloudSyncResilienceTest {
         assertEquals("totalChanges", original.totalChanges, restored.totalChanges)
         assertEquals("totalPushed", original.totalPushed, restored.totalPushed)
 
-        println("All fields survived Gson round-trip")
+        println("All fields survived serialization round-trip")
     }
 
     /**
-     * THEORY 2b: Gson deserializes session with MISSING fields (simulates old JSON format).
+     * THEORY 2b: Serialization handles missing fields in old session JSON.
      *
      * If the user's app was updated and the session file has old-format entries,
-     * Gson must handle missing fields gracefully. Since Gson bypasses the Kotlin
-     * constructor, default values are NOT applied — fields get JVM zero values.
+     * kotlinx.serialization applies Kotlin default values for missing fields
+     * (unlike Gson which used JVM zero values).
      */
     @Test
-    fun `THEORY 2b - Gson handles missing fields in old session JSON`() {
-        val gson = com.google.gson.GsonBuilder().create()
+    fun `THEORY 2b - serialization handles missing fields in old session JSON`() {
+        val json = kotlinx.serialization.json.Json {
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
 
         // Simulate old JSON with only the original fields (no push stats, no recently-pushed, etc.)
         val oldJson = """[{
@@ -836,13 +838,11 @@ class NextcloudSyncResilienceTest {
             "eventsDeleted": 0
         }]"""
 
-        val type = object : com.google.gson.reflect.TypeToken<List<org.onekash.kashcal.sync.session.SyncSession>>() {}.type
-
         // This should NOT throw
         val sessions: List<org.onekash.kashcal.sync.session.SyncSession> = try {
-            gson.fromJson(oldJson, type)
+            json.decodeFromString(oldJson)
         } catch (e: Throwable) {
-            fail("Gson deserialization of old-format JSON threw: ${e.javaClass.simpleName}: ${e.message}")
+            fail("Deserialization of old-format JSON threw: ${e.javaClass.simpleName}: ${e.message}")
             return
         }
 
@@ -858,14 +858,17 @@ class NextcloudSyncResilienceTest {
         println("  truncated: ${session.truncated}")
         println("  errorType: ${session.errorType}")
 
-        // Missing Int fields should be 0 (JVM default matches Kotlin default)
+        // Missing Int fields get Kotlin default (0)
         assertEquals("eventsPushedCreated should be 0", 0, session.eventsPushedCreated)
         assertEquals("skippedRecentlyPushed should be 0", 0, session.skippedRecentlyPushed)
 
-        // Missing Boolean fields should be false (JVM default matches Kotlin default)
+        // Missing Boolean fields get Kotlin default (false for truncated)
         assertEquals("truncated should be false", false, session.truncated)
 
-        // Missing nullable fields should be null (JVM default matches Kotlin default)
+        // tokenAdvanced gets Kotlin default (true) — correctness fix vs Gson's JVM zero (false)
+        assertEquals("tokenAdvanced should be true (Kotlin default)", true, session.tokenAdvanced)
+
+        // Missing nullable fields get Kotlin default (null)
         assertNull("errorType should be null", session.errorType)
 
         // Verify computed properties don't crash

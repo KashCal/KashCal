@@ -37,12 +37,21 @@ object WeekViewUtils {
     val MIN_EVENT_HEIGHT = 20.dp
     val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
-    // Infinite day pager constants
+    // Infinite day pager constants (THREE_DAYS mode)
     // Using large page count for pseudo-infinite scrolling
     // HorizontalPager is lazy - large pageCount costs nothing
     const val TOTAL_DAY_PAGES = Int.MAX_VALUE
     const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
     const val VISIBLE_DAYS = 3  // 3-day view
+
+    // Week pager constants (WEEK mode — 1 page = 1 week)
+    const val TOTAL_WEEK_PAGES = 1000  // ~500 weeks each direction
+    const val CENTER_WEEK_PAGE = TOTAL_WEEK_PAGES / 2
+
+    // Full 24-hour grid constants for WEEK mode
+    const val FULL_DAY_START_HOUR = 0
+    const val FULL_DAY_END_HOUR = 24
+    const val FULL_DAY_TOTAL_HOURS = 24
 
     // ==================== Day Pager Functions ====================
 
@@ -102,6 +111,91 @@ object WeekViewUtils {
         val startDate = pageToDate(currentPage).minusDays(bufferDays.toLong())
         val endDate = pageToDate(currentPage).plusDays((visibleDays - 1 + bufferDays).toLong())
         return startDate to endDate
+    }
+
+    // ==================== Week Pager Functions ====================
+
+    /**
+     * Convert a week pager page index to the start date of that week.
+     * CENTER_WEEK_PAGE corresponds to the current week.
+     *
+     * @param weekPage The week pager page index
+     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
+     * @param referenceDate Reference date for "today" (default: now; injectable for tests)
+     * @return LocalDate for the first day of that week
+     */
+    fun weekPageToStartDate(
+        weekPage: Int,
+        firstDayOfWeek: Int = Calendar.SUNDAY,
+        referenceDate: LocalDate = LocalDate.now()
+    ): LocalDate {
+        val weekOffset = (weekPage - CENTER_WEEK_PAGE).toLong()
+        val currentWeekStart = getWeekStart(referenceDate, firstDayOfWeek)
+        return currentWeekStart.plusWeeks(weekOffset)
+    }
+
+    /**
+     * Convert a date to a week pager page index.
+     * Inverse of [weekPageToStartDate].
+     *
+     * @param date The date to convert (any day in the target week)
+     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
+     * @param referenceDate Reference date for "today" (default: now; injectable for tests)
+     * @return Week pager page index
+     */
+    fun dateToWeekPage(
+        date: LocalDate,
+        firstDayOfWeek: Int = Calendar.SUNDAY,
+        referenceDate: LocalDate = LocalDate.now()
+    ): Int {
+        val currentWeekStart = getWeekStart(referenceDate, firstDayOfWeek)
+        val targetWeekStart = getWeekStart(date, firstDayOfWeek)
+        val weekOffset = ChronoUnit.WEEKS.between(currentWeekStart, targetWeekStart)
+        return (CENTER_WEEK_PAGE + weekOffset).toInt()
+    }
+
+    /**
+     * Format a week range for the header (e.g., "Mar 9 - 15, 2026").
+     *
+     * Rules:
+     * - Same month: "Mar 9 - 15, 2026"
+     * - Cross month, same year: "Mar 30 - Apr 5, 2026"
+     * - Cross year: "Dec 29, 2025 - Jan 4, 2026" (shows both years)
+     *
+     * @param weekPage The week pager page index
+     * @param firstDayOfWeek User's preferred first day of week
+     * @param referenceDate Reference date for "today" (injectable for tests)
+     * @return Formatted week range string
+     */
+    fun formatWeekRange(
+        weekPage: Int,
+        firstDayOfWeek: Int = Calendar.SUNDAY,
+        referenceDate: LocalDate = LocalDate.now()
+    ): String {
+        val startDate = weekPageToStartDate(weekPage, firstDayOfWeek, referenceDate)
+        val endDate = startDate.plusDays(6)
+
+        val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale.getDefault())
+
+        return when {
+            // Same month
+            startDate.month == endDate.month && startDate.year == endDate.year -> {
+                val month = startDate.format(monthFormatter)
+                "$month ${startDate.dayOfMonth} - ${endDate.dayOfMonth}, ${startDate.year}"
+            }
+            // Cross month, same year
+            startDate.year == endDate.year -> {
+                val startMonth = startDate.format(monthFormatter)
+                val endMonth = endDate.format(monthFormatter)
+                "$startMonth ${startDate.dayOfMonth} - $endMonth ${endDate.dayOfMonth}, ${startDate.year}"
+            }
+            // Cross year — show both years for clarity
+            else -> {
+                val startMonth = startDate.format(monthFormatter)
+                val endMonth = endDate.format(monthFormatter)
+                "$startMonth ${startDate.dayOfMonth}, ${startDate.year} - $endMonth ${endDate.dayOfMonth}, ${endDate.year}"
+            }
+        }
     }
 
     /**
@@ -268,11 +362,11 @@ object WeekViewUtils {
                     "$startMonth ${startDate.dayOfMonth} - $endMonth ${endDate.dayOfMonth}"
                 }
             }
-            // Cross year
+            // Cross year — show both years for clarity
             else -> {
                 val startMonth = startDate.format(monthFormatter)
                 val endMonth = endDate.format(monthFormatter)
-                "$startMonth ${startDate.dayOfMonth} - $endMonth ${endDate.dayOfMonth}, ${endDate.year}"
+                "$startMonth ${startDate.dayOfMonth}, ${startDate.year} - $endMonth ${endDate.dayOfMonth}, ${endDate.year}"
             }
         }
     }
@@ -313,8 +407,8 @@ object WeekViewUtils {
      * @param snap Whether to snap to 15-minute intervals
      * @return Pair of (hour, minute)
      */
-    fun offsetToTime(yOffset: Float, hourHeightPx: Float, snap: Boolean = true): Pair<Int, Int> {
-        val totalMinutes = START_HOUR * MINUTES_PER_HOUR + (yOffset / hourHeightPx * MINUTES_PER_HOUR).toInt()
+    fun offsetToTime(yOffset: Float, hourHeightPx: Float, snap: Boolean = true, startHour: Int = START_HOUR): Pair<Int, Int> {
+        val totalMinutes = startHour * MINUTES_PER_HOUR + (yOffset / hourHeightPx * MINUTES_PER_HOUR).toInt()
         var hour = totalMinutes / MINUTES_PER_HOUR
         var minute = totalMinutes % MINUTES_PER_HOUR
 
@@ -358,9 +452,14 @@ object WeekViewUtils {
      * @param endMinutes End time in minutes from midnight
      * @return ClampResult with display times and clamping indicators
      */
-    fun clampToVisibleRange(startMinutes: Int, endMinutes: Int): ClampResult {
-        val gridStartMinutes = START_HOUR * MINUTES_PER_HOUR  // 360 (6am)
-        val gridEndMinutes = END_HOUR * MINUTES_PER_HOUR      // 1380 (11pm)
+    fun clampToVisibleRange(
+        startMinutes: Int,
+        endMinutes: Int,
+        startHour: Int = START_HOUR,
+        endHour: Int = END_HOUR
+    ): ClampResult {
+        val gridStartMinutes = startHour * MINUTES_PER_HOUR
+        val gridEndMinutes = endHour * MINUTES_PER_HOUR
 
         return ClampResult(
             displayStartMinutes = startMinutes.coerceIn(gridStartMinutes, gridEndMinutes),
@@ -503,7 +602,9 @@ object WeekViewUtils {
     fun positionEventsForDay(
         events: List<DisplayEvent>,
         dayIndex: Int,
-        hourHeight: Dp = HOUR_HEIGHT
+        hourHeight: Dp = HOUR_HEIGHT,
+        startHour: Int = START_HOUR,
+        endHour: Int = END_HOUR
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
@@ -559,13 +660,13 @@ object WeekViewUtils {
             val leftFraction = slotIndex * widthFraction
 
             // Clamp to visible range
-            val clampResult = clampToVisibleRange(span.startMinutes, span.endMinutes)
+            val clampResult = clampToVisibleRange(span.startMinutes, span.endMinutes, startHour, endHour)
 
             // Skip if entirely outside visible range
             if (clampResult.displayEndMinutes <= clampResult.displayStartMinutes) return@mapIndexedNotNull null
 
             // Calculate visual position
-            val topMinutes = clampResult.displayStartMinutes - START_HOUR * MINUTES_PER_HOUR
+            val topMinutes = clampResult.displayStartMinutes - startHour * MINUTES_PER_HOUR
             val durationMinutes = clampResult.displayEndMinutes - clampResult.displayStartMinutes
 
             val topOffset = (topMinutes.toFloat() / MINUTES_PER_HOUR * hourHeight.value).dp

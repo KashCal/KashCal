@@ -1,5 +1,8 @@
 package org.onekash.kashcal.error
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
+
 /**
  * Centralized error types for KashCal.
  *
@@ -19,12 +22,14 @@ package org.onekash.kashcal.error
  * - Data objects for singleton errors
  * - Nested sealed classes for organization
  */
+@Immutable
 sealed class CalendarError {
 
     /**
      * Authentication errors requiring user action.
      * Always displayed as Dialog.
      */
+    @Immutable
     sealed class Auth : CalendarError() {
         /** Invalid Apple ID or app-specific password */
         data object InvalidCredentials : Auth()
@@ -43,6 +48,7 @@ sealed class CalendarError {
      * Network connectivity errors.
      * Usually transient, displayed as Snackbar with Retry.
      */
+    @Immutable
     sealed class Network : CalendarError() {
         /** Device is offline */
         data object Offline : Network()
@@ -64,6 +70,7 @@ sealed class CalendarError {
      * Server-side errors.
      * Mix of transient (5xx) and permanent (4xx).
      */
+    @Immutable
     sealed class Server : CalendarError() {
         /** 5xx - Server temporarily unavailable */
         data object TemporarilyUnavailable : Server()
@@ -88,6 +95,7 @@ sealed class CalendarError {
      * Event operation errors.
      * Displayed as Snackbar.
      */
+    @Immutable
     sealed class Event : CalendarError() {
         /** Event ID not found in database */
         data class NotFound(val eventId: Long) : Event()
@@ -109,6 +117,7 @@ sealed class CalendarError {
      * Import/Export errors.
      * Displayed as Snackbar, may include partial success info.
      */
+    @Immutable
     sealed class ImportExport : CalendarError() {
         /** File not found or unreadable */
         data object FileNotFound : ImportExport()
@@ -134,6 +143,7 @@ sealed class CalendarError {
      * Storage/Database errors.
      * Serious errors, displayed as Dialog.
      */
+    @Immutable
     sealed class Storage : CalendarError() {
         /** Device storage full */
         data object StorageFull : Storage()
@@ -152,6 +162,7 @@ sealed class CalendarError {
      * Android permission errors.
      * Displayed as Dialog with Settings action.
      */
+    @Immutable
     sealed class Permission : CalendarError() {
         /** Notification permission denied */
         data object NotificationDenied : Permission()
@@ -168,6 +179,7 @@ sealed class CalendarError {
      * Used for Phase 3 write support.
      * Displayed as Dialog with retry option.
      */
+    @Immutable
     sealed class DeviceCalendar : CalendarError() {
         /** Write operation failed */
         data class WriteFailed(val message: String) : DeviceCalendar()
@@ -189,6 +201,7 @@ sealed class CalendarError {
      * Sync operation errors.
      * Various presentations based on severity.
      */
+    @Stable
     sealed class Sync : CalendarError() {
         /** Sync already in progress */
         data object AlreadySyncing : Sync()

@@ -1,11 +1,16 @@
 package org.onekash.kashcal.error
 
+import androidx.compose.runtime.Stable
+
 /**
  * Callbacks for error action buttons.
  *
  * ViewModel handles these callbacks and performs appropriate actions.
  * Using sealed class ensures exhaustive handling.
+ *
+ * Uses @Stable (not @Immutable) because Custom variant contains a lambda.
  */
+@Stable
 sealed class ErrorActionCallback {
     /** Retry the failed operation */
     data object Retry : ErrorActionCallback()

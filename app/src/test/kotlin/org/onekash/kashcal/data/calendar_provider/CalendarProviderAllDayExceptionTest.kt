@@ -85,4 +85,93 @@ class CalendarProviderAllDayExceptionTest {
 
         assertEquals(ts, values.getAsLong(Events.ORIGINAL_INSTANCE_TIME))
     }
+
+    @Test
+    fun `buildCanceledExceptionValues handles multi-day spanning month boundary`() {
+        // All-day event Jan 30 - Feb 2, originalInstanceTime = Jan 30 UTC midnight
+        val jan30Midnight = 1706572800000L // 2024-01-30 00:00:00 UTC
+        val jan31Midnight = 1706659200000L // 2024-01-31 00:00:00 UTC
+
+        val values = buildCanceledExceptionValues(
+            calendarId = 1L,
+            masterEventId = 100L,
+            originalInstanceTime = jan30Midnight,
+            isAllDay = true
+        )
+
+        assertEquals(jan30Midnight, values.getAsLong(Events.DTSTART))
+        assertEquals(jan31Midnight, values.getAsLong(Events.DTEND))
+        assertEquals(1, values.getAsInteger(Events.ALL_DAY))
+        assertEquals("UTC", values.getAsString(Events.EVENT_TIMEZONE))
+    }
+
+    @Test
+    fun `buildCanceledExceptionValues handles multi-day spanning year boundary`() {
+        // All-day event Dec 30 - Jan 2, originalInstanceTime = Dec 31 UTC midnight
+        val dec31Midnight = 1735603200000L // 2024-12-31 00:00:00 UTC
+        val jan1Midnight = 1735689600000L  // 2025-01-01 00:00:00 UTC
+
+        val values = buildCanceledExceptionValues(
+            calendarId = 1L,
+            masterEventId = 100L,
+            originalInstanceTime = dec31Midnight,
+            isAllDay = true
+        )
+
+        assertEquals(dec31Midnight, values.getAsLong(Events.DTSTART))
+        assertEquals(jan1Midnight, values.getAsLong(Events.DTEND))
+    }
+
+    @Test
+    fun `buildCanceledExceptionValues handles leap year boundary`() {
+        // All-day event Feb 28 2024 (leap year), originalInstanceTime = Feb 28 UTC midnight
+        val feb28Midnight = 1709078400000L // 2024-02-28 00:00:00 UTC
+        val feb29Midnight = 1709164800000L // 2024-02-29 00:00:00 UTC (exists in leap year)
+
+        val values = buildCanceledExceptionValues(
+            calendarId = 1L,
+            masterEventId = 100L,
+            originalInstanceTime = feb28Midnight,
+            isAllDay = true
+        )
+
+        assertEquals(feb28Midnight, values.getAsLong(Events.DTSTART))
+        assertEquals(feb29Midnight, values.getAsLong(Events.DTEND))
+    }
+
+    @Test
+    fun `buildCanceledExceptionValues handles non-leap year boundary`() {
+        // All-day event Feb 28 2025 (non-leap), originalInstanceTime = Feb 28 UTC midnight
+        val feb28Midnight = 1740700800000L // 2025-02-28 00:00:00 UTC
+        val mar1Midnight = 1740787200000L  // 2025-03-01 00:00:00 UTC (skips Feb 29)
+
+        val values = buildCanceledExceptionValues(
+            calendarId = 1L,
+            masterEventId = 100L,
+            originalInstanceTime = feb28Midnight,
+            isAllDay = true
+        )
+
+        assertEquals(feb28Midnight, values.getAsLong(Events.DTSTART))
+        assertEquals(mar1Midnight, values.getAsLong(Events.DTEND))
+    }
+
+    @Test
+    fun `buildCanceledExceptionValues normalizes DST-offset time for all-day`() {
+        // Mar 10 2024 02:00 UTC - DST transition time in America/New_York, not midnight
+        val dstTransitionTime = 1710036000000L // 2024-03-10 02:00:00 UTC
+        val mar10Midnight = 1710028800000L     // 2024-03-10 00:00:00 UTC
+
+        val values = buildCanceledExceptionValues(
+            calendarId = 1L,
+            masterEventId = 100L,
+            originalInstanceTime = dstTransitionTime,
+            isAllDay = true
+        )
+
+        // isAllDay=true should normalize ORIGINAL_INSTANCE_TIME to UTC midnight
+        assertEquals(mar10Midnight, values.getAsLong(Events.ORIGINAL_INSTANCE_TIME))
+        assertEquals(mar10Midnight, values.getAsLong(Events.DTSTART))
+        assertEquals(mar10Midnight + 86_400_000L, values.getAsLong(Events.DTEND))
+    }
 }

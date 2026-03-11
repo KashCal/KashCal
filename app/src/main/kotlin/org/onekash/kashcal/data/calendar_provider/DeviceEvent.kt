@@ -1,5 +1,7 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Full event data from CalendarProvider's Events table.
  *
@@ -12,6 +14,7 @@ package org.onekash.kashcal.data.calendar_provider
  *
  * Used by EventFormSheet when editing device events.
  */
+@Immutable
 data class DeviceEvent(
     val id: Long,
     val calendarId: Long,

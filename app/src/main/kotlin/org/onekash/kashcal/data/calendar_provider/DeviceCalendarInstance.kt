@@ -1,5 +1,7 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import androidx.compose.runtime.Immutable
+
 /**
  * A single calendar instance from the device's CalendarProvider.
  * Maps to one row from CalendarContract.Instances.
@@ -7,6 +9,7 @@ package org.onekash.kashcal.data.calendar_provider
  * Instances are pre-expanded occurrences of events — for recurring events,
  * there is one instance per occurrence in the queried range.
  */
+@Immutable
 data class DeviceCalendarInstance(
     val instanceId: Long,
     val eventId: Long,

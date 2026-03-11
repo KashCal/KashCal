@@ -696,44 +696,49 @@ class DateTimeUtilsTest {
 
     @Test
     fun `formatRelativeTime just now for recent timestamp`() {
-        val now = System.currentTimeMillis()
-        val result = DateTimeUtils.formatRelativeTime(now)
+        val now = 1704067200000L  // Jan 1, 2024 00:00 UTC
+        val result = DateTimeUtils.formatRelativeTime(now, now = now)
         assertEquals("Just now", result)
     }
 
     @Test
     fun `formatRelativeTime shows minutes ago`() {
-        val fiveMinutesAgo = System.currentTimeMillis() - (5 * 60 * 1000)
-        val result = DateTimeUtils.formatRelativeTime(fiveMinutesAgo)
+        val now = 1704067200000L
+        val fiveMinutesAgo = now - (5 * 60 * 1000)
+        val result = DateTimeUtils.formatRelativeTime(fiveMinutesAgo, now = now)
         assertEquals("5 minutes ago", result)
     }
 
     @Test
     fun `formatRelativeTime shows singular minute`() {
-        val oneMinuteAgo = System.currentTimeMillis() - (1 * 60 * 1000)
-        val result = DateTimeUtils.formatRelativeTime(oneMinuteAgo)
+        val now = 1704067200000L
+        val oneMinuteAgo = now - (1 * 60 * 1000)
+        val result = DateTimeUtils.formatRelativeTime(oneMinuteAgo, now = now)
         assertEquals("1 minute ago", result)
     }
 
     @Test
     fun `formatRelativeTime shows hours ago`() {
-        val threeHoursAgo = System.currentTimeMillis() - (3 * 60 * 60 * 1000)
-        val result = DateTimeUtils.formatRelativeTime(threeHoursAgo)
+        val now = 1704067200000L
+        val threeHoursAgo = now - (3 * 60 * 60 * 1000)
+        val result = DateTimeUtils.formatRelativeTime(threeHoursAgo, now = now)
         assertEquals("3 hours ago", result)
     }
 
     @Test
     fun `formatRelativeTime shows days ago`() {
-        val twoDaysAgo = System.currentTimeMillis() - (2 * 24 * 60 * 60 * 1000)
-        val result = DateTimeUtils.formatRelativeTime(twoDaysAgo)
+        val now = 1704067200000L
+        val twoDaysAgo = now - (2 * 24 * 60 * 60 * 1000)
+        val result = DateTimeUtils.formatRelativeTime(twoDaysAgo, now = now)
         assertEquals("2 days ago", result)
     }
 
     @Test
     fun `formatRelativeTime shows date for old timestamps`() {
-        val twoWeeksAgo = System.currentTimeMillis() - (14 * 24 * 60 * 60 * 1000)
-        val result = DateTimeUtils.formatRelativeTime(twoWeeksAgo)
-        // Should show date like "Dec 20" instead of "14 days ago"
+        val now = 1704067200000L
+        val twoWeeksAgo = now - (14L * 24 * 60 * 60 * 1000)
+        val result = DateTimeUtils.formatRelativeTime(twoWeeksAgo, now = now)
+        // Should show date like "Dec 18" instead of "14 days ago"
         assertTrue("Should show month format, got: $result",
             result.matches(Regex("[A-Z][a-z]{2} \\d{1,2}")))
     }

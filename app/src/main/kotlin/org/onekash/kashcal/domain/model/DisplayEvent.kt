@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.model
 
+import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -21,6 +22,7 @@ import java.util.UUID
  * [Room] wraps KashCal's own Event + Occurrence + Calendar from Room DB.
  * [Device] wraps a DeviceCalendarInstance from Android's CalendarProvider.
  */
+@Immutable
 sealed interface DisplayEvent {
     val title: String
     val description: String?
@@ -36,6 +38,7 @@ sealed interface DisplayEvent {
     val isReadOnly: Boolean
 
     /** Room event with full Event + Occurrence data */
+    @Immutable
     data class Room(
         val event: Event,
         val occurrence: Occurrence,
@@ -56,6 +59,7 @@ sealed interface DisplayEvent {
     }
 
     /** Device calendar event from CalendarProvider */
+    @Immutable
     data class Device(val instance: DeviceCalendarInstance) : DisplayEvent {
         override val title get() = instance.title
         override val description get() = instance.description

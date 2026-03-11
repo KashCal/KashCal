@@ -528,8 +528,7 @@ object DateTimeUtils {
      * @param timestampMs Timestamp in milliseconds
      * @return Human-readable relative time string
      */
-    fun formatRelativeTime(timestampMs: Long): String {
-        val now = System.currentTimeMillis()
+    fun formatRelativeTime(timestampMs: Long, now: Long = System.currentTimeMillis()): String {
         val diff = now - timestampMs
         val minutes = diff / (1000 * 60)
         val hours = minutes / 60

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.rrule
 
+import androidx.compose.runtime.Immutable
 import java.time.DayOfWeek
 
 /**
@@ -38,6 +39,7 @@ enum class RecurrenceFrequency {
  * - NthWeekday(2, TUESDAY) -> BYDAY=2TU (2nd Tuesday)
  * - NthWeekday(-1, FRIDAY) -> BYDAY=-1FR (last Friday)
  */
+@Immutable
 sealed class MonthlyPattern {
     /**
      * Same day of month (e.g., 15th).
@@ -62,6 +64,7 @@ sealed class MonthlyPattern {
 /**
  * End condition for recurring events.
  */
+@Immutable
 sealed class EndCondition {
     /** Repeats forever (no COUNT or UNTIL) */
     data object Never : EndCondition()
@@ -91,6 +94,7 @@ sealed class EndCondition {
  * @property monthlyPattern Pattern for monthly recurrence
  * @property endCondition How the recurrence ends
  */
+@Immutable
 data class ParsedRecurrence(
     val frequency: RecurrenceFrequency = RecurrenceFrequency.NONE,
     val interval: Int = 1,

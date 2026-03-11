@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import android.util.Log
+import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -16,6 +17,7 @@ import javax.net.ssl.SSLHandshakeException
  * Used by AccountSettingsViewModel and AccountSettingsScreen to manage
  * the iCloud connection UI state.
  */
+@Immutable
 sealed class ICloudConnectionState {
     /**
      * Not connected to iCloud.
@@ -53,6 +55,7 @@ sealed class ICloudConnectionState {
  * Provides a simplified view of the connected iCloud account
  * for the accounts list, separate from the full ICloudConnectionState.
  */
+@Immutable
 data class ICloudAccountUiModel(
     /** Account database ID */
     val accountId: Long,
@@ -75,6 +78,7 @@ data class ICloudAccountUiModel(
  * Renamed from `IcsSubscription` to `IcsSubscriptionUiModel` to avoid
  * confusion with the database entity class.
  */
+@Immutable
 data class IcsSubscriptionUiModel(
     /** Database ID (null for new subscriptions not yet saved) */
     val id: Long?,
@@ -105,6 +109,7 @@ data class IcsSubscriptionUiModel(
  * State for fetching and validating ICS calendar URLs.
  * Used in the Add Subscription dialog.
  */
+@Immutable
 sealed class FetchCalendarState {
     /** Initial state - no fetch in progress */
     data object Idle : FetchCalendarState()

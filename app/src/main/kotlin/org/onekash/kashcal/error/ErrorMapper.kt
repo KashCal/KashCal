@@ -152,9 +152,9 @@ object ErrorMapper {
                 R.string.error_conflict_generic
             },
             messageArgs = if (error.eventTitle != null) {
-                arrayOf(error.eventTitle)
+                listOf(error.eventTitle)
             } else {
-                emptyArray()
+                emptyList()
             },
             primaryAction = DialogAction(
                 labelResId = R.string.action_force_sync,
@@ -187,7 +187,7 @@ object ErrorMapper {
 
         is CalendarError.Event.ReadOnlyCalendar -> ErrorPresentation.Snackbar(
             messageResId = R.string.error_calendar_read_only,
-            messageArgs = arrayOf(error.calendarName)
+            messageArgs = listOf(error.calendarName)
         )
 
         is CalendarError.Event.InvalidData -> ErrorPresentation.Snackbar(
@@ -211,7 +211,7 @@ object ErrorMapper {
 
         is CalendarError.ImportExport.PartialImport -> ErrorPresentation.Snackbar(
             messageResId = R.string.error_import_partial,
-            messageArgs = arrayOf(error.imported, error.failed),
+            messageArgs = listOf(error.imported, error.failed),
             duration = ErrorPresentation.Snackbar.SnackbarDuration.Long
         )
 
@@ -358,7 +358,7 @@ object ErrorMapper {
 
         is CalendarError.Sync.PartialFailure -> ErrorPresentation.Snackbar(
             messageResId = R.string.error_sync_partial,
-            messageArgs = arrayOf(error.successCount, error.failedCount),
+            messageArgs = listOf(error.successCount, error.failedCount),
             action = SnackbarAction(
                 labelResId = R.string.action_details,
                 callback = ErrorActionCallback.ViewSyncDetails

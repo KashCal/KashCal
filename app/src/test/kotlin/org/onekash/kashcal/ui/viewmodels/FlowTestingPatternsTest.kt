@@ -322,18 +322,6 @@ class FlowTestingPatternsTest {
 
     @Test
     fun `Flow collection is cancelled when ViewModel is cleared`() = runTest {
-        var flowCompleted = false
-        val continuousFlow = flow {
-            try {
-                repeat(100) {
-                    emit(it)
-                    kotlinx.coroutines.delay(100)
-                }
-            } finally {
-                flowCompleted = true
-            }
-        }
-
         // This test verifies that coroutines are cancelled on ViewModel clearing
         // The viewModelScope handles this automatically
         val viewModel = createViewModel()

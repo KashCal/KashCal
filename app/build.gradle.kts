@@ -9,6 +9,13 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kover)
     alias(libs.plugins.dokka)
+    alias(libs.plugins.kotlin.serialization)
+}
+
+composeCompiler {
+    stabilityConfigurationFile = rootProject.layout.projectDirectory.file("stability_config.conf")
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+    metricsDestination = layout.buildDirectory.dir("compose_compiler")
 }
 
 // Load version from version.properties
@@ -184,7 +191,7 @@ dependencies {
     ksp(libs.hilt.compiler)
 
     // JSON
-    implementation(libs.gson)
+    implementation(libs.kotlinx.serialization.json)
 
     // RFC 5545 Recurrence
     implementation(libs.lib.recur)

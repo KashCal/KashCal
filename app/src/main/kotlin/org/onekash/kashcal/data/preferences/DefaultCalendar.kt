@@ -1,5 +1,7 @@
 package org.onekash.kashcal.data.preferences
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Represents the default calendar selection for new events.
  *
@@ -9,6 +11,7 @@ package org.onekash.kashcal.data.preferences
  * Storage format: "room:123" or "device:456"
  * Legacy format: Plain numeric string (e.g., "123") - treated as Room calendar
  */
+@Immutable
 sealed class DefaultCalendar {
 
     abstract val calendarId: Long

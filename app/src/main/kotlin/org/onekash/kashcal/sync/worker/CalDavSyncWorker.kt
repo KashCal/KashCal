@@ -9,7 +9,8 @@ import androidx.work.ForegroundInfo
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import com.google.gson.Gson
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -879,7 +880,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                     if (shouldApplyDefaults) {
                         try {
                             val reminder = ContactEventUtils.minutesToIsoDuration(defaultMinutes)
-                            val remindersJson = Gson().toJson(listOf(reminder))
+                            val remindersJson = Json.encodeToString(listOf(reminder))
                             eventsDao.updateReminders(event.id, remindersJson, System.currentTimeMillis())
                             event = event.copy(reminders = listOf(reminder))
                             defaultsApplied++

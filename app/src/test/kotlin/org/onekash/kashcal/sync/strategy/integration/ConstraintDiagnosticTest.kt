@@ -1,9 +1,15 @@
 package org.onekash.kashcal.sync.strategy.integration
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -52,6 +58,10 @@ class ConstraintDiagnosticTest {
     private var serverUrl: String = "https://caldav.icloud.com"
     private lateinit var client: CalDavClient
 
+    // Test-scoped DataStore cleanup tracking
+    private val dataStoreScopes = mutableListOf<CoroutineScope>()
+    private val dataStoreFiles = mutableListOf<File>()
+
     @Before
     fun setup() {
         loadCredentials()
@@ -88,6 +98,12 @@ class ConstraintDiagnosticTest {
                 if (username != null && password != null) break
             }
         }
+    }
+
+    @After
+    fun tearDown() {
+        dataStoreScopes.forEach { it.cancel() }
+        dataStoreFiles.forEach { it.delete() }
     }
 
     private fun assumeCredentialsAvailable() {
@@ -136,7 +152,14 @@ class ConstraintDiagnosticTest {
         val eventsDao = db.eventsDao()
         val occurrencesDao = db.occurrencesDao()
         val calendarRepository = CalendarRepositoryImpl(db.calendarsDao())
-        val dataStore = KashCalDataStore(context)
+        val dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        val testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        dataStoreScopes.add(dataStoreScope)
+        dataStoreFiles.add(testDataStoreFile)
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        val dataStore = KashCalDataStore(context, testPrefsDataStore)
         val occurrenceGenerator = OccurrenceGenerator(db, occurrencesDao, eventsDao, dataStore)
         val syncSessionStore = SyncSessionStore(context)
 

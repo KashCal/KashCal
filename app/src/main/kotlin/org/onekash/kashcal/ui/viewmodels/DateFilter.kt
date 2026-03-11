@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import androidx.compose.runtime.Immutable
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -13,6 +14,7 @@ import org.onekash.kashcal.util.DateTimeUtils
  * Each filter provides a computed time range based on current date.
  * Used with FTS search to filter results by occurrence date range.
  */
+@Immutable
 sealed class DateFilter {
     abstract val displayName: String
 

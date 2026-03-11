@@ -138,7 +138,9 @@ fun SyncHistorySheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(sessions, key = { it.id }) { session ->
-                        SyncSessionCard(session = session)
+                        Column(modifier = Modifier.animateItem()) {
+                            SyncSessionCard(session = session)
+                        }
                     }
                 }
             }

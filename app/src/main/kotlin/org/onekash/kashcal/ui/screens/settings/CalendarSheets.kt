@@ -204,7 +204,7 @@ fun DefaultCalendarSheet(
                     // Room calendars section
                     calendarGroups.forEach { group ->
                         // Account header
-                        item(key = "room_header_${group.accountId}") {
+                        item(key = "room_header_${group.accountId}", contentType = "account_header") {
                             Text(
                                 text = group.accountName,
                                 style = MaterialTheme.typography.labelMedium,
@@ -219,7 +219,8 @@ fun DefaultCalendarSheet(
                         // Calendars in group
                         items(
                             items = group.calendars,
-                            key = { "room_cal_${it.id}" }
+                            key = { "room_cal_${it.id}" },
+                            contentType = { "calendar_item" }
                         ) { calendar ->
                             DefaultCalendarItem(
                                 name = calendar.displayName,
@@ -235,7 +236,7 @@ fun DefaultCalendarSheet(
 
                     // Device calendars section (if available)
                     if (allDeviceCalendars.isNotEmpty()) {
-                        item(key = "device_section_header") {
+                        item(key = "device_section_header", contentType = "section_header") {
                             Column {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 HorizontalDivider(
@@ -255,7 +256,7 @@ fun DefaultCalendarSheet(
 
                         deviceCalendarGroups.forEach { group ->
                             // Account header
-                            item(key = "device_header_${group.accountName}") {
+                            item(key = "device_header_${group.accountName}", contentType = "account_header") {
                                 Text(
                                     text = group.accountName,
                                     style = MaterialTheme.typography.labelMedium,
@@ -270,7 +271,8 @@ fun DefaultCalendarSheet(
                             // Calendars in group
                             items(
                                 items = group.pickerCalendars,
-                                key = { "device_cal_${it.id}" }
+                                key = { "device_cal_${it.id}" },
+                                contentType = { "calendar_item" }
                             ) { pickerCal ->
                                 DefaultCalendarItem(
                                     name = pickerCal.displayName,

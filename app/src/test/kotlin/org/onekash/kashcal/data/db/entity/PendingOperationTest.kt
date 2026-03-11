@@ -88,7 +88,7 @@ class PendingOperationTest {
             status = PendingOperation.STATUS_IN_PROGRESS,
             nextRetryAt = 0L
         )
-        assertFalse(op.isReady(System.currentTimeMillis()))
+        assertFalse(op.isReady(1704067200000L))
     }
 
     @Test
@@ -97,7 +97,7 @@ class PendingOperationTest {
             status = PendingOperation.STATUS_FAILED,
             nextRetryAt = 0L
         )
-        assertFalse(op.isReady(System.currentTimeMillis()))
+        assertFalse(op.isReady(1704067200000L))
     }
 
     // ========== calculateRetryDelay Tests ==========

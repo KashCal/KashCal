@@ -1,5 +1,7 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.runtime.Immutable
+
 /**
  * State for CalDAV sign-in flow.
  *
@@ -8,6 +10,7 @@ package org.onekash.kashcal.ui.screens.settings
  * 2. Discovering: Querying server for calendars, then auto-adds all
  * 3. Success: Account added, success sheet shown, sign-in sheet dismissed
  */
+@Immutable
 sealed class CalDavConnectionState {
 
     /**
@@ -45,6 +48,7 @@ sealed class CalDavConnectionState {
 /**
  * UI model for displaying connected CalDAV accounts in Settings.
  */
+@Immutable
 data class CalDavAccountUiModel(
     val id: Long,
     val email: String,

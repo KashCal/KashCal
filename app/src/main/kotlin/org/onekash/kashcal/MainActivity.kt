@@ -302,20 +302,19 @@ class MainActivity : ComponentActivity() {
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
 
-                        // Check if in 3-day view
-                        val isInThreeDaysView = uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS
+                        // Check if in a time-grid view (3-day or week)
+                        val isInTimeGridView = uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS ||
+                            uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK
+                        val gridStartHour = if (uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK) 0 else 6
 
-                        val eventTimestamp = if (isInThreeDaysView && uiState.weekViewStartDate != 0L) {
-                            // 3-day view: use current pager position and scroll position
+                        val eventTimestamp = if (isInTimeGridView && uiState.weekViewStartDate != 0L) {
+                            // Time-grid view: use current pager position and scroll position
                             val dayIndex = uiState.weekViewPagerPosition
 
                             // Calculate visible hour from scroll position
-                            // Hour height is 60.dp, scroll position is in pixels
-                            // Approximate conversion: scroll / densityDp / 60 + 6 (START_HOUR)
-                            // Use a simplified approach: estimate based on screen density (~2.75)
                             val hourHeightPx = 60 * 2.75f  // Approximate for typical density
-                            val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + 6  // START_HOUR = 6
-                            val hour = visibleHour.coerceIn(6, 22)
+                            val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + gridStartHour
+                            val hour = visibleHour.coerceIn(gridStartHour, if (gridStartHour == 0) 23 else 22)
 
                             val eventCal = java.util.Calendar.getInstance().apply {
                                 timeInMillis = uiState.weekViewStartDate
@@ -324,7 +323,7 @@ class MainActivity : ComponentActivity() {
                                 set(java.util.Calendar.MINUTE, 0)
                                 set(java.util.Calendar.SECOND, 0)
                             }
-                            Log.d(TAG, "Week view FAB: dayIndex=$dayIndex, hour=$hour")
+                            Log.d(TAG, "Time grid FAB: dayIndex=$dayIndex, hour=$hour, gridStartHour=$gridStartHour")
                             eventCal.timeInMillis
                         } else {
                             // Month view: use selected date with next hour
@@ -393,8 +392,11 @@ class MainActivity : ComponentActivity() {
                         homeViewModel.showSnackbar("Default view set to ${
                             when (mode) {
                                 org.onekash.kashcal.ui.viewmodels.ViewMode.MONTH -> "Month"
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.MONTH_FULL -> "Month (Full)"
                                 org.onekash.kashcal.ui.viewmodels.ViewMode.AGENDA -> "Agenda"
                                 org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS -> "3 Days"
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK -> "Week"
+                                org.onekash.kashcal.ui.viewmodels.ViewMode.YEAR -> "Year"
                             }
                         }")
                     },
@@ -412,14 +414,19 @@ class MainActivity : ComponentActivity() {
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
                     // Agenda scroll callback
+                    onResume = { homeViewModel.onAppResume() },
                     onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },
                     // Snackbar callback
                     onClearSnackbar = { homeViewModel.clearSnackbar() },
                     // URL callback (for error actions)
                     onClearPendingUrl = { homeViewModel.clearPendingUrl() },
+                    // Day detail sheet callbacks
+                    onShowDayDetail = { dateMs -> homeViewModel.showDayDetail(dateMs) },
+                    onDismissDayDetail = { homeViewModel.dismissDayDetail() },
                     // Day pager cache callbacks
                     onLoadEventsForDayPagerRange = { centerDateMs -> homeViewModel.loadEventsForDayPagerRange(centerDateMs) },
-                    shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) }
+                    shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },
+                    onEnsureDotsForYear = { year -> homeViewModel.ensureDotsForYear(year) }
                 )
 
                 // Calendar Visibility Sheet

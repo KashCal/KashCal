@@ -1,11 +1,14 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import androidx.compose.runtime.Immutable
+
 /**
  * A device calendar from CalendarProvider.
  * Used in settings UI (calendar selection) and write routing (access level check).
  *
  * Maps to CalendarContract.Calendars columns.
  */
+@Immutable
 data class DeviceCalendar(
     val id: Long,
     val displayName: String,

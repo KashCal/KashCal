@@ -50,12 +50,26 @@ data class HomeUiState(
      * Prevents false cache hits when fast-swipe cancels intermediate month loads.
      */
     val loadedMonths: PersistentSet<Int> = persistentSetOf(),
+    /**
+     * Set of years that have successfully loaded dots for year view.
+     * Prevents re-query when swiping back to a previously loaded year.
+     */
+    val loadedYears: PersistentSet<Int> = persistentSetOf(),
 
     // === SELECTED DAY STATE ===
     /** Currently selected date (epoch millis), 0 = no selection */
     val selectedDate: Long = 0L,
     /** Formatted label for selected day (e.g., "December 17, 2024") */
     val selectedDayLabel: String = "",
+
+    // === MONTH EVENTS (for full-height month grid) ===
+    /**
+     * Events grouped by dayCode for the month grid.
+     * Key: dayCode (YYYYMMDD format, e.g., 20260315)
+     * Value: List of DisplayEvent for that day
+     * Covers viewing month +/- 1 month for smooth pager transitions.
+     */
+    val monthEventsMap: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
 
     // === DAY EVENTS CACHE (for swipe pager) ===
     /**
@@ -142,6 +156,12 @@ data class HomeUiState(
     val pendingWeekViewPagerPosition: Int? = null,
     /** Show week view date picker dialog */
     val showWeekViewDatePicker: Boolean = false,
+
+    // === DAY DETAIL SHEET (for month view) ===
+    /** Show day events bottom sheet */
+    val showDayDetailSheet: Boolean = false,
+    /** Date for day detail sheet (epoch millis) */
+    val dayDetailDate: Long = 0L,
 
     // === UI DIALOGS/SHEETS ===
     /** Show onboarding for first-time users */
@@ -274,6 +294,7 @@ data class HomeUiState(
  *
  * @see <a href="https://developer.android.com/topic/architecture/ui-layer/events">UI events</a>
  */
+@Immutable
 sealed class PendingAction {
     /**
      * Show event quick view sheet from reminder notification or widget tap.
@@ -362,7 +383,13 @@ enum class ViewMode(val key: String) {
     /** 30-day upcoming events list */
     AGENDA("agenda"),
     /** 3-day scrollable time grid */
-    THREE_DAYS("three_days");
+    THREE_DAYS("three_days"),
+    /** 7-day scrollable time grid (full 24-hour range) */
+    WEEK("week"),
+    /** Full-height month grid with event snippets */
+    MONTH_FULL("month_full"),
+    /** 12-month year overview grid */
+    YEAR("year");
 
     companion object {
         fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH

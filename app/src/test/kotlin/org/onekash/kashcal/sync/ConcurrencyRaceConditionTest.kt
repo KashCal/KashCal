@@ -119,7 +119,7 @@ class ConcurrencyRaceConditionTest {
         val results = listOf(
             async { database.eventsDao().update(serverVersion) },
             async {
-                delay(10) // Small delay to create race
+                delay(10) // Intentional: interleaves virtual-time execution order for race testing
                 database.eventsDao().update(localVersion)
             }
         ).awaitAll()
@@ -223,7 +223,7 @@ class ConcurrencyRaceConditionTest {
             }
         }
         val deleteJob = async {
-            delay(5) // Small delay
+            delay(5) // Intentional: interleaves virtual-time execution order for race testing
             try {
                 eventWriter.deleteEvent(eventId, isLocal = true)
             } catch (e: Exception) {

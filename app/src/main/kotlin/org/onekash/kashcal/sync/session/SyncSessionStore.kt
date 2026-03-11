@@ -2,9 +2,9 @@ package org.onekash.kashcal.sync.session
 
 import android.content.Context
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,7 @@ class SyncSessionStore @Inject constructor(
     }
 
     private val file = File(context.filesDir, FILE_NAME)
-    private val gson: Gson = GsonBuilder().create()
+    private val json = Json { ignoreUnknownKeys = true; coerceInputValues = true }
     private val mutex = Mutex()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -86,9 +86,8 @@ class SyncSessionStore @Inject constructor(
         }
 
         try {
-            val json = file.readText()
-            val type = object : TypeToken<List<SyncSession>>() {}.type
-            val loaded: List<SyncSession> = gson.fromJson(json, type) ?: emptyList()
+            val jsonStr = file.readText()
+            val loaded: List<SyncSession> = json.decodeFromString(jsonStr)
 
             // Filter out old entries
             val cutoff = System.currentTimeMillis() - RETENTION_MS
@@ -107,7 +106,7 @@ class SyncSessionStore @Inject constructor(
      */
     private fun saveToDisk(sessions: List<SyncSession>) {
         try {
-            file.writeText(gson.toJson(sessions))
+            file.writeText(json.encodeToString(sessions))
         } catch (e: Exception) {
             Log.e(TAG, "Failed to save sessions to disk", e)
         }

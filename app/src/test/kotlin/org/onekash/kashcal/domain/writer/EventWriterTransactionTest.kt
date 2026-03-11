@@ -159,8 +159,8 @@ class EventWriterTransactionTest {
         val original = eventWriter.createEvent(createTestEvent("Original"), isLocal = false)
         val originalModifiedAt = original.localModifiedAt!!
 
-        // Small delay to ensure different timestamp
-        Thread.sleep(10)
+        // Wall-clock delay to ensure localModifiedAt advances (uses System.currentTimeMillis())
+        Thread.sleep(50)
 
         val updated = eventWriter.updateEvent(
             original.copy(title = "Updated"),

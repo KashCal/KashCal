@@ -255,16 +255,21 @@ fun TimezonePickerChip(
                                 .fillMaxWidth()
                                 .heightIn(max = 150.dp)
                         ) {
-                            items(searchResults) { tzInfo ->
-                                TimezoneResultItem(
-                                    tzInfo = tzInfo,
-                                    onClick = {
-                                        onTimezoneSelected(tzInfo.zoneId)
-                                        isSearchOpen = false
-                                        searchQuery = ""
-                                        focusManager.clearFocus()
-                                    }
-                                )
+                            items(
+                                items = searchResults,
+                                key = { it.zoneId }
+                            ) { tzInfo ->
+                                Column(modifier = Modifier.animateItem()) {
+                                    TimezoneResultItem(
+                                        tzInfo = tzInfo,
+                                        onClick = {
+                                            onTimezoneSelected(tzInfo.zoneId)
+                                            isSearchOpen = false
+                                            searchQuery = ""
+                                            focusManager.clearFocus()
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

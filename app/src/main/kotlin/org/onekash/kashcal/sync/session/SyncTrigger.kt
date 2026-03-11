@@ -1,9 +1,12 @@
 package org.onekash.kashcal.sync.session
 
+import kotlinx.serialization.Serializable
+
 /**
  * Identifies what triggered a sync operation.
  * Used for distinguishing foreground vs background syncs in diagnostics.
  */
+@Serializable
 enum class SyncTrigger(val displayName: String, val icon: String) {
     FOREGROUND_PULL_TO_REFRESH("Pull-to-refresh", "👆"),
     FOREGROUND_APP_OPEN("App open", "📱"),

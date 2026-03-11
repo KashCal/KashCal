@@ -16,6 +16,9 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.ViewWeek
+import androidx.compose.material.icons.filled.CalendarViewMonth
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -60,10 +63,28 @@ private val viewOptions = listOf(
         icon = Icons.Default.ViewAgenda
     ),
     ViewOption(
+        mode = ViewMode.MONTH_FULL,
+        label = "Month (Full)",
+        description = "Full-height grid with event snippets",
+        icon = Icons.Default.GridView
+    ),
+    ViewOption(
         mode = ViewMode.THREE_DAYS,
         label = "3 Days",
         description = "Scrollable 3-day time grid",
         icon = Icons.Default.ViewWeek
+    ),
+    ViewOption(
+        mode = ViewMode.WEEK,
+        label = "Week",
+        description = "7-day scrollable time grid",
+        icon = Icons.Default.DateRange
+    ),
+    ViewOption(
+        mode = ViewMode.YEAR,
+        label = "Year",
+        description = "12-month grid overview",
+        icon = Icons.Default.CalendarViewMonth
     )
 )
 

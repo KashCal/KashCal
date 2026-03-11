@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.model
 
+import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -8,6 +9,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
  * Unified calendar representation for the calendar picker.
  * Wraps both Room Calendar and DeviceCalendar with common interface.
  */
+@Immutable
 sealed class PickerCalendar {
     abstract val id: Long
     abstract val displayName: String
@@ -15,6 +17,7 @@ sealed class PickerCalendar {
     abstract val isWritable: Boolean
 
     /** Room calendar (KashCal-managed) */
+    @Immutable
     data class Room(val calendar: Calendar) : PickerCalendar() {
         override val id: Long get() = calendar.id
         override val displayName: String get() = calendar.displayName
@@ -23,6 +26,7 @@ sealed class PickerCalendar {
     }
 
     /** Device calendar (from CalendarProvider) */
+    @Immutable
     data class Device(val calendar: DeviceCalendar) : PickerCalendar() {
         override val id: Long get() = calendar.id
         override val displayName: String get() = calendar.displayName
@@ -40,6 +44,7 @@ sealed class PickerCalendar {
  * @param calendars List of calendars under this account
  * @param isDeviceSection True for device calendar groups (shows after separator)
  */
+@Immutable
 data class CalendarGroup(
     val accountName: String,
     val accountId: Long,

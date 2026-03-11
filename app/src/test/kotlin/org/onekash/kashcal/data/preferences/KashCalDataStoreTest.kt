@@ -306,6 +306,21 @@ class KashCalDataStoreTest {
             dataStore.setDefaultCalendarView(KashCalDataStore.VIEW_THREE_DAYS)
             assertEquals(KashCalDataStore.VIEW_THREE_DAYS, awaitItem())
 
+            dataStore.setDefaultCalendarView(KashCalDataStore.VIEW_MONTH_FULL)
+            assertEquals(KashCalDataStore.VIEW_MONTH_FULL, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `setDefaultCalendarView VIEW_WEEK round-trip`() = runTest {
+        dataStore.defaultCalendarView.test {
+            assertEquals(KashCalDataStore.VIEW_MONTH, awaitItem())
+
+            dataStore.setDefaultCalendarView(KashCalDataStore.VIEW_WEEK)
+            assertEquals(KashCalDataStore.VIEW_WEEK, awaitItem())
+
             cancelAndIgnoreRemainingEvents()
         }
     }

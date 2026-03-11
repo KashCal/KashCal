@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.screens
 import androidx.activity.compose.BackHandler
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +66,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.MonthPagerUtils
 import androidx.compose.foundation.pager.PagerState
@@ -77,6 +79,12 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.ui.components.DayEventsSheet
+import org.onekash.kashcal.ui.components.EventCard
+import org.onekash.kashcal.ui.components.formatDisplayEventTitle
+import org.onekash.kashcal.ui.components.formatDisplayEventTimeDisplay
+import org.onekash.kashcal.ui.components.formatEventTitle
+import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
@@ -91,7 +99,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-import java.time.temporal.WeekFields
+
 import java.util.*
 import java.util.Calendar as JavaCalendar
 
@@ -160,15 +168,22 @@ fun HomeScreen(
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
+    // Resume callback (reload stale data on app resume)
+    onResume: () -> Unit = {},
     // Agenda scroll callback
     onClearScrollAgendaToTop: () -> Unit = {},
     // Snackbar callback
     onClearSnackbar: () -> Unit = {},
     // URL callback (for error actions that open URLs)
     onClearPendingUrl: () -> Unit = {},
+    // Day detail sheet callbacks (month view)
+    onShowDayDetail: (Long) -> Unit = {},
+    onDismissDayDetail: () -> Unit = {},
     // Day pager cache callbacks
     onLoadEventsForDayPagerRange: (Long) -> Unit = {},
-    shouldRefreshDayPagerCache: (Long) -> Boolean = { true }
+    shouldRefreshDayPagerCache: (Long) -> Boolean = { true },
+    // Year view callbacks
+    onEnsureDotsForYear: (Int) -> Unit = {},
 ) {
     // HorizontalPager for smooth month swiping (~100 years each direction)
     val initialPage = MonthPagerUtils.INITIAL_PAGE
@@ -197,6 +212,7 @@ fun HomeScreen(
 
     LifecycleResumeEffect(Unit) {
         refreshKey++  // Triggers recomposition of today-dependent values
+        onResume()    // Reload stale data (THREE_DAYS/WEEK one-shot queries)
         onPauseOrDispose { }
     }
 
@@ -362,11 +378,28 @@ fun HomeScreen(
                                 onCustomDateClick = onSearchShowDatePicker
                             )
                         }
-                        uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.THREE_DAYS -> {
+                        uiState.viewMode == ViewMode.YEAR -> {
+                            YearViewContent(
+                                eventDots = uiState.eventDots,
+                                firstDayOfWeek = uiState.firstDayOfWeek,
+                                pendingNavigateToToday = uiState.pendingNavigateToToday,
+                                onNavigateToTodayConsumed = onClearNavigateToToday,
+                                onMonthClick = { year, month ->
+                                    // Switch to MONTH view at selected month
+                                    onViewSelect(ViewMode.MONTH)
+                                    val cal = JavaCalendar.getInstance().apply { set(year, month, 1) }
+                                    onDateSelected(cal.timeInMillis)
+                                },
+                                onYearChanged = onEnsureDotsForYear,
+                                onBackToMonth = { onViewSelect(ViewMode.MONTH) }
+                            )
+                        }
+                        uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.THREE_DAYS || uiState.viewMode == ViewMode.WEEK -> {
                             Column(modifier = Modifier.fillMaxSize()) {
                                 ViewHeaderRow(
                                     viewMode = uiState.viewMode,
                                     pagerPosition = uiState.weekViewPagerPosition,
+                                    firstDayOfWeek = uiState.firstDayOfWeek,
                                     onMonthClick = onWeekDatePickerRequest,
                                     onPreviousPage = onPreviousPage,
                                     onNextPage = onNextPage
@@ -405,7 +438,7 @@ fun HomeScreen(
                                             )
                                         }
                                     }
-                                    ViewMode.THREE_DAYS -> {
+                                    ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                                         WeekViewContent(
                                             timedEvents = uiState.weekViewTimedEvents,
                                             allDayEvents = uiState.weekViewAllDayEvents,
@@ -414,6 +447,8 @@ fun HomeScreen(
                                             scrollPosition = uiState.weekViewScrollPosition,
                                             showEventEmojis = uiState.showEventEmojis,
                                             timePattern = timePattern,
+                                            weekMode = uiState.viewMode == ViewMode.WEEK,
+                                            firstDayOfWeek = uiState.firstDayOfWeek,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { displayEvent ->
                                                 when (displayEvent) {
@@ -436,7 +471,66 @@ fun HomeScreen(
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
-                                    else -> {} // MONTH handled below
+                                    else -> {} // MONTH and MONTH_FULL handled below
+                                }
+                            }
+                        }
+                        uiState.viewMode == ViewMode.MONTH_FULL -> {
+                            // Full-height month view with event snippets in day cells
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalAlignment = Alignment.Top,
+                                userScrollEnabled = true
+                            ) { page ->
+                                val monthOffset = page - initialPage
+                                val pageCal = JavaCalendar.getInstance().apply {
+                                    set(todayYear, todayMonth, 1)
+                                    add(JavaCalendar.MONTH, monthOffset)
+                                }
+                                val pageYear = pageCal.get(JavaCalendar.YEAR)
+                                val pageMonth = pageCal.get(JavaCalendar.MONTH)
+
+                                Column(
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.Top
+                                ) {
+                                    MonthNavHeader(
+                                        year = pageYear,
+                                        month = pageMonth,
+                                        onPrevious = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                            }
+                                        },
+                                        onNext = {
+                                            coroutineScope.launch {
+                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                            }
+                                        },
+                                        onMonthClick = onMonthHeaderClick
+                                    )
+
+                                    DayOfWeekHeaders(
+                                        firstDayOfWeek = uiState.firstDayOfWeek,
+                                        showWeekNumbers = uiState.showWeekNumbers
+                                    )
+
+                                    FullHeightMonthGrid(
+                                        year = pageYear,
+                                        month = pageMonth,
+                                        selectedDate = uiState.selectedDate,
+                                        monthEventsMap = uiState.monthEventsMap,
+                                        onDateSelected = { dateMs ->
+                                            onDateSelected(dateMs)
+                                            onShowDayDetail(dateMs)
+                                        },
+                                        firstDayOfWeekPref = uiState.firstDayOfWeek,
+                                        showWeekNumbers = uiState.showWeekNumbers,
+                                        showEventEmojis = uiState.showEventEmojis,
+                                        refreshKey = refreshKey,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                 }
                             }
                         }
@@ -541,9 +635,25 @@ fun HomeScreen(
         )
     }
 
+    // Day events bottom sheet (month view)
+    if (uiState.showDayDetailSheet) {
+        val dayCode = DayPagerUtils.msToDayCode(uiState.dayDetailDate)
+        val dayEvents = uiState.monthEventsMap[dayCode] ?: persistentListOf()
+        DayEventsSheet(
+            dateMs = uiState.dayDetailDate,
+            events = dayEvents,
+            showEventEmojis = uiState.showEventEmojis,
+            timePattern = timePattern,
+            onEventClick = onEventClick,
+            onDeviceEventClick = onDeviceEventClick,
+            onCreateEvent = onCreateEventWithDateTime,
+            onDismiss = onDismissDayDetail
+        )
+    }
+
     // View picker bottom sheet
+    val viewPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     if (uiState.showViewPicker) {
-        val viewPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         org.onekash.kashcal.ui.components.ViewPickerSheet(
             sheetState = viewPickerSheetState,
             currentView = uiState.viewMode,
@@ -749,119 +859,115 @@ private fun CalendarGrid(
     refreshKey: Int = 0,
     showWeekNumbers: Boolean = false
 ) {
+    val monthGrid = remember(year, month, firstDayOfWeekPref) {
+        MonthGrid.compute(year, month, firstDayOfWeekPref)
+    }
     val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
-
-    val calendar = JavaCalendar.getInstance().apply { set(year, month, 1) }
-    val daysInMonth = calendar.getActualMaximum(JavaCalendar.DAY_OF_MONTH)
-    val gridOffset = DateTimeUtils.getFirstDayOffset(calendar, firstDayOfWeekPref)
-
-    // Get ordered days of week for weekend detection by column position
-    val orderedDays = remember(firstDayOfWeekPref) {
-        DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeekPref)
-    }
-
-    // WeekFields for week number calculation — respects user's first-day-of-week preference
-    val weekFields = remember(firstDayOfWeekPref) {
-        if (firstDayOfWeekPref == 0) {
-            WeekFields.of(Locale.getDefault())
-        } else {
-            val dow = when (firstDayOfWeekPref) {
-                1 -> java.time.DayOfWeek.SUNDAY
-                2 -> java.time.DayOfWeek.MONDAY
-                7 -> java.time.DayOfWeek.SATURDAY
-                else -> java.time.DayOfWeek.MONDAY
-            }
-            WeekFields.of(dow, WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek)
-        }
-    }
 
     val today = remember(refreshKey) { JavaCalendar.getInstance() }
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
     val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
                                selectedCal.get(JavaCalendar.YEAR) == year
 
-    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-        var dayCounter = 1
-        for (week in 0..5) {
-            if (dayCounter > daysInMonth) break
-
+    Column(modifier = Modifier.padding(horizontal = 8.dp).animateContentSize()) {
+        monthGrid.weeks.forEach { row ->
+            if (row.none { it.position == MonthGrid.DayPosition.MonthDate }) return@forEach
             Row(modifier = Modifier.fillMaxWidth()) {
                 if (showWeekNumbers) {
-                    val firstDayOfRow = 1 + (week * 7) - gridOffset
-                    val clampedDay = firstDayOfRow.coerceIn(1, daysInMonth)
-                    val weekDate = LocalDate.of(year, month + 1, clampedDay)
-                    val weekNumber = weekDate.get(weekFields.weekOfWeekBasedYear())
                     Box(
                         modifier = Modifier.width(24.dp).height(44.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = weekNumber.toString(),
+                            text = row.first().weekNumber.toString(),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                         )
                     }
                 }
-                for (dayOfWeekIdx in 0..6) {
-                    if (week == 0 && dayOfWeekIdx < gridOffset || dayCounter > daysInMonth) {
-                        Box(modifier = Modifier.weight(1f).height(44.dp))
-                    } else {
-                        val day = dayCounter
-                        val dateCal = JavaCalendar.getInstance().apply { set(year, month, day) }
-                        val isToday = dateCal.get(JavaCalendar.DAY_OF_YEAR) == today.get(JavaCalendar.DAY_OF_YEAR) &&
-                                      dateCal.get(JavaCalendar.YEAR) == today.get(JavaCalendar.YEAR)
-                        val isSelected = selectedInThisMonth && day == selectedCal.get(JavaCalendar.DAY_OF_MONTH)
-                        // Check actual day of week for weekend highlighting, not column position
-                        val columnDay = orderedDays[dayOfWeekIdx]
-                        val isWeekend = columnDay == java.time.DayOfWeek.SATURDAY || columnDay == java.time.DayOfWeek.SUNDAY
-
-                        val dayColors = monthDots[day] ?: emptyList()
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(44.dp)
-                                .padding(2.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(
-                                    when {
-                                        isSelected -> MaterialTheme.colorScheme.primary
-                                        isToday -> MaterialTheme.colorScheme.primaryContainer
-                                        else -> Color.Transparent
-                                    }
-                                )
-                                .clickable {
-                                    val clickedCal = JavaCalendar.getInstance().apply { set(year, month, day) }
-                                    onDateSelected(clickedCal.timeInMillis)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                row.forEach { cell ->
+                    when (cell.position) {
+                        MonthGrid.DayPosition.InDate, MonthGrid.DayPosition.OutDate -> {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .padding(2.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable {
+                                        val (adjYear, adjMonth) = when (cell.position) {
+                                            MonthGrid.DayPosition.InDate ->
+                                                if (month == 0) (year - 1) to 11 else year to (month - 1)
+                                            MonthGrid.DayPosition.OutDate ->
+                                                if (month == 11) (year + 1) to 0 else year to (month + 1)
+                                            else -> return@clickable
+                                        }
+                                        val clickedCal = JavaCalendar.getInstance().apply {
+                                            set(adjYear, adjMonth, cell.dayOfMonth)
+                                        }
+                                        onDateSelected(clickedCal.timeInMillis)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
                                 Text(
-                                    text = day.toString(),
-                                    color = when {
-                                        isSelected -> MaterialTheme.colorScheme.onPrimary
-                                        isToday -> MaterialTheme.colorScheme.onPrimaryContainer
-                                        isWeekend -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
-                                        else -> MaterialTheme.colorScheme.onSurface
-                                    }
+                                    text = cell.dayOfMonth.toString(),
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                                 )
-                                if (dayColors.isNotEmpty()) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                        dayColors.take(3).forEach { colorInt ->
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(4.dp)
-                                                    .clip(CircleShape)
-                                                    .background(Color(colorInt))
-                                            )
+                            }
+                        }
+                        MonthGrid.DayPosition.MonthDate -> {
+                            val day = cell.dayOfMonth
+                            val isToday = day == today.get(JavaCalendar.DAY_OF_MONTH) &&
+                                month == today.get(JavaCalendar.MONTH) &&
+                                year == today.get(JavaCalendar.YEAR)
+                            val isSelected = selectedInThisMonth && day == selectedCal.get(JavaCalendar.DAY_OF_MONTH)
+                            val dayColors = monthDots[day] ?: emptyList()
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(44.dp)
+                                    .padding(2.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(
+                                        when {
+                                            isSelected -> MaterialTheme.colorScheme.primary
+                                            isToday -> MaterialTheme.colorScheme.primaryContainer
+                                            else -> Color.Transparent
+                                        }
+                                    )
+                                    .clickable {
+                                        val clickedCal = JavaCalendar.getInstance().apply { set(year, month, day) }
+                                        onDateSelected(clickedCal.timeInMillis)
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Text(
+                                        text = day.toString(),
+                                        color = when {
+                                            isSelected -> MaterialTheme.colorScheme.onPrimary
+                                            isToday -> MaterialTheme.colorScheme.onPrimaryContainer
+                                            cell.isWeekend -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
+                                            else -> MaterialTheme.colorScheme.onSurface
+                                        }
+                                    )
+                                    if (dayColors.isNotEmpty()) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            dayColors.take(3).forEach { colorInt ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(Color(colorInt))
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                        dayCounter++
                     }
                 }
             }
@@ -1060,58 +1166,6 @@ private fun DayEventsPage(
 }
 
 @Composable
-private fun EventCard(
-    displayEvent: DisplayEvent,
-    eventColor: Color,
-    isPast: Boolean,
-    selectedDate: Long,
-    showEventEmojis: Boolean = true,
-    timePattern: String = "h:mm a",
-    onClick: () -> Unit
-) {
-    val displayTitle = remember(displayEvent, showEventEmojis) {
-        formatDisplayEventTitle(displayEvent, showEventEmojis)
-    }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .alpha(if (isPast) 0.5f else 1f)
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = eventColor.copy(alpha = 0.15f)),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .fillMaxHeight()
-                    .background(eventColor)
-            )
-            Column(modifier = Modifier.padding(12.dp).weight(1f)) {
-                Text(
-                    displayTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, timePattern = timePattern)
-                Text(
-                    timeText,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                if (!displayEvent.location.isNullOrEmpty()) {
-                    Text(
-                        displayEvent.location!!,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                    )
-                }
-            }
-        }
-    }
-}
-@Composable
 private fun SearchResultCard(
     searchResult: SearchResult,
     isPast: Boolean,
@@ -1258,7 +1312,8 @@ private fun SearchContent(
                             is DisplayEvent.Room -> "room_${de.event.id}"
                             is DisplayEvent.Device -> "device_${de.instance.instanceId}"
                         }
-                    }
+                    },
+                    contentType = { "search_result" }
                 ) { result ->
                     val displayEvent = result.displayEvent
                     // Determine if event is recurring (Room exceptions count as recurring)
@@ -1273,6 +1328,7 @@ private fun SearchContent(
                         isPast = isPast,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
+                        modifier = Modifier.animateItem(),
                         onClick = {
                             when (displayEvent) {
                                 is DisplayEvent.Room -> onResultClick(displayEvent.event, result.displayTs)
@@ -1297,27 +1353,30 @@ private fun SearchContent(
 private fun ViewHeaderRow(
     viewMode: ViewMode,
     pagerPosition: Int,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     onMonthClick: () -> Unit,
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
-    val displayText = remember(viewMode, pagerPosition) {
+    val displayText = remember(viewMode, pagerPosition, firstDayOfWeek) {
         when (viewMode) {
             ViewMode.AGENDA -> "Upcoming Events"
             ViewMode.THREE_DAYS -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(pagerPosition)
-            ViewMode.MONTH -> ""
+            ViewMode.WEEK -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatWeekRange(pagerPosition, firstDayOfWeek)
+            ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR -> ""
         }
     }
 
     when (viewMode) {
-        ViewMode.THREE_DAYS -> {
+        ViewMode.THREE_DAYS, ViewMode.WEEK -> {
+            val navLabel = if (viewMode == ViewMode.WEEK) "week" else "3 days"
             Row(
                 modifier = Modifier.fillMaxWidth().padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onPreviousPage) {
-                    Icon(Icons.Default.ChevronLeft, "Previous 3 days")
+                    Icon(Icons.Default.ChevronLeft, "Previous $navLabel")
                 }
                 Text(
                     text = displayText,
@@ -1326,7 +1385,7 @@ private fun ViewHeaderRow(
                     modifier = Modifier.clickable(onClick = onMonthClick)
                 )
                 IconButton(onClick = onNextPage) {
-                    Icon(Icons.Default.ChevronRight, "Next 3 days")
+                    Icon(Icons.Default.ChevronRight, "Next $navLabel")
                 }
             }
         }
@@ -1339,7 +1398,7 @@ private fun ViewHeaderRow(
                 modifier = Modifier.fillMaxWidth().padding(8.dp)
             )
         }
-        ViewMode.MONTH -> {} // Uses MonthNavHeader directly
+        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR -> {} // Month uses MonthNavHeader, Year has own header
     }
 }
 
@@ -1428,7 +1487,7 @@ private fun AgendaContent(
             val grouped = expandedItems.groupBy { it.displayDay }
 
             grouped.forEach { (displayDay, dayItems) ->
-                item {
+                item(key = "header_$displayDay", contentType = "header") {
                     // Format the display day for header
                     val headerDate = Occurrence.dayFormatToCalendar(displayDay).time
                     Text(
@@ -1440,18 +1499,26 @@ private fun AgendaContent(
                 }
                 items(
                     items = dayItems,
-                    key = { "${it.displayEvent.title}-${it.displayEvent.startTs}-${it.displayDay}" }
+                    key = { item ->
+                        when (val de = item.displayEvent) {
+                            is DisplayEvent.Room -> "room_${de.event.id}_${de.occurrence.startTs}_${item.displayDay}"
+                            is DisplayEvent.Device -> "device_${de.instance.instanceId}_${item.displayDay}"
+                        }
+                    },
+                    contentType = { "agenda_card" }
                 ) { item ->
                     val eventColor = Color(item.displayEvent.calendarColor)
                     val isPast = item.displayDay < todayDayCode
-                    AgendaCard(
-                        item = item,
-                        eventColor = eventColor,
-                        isPast = isPast,
-                        showEventEmojis = showEventEmojis,
-                        timePattern = timePattern,
-                        onClick = { onEventClick(item.displayEvent) }
-                    )
+                    Column(modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
+                        AgendaCard(
+                            item = item,
+                            eventColor = eventColor,
+                            isPast = isPast,
+                            showEventEmojis = showEventEmojis,
+                            timePattern = timePattern,
+                            onClick = { onEventClick(item.displayEvent) }
+                        )
+                    }
                 }
             }
         }
@@ -1518,77 +1585,6 @@ private fun AgendaCard(
     }
 }
 
-/**
- * Format event title for contact events (birthdays, anniversaries) with optional emoji.
- *
- * Delegates to [ContactEventTitleFormatter] for contact event formatting (age/year info),
- * then applies emoji decoration via [EmojiMatcher].
- *
- * @param event The event to format title for
- * @param occurrenceTs The occurrence timestamp for age/year calculation
- * @param showEmojis Whether to prefix auto-detected emoji to the title
- * @return Formatted title string
- */
-private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
-    val baseTitle = ContactEventTitleFormatter.format(event, occurrenceTs)
-    return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
-}
-
-/**
- * Format title for a DisplayEvent from any source.
- * Routes to the Event-specific formatter for Room events (birthday decoration, etc.)
- * and applies emoji formatting for Device events.
- */
-private fun formatDisplayEventTitle(displayEvent: DisplayEvent, showEmojis: Boolean): String {
-    return when (displayEvent) {
-        is DisplayEvent.Room -> formatEventTitle(displayEvent.event, displayEvent.occurrence.startTs, showEmojis)
-        is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEmojis)
-    }
-}
-
-/**
- * Format time display for a DisplayEvent from any source.
- * Uses DisplayEvent common properties — no type branching needed.
- * Shows "Day X of Y" for multi-day events, recurring indicator, etc.
- */
-private fun formatDisplayEventTimeDisplay(
-    displayEvent: DisplayEvent,
-    selectedDateMillis: Long,
-    zoneId: ZoneId = ZoneId.systemDefault(),
-    timePattern: String = "h:mm a"
-): String {
-    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-    val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
-
-    val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
-    val isMultiDay = endDate.isAfter(startDate)
-
-    if (!isMultiDay) {
-        return if (displayEvent.isAllDay) "All day$recurringIndicator"
-        else {
-            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
-            val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
-            "$startTime - $endTime$recurringIndicator"
-        }
-    }
-
-    val totalDays = DateTimeUtils.calculateTotalDays(displayEvent.startTs, displayEvent.endTs, displayEvent.isAllDay, zoneId)
-    val currentDay = calculateCurrentDayForEvent(displayEvent.startTs, selectedDateMillis, displayEvent.isAllDay, zoneId)
-        .coerceIn(1, totalDays)
-
-    return when {
-        currentDay == 1 && !displayEvent.isAllDay -> {
-            val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
-            "Day 1 of $totalDays · starts $startTime$recurringIndicator"
-        }
-        currentDay == totalDays && !displayEvent.isAllDay -> {
-            val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
-            "Day $totalDays of $totalDays · ends $endTime$recurringIndicator"
-        }
-        else -> "Day $currentDay of $totalDays$recurringIndicator"
-    }
-}
 
 /**
  * Format time display for agenda card.
@@ -1687,31 +1683,6 @@ internal fun formatEventTimeDisplay(
         }
         else -> "Day $currentDay of $totalDays$recurringIndicator"
     }
-}
-
-/**
- * Calculate which day of a multi-day event the selected date falls on.
- *
- * Critical: selectedDateMillis is ALWAYS local time (from calendar picker),
- * while eventStartTs uses isAllDay to determine UTC vs local interpretation.
- *
- * @param eventStartTs Event start timestamp (UTC for all-day, local for timed)
- * @param selectedDateMillis Calendar picker selection (ALWAYS local time)
- * @param isAllDay Whether the event is all-day (affects eventStartTs interpretation)
- * @param zoneId Timezone for local time calculations
- * @return 1-based day number (1 = first day of event)
- */
-private fun calculateCurrentDayForEvent(
-    eventStartTs: Long,
-    selectedDateMillis: Long,
-    isAllDay: Boolean,
-    zoneId: ZoneId
-): Int {
-    // Event start uses isAllDay for correct timezone handling
-    val startDate = DateTimeUtils.eventTsToLocalDate(eventStartTs, isAllDay, zoneId)
-    // Selected date is ALWAYS local time (from calendar picker)
-    val selectedDate = DateTimeUtils.eventTsToLocalDate(selectedDateMillis, isAllDay = false, zoneId)
-    return ChronoUnit.DAYS.between(startDate, selectedDate).toInt() + 1
 }
 
 /**

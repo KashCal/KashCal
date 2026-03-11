@@ -58,7 +58,7 @@ fun ErrorBanner(
     modifier: Modifier = Modifier
 ) {
     val message = if (presentation.messageArgs.isNotEmpty()) {
-        stringResource(presentation.messageResId, *presentation.messageArgs)
+        stringResource(presentation.messageResId, *presentation.messageArgs.toTypedArray())
     } else {
         stringResource(presentation.messageResId)
     }

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.session
 
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
 /**
@@ -9,6 +10,7 @@ import java.util.UUID
  * Privacy: Only stores aggregate counts and calendar names (user-created).
  * Does NOT store: event titles, UIDs, sync tokens, or caldavUrls.
  */
+@Serializable
 data class SyncSession(
     val id: String = UUID.randomUUID().toString(),
     val timestamp: Long = System.currentTimeMillis(),
@@ -61,7 +63,7 @@ data class SyncSession(
 
     // Diagnostic warnings for silently handled issues (v23.1.0)
     // Privacy: Uses .ics filenames (opaque server IDs), never event titles or UIDs
-    // Nullable for Gson backward compat: old sessions without this field deserialize as null
+    // Nullable for backward compat: old session JSON files may omit this field
     val warnings: List<String>? = null
 ) {
     /**
@@ -132,6 +134,7 @@ data class SyncSession(
 /**
  * Type of sync operation.
  */
+@Serializable
 enum class SyncType {
     INCREMENTAL,  // Uses sync-token for delta changes
     FULL          // Fetches all events in time window
@@ -140,6 +143,7 @@ enum class SyncType {
 /**
  * Overall sync status.
  */
+@Serializable
 enum class SyncStatus {
     SUCCESS,   // All events synced successfully
     PARTIAL,   // Some events missing or skipped
@@ -149,6 +153,7 @@ enum class SyncStatus {
 /**
  * Category of sync error.
  */
+@Serializable
 enum class ErrorType {
     NETWORK,   // Connection failed, timeout
     AUTH,      // 401/403 authentication error

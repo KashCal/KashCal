@@ -1,8 +1,13 @@
 package org.onekash.kashcal.sync.strategy.integration
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -60,6 +65,10 @@ class RealICloudPullStrategyTest {
     private var password: String? = null
     private var serverUrl: String = "https://caldav.icloud.com"
 
+    // Test-scoped DataStore
+    private lateinit var dataStoreScope: CoroutineScope
+    private lateinit var testDataStoreFile: File
+
     // Test state
     private var testCalendar: CalDavCalendar? = null
     private var testCalendarId: Long = 0
@@ -77,7 +86,12 @@ class RealICloudPullStrategyTest {
         eventsDao = database.eventsDao()
         occurrencesDao = database.occurrencesDao()
         val calendarRepository = CalendarRepositoryImpl(database.calendarsDao())
-        val dataStore = KashCalDataStore(context)
+        dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
+        testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
+        val testPrefsDataStore = PreferenceDataStoreFactory.create(
+            scope = dataStoreScope
+        ) { testDataStoreFile }
+        val dataStore = KashCalDataStore(context, testPrefsDataStore)
         occurrenceGenerator = OccurrenceGenerator(database, occurrencesDao, eventsDao, dataStore)
         val syncSessionStore = SyncSessionStore(context)
 
@@ -107,7 +121,9 @@ class RealICloudPullStrategyTest {
 
     @After
     fun tearDown() {
+        dataStoreScope.cancel()
         database.close()
+        testDataStoreFile.delete()
     }
 
     private fun loadCredentials() {

@@ -95,7 +95,7 @@ private fun ErrorSnackbarContent(
     onAction: (ErrorActionCallback) -> Unit
 ) {
     val message = if (presentation.messageArgs.isNotEmpty()) {
-        stringResource(presentation.messageResId, *presentation.messageArgs)
+        stringResource(presentation.messageResId, *presentation.messageArgs.toTypedArray())
     } else {
         stringResource(presentation.messageResId)
     }
@@ -132,7 +132,7 @@ fun ErrorSnackbar(
     modifier: Modifier = Modifier
 ) {
     val message = if (presentation.messageArgs.isNotEmpty()) {
-        stringResource(presentation.messageResId, *presentation.messageArgs)
+        stringResource(presentation.messageResId, *presentation.messageArgs.toTypedArray())
     } else {
         stringResource(presentation.messageResId)
     }

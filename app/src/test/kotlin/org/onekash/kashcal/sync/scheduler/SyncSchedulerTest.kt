@@ -275,9 +275,6 @@ class SyncSchedulerTest {
         scheduler.cancelAllSync()
 
         // Then - All work with TAG_SYNC should be cancelled
-        // Note: WorkManager might take time to process cancellations
-        Thread.sleep(100)
-
         // Verify periodic is cancelled
         val periodicWork = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertTrue(periodicWork.isEmpty() || periodicWork[0].state == WorkInfo.State.CANCELLED)

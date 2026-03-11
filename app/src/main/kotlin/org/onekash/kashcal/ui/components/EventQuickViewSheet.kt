@@ -636,22 +636,6 @@ private fun formatEventDateTime(
 }
 
 /**
- * Format event title for contact events (birthdays, anniversaries) with optional emoji.
- *
- * Delegates to [ContactEventTitleFormatter] for contact event formatting (age/year info),
- * then applies emoji decoration via [EmojiMatcher].
- *
- * @param event The event to format title for
- * @param occurrenceTs The occurrence timestamp for age/year calculation
- * @param showEmojis Whether to prefix auto-detected emoji to the title
- * @return Formatted title string
- */
-private fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
-    val baseTitle = ContactEventTitleFormatter.format(event, occurrenceTs)
-    return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
-}
-
-/**
  * Expanded content section showing URL, notes, and reminders.
  */
 @Composable

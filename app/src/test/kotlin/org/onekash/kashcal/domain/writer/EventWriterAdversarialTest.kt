@@ -489,7 +489,9 @@ class EventWriterAdversarialTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
         val originalModified = event.localModifiedAt!!
 
-        delay(10) // Ensure time passes
+        // Wall-clock delay: localModifiedAt uses System.currentTimeMillis(),
+        // not virtual time. delay() only advances virtual time and is ineffective here.
+        Thread.sleep(50)
 
         val updated = eventWriter.updateEvent(event.copy(title = "Updated"), isLocal = false)
 

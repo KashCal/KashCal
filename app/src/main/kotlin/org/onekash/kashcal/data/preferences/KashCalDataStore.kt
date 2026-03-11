@@ -1,7 +1,9 @@
 package org.onekash.kashcal.data.preferences
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
@@ -35,7 +37,11 @@ import java.util.Calendar
  * ```
  */
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "kashcal_preferences"
+    name = "kashcal_preferences",
+    corruptionHandler = ReplaceFileCorruptionHandler {
+        Log.w("KashCalDataStore", "Preferences file corrupted, resetting to defaults")
+        emptyPreferences()
+    }
 )
 
 class KashCalDataStore(
@@ -721,8 +727,11 @@ class KashCalDataStore(
         const val VIEW_MONTH = "month"
         const val VIEW_AGENDA = "agenda"
         const val VIEW_THREE_DAYS = "three_days"
+        const val VIEW_MONTH_FULL = "month_full"
+        const val VIEW_WEEK = "week"
+        const val VIEW_YEAR = "year"
 
-        private val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_THREE_DAYS)
+        private val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_THREE_DAYS, VIEW_WEEK, VIEW_MONTH_FULL, VIEW_YEAR)
 
         // Time format values
         const val TIME_FORMAT_SYSTEM = "system"

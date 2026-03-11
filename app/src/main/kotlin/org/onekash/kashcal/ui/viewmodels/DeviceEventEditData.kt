@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 
 /**
@@ -8,6 +9,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceEvent
  * Contains the event, reminders, and calendar metadata needed
  * to populate EventFormSheet for editing a device calendar event.
  */
+@Immutable
 data class DeviceEventEditData(
     /** Full event data from CalendarProvider Events table. */
     val event: DeviceEvent,

@@ -102,14 +102,15 @@ fun LazyListScope.groupedCalendarItems(
     onCalendarClick: (Calendar) -> Unit
 ) {
     // Account header
-    item(key = "header_${group.accountId}") {
+    item(key = "header_${group.accountId}", contentType = "account_header") {
         AccountHeader(accountName = group.accountName)
     }
 
     // Calendars in this group
     items(
         items = group.calendars,
-        key = { "calendar_${it.id}" }
+        key = { "calendar_${it.id}" },
+        contentType = { "calendar_item" }
     ) { calendar ->
         val isSelected = when (selectionMode) {
             CalendarSelectionMode.CHECKBOX -> calendar.id in selectedCalendarIds

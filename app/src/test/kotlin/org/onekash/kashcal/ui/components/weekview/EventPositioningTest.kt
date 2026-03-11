@@ -347,6 +347,101 @@ class EventPositioningTest {
         assertFalse(pos.clampedEnd)
     }
 
+    // ==================== 24-Hour Grid (Week Mode) Tests ====================
+
+    @Test
+    fun `position 3am event in 24h grid not clamped`() {
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 3,
+            endHour = 5
+        )
+
+        val events = listOf(toDisplayEvent(event, occurrence))
+        val positioned = WeekViewUtils.positionEventsForDay(
+            events, dayIndex = 0,
+            startHour = WeekViewUtils.FULL_DAY_START_HOUR,
+            endHour = WeekViewUtils.FULL_DAY_END_HOUR
+        )
+
+        assertEquals(1, positioned.size)
+        val pos = positioned[0]
+
+        assertFalse("3am event should NOT be clamped in 24h grid", pos.clampedStart)
+        assertFalse(pos.clampedEnd)
+
+        // topOffset: 3 hours * 60dp = 180dp
+        assertEquals(180f, pos.topOffset.value, 1f)
+        // height: 2 hours * 60dp = 120dp
+        assertEquals(120f, pos.height.value, 1f)
+    }
+
+    @Test
+    fun `position 11pm event in 24h grid not clamped`() {
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 23,
+            endHour = 23,
+            endMinute = 59
+        )
+
+        val events = listOf(toDisplayEvent(event, occurrence))
+        val positioned = WeekViewUtils.positionEventsForDay(
+            events, dayIndex = 0,
+            startHour = WeekViewUtils.FULL_DAY_START_HOUR,
+            endHour = WeekViewUtils.FULL_DAY_END_HOUR
+        )
+
+        assertEquals(1, positioned.size)
+        val pos = positioned[0]
+
+        assertFalse("11pm event should NOT be clamped in 24h grid", pos.clampedStart)
+        assertFalse("11:59pm event should NOT be clamped in 24h grid", pos.clampedEnd)
+    }
+
+    @Test
+    fun `position midnight event in 24h grid at top`() {
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 0,
+            endHour = 1
+        )
+
+        val events = listOf(toDisplayEvent(event, occurrence))
+        val positioned = WeekViewUtils.positionEventsForDay(
+            events, dayIndex = 0,
+            startHour = WeekViewUtils.FULL_DAY_START_HOUR,
+            endHour = WeekViewUtils.FULL_DAY_END_HOUR
+        )
+
+        assertEquals(1, positioned.size)
+        val pos = positioned[0]
+
+        // topOffset: 0 hours from startHour=0 → 0dp
+        assertEquals(0f, pos.topOffset.value, 0.1f)
+        assertFalse(pos.clampedStart)
+    }
+
+    @Test
+    fun `3am event IS clamped with default 6-23 range (backward compat)`() {
+        val event = createTestEvent(id = 1)
+        val occurrence = createTestOccurrence(
+            eventId = 1,
+            startHour = 3,
+            endHour = 5
+        )
+
+        val events = listOf(toDisplayEvent(event, occurrence))
+        // Default startHour/endHour (6am-11pm)
+        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+
+        // 3am-5am is entirely before 6am grid → clamped to zero duration → filtered out
+        assertEquals(0, positioned.size)
+    }
+
     // ==================== Exception Event Tests ====================
 
     @Test

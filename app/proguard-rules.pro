@@ -124,20 +124,17 @@
 -keep class org.onekash.kashcal.di.** { *; }
 
 # ----------------------------------------------------------------------------
-# Gson
+# kotlinx.serialization (compiler plugin, no reflection — minimal rules needed)
 # ----------------------------------------------------------------------------
 
--keepattributes Signature
--keepattributes *Annotation*
--dontwarn sun.misc.**
--keep class com.google.gson.** { *; }
--keep class * implements com.google.gson.TypeAdapterFactory
--keep class * implements com.google.gson.JsonSerializer
--keep class * implements com.google.gson.JsonDeserializer
-
-# Keep fields used for Gson serialization
--keepclassmembers,allowobfuscation class * {
-    @com.google.gson.annotations.SerializedName <fields>;
+-keepattributes *Annotation*, InnerClasses
+-dontnote kotlinx.serialization.**
+-keepclassmembers class kotlinx.serialization.json.** { *** Companion; }
+-keepclasseswithmembers class kotlinx.serialization.json.** { kotlinx.serialization.KSerializer serializer(...); }
+-keepclassmembers @kotlinx.serialization.Serializable class org.onekash.kashcal.** {
+    *** Companion;
+    *** INSTANCE;
+    kotlinx.serialization.KSerializer serializer(...);
 }
 
 # ----------------------------------------------------------------------------

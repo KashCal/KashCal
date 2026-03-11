@@ -92,6 +92,8 @@ fun WeekViewContent(
     scrollPosition: Int,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
+    weekMode: Boolean = false,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     onDatePickerRequest: () -> Unit,
     onEventClick: (DisplayEvent) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -103,18 +105,32 @@ fun WeekViewContent(
 ) {
     // Compute is24Hour flag for clamp indicators
     val is24Hour = timePattern.startsWith("H")
-    // Infinite day pager: CENTER_DAY_PAGE = today
-    val pagerState = rememberPagerState(
-        initialPage = WeekViewUtils.CENTER_DAY_PAGE,
-        pageCount = { WeekViewUtils.TOTAL_DAY_PAGES }
-    )
+
+    // Grid time range: 24h for week mode, 6am-11pm for 3-day mode
+    val startHour = if (weekMode) WeekViewUtils.FULL_DAY_START_HOUR else WeekViewUtils.START_HOUR
+    val endHour = if (weekMode) WeekViewUtils.FULL_DAY_END_HOUR else WeekViewUtils.END_HOUR
+    val totalHours = endHour - startHour
+    val visibleDays = if (weekMode) 7 else 3
+
+    // Pager: day-based (THREE_DAYS) or week-based (WEEK)
+    val pagerState = if (weekMode) {
+        rememberPagerState(
+            initialPage = WeekViewUtils.CENTER_WEEK_PAGE,
+            pageCount = { WeekViewUtils.TOTAL_WEEK_PAGES }
+        )
+    } else {
+        rememberPagerState(
+            initialPage = WeekViewUtils.CENTER_DAY_PAGE,
+            pageCount = { WeekViewUtils.TOTAL_DAY_PAGES }
+        )
+    }
 
     // Track pager position changes - use settledPage for debounced loading
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()  // Prevent duplicate emissions
             .collect { page ->
-                Log.d(TAG, "Pager settled on page $page (date: ${WeekViewUtils.pageToDate(page)})")
+                Log.d(TAG, "Pager settled on page $page")
                 onPageChanged(page)
             }
     }
@@ -128,7 +144,7 @@ fun WeekViewContent(
                 .filter { !it }
                 .first()
 
-            Log.d(TAG, "Navigating to page $targetPage (date: ${WeekViewUtils.pageToDate(targetPage)})")
+            Log.d(TAG, "Navigating to page $targetPage")
             pagerState.animateScrollToPage(targetPage)
             onNavigationConsumed()
         }
@@ -146,9 +162,23 @@ fun WeekViewContent(
         groupEventsByDate(allDayEvents.toList())
     }
 
-    // Separate timed events into early (before 6am), normal (6am-11pm), and late (after 11pm)
-    val (earlyEventsByDate, normalEventsByDate, lateEventsByDate) = remember(timedEventsByDate) {
-        separateEventsByTimeSlotByDate(timedEventsByDate)
+    // Separate timed events into early/normal/late — only needed for 3-day mode
+    // In week mode (24h grid), all timed events are "normal" (no clamping)
+    val earlyEventsByDate: Map<LocalDate, List<DisplayEvent>>
+    val normalEventsByDate: Map<LocalDate, List<DisplayEvent>>
+    val lateEventsByDate: Map<LocalDate, List<DisplayEvent>>
+
+    if (weekMode) {
+        earlyEventsByDate = emptyMap()
+        normalEventsByDate = timedEventsByDate
+        lateEventsByDate = emptyMap()
+    } else {
+        val separated = remember(timedEventsByDate) {
+            separateEventsByTimeSlotByDate(timedEventsByDate)
+        }
+        earlyEventsByDate = separated.first
+        normalEventsByDate = separated.second
+        lateEventsByDate = separated.third
     }
 
     // State for overflow sheet
@@ -180,6 +210,12 @@ fun WeekViewContent(
                 allDayEventsByDate = allDayEventsByDate,
                 earlyEventsByDate = earlyEventsByDate,
                 lateEventsByDate = lateEventsByDate,
+                startHour = startHour,
+                endHour = endHour,
+                totalHours = totalHours,
+                visibleDays = visibleDays,
+                weekMode = weekMode,
+                firstDayOfWeek = firstDayOfWeek,
                 scrollState = scrollState,
                 showEventEmojis = showEventEmojis,
                 timePattern = timePattern,
@@ -216,6 +252,12 @@ private fun UnifiedTimeGrid(
     allDayEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     earlyEventsByDate: Map<LocalDate, List<DisplayEvent>>,
     lateEventsByDate: Map<LocalDate, List<DisplayEvent>>,
+    startHour: Int = WeekViewUtils.START_HOUR,
+    endHour: Int = WeekViewUtils.END_HOUR,
+    totalHours: Int = WeekViewUtils.TOTAL_HOURS,
+    visibleDays: Int = 3,
+    weekMode: Boolean = false,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     scrollState: ScrollState = rememberScrollState(),
     showEventEmojis: Boolean = true,
@@ -227,7 +269,7 @@ private fun UnifiedTimeGrid(
     onScrollPositionChange: (Int) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    val totalHeight = hourHeight * WeekViewUtils.TOTAL_HOURS
+    val totalHeight = hourHeight * totalHours
     val timeColumnWidth = 48.dp
     val today = LocalDate.now()
 
@@ -242,34 +284,34 @@ private fun UnifiedTimeGrid(
     }
 
     // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
-    // Avoids ~15 separate pageToDate() calls across 5 composables per page change.
-    val visibleDates by remember {
+    val visibleDates by remember(weekMode, firstDayOfWeek) {
         derivedStateOf {
-            val page = pagerState.currentPage
-            List(3) { offset -> WeekViewUtils.pageToDate(page + offset) }
+            if (weekMode) {
+                val weekStart = WeekViewUtils.weekPageToStartDate(pagerState.currentPage, firstDayOfWeek)
+                List(7) { offset -> weekStart.plusDays(offset.toLong()) }
+            } else {
+                val page = pagerState.currentPage
+                List(3) { offset -> WeekViewUtils.pageToDate(page + offset) }
+            }
         }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Header row with pager (scrolls horizontally with content)
+        // Header row
         Row(modifier = Modifier.fillMaxWidth()) {
             // Empty spacer for time column alignment
             Box(modifier = Modifier.width(timeColumnWidth))
 
-            // Day headers - render 3 columns directly from derived visibleDates
-            // (No HorizontalPager to avoid lag with other direct-rendered rows)
-            BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                val columnWidth = maxWidth / 3
-
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    visibleDates.forEach { date ->
-                        DayHeaderCell(
-                            date = date,
-                            isToday = date == today,
-                            isWeekend = WeekViewUtils.isWeekend(date),
-                            modifier = Modifier.width(columnWidth)
-                        )
-                    }
+            // Day headers - render columns directly from derived visibleDates
+            Row(modifier = Modifier.weight(1f)) {
+                visibleDates.forEach { date ->
+                    DayHeaderCell(
+                        date = date,
+                        isToday = date == today,
+                        isWeekend = WeekViewUtils.isWeekend(date),
+                        compact = weekMode,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
             }
         }
@@ -284,16 +326,18 @@ private fun UnifiedTimeGrid(
             onOverflowClick = onOverflowClick
         )
 
-        // Early events row (before 6am)
-        OverflowEventsPagerRow(
-            visibleDates = visibleDates,
-            overflowEventsByDate = earlyEventsByDate,
-            timeColumnWidth = timeColumnWidth,
-            showEventEmojis = showEventEmojis,
-            timePattern = timePattern,
-            onEventClick = onEventClick,
-            onOverflowClick = onOverflowClick
-        )
+        // Early events row (before 6am) — only in 3-day mode
+        if (!weekMode) {
+            OverflowEventsPagerRow(
+                visibleDates = visibleDates,
+                overflowEventsByDate = earlyEventsByDate,
+                timeColumnWidth = timeColumnWidth,
+                showEventEmojis = showEventEmojis,
+                timePattern = timePattern,
+                onEventClick = onEventClick,
+                onOverflowClick = onOverflowClick
+            )
+        }
 
         // Main time grid area
         Row(modifier = Modifier.weight(1f)) {
@@ -304,14 +348,14 @@ private fun UnifiedTimeGrid(
                     .verticalScroll(scrollState)
                     .height(totalHeight)
             ) {
-                for (hour in WeekViewUtils.START_HOUR until WeekViewUtils.END_HOUR) {
+                for (hour in startHour until endHour) {
                     TimeLabel(hour = hour, height = hourHeight, is24Hour = is24Hour)
                 }
             }
 
-            // Day columns pager (infinite)
+            // Day columns area
             BoxWithConstraints(modifier = Modifier.weight(1f)) {
-                val columnWidth = maxWidth / 3
+                val columnWidth = this.maxWidth / visibleDays
 
                 Column(
                     modifier = Modifier
@@ -326,56 +370,116 @@ private fun UnifiedTimeGrid(
                         // Grid lines
                         GridLines(
                             hourHeight = hourHeight,
-                            totalHours = WeekViewUtils.TOTAL_HOURS
+                            totalHours = totalHours
                         )
 
-                        // Infinite pager - each page is one day
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier.fillMaxSize(),
-                            pageSize = PageSize.Fixed(columnWidth),
-                            beyondViewportPageCount = 3,
-                            key = { page -> "grid_$page" }
-                        ) { page ->
-                            val date = WeekViewUtils.pageToDate(page)
-                            val dayEvents = normalEventsByDate[date] ?: emptyList()
+                        if (weekMode) {
+                            // Week mode: 1 page = 1 week (Row of 7 DayColumns)
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                beyondViewportPageCount = 1,
+                                key = { page -> "week_$page" }
+                            ) { page ->
+                                val weekStart = WeekViewUtils.weekPageToStartDate(page, firstDayOfWeek)
 
-                            DayColumn(
-                                date = date,
-                                events = dayEvents,
+                                Row(modifier = Modifier.fillMaxSize()) {
+                                    for (dayOffset in 0 until 7) {
+                                        val date = weekStart.plusDays(dayOffset.toLong())
+                                        val dayEvents = normalEventsByDate[date] ?: emptyList()
+
+                                        DayColumn(
+                                            date = date,
+                                            events = dayEvents,
+                                            hourHeight = hourHeight,
+                                            isToday = date == today,
+                                            showEventEmojis = showEventEmojis,
+                                            timePattern = timePattern,
+                                            is24Hour = is24Hour,
+                                            startHour = startHour,
+                                            onEventClick = onEventClick,
+                                            onOverflowClick = onOverflowClick,
+                                            onLongPress = onLongPress,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Current time indicator (week mode)
+                            val weekStart = remember {
+                                derivedStateOf {
+                                    WeekViewUtils.weekPageToStartDate(pagerState.currentPage, firstDayOfWeek)
+                                }
+                            }
+                            CurrentTimeIndicator(
                                 hourHeight = hourHeight,
-                                isToday = date == today,
-                                showEventEmojis = showEventEmojis,
-                                timePattern = timePattern,
-                                is24Hour = is24Hour,
-                                onEventClick = onEventClick,
-                                onOverflowClick = onOverflowClick,
-                                onLongPress = onLongPress,
-                                modifier = Modifier.width(columnWidth)
+                                visibleDays = 7,
+                                startHour = startHour,
+                                todayOffset = {
+                                    val ws = weekStart.value
+                                    val todayPage = WeekViewUtils.dateToPage(today)
+                                    val wsPage = WeekViewUtils.dateToPage(ws)
+                                    todayPage - wsPage
+                                },
+                                columnWidth = columnWidth
+                            )
+                        } else {
+                            // 3-day mode: 1 page = 1 day, PageSize.Fixed
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                pageSize = PageSize.Fixed(columnWidth),
+                                beyondViewportPageCount = 3,
+                                key = { page -> "grid_$page" }
+                            ) { page ->
+                                val date = WeekViewUtils.pageToDate(page)
+                                val dayEvents = normalEventsByDate[date] ?: emptyList()
+
+                                DayColumn(
+                                    date = date,
+                                    events = dayEvents,
+                                    hourHeight = hourHeight,
+                                    isToday = date == today,
+                                    showEventEmojis = showEventEmojis,
+                                    timePattern = timePattern,
+                                    is24Hour = is24Hour,
+                                    startHour = startHour,
+                                    onEventClick = onEventClick,
+                                    onOverflowClick = onOverflowClick,
+                                    onLongPress = onLongPress,
+                                    modifier = Modifier.width(columnWidth)
+                                )
+                            }
+
+                            // Current time indicator (3-day mode)
+                            CurrentTimeIndicator(
+                                hourHeight = hourHeight,
+                                visibleDays = 3,
+                                startHour = startHour,
+                                todayOffset = {
+                                    WeekViewUtils.dateToPage(today) - pagerState.currentPage
+                                },
+                                columnWidth = columnWidth
                             )
                         }
-
-                        // Current time indicator
-                        CurrentTimeIndicator(
-                            hourHeight = hourHeight,
-                            currentPage = pagerState.currentPage,
-                            columnWidth = columnWidth
-                        )
                     }
                 }
             }
         }
 
-        // Late events row (after 11pm)
-        OverflowEventsPagerRow(
-            visibleDates = visibleDates,
-            overflowEventsByDate = lateEventsByDate,
-            timeColumnWidth = timeColumnWidth,
-            showEventEmojis = showEventEmojis,
-            timePattern = timePattern,
-            onEventClick = onEventClick,
-            onOverflowClick = onOverflowClick
-        )
+        // Late events row (after 11pm) — only in 3-day mode
+        if (!weekMode) {
+            OverflowEventsPagerRow(
+                visibleDates = visibleDates,
+                overflowEventsByDate = lateEventsByDate,
+                timeColumnWidth = timeColumnWidth,
+                showEventEmojis = showEventEmojis,
+                timePattern = timePattern,
+                onEventClick = onEventClick,
+                onOverflowClick = onOverflowClick
+            )
+        }
     }
 }
 
@@ -387,10 +491,16 @@ private fun DayHeaderCell(
     date: LocalDate,
     isToday: Boolean,
     isWeekend: Boolean,
+    compact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    val dayName = remember(date) {
-        date.format(DateTimeFormatter.ofPattern("EEE", Locale.getDefault()))
+    val dayName = remember(date, compact) {
+        if (compact) {
+            // Single letter: M, T, W, T, F, S, S
+            date.format(DateTimeFormatter.ofPattern("EEEEE", Locale.getDefault()))
+        } else {
+            date.format(DateTimeFormatter.ofPattern("EEE", Locale.getDefault()))
+        }
     }
     val dayNumber = date.dayOfMonth.toString()
 
@@ -399,40 +509,78 @@ private fun DayHeaderCell(
         else -> MaterialTheme.colorScheme.onSurface
     }
 
-    Row(
-        modifier = modifier.padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = dayName,
-            style = MaterialTheme.typography.bodyMedium,
-            color = textColor,
-            textAlign = TextAlign.Center
-        )
-
-        Box(
-            modifier = Modifier
-                .padding(start = 4.dp)
-                .then(
-                    if (isToday) {
-                        Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    } else {
-                        Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                    }
-                ),
-            contentAlignment = Alignment.Center
+    if (compact) {
+        // Compact vertical layout for 7-day view: single letter + number stacked
+        Column(
+            modifier = modifier.padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = dayNumber,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                text = dayName,
+                style = MaterialTheme.typography.labelSmall,
+                color = textColor,
                 textAlign = TextAlign.Center
             )
+            Box(
+                modifier = Modifier
+                    .then(
+                        if (isToday) {
+                            Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                        } else {
+                            Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = dayNumber,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    } else {
+        // Standard horizontal layout for 3-day view: "Wed 11"
+        Row(
+            modifier = modifier.padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = dayName,
+                style = MaterialTheme.typography.bodyMedium,
+                color = textColor,
+                textAlign = TextAlign.Center
+            )
+
+            Box(
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .then(
+                        if (isToday) {
+                            Modifier
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        } else {
+                            Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = dayNumber,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                    color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
@@ -708,16 +856,23 @@ private fun GridLines(
 
 /**
  * Current time indicator positioned on today's column.
+ *
+ * @param hourHeight Height of one hour in the grid
+ * @param visibleDays Number of visible day columns (3 or 7)
+ * @param startHour First hour of the grid (6 for 3-day, 0 for week)
+ * @param todayOffset Lambda returning today's column offset (0-based) from current page
+ * @param columnWidth Width of one day column
  */
 @Composable
 private fun CurrentTimeIndicator(
     hourHeight: Dp,
-    currentPage: Int,
+    visibleDays: Int = 3,
+    startHour: Int = WeekViewUtils.START_HOUR,
+    todayOffset: () -> Int,
     columnWidth: Dp,
     modifier: Modifier = Modifier
 ) {
-    val today = LocalDate.now()
-    val todayPage = WeekViewUtils.dateToPage(today)
+    val endHour = if (startHour == 0) 24 else WeekViewUtils.END_HOUR
 
     // Update current time every minute
     var currentMinutes by remember { mutableStateOf(LocalTime.now().let { it.hour * 60 + it.minute }) }
@@ -732,16 +887,16 @@ private fun CurrentTimeIndicator(
         }
     }
 
-    // Only show if current time is in visible range (6am - 11pm)
-    val startMinutes = WeekViewUtils.START_HOUR * 60
-    val endMinutes = WeekViewUtils.END_HOUR * 60
+    // Only show if current time is in visible grid range
+    val startMinutes = startHour * 60
+    val endMinutes = endHour * 60
     if (currentMinutes < startMinutes || currentMinutes >= endMinutes) return
 
-    // Calculate today's visible position (0, 1, or 2 for the 3 visible columns)
-    val todayVisibleOffset = todayPage - currentPage
+    // Calculate today's visible position
+    val todayVisibleOffset = todayOffset()
 
-    // Only show if today is in visible range (0, 1, or 2)
-    if (todayVisibleOffset !in 0..2) return
+    // Only show if today is in visible range
+    if (todayVisibleOffset !in 0 until visibleDays) return
 
     val minutesFromStart = currentMinutes - startMinutes
     val density = LocalDensity.current

@@ -1,0 +1,3 @@
+• Year view with 12 mini-month grid and event dots
+• Full-height month view with event snippets
+• 7-day week view with full 24-hour grid

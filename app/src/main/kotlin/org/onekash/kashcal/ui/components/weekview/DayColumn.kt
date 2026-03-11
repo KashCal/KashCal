@@ -49,15 +49,17 @@ fun DayColumn(
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     is24Hour: Boolean = false,
+    startHour: Int = WeekViewUtils.START_HOUR,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
     modifier: Modifier = Modifier
 ) {
     // Calculate positioned events
-    val positionedEvents = remember(events, date) {
+    val endHour = if (startHour == 0) WeekViewUtils.FULL_DAY_END_HOUR else WeekViewUtils.END_HOUR
+    val positionedEvents = remember(events, date, startHour) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
-        WeekViewUtils.positionEventsForDay(events, dayIndex, hourHeight)
+        WeekViewUtils.positionEventsForDay(events, dayIndex, hourHeight, startHour, endHour)
     }
 
     // Group by overlap to show only 2 + badge
@@ -85,13 +87,12 @@ fun DayColumn(
                     Modifier
                 }
             )
-            .pointerInput(date) {
+            .pointerInput(date, startHour) {
                 detectTapGestures(
                     onLongPress = { offset ->
                         // Calculate time from y offset
-                        // Grid starts at START_HOUR (6am)
                         val minutesFromGridStart = (offset.y / hourHeightPx * 60).toInt()
-                        val totalMinutes = WeekViewUtils.START_HOUR * 60 + minutesFromGridStart
+                        val totalMinutes = startHour * 60 + minutesFromGridStart
                         val hour = (totalMinutes / 60).coerceIn(0, 23)
                         // Snap to 15-minute intervals
                         val minute = ((totalMinutes % 60) / 15) * 15

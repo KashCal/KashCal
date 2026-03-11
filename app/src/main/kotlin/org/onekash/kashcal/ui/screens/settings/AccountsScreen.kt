@@ -144,13 +144,13 @@ fun AccountsScreen(
         ) {
             if (hasAccounts) {
                 // Connected section header
-                item {
+                item(key = "connected_header", contentType = "section_header") {
                     SectionHeader(stringResource(R.string.accounts_section_connected))
                 }
 
                 // iCloud account (if connected)
                 iCloudAccount?.let { account ->
-                    item {
+                    item(key = "icloud_account", contentType = "account_row") {
                         AccountRow(
                             icon = Icons.Default.Cloud,
                             iconContentDescription = stringResource(R.string.accounts_cd_icloud_icon),
@@ -174,34 +174,37 @@ fun AccountsScreen(
                 // CalDAV accounts
                 items(
                     items = calDavAccounts,
-                    key = { it.id }
+                    key = { it.id },
+                    contentType = { "account_row" }
                 ) { account ->
-                    AccountRow(
-                        icon = Icons.Default.CalendarMonth,
-                        iconContentDescription = stringResource(R.string.accounts_cd_caldav_icon),
-                        providerName = account.displayName,
-                        email = maskEmail(account.email),
-                        calendarCount = account.calendarCount,
-                        consecutiveSyncFailures = account.consecutiveSyncFailures,
-                        lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
-                        onClick = {
-                            selectedAccountId = account.id
-                            onObserveAccountDetail(account.id)
-                        }
-                    )
-                    HorizontalDivider(
-                        modifier = Modifier.padding(start = 56.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                    )
+                    Column(modifier = Modifier.animateItem()) {
+                        AccountRow(
+                            icon = Icons.Default.CalendarMonth,
+                            iconContentDescription = stringResource(R.string.accounts_cd_caldav_icon),
+                            providerName = account.displayName,
+                            email = maskEmail(account.email),
+                            calendarCount = account.calendarCount,
+                            consecutiveSyncFailures = account.consecutiveSyncFailures,
+                            lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
+                            onClick = {
+                                selectedAccountId = account.id
+                                onObserveAccountDetail(account.id)
+                            }
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(start = 56.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                    }
                 }
 
                 // Add Account section
-                item {
+                item(key = "add_header", contentType = "section_header") {
                     Spacer(modifier = Modifier.height(24.dp))
                     SectionHeader(stringResource(R.string.accounts_section_add))
                 }
 
-                item {
+                item(key = "add_buttons", contentType = "add_button") {
                     AddAccountButtons(
                         showAddICloud = showAddICloud,
                         onAddICloud = onAddICloud,
@@ -211,7 +214,7 @@ fun AccountsScreen(
                 }
             } else {
                 // Empty state
-                item {
+                item(key = "empty_state", contentType = "empty_state") {
                     EmptyState(
                         onAddICloud = onAddICloud,
                         onAddCalDav = onAddCalDav,

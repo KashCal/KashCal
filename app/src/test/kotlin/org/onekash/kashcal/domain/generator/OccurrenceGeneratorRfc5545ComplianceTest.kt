@@ -47,9 +47,11 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
     private var testCalendarId: Long = 0
 
     private val defaultZone = ZoneId.of("America/New_York")
+    private lateinit var savedTimeZone: TimeZone
 
     @Before
     fun setup() {
+        savedTimeZone = TimeZone.getDefault()
         val context: Context = ApplicationProvider.getApplicationContext()
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
@@ -75,6 +77,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @After
     fun teardown() {
+        TimeZone.setDefault(savedTimeZone)
         database.close()
     }
 
