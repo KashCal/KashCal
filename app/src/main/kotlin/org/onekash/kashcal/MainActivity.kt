@@ -225,7 +225,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 is PendingAction.CreateEventFromCalendarIntent -> {
-                                    // Handle calendar intent from other apps (Gmail, Chrome, etc.)
+                                    // Handle calendar intent from other apps (email clients, browsers, etc.)
                                     Log.d(TAG, "Processing calendar intent: title=${action.data.title}")
                                     editingEventId = null
                                     newEventStartTs = action.data.startTimeMillis
@@ -1070,7 +1070,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // Handle calendar provider intents (ACTION_INSERT) - for "Add to Calendar" from other apps
+        // Handle calendar provider intents (ACTION_INSERT/EDIT) - for "Add to Calendar" from other apps
         CalendarIntentParser.parse(intent)?.let { (data, invitees) ->
             Log.d(TAG, "Calendar intent: title=${data.title}, start=${data.startTimeMillis}, invitees=${invitees.size}")
             homeViewModel.setPendingAction(PendingAction.CreateEventFromCalendarIntent(data, invitees))
@@ -1078,7 +1078,7 @@ class MainActivity : ComponentActivity() {
         }
 
         // Handle CalendarContract content URIs (VIEW/EDIT on content://com.android.calendar)
-        // Used by launchers (Kvaesitso), clock widgets, and other apps
+        // Used by launchers, clock widgets, and other apps
         CalendarIntentParser.parseCalendarContractUri(intent)?.let { action ->
             when (action) {
                 is CalendarContractAction.GoToDate -> {

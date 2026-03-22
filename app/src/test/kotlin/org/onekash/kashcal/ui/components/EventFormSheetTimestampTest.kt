@@ -408,9 +408,9 @@ class EventFormSheetTimestampTest {
     }
 
     @Test
-    fun `calendar intent timestamp from Gmail`() {
+    fun `calendar intent timestamp from email client`() {
         // Android CalendarContract.EXTRA_EVENT_BEGIN_TIME uses milliseconds
-        // Simulating a Gmail "Add to Calendar" link
+        // Simulating an email client "Add to Calendar" link
         val cal = Calendar.getInstance()
         cal.set(2025, Calendar.FEBRUARY, 14, 19, 0, 0) // Valentine's dinner at 7 PM
         val valentinesMs = cal.timeInMillis

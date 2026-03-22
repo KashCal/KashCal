@@ -61,7 +61,7 @@ class MainActivitySyncDecisionTest {
 
     @Test
     fun `returning from another app does sync`() {
-        // User switched to Chrome, then returned - might have changes
+        // User switched to another app, then returned - might have changes
         assertTrue(shouldSyncOnResume(isFirstResume = false, returningFromInternalActivity = false))
     }
 }

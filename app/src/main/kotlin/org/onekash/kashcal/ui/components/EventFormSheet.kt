@@ -537,7 +537,7 @@ fun EventFormSheet(
                 )
             }
 
-            // Handle calendar intent - pre-fill from external app (Gmail, Chrome, etc.)
+            // Handle calendar intent - pre-fill from external app (email client, browser, etc.)
             if (calendarIntentData != null && eventId == null) {
                 val startTs = calendarIntentData.startTimeMillis ?: System.currentTimeMillis()
                 val endTs = calendarIntentData.endTimeMillis

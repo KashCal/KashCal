@@ -11,7 +11,7 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
  * All fields are nullable - intent may contain partial data.
  *
  * Used when other apps trigger "Add to Calendar" via standard Android intents.
- * Examples: Gmail calendar invites, browser event links, etc.
+ * Examples: calendar invites, browser event links, etc.
  */
 @Immutable
 data class CalendarIntentData(
@@ -41,7 +41,7 @@ data class CalendarIntentData(
 /**
  * Actions parsed from CalendarContract content URIs (content://com.android.calendar/...).
  *
- * Used by launchers (Kvaesitso), clock widgets, and other apps that fire
+ * Used by launchers, clock widgets, and other apps that fire
  * ACTION_VIEW/ACTION_EDIT on standard CalendarContract URIs.
  */
 sealed class CalendarContractAction {
@@ -59,7 +59,7 @@ sealed class CalendarContractAction {
  * Parser for CalendarContract intents.
  *
  * Handles:
- * - ACTION_INSERT intents from other apps ("Add to Calendar" from Gmail, Chrome, etc.)
+ * - ACTION_INSERT intents from other apps ("Add to Calendar" from email clients, browsers, etc.)
  * - ACTION_VIEW/EDIT on content://com.android.calendar URIs (launchers, clock widgets)
  *
  * @see [CalendarContract](https://developer.android.com/reference/android/provider/CalendarContract)
@@ -78,14 +78,20 @@ object CalendarIntentParser {
     /**
      * Check if intent is a calendar event creation intent.
      *
+     * Accepts both ACTION_INSERT and ACTION_EDIT — EDIT is treated as create because
+     * KashCal doesn't use CalendarProvider IDs. Matches both dir and item MIME variants.
+     *
      * @param intent The incoming intent to check
-     * @return true if this is an ACTION_INSERT intent with calendar MIME type
+     * @return true if this is an ACTION_INSERT or ACTION_EDIT intent with calendar event MIME type
      */
     fun isCalendarInsertIntent(intent: Intent?): Boolean {
         if (intent == null) return false
-        if (intent.action != Intent.ACTION_INSERT) return false
-        // Match explicit MIME type (apps using setType() or setDataAndType())
-        if (intent.type == "vnd.android.cursor.dir/event") return true
+        val action = intent.action
+        // Accept INSERT and EDIT (EDIT treated as create — KashCal doesn't use CalendarProvider IDs)
+        if (action != Intent.ACTION_INSERT && action != Intent.ACTION_EDIT) return false
+        // Match explicit MIME type — both dir and item variants
+        val type = intent.type
+        if (type == "vnd.android.cursor.dir/event" || type == "vnd.android.cursor.item/event") return true
         // Match CalendarContract data URI (apps using setData() — type resolved by
         // ContentProvider during intent filter matching, but not stored on intent)
         val uri = intent.data ?: return false
@@ -137,9 +143,9 @@ object CalendarIntentParser {
      * - /events (EDIT + extras) → [CalendarContractAction.CreateEvent]
      * - /events/{id}, unknown paths → [CalendarContractAction.OpenApp]
      *
-     * Design note: EDIT on /events is treated as "create" because KashCal doesn't use
-     * the system CalendarProvider, so provider event IDs are meaningless. This matches
-     * what other third-party calendar apps (Simple Calendar, Etar) do.
+     * Design note: EDIT on /events (no ID) is treated as "create" because there is no
+     * event ID to resolve — only extras describing a new event. This is the standard
+     * behavior for third-party calendar apps.
      *
      * @param intent The incoming CalendarContract intent
      * @return Parsed action, or null if not a CalendarContract intent

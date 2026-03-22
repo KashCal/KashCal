@@ -20,7 +20,7 @@ import javax.net.ssl.X509TrustManager
  * Some servers serve incomplete SSL certificate chains — the leaf cert is present
  * but the intermediate is missing. OkHttp's TLS handshake fails with SSLHandshakeException.
  *
- * This class implements the same fallback Chrome and Google Calendar use:
+ * This class implements the same fallback major browsers and calendar apps use:
  * 1. Grab the leaf cert via a trust-all handshake (no data transfer)
  * 2. Extract the AIA caIssuers URL from the leaf cert's AIA extension
  * 3. Download the missing intermediate certificate (always HTTP, not HTTPS)

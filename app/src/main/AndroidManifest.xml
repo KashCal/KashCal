@@ -74,15 +74,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Handle time/epoch content URIs from CalendarContract (e.g. clock widget "Go to calendar") -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="time/epoch"/>
-                <data android:host="com.android.calendar"/>
-                <data android:scheme="content"/>
-            </intent-filter>
-
             <!-- Register as calendar app (for "Default calendar" picker and Android Auto) -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
@@ -117,7 +108,7 @@
                 <data android:pathPattern=".*\\.ics" />
             </intent-filter>
 
-            <!-- Handle .ics (application/ics - Gmail attachments, some email clients) -->
+            <!-- Handle .ics (application/ics - email client attachments) -->
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -149,12 +140,37 @@
                 <data android:scheme="webcals" />
             </intent-filter>
 
-            <!-- Handle calendar event creation from other apps (ACTION_INSERT) -->
-            <!-- Allows "Add to Calendar" from Gmail, Chrome, etc. -->
+            <!-- Handle calendar event creation/editing from other apps -->
+            <!-- Allows "Add to Calendar" from email clients, browsers, transit apps, etc. -->
             <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
                 <action android:name="android.intent.action.INSERT" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="vnd.android.cursor.dir/event" />
+            </intent-filter>
+
+            <!-- Handle EDIT/INSERT with item MIME type (some apps use item instead of dir) -->
+            <intent-filter>
+                <action android:name="android.intent.action.EDIT" />
+                <action android:name="android.intent.action.INSERT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.item/event" />
+            </intent-filter>
+
+            <!-- Handle VIEW for specific CalendarProvider events (transit apps, notification taps) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="vnd.android.cursor.item/event" />
+            </intent-filter>
+
+            <!-- Handle time/epoch content URIs from CalendarContract (clock widget "Go to calendar") -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="time/epoch" />
+                <data android:host="com.android.calendar" />
+                <data android:scheme="content" />
             </intent-filter>
 
             <!-- Handle ACTION_INSERT with CalendarContract data URI -->

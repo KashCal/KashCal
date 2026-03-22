@@ -63,6 +63,60 @@ class CalendarIntentParserTest {
     }
 
     @Test
+    fun `isCalendarInsertIntent returns true for ACTION_INSERT with item event MIME type`() {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            type = "vnd.android.cursor.item/event"
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns true for ACTION_EDIT with dir event MIME type`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            type = "vnd.android.cursor.dir/event"
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns true for ACTION_EDIT with item event MIME type`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            type = "vnd.android.cursor.item/event"
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns true for ACTION_EDIT with CalendarContract data URI`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+        }
+
+        assertTrue(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns false for ACTION_VIEW with dir event MIME type`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            type = "vnd.android.cursor.dir/event"
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
+    fun `isCalendarInsertIntent returns false for ACTION_VIEW with item event MIME type`() {
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            type = "vnd.android.cursor.item/event"
+        }
+
+        assertFalse(CalendarIntentParser.isCalendarInsertIntent(intent))
+    }
+
+    @Test
     fun `isCalendarInsertIntent returns false for null mime type and null data`() {
         val intent = Intent(Intent.ACTION_INSERT)
 
@@ -93,7 +147,7 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parse extracts extras from ACTION_INSERT with data URI`() {
-        // Simulates what Öffi, Google Maps, etc. send
+        // Simulates what transit and map apps send
         val intent = Intent(Intent.ACTION_INSERT).apply {
             data = CalendarContract.Events.CONTENT_URI
             putExtra(CalendarContract.Events.TITLE, "Train to Berlin")
@@ -345,6 +399,75 @@ class CalendarIntentParserTest {
         assertFalse(data.isAllDay)
         assertEquals("FREQ=DAILY", data.rrule)
         assertEquals(listOf("team@example.com"), invitees)
+    }
+
+    // ==================== parse - ACTION_EDIT and item MIME Tests ====================
+
+    @Test
+    fun `parse extracts extras from ACTION_EDIT with item event MIME type`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            type = "vnd.android.cursor.item/event"
+            putExtra(CalendarContract.Events.TITLE, "Dentist Appointment")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1704369600000L)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, 1704373200000L)
+            putExtra(CalendarContract.Events.EVENT_LOCATION, "123 Main St")
+        }
+
+        val result = CalendarIntentParser.parse(intent)
+
+        assertNotNull(result)
+        val (data, _) = result!!
+        assertEquals("Dentist Appointment", data.title)
+        assertEquals(1704369600000L, data.startTimeMillis)
+        assertEquals(1704373200000L, data.endTimeMillis)
+        assertEquals("123 Main St", data.location)
+    }
+
+    @Test
+    fun `parse extracts extras from ACTION_EDIT with dir event MIME type`() {
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            type = "vnd.android.cursor.dir/event"
+            putExtra(CalendarContract.Events.TITLE, "Team Standup")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1704369600000L)
+        }
+
+        val result = CalendarIntentParser.parse(intent)
+
+        assertNotNull(result)
+        assertEquals("Team Standup", result!!.first.title)
+        assertEquals(1704369600000L, result.first.startTimeMillis)
+    }
+
+    @Test
+    fun `parse extracts extras from ACTION_INSERT with item event MIME type`() {
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            type = "vnd.android.cursor.item/event"
+            putExtra(CalendarContract.Events.TITLE, "Lunch")
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1704369600000L)
+        }
+
+        val result = CalendarIntentParser.parse(intent)
+
+        assertNotNull(result)
+        assertEquals("Lunch", result!!.first.title)
+        assertEquals(1704369600000L, result.first.startTimeMillis)
+    }
+
+    @Test
+    fun `parse returns CalendarIntentData for ACTION_EDIT with CalendarContract URI and no extras`() {
+        // Behavior change: previously fell through to parseCalendarContractUri → OpenApp
+        // Now parse() catches it → blank event form (better UX)
+        val intent = Intent(Intent.ACTION_EDIT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+        }
+
+        val result = CalendarIntentParser.parse(intent)
+
+        assertNotNull("EDIT with CalendarContract URI should be parsed as event creation", result)
+        val (data, invitees) = result!!
+        assertNull(data.title)
+        assertNull(data.startTimeMillis)
+        assertTrue(invitees.isEmpty())
     }
 
     // ==================== CalendarIntentData.getDescriptionWithInvitees Tests ====================

@@ -359,7 +359,7 @@ sealed class PendingAction {
      * Pre-fills EventFormSheet with data from CalendarContract extras.
      *
      * Used when other apps trigger "Add to Calendar" via standard Android intents.
-     * Examples: Gmail calendar invites, browser event links, etc.
+     * Examples: calendar invites, browser event links, etc.
      *
      * @param data Parsed intent data (title, location, times, etc.)
      * @param invitees List of invitee emails (appended to description)
