@@ -361,7 +361,7 @@ class EventWriter @Inject constructor(
             val rrule = checkNotNull(masterEvent.rrule) {
                 "Recurring event has no RRULE: ${masterEvent.id}"
             }
-            val truncatedRrule = addUntilToRrule(rrule, splitTimeMs - 1)
+            val truncatedRrule = addUntilToRrule(rrule, splitTimeMs - 1, masterEvent.isAllDay)
             eventsDao.updateRrule(masterEventId, truncatedRrule, now)
 
             // Delete occurrences at/after split point
@@ -436,7 +436,7 @@ class EventWriter @Inject constructor(
             val rrule = checkNotNull(masterEvent.rrule) {
                 "Recurring event has no RRULE: ${masterEvent.id}"
             }
-            val truncatedRrule = addUntilToRrule(rrule, fromTimeMs - 1)
+            val truncatedRrule = addUntilToRrule(rrule, fromTimeMs - 1, masterEvent.isAllDay)
             eventsDao.updateRrule(masterEventId, truncatedRrule, now)
 
             // Delete occurrences at/after point
@@ -724,7 +724,7 @@ class EventWriter @Inject constructor(
      * Add UNTIL parameter to RRULE.
      * Delegates to [RruleUtils] for shared logic between Room and CalendarProvider layers.
      */
-    private fun addUntilToRrule(rrule: String, untilMs: Long): String {
-        return org.onekash.kashcal.util.RruleUtils.addUntilToRrule(rrule, untilMs)
+    private fun addUntilToRrule(rrule: String, untilMs: Long, isAllDay: Boolean = false): String {
+        return org.onekash.kashcal.util.RruleUtils.addUntilToRrule(rrule, untilMs, isAllDay)
     }
 }

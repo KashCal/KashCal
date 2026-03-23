@@ -235,6 +235,7 @@ class HomeViewModelTest {
         }
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_MONTH)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_MONTH
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
     }
 
     @After
@@ -819,6 +820,64 @@ class HomeViewModelTest {
         coVerify(exactly = 1) { eventReader.searchEventsWithNextOccurrence("test") }
     }
 
+    // ==================== Search Lookback Tests ====================
+
+    @Test
+    fun `search with syncPastDays 730 and include past uses 730 day lookback`() = runTest {
+        every { dataStore.syncPastDays } returns flowOf(730)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.activateSearch()
+        viewModel.updateSearchQuery("test")
+        advanceUntilIdle()
+
+        // Toggle include past
+        viewModel.toggleSearchIncludePast()
+        advanceUntilIdle()
+
+        // Verify startDayCode passed to displayEventRepository is ~730 days ago (±1 day for midnight)
+        val today = java.time.LocalDate.now()
+        val expectedDate = today.minusDays(730)
+        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
+        coVerify {
+            displayEventRepository.searchDisplayEvents(
+                eq("test"),
+                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
+                any(),
+                any()
+            )
+        }
+    }
+
+    @Test
+    fun `search with syncPastDays MAX_VALUE and include past uses 10 year lookback`() = runTest {
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.activateSearch()
+        viewModel.updateSearchQuery("test")
+        advanceUntilIdle()
+
+        // Toggle include past
+        viewModel.toggleSearchIncludePast()
+        advanceUntilIdle()
+
+        // Verify startDayCode passed to displayEventRepository is ~10 years ago (±1 day)
+        val today = java.time.LocalDate.now()
+        val expectedDate = today.minusYears(10)
+        val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
+        coVerify {
+            displayEventRepository.searchDisplayEvents(
+                eq("test"),
+                match { startDayCode -> kotlin.math.abs(startDayCode - expectedCode) <= 1 },
+                any(),
+                any()
+            )
+        }
+    }
+
     // ==================== Search Debouncing Tests ====================
 
     @Test
@@ -885,6 +944,54 @@ class HomeViewModelTest {
         // Should not search and should clear results immediately (no debounce)
         coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
         assertTrue(viewModel.uiState.value.searchResults.isEmpty())
+    }
+
+    // ==================== Search Date Filter Tests ====================
+
+    @Test
+    fun `setSearchDateFilter AnyTime enables searchIncludePast`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Start with non-AnyTime filter
+        viewModel.setSearchDateFilter(DateFilter.Today)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.searchIncludePast)
+
+        // Select AnyTime — should auto-enable searchIncludePast
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.searchIncludePast)
+    }
+
+    @Test
+    fun `setSearchDateFilter Today resets searchIncludePast to false`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Enable searchIncludePast via AnyTime
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.searchIncludePast)
+
+        // Switch to Today — should reset
+        viewModel.setSearchDateFilter(DateFilter.Today)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.searchIncludePast)
+    }
+
+    @Test
+    fun `setSearchDateFilter from AnyTime to ThisWeek resets searchIncludePast`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.searchIncludePast)
+
+        viewModel.setSearchDateFilter(DateFilter.ThisWeek)
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.searchIncludePast)
     }
 
     // ==================== Agenda Tests ====================

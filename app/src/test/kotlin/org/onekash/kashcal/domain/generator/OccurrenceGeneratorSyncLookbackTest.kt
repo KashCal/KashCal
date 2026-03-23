@@ -129,7 +129,7 @@ class OccurrenceGeneratorSyncLookbackTest {
     }
 
     @Test
-    fun `regenerateOccurrences uses full 2 year window when sync lookback is All`() = runTest {
+    fun `regenerateOccurrences with All lookback generates back to event start`() = runTest {
         // Setup: Set sync lookback to All (Int.MAX_VALUE)
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
@@ -144,23 +144,60 @@ class OccurrenceGeneratorSyncLookbackTest {
         // Act
         val count = occurrenceGenerator.regenerateOccurrences(event)
 
-        // Assert: With "All events", should use DEFAULT_EXPANSION_MONTHS (24 = 2 years)
+        // Assert: With "All events", should generate back to event start
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         val now = System.currentTimeMillis()
         val pastOccurrences = occurrences.filter { it.startTs < now }
 
-        // Past should have 365 occurrences (event started 1 year ago, within 2yr window)
+        // Past should have ~365 occurrences (all since event start)
         assertTrue(
             "Expected ~365 past occurrences but got ${pastOccurrences.size}",
             pastOccurrences.size in 355..375
         )
 
-        // Oldest should be ~365 days ago
+        // Oldest should be ~365 days ago (at event start)
         val oldest = occurrences.minByOrNull { it.startTs }!!
         val daysOld = (now - oldest.startTs) / MS_PER_DAY
         assertTrue(
             "Oldest occurrence should be ~365 days ago but was $daysOld days ago",
             daysOld in 360..370
+        )
+    }
+
+    @Test
+    fun `regenerateOccurrences with All lookback generates back to event start for 5 year old event`() = runTest {
+        // Setup: Set sync lookback to All (Int.MAX_VALUE)
+        every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
+
+        // Create weekly recurring event starting 5 years ago
+        val fiveYearsAgo = System.currentTimeMillis() - (1825 * MS_PER_DAY)
+        val event = createAndInsertEvent(
+            startTs = fiveYearsAgo,
+            endTs = fiveYearsAgo + 3600000,
+            rrule = "FREQ=WEEKLY"
+        )
+
+        // Act
+        occurrenceGenerator.regenerateOccurrences(event)
+
+        // Assert: Should generate back to event start (~5 years), NOT capped at 2 years
+        val occurrences = database.occurrencesDao().getForEvent(event.id)
+        val now = System.currentTimeMillis()
+        val oldest = occurrences.minByOrNull { it.startTs }!!
+        val daysOld = (now - oldest.startTs) / MS_PER_DAY
+
+        // Should be ~1825 days old (5 years), NOT ~720 (2 years)
+        assertTrue(
+            "Oldest occurrence should be ~1825 days ago (event start) but was $daysOld days ago. " +
+                "This fails if MAX_VALUE is still capped at 2 years (would be ~720).",
+            daysOld in 1820..1830
+        )
+
+        // Should have ~260 past weekly occurrences (5 years * 52 weeks)
+        val pastOccurrences = occurrences.filter { it.startTs < now }
+        assertTrue(
+            "Expected ~260 past weekly occurrences but got ${pastOccurrences.size}",
+            pastOccurrences.size in 255..265
         )
     }
 
@@ -347,7 +384,7 @@ class OccurrenceGeneratorSyncLookbackTest {
     }
 
     @Test
-    fun `extendPastOccurrences with All events lookback uses 2 year window`() = runTest {
+    fun `extendPastOccurrences with All events lookback allows extension to event start`() = runTest {
         // Setup: Set sync lookback to All (Int.MAX_VALUE)
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
@@ -359,7 +396,7 @@ class OccurrenceGeneratorSyncLookbackTest {
             rrule = "FREQ=DAILY"
         )
 
-        // First regenerate (will use 2-year window for "All events")
+        // First regenerate — with unbounded MAX_VALUE, already goes back to event start
         occurrenceGenerator.regenerateOccurrences(event)
 
         val now = System.currentTimeMillis()
@@ -367,23 +404,10 @@ class OccurrenceGeneratorSyncLookbackTest {
         val oldest = occurrences.minByOrNull { it.startTs }!!
         val daysOld = (now - oldest.startTs) / MS_PER_DAY
 
-        // Even with "All events", should be bounded by DEFAULT_EXPANSION_MONTHS (2 years = 720 days)
+        // With "All events", regenerate should already reach event start (~1095 days)
         assertTrue(
-            "With 'All events', oldest occurrence should be ~720 days old, was $daysOld",
-            daysOld in 710..730
-        )
-
-        // Try to extend to 3 years ago (beyond 2-year default window)
-        val extended = occurrenceGenerator.extendPastOccurrences(event, threeYearsAgo)
-
-        // Should not extend beyond 2-year default window
-        val occurrencesAfter = database.occurrencesDao().getForEvent(event.id)
-        val oldestAfter = occurrencesAfter.minByOrNull { it.startTs }!!
-        val daysOldAfter = (now - oldestAfter.startTs) / MS_PER_DAY
-
-        assertTrue(
-            "After extend attempt, oldest should still be ~720 days, was $daysOldAfter",
-            daysOldAfter in 710..730
+            "With 'All events', oldest occurrence should be ~1095 days old, was $daysOld",
+            daysOld in 1090..1100
         )
     }
 

@@ -664,6 +664,61 @@ class EventWriterTest {
         assertNull(database.eventsDao().getById(master.id))
     }
 
+    @Test
+    fun `deleteThisAndFuture uses date-only UNTIL for all-day events`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(
+                rrule = "FREQ=DAILY;COUNT=10",
+                isAllDay = true
+            ),
+            isLocal = true
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        val deleteFrom = occurrences[5].startTs
+
+        eventWriter.deleteThisAndFuture(master.id, deleteFrom, isLocal = true)
+
+        val updated = database.eventsDao().getById(master.id)
+        assertNotNull("Event should exist after deleteThisAndFuture", updated)
+        val rrule = updated!!.rrule!!
+        assertTrue("RRULE should contain UNTIL", rrule.contains("UNTIL="))
+        // Date-only format: 8 digits, no 'T' (e.g., UNTIL=20260115)
+        val untilMatch = Regex("UNTIL=([^;]+)").find(rrule)
+        assertNotNull("UNTIL should be in RRULE: $rrule", untilMatch)
+        val untilValue = untilMatch!!.groupValues[1]
+        assertFalse("UNTIL should be date-only (no T) for all-day: $untilValue",
+            untilValue.contains("T"))
+        assertEquals("UNTIL should be 8-digit date", 8, untilValue.length)
+    }
+
+    @Test
+    fun `splitSeries uses date-only UNTIL for all-day events`() = runTest {
+        val master = eventWriter.createEvent(
+            createBaseEvent().copy(
+                rrule = "FREQ=DAILY;COUNT=10",
+                isAllDay = true
+            ),
+            isLocal = true
+        )
+        val occurrences = database.occurrencesDao().getForEvent(master.id)
+        val splitFrom = occurrences[5].startTs
+
+        eventWriter.splitSeries(
+            master.id, splitFrom,
+            createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5", isAllDay = true),
+            isLocal = true
+        )
+
+        val updated = database.eventsDao().getById(master.id)
+        assertNotNull("Event should exist after splitSeries", updated)
+        val rrule = updated!!.rrule!!
+        val untilMatch = Regex("UNTIL=([^;]+)").find(rrule)
+        assertNotNull("UNTIL should be in RRULE: $rrule", untilMatch)
+        val untilValue = untilMatch!!.groupValues[1]
+        assertFalse("UNTIL should be date-only for all-day: $untilValue",
+            untilValue.contains("T"))
+    }
+
     // ========== Move Calendar ==========
 
     @Test

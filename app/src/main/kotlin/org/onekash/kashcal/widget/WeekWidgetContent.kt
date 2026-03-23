@@ -41,9 +41,6 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
-/** Maximum events shown per day */
-private const val MAX_EVENTS_PER_DAY = 5
-
 /**
  * Main content composable for the week widget.
  * Shows 7 days (today + 6) in a scrollable list with events for each day.
@@ -51,12 +48,14 @@ private const val MAX_EVENTS_PER_DAY = 5
  * @param weekEvents Map of day code to events for that day
  * @param showEventEmojis Whether to show auto-detected emojis in event titles
  * @param timePattern Time format pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
+ * @param maxEventsPerDay Maximum events to show per day before overflow indicator
  */
 @Composable
 fun WeekWidgetContent(
     weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
     showEventEmojis: Boolean,
-    timePattern: String = "h:mma"
+    timePattern: String = "h:mma",
+    maxEventsPerDay: Int = 5
 ) {
     Column(
         modifier = GlanceModifier
@@ -79,6 +78,7 @@ fun WeekWidgetContent(
                     dayCode = dayCode,
                     events = events,
                     showEventEmojis = showEventEmojis,
+                    maxEventsPerDay = maxEventsPerDay,
                     timePattern = timePattern,
                     isToday = isToday(dayCode)
                 )
@@ -155,6 +155,7 @@ private fun DaySection(
     dayCode: Int,
     events: List<WidgetDataRepository.WidgetEvent>,
     showEventEmojis: Boolean,
+    maxEventsPerDay: Int,
     timePattern: String,
     isToday: Boolean
 ) {
@@ -167,12 +168,12 @@ private fun DaySection(
         if (events.isEmpty()) {
             EmptyDayRow(dayCode)
         } else {
-            val visibleEvents = events.take(MAX_EVENTS_PER_DAY)
+            val visibleEvents = events.take(maxEventsPerDay)
             visibleEvents.forEach { event ->
                 CompactEventRow(event, showEventEmojis, timePattern)
             }
-            if (events.size > MAX_EVENTS_PER_DAY) {
-                OverflowRow(dayCode, events.size - MAX_EVENTS_PER_DAY)
+            if (events.size > maxEventsPerDay) {
+                OverflowRow(dayCode, events.size - maxEventsPerDay)
             }
         }
     }

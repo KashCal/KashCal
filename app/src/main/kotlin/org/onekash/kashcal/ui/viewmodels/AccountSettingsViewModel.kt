@@ -277,6 +277,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _showWeekNumbers = MutableStateFlow(false)
     val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
 
+    private val _widgetMaxEventsPerDay = MutableStateFlow(5)
+    val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
+
     init {
         loadInitialState()
         observeCalendars()
@@ -592,6 +595,11 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            dataStore.widgetMaxEventsPerDay.collect { count ->
+                _widgetMaxEventsPerDay.value = count
+            }
+        }
+        viewModelScope.launch {
             dataStore.syncPastDays.collect { days ->
                 _syncLookbackDays.value = days
             }
@@ -633,6 +641,17 @@ class AccountSettingsViewModel @Inject constructor(
     fun setShowWeekNumbers(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowWeekNumbers(show)
+        }
+    }
+
+    /**
+     * Update the widget max events per day preference.
+     * Also triggers widget refresh since widgets display events.
+     */
+    fun setWidgetMaxEventsPerDay(count: Int) {
+        viewModelScope.launch {
+            dataStore.setWidgetMaxEventsPerDay(count)
+            widgetUpdateManager.updateAllWidgets("widget_max_events_changed")
         }
     }
 

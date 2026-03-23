@@ -136,6 +136,55 @@ fun EventDurationSheet(
     }
 }
 
+private val WIDGET_EVENT_LIMIT_OPTIONS = listOf(3, 5, 8, 10, 15)
+
+/**
+ * Bottom sheet for configuring widget event limit.
+ *
+ * @param sheetState Material3 sheet state
+ * @param currentLimit Current widget event limit
+ * @param onLimitChange Callback when limit changes
+ * @param onDismiss Callback when sheet is dismissed
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WidgetEventLimitSheet(
+    sheetState: SheetState,
+    currentLimit: Int,
+    onLimitChange: (Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val selectedOption = WIDGET_EVENT_LIMIT_OPTIONS.find { it == currentLimit } ?: 5
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp)
+        ) {
+            Text(
+                "Widget Event Limit",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+            )
+
+            SettingsCard {
+                SettingsDropdownRow(
+                    label = "Events per day",
+                    options = WIDGET_EVENT_LIMIT_OPTIONS,
+                    selectedOption = selectedOption,
+                    onOptionSelected = { onLimitChange(it) },
+                    optionLabel = { if (it == 5) "$it events (default)" else "$it events" },
+                    showDivider = false
+                )
+            }
+        }
+    }
+}
+
 /**
  * Preview card showing example event titles with emojis.
  */

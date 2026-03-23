@@ -104,6 +104,7 @@ class SettingsActivity : ComponentActivity() {
                 val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
                 val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
                 val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
+                val widgetMaxEventsPerDay by viewModel.widgetMaxEventsPerDay.collectAsStateWithLifecycle()
                 val syncLookbackDays by viewModel.syncLookbackDays.collectAsStateWithLifecycle()
 
                 // Contact birthdays state
@@ -468,6 +469,8 @@ class SettingsActivity : ComponentActivity() {
                             onFirstDayOfWeekChange = viewModel::setFirstDayOfWeek,
                             showWeekNumbers = showWeekNumbers,
                             onShowWeekNumbersChange = viewModel::setShowWeekNumbers,
+                            widgetMaxEventsPerDay = widgetMaxEventsPerDay,
+                            onWidgetMaxEventsPerDayChange = viewModel::setWidgetMaxEventsPerDay,
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen

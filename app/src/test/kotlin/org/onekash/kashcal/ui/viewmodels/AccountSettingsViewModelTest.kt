@@ -1321,6 +1321,18 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `setWidgetMaxEventsPerDay saves preference and triggers widget update`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setWidgetMaxEventsPerDay(10)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setWidgetMaxEventsPerDay(10) }
+        coVerify { widgetUpdateManager.updateAllWidgets("widget_max_events_changed") }
+    }
+
+    @Test
     fun `setFirstDayOfWeek calls dataStore`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

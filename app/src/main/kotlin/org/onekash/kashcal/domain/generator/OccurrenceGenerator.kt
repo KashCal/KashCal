@@ -160,8 +160,8 @@ class OccurrenceGenerator @Inject constructor(
      * Past window: Respects user's sync lookback setting (via DataStore).
      * Future window: Always DEFAULT_EXPANSION_MONTHS (24 = 2 years).
      *
-     * When sync lookback is "All events" (Int.MAX_VALUE), uses DEFAULT_EXPANSION_MONTHS
-     * for both past and future windows.
+     * When sync lookback is "All events" (Int.MAX_VALUE), uses unbounded past window
+     * (back to event start) and DEFAULT_EXPANSION_MONTHS for future window.
      *
      * For old events, bounds rangeStart to (now - window) so FastForwarded
      * activates instead of iterating from DTSTART.
@@ -169,11 +169,12 @@ class OccurrenceGenerator @Inject constructor(
     suspend fun regenerateOccurrences(event: Event): Int {
         val now = System.currentTimeMillis()
 
-        // Past window: use sync lookback setting, falling back to 2 years for "All events"
+        // Past window: use sync lookback setting, unbounded for "All events"
         val syncPastDays = dataStore.syncPastDays.first()
         val pastWindowMs = if (syncPastDays == Int.MAX_VALUE) {
-            // "All events" - use default 2 year window
-            DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
+            // Unbounded: now - Long.MAX_VALUE underflows to large negative,
+            // then coerceAtLeast(eventStartAligned) picks event start
+            Long.MAX_VALUE
         } else {
             // User-specified lookback in days
             syncPastDays.toLong() * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
@@ -249,8 +250,9 @@ class OccurrenceGenerator @Inject constructor(
             val now = System.currentTimeMillis()
             val syncPastDays = dataStore.syncPastDays.first()
             val lookbackCutoff = if (syncPastDays == Int.MAX_VALUE) {
-                // "All events" - use default 2 year window
-                now - (DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND)
+                // Unbounded — allow extension back to event start
+                // (coerceAtLeast(eventStartAligned) on effectiveExtendTo bounds naturally)
+                0L
             } else {
                 now - (syncPastDays.toLong() * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND)
             }

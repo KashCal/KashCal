@@ -325,6 +325,19 @@ class KashCalDataStore(
     }
 
     /**
+     * Maximum events per day in widgets (agenda + week).
+     * Default: 5. Valid options: 3, 5, 8, 10, 15.
+     */
+    val widgetMaxEventsPerDay: Flow<Int>
+        get() = getPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, 5)
+
+    suspend fun setWidgetMaxEventsPerDay(count: Int) {
+        val validOptions = setOf(3, 5, 8, 10, 15)
+        val safeCount = if (count in validOptions) count else 5
+        setPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, safeCount)
+    }
+
+    /**
      * Time format preference.
      * - "system": Follow device's 24-hour setting
      * - "12h": Always 12-hour (2:30 PM)

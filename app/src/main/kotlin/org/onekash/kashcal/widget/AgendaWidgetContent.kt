@@ -51,13 +51,15 @@ import java.time.format.DateTimeFormatter
  * @param currentDate Formatted current date for header
  * @param showEventEmojis Whether to show auto-detected emojis in event titles
  * @param timePattern Time format pattern (e.g., "h:mm a" for 12h, "HH:mm" for 24h)
+ * @param maxEventsPerDay Maximum events to show before overflow indicator
  */
 @Composable
 fun AgendaWidgetContent(
     events: List<WidgetDataRepository.WidgetEvent>,
     currentDate: String,
     showEventEmojis: Boolean = true,
-    timePattern: String = "h:mm a"
+    timePattern: String = "h:mm a",
+    maxEventsPerDay: Int = 5
 ) {
     Column(
         modifier = GlanceModifier
@@ -72,7 +74,7 @@ fun AgendaWidgetContent(
         if (events.isEmpty()) {
             EmptyState()
         } else {
-            EventList(events, showEventEmojis, timePattern)
+            EventList(events, showEventEmojis, timePattern, maxEventsPerDay)
         }
     }
 }
@@ -142,16 +144,17 @@ private fun WidgetHeader(date: String) {
 
 /**
  * List of today's events.
- * Limited to MAX_VISIBLE_EVENTS with overflow indicator.
+ * Limited to maxEventsPerDay with overflow indicator.
  */
 @Composable
 private fun EventList(
     events: List<WidgetDataRepository.WidgetEvent>,
     showEventEmojis: Boolean,
-    timePattern: String
+    timePattern: String,
+    maxEventsPerDay: Int
 ) {
-    val visibleEvents = events.take(MAX_VISIBLE_EVENTS)
-    val overflowCount = events.size - MAX_VISIBLE_EVENTS
+    val visibleEvents = events.take(maxEventsPerDay)
+    val overflowCount = events.size - maxEventsPerDay
 
     Column(
         modifier = GlanceModifier
@@ -334,6 +337,3 @@ const val ACTION_GO_TO_DATE = "go_to_date"
 // Extra keys for week widget
 const val EXTRA_DAY_CODE = "widget_day_code"
 const val EXTRA_CREATE_EVENT_START_TS = "widget_create_event_start_ts"
-
-/** Maximum number of events to show in widget */
-private const val MAX_VISIBLE_EVENTS = 5

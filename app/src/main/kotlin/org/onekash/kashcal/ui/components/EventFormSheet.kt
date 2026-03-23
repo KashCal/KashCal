@@ -167,6 +167,48 @@ data class EventFormState(
 // Reminder options moved to ui/shared/FormConstants.kt
 // Use getReminderOptionsForEventType(isAllDay) to get correct options
 
+internal data class ResolvedCalendar(
+    val id: Long?,
+    val name: String,
+    val color: Int?,
+    val isDevice: Boolean
+)
+
+internal fun resolveDefaultCalendar(
+    defaultCalendar: DefaultCalendar?,
+    writableCalendars: List<Calendar>,
+    deviceCalendarGroups: List<CalendarGroup>
+): ResolvedCalendar {
+    return when (defaultCalendar) {
+        is DefaultCalendar.Room -> {
+            val cal = writableCalendars.find { it.id == defaultCalendar.calendarId }
+            if (cal != null) {
+                ResolvedCalendar(cal.id, cal.displayName, cal.color, isDevice = false)
+            } else {
+                val fallback = writableCalendars.firstOrNull()
+                ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+            }
+        }
+        is DefaultCalendar.Device -> {
+            val deviceCal = deviceCalendarGroups
+                .flatMap { it.pickerCalendars }
+                .filterIsInstance<PickerCalendar.Device>()
+                .map { it.calendar }
+                .find { it.id == defaultCalendar.calendarId }
+            if (deviceCal != null) {
+                ResolvedCalendar(deviceCal.id, deviceCal.displayName, deviceCal.color, isDevice = true)
+            } else {
+                val fallback = writableCalendars.firstOrNull()
+                ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+            }
+        }
+        null -> {
+            val fallback = writableCalendars.firstOrNull()
+            ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+        }
+    }
+}
+
 /**
  * Event creation/editing bottom sheet with iOS-style UI.
  *
@@ -306,57 +348,8 @@ fun EventFormSheet(
             if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
         }
 
-        // Default calendar: handle both Room and Device calendars
-        val defaultCalId: Long?
-        val defaultCalName: String
-        val defaultCalColor: Int?
-        val defaultIsDevice: Boolean
-
-        when (defaultCalendar) {
-            is DefaultCalendar.Room -> {
-                val cal = writableCalendars.find { it.id == defaultCalendar.calendarId }
-                if (cal != null) {
-                    defaultCalId = cal.id
-                    defaultCalName = cal.displayName
-                    defaultCalColor = cal.color
-                    defaultIsDevice = false
-                } else {
-                    // Room calendar unavailable - fallback to first writable
-                    val fallback = writableCalendars.firstOrNull()
-                    defaultCalId = fallback?.id
-                    defaultCalName = fallback?.displayName ?: ""
-                    defaultCalColor = fallback?.color
-                    defaultIsDevice = false
-                }
-            }
-            is DefaultCalendar.Device -> {
-                val deviceCal = deviceCalendarGroups
-                    .flatMap { it.pickerCalendars }
-                    .filterIsInstance<PickerCalendar.Device>()
-                    .map { it.calendar }
-                    .find { it.id == defaultCalendar.calendarId }
-                if (deviceCal != null) {
-                    defaultCalId = deviceCal.id
-                    defaultCalName = deviceCal.displayName
-                    defaultCalColor = deviceCal.color
-                    defaultIsDevice = true
-                } else {
-                    // Device calendar unavailable - fallback to first writable Room calendar
-                    val fallback = writableCalendars.firstOrNull()
-                    defaultCalId = fallback?.id
-                    defaultCalName = fallback?.displayName ?: ""
-                    defaultCalColor = fallback?.color
-                    defaultIsDevice = false
-                }
-            }
-            null -> {
-                val fallback = writableCalendars.firstOrNull()
-                defaultCalId = fallback?.id
-                defaultCalName = fallback?.displayName ?: ""
-                defaultCalColor = fallback?.color
-                defaultIsDevice = false
-            }
-        }
+        val (defaultCalId, defaultCalName, defaultCalColor, defaultIsDevice) =
+            resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
 
         var newState = state.copy(
             calendarGroups = writableGroups,
@@ -581,6 +574,61 @@ fun EventFormSheet(
         // Store initial state for change detection
         if (initialState == null) {
             initialState = newState
+        }
+    }
+
+    // Reactive calendar update: handles async calendar loading on cold start.
+    // The init LaunchedEffect above captures calendars at first composition,
+    // which may be empty if HomeViewModel hasn't loaded them yet (race condition).
+    // This effect updates calendar state when the list becomes available.
+    LaunchedEffect(calendars, calendarGroups, deviceCalendarGroups) {
+        val writableCalendars = calendars.filter { !it.isReadOnly }
+        val writableGroups = calendarGroups.mapNotNull { group ->
+            val writableCals = group.calendars.filter { !it.isReadOnly }
+            if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
+        }
+
+        // Early return if nothing changed (prevents unnecessary state updates during sync)
+        if (writableGroups == state.calendarGroups &&
+            deviceCalendarGroups == state.deviceCalendarGroups) return@LaunchedEffect
+
+        // Always update the calendar groups (picker needs current list)
+        state = state.copy(
+            calendarGroups = writableGroups,
+            deviceCalendarGroups = deviceCalendarGroups
+        )
+
+        // Case 1: Create mode — no calendar selected yet (empty on first composition)
+        // Resolve default now that calendars are available
+        if (state.selectedCalendarId == null && writableCalendars.isNotEmpty()) {
+            val resolved = resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
+            state = state.copy(
+                selectedCalendarId = resolved.id,
+                selectedCalendarName = resolved.name,
+                selectedCalendarColor = resolved.color,
+                isDeviceCalendar = resolved.isDevice
+            )
+            // Sync initialState so change detection doesn't trip on auto-resolved calendar
+            if (initialState?.selectedCalendarId == null) {
+                initialState = state
+            }
+        }
+
+        // Case 2: Edit mode — calendar ID already set but metadata missing (cold start)
+        // The init LaunchedEffect set selectedCalendarId from event.calendarId,
+        // but calendar name/color were null because calendars list was empty
+        if (state.selectedCalendarId != null &&
+            state.selectedCalendarName.isEmpty() &&
+            writableCalendars.isNotEmpty()) {
+            val cal = calendars.find { it.id == state.selectedCalendarId }
+            if (cal != null) {
+                state = state.copy(
+                    selectedCalendarName = cal.displayName,
+                    selectedCalendarColor = cal.color
+                )
+                // Sync initialState for edit mode too
+                initialState = state
+            }
         }
     }
 

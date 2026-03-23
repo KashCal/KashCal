@@ -61,6 +61,7 @@ import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
+import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
@@ -223,6 +224,8 @@ fun AccountSettingsScreen(
     onFirstDayOfWeekChange: (Int) -> Unit = {},
     showWeekNumbers: Boolean = false,
     onShowWeekNumbersChange: (Boolean) -> Unit = {},
+    widgetMaxEventsPerDay: Int = 5,
+    onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     // Version footer (Checkpoint 9)
     versionName: String = ""
 ) {
@@ -307,6 +310,8 @@ fun AccountSettingsScreen(
                     onFirstDayOfWeekChange = onFirstDayOfWeekChange,
                     showWeekNumbers = showWeekNumbers,
                     onShowWeekNumbersChange = onShowWeekNumbersChange,
+                    widgetMaxEventsPerDay = widgetMaxEventsPerDay,
+                    onWidgetMaxEventsPerDayChange = onWidgetMaxEventsPerDayChange,
                     showAddSubscriptionDialogFromIntent = uiState.showAddSubscriptionDialog,
                     prefillSubscriptionUrl = uiState.prefillSubscriptionUrl,
                     onHideAddSubscriptionDialog = onHideAddSubscriptionDialog,
@@ -435,6 +440,8 @@ private fun FlatSettingsContent(
     onFirstDayOfWeekChange: (Int) -> Unit,
     showWeekNumbers: Boolean,
     onShowWeekNumbersChange: (Boolean) -> Unit,
+    widgetMaxEventsPerDay: Int,
+    onWidgetMaxEventsPerDayChange: (Int) -> Unit,
     showAddSubscriptionDialogFromIntent: Boolean,
     prefillSubscriptionUrl: String?,
     onHideAddSubscriptionDialog: () -> Unit,
@@ -450,6 +457,7 @@ private fun FlatSettingsContent(
     var showTimeFormatSheet by remember { mutableStateOf(false) }
     var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
     var showEventDurationSheet by remember { mutableStateOf(false) }
+    var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
     var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
@@ -462,6 +470,7 @@ private fun FlatSettingsContent(
     val timeFormatSheetState = rememberModalBottomSheetState()
     val firstDayOfWeekSheetState = rememberModalBottomSheetState()
     val eventDurationSheetState = rememberModalBottomSheetState()
+    val widgetEventLimitSheetState = rememberModalBottomSheetState()
     val syncLookbackSheetState = rememberModalBottomSheetState()
     val debugSheetState = rememberModalBottomSheetState()
 
@@ -626,7 +635,13 @@ private fun FlatSettingsContent(
                 icon = Icons.Default.Schedule,
                 label = "Default Event Length",
                 subtitle = formatDuration(defaultEventDuration),
-                onClick = { showEventDurationSheet = true },
+                onClick = { showEventDurationSheet = true }
+            )
+            SettingsRow(
+                icon = Icons.Default.CalendarMonth,
+                label = "Widget Event Limit",
+                subtitle = "$widgetMaxEventsPerDay per day",
+                onClick = { showWidgetEventLimitSheet = true },
                 showDivider = false  // Last item in card
             )
         }
@@ -820,6 +835,16 @@ private fun FlatSettingsContent(
             defaultEventDuration = defaultEventDuration,
             onEventDurationChange = onDefaultEventDurationChange,
             onDismiss = { showEventDurationSheet = false }
+        )
+    }
+
+    // Widget Event Limit Sheet
+    if (showWidgetEventLimitSheet) {
+        WidgetEventLimitSheet(
+            sheetState = widgetEventLimitSheetState,
+            currentLimit = widgetMaxEventsPerDay,
+            onLimitChange = onWidgetMaxEventsPerDayChange,
+            onDismiss = { showWidgetEventLimitSheet = false }
         )
     }
 

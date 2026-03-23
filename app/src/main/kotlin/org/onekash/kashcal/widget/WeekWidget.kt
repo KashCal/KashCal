@@ -58,6 +58,7 @@ class WeekWidget : GlanceAppWidget() {
         // Get display preferences
         val dataStore = KashCalDataStore(context)
         val showEventEmojis = dataStore.showEventEmojis.first()
+        val maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first()
 
         // Get time format preference
         val timeFormatPref = dataStore.getTimeFormat()
@@ -69,7 +70,8 @@ class WeekWidget : GlanceAppWidget() {
                 WeekWidgetContent(
                     weekEvents = weekEvents,
                     showEventEmojis = showEventEmojis,
-                    timePattern = timePattern
+                    timePattern = timePattern,
+                    maxEventsPerDay = maxEventsPerDay
                 )
             }
         }

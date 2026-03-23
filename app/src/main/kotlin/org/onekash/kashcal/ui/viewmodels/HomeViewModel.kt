@@ -1621,6 +1621,7 @@ class HomeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 searchDateFilter = filter,
+                searchIncludePast = filter is DateFilter.AnyTime,
                 showSearchDatePicker = false,  // Auto-dismiss picker on selection
                 searchDateRangeStart = null    // Reset range selection
             )
@@ -1728,7 +1729,12 @@ class HomeViewModel @Inject constructor(
                         DayPagerUtils.msToDayCode(timeRange.first) to DayPagerUtils.msToDayCode(timeRange.second)
                     }
                     _uiState.value.searchIncludePast -> {
-                        val pastDate = today.minusYears(1)
+                        val syncPastDays = dataStore.syncPastDays.first()
+                        val pastDate = if (syncPastDays == Int.MAX_VALUE) {
+                            today.minusYears(10)  // Practical upper bound for device calendar
+                        } else {
+                            today.minusDays(syncPastDays.toLong())
+                        }
                         val futureDate = today.plusYears(2)
                         (pastDate.year * 10000 + pastDate.monthValue * 100 + pastDate.dayOfMonth) to
                             (futureDate.year * 10000 + futureDate.monthValue * 100 + futureDate.dayOfMonth)
