@@ -68,16 +68,11 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.KashCal">
 
-            <!-- Launcher -->
+            <!-- Launcher + default calendar app (APP_CALENDAR must be on ACTION_MAIN per Android docs) -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <!-- Register as calendar app (for "Default calendar" picker and Android Auto) -->
-            <intent-filter tools:ignore="AppLinkUrlError">
-                <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.APP_CALENDAR" />
             </intent-filter>
 
@@ -315,6 +310,19 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/week_widget_info" />
+        </receiver>
+
+        <!-- Month View widget receiver -->
+        <receiver
+            android:name=".widget.MonthWidgetReceiver"
+            android:exported="true"
+            android:label="@string/month_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/month_widget_info" />
         </receiver>
 
         <!-- Date widget receiver (icon-like, shows today's date) -->

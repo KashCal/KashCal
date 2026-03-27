@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Widget metadata for Month View widget.
+
+    Size: 4x4 cells (approximately 250dp x 280dp)
+    Update: Every 30 minutes (1800000ms)
+    Resizable: horizontal and vertical
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="280dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:minResizeWidth="200dp"
+    android:minResizeHeight="240dp"
+    android:maxResizeWidth="500dp"
+    android:maxResizeHeight="600dp"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:initialLayout="@layout/widget_loading"
+    android:previewLayout="@layout/widget_loading"
+    android:description="@string/month_widget_description"
+    android:updatePeriodMillis="1800000"
+    android:widgetFeatures="reconfigurable" />

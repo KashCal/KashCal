@@ -83,6 +83,27 @@ class WidgetDataRepository @Inject constructor(
     }
 
     /**
+     * Get events for an arbitrary day code range.
+     *
+     * Used by MonthWidget to fetch events for the full calendar grid range
+     * (computed via [MonthGrid.toDayCodeRange]).
+     *
+     * @param startDayCode Start of range in YYYYMMDD format
+     * @param endDayCode End of range in YYYYMMDD format
+     * @return Map of dayCode to list of events for that day.
+     *         Only days with events are included (no empty-day entries).
+     */
+    suspend fun getEventsInRange(startDayCode: Int, endDayCode: Int): Map<Int, List<WidgetEvent>> {
+        val eventsMap = displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
+
+        return eventsMap.mapValues { (_, displayEvents) ->
+            displayEvents
+                .map { toWidgetEvent(it) }
+                .sortedWith(compareBy({ !it.isAllDay }, { it.startTs }))
+        }
+    }
+
+    /**
      * Convert a [DisplayEvent] to a [WidgetEvent] for widget rendering.
      */
     private fun toWidgetEvent(displayEvent: DisplayEvent): WidgetEvent {

@@ -252,6 +252,113 @@ class WidgetDataRepositoryTest {
         assertEquals("Afternoon", todayEvents[1].title)
     }
 
+    // ========== Range Events Tests ==========
+
+    @Test
+    fun `getEventsInRange returns events for specified range`() = runTest {
+        val today = LocalDate.now()
+        val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+        val tomorrowCode = today.plusDays(1).let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
+        val zone = ZoneId.systemDefault()
+
+        val time1 = today.atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
+        val time2 = today.plusDays(1).atTime(14, 0).atZone(zone).toInstant().toEpochMilli()
+
+        val events = mapOf(
+            todayCode to listOf(
+                createDisplayEvent(1L, "Today Event", time1, time1 + 3600000, todayCode)
+            ),
+            tomorrowCode to listOf(
+                createDisplayEvent(2L, "Tomorrow Event", time2, time2 + 3600000, tomorrowCode)
+            )
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(todayCode, tomorrowCode) } returns events
+
+        val result = repository.getEventsInRange(todayCode, tomorrowCode)
+        assertEquals(2, result.size)
+        assertEquals("Today Event", result[todayCode]?.first()?.title)
+        assertEquals("Tomorrow Event", result[tomorrowCode]?.first()?.title)
+    }
+
+    @Test
+    fun `getEventsInRange returns empty map when no events exist`() = runTest {
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns emptyMap()
+
+        val result = repository.getEventsInRange(20260301, 20260331)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `getEventsInRange sorts events within each day`() = runTest {
+        val today = LocalDate.now()
+        val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+        val zone = ZoneId.systemDefault()
+
+        val time1 = today.atTime(14, 0).atZone(zone).toInstant().toEpochMilli()
+        val time2 = today.atTime(9, 0).atZone(zone).toInstant().toEpochMilli()
+        val allDayStart = today.atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
+
+        val events = listOf(
+            createDisplayEvent(1L, "Afternoon", time1, time1 + 3600000, todayCode),
+            createDisplayEvent(2L, "Morning", time2, time2 + 1800000, todayCode),
+            createDisplayEvent(3L, "All Day", allDayStart, allDayStart + 86400000 - 1, todayCode, isAllDay = true)
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns
+            mapOf(todayCode to events)
+
+        val result = repository.getEventsInRange(todayCode, todayCode)
+        val dayEvents = result[todayCode]!!
+        assertEquals(3, dayEvents.size)
+        assertEquals("All Day", dayEvents[0].title)
+        assertTrue(dayEvents[0].isAllDay)
+        assertEquals("Morning", dayEvents[1].title)
+        assertEquals("Afternoon", dayEvents[2].title)
+    }
+
+    @Test
+    fun `getEventsInRange uses default color for zero calendar color`() = runTest {
+        val today = LocalDate.now()
+        val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+        val zone = ZoneId.systemDefault()
+        val time = today.atTime(10, 0).atZone(zone).toInstant().toEpochMilli()
+
+        val events = listOf(
+            createDisplayEvent(1L, "No Color", time, time + 3600000, todayCode, calendarColor = 0)
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns
+            mapOf(todayCode to events)
+
+        val result = repository.getEventsInRange(todayCode, todayCode)
+        assertEquals(0xFF2196F3.toInt(), result[todayCode]?.first()?.calendarColor)
+    }
+
+    @Test
+    fun `getEventsInRange detects past events correctly`() = runTest {
+        val now = System.currentTimeMillis()
+        val todayCode = DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
+
+        val pastEnd = now - 2 * 3600000
+        val pastStart = pastEnd - 3600000
+        val futureStart = now + 3600000
+        val futureEnd = now + 2 * 3600000
+
+        val events = listOf(
+            createDisplayEvent(1L, "Past", pastStart, pastEnd, todayCode),
+            createDisplayEvent(2L, "Future", futureStart, futureEnd, todayCode)
+        )
+
+        coEvery { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) } returns
+            mapOf(todayCode to events)
+
+        val result = repository.getEventsInRange(todayCode, todayCode)
+        val dayEvents = result[todayCode]!!
+        assertTrue(dayEvents.find { it.title == "Past" }!!.isPast)
+        assertFalse(dayEvents.find { it.title == "Future" }!!.isPast)
+    }
+
     // ========== Helper Methods ==========
 
     private fun createDisplayEvent(

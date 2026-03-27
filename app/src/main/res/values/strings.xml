@@ -7,6 +7,8 @@
     <string name="widget_description">Shows today\'s calendar events</string>
     <string name="week_widget_name">Week View</string>
     <string name="week_widget_description">Shows calendar events for the next 7 days</string>
+    <string name="month_widget_name">Month View</string>
+    <string name="month_widget_description">Shows a full month calendar grid with event indicator dots</string>
     <string name="date_widget_name">Date</string>
     <string name="date_widget_description">Shows today\'s date like an app icon</string>
     <!-- Widget content -->

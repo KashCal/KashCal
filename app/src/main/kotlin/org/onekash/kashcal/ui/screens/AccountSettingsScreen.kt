@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
@@ -459,6 +460,7 @@ private fun FlatSettingsContent(
     var showEventDurationSheet by remember { mutableStateOf(false) }
     var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
     var showDebugMenu by remember { mutableStateOf(false) }
+    var showAppInfoSheet by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
     var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
     var showSyncLookbackSheet by remember { mutableStateOf(false) }
@@ -724,6 +726,7 @@ private fun FlatSettingsContent(
         if (versionName.isNotEmpty()) {
             VersionFooter(
                 versionName = versionName,
+                onClick = { showAppInfoSheet = true },
                 onLongPress = { showDebugMenu = true }
             )
         }
@@ -856,6 +859,11 @@ private fun FlatSettingsContent(
             onSelect = onSyncLookbackChange,
             onDismiss = { showSyncLookbackSheet = false }
         )
+    }
+
+    // App Info Sheet (tap on version footer)
+    if (showAppInfoSheet) {
+        AppInfoSheet(onDismiss = { showAppInfoSheet = false })
     }
 
     // Debug Menu Sheet

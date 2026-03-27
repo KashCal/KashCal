@@ -29,11 +29,11 @@ class FlatSettingsComponentsTest {
     }
 
     @Test
-    fun `version footer accessibility description is correct`() {
+    fun `version footer accessibility description includes tap and long press hints`() {
         val versionName = "4.2.4"
-        val expectedDescription = "KashCal version $versionName. Long press for debug options."
+        val expectedDescription = "KashCal version $versionName. Tap for info, long press for debug options."
         assertEquals(
-            "KashCal version 4.2.4. Long press for debug options.",
+            "KashCal version 4.2.4. Tap for info, long press for debug options.",
             expectedDescription
         )
     }

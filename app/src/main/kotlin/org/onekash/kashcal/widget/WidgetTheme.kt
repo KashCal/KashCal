@@ -47,6 +47,12 @@ object WidgetTheme {
         night = Color(0xFF64B5F6)  // Blue 300
     )
 
+    /** Today highlight background (accent with alpha) */
+    val todayHighlightBackground = ColorProvider(
+        day = Color(0x332196F3),   // Blue 500, 20% alpha
+        night = Color(0x3364B5F6)  // Blue 300, 20% alpha
+    )
+
     /** Divider color */
     val dividerColor = ColorProvider(
         day = Color(0xFFE0E0E0),   // Gray 300

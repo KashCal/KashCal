@@ -244,12 +244,14 @@ fun SettingsToggleRow(
  * Long-press opens the debug menu.
  *
  * @param versionName App version (e.g., "4.2.4")
+ * @param onClick Callback when tapped (opens app info)
  * @param onLongPress Callback when long-pressed (opens debug menu)
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VersionFooter(
     versionName: String,
+    onClick: () -> Unit,
     onLongPress: () -> Unit
 ) {
     val hapticFeedback = LocalHapticFeedback.current
@@ -259,7 +261,7 @@ fun VersionFooter(
             .fillMaxWidth()
             .padding(vertical = 24.dp)
             .combinedClickable(
-                onClick = { /* No action on regular click */ },
+                onClick = onClick,
                 onLongClick = {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongPress()
@@ -267,7 +269,7 @@ fun VersionFooter(
                 onLongClickLabel = "Open debug menu"
             )
             .semantics {
-                contentDescription = "KashCal version $versionName. Long press for debug options."
+                contentDescription = "KashCal version $versionName. Tap for info, long press for debug options."
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {

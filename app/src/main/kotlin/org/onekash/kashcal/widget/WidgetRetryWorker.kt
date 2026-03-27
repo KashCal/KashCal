@@ -33,6 +33,7 @@ class WidgetRetryWorker(
             AgendaWidget().updateAll(applicationContext)
             WeekWidget().updateAll(applicationContext)
             DateWidget().updateAll(applicationContext)
+            MonthWidget().updateAll(applicationContext)
             Log.d(TAG, "Widget update succeeded on retry")
             Result.success()
         } catch (e: Exception) {

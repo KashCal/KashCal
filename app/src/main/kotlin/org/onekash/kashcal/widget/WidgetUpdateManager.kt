@@ -52,6 +52,7 @@ class WidgetUpdateManager @Inject constructor(
             AgendaWidget().updateAll(context)
             WeekWidget().updateAll(context)
             DateWidget().updateAll(context)
+            MonthWidget().updateAll(context)
         } catch (e: Exception) {
             Log.e(TAG, "Immediate widget update failed", e)
             if (isTransientError(e)) {
@@ -162,6 +163,7 @@ class WidgetUpdateWorker(
             AgendaWidget().updateAll(applicationContext)
             WeekWidget().updateAll(applicationContext)
             DateWidget().updateAll(applicationContext)
+            MonthWidget().updateAll(applicationContext)
             return Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Widget update failed", e)
@@ -186,6 +188,7 @@ class MidnightWidgetUpdateWorker(
             AgendaWidget().updateAll(applicationContext)
             WeekWidget().updateAll(applicationContext)
             DateWidget().updateAll(applicationContext)
+            MonthWidget().updateAll(applicationContext)
 
             // Reschedule for next midnight
             val manager = WidgetUpdateManager(applicationContext)
