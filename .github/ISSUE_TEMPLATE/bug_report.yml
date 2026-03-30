@@ -1,0 +1,109 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in KashCal
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: Describe what went wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this?
+      placeholder: |
+        1. Go to '...'
+        2. Tap on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should have happened instead?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: KashCal version
+      description: "Settings > scroll to bottom"
+      placeholder: "e.g., v23.3.6"
+    validations:
+      required: true
+
+  - type: input
+    id: android
+    attributes:
+      label: Android version and device
+      placeholder: "e.g., Android 14 / Pixel 8"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-source
+    attributes:
+      label: Install source
+      options:
+        - F-Droid
+        - GitHub Release
+        - Built from source
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sync-provider
+    attributes:
+      label: Sync provider (if related to sync)
+      options:
+        - None
+        - iCloud
+        - Nextcloud
+        - Radicale
+        - Baikal
+        - Stalwart
+        - Zoho
+        - FastMail
+        - SoGo
+        - Other CalDAV
+        - ICS Subscription
+    validations:
+      required: false
+
+  - type: dropdown
+    id: device-calendar
+    attributes:
+      label: Device calendar (if related to device calendars)
+      options:
+        - None
+        - Google Calendar
+        - Samsung Calendar
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sync logs or screenshots
+      description: "For sync issues: Settings > long-press version number > Sync History. Screenshots are also helpful."
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else that might help — CalDAV server version, workarounds tried, etc.
+    validations:
+      required: false

@@ -16,16 +16,17 @@ Fixes #(issue number)
 ## Checklist
 
 - [ ] I have read the [CONTRIBUTING](CONTRIBUTING.md) guide
-- [ ] My code follows the project's code style
 - [ ] I have tested my changes locally
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes (`./gradlew test`)
+- [ ] New and existing unit tests pass locally (`./gradlew test`)
 - [ ] The app builds successfully (`./gradlew assembleDebug`)
+
+## AI Disclosure
+
+If you used AI assistance (Copilot, ChatGPT, Claude, etc.) while working on this PR, please disclose it here. This helps reviewers calibrate their review.
+
+- [ ] No AI assistance was used
+- [ ] AI assisted with: ___
 
 ## Screenshots (if applicable)
 
 Add screenshots for UI changes.
-
-## Additional Notes
-
-Any additional information reviewers should know.

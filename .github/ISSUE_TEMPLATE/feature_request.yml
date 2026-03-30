@@ -1,0 +1,55 @@
+name: Feature Request
+description: Suggest an idea for KashCal
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem would this solve? What's frustrating or missing?
+      placeholder: "I'm frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe what you'd like to happen. Be as specific as you can.
+      placeholder: What would the ideal experience look like?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of KashCal does this relate to?
+      options:
+        - Calendar views (month, agenda, 3-day)
+        - Event creation / editing
+        - Sync (iCloud, CalDAV, ICS subscriptions)
+        - Widgets (agenda, date, week)
+        - Reminders / notifications
+        - Settings / preferences
+        - Device calendar integration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you tried any workarounds? Are there other apps that handle this well?
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, screenshots, or links to related issues.
+    validations:
+      required: false

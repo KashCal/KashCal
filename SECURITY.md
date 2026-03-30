@@ -1,51 +1,47 @@
 # Security Policy
 
-## Supported Versions
-
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | :white_check_mark: |
-
-
 ## Reporting a Vulnerability
-
-We take security vulnerabilities seriously. If you discover a security issue, please report it responsibly.
-
-### How to Report
 
 **Please use [GitHub Security Advisories](https://github.com/KashCal/KashCal/security/advisories/new)** to report vulnerabilities privately.
 
-Do NOT:
-- Open a public GitHub issue for security vulnerabilities
-- Disclose the vulnerability publicly before it has been addressed
+Do NOT open a public issue or disclose the vulnerability before it has been addressed.
 
 ### What to Include
 
 - Description of the vulnerability
 - Steps to reproduce
+- Affected component (credential storage, sync, intent handling, etc.)
 - Potential impact
 - Suggested fix (if any)
 
 ### What to Expect
 
-1. **Acknowledgment**: We will acknowledge receipt within 48 hours
-2. **Assessment**: We will assess the vulnerability and determine severity
-3. **Fix**: We will work on a fix for confirmed vulnerabilities
-4. **Disclosure**: Once fixed, we will coordinate disclosure with you
+1. **Acknowledgment** within a few days
+2. **Assessment** of severity
+3. **Fix** for confirmed vulnerabilities
+4. **Coordinated disclosure** once resolved — reporters credited in release notes unless they prefer anonymity
 
-### Scope
+## Scope
 
-This security policy applies to:
-- The KashCal Android application
-- The official repository at github.com/KashCal/KashCal
+This security policy covers the KashCal Android application and this repository.
+
+KashCal handles sensitive data including:
+
+- **Sync credentials** — iCloud app-specific passwords, CalDAV server passwords, stored via Android Keystore (AES-256-GCM)
+- **Calendar data** — Event titles, descriptions, locations
+- **Contact data** — Birthday information from device contacts (when enabled)
+- **Network traffic** — CalDAV sync over HTTPS
 
 Out of scope:
-- Third-party services (iCloud, CalDAV servers)
-- Issues in dependencies (report to the respective projects)
+- Third-party services (iCloud, CalDAV servers) — report to the respective projects
+- Issues in dependencies — report to the respective projects
+
+## Supported Versions
+
+Security fixes are applied to the latest release only.
 
 ## Security Best Practices for Users
 
 - Keep KashCal updated to the latest version
-- Use a strong, unique app-specific password for iCloud sync
-- Do not share your iCloud credentials
-- Review calendar permissions granted to the app
+- Use strong, unique app-specific passwords for sync accounts
+- Review calendar and contact permissions granted to the app
