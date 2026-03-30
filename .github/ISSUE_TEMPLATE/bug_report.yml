@@ -68,7 +68,7 @@ body:
       label: Sync provider
       description: Select if the bug is related to sync.
       options:
-        - None
+        - Not applicable
         - iCloud
         - Nextcloud
         - Radicale
@@ -88,7 +88,7 @@ body:
       label: Device calendar
       description: Select if the bug is related to device calendars.
       options:
-        - None
+        - Not applicable
         - Google Calendar
         - Samsung Calendar
         - Other
