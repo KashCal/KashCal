@@ -4,7 +4,7 @@ title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: textarea
-    id: description
+    id: bug-description
     attributes:
       label: What happened?
       description: A clear description of the bug.
