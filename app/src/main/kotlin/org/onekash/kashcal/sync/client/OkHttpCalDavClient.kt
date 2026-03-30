@@ -616,6 +616,34 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
+    override suspend fun fetchAllEtags(
+        calendarUrl: String
+    ): CalDavResult<List<Pair<String, String?>>> = withContext(Dispatchers.IO) {
+        // PROPFIND Depth:1 — lists all resources in the collection with their etags.
+        // No time-range filter (unlike calendar-query). Used on servers without sync-token
+        // (e.g., Purelymail) where calendar-query index may be stale.
+        val body = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <d:propfind xmlns:d="DAV:">
+                <d:prop>
+                    <d:getetag/>
+                </d:prop>
+            </d:propfind>
+        """.trimIndent()
+
+        val request = Request.Builder()
+            .url(calendarUrl)
+            .method("PROPFIND", body.toRequestBody(XML_MEDIA_TYPE))
+            .header("Depth", "1")
+            .build()
+
+        executeRequest(request) { responseBody ->
+            // Reuse extractChangedItems which parses href+etag pairs and filters by .ics
+            val items = quirks.extractChangedItems(responseBody)
+            CalDavResult.success(items)
+        }
+    }
+
     override suspend fun fetchEtagsInRange(
         calendarUrl: String,
         startMillis: Long,

@@ -2,8 +2,6 @@ package org.onekash.kashcal.ui.components
 
 import android.util.Log
 import org.onekash.kashcal.domain.mapper.toFormState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,7 +31,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
@@ -50,7 +46,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,7 +53,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -281,9 +275,6 @@ fun EventFormSheet(
     var state by remember { mutableStateOf(EventFormState()) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
 
-    // Two-tap discard confirmation state
-    var initialState by remember { mutableStateOf<EventFormState?>(null) }
-    var showDiscardConfirm by remember { mutableStateOf(false) }
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
 
@@ -570,11 +561,6 @@ fun EventFormSheet(
         }
 
         state = newState
-
-        // Store initial state for change detection
-        if (initialState == null) {
-            initialState = newState
-        }
     }
 
     // Reactive calendar update: handles async calendar loading on cold start.
@@ -608,10 +594,6 @@ fun EventFormSheet(
                 selectedCalendarColor = resolved.color,
                 isDeviceCalendar = resolved.isDevice
             )
-            // Sync initialState so change detection doesn't trip on auto-resolved calendar
-            if (initialState?.selectedCalendarId == null) {
-                initialState = state
-            }
         }
 
         // Case 2: Edit mode — calendar ID already set but metadata missing (cold start)
@@ -626,30 +608,7 @@ fun EventFormSheet(
                     selectedCalendarName = cal.displayName,
                     selectedCalendarColor = cal.color
                 )
-                // Sync initialState for edit mode too
-                initialState = state
             }
-        }
-    }
-
-    // Detect changes for discard confirmation
-    val hasChanges by remember {
-        derivedStateOf {
-            val initial = initialState ?: return@derivedStateOf false
-            state.title != initial.title ||
-                state.dateMillis != initial.dateMillis ||
-                state.endDateMillis != initial.endDateMillis ||
-                state.startHour != initial.startHour ||
-                state.startMinute != initial.startMinute ||
-                state.endHour != initial.endHour ||
-                state.endMinute != initial.endMinute ||
-                state.selectedCalendarId != initial.selectedCalendarId ||
-                state.isAllDay != initial.isAllDay ||
-                state.location != initial.location ||
-                state.description != initial.description ||
-                state.reminder1Minutes != initial.reminder1Minutes ||
-                state.reminder2Minutes != initial.reminder2Minutes ||
-                state.rrule != initial.rrule
         }
     }
 
@@ -672,40 +631,16 @@ fun EventFormSheet(
         }
     }
 
-    // Sheet state with swipe-to-dismiss protection
+    // Sheet state — gestural dismiss disabled
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
-        confirmValueChange = { newValue ->
-            when {
-                // Allow any non-dismiss state changes
-                newValue != SheetValue.Hidden -> true
-                // Allow dismiss while saving (onDismiss will be called after save succeeds)
-                state.isSaving -> false
-                // No changes - allow dismiss freely
-                !hasChanges -> true
-                // Has changes + already showing confirm - allow dismiss
-                showDiscardConfirm -> true
-                // Has changes + first attempt - block & show confirm
-                else -> {
-                    showDiscardConfirm = true
-                    false
-                }
-            }
-        }
+        confirmValueChange = { it != SheetValue.Hidden }
     )
 
     ModalBottomSheet(
-        onDismissRequest = {
-            // Handle scrim tap and back button with same logic as Cancel button
-            when {
-                state.isSaving -> { /* Block dismiss while saving */ }
-                !hasChanges -> onDismiss()
-                showDiscardConfirm -> onDismiss()
-                else -> showDiscardConfirm = true
-            }
-        },
+        onDismissRequest = { if (!state.isSaving) onDismiss() },
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
+        dragHandle = {}
     ) {
         Column(
             modifier = Modifier
@@ -721,32 +656,17 @@ fun EventFormSheet(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                TextButton(onClick = {
-                    when {
-                        !hasChanges -> onDismiss()
-                        showDiscardConfirm -> onDismiss()
-                        else -> showDiscardConfirm = true
-                    }
-                }) {
-                    Text(
-                        text = if (showDiscardConfirm) "Discard Changes?" else "Cancel",
-                        color = if (showDiscardConfirm) MaterialTheme.colorScheme.error else LocalContentColor.current
-                    )
+                TextButton(onClick = { onDismiss() }) {
+                    Text("Cancel")
                 }
                 Text(
                     text = if (state.isEditMode) "Edit Event" else "New Event",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                val saveButtonAlpha by animateFloatAsState(
-                    targetValue = if (showDiscardConfirm) 0f else 1f,
-                    animationSpec = tween(150),
-                    label = "saveButtonAlpha"
-                )
                 TextButton(
                     onClick = { performSave() },
-                    enabled = !showDiscardConfirm && state.title.isNotBlank() && !state.isSaving && !hasTimeConflict,
-                    modifier = Modifier.alpha(saveButtonAlpha)
+                    enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict
                 ) {
                     if (state.isSaving) {
                         CircularProgressIndicator(
@@ -1201,6 +1121,7 @@ fun EventFormSheet(
     // Start DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.START) {
         DateTimeSheet(
+            label = "Starts",
             selectedDateMillis = state.dateMillis,
             selectedHour = state.startHour,
             selectedMinute = state.startMinute,
@@ -1281,6 +1202,7 @@ fun EventFormSheet(
     // End DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.END) {
         DateTimeSheet(
+            label = "Ends",
             selectedDateMillis = state.endDateMillis,
             selectedHour = state.endHour,
             selectedMinute = state.endMinute,

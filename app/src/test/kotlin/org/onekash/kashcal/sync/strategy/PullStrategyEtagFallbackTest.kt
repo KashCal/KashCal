@@ -76,6 +76,10 @@ class PullStrategyEtagFallbackTest {
         // Tests that verify time-filtered behavior override this with a specific day count.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
+        // Default: PROPFIND Depth:1 not supported — forces fallback to calendar-query.
+        // All tests here use non-null syncToken so this is bypassed, but added for future-proofing.
+        coEvery { client.fetchAllEtags(any()) } returns CalDavResult.error(501, "Not supported")
+
         pullStrategy = PullStrategy(
             database = database,
             calendarRepository = calendarRepository,

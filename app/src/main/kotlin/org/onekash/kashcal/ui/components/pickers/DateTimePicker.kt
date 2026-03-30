@@ -28,22 +28,19 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -199,12 +196,12 @@ private fun formatDateForPicker(dateMillis: Long, isAllDay: Boolean): String {
 }
 
 /**
- * Combined date + time picker sheet with buffered state and dismiss protection.
+ * Combined date + time picker sheet with buffered state and blocked gestural dismiss.
  * Shows calendar and wheel time picker in a single sheet.
  *
  * Features:
  * - Local buffered state (changes don't apply until Done)
- * - Two-tap dismiss protection (swipe shows "Discard?", second swipe dismisses)
+ * - Gestural dismiss blocked (explicit Cancel/Done buttons only)
  * - Done button to commit changes
  * - Timezone picker chip (for timed events)
  *
@@ -219,6 +216,7 @@ private fun formatDateForPicker(dateMillis: Long, isAllDay: Boolean): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateTimeSheet(
+    label: String = "Date",
     selectedDateMillis: Long,
     selectedHour: Int,
     selectedMinute: Int,
@@ -238,45 +236,15 @@ fun DateTimeSheet(
         mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis })
     }
 
-    // Dismiss protection state
-    var showDiscardConfirm by remember { mutableStateOf(false) }
-
-    // Check if user made changes
-    val hasChanges by remember {
-        derivedStateOf {
-            localDateMillis != selectedDateMillis ||
-                localHour != selectedHour ||
-                localMinute != selectedMinute ||
-                localTimezone != selectedTimezone
-        }
-    }
-
-    // Sheet state with dismiss protection
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
-        confirmValueChange = { newValue ->
-            when {
-                newValue != SheetValue.Hidden -> true  // Allow expand
-                !hasChanges -> true                     // No changes = allow dismiss
-                showDiscardConfirm -> true              // Second attempt = allow
-                else -> {
-                    showDiscardConfirm = true           // First attempt = block & show confirm
-                    false
-                }
-            }
-        }
+        confirmValueChange = { it != SheetValue.Hidden }
     )
 
     ModalBottomSheet(
-        onDismissRequest = {
-            when {
-                !hasChanges -> onDismiss()
-                showDiscardConfirm -> onDismiss()
-                else -> showDiscardConfirm = true
-            }
-        },
+        onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = { BottomSheetDefaults.DragHandle() }
+        dragHandle = {}
     ) {
         Column(
             modifier = Modifier
@@ -284,6 +252,29 @@ fun DateTimeSheet(
                 .padding(horizontal = 8.dp)
                 .padding(bottom = 8.dp)
         ) {
+            // Header with Cancel/Done buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { onDismiss() }) {
+                    Text("Cancel")
+                }
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                TextButton(onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) }) {
+                    Text("Done", fontWeight = FontWeight.Bold)
+                }
+            }
+
+            HorizontalDivider()
+
             // Calendar picker - updates LOCAL state (compact)
             InlineDatePickerContent(
                 selectedDateMillis = localDateMillis,
@@ -386,40 +377,12 @@ fun DateTimeSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Done / Discard buttons - show both when user tried to dismiss with changes
-            if (showDiscardConfirm) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    // Discard button (error color)
-                    OutlinedButton(
-                        onClick = { onDismiss() },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error
-                        )
-                    ) {
-                        Text("Discard", fontWeight = FontWeight.SemiBold)
-                    }
-                    // Done button (primary) - user can still save!
-                    Button(
-                        onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text("Done", fontWeight = FontWeight.SemiBold)
-                    }
-                }
-            } else {
-                Button(
-                    onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text("Done", fontWeight = FontWeight.SemiBold)
-                }
+            Button(
+                onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Done", fontWeight = FontWeight.SemiBold)
             }
         }
     }

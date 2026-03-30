@@ -75,6 +75,10 @@ class PullStrategyTest {
         // in pullWithEtagComparison(). Only relevant for token-expiry fallback path.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
+        // Default: PROPFIND Depth:1 not supported — forces fallback to calendar-query.
+        // This preserves existing test behavior. Tests for PROPFIND path override this.
+        coEvery { client.fetchAllEtags(any()) } returns CalDavResult.error(501, "Not supported")
+
         pullStrategy = PullStrategy(
             database = database,
             calendarRepository = calendarRepository,
@@ -1818,6 +1822,236 @@ class PullStrategyTest {
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         // Both etags null → etag-unchanged check passes → event skipped → no upsert
         coVerify(exactly = 0) { eventsDao.upsert(any()) }
+    }
+
+    // ========== PROPFIND Depth:1 Probe-Based Routing (Issue #102) ==========
+
+    @Test
+    fun `pullFull uses calendar-query when forceFullSync is true`() = runTest {
+        // forceFullSync bypasses probe — getSyncToken should NOT be called as probe
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val events = listOf(
+            CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
+                createSimpleIcal("uid-1", "Event 1"))
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, events)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client, forceFullSync = true)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        // fetchEtagsInRange used (calendar-query), NOT fetchAllEtags (PROPFIND)
+        coVerify(exactly = 1) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
+        coVerify(exactly = 0) { client.fetchAllEtags(any()) }
+    }
+
+    @Test
+    fun `pullFull uses calendar-query when syncToken is not null`() = runTest {
+        // Non-null syncToken bypasses probe — goes straight to calendar-query
+        val calendar = createCalendar(ctag = null, syncToken = "existing-token")
+        val events = listOf(
+            CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
+                createSimpleIcal("uid-1", "Event 1"))
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        // syncToken non-null → incremental path, but let's force to pullFull via forceFullSync
+        // Actually, non-null syncToken goes to pullIncremental, not pullFull.
+        // To test non-null syncToken in pullFull, use forceFullSync=true (which overrides).
+        // But forceFullSync also bypasses probe. So this test verifies the combined bypass.
+        mockTwoStepFetch(calendar.caldavUrl, events)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client, forceFullSync = true)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        coVerify(exactly = 1) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
+        coVerify(exactly = 0) { client.fetchAllEtags(any()) }
+    }
+
+    @Test
+    fun `pullFull probes getSyncToken and uses calendar-query when server has token`() = runTest {
+        // First sync on capable server (iCloud): syncToken=null, probe returns token → calendar-query
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val events = listOf(
+            CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
+                createSimpleIcal("uid-1", "Event 1"))
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        mockTwoStepFetch(calendar.caldavUrl, events)
+        // Probe returns a token — server supports sync-token
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("probe-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        // calendar-query used (fetchEtagsInRange), NOT PROPFIND (fetchAllEtags)
+        coVerify(exactly = 1) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
+        coVerify(exactly = 0) { client.fetchAllEtags(any()) }
+    }
+
+    @Test
+    fun `pullFull probes getSyncToken and uses PROPFIND when server lacks token`() = runTest {
+        // Purelymail path: syncToken=null, probe returns null → PROPFIND Depth:1
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        // Probe returns null — server does NOT support sync-token
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        // PROPFIND returns etags
+        coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
+            listOf(Pair("event-1.ics", "etag-1"), Pair("event-2.ics", "etag-2"))
+        )
+        coEvery { client.fetchEventsByHref(calendarUrl, any()) } returns CalDavResult.success(
+            listOf(
+                CalDavEvent("event-1.ics", "${calendarUrl}event-1.ics", "etag-1",
+                    createSimpleIcal("uid-1", "Event 1")),
+                CalDavEvent("event-2.ics", "${calendarUrl}event-2.ics", "etag-2",
+                    createSimpleIcal("uid-2", "Event 2"))
+            )
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(2, (result as PullResult.Success).eventsAdded)
+        // PROPFIND used, NOT calendar-query
+        coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
+        coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
+    }
+
+    @Test
+    fun `pullFull falls back to calendar-query when PROPFIND fails`() = runTest {
+        // PROPFIND fails → fallback to calendar-query, with Log.w warning
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+        val events = listOf(
+            CalDavEvent("event-1.ics", "${calendarUrl}event-1.ics", "etag-1",
+                createSimpleIcal("uid-1", "Event 1"))
+        )
+
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        // Probe returns null → PROPFIND path
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        // PROPFIND fails
+        coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.error(501, "PROPFIND not supported")
+        // Fallback to calendar-query
+        mockTwoStepFetch(calendarUrl, events)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        // Both PROPFIND and calendar-query called (PROPFIND failed, fell back)
+        coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
+        coVerify(exactly = 1) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
+        // Warning should be added to session
+        val session = sessionBuilder.build()
+        assertTrue("Session should have warnings", session.hasWarnings)
+        assertTrue("Warning should mention PROPFIND",
+            session.warnings?.any { it.contains("PROPFIND") } == true)
+    }
+
+    @Test
+    fun `pullFull PROPFIND success detects new and changed events`() = runTest {
+        // End-to-end: PROPFIND returns etags, detect new + changed events
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+        val existingEvent = createEvent(id = 42L, caldavUrl = "${calendarUrl}existing.ics").copy(
+            etag = "old-etag", uid = "uid-existing"
+        )
+
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        // Probe → no token
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
+        // PROPFIND returns 2 events: one with changed etag, one new
+        coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
+            listOf(
+                Pair("existing.ics", "new-etag"),   // Changed etag
+                Pair("brand-new.ics", "etag-new")   // New event
+            )
+        )
+        coEvery { client.fetchEventsByHref(calendarUrl, any()) } returns CalDavResult.success(
+            listOf(
+                CalDavEvent("existing.ics", "${calendarUrl}existing.ics", "new-etag",
+                    createSimpleIcal("uid-existing", "Updated Event")),
+                CalDavEvent("brand-new.ics", "${calendarUrl}brand-new.ics", "etag-new",
+                    createSimpleIcal("uid-new", "New Event"))
+            )
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
+        coEvery { eventsDao.getByCaldavUrl("${calendarUrl}existing.ics") } returns existingEvent
+        coEvery { eventsDao.getByCaldavUrl("${calendarUrl}brand-new.ics") } returns null
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-existing", calendar.id) } returns existingEvent
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        val success = result as PullResult.Success
+        // 1 new + 1 updated
+        assertEquals(1, success.eventsAdded)
+        assertEquals(1, success.eventsUpdated)
+        // PROPFIND used
+        coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
+        coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
+    }
+
+    @Test
+    fun `pullFull uses PROPFIND path when getSyncToken probe returns network error`() = runTest {
+        // Probe fails with network error → treats as no-token → PROPFIND path
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val calendarUrl = calendar.caldavUrl
+
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        // Probe returns error (network failure)
+        coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.error(0, "Network error")
+        // PROPFIND succeeds
+        coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
+            listOf(Pair("event-1.ics", "etag-1"))
+        )
+        coEvery { client.fetchEventsByHref(calendarUrl, any()) } returns CalDavResult.success(
+            listOf(
+                CalDavEvent("event-1.ics", "${calendarUrl}event-1.ics", "etag-1",
+                    createSimpleIcal("uid-1", "Event 1"))
+            )
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(any()) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        // PROPFIND used (probe error → no-token path)
+        coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
+        coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
     }
 
     // ========== Helper Methods ==========

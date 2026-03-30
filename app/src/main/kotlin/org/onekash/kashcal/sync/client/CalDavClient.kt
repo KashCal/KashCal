@@ -101,6 +101,20 @@ interface CalDavClient {
     ): CalDavResult<List<CalDavEvent>>
 
     /**
+     * Fetch etags for ALL events in a calendar using PROPFIND Depth:1 (RFC 4918).
+     * Unlike fetchEtagsInRange(), this has no time-range filter — it returns every
+     * .ics resource in the collection.
+     *
+     * Used by PullStrategy.pullFull() on servers without sync-token (e.g., Purelymail)
+     * where calendar-query REPORT may have a stale index. PROPFIND reads the filesystem
+     * directly — always accurate.
+     *
+     * @param calendarUrl Full calendar URL
+     * @return List of (href, etag) pairs for all events in the calendar
+     */
+    suspend fun fetchAllEtags(calendarUrl: String): CalDavResult<List<Pair<String, String?>>>
+
+    /**
      * Fetch only etags (not iCal data) for events in time range.
      * Used for etag-based fallback sync when sync-token expires (403/410).
      * Much lighter than fetchEventsInRange() - returns only href+etag pairs.

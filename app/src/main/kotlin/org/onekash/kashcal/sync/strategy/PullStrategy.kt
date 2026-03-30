@@ -442,8 +442,30 @@ class PullStrategy @Inject constructor(
         val startMs = if (isAllLookback) 0L else now - pastWindowMs
         val endMs = FUTURE_END_MS  // Unlimited future - fetch all future events
 
-        // Step 1: Fetch etags only (lightweight calendar-query, no calendar-data)
-        val etagResult = clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+        // Step 1: Fetch etags only (lightweight — calendar-query or PROPFIND Depth:1)
+        val etagResult = if (forceFullSync || calendar.syncToken != null) {
+            // Force refresh or server known to support sync-token — calendar-query with time filter
+            clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+        } else {
+            // syncToken is null and not force sync — probe if server supports sync-token
+            val tokenProbe = clientToUse.getSyncToken(calendar.caldavUrl)
+            val serverSupportsSyncToken = tokenProbe.isSuccess() && tokenProbe.getOrNull() != null
+            if (serverSupportsSyncToken) {
+                // First sync on a capable server (iCloud, Nextcloud) — calendar-query works
+                clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+            } else {
+                // Server genuinely doesn't support sync-token (Purelymail) — use PROPFIND
+                val propfindResult = clientToUse.fetchAllEtags(calendar.caldavUrl)
+                if (propfindResult.isError()) {
+                    val error = propfindResult as CalDavResult.Error
+                    Log.w(TAG, "PROPFIND Depth:1 failed (${error.code}: ${error.message}), falling back to calendar-query")
+                    sessionBuilder?.addWarning("PROPFIND Depth:1 failed (${error.code}), using calendar-query fallback")
+                    clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
+                } else {
+                    propfindResult
+                }
+            }
+        }
         if (etagResult.isError()) {
             val error = etagResult as CalDavResult.Error
             return PullResult.Error(error.code, error.message, error.isRetryable)
