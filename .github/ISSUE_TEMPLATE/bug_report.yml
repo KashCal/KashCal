@@ -59,6 +59,7 @@ body:
         - F-Droid
         - GitHub Release
         - Built from source
+        - Other
     validations:
       required: true
 
