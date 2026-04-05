@@ -70,6 +70,14 @@ class PullStrategy @Inject constructor(
         private fun filenameOf(caldavUrl: String): String =
             caldavUrl.substringAfterLast('/').ifEmpty { caldavUrl }
 
+        /**
+         * Validate that mapped event has sane timestamps.
+         * Rejects endTs < startTs (RFC 5545 violation, always corrupt server data).
+         * Does NOT reject historical events or epoch-zero — those are legitimate dates.
+         */
+        internal fun hasValidTimestamps(event: Event): Boolean =
+            event.endTs >= event.startTs
+
         // Sync window: 1 year back, unlimited future (far-future date for CalDAV spec compliance)
         private const val PAST_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
         private const val FUTURE_END_MS = 4102444800000L  // Jan 1, 2100 UTC
@@ -891,6 +899,14 @@ class PullStrategy @Inject constructor(
                 etag = meta.etag
             )
 
+            // Reject events with invalid timestamps (RFC 5545 violation)
+            if (!hasValidTimestamps(event)) {
+                Log.w(TAG, "Skipping ${meta.caldavUrl} - invalid timestamps: startTs=${event.startTs}, endTs=${event.endTs}")
+                sessionBuilder?.incrementSkipParseError()
+                sessionBuilder?.addWarning("Invalid timestamps in ${filenameOf(meta.caldavUrl)} (endTs < startTs)")
+                continue
+            }
+
             // Preserve existing event ID and timestamps
             if (existingEvent != null) {
                 event = event.copy(
@@ -1027,6 +1043,14 @@ class PullStrategy @Inject constructor(
                 caldavUrl = meta.caldavUrl,
                 etag = meta.etag
             )
+
+            // Reject exception events with invalid timestamps (RFC 5545 violation)
+            if (!hasValidTimestamps(event)) {
+                Log.w(TAG, "Skipping exception ${meta.caldavUrl} - invalid timestamps: startTs=${event.startTs}, endTs=${event.endTs}")
+                sessionBuilder?.incrementSkipParseError()
+                sessionBuilder?.addWarning("Invalid timestamps in exception at ${filenameOf(meta.caldavUrl)} (endTs < startTs)")
+                continue
+            }
 
             // Link to master event
             event = event.copy(

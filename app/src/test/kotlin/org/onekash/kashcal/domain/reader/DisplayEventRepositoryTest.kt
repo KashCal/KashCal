@@ -145,6 +145,52 @@ class DisplayEventRepositoryTest {
         assertEquals(listOf(20251230, 20251231, 20260101, 20260102), result)
     }
 
+    // ========== generateDayCodesInRange validation ==========
+
+    @Test
+    fun `generateDayCodesInRange returns empty for zero startDayCode`() {
+        val result = generateDayCodesInRange(0, 20260215)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `generateDayCodesInRange returns empty for zero endDayCode`() {
+        val result = generateDayCodesInRange(20260215, 0)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `generateDayCodesInRange returns empty for both zero`() {
+        val result = generateDayCodesInRange(0, 0)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `generateDayCodesInRange returns empty for reversed range`() {
+        val result = generateDayCodesInRange(20260217, 20260215)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `generateDayCodesInRange returns empty for range exceeding 366 days`() {
+        val result = generateDayCodesInRange(20260101, 20280101)
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `generateDayCodesInRange valid range at 366-day cap works`() {
+        val result = generateDayCodesInRange(20260101, 20270102) // 366 days between = at cap, 367 entries (inclusive)
+        assertEquals(367, result.size)
+        assertEquals(20260101, result.first())
+        assertEquals(20270102, result.last())
+    }
+
+    @Test
+    fun `generateDayCodesInRange returns empty for negative dayCode`() {
+        val result = generateDayCodesInRange(-1, 20260215)
+        assertTrue(result.isEmpty())
+    }
+
     // ========== FakeCalendarProviderRepository ==========
 
     @Test

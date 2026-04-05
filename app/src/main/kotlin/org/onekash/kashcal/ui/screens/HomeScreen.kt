@@ -1029,12 +1029,12 @@ private fun ColumnScope.DayEventsPager(
         }
     }
 
-    // SYNC 2: Calendar tap → Scroll day pager
+    // SYNC 2: Calendar tap → Scroll day pager (instant to prevent race with SYNC 1)
     LaunchedEffect(uiState.selectedDate) {
         if (uiState.selectedDate != 0L) {
             val targetPage = DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
-            if (targetPage != dayPagerState.currentPage && !dayPagerState.isScrollInProgress) {
-                dayPagerState.animateScrollToPage(targetPage)
+            if (targetPage != dayPagerState.currentPage) {
+                dayPagerState.scrollToPage(targetPage)
             }
         }
     }

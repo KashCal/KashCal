@@ -18,6 +18,7 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -263,13 +264,30 @@ class DisplayEventRepository @Inject constructor(
     }
 }
 
+private const val LOG_TAG = "DisplayEventRepo"
+private const val MAX_RANGE_DAYS = 366L
+
 /**
  * Generate a list of YYYYMMDD day codes for each day from startDayCode to endDayCode (inclusive).
  * Handles month/year boundaries correctly via LocalDate arithmetic.
+ *
+ * Returns emptyList() for invalid inputs (day codes < 10000101, reversed range, or span > 366 days).
  */
 internal fun generateDayCodesInRange(startDayCode: Int, endDayCode: Int): List<Int> {
+    if (startDayCode < 10000101 || endDayCode < 10000101) {
+        Log.w(LOG_TAG, "Invalid day codes: start=$startDayCode, end=$endDayCode")
+        return emptyList()
+    }
+    if (startDayCode > endDayCode) {
+        Log.w(LOG_TAG, "Reversed day code range: start=$startDayCode, end=$endDayCode")
+        return emptyList()
+    }
     val startDate = dayCodeToLocalDate(startDayCode)
     val endDate = dayCodeToLocalDate(endDayCode)
+    if (ChronoUnit.DAYS.between(startDate, endDate) > MAX_RANGE_DAYS) {
+        Log.w(LOG_TAG, "Day range too large: start=$startDayCode, end=$endDayCode")
+        return emptyList()
+    }
 
     val result = mutableListOf<Int>()
     var current = startDate

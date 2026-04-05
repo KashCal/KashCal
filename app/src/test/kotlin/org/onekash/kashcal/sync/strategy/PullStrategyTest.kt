@@ -3933,4 +3933,112 @@ class PullStrategyTest {
         // getEtagMapForCalendar should NOT be called for incremental sync
         coVerify(exactly = 0) { eventsDao.getEtagMapForCalendar(any(), any(), any()) }
     }
+
+    // ========== Timestamp Validation Tests (Issue #140) ==========
+
+    @Test
+    fun `hasValidTimestamps rejects endTs before startTs`() {
+        val event = createEvent().copy(startTs = 1000, endTs = 999)
+        assertFalse(PullStrategy.hasValidTimestamps(event))
+    }
+
+    @Test
+    fun `hasValidTimestamps accepts zero-duration event`() {
+        val event = createEvent().copy(startTs = 1000, endTs = 1000)
+        assertTrue(PullStrategy.hasValidTimestamps(event))
+    }
+
+    @Test
+    fun `hasValidTimestamps accepts normal event`() {
+        val event = createEvent().copy(startTs = 1000, endTs = 2000)
+        assertTrue(PullStrategy.hasValidTimestamps(event))
+    }
+
+    @Test
+    fun `hasValidTimestamps accepts historical event with negative startTs`() {
+        // Pre-1970 events have negative timestamps — legitimate
+        val event = createEvent().copy(startTs = -1000000, endTs = -999000)
+        assertTrue(PullStrategy.hasValidTimestamps(event))
+    }
+
+    @Test
+    fun `hasValidTimestamps accepts epoch-zero event`() {
+        // Jan 1 1970 is a real date
+        val event = createEvent().copy(startTs = 0, endTs = 3600000)
+        assertTrue(PullStrategy.hasValidTimestamps(event))
+    }
+
+    @Test
+    fun `historical event from 2005 is NOT skipped`() = runTest {
+        // Events with old but valid timestamps are legitimate — must not be rejected.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}historical.ics"
+
+        val historicalIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:old-uid
+            DTSTAMP:20050601T120000Z
+            DTSTART:20050601T100000Z
+            DTEND:20050601T110000Z
+            SUMMARY:Historical Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent("historical.ics", eventUrl, "etag-1", historicalIcal)
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "old-uid" }) }
+    }
+
+    @Test
+    fun `zero-duration event is NOT skipped`() = runTest {
+        // endTs == startTs is valid (milestones, reminders). Only endTs < startTs is rejected.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}milestone.ics"
+
+        val zeroDurationIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:milestone-uid
+            DTSTAMP:20240601T120000Z
+            DTSTART:20240601T100000Z
+            DTEND:20240601T100000Z
+            SUMMARY:Milestone
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent("milestone.ics", eventUrl, "etag-1", zeroDurationIcal)
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.upsert(any()) } returns 1L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsAdded)
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "milestone-uid" }) }
+    }
 }
