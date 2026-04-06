@@ -529,16 +529,14 @@ class OkHttpCalDavClient : CalDavClient {
                         )
                     }
 
-                    val newSyncToken = quirks.extractSyncToken(responseBody)
+                    val syncData = quirks.extractSyncCollectionData(responseBody)
+                    val newSyncToken = syncData.syncToken
 
-                    // Parse changed items (hrefs + etags only)
-                    val changedItems = quirks.extractChangedItems(responseBody)
-                    val changed = changedItems.map { (href, etag) ->
+                    val changed = syncData.changedItems.map { (href, etag) ->
                         SyncItem(href = href, etag = etag, status = SyncItemStatus.OK)
                     }
 
-                    // Parse deleted items from 404 responses
-                    val deleted = quirks.extractDeletedHrefs(responseBody)
+                    val deleted = syncData.deletedHrefs
 
                     if (isTruncated) {
                         Log.w(TAG, "sync-collection returned 507 (truncated). " +

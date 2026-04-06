@@ -223,14 +223,14 @@ data class Event(
     /**
      * JSON array of reminder configurations.
      * Example: ["-PT15M", "-PT1H"] for 15 min and 1 hour before.
-     * Stores only first 3 alarms for compatibility; use alarmCount + rawIcal for more.
+     * Stores only first 5 alarms for compatibility; use alarmCount + rawIcal for more.
      */
     @ColumnInfo(name = "reminders")
     val reminders: List<String>? = null,
 
     /**
      * Total number of VALARM components in the original ICS.
-     * When alarmCount > 3, use RawIcsParser to extract all alarms from rawIcal.
+     * When alarmCount > 5, use RawIcsParser to extract all alarms from rawIcal.
      */
     @ColumnInfo(name = "alarm_count", defaultValue = "0")
     val alarmCount: Int = 0,

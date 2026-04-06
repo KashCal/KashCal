@@ -156,6 +156,145 @@ fun formatReminderShort(minutes: Int, use24Hour: Boolean = false): String {
     }
 }
 
+// ==================== Custom Reminders: Duration Helpers ====================
+
+/** Maximum number of reminders per event. */
+const val MAX_REMINDERS = 5
+
+/**
+ * Represents a quick preset chip for the duration wheel picker.
+ *
+ * @property label Short display label (e.g., "15m", "1h")
+ * @property minutes Duration in minutes
+ */
+data class PresetChip(
+    val label: String,
+    val minutes: Int
+)
+
+/** Quick preset chips for timed events: 15m, 30m, 1h, 1d */
+val TIMED_PRESET_CHIPS = listOf(
+    PresetChip("15m", 15),
+    PresetChip("30m", 30),
+    PresetChip("1h", 60),
+    PresetChip("1d", 1440)
+)
+
+/** Quick preset chips for all-day events: 9AM day of, 1d before, 2d before, 1w before */
+val ALL_DAY_PRESET_CHIPS = listOf(
+    PresetChip("9AM", 540),
+    PresetChip("1d", 1440),
+    PresetChip("2d", 2880),
+    PresetChip("1w", 10080)
+)
+
+/**
+ * Convert total minutes to (days, hours, minutes) components.
+ *
+ * @param totalMinutes Total duration in minutes (non-negative)
+ * @return Triple of (days, hours, minutes)
+ */
+fun minutesToComponents(totalMinutes: Int): Triple<Int, Int, Int> {
+    val days = totalMinutes / 1440
+    val remaining = totalMinutes % 1440
+    val hours = remaining / 60
+    val minutes = remaining % 60
+    return Triple(days, hours, minutes)
+}
+
+/**
+ * Convert (days, hours, minutes) components to total minutes.
+ *
+ * @return Total minutes
+ */
+fun componentsToMinutes(days: Int, hours: Int, minutes: Int): Int =
+    days * 1440 + hours * 60 + minutes
+
+/**
+ * Round minutes to nearest wheel step (default 5).
+ * Used to snap odd-minute values from server to the nearest wheel position.
+ *
+ * @param minutes Raw minute value
+ * @param step Wheel step size (default 5)
+ * @return Rounded minute value
+ */
+fun roundToWheelStep(minutes: Int, step: Int = 5): Int =
+    ((minutes + step / 2) / step) * step
+
+/**
+ * Format a reminder duration for human-readable display.
+ *
+ * For timed events: "15 minutes before", "1 hour 30 min before", "At time of event"
+ * For all-day events: contextual labels like "9 AM day of event", "1 day before at 9 AM"
+ *
+ * @param minutes Duration in minutes before the event
+ * @param isAllDay Whether the event is all-day
+ * @param use24Hour Whether to use 24-hour format for time labels
+ * @return Human-readable duration string
+ */
+fun formatReminderDuration(minutes: Int, isAllDay: Boolean, use24Hour: Boolean): String {
+    if (minutes == 0 && !isAllDay) return "At time of event"
+
+    // All-day contextual labels
+    if (isAllDay) {
+        val timeLabel = if (use24Hour) "09:00" else "9 AM"
+        when {
+            // Exactly 9 hours = "9 AM day of event"
+            minutes == 540 -> return "$timeLabel day of event"
+            // Exact days (multiples of 1440) = "N day(s) before at 9 AM"
+            minutes >= 1440 && minutes % 1440 == 0 -> {
+                val days = minutes / 1440
+                val dayStr = if (days == 1) "1 day" else "$days days"
+                return "$dayStr before at $timeLabel"
+            }
+        }
+        // Fall through to generic formatting for non-standard all-day values
+    }
+
+    // Generic duration formatting
+    return buildGenericDuration(minutes)
+}
+
+private fun buildGenericDuration(minutes: Int): String {
+    val (days, hours, mins) = minutesToComponents(minutes)
+    val parts = mutableListOf<String>()
+    if (days > 0) parts.add(if (days == 1) "1 day" else "$days days")
+    if (hours > 0) parts.add(if (hours == 1) "1 hour" else "$hours hours")
+    if (mins > 0) {
+        // Use full "minutes" when it's the only component, "min" when combined
+        val minLabel = if (days == 0 && hours == 0) {
+            if (mins == 1) "1 minute" else "$mins minutes"
+        } else {
+            "$mins min"
+        }
+        parts.add(minLabel)
+    }
+    if (parts.isEmpty()) return "At time of event"
+    return "${parts.joinToString(" ")} before"
+}
+
+/**
+ * Deduplicate and sort reminders by ascending duration.
+ *
+ * @param reminders List of reminder durations in minutes
+ * @return Deduplicated, sorted list
+ */
+fun deduplicateAndSortReminders(reminders: List<Int>): List<Int> =
+    reminders.distinct().sorted()
+
+/**
+ * Format a list of reminder durations as a comma-separated summary.
+ * Used for the collapsed Alerts section header.
+ *
+ * @param reminderMinutes List of reminder durations in minutes
+ * @param use24Hour Whether to use 24-hour format
+ * @return Summary string like "15m, 1h, 1d" or "None"
+ */
+fun formatReminderSummary(reminderMinutes: List<Int>, use24Hour: Boolean): String {
+    if (reminderMinutes.isEmpty()) return "None"
+    return reminderMinutes.joinToString(", ") { formatReminderShort(it, use24Hour) }
+}
+
 /**
  * Represents a duration option with display label and minutes.
  *

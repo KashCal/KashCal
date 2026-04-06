@@ -98,6 +98,28 @@ interface CalDavQuirks {
     fun extractChangedItems(responseBody: String): List<Pair<String, String?>>
 
     /**
+     * Single-pass extraction of sync token, changed items, and deleted hrefs.
+     * Default implementation calls the three individual methods (3 XML passes).
+     * Override with CalDavXmlParser.extractSyncCollectionData() for single-pass efficiency.
+     */
+    fun extractSyncCollectionData(responseBody: String): SyncCollectionData {
+        return SyncCollectionData(
+            syncToken = extractSyncToken(responseBody),
+            changedItems = extractChangedItems(responseBody),
+            deletedHrefs = extractDeletedHrefs(responseBody)
+        )
+    }
+
+    /**
+     * Result of single-pass sync-collection response parsing.
+     */
+    data class SyncCollectionData(
+        val syncToken: String?,
+        val changedItems: List<Pair<String, String?>>,
+        val deletedHrefs: List<String>
+    )
+
+    /**
      * Check if a calendar href should be skipped (inbox, outbox, etc).
      */
     fun shouldSkipCalendar(href: String, displayName: String?): Boolean

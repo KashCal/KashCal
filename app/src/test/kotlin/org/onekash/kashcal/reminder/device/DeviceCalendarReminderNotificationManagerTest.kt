@@ -116,6 +116,94 @@ class DeviceCalendarReminderNotificationManagerTest {
         )
     }
 
+    // ========== Request Code Collision Fix ==========
+
+    @Test
+    fun `request code range is 100_000`() {
+        assertEquals(100_000, DeviceCalendarReminderNotificationManager.REQUEST_CODE_RANGE)
+    }
+
+    @Test
+    fun `open request codes are always positive`() {
+        val testCases = listOf(
+            Pair(Long.MAX_VALUE, 1L),
+            Pair(1L, Long.MAX_VALUE),
+            Pair(0L, 0L),
+            Pair(123L, 456L),
+            Pair(999_999L, 1_709_251_200_000L)
+        )
+
+        for ((eventId, occurrenceTs) in testCases) {
+            val code = DeviceCalendarReminderNotificationManager.computeOpenRequestCode(eventId, occurrenceTs)
+            assertTrue("Open request code $code must be positive", code > 0)
+        }
+    }
+
+    @Test
+    fun `snooze action request codes are always positive`() {
+        val testCases = listOf(
+            Pair(Long.MAX_VALUE, 1L),
+            Pair(0L, 0L),
+            Pair(123L, 456L)
+        )
+
+        for ((eventId, occurrenceTs) in testCases) {
+            val code = DeviceCalendarReminderNotificationManager.computeSnoozeRequestCode(eventId, occurrenceTs)
+            assertTrue("Snooze request code $code must be positive", code > 0)
+        }
+    }
+
+    @Test
+    fun `dismiss request codes are always positive`() {
+        val testIds = listOf(0, 20000, 20500, 29999, Int.MAX_VALUE)
+
+        for (notificationId in testIds) {
+            val code = DeviceCalendarReminderNotificationManager.computeDismissRequestCode(notificationId)
+            assertTrue("Dismiss request code $code must be positive", code > 0)
+        }
+    }
+
+    @Test
+    fun `request code ranges do not overlap`() {
+        // Generate request codes from all three types and verify no overlap
+        val openCodes = mutableSetOf<Int>()
+        val snoozeCodes = mutableSetOf<Int>()
+        val dismissCodes = mutableSetOf<Int>()
+
+        for (i in 1L..100L) {
+            val eventId = i * 13
+            val occurrenceTs = 1_700_000_000_000L + (i * 60_000L)
+            openCodes.add(DeviceCalendarReminderNotificationManager.computeOpenRequestCode(eventId, occurrenceTs))
+            snoozeCodes.add(DeviceCalendarReminderNotificationManager.computeSnoozeRequestCode(eventId, occurrenceTs))
+            dismissCodes.add(DeviceCalendarReminderNotificationManager.computeDismissRequestCode((20000 + i).toInt()))
+        }
+
+        // No set should intersect with another
+        assertTrue("Open and snooze codes must not overlap", openCodes.intersect(snoozeCodes).isEmpty())
+        assertTrue("Open and dismiss codes must not overlap", openCodes.intersect(dismissCodes).isEmpty())
+        assertTrue("Snooze and dismiss codes must not overlap", snoozeCodes.intersect(dismissCodes).isEmpty())
+    }
+
+    @Test
+    fun `request codes do not collide for 50 different events`() {
+        val openCodes = mutableSetOf<Int>()
+        val collisions = mutableListOf<String>()
+
+        for (i in 1L..50L) {
+            val eventId = i * 7
+            val occurrenceTs = 1_700_000_000_000L + (i * 3_600_000L)
+            val code = DeviceCalendarReminderNotificationManager.computeOpenRequestCode(eventId, occurrenceTs)
+            if (!openCodes.add(code)) {
+                collisions.add("eventId=$eventId, occurrenceTs=$occurrenceTs -> code=$code")
+            }
+        }
+
+        assertTrue(
+            "Expected 0 collisions among 50 events, got ${collisions.size}: $collisions",
+            collisions.isEmpty()
+        )
+    }
+
     // ========== Test Helper ==========
 
     /**

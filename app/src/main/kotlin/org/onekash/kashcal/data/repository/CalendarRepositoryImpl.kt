@@ -92,10 +92,7 @@ class CalendarRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setAllVisible(accountId: Long, visible: Boolean) {
-        val calendars = calendarsDao.getByAccountIdOnce(accountId)
-        for (calendar in calendars) {
-            calendarsDao.setVisible(calendar.id, visible)
-        }
+        calendarsDao.setVisibleForAccount(accountId, visible)
     }
 
     override suspend fun setDefaultCalendar(accountId: Long, calendarId: Long) {

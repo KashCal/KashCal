@@ -501,7 +501,7 @@ class IcsRecurringExceptionSyncTest {
             etag = null,
             lastModified = null
         )
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns listOf(
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns listOf(
             existingMaster,
             existingException
         )
@@ -560,7 +560,7 @@ class IcsRecurringExceptionSyncTest {
             etag = null,
             lastModified = null
         )
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns listOf(
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns listOf(
             existingMaster,
             existingException
         )
@@ -606,7 +606,7 @@ class IcsRecurringExceptionSyncTest {
             etag = null,
             lastModified = null
         )
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns listOf(existingMaster)
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns listOf(existingMaster)
 
         val result = repository.refreshSubscription(1L)
 

@@ -14,7 +14,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.ui.components.EventFormState
-import org.onekash.kashcal.ui.shared.REMINDER_OFF
 
 /**
  * Regression tests for Room event editing after device calendar edit changes.
@@ -212,25 +211,21 @@ class HomeViewModelRoomEditRegressionTest {
     @Test
     fun `Room event reminders preserved in form state`() {
         val state = EventFormState(
-            reminder1Minutes = 15,
-            reminder2Minutes = 60,
+            reminders = listOf(15, 60),
             isDeviceCalendar = false
         )
 
-        assertEquals(15, state.reminder1Minutes)
-        assertEquals(60, state.reminder2Minutes)
+        assertEquals(listOf(15, 60), state.reminders)
     }
 
     @Test
     fun `Device event reminders preserved in form state`() {
         val state = EventFormState(
-            reminder1Minutes = 30,
-            reminder2Minutes = REMINDER_OFF,
+            reminders = listOf(30),
             isDeviceCalendar = true
         )
 
-        assertEquals(30, state.reminder1Minutes)
-        assertEquals(REMINDER_OFF, state.reminder2Minutes)
+        assertEquals(listOf(30), state.reminders)
     }
 
     // ==================== Calendar Selection ====================

@@ -547,6 +547,21 @@ class ReminderScheduler @Inject constructor(
     }
 
     /**
+     * Cancel all reminders for all events in a calendar.
+     * Uses batch queries (1 select + 1 delete) instead of per-event queries.
+     *
+     * @param calendarId The calendar ID
+     */
+    suspend fun cancelRemindersForCalendar(calendarId: Long) {
+        val reminders = scheduledRemindersDao.getPendingForCalendar(calendarId)
+        for (reminder in reminders) {
+            cancelAlarm(reminder.id)
+        }
+        scheduledRemindersDao.deleteForCalendar(calendarId)
+        Log.d(TAG, "Cancelled ${reminders.size} reminders for calendar $calendarId")
+    }
+
+    /**
      * Cancel reminder for a specific occurrence.
      *
      * @param eventId The event ID

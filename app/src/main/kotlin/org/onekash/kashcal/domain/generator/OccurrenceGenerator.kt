@@ -242,13 +242,15 @@ class OccurrenceGenerator @Inject constructor(
             return 0 // Non-recurring events don't need extension
         }
 
+        // Read DataStore outside transaction to avoid holding DB lock during DataStore I/O
+        val now = System.currentTimeMillis()
+        val syncPastDays = dataStore.syncPastDays.first()
+
         return database.withTransaction {
             // Find current min occurrence
             val currentMinTs = occurrencesDao.getMinStartTs(event.id) ?: return@withTransaction 0
 
             // Respect sync lookback setting - don't extend beyond the lookback window
-            val now = System.currentTimeMillis()
-            val syncPastDays = dataStore.syncPastDays.first()
             val lookbackCutoff = if (syncPastDays == Int.MAX_VALUE) {
                 // Unbounded — allow extension back to event start
                 // (coerceAtLeast(eventStartAligned) on effectiveExtendTo bounds naturally)

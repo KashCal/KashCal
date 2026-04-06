@@ -4,7 +4,7 @@ import android.util.Log
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.model.CalendarGroup
-import org.onekash.kashcal.ui.shared.REMINDER_OFF
+import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.ZoneId
@@ -19,7 +19,7 @@ private const val TAG = "DeviceEventMapper"
  * Handles:
  * - Duration parsing for recurring events (CalendarProvider stores DURATION, not DTEND)
  * - All-day UTC to local date conversion
- * - Reminder mapping (first 2 only, logs warning if truncated)
+ * - Reminder mapping (first 5 only, logs warning if truncated)
  * - Color precedence (eventColor over calendarColor)
  *
  * @param reminders List of reminder minutes from CalendarProvider
@@ -58,8 +58,8 @@ fun DeviceEvent.toFormState(
     val startCal = Calendar.getInstance().apply { timeInMillis = actualStartTs }
     val endCal = Calendar.getInstance().apply { timeInMillis = actualEndTs }
 
-    // Map reminders (take first 2, track truncated count for UI warning)
-    val (reminder1, reminder2, truncatedCount) = mapReminders(reminders)
+    // Map reminders (take first 5, track truncated count for UI warning)
+    val (mappedReminders, truncatedCount) = mapReminders(reminders)
 
     // Color precedence: eventColor > calendarColor
     val displayColor = eventColor ?: calendarColor
@@ -75,11 +75,10 @@ fun DeviceEvent.toFormState(
         selectedCalendarId = calendarId,
         selectedCalendarName = calendarName,
         selectedCalendarColor = displayColor,
-        reminder1Minutes = reminder1,
+        reminders = mappedReminders,
         isAllDay = isAllDay,
         location = location ?: "",
         description = description ?: "",
-        reminder2Minutes = reminder2,
         rrule = rrule,
         timezone = timezone,
         deviceCalendarGroups = deviceCalendarGroups,
@@ -109,18 +108,15 @@ private fun DeviceEvent.computeEndTs(): Long? {
 
 /**
  * Map reminder minutes to form state.
- * Takes first 2 reminders, logs warning and tracks truncated count if >2.
+ * Takes first MAX_REMINDERS (5), logs warning and tracks truncated count if exceeded.
  *
- * @return Triple of (reminder1Minutes, reminder2Minutes, truncatedCount)
+ * @return Pair of (reminderMinutes, truncatedCount)
  */
-private fun mapReminders(reminders: List<Int>): Triple<Int, Int, Int> {
-    val truncatedCount = (reminders.size - 2).coerceAtLeast(0)
+private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
+    val truncatedCount = (reminders.size - MAX_REMINDERS).coerceAtLeast(0)
     if (truncatedCount > 0) {
-        Log.w(TAG, "Event has ${reminders.size} reminders, only first 2 will be used ($truncatedCount truncated)")
+        Log.w(TAG, "Event has ${reminders.size} reminders, only first $MAX_REMINDERS will be used ($truncatedCount truncated)")
     }
 
-    val reminder1 = reminders.getOrNull(0) ?: REMINDER_OFF
-    val reminder2 = reminders.getOrNull(1) ?: REMINDER_OFF
-
-    return Triple(reminder1, reminder2, truncatedCount)
+    return Pair(reminders.take(MAX_REMINDERS), truncatedCount)
 }

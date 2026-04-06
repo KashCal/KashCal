@@ -81,6 +81,18 @@ class EventReader @Inject constructor(
     }
 
     /**
+     * Get all exception events for multiple master recurring events in a single batch.
+     * Returns a map of masterId -> list of exceptions.
+     * Uses chunked(500) to stay within SQLite's IN clause variable limit (999).
+     */
+    suspend fun getExceptionsForMasters(masterIds: List<Long>): Map<Long, List<Event>> {
+        if (masterIds.isEmpty()) return emptyMap()
+        return masterIds.chunked(500)
+            .flatMap { chunk -> eventsDao.getExceptionsForMasters(chunk) }
+            .groupBy { it.originalEventId!! }
+    }
+
+    /**
      * Get master event for an exception.
      */
     suspend fun getMasterForException(exceptionEvent: Event): Event? {

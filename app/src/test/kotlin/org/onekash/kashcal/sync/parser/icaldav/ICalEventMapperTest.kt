@@ -286,9 +286,9 @@ class ICalEventMapperTest {
     }
 
     @Test
-    fun `maps multiple alarms - only closest 3 by duration`() {
+    fun `maps multiple alarms - keeps closest 5 by duration`() {
         // Alarms happen to be in sorted order here (15m, 30m, 1h, 1d, 1w)
-        // Result: keeps 15m, 30m, 1h (closest 3)
+        // All 5 fit within the limit
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -336,13 +336,15 @@ class ICalEventMapperTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
 
-        // Entity stores closest 3 reminders (sorted by duration)
+        // Entity stores all 5 reminders (within limit of 5, sorted by duration)
         assertNotNull("Should have reminders", entity.reminders)
-        assertEquals("Should store only 3 reminders", 3, entity.reminders!!.size)
-        // Verify sorted order: 15m, 30m, 1h (smallest durations)
+        assertEquals("Should store all 5 reminders", 5, entity.reminders!!.size)
+        // Verify sorted order: 15m, 30m, 1h, 1d, 1w (DurationUtils normalizes 1W to 7D)
         assertEquals("-PT15M", entity.reminders!![0])
         assertEquals("-PT30M", entity.reminders!![1])
         assertEquals("-PT1H", entity.reminders!![2])
+        assertEquals("-P1D", entity.reminders!![3])
+        assertEquals("-P7D", entity.reminders!![4])
     }
 
     @Test
@@ -499,10 +501,10 @@ class ICalEventMapperTest {
     }
 
     @Test
-    fun `alarms beyond limit 3 are excluded after sorting - keeps smallest`() {
+    fun `alarms beyond limit 5 are excluded after sorting - keeps smallest from 5 alarms`() {
         // 5 alarms: 1 week, 1 day, 15 min, 1 hour, 30 min
         // After sorting: 15 min, 30 min, 1 hour, 1 day, 1 week
-        // Take 3: 15 min, 30 min, 1 hour (smallest 3)
+        // Take 5: all 5 fit within the limit
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -550,13 +552,92 @@ class ICalEventMapperTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
 
-        // Entity stores only closest 3 (by duration)
+        // Entity stores all 5 (within limit of 5)
         assertNotNull("Should have reminders", entity.reminders)
-        assertEquals("Should store only 3 reminders", 3, entity.reminders!!.size)
-        // Verify it's the smallest 3: 15 min, 30 min, 1 hour
+        assertEquals("Should store all 5 reminders", 5, entity.reminders!!.size)
+        // Verify sorted by duration: 15 min, 30 min, 1 hour, 1 day, 1 week
+        // Note: DurationUtils.format() normalizes 1W to 7D
         assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
         assertEquals("Second should be 30 min", "-PT30M", entity.reminders!![1])
         assertEquals("Third should be 1 hour", "-PT1H", entity.reminders!![2])
+        assertEquals("Fourth should be 1 day", "-P1D", entity.reminders!![3])
+        assertEquals("Fifth should be 1 week (7 days)", "-P7D", entity.reminders!![4])
+    }
+
+    @Test
+    fun `alarms beyond limit 5 are excluded after sorting - keeps smallest 5`() {
+        // 7 alarms: 1 week, 1 day, 15 min, 1 hour, 30 min, 2 hours, 4 hours
+        // After sorting: 15 min, 30 min, 1 hour, 2 hours, 4 hours, 1 day, 1 week
+        // Take 5: 15 min, 30 min, 1 hour, 2 hours, 4 hours
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:alarm-limit-7@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T100000Z
+            DTEND:20251225T110000Z
+            SUMMARY:Event with 7 Alarms
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1W
+            DESCRIPTION:1 week before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-P1D
+            DESCRIPTION:1 day before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT15M
+            DESCRIPTION:15 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT1H
+            DESCRIPTION:1 hour before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT30M
+            DESCRIPTION:30 min before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT2H
+            DESCRIPTION:2 hours before
+            END:VALARM
+            BEGIN:VALARM
+            ACTION:DISPLAY
+            TRIGGER:-PT4H
+            DESCRIPTION:4 hours before
+            END:VALARM
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        val icalEvent = events.first()
+
+        // icaldav parses all 7 alarms
+        assertEquals("icaldav should parse all 7 alarms", 7, icalEvent.alarms.size)
+
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+
+        // Entity stores only closest 5 (by duration)
+        assertNotNull("Should have reminders", entity.reminders)
+        assertEquals("Should store only 5 reminders", 5, entity.reminders!!.size)
+        // Verify it's the smallest 5: 15 min, 30 min, 1 hour, 2 hours, 4 hours
+        assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
+        assertEquals("Second should be 30 min", "-PT30M", entity.reminders!![1])
+        assertEquals("Third should be 1 hour", "-PT1H", entity.reminders!![2])
+        assertEquals("Fourth should be 2 hours", "-PT2H", entity.reminders!![3])
+        assertEquals("Fifth should be 4 hours", "-PT4H", entity.reminders!![4])
+
+        // alarmCount should reflect total count
+        assertEquals("alarmCount should be 7", 7, entity.alarmCount)
     }
 
     // ========== Status and Transparency Tests ==========

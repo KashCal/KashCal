@@ -518,14 +518,8 @@ class CalDavXmlParser {
      * Single-pass extraction of all sync-collection data.
      * More efficient than 3 separate calls for changed items, deleted hrefs, and sync token.
      */
-    data class SyncCollectionData(
-        val syncToken: String?,
-        val changedItems: List<Pair<String, String?>>,
-        val deletedHrefs: List<String>
-    )
-
-    fun extractSyncCollectionData(xml: String): SyncCollectionData {
-        if (xml.isBlank()) return SyncCollectionData(null, emptyList(), emptyList())
+    fun extractSyncCollectionData(xml: String): CalDavQuirks.SyncCollectionData {
+        if (xml.isBlank()) return CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
         return try {
             val parser = createParser(xml)
             val changedItems = mutableListOf<Pair<String, String?>>()
@@ -581,10 +575,10 @@ class CalDavXmlParser {
                 parser.next()
             }
 
-            SyncCollectionData(syncToken, changedItems, deletedHrefs)
+            CalDavQuirks.SyncCollectionData(syncToken, changedItems, deletedHrefs)
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse sync collection data: ${e.message}")
-            SyncCollectionData(null, emptyList(), emptyList())
+            CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
         }
     }
 

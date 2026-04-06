@@ -869,8 +869,8 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
 
-        // reminders limited to 3
-        assertEquals("Should store only 3 reminders", 3, entity.reminders?.size ?: 0)
+        // reminders limited to 5 (all fit within the limit)
+        assertEquals("Should store all 5 reminders", 5, entity.reminders?.size ?: 0)
         // alarmCount tracks total
         assertEquals("alarmCount should track all 5", 5, entity.alarmCount)
     }

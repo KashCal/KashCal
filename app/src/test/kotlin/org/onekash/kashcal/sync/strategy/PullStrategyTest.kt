@@ -71,6 +71,10 @@ class PullStrategyTest {
         // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
+        // Default: sync status returns SYNCED (matching createEvent default).
+        // Race condition tests override this to simulate concurrent edits.
+        coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
+
         // Default: "All" lookback routes to existing getEtagsByCalendarId() (unfiltered)
         // in pullWithEtagComparison(). Only relevant for token-expiry fallback path.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
@@ -1794,9 +1798,9 @@ class PullStrategyTest {
     }
 
     @Test
-    fun `pull skips upsert when both etags are null`() = runTest {
-        // Given: existing event with null etag, server also returns null etag
-        // The etag-unchanged check (null == null → true) correctly skips the event
+    fun `pull re-fetches event when both etags are null`() = runTest {
+        // Null etag means "unknown state" — should always re-fetch, not skip.
+        // null == null is true in Kotlin, but null should mean "re-fetch" not "unchanged".
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val existingEvent = createEvent(id = 42L, caldavUrl = eventUrl).copy(
@@ -1816,12 +1820,78 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.getMasterByUidAndCalendar("uid-1", calendar.id) } returns existingEvent
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        coEvery { eventsDao.upsert(any()) } returns 42L
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Both etags null → etag-unchanged check passes → event skipped → no upsert
-        coVerify(exactly = 0) { eventsDao.upsert(any()) }
+        // Null etag = unknown → event should be upserted (re-fetched), not skipped
+        coVerify(atLeast = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
+    }
+
+    @Test
+    fun `pull re-fetches exception event when both etags are null`() = runTest {
+        // Same null-etag fix applies to exception events
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
+        val masterEvent = createEvent(id = 500L, caldavUrl = eventUrl, title = "Master Event")
+            .copy(rrule = "FREQ=WEEKLY", etag = "master-etag")
+        val existingException = createEvent(
+            id = 501L,
+            caldavUrl = eventUrl,
+            title = "Existing Exception"
+        ).copy(
+            etag = null,  // Null etag on exception
+            originalEventId = 500L,
+            originalInstanceTime = parseDate("2024-01-08 10:00")
+        )
+
+        val masterWithExceptionIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Weekly Meeting
+            RRULE:FREQ=WEEKLY
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:master-uid
+            DTSTAMP:20240115T120000Z
+            RECURRENCE-ID:20240108T100000Z
+            DTSTART:20240108T110000Z
+            DTEND:20240108T120000Z
+            SUMMARY:Server Exception
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent(
+                href = "master-with-exception.ics",
+                url = eventUrl,
+                etag = null,  // Server also returns null etag
+                icalData = masterWithExceptionIcal
+            )
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
+        coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent)
+        coEvery { eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, any()) } returns existingException
+        coEvery { eventsDao.upsert(any()) } returns 500L
+
+        pullStrategy.pull(calendar, client = client)
+
+        // Exception with null etag should be upserted, not skipped
+        coVerify(atLeast = 1) {
+            eventsDao.upsert(match { it.originalEventId != null })
+        }
     }
 
     // ========== PROPFIND Depth:1 Probe-Based Routing (Issue #102) ==========
@@ -4040,5 +4110,92 @@ class PullStrategyTest {
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "milestone-uid" }) }
+    }
+
+    // ========== Race Condition: hasPendingChanges() TOCTOU Fix (#9) ==========
+
+    @Test
+    fun `pull skips upsert when event gains pending changes between check and transaction`() = runTest {
+        // RACE SCENARIO: User edits event between the outer hasPendingChanges() check (line 865)
+        // and the inner upsert transaction (line 927). The outer check sees SYNCED, but by the
+        // time the transaction runs, the event is PENDING_UPDATE. Without the fix, the server
+        // version silently overwrites the user's local edit (data loss).
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}race-event.ics"
+
+        // Existing event starts as SYNCED — passes the outer hasPendingChanges() check
+        val existingEvent = createEvent(
+            id = 500L,
+            caldavUrl = eventUrl,
+            title = "Original Title"
+        ).copy(syncStatus = SyncStatus.SYNCED, uid = "race-uid", etag = "old-etag")
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent("race-event.ics", eventUrl, "new-etag",
+                createSimpleIcal("race-uid", "Server Title"))
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        // UID lookup returns the existing event (SYNCED at outer check time)
+        coEvery { eventsDao.getMasterByUidAndCalendar("race-uid", calendar.id) } returns existingEvent
+
+        // THE RACE: getSyncStatus returns PENDING_UPDATE inside the transaction,
+        // simulating a user edit that happened after the outer check
+        coEvery { eventsDao.getSyncStatus(500L) } returns SyncStatus.PENDING_UPDATE
+
+        val sessionBuilder = SyncSessionBuilder(
+            calendarId = calendar.id,
+            calendarName = calendar.displayName,
+            syncType = SyncType.FULL,
+            triggerSource = SyncTrigger.FOREGROUND_MANUAL
+        )
+
+        val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        // Upsert must NOT be called — the event has pending local changes
+        coVerify(exactly = 0) { eventsDao.upsert(match { it.uid == "race-uid" }) }
+        // The skip should be counted in session metrics
+        val session = sessionBuilder.build()
+        assertTrue("Should count race-skipped event as skippedPendingLocal",
+            session.skippedPendingLocal > 0)
+    }
+
+    @Test
+    fun `pull proceeds with upsert when getSyncStatus confirms SYNCED inside transaction`() = runTest {
+        // HAPPY PATH: No race — event is still SYNCED when re-checked inside transaction
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}normal-event.ics"
+
+        val existingEvent = createEvent(
+            id = 600L,
+            caldavUrl = eventUrl,
+            title = "Original Title"
+        ).copy(syncStatus = SyncStatus.SYNCED, uid = "normal-uid", etag = "old-etag")
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        val serverEvents = listOf(
+            CalDavEvent("normal-event.ics", eventUrl, "new-etag",
+                createSimpleIcal("normal-uid", "Server Title"))
+        )
+        mockTwoStepFetch(calendar.caldavUrl, serverEvents)
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("normal-uid", calendar.id) } returns existingEvent
+
+        // No race: getSyncStatus returns SYNCED (consistent with outer check)
+        coEvery { eventsDao.getSyncStatus(600L) } returns SyncStatus.SYNCED
+        coEvery { eventsDao.upsert(any()) } returns 600L
+
+        val result = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Expected PullResult.Success", result is PullResult.Success)
+        assertEquals(1, (result as PullResult.Success).eventsUpdated)
+        // Upsert SHOULD be called — no race detected
+        coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "normal-uid" }) }
     }
 }

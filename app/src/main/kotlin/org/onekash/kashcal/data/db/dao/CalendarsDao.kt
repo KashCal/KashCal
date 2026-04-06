@@ -148,6 +148,12 @@ interface CalendarsDao {
     suspend fun setVisible(id: Long, visible: Boolean)
 
     /**
+     * Set visibility for all calendars in an account (batch).
+     */
+    @Query("UPDATE calendars SET is_visible = :visible WHERE account_id = :accountId")
+    suspend fun setVisibleForAccount(accountId: Long, visible: Boolean)
+
+    /**
      * Set calendar as default (clears other defaults in same account).
      */
     @Query("UPDATE calendars SET is_default = (id = :calendarId) WHERE account_id = :accountId")

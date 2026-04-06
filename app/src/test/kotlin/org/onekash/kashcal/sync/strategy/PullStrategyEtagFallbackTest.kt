@@ -72,6 +72,9 @@ class PullStrategyEtagFallbackTest {
         // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
+        // Default: sync status returns SYNCED (matching createEvent default).
+        coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
+
         // Default: "All" lookback routes to existing getEtagsByCalendarId() (unfiltered).
         // Tests that verify time-filtered behavior override this with a specific day count.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)

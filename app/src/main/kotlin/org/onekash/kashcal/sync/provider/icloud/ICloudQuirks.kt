@@ -105,6 +105,10 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         return xmlParser.extractChangedItems(responseBody)
     }
 
+    override fun extractSyncCollectionData(responseBody: String): CalDavQuirks.SyncCollectionData {
+        return xmlParser.extractSyncCollectionData(responseBody)
+    }
+
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
         val hrefLower = href.lowercase()
         val nameLower = displayName?.lowercase() ?: ""

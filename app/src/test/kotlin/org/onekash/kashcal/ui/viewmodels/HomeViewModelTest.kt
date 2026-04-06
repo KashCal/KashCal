@@ -1728,8 +1728,7 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminder1Minutes = 15,
-            reminder2Minutes = -1,
+            reminders = listOf(15),
             isEditMode = false
         )
 
@@ -1760,8 +1759,7 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminder1Minutes = 15,
-            reminder2Minutes = -1,
+            reminders = listOf(15),
             isEditMode = true,
             editingEventId = 1L
         )
@@ -2321,8 +2319,7 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminder1Minutes = 30,    // 30 minutes before
-            reminder2Minutes = 1440,  // 1 day before
+            reminders = listOf(30, 1440),  // 30 minutes + 1 day before
             isEditMode = false
         )
 
@@ -2351,8 +2348,7 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminder1Minutes = -1, // REMINDER_OFF
-            reminder2Minutes = -1, // REMINDER_OFF
+            reminders = emptyList(), // No reminders
             isEditMode = false
         )
 

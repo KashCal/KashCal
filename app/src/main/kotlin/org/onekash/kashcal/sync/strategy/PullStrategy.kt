@@ -13,6 +13,7 @@ import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -883,7 +884,7 @@ class PullStrategy @Inject constructor(
             // After successful push, local event has the new etag from server.
             // If server returns same etag, data is identical - no need to upsert.
             // This handles iCloud eventual consistency where pull may return stale data.
-            if (existingEvent != null && existingEvent.etag == meta.etag) {
+            if (existingEvent != null && existingEvent.etag != null && existingEvent.etag == meta.etag) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - etag unchanged (${meta.etag})")
                 sessionBuilder?.incrementSkipEtagUnchanged()
                 uidToMasterEvent[meta.parsed.uid] = existingEvent
@@ -917,6 +918,21 @@ class PullStrategy @Inject constructor(
                     // (RFC 4791 says SHOULD include etag, but some servers/CDN may omit it)
                     etag = meta.etag ?: existingEvent.etag
                 )
+            }
+
+            // RACE PREVENTION: Re-check sync status just before the transaction.
+            // The outer hasPendingChanges() check (line 865) uses a stale in-memory
+            // object. A user edit between that check and this transaction would set
+            // syncStatus to PENDING_UPDATE. Without this re-check, the upsert would
+            // silently overwrite the user's local edit with server data (data loss).
+            if (existingEvent != null) {
+                val freshStatus = eventsDao.getSyncStatus(existingEvent.id)
+                if (freshStatus != null && freshStatus != SyncStatus.SYNCED) {
+                    Log.d(TAG, "Race detected: ${meta.caldavUrl} gained pending changes ($freshStatus) between check and transaction")
+                    sessionBuilder?.incrementSkipPendingLocal()
+                    uidToMasterEvent[meta.parsed.uid] = existingEvent
+                    continue
+                }
             }
 
             // TRANSACTION: Upsert event and generate occurrences atomically
@@ -1029,7 +1045,7 @@ class PullStrategy @Inject constructor(
             }
 
             // Skip if etag unchanged (prevents overwrite with stale data after push)
-            if (existingException != null && existingException.etag == meta.etag) {
+            if (existingException != null && existingException.etag != null && existingException.etag == meta.etag) {
                 Log.d(TAG, "Skipping exception ${meta.caldavUrl} - etag unchanged (${meta.etag})")
                 sessionBuilder?.incrementSkipEtagUnchanged()
                 continue
@@ -1067,6 +1083,16 @@ class PullStrategy @Inject constructor(
                     // Preserve existing etag when server omits <getetag> from response
                     etag = meta.etag ?: existingException.etag
                 )
+            }
+
+            // RACE PREVENTION: Re-check sync status for exception events (same as master events above)
+            if (existingException != null) {
+                val freshStatus = eventsDao.getSyncStatus(existingException.id)
+                if (freshStatus != null && freshStatus != SyncStatus.SYNCED) {
+                    Log.d(TAG, "Race detected: exception ${meta.caldavUrl} gained pending changes ($freshStatus)")
+                    sessionBuilder?.incrementSkipPendingLocal()
+                    continue
+                }
             }
 
             // TRANSACTION: Upsert exception, link to master's occurrence atomically

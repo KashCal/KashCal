@@ -206,21 +206,11 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `setAllVisible updates all calendars for account`() = runBlocking {
-        // Setup
-        val calendars = listOf(
-            testCalendar(id = 1L, accountId = 5L, displayName = "Cal 1", caldavUrl = "https://a/1"),
-            testCalendar(id = 2L, accountId = 5L, displayName = "Cal 2", caldavUrl = "https://a/2"),
-            testCalendar(id = 3L, accountId = 5L, displayName = "Cal 3", caldavUrl = "https://a/3")
-        )
-        coEvery { calendarsDao.getByAccountIdOnce(5L) } returns calendars
-
         // Execute
         calendarRepository.setAllVisible(5L, false)
 
-        // Verify all calendars updated
-        coVerify { calendarsDao.setVisible(1L, false) }
-        coVerify { calendarsDao.setVisible(2L, false) }
-        coVerify { calendarsDao.setVisible(3L, false) }
+        // Verify single batch UPDATE instead of N+1 queries
+        coVerify { calendarsDao.setVisibleForAccount(5L, false) }
     }
 
     // ========== Sync Metadata Tests ==========

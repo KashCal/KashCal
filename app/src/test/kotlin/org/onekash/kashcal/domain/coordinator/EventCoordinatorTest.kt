@@ -986,7 +986,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `cancelRemindersForAccount cancels reminders for all account calendars`() = runTest {
-        // Setup: Create test account with two calendars and events
+        // Setup: Create test account with two calendars
         val testAccount = Account(
             id = 10L,
             provider = AccountProvider.ICLOUD,
@@ -996,20 +996,18 @@ class EventCoordinatorTest {
         )
         val calendar1 = iCloudCalendar.copy(id = 20L, accountId = testAccount.id)
         val calendar2 = iCloudCalendar.copy(id = 21L, accountId = testAccount.id, displayName = "Work")
-        val event1 = testEvent.copy(id = 200L, calendarId = calendar1.id)
-        val event2 = testEvent.copy(id = 201L, calendarId = calendar2.id)
 
         coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com") } returns testAccount
         coEvery { eventReader.getCalendarsByAccountIdOnce(testAccount.id) } returns listOf(calendar1, calendar2)
-        coEvery { eventReader.getEventsForCalendar(calendar1.id) } returns listOf(event1)
-        coEvery { eventReader.getEventsForCalendar(calendar2.id) } returns listOf(event2)
 
         // Act
         coordinator.cancelRemindersForAccount("test@icloud.com")
 
-        // Assert: Reminders cancelled for both events
-        coVerify { reminderScheduler.cancelRemindersForEvent(event1.id) }
-        coVerify { reminderScheduler.cancelRemindersForEvent(event2.id) }
+        // Assert: Batch cancel called per calendar (not per event)
+        coVerify { reminderScheduler.cancelRemindersForCalendar(calendar1.id) }
+        coVerify { reminderScheduler.cancelRemindersForCalendar(calendar2.id) }
+        // Verify old N+1 pattern NOT used
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
     }
 
     @Test
@@ -1021,7 +1019,7 @@ class EventCoordinatorTest {
         coordinator.cancelRemindersForAccount("nonexistent@test.com")
 
         // Assert: No reminders cancelled
-        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForCalendar(any()) }
     }
 
     // ==================== Move Event Reminder Reschedule Tests (v16.4.1) ====================
@@ -1052,5 +1050,69 @@ class EventCoordinatorTest {
         // Assert: Reminders were rescheduled (cancel + schedule)
         coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(movedEvent, any(), any()) }
+    }
+
+    // ==================== Export Tests ====================
+
+    @Test
+    fun `getCalendarEventsForExport uses batch query for exceptions`() = runTest {
+        // Setup: 2 recurring masters + 1 non-recurring event
+        val master1 = recurringEvent.copy(id = 200L, uid = "master1@test")
+        val master2 = recurringEvent.copy(id = 201L, uid = "master2@test", rrule = "FREQ=DAILY")
+        val standalone = testEvent.copy(id = 202L, uid = "standalone@test", rrule = null)
+
+        val exception1a = testEvent.copy(id = 300L, originalEventId = 200L)
+        val exception1b = testEvent.copy(id = 301L, originalEventId = 200L)
+        val exception2a = testEvent.copy(id = 302L, originalEventId = 201L)
+
+        coEvery { eventReader.getAllMasterEventsForCalendar(iCloudCalendarId) } returns
+            listOf(master1, master2, standalone)
+        coEvery { eventReader.getExceptionsForMasters(listOf(200L, 201L)) } returns
+            mapOf(
+                200L to listOf(exception1a, exception1b),
+                201L to listOf(exception2a)
+            )
+
+        // Act
+        val result = coordinator.getCalendarEventsForExport(iCloudCalendarId)
+
+        // Assert: 3 pairs returned
+        assertEquals(3, result.size)
+
+        // master1 has 2 exceptions
+        assertEquals(master1, result[0].first)
+        assertEquals(listOf(exception1a, exception1b), result[0].second)
+
+        // master2 has 1 exception
+        assertEquals(master2, result[1].first)
+        assertEquals(listOf(exception2a), result[1].second)
+
+        // standalone has no exceptions
+        assertEquals(standalone, result[2].first)
+        assertEquals(emptyList<Event>(), result[2].second)
+
+        // Verify batch query called once with correct IDs (not N+1)
+        coVerify(exactly = 1) { eventReader.getExceptionsForMasters(listOf(200L, 201L)) }
+        // Verify old N+1 pattern NOT used
+        coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
+    }
+
+    @Test
+    fun `getCalendarEventsForExport handles no recurring events`() = runTest {
+        val standalone1 = testEvent.copy(id = 200L, rrule = null)
+        val standalone2 = testEvent.copy(id = 201L, rrule = null)
+
+        coEvery { eventReader.getAllMasterEventsForCalendar(localCalendarId) } returns
+            listOf(standalone1, standalone2)
+
+        val result = coordinator.getCalendarEventsForExport(localCalendarId)
+
+        assertEquals(2, result.size)
+        assertEquals(emptyList<Event>(), result[0].second)
+        assertEquals(emptyList<Event>(), result[1].second)
+
+        // No batch query needed when no recurring events
+        coVerify(exactly = 0) { eventReader.getExceptionsForMasters(any()) }
+        coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
     }
 }

@@ -20,7 +20,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -75,8 +74,7 @@ class EventFormSheetComposeTest {
             selectedCalendarId = 1L,
             selectedCalendarName = "Personal",
             selectedCalendarColor = 0xFF2196F3.toInt(),
-            reminder1Minutes = 15,
-            reminder2Minutes = REMINDER_OFF,
+            reminders = listOf(15),
             isAllDay = false,
             location = "",
             description = "",

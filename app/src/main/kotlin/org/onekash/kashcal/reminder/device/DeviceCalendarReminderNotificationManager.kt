@@ -62,12 +62,27 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         // Default snooze duration
         const val DEFAULT_SNOOZE_MINUTES = 15
 
-        // Request code ranges for non-overlapping PendingIntents
-        // Using 50000-59999 range for device calendar reminders
-        // (Room reminders use 0-1.4B range partitioned by action type)
-        private const val REQUEST_CODE_OPEN = 50_000
-        private const val REQUEST_CODE_SNOOZE = 53_000
-        private const val REQUEST_CODE_DISMISS = 56_000
+        // Request code ranges for non-overlapping PendingIntents.
+        // Each range has 100K buckets with 100K spacing between bases.
+        // (Room reminders use 0-2.1B range partitioned by action type with different components.)
+        private const val REQUEST_CODE_OPEN = 200_000
+        private const val REQUEST_CODE_SNOOZE = 300_000
+        private const val REQUEST_CODE_DISMISS = 400_000
+
+        /** Bucket range for request codes. 100K buckets gives <0.01% collision at 5 events. */
+        const val REQUEST_CODE_RANGE = 100_000
+
+        fun computeOpenRequestCode(eventId: Long, occurrenceTs: Long): Int {
+            return REQUEST_CODE_OPEN + abs((eventId xor occurrenceTs) % REQUEST_CODE_RANGE).toInt()
+        }
+
+        fun computeSnoozeRequestCode(eventId: Long, occurrenceTs: Long): Int {
+            return REQUEST_CODE_SNOOZE + abs((eventId xor occurrenceTs) % REQUEST_CODE_RANGE).toInt()
+        }
+
+        fun computeDismissRequestCode(notificationId: Int): Int {
+            return REQUEST_CODE_DISMISS + abs(notificationId % REQUEST_CODE_RANGE)
+        }
     }
 
     /**
@@ -266,7 +281,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
-        val requestCode = REQUEST_CODE_OPEN + ((eventId xor occurrenceTs) % 3000).toInt()
+        val requestCode = computeOpenRequestCode(eventId, occurrenceTs)
         return PendingIntent.getActivity(
             context,
             requestCode,
@@ -301,7 +316,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             putExtra(EXTRA_NOTIFICATION_ID, notificationId)
         }
 
-        val requestCode = REQUEST_CODE_SNOOZE + ((eventId xor occurrenceTs) % 3000).toInt()
+        val requestCode = computeSnoozeRequestCode(eventId, occurrenceTs)
         return PendingIntent.getBroadcast(
             context,
             requestCode,
@@ -319,7 +334,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             putExtra(EXTRA_NOTIFICATION_ID, notificationId)
         }
 
-        val requestCode = REQUEST_CODE_DISMISS + (notificationId % 3000)
+        val requestCode = computeDismissRequestCode(notificationId)
         return PendingIntent.getBroadcast(
             context,
             requestCode,

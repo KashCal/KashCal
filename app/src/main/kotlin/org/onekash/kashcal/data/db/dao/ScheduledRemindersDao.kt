@@ -154,6 +154,28 @@ interface ScheduledRemindersDao {
     """)
     suspend fun deleteOldReminders(beforeTime: Long)
 
+    /**
+     * Get all pending/snoozed reminders for events in a calendar.
+     * Used for batch reminder cancellation when deleting a calendar or account.
+     */
+    @Query("""
+        SELECT sr.* FROM scheduled_reminders sr
+        INNER JOIN events e ON sr.event_id = e.id
+        WHERE e.calendar_id = :calendarId
+        AND sr.status IN ('PENDING', 'SNOOZED')
+    """)
+    suspend fun getPendingForCalendar(calendarId: Long): List<ScheduledReminder>
+
+    /**
+     * Delete all reminders for events in a calendar.
+     * Used for batch cleanup when deleting a calendar or account.
+     */
+    @Query("""
+        DELETE FROM scheduled_reminders
+        WHERE event_id IN (SELECT id FROM events WHERE calendar_id = :calendarId)
+    """)
+    suspend fun deleteForCalendar(calendarId: Long)
+
     // ========== Statistics ==========
 
     /**

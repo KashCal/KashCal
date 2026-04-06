@@ -369,11 +369,10 @@ class IcsSubscriptionRepository @Inject constructor(
 
         database.runInTransaction {
             val sourcePrefix = "${IcsSubscription.SOURCE_PREFIX}:${subscriptionId}:"
-            val existingEvents = eventsDao.getByCalendarIdInRange(
+            val existingEvents = eventsDao.getByCalendarIdAndCaldavUrlPrefix(
                 calendarId = calendarId,
-                startTs = Long.MIN_VALUE,
-                endTs = Long.MAX_VALUE
-            ).filter { it.caldavUrl?.startsWith(sourcePrefix) == true }
+                urlPrefix = sourcePrefix
+            )
 
             // Match by importId (unique per event, includes RECURRENCE-ID for exceptions)
             val existingByImportId = existingEvents.associateBy { extractImportIdFromSource(it.caldavUrl) }

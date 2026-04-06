@@ -5,7 +5,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
-import org.onekash.kashcal.ui.shared.REMINDER_OFF
 
 /**
  * Tests for DeviceEventMapper.toFormState().
@@ -16,7 +15,7 @@ import org.onekash.kashcal.ui.shared.REMINDER_OFF
  * - endTs fallback for non-recurring events
  * - Device calendar state flags
  * - All-day UTC to local conversion
- * - Reminder mapping (first 2 only)
+ * - Reminder mapping (first 5 only)
  * - Color precedence (eventColor over calendarColor)
  */
 class DeviceEventMapperTest {
@@ -105,79 +104,53 @@ class DeviceEventMapperTest {
     }
 
     @Test
-    fun `toFormState takes first 2 reminders when more than 2 present`() {
+    fun `toFormState takes first 5 reminders when more than 5 present`() {
         val event = createDeviceEvent()
 
         val formState = event.toFormState(
-            reminders = listOf(15, 30, 60, 120), // 4 reminders
+            reminders = listOf(15, 30, 60, 120, 1440, 2880, 10080), // 7 reminders
             calendarColor = 0xFF0000,
             calendarName = "Work",
             deviceCalendarGroups = emptyList()
         )
 
-        assertEquals(15, formState.reminder1Minutes)
-        assertEquals(30, formState.reminder2Minutes)
+        assertEquals(listOf(15, 30, 60, 120, 1440), formState.reminders)
+        assertEquals(2, formState.truncatedReminderCount) // 7 - 5 = 2 truncated
     }
 
     @Test
-    fun `toFormState sets truncatedReminderCount when more than 2 reminders`() {
+    fun `toFormState keeps all reminders when 5 or fewer`() {
         val event = createDeviceEvent()
 
-        val formState = event.toFormState(
-            reminders = listOf(15, 30, 60, 120, 1440), // 5 reminders
+        // Test with exactly 5 reminders
+        val formState5 = event.toFormState(
+            reminders = listOf(15, 30, 60, 120, 1440),
             calendarColor = 0xFF0000,
             calendarName = "Work",
             deviceCalendarGroups = emptyList()
         )
+        assertEquals(listOf(15, 30, 60, 120, 1440), formState5.reminders)
+        assertEquals(0, formState5.truncatedReminderCount)
 
-        assertEquals(3, formState.truncatedReminderCount) // 5 - 2 = 3 truncated
-    }
-
-    @Test
-    fun `toFormState sets truncatedReminderCount to 0 when 2 or fewer reminders`() {
-        val event = createDeviceEvent()
-
-        // Test with exactly 2 reminders
-        val formState2 = event.toFormState(
-            reminders = listOf(15, 30),
+        // Test with 3 reminders
+        val formState3 = event.toFormState(
+            reminders = listOf(15, 30, 60),
             calendarColor = 0xFF0000,
             calendarName = "Work",
             deviceCalendarGroups = emptyList()
         )
-        assertEquals(0, formState2.truncatedReminderCount)
+        assertEquals(listOf(15, 30, 60), formState3.reminders)
+        assertEquals(0, formState3.truncatedReminderCount)
 
         // Test with 1 reminder
         val formState1 = event.toFormState(
-            reminders = listOf(15),
+            reminders = listOf(60),
             calendarColor = 0xFF0000,
             calendarName = "Work",
             deviceCalendarGroups = emptyList()
         )
+        assertEquals(listOf(60), formState1.reminders)
         assertEquals(0, formState1.truncatedReminderCount)
-
-        // Test with 0 reminders
-        val formState0 = event.toFormState(
-            reminders = emptyList(),
-            calendarColor = 0xFF0000,
-            calendarName = "Work",
-            deviceCalendarGroups = emptyList()
-        )
-        assertEquals(0, formState0.truncatedReminderCount)
-    }
-
-    @Test
-    fun `toFormState maps single reminder correctly`() {
-        val event = createDeviceEvent()
-
-        val formState = event.toFormState(
-            reminders = listOf(60), // Just 1 reminder
-            calendarColor = 0xFF0000,
-            calendarName = "Work",
-            deviceCalendarGroups = emptyList()
-        )
-
-        assertEquals(60, formState.reminder1Minutes)
-        assertEquals(REMINDER_OFF, formState.reminder2Minutes)
     }
 
     @Test
@@ -191,8 +164,8 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        assertEquals(REMINDER_OFF, formState.reminder1Minutes)
-        assertEquals(REMINDER_OFF, formState.reminder2Minutes)
+        assertEquals(emptyList<Int>(), formState.reminders)
+        assertEquals(0, formState.truncatedReminderCount)
     }
 
     @Test

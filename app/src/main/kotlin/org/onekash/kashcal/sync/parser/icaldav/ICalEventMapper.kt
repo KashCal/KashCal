@@ -52,18 +52,18 @@ object ICalEventMapper {
             effectiveEnd.timestamp
         }
 
-        // Convert alarms to reminder strings (closest 3 by duration)
+        // Convert alarms to reminder strings (closest 5 by duration)
         // Sort by absolute duration so closest reminders appear first in UI
         val reminders = icalEvent.alarms
             .filter { it.trigger != null && !it.triggerRelatedToEnd }
             .sortedBy { it.trigger?.abs() }
-            .take(3)
+            .take(5)
             .mapNotNull { alarm ->
                 alarm.trigger?.let { formatTriggerDuration(it) }
             }
             .takeIf { it.isNotEmpty() }
 
-        // Total alarm count for optimization (when >3, use RawIcsParser)
+        // Total alarm count for optimization (when >5, use RawIcsParser)
         val alarmCount = icalEvent.alarms.count { it.trigger != null && !it.triggerRelatedToEnd }
 
         // Parse EXDATE timestamps to comma-separated string

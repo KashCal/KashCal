@@ -245,4 +245,166 @@ class FormConstantsTest {
         assertEquals("1h30m", formatDurationShort(90))
         assertEquals("2h15m", formatDurationShort(135))
     }
+
+    // ==================== Custom Reminders: Duration Helpers (Chunk 1) ====================
+
+    @Test
+    fun `componentsToMinutes converts days hours minutes to total minutes`() {
+        assertEquals(1590, componentsToMinutes(1, 2, 30))
+    }
+
+    @Test
+    fun `componentsToMinutes returns zero for all zeros`() {
+        assertEquals(0, componentsToMinutes(0, 0, 0))
+    }
+
+    @Test
+    fun `componentsToMinutes handles days only`() {
+        assertEquals(1440, componentsToMinutes(1, 0, 0))
+    }
+
+    @Test
+    fun `minutesToComponents decomposes total minutes into days hours minutes`() {
+        assertEquals(Triple(1, 2, 30), minutesToComponents(1590))
+    }
+
+    @Test
+    fun `minutesToComponents returns all zeros for zero`() {
+        assertEquals(Triple(0, 0, 0), minutesToComponents(0))
+    }
+
+    @Test
+    fun `minutesToComponents handles minutes only`() {
+        assertEquals(Triple(0, 0, 15), minutesToComponents(15))
+    }
+
+    @Test
+    fun `minutesToComponents handles hours and minutes`() {
+        assertEquals(Triple(0, 1, 30), minutesToComponents(90))
+    }
+
+    @Test
+    fun `roundToWheelStep rounds to nearest 5`() {
+        assertEquals(5, roundToWheelStep(7))
+        assertEquals(10, roundToWheelStep(8))
+        assertEquals(0, roundToWheelStep(0))
+        assertEquals(0, roundToWheelStep(2))
+        assertEquals(5, roundToWheelStep(3))
+        assertEquals(55, roundToWheelStep(57))
+    }
+
+    @Test
+    fun `formatReminderDuration for timed 15 minutes`() {
+        assertEquals("15 minutes before", formatReminderDuration(15, isAllDay = false, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for timed 90 minutes`() {
+        assertEquals("1 hour 30 min before", formatReminderDuration(90, isAllDay = false, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for timed at time of event`() {
+        assertEquals("At time of event", formatReminderDuration(0, isAllDay = false, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for timed 1 day`() {
+        assertEquals("1 day before", formatReminderDuration(1440, isAllDay = false, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for timed 2 days 3 hours`() {
+        assertEquals("2 days 3 hours before", formatReminderDuration(3060, isAllDay = false, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 540 min 12h format`() {
+        assertEquals("9 AM day of event", formatReminderDuration(540, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 540 min 24h format`() {
+        assertEquals("09:00 day of event", formatReminderDuration(540, isAllDay = true, use24Hour = true))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 1 day before`() {
+        assertEquals("1 day before at 9 AM", formatReminderDuration(1440, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 1 day before 24h`() {
+        assertEquals("1 day before at 09:00", formatReminderDuration(1440, isAllDay = true, use24Hour = true))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 2 days before`() {
+        assertEquals("2 days before at 9 AM", formatReminderDuration(2880, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day non-standard falls back`() {
+        // 1500 min = 1 day 1 hour - not a standard all-day pattern
+        assertEquals("1 day 1 hour before", formatReminderDuration(1500, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderDuration for all-day 30 min shows raw duration`() {
+        // Sub-hour all-day reminder, not a contextual pattern - falls back to generic
+        assertEquals("30 minutes before", formatReminderDuration(30, isAllDay = true, use24Hour = false))
+    }
+
+    @Test
+    fun `deduplicateAndSortReminders deduplicates and sorts ascending`() {
+        assertEquals(listOf(15, 60), deduplicateAndSortReminders(listOf(60, 15, 60)))
+    }
+
+    @Test
+    fun `deduplicateAndSortReminders handles empty list`() {
+        assertEquals(emptyList<Int>(), deduplicateAndSortReminders(emptyList()))
+    }
+
+    @Test
+    fun `deduplicateAndSortReminders handles single element`() {
+        assertEquals(listOf(30), deduplicateAndSortReminders(listOf(30)))
+    }
+
+    @Test
+    fun `formatReminderSummary shows comma-separated short labels`() {
+        assertEquals("15m, 1d", formatReminderSummary(listOf(15, 1440), use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderSummary shows None for empty list`() {
+        assertEquals("None", formatReminderSummary(emptyList(), use24Hour = false))
+    }
+
+    @Test
+    fun `formatReminderSummary shows single value`() {
+        assertEquals("1h", formatReminderSummary(listOf(60), use24Hour = false))
+    }
+
+    @Test
+    fun `MAX_REMINDERS is 5`() {
+        assertEquals(5, MAX_REMINDERS)
+    }
+
+    @Test
+    fun `TIMED_PRESET_CHIPS has 4 chips`() {
+        assertEquals(4, TIMED_PRESET_CHIPS.size)
+        assertEquals(15, TIMED_PRESET_CHIPS[0].minutes)
+        assertEquals(30, TIMED_PRESET_CHIPS[1].minutes)
+        assertEquals(60, TIMED_PRESET_CHIPS[2].minutes)
+        assertEquals(1440, TIMED_PRESET_CHIPS[3].minutes)
+    }
+
+    @Test
+    fun `ALL_DAY_PRESET_CHIPS has 4 chips`() {
+        assertEquals(4, ALL_DAY_PRESET_CHIPS.size)
+        assertEquals(540, ALL_DAY_PRESET_CHIPS[0].minutes)
+        assertEquals(1440, ALL_DAY_PRESET_CHIPS[1].minutes)
+        assertEquals(2880, ALL_DAY_PRESET_CHIPS[2].minutes)
+        assertEquals(10080, ALL_DAY_PRESET_CHIPS[3].minutes)
+    }
 }

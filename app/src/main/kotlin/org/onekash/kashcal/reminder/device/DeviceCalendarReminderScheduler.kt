@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import kotlin.math.abs
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -59,7 +60,18 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         private const val REQUEST_CODE = 5001
 
         /** Request code base for snooze alarms (supports multiple snoozed events) */
-        private const val SNOOZE_REQUEST_CODE_BASE = 5100
+        private const val SNOOZE_REQUEST_CODE_BASE = 6000
+
+        /** Bucket range for snooze request codes. 100K buckets gives <0.01% collision at 5 events. */
+        const val SNOOZE_REQUEST_CODE_RANGE = 100_000
+
+        /**
+         * Compute snooze alarm request code from event identity.
+         * Public for testability — used internally by [createSnoozePendingIntent].
+         */
+        fun computeSnoozeRequestCode(eventId: Long, occurrenceTs: Long): Int {
+            return SNOOZE_REQUEST_CODE_BASE + abs((eventId xor occurrenceTs) % SNOOZE_REQUEST_CODE_RANGE).toInt()
+        }
     }
 
     private val alarmManager: AlarmManager by lazy {
@@ -269,8 +281,7 @@ class DeviceCalendarReminderScheduler @Inject constructor(
             putExtra(EXTRA_TRIGGER_TIME, reminder.triggerTime)
         }
 
-        // Use unique request code based on eventId + occurrenceTs hash
-        val requestCode = SNOOZE_REQUEST_CODE_BASE + ((reminder.eventId xor reminder.occurrenceStartTs) % 100).toInt()
+        val requestCode = computeSnoozeRequestCode(reminder.eventId, reminder.occurrenceStartTs)
 
         return PendingIntent.getBroadcast(
             context,

@@ -161,11 +161,7 @@ class EventCoordinator @Inject constructor(
      * @param calendarId The calendar ID
      */
     private suspend fun cancelRemindersForCalendar(calendarId: Long) {
-        val events = eventReader.getEventsForCalendar(calendarId)
-        for (event in events) {
-            reminderScheduler.cancelRemindersForEvent(event.id)
-        }
-        Log.d(TAG, "Cancelled reminders for ${events.size} events in calendar $calendarId")
+        reminderScheduler.cancelRemindersForCalendar(calendarId)
     }
 
     /**
@@ -977,13 +973,14 @@ class EventCoordinator @Inject constructor(
      */
     suspend fun getCalendarEventsForExport(calendarId: Long): List<Pair<Event, List<Event>>> {
         val masterEvents = eventReader.getAllMasterEventsForCalendar(calendarId)
+        val recurringIds = masterEvents.filter { it.isRecurring }.map { it.id }
+        val exceptionsByMaster = if (recurringIds.isNotEmpty()) {
+            eventReader.getExceptionsForMasters(recurringIds)
+        } else {
+            emptyMap()
+        }
         return masterEvents.map { master ->
-            val exceptions = if (master.isRecurring) {
-                eventReader.getExceptionsForMaster(master.id)
-            } else {
-                emptyList()
-            }
-            Pair(master, exceptions)
+            Pair(master, exceptionsByMaster[master.id] ?: emptyList())
         }
     }
 

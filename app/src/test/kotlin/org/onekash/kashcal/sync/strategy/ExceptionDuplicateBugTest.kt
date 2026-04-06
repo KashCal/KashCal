@@ -64,6 +64,9 @@ class ExceptionDuplicateBugTest {
         // Mock syncPastDays to return all events (no time filtering)
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
+        // Default: sync status returns SYNCED (matching createEvent default).
+        coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
+
         // Mock database.runInTransaction
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())

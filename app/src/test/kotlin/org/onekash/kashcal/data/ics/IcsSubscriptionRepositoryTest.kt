@@ -482,7 +482,7 @@ class IcsSubscriptionRepositoryTest {
             etag = null,
             lastModified = null
         )
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns listOf(existingEvent)
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.insert(any()) } returns 1L
 
         val result = repository.refreshSubscription(1L)
@@ -514,7 +514,7 @@ class IcsSubscriptionRepositoryTest {
             etag = null,
             lastModified = null
         )
-        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns listOf(existingEvent)
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.insert(any()) } returns 1L
 
         val result = repository.refreshSubscription(1L)

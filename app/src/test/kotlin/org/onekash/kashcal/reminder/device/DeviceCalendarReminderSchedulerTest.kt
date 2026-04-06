@@ -288,6 +288,62 @@ class DeviceCalendarReminderSchedulerTest {
         assertEquals(secondTrigger, alarm!!.triggerAtTime)
     }
 
+    // ========== Snooze Request Code Collision ==========
+
+    @Test
+    fun `snooze request codes use 100_000 bucket range`() {
+        // The snooze range should be large enough to avoid birthday-paradox collisions
+        // With 100_000 buckets, collision probability is <0.01% at 5 simultaneous snoozes
+        assertEquals(100_000, DeviceCalendarReminderScheduler.SNOOZE_REQUEST_CODE_RANGE)
+    }
+
+    @Test
+    fun `snooze request codes are always positive and above main alarm code`() {
+        // Regression: negative XOR results must not produce negative request codes
+        // that could collide with the main alarm code (5001)
+        val testCases = listOf(
+            Pair(Long.MAX_VALUE, 1L),           // Large positive XOR
+            Pair(1L, Long.MAX_VALUE),           // Large positive XOR (reversed)
+            Pair(-1L, 1L),                      // Negative eventId (shouldn't happen but defensive)
+            Pair(0L, 0L),                       // Zero case
+            Pair(123L, 456L),                   // Normal case
+            Pair(999_999L, 1_709_251_200_000L)  // Realistic IDs
+        )
+
+        for ((eventId, occurrenceTs) in testCases) {
+            val requestCode = DeviceCalendarReminderScheduler.computeSnoozeRequestCode(eventId, occurrenceTs)
+            assertTrue(
+                "Snooze request code $requestCode for ($eventId, $occurrenceTs) must be > 5001 (main alarm code)",
+                requestCode > 5001
+            )
+            assertTrue(
+                "Snooze request code $requestCode must be positive",
+                requestCode > 0
+            )
+        }
+    }
+
+    @Test
+    fun `snooze request codes do not collide for different events at scale`() {
+        // Generate 50 different event/occurrence pairs and check for collisions
+        val codes = mutableSetOf<Int>()
+        val collisions = mutableListOf<String>()
+
+        for (i in 1L..50L) {
+            val eventId = i * 7  // Spread out event IDs
+            val occurrenceTs = 1_700_000_000_000L + (i * 3_600_000L)  // 1hr apart
+            val code = DeviceCalendarReminderScheduler.computeSnoozeRequestCode(eventId, occurrenceTs)
+            if (!codes.add(code)) {
+                collisions.add("eventId=$eventId, occurrenceTs=$occurrenceTs -> code=$code")
+            }
+        }
+
+        assertTrue(
+            "Expected 0 collisions among 50 events, got ${collisions.size}: $collisions",
+            collisions.isEmpty()
+        )
+    }
+
     // ========== Test Helpers ==========
 
     private fun createTestReminder(

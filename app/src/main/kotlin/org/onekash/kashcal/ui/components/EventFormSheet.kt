@@ -75,10 +75,9 @@ import java.util.Calendar as JavaCalendar
 import org.onekash.kashcal.util.DateTimeUtils
 import android.text.format.DateFormat
 import androidx.compose.ui.platform.LocalContext
+import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
-import org.onekash.kashcal.ui.shared.getReminderOptionsForEventType
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
-import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -97,21 +96,19 @@ import org.onekash.kashcal.domain.rrule.EndCondition
 private const val TAG = "EventFormSheet"
 
 /**
- * Migrate a reminder value when toggling all-day.
- * If the reminder is OFF, keep it.
- * If the reminder is valid for the new type, keep it.
- * Otherwise, reset to REMINDER_OFF.
+ * Migrate reminders when toggling all-day.
+ * Swaps the default reminder value; keeps all custom values as-is.
+ * Deduplicates after swap.
  */
-private fun migrateReminderForAllDayToggle(
-    reminderMinutes: Int,
-    newIsAllDay: Boolean
-): Int {
-    if (reminderMinutes == REMINDER_OFF) return REMINDER_OFF
-
-    val validOptions = if (newIsAllDay) ALL_DAY_REMINDER_OPTIONS else TIMED_REMINDER_OPTIONS
-    val isValid = validOptions.any { it.minutes == reminderMinutes }
-
-    return if (isValid) reminderMinutes else REMINDER_OFF
+private fun migrateRemindersForAllDayToggle(
+    reminders: List<Int>,
+    currentDefault: Int,
+    newDefault: Int
+): List<Int> {
+    if (reminders.isEmpty()) return reminders
+    return reminders.map { minutes ->
+        if (minutes == currentDefault) newDefault else minutes
+    }.let { deduplicateAndSortReminders(it) }
 }
 
 /**
@@ -129,13 +126,12 @@ data class EventFormState(
     val selectedCalendarId: Long? = null,
     val selectedCalendarName: String = "",
     val selectedCalendarColor: Int? = null,
-    val reminder1Minutes: Int = 15,
+    val reminders: List<Int> = listOf(15),
 
     // Advanced fields
     val isAllDay: Boolean = false,
     val location: String = "",
     val description: String = "",
-    val reminder2Minutes: Int = REMINDER_OFF,
     val rrule: String? = null,
     val timezone: String? = null,  // null = device default
 
@@ -149,7 +145,7 @@ data class EventFormState(
     // Device calendar state
     val isDeviceCalendar: Boolean = false,
     val editingDeviceEventId: Long? = null,
-    /** Number of reminders truncated when loading device event (>2 reminders) */
+    /** Number of reminders truncated when loading event (>5 reminders) */
     val truncatedReminderCount: Int = 0,
 
     // Edit mode
@@ -158,8 +154,7 @@ data class EventFormState(
     val editingOccurrenceTs: Long? = null
 )
 
-// Reminder options moved to ui/shared/FormConstants.kt
-// Use getReminderOptionsForEventType(isAllDay) to get correct options
+// Reminder constants and helpers are in ui/shared/FormConstants.kt
 
 internal data class ResolvedCalendar(
     val id: Long?,
@@ -284,8 +279,7 @@ fun EventFormSheet(
     // Perform save with result handling
     val performSave: () -> Unit = {
         // Check if event has a reminder set
-        val hasReminder = state.reminder1Minutes != REMINDER_OFF ||
-            state.reminder2Minutes != REMINDER_OFF
+        val hasReminder = state.reminders.isNotEmpty()
 
         // The actual save operation
         val doSave: () -> Unit = {
@@ -409,7 +403,7 @@ fun EventFormSheet(
                 val endCal = JavaCalendar.getInstance(eventTz).apply { timeInMillis = displayEndTs }
 
                 // Parse reminders from event
-                val (reminder1, reminder2) = parseRemindersFromEvent(event.reminders)
+                val (parsedReminders, truncatedCount) = parseRemindersFromEvent(event.reminders, event.alarmCount)
 
                 // For single occurrence edit (occurrenceTs != null), clear rrule
                 // Exception events have rrule=null (no recurrence of their own)
@@ -432,8 +426,8 @@ fun EventFormSheet(
                     location = event.location ?: "",
                     description = event.description ?: "",
                     rrule = effectiveRrule,
-                    reminder1Minutes = reminder1,
-                    reminder2Minutes = reminder2,
+                    reminders = parsedReminders,
+                    truncatedReminderCount = truncatedCount,
                     editingEventId = eventId,
                     isEditMode = true,
                     editingOccurrenceTs = occurrenceTs
@@ -452,7 +446,7 @@ fun EventFormSheet(
                 selectedCalendarName = defaultCalName,
                 selectedCalendarColor = defaultCalColor,
                 isDeviceCalendar = defaultIsDevice,
-                reminder1Minutes = defaultReminderTimed,
+                reminders = if (defaultReminderTimed == REMINDER_OFF) emptyList() else listOf(defaultReminderTimed),
                 endHour = computedEndHour,
                 endMinute = computedEndMinute
             )
@@ -491,8 +485,8 @@ fun EventFormSheet(
                 val startCal = JavaCalendar.getInstance().apply { timeInMillis = displayStartTs }
                 val endCal = JavaCalendar.getInstance().apply { timeInMillis = displayEndTs }
 
-                // Parse reminders from event
-                val (reminder1, reminder2) = parseRemindersFromEvent(duplicateFrom.reminders)
+                // Parse reminders from event (ignore truncation for duplicates)
+                val (dupReminders, _) = parseRemindersFromEvent(duplicateFrom.reminders, duplicateFrom.alarmCount)
 
                 // Use source calendar if writable, otherwise fall back to resolved default
                 val sourceCalendar = writableCalendars.find { it.id == duplicateFrom.calendarId }
@@ -515,8 +509,7 @@ fun EventFormSheet(
                     selectedCalendarName = sourceCalName,
                     selectedCalendarColor = sourceCalColor,
                     isDeviceCalendar = sourceCalendar == null && defaultIsDevice,
-                    reminder1Minutes = reminder1,
-                    reminder2Minutes = reminder2,
+                    reminders = dupReminders,
                     rrule = null  // Don't copy recurrence (creates independent event)
                 )
             }
@@ -717,32 +710,24 @@ fun EventFormSheet(
                     )
 
                     // All-day toggle
+                    val toggleAllDay = { newIsAllDay: Boolean ->
+                        val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
+                        val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
+                        val migratedReminders = migrateRemindersForAllDayToggle(state.reminders, currentDefault, newDefault)
+                        // Normalize to midnight when toggling all-day ON to prevent timezone date shift
+                        val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
+                        val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
+                        state = state.copy(
+                            isAllDay = newIsAllDay,
+                            dateMillis = normalizedDate,
+                            endDateMillis = normalizedEndDate,
+                            reminders = migratedReminders
+                        )
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                val newIsAllDay = !state.isAllDay
-                                val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
-                                val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
-                                // Migrate reminder1: if matches current default, use new default; otherwise validate
-                                val newReminder1 = if (state.reminder1Minutes == currentDefault) {
-                                    newDefault
-                                } else {
-                                    migrateReminderForAllDayToggle(state.reminder1Minutes, newIsAllDay)
-                                }
-                                // Migrate reminder2: validate for new type
-                                val newReminder2 = migrateReminderForAllDayToggle(state.reminder2Minutes, newIsAllDay)
-                                // Normalize to midnight when toggling all-day ON to prevent timezone date shift
-                                val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
-                                val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
-                                state = state.copy(
-                                    isAllDay = newIsAllDay,
-                                    dateMillis = normalizedDate,
-                                    endDateMillis = normalizedEndDate,
-                                    reminder1Minutes = newReminder1,
-                                    reminder2Minutes = newReminder2
-                                )
-                            }
+                            .clickable { toggleAllDay(!state.isAllDay) }
                             .padding(vertical = 12.dp, horizontal = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -750,28 +735,7 @@ fun EventFormSheet(
                         Text("All-day", style = MaterialTheme.typography.bodyLarge)
                         Switch(
                             checked = state.isAllDay,
-                            onCheckedChange = { isAllDay ->
-                                val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
-                                val newDefault = if (isAllDay) defaultReminderAllDay else defaultReminderTimed
-                                // Migrate reminder1: if matches current default, use new default; otherwise validate
-                                val newReminder1 = if (state.reminder1Minutes == currentDefault) {
-                                    newDefault
-                                } else {
-                                    migrateReminderForAllDayToggle(state.reminder1Minutes, isAllDay)
-                                }
-                                // Migrate reminder2: validate for new type
-                                val newReminder2 = migrateReminderForAllDayToggle(state.reminder2Minutes, isAllDay)
-                                // Normalize to midnight when toggling all-day ON to prevent timezone date shift
-                                val normalizedDate = if (isAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
-                                val normalizedEndDate = if (isAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
-                                state = state.copy(
-                                    isAllDay = isAllDay,
-                                    dateMillis = normalizedDate,
-                                    endDateMillis = normalizedEndDate,
-                                    reminder1Minutes = newReminder1,
-                                    reminder2Minutes = newReminder2
-                                )
-                            }
+                            onCheckedChange = toggleAllDay
                         )
                     }
 
@@ -851,18 +815,13 @@ fun EventFormSheet(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Combined alert picker (handles both first and second reminders)
-                    // Uses extracted ReminderPickerCard which shows correct options based on isAllDay
+                    // Dynamic reminder picker with inline wheel duration pickers
                     ReminderPickerCard(
-                        reminder1Minutes = state.reminder1Minutes,
-                        reminder2Minutes = state.reminder2Minutes,
+                        reminders = state.reminders,
                         isAllDay = state.isAllDay,
                         use24Hour = use24Hour,
-                        onReminder1Change = { minutes ->
-                            state = state.copy(reminder1Minutes = minutes)
-                        },
-                        onReminder2Change = { minutes ->
-                            state = state.copy(reminder2Minutes = minutes)
+                        onRemindersChange = { newReminders ->
+                            state = state.copy(reminders = newReminders)
                         },
                         truncatedReminderCount = state.truncatedReminderCount
                     )
@@ -1310,16 +1269,20 @@ private fun parseIso8601DurationToMinutes(duration: String?): Int {
 }
 
 /**
- * Parse reminders list from event into reminder1Minutes and reminder2Minutes.
- * Returns Pair(reminder1, reminder2) where reminder2 defaults to REMINDER_OFF.
+ * Parse reminders list from event into List<Int> of minutes.
+ * Takes first MAX_REMINDERS (5), computes truncation count from alarmCount.
+ * Returns Pair(reminderMinutes, truncatedCount).
  */
-private fun parseRemindersFromEvent(reminders: List<String>?): Pair<Int, Int> {
-    if (reminders.isNullOrEmpty()) return Pair(REMINDER_OFF, REMINDER_OFF)
+private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 0): Pair<List<Int>, Int> {
+    if (reminders.isNullOrEmpty()) return Pair(emptyList(), 0)
 
-    val reminder1 = parseIso8601DurationToMinutes(reminders.getOrNull(0))
-    val reminder2 = parseIso8601DurationToMinutes(reminders.getOrNull(1))
+    val parsed = reminders.take(MAX_REMINDERS).mapNotNull { duration ->
+        val minutes = parseIso8601DurationToMinutes(duration)
+        if (minutes >= 0) minutes else null
+    }
+    val truncatedCount = (alarmCount - MAX_REMINDERS).coerceAtLeast(0)
 
-    return Pair(reminder1, reminder2)
+    return Pair(parsed, truncatedCount)
 }
 
 /**

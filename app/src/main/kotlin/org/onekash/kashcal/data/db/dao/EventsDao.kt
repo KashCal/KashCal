@@ -182,6 +182,23 @@ interface EventsDao {
     suspend fun getByCalendarIdInRange(calendarId: Long, startTs: Long, endTs: Long): List<Event>
 
     /**
+     * Get events for calendar matching a caldav_url prefix.
+     *
+     * Used by IcsSubscriptionRepository to find events belonging to a specific
+     * ICS subscription without loading all events in the calendar.
+     * The prefix format is "ics_subscription:{subscriptionId}:" which is controlled
+     * internally (no LIKE special characters).
+     */
+    @Query("""
+        SELECT * FROM events
+        WHERE calendar_id = :calendarId
+        AND caldav_url LIKE :urlPrefix || '%'
+        AND sync_status != 'PENDING_DELETE'
+        ORDER BY start_ts ASC
+    """)
+    suspend fun getByCalendarIdAndCaldavUrlPrefix(calendarId: Long, urlPrefix: String): List<Event>
+
+    /**
      * Get all events in time range across all calendars.
      */
     @Query("""
@@ -245,6 +262,13 @@ interface EventsDao {
      */
     @Query("SELECT * FROM events WHERE original_event_id = :masterEventId ORDER BY original_instance_time ASC")
     suspend fun getExceptionsForMaster(masterEventId: Long): List<Event>
+
+    /**
+     * Get all exception events for multiple master recurring events in a single query.
+     * Used by getCalendarEventsForExport() to avoid N+1 queries.
+     */
+    @Query("SELECT * FROM events WHERE original_event_id IN (:masterIds) ORDER BY original_instance_time ASC")
+    suspend fun getExceptionsForMasters(masterIds: List<Long>): List<Event>
 
     /**
      * Get exception for specific occurrence time.
@@ -539,6 +563,16 @@ interface EventsDao {
         WHERE id = :id
     """)
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, now: Long)
+
+    /**
+     * Lightweight query returning only the sync status for an event.
+     *
+     * Used inside PullStrategy's upsert transaction to re-check whether the event
+     * gained pending local changes between the outer hasPendingChanges() check and
+     * the transaction (TOCTOU race prevention).
+     */
+    @Query("SELECT sync_status FROM events WHERE id = :eventId")
+    suspend fun getSyncStatus(eventId: Long): SyncStatus?
 
     /**
      * Update only the reminders field for an event.

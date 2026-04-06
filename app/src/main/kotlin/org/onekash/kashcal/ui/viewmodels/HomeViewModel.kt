@@ -46,6 +46,7 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -2124,7 +2125,7 @@ class HomeViewModel @Inject constructor(
                 }
 
                 // Build reminders list
-                val reminders = buildRemindersList(formState.reminder1Minutes, formState.reminder2Minutes)
+                val reminders = buildRemindersList(formState.reminders)
 
                 // Get calendar ID (use local if not specified)
                 val calendarId = formState.selectedCalendarId
@@ -2601,7 +2602,7 @@ class HomeViewModel @Inject constructor(
             val (startTs, endTs) = computeTimestampsFromFormState(formState)
 
             // Build reminders list (just minutes, not ISO format)
-            val reminders = buildDeviceReminders(formState.reminder1Minutes, formState.reminder2Minutes)
+            val reminders = buildDeviceReminders(formState.reminders)
 
             val timezone = formState.timezone ?: java.util.TimeZone.getDefault().id
 
@@ -2728,12 +2729,10 @@ class HomeViewModel @Inject constructor(
     /**
      * Build device reminders list from form minutes.
      * Returns list of minutes (not ISO format like Room events).
+     * Deduplicates and sorts before returning.
      */
-    private fun buildDeviceReminders(reminder1: Int, reminder2: Int): List<Int> {
-        val reminders = mutableListOf<Int>()
-        if (reminder1 >= 0) reminders.add(reminder1)
-        if (reminder2 >= 0) reminders.add(reminder2)
-        return reminders
+    private fun buildDeviceReminders(reminderMinutes: List<Int>): List<Int> {
+        return deduplicateAndSortReminders(reminderMinutes)
     }
 
     /**
@@ -2762,17 +2761,11 @@ class HomeViewModel @Inject constructor(
     /**
      * Build reminders list from form values.
      * Converts minutes to ISO 8601 duration format (e.g., -PT15M for 15 minutes before).
+     * Deduplicates and sorts before converting.
      */
-    private fun buildRemindersList(reminder1: Int, reminder2: Int): List<String>? {
-        val reminders = mutableListOf<String>()
-
-        if (reminder1 >= 0) {
-            reminders.add(minutesToIsoDuration(reminder1))
-        }
-        if (reminder2 >= 0) {
-            reminders.add(minutesToIsoDuration(reminder2))
-        }
-
+    private fun buildRemindersList(reminderMinutes: List<Int>): List<String>? {
+        val deduplicated = deduplicateAndSortReminders(reminderMinutes)
+        val reminders = deduplicated.map { minutesToIsoDuration(it) }
         return reminders.ifEmpty { null }
     }
 
