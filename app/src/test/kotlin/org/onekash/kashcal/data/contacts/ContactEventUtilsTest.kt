@@ -358,6 +358,74 @@ class ContactEventUtilsTest {
     }
 
     // ---------------------------------------------------------------
+    // getStartTimestamp
+    // ---------------------------------------------------------------
+
+    @Test
+    fun `getStartTimestamp - known year returns that year UTC midnight`() {
+        val ts = ContactEventUtils.getStartTimestamp(7, 4, 1990)
+
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = ts
+        assertEquals(1990, cal.get(Calendar.YEAR))
+        assertEquals(Calendar.JULY, cal.get(Calendar.MONTH))
+        assertEquals(4, cal.get(Calendar.DAY_OF_MONTH))
+        assertEquals(0, cal.get(Calendar.HOUR_OF_DAY))
+        assertEquals(0, cal.get(Calendar.MINUTE))
+    }
+
+    @Test
+    fun `getStartTimestamp - null year returns currentYear minus 1`() {
+        val ts = ContactEventUtils.getStartTimestamp(6, 15, null)
+
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = ts
+        val expectedYear = Calendar.getInstance().get(Calendar.YEAR) - 1
+        assertEquals(expectedYear, cal.get(Calendar.YEAR))
+        assertEquals(Calendar.JUNE, cal.get(Calendar.MONTH))
+        assertEquals(15, cal.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `getStartTimestamp - known leap year Feb 29 returns correct date`() {
+        val ts = ContactEventUtils.getStartTimestamp(2, 29, 1992)
+
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = ts
+        assertEquals(1992, cal.get(Calendar.YEAR))
+        assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH))
+        assertEquals(29, cal.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `getStartTimestamp - null year Feb 29 uses nearest past leap year`() {
+        val ts = ContactEventUtils.getStartTimestamp(2, 29, null)
+
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = ts
+        val year = cal.get(Calendar.YEAR)
+        // Must be a leap year
+        assertTrue("Year $year must be a leap year", year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
+        // Must be in the past (before current year)
+        assertTrue("Year $year must be before current year", year < Calendar.getInstance().get(Calendar.YEAR))
+        // Must be Feb 29, not rolled to Mar 1
+        assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH))
+        assertEquals(29, cal.get(Calendar.DAY_OF_MONTH))
+    }
+
+    @Test
+    fun `getStartTimestamp - future month with known year still uses known year`() {
+        // December with year 1985 should return 1985, not next year
+        val ts = ContactEventUtils.getStartTimestamp(12, 25, 1985)
+
+        val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = ts
+        assertEquals(1985, cal.get(Calendar.YEAR))
+        assertEquals(Calendar.DECEMBER, cal.get(Calendar.MONTH))
+        assertEquals(25, cal.get(Calendar.DAY_OF_MONTH))
+    }
+
+    // ---------------------------------------------------------------
     // minutesToIsoDuration
     // ---------------------------------------------------------------
 

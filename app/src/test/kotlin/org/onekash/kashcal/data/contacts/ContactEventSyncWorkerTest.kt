@@ -54,8 +54,8 @@ class ContactEventSyncWorkerTest {
 
         assertTrue("Should succeed when both disabled", result is Result)
         // Should not attempt sync on either repository
-        coVerify(exactly = 0) { birthdayRepository.syncBirthdays() }
-        coVerify(exactly = 0) { anniversaryRepository.syncAnniversaries() }
+        coVerify(exactly = 0) { birthdayRepository.syncEvents() }
+        coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
 
     // ========== Birthday-Only Sync ==========
@@ -64,7 +64,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork returns success with output data on successful birthday sync`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } returns ContactEventSyncResult.Success(
+        coEvery { birthdayRepository.syncEvents() } returns ContactEventSyncResult.Success(
             added = 3,
             updated = 1,
             deleted = 0
@@ -77,7 +77,7 @@ class ContactEventSyncWorkerTest {
         // Verify last sync time was recorded
         coVerify { dataStore.setContactBirthdaysLastSync(any()) }
         // Should not sync anniversaries
-        coVerify(exactly = 0) { anniversaryRepository.syncAnniversaries() }
+        coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
 
     // ========== Anniversary-Only Sync ==========
@@ -86,7 +86,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork syncs only anniversaries when birthdays disabled`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns false
         coEvery { dataStore.getContactAnniversariesEnabled() } returns true
-        coEvery { anniversaryRepository.syncAnniversaries() } returns ContactEventSyncResult.Success(
+        coEvery { anniversaryRepository.syncEvents() } returns ContactEventSyncResult.Success(
             added = 2,
             updated = 0,
             deleted = 1
@@ -97,10 +97,10 @@ class ContactEventSyncWorkerTest {
         val result = worker.doWork()
 
         // Should sync anniversaries
-        coVerify { anniversaryRepository.syncAnniversaries() }
+        coVerify { anniversaryRepository.syncEvents() }
         coVerify { dataStore.setContactAnniversariesLastSync(any()) }
         // Should not sync birthdays
-        coVerify(exactly = 0) { birthdayRepository.syncBirthdays() }
+        coVerify(exactly = 0) { birthdayRepository.syncEvents() }
     }
 
     // ========== Dual Sync ==========
@@ -109,12 +109,12 @@ class ContactEventSyncWorkerTest {
     fun `doWork syncs both when both enabled`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns true
-        coEvery { birthdayRepository.syncBirthdays() } returns ContactEventSyncResult.Success(
+        coEvery { birthdayRepository.syncEvents() } returns ContactEventSyncResult.Success(
             added = 3,
             updated = 1,
             deleted = 0
         )
-        coEvery { anniversaryRepository.syncAnniversaries() } returns ContactEventSyncResult.Success(
+        coEvery { anniversaryRepository.syncEvents() } returns ContactEventSyncResult.Success(
             added = 2,
             updated = 0,
             deleted = 1
@@ -126,8 +126,8 @@ class ContactEventSyncWorkerTest {
         val result = worker.doWork()
 
         // Should sync both
-        coVerify { birthdayRepository.syncBirthdays() }
-        coVerify { anniversaryRepository.syncAnniversaries() }
+        coVerify { birthdayRepository.syncEvents() }
+        coVerify { anniversaryRepository.syncEvents() }
         coVerify { dataStore.setContactBirthdaysLastSync(any()) }
         coVerify { dataStore.setContactAnniversariesLastSync(any()) }
     }
@@ -141,8 +141,8 @@ class ContactEventSyncWorkerTest {
         val result = worker.doWork()
 
         assertTrue("Should succeed when neither enabled", result is Result)
-        coVerify(exactly = 0) { birthdayRepository.syncBirthdays() }
-        coVerify(exactly = 0) { anniversaryRepository.syncAnniversaries() }
+        coVerify(exactly = 0) { birthdayRepository.syncEvents() }
+        coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
 
     // ========== Sync Error - Retry ==========
@@ -151,7 +151,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork retries on sync error when under max attempts`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } returns ContactEventSyncResult.Error(
+        coEvery { birthdayRepository.syncEvents() } returns ContactEventSyncResult.Error(
             "Database locked"
         )
 
@@ -166,7 +166,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork retries on sync error at second attempt`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } returns ContactEventSyncResult.Error(
+        coEvery { birthdayRepository.syncEvents() } returns ContactEventSyncResult.Error(
             "Transient error"
         )
 
@@ -180,7 +180,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork fails on sync error when max attempts exceeded`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } returns ContactEventSyncResult.Error(
+        coEvery { birthdayRepository.syncEvents() } returns ContactEventSyncResult.Error(
             "Persistent error"
         )
 
@@ -197,7 +197,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork fails immediately on SecurityException (permission denied)`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } throws SecurityException("Permission denied")
+        coEvery { birthdayRepository.syncEvents() } throws SecurityException("Permission denied")
 
         val worker = createWorker(runAttemptCount = 0)
         val result = worker.doWork()
@@ -212,7 +212,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork retries on general exception when under max attempts`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } throws RuntimeException("Unexpected crash")
+        coEvery { birthdayRepository.syncEvents() } throws RuntimeException("Unexpected crash")
 
         val worker = createWorker(runAttemptCount = 0)
         val result = worker.doWork()
@@ -224,7 +224,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork fails on general exception when max attempts exceeded`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } throws RuntimeException("Persistent crash")
+        coEvery { birthdayRepository.syncEvents() } throws RuntimeException("Persistent crash")
 
         val worker = createWorker(runAttemptCount = 3)
         val result = worker.doWork()
@@ -236,7 +236,7 @@ class ContactEventSyncWorkerTest {
     fun `doWork exception with null message uses class name not Unknown error`() = runTest {
         coEvery { dataStore.getContactBirthdaysEnabled() } returns true
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
-        coEvery { birthdayRepository.syncBirthdays() } throws NullPointerException()
+        coEvery { birthdayRepository.syncEvents() } throws NullPointerException()
 
         val worker = createWorker(runAttemptCount = 3) // At max, will produce failure
         val result = worker.doWork()

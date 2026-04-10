@@ -1507,9 +1507,10 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Toggle contact birthdays: enabled=$enabled")
 
             if (enabled) {
-                // Enable: create calendar + start sync
+                // Enable: create calendar + sync in-process + start observer
                 val color = _contactBirthdaysColor.value
                 eventCoordinator.enableContactBirthdays(color)
+                eventCoordinator.syncContactBirthdays()
                 dataStore.setContactBirthdaysEnabled(true)
                 contactEventManager.onBirthdaysEnabled()
             } else {
@@ -1558,6 +1559,7 @@ class AccountSettingsViewModel @Inject constructor(
             if (enabled) {
                 val color = _contactAnniversariesColor.value
                 eventCoordinator.enableContactAnniversaries(color)
+                eventCoordinator.syncContactAnniversaries()
                 dataStore.setContactAnniversariesEnabled(true)
                 contactEventManager.onAnniversariesEnabled()
             } else {

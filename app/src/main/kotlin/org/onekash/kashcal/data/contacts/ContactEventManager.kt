@@ -76,6 +76,19 @@ class ContactEventManager @Inject constructor(
                 }
                 Log.d(TAG, "Contact events enabled on startup (birthdays=$birthdaysEnabled, anniversaries=$anniversariesEnabled), registering observer")
                 registerObserver()
+
+                // Sync on startup to recover from killed WorkManager jobs (Issue #146)
+                // syncContactBirthdays/Anniversaries are idempotent (diff-based, fast no-op if events exist)
+                try {
+                    if (birthdaysEnabled) {
+                        eventCoordinator.syncContactBirthdays()
+                    }
+                    if (anniversariesEnabled) {
+                        eventCoordinator.syncContactAnniversaries()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error during startup sync", e)
+                }
             }
         }
     }

@@ -178,6 +178,39 @@ class ContactEventManagerTest {
         // No crash = success
     }
 
+    // ========== Startup Sync Tests ==========
+
+    @Test
+    fun `initialize with birthdays enabled calls syncContactBirthdays`() = runTest(testDispatcher) {
+        dataStore.setContactBirthdaysEnabled(true)
+        dataStore.setContactAnniversariesEnabled(false)
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { eventCoordinator.syncContactBirthdays() }
+    }
+
+    @Test
+    fun `initialize with anniversaries enabled calls syncContactAnniversaries`() = runTest(testDispatcher) {
+        dataStore.setContactBirthdaysEnabled(false)
+        dataStore.setContactAnniversariesEnabled(true)
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { eventCoordinator.syncContactAnniversaries() }
+    }
+
+    @Test
+    fun `initialize with both disabled does not call sync`() = runTest(testDispatcher) {
+        dataStore.setContactBirthdaysEnabled(false)
+        dataStore.setContactAnniversariesEnabled(false)
+        manager.initialize()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { eventCoordinator.syncContactBirthdays() }
+        coVerify(exactly = 0) { eventCoordinator.syncContactAnniversaries() }
+    }
+
     @Test
     fun `initialize with anniversaries enabled but no permission auto-disables`() = runTest(testDispatcher) {
         dataStore.setContactAnniversariesEnabled(true)

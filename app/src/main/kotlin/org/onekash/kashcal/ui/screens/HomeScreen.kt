@@ -317,6 +317,7 @@ fun HomeScreen(
         topBar = {
             HomeTopAppBar(
                 uiState = uiState,
+                isOnline = isOnline,
                 searchFocusRequester = searchFocusRequester,
                 refreshKey = refreshKey,
                 onSearchClick = onSearchClick,
@@ -343,11 +344,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Offline banner
-            AnimatedVisibility(visible = !isOnline) {
-                OfflineBanner()
-            }
-
             // Sync progress banner
             AnimatedVisibility(visible = uiState.showSyncBanner) {
                 SyncBanner(message = uiState.syncBannerMessage)
@@ -669,6 +665,7 @@ fun HomeScreen(
 @Composable
 private fun HomeTopAppBar(
     uiState: HomeUiState,
+    isOnline: Boolean,
     searchFocusRequester: FocusRequester,
     refreshKey: Int,
     onSearchClick: () -> Unit,
@@ -735,6 +732,14 @@ private fun HomeTopAppBar(
                     }
                 },
                 actions = {
+                    AnimatedVisibility(visible = !isOnline && uiState.isConfigured) {
+                        Icon(
+                            Icons.Default.CloudOff,
+                            contentDescription = "Offline",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     TodayButton(onClick = onGoToToday, refreshKey = refreshKey)
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Default.Tune, contentDescription = "Settings", modifier = Modifier.size(28.dp))
@@ -768,32 +773,6 @@ private fun TodayButton(onClick: () -> Unit, refreshKey: Int) {
 }
 
 @Composable
-private fun OfflineBanner() {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.errorContainer
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                Icons.Default.CloudOff,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onErrorContainer,
-                modifier = Modifier.size(20.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                "Offline - Changes will sync when connected",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onErrorContainer
-            )
-        }
-    }
-}
-
-@Composable
 private fun MonthNavHeader(
     year: Int,
     month: Int,
@@ -805,7 +784,7 @@ private fun MonthNavHeader(
     val monthFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
 
     Row(
-        modifier = Modifier.fillMaxWidth().padding(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {

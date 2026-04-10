@@ -224,6 +224,39 @@ object ContactEventUtils {
     }
 
     /**
+     * Get the DTSTART timestamp for a contact event (birthday/anniversary).
+     *
+     * Uses the event's known year if available. If the year is unknown (null),
+     * uses (currentYear - 1) to ensure the RRULE FREQ=YEARLY generates
+     * occurrences for the current year. Special case: Feb 29 with unknown year
+     * uses the nearest past leap year to prevent java.util.Calendar from
+     * silently rolling to March 1.
+     *
+     * @param month Month (1-12)
+     * @param day Day (1-31)
+     * @param eventYear The known event year, or null if unknown
+     * @return Timestamp at UTC midnight for the computed DTSTART date
+     */
+    fun getStartTimestamp(month: Int, day: Int, eventYear: Int?): Long {
+        val year = if (eventYear != null) {
+            eventYear
+        } else {
+            val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+            if (month == 2 && day == 29) {
+                // Find nearest past leap year to avoid Calendar rolling Feb 29 → Mar 1
+                var candidate = currentYear - 1
+                while (!isLeapYear(candidate)) {
+                    candidate--
+                }
+                candidate
+            } else {
+                currentYear - 1
+            }
+        }
+        return getEventTimestamp(month, day, year)
+    }
+
+    /**
      * Get the next upcoming event timestamp from today.
      *
      * Uses local timezone for date comparison to correctly determine if
@@ -234,6 +267,7 @@ object ContactEventUtils {
      * @param day Day (1-31)
      * @return Timestamp of the next occurrence (UTC midnight)
      */
+    @Deprecated("Use getStartTimestamp() instead — getNextEventTimestamp sets DTSTART to next year for past-month dates, causing RRULE to skip the current year")
     fun getNextEventTimestamp(month: Int, day: Int): Long {
         val now = Calendar.getInstance()  // Local timezone for date comparison
         val currentYear = now.get(Calendar.YEAR)

@@ -1,15 +1,27 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -18,29 +30,30 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.components.pickers.WheelDurationPicker
+import org.onekash.kashcal.ui.shared.ALL_DAY_PRESET_CHIPS
+import org.onekash.kashcal.ui.shared.PresetChip
+import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.ReminderOption
-import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
-import org.onekash.kashcal.ui.shared.formatReminderShort
-import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
+import org.onekash.kashcal.ui.shared.TIMED_PRESET_CHIPS
+import org.onekash.kashcal.ui.shared.formatReminderDuration
 
 /**
  * Bottom sheet for selecting default alerts/reminders.
  *
- * Uses compact dropdown selectors for timed and all-day event reminders.
- * Event duration has been moved to DisplayOptionsSheet.
- *
- * @param sheetState Material3 sheet state
- * @param defaultReminderTimed Current default for timed events (minutes)
- * @param defaultReminderAllDay Current default for all-day events (minutes)
- * @param use24Hour Whether to use 24-hour format for time-based labels
- * @param onTimedReminderChange Callback when timed reminder changes
- * @param onAllDayReminderChange Callback when all-day reminder changes
- * @param onDismiss Callback when sheet is dismissed
+ * Uses expandable sections with inline wheel duration pickers for
+ * timed and all-day event reminders. Each section shows preset chips
+ * (including "None") and a 3-wheel days/hours/minutes picker.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,14 +66,13 @@ fun AlertsSheet(
     onAllDayReminderChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Get time-format-aware all-day options
-    val allDayOptions = getAllDayReminderOptions(use24Hour)
+    var expandedSection by remember { mutableIntStateOf(-1) }
 
-    // Find selected options
-    val selectedTimedOption = TIMED_REMINDER_OPTIONS.find { it.minutes == defaultReminderTimed }
-        ?: TIMED_REMINDER_OPTIONS[1]  // Default to 15 minutes
-    val selectedAllDayOption = allDayOptions.find { it.minutes == defaultReminderAllDay }
-        ?: allDayOptions[2]  // Default to 12 hours
+    val timedWheelMinutes = if (defaultReminderTimed == REMINDER_OFF) 15 else defaultReminderTimed
+    val allDayWheelMinutes = if (defaultReminderAllDay == REMINDER_OFF) 540 else defaultReminderAllDay
+
+    val timedChips = remember { listOf(PresetChip("None", REMINDER_OFF)) + TIMED_PRESET_CHIPS }
+    val allDayChips = remember { listOf(PresetChip("None", REMINDER_OFF)) + ALL_DAY_PRESET_CHIPS }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -71,37 +83,173 @@ fun AlertsSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Text(
                 "Default Alerts",
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
 
-            // Scheduled Events dropdown
             SettingsCard {
-                SettingsDropdownRow(
-                    label = "Scheduled Events",
-                    options = TIMED_REMINDER_OPTIONS,
-                    selectedOption = selectedTimedOption,
-                    onOptionSelected = { onTimedReminderChange(it.minutes) },
-                    optionLabel = { it.label },
+                AlertSection(
                     iconEmoji = "⏰",
-                    showDivider = true
+                    label = "Scheduled Events",
+                    currentValue = defaultReminderTimed,
+                    isAllDay = false,
+                    use24Hour = use24Hour,
+                    chips = timedChips,
+                    wheelMinutes = timedWheelMinutes,
+                    isExpanded = expandedSection == 0,
+                    onToggle = { expandedSection = if (expandedSection == 0) -1 else 0 },
+                    onCollapse = { expandedSection = -1 },
+                    onChange = onTimedReminderChange
                 )
 
-                // All-Day Events dropdown
-                SettingsDropdownRow(
-                    label = "All-Day Events",
-                    options = allDayOptions,
-                    selectedOption = selectedAllDayOption,
-                    onOptionSelected = { onAllDayReminderChange(it.minutes) },
-                    optionLabel = { it.label },
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                AlertSection(
                     iconEmoji = "📅",
-                    showDivider = false
+                    label = "All-Day Events",
+                    currentValue = defaultReminderAllDay,
+                    isAllDay = true,
+                    use24Hour = use24Hour,
+                    chips = allDayChips,
+                    wheelMinutes = allDayWheelMinutes,
+                    isExpanded = expandedSection == 1,
+                    onToggle = { expandedSection = if (expandedSection == 1) -1 else 1 },
+                    onCollapse = { expandedSection = -1 },
+                    onChange = onAllDayReminderChange
                 )
             }
         }
+    }
+}
+
+/**
+ * Expandable section with preset chips and a wheel duration picker.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AlertSection(
+    iconEmoji: String,
+    label: String,
+    currentValue: Int,
+    isAllDay: Boolean,
+    use24Hour: Boolean,
+    chips: List<PresetChip>,
+    wheelMinutes: Int,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onCollapse: () -> Unit,
+    onChange: (Int) -> Unit
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+
+    AlertSectionRow(
+        iconEmoji = iconEmoji,
+        label = label,
+        currentValue = currentValue,
+        isAllDay = isAllDay,
+        use24Hour = use24Hour,
+        isExpanded = isExpanded,
+        onClick = onToggle
+    )
+
+    AnimatedVisibility(
+        visible = isExpanded,
+        enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
+        exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                chips.forEach { chip ->
+                    val isSelected = currentValue == chip.minutes
+                    AssistChip(
+                        onClick = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onChange(chip.minutes)
+                            onCollapse()
+                        },
+                        label = { Text(chip.label) },
+                        colors = if (isSelected) {
+                            AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                        } else {
+                            AssistChipDefaults.assistChipColors()
+                        }
+                    )
+                }
+            }
+
+            WheelDurationPicker(
+                selectedMinutes = wheelMinutes,
+                isAllDay = isAllDay,
+                use24Hour = use24Hour,
+                presets = emptyList(),
+                onDurationSelected = onChange,
+                onDismiss = onCollapse
+            )
+        }
+    }
+}
+
+/**
+ * Tappable section row showing icon, label, current value, and expand/collapse chevron.
+ */
+@Composable
+private fun AlertSectionRow(
+    iconEmoji: String,
+    label: String,
+    currentValue: Int,
+    isAllDay: Boolean,
+    use24Hour: Boolean,
+    isExpanded: Boolean,
+    onClick: () -> Unit
+) {
+    val displayText = if (currentValue == REMINDER_OFF) {
+        "None"
+    } else {
+        formatReminderDuration(currentValue, isAllDay, use24Hour)
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(iconEmoji)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                label,
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Text(
+                displayText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 
@@ -110,13 +258,6 @@ fun AlertsSheet(
  *
  * Use this when you want separate sheets for each type.
  * Uses expanded list view (for backward compatibility with existing callers).
- *
- * @param sheetState Material3 sheet state
- * @param title Sheet title
- * @param options List of reminder options to show
- * @param currentValue Current selected value (minutes)
- * @param onSelect Callback when option is selected
- * @param onDismiss Callback when sheet is dismissed
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -137,7 +278,6 @@ fun SingleAlertPickerSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Text(
                 title,
                 style = MaterialTheme.typography.titleMedium,
@@ -148,7 +288,6 @@ fun SingleAlertPickerSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Options
             options.forEach { option ->
                 ReminderOptionRow(
                     option = option,

@@ -32,6 +32,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
@@ -1217,6 +1218,71 @@ class HomeViewModelTest {
 
         // Verify sync was requested (may be called multiple times due to init)
         verify(atLeast = 1) { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+    fun `refreshSync when offline shows Network Offline error`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isConfigured)
+
+        // Go offline
+        networkStateFlow.value = false
+        advanceUntilIdle()
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Should show offline error snackbar, not start syncing
+        assertFalse(viewModel.uiState.value.isSyncing)
+        val error = viewModel.uiState.value.currentError
+        assertTrue("Expected Snackbar error but got $error", error is ErrorPresentation.Snackbar)
+    }
+
+    @Test
+    fun `refreshSync when offline does not enqueue sync`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Go offline
+        networkStateFlow.value = false
+        advanceUntilIdle()
+
+        // Clear any init-time sync calls
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Sync should NOT have been requested
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+    fun `refreshSync when online proceeds normally`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Ensure online
+        networkStateFlow.value = true
+
+        // Clear any init-time sync calls
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        // Sync should have been requested
+        verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
     // ==================== Sync Banner Tests (Context-Aware) ====================

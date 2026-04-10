@@ -31,10 +31,10 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
  * Tests calendar management and sync operations with mocked dependencies.
  *
  * Tests:
- * - anniversaryCalendarExists: true/false cases
+ * - calendarExists: true/false cases
  * - ensureCalendarExists: creates new, returns existing
  * - removeCalendar: delegates to AccountRepository
- * - syncAnniversaries: error when no calendar, SecurityException handling
+ * - syncEvents: error when no calendar, SecurityException handling
  * - getCaldavUrl: format validation
  * - Calendar color operations
  */
@@ -56,7 +56,7 @@ class ContactAnniversaryRepositoryTest {
     private val testAccount = Account(
         id = 10L,
         provider = AccountProvider.CONTACTS,
-        email = ContactAnniversaryRepository.ACCOUNT_EMAIL,
+        email = ContactEventType.ANNIVERSARY.accountEmail,
         displayName = "Contact Anniversaries"
     )
 
@@ -64,7 +64,7 @@ class ContactAnniversaryRepositoryTest {
         id = 20L,
         accountId = 10L,
         caldavUrl = "local://contact_anniversaries",
-        displayName = "Contact Anniversaries",
+        displayName = ContactEventType.ANNIVERSARY.calendarDisplayName,
         color = 0xFFE91E63.toInt(),
         isReadOnly = true,
         isVisible = true,
@@ -109,35 +109,35 @@ class ContactAnniversaryRepositoryTest {
         unmockkAll()
     }
 
-    // ==================== anniversaryCalendarExists ====================
+    // ==================== calendarExists ====================
 
     @Test
-    fun `anniversaryCalendarExists returns false when no account`() = runTest {
+    fun `calendarExists returns false when no account`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns null
 
-        assertFalse(repository.anniversaryCalendarExists())
+        assertFalse(repository.calendarExists())
     }
 
     @Test
-    fun `anniversaryCalendarExists returns false when account exists but no calendar`() = runTest {
+    fun `calendarExists returns false when account exists but no calendar`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns emptyList()
 
-        assertFalse(repository.anniversaryCalendarExists())
+        assertFalse(repository.calendarExists())
     }
 
     @Test
-    fun `anniversaryCalendarExists returns true when account and calendar exist`() = runTest {
+    fun `calendarExists returns true when account and calendar exist`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
 
-        assertTrue(repository.anniversaryCalendarExists())
+        assertTrue(repository.calendarExists())
     }
 
     // ==================== ensureCalendarExists ====================
@@ -145,7 +145,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `ensureCalendarExists returns existing calendar ID when present`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
 
@@ -156,7 +156,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `ensureCalendarExists creates account and calendar when missing`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns null
         coEvery { accountRepository.createAccount(any()) } returns 10L
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns emptyList()
@@ -174,7 +174,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `removeCalendar delegates to accountRepository deleteAccount`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
 
         repository.removeCalendar()
@@ -185,7 +185,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `removeCalendar does nothing when no account exists`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns null
 
         repository.removeCalendar()
@@ -193,23 +193,23 @@ class ContactAnniversaryRepositoryTest {
         coVerify(exactly = 0) { accountRepository.deleteAccount(any()) }
     }
 
-    // ==================== syncAnniversaries ====================
+    // ==================== syncEvents ====================
 
     @Test
-    fun `syncAnniversaries returns error when calendar not created`() = runTest {
+    fun `syncEvents returns error when calendar not created`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns null
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Error)
         assertTrue((result as ContactEventSyncResult.Error).message.contains("not created"))
     }
 
     @Test
-    fun `syncAnniversaries handles SecurityException`() = runTest {
+    fun `syncEvents handles SecurityException`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
@@ -218,15 +218,15 @@ class ContactAnniversaryRepositoryTest {
         // ContentResolver throws SecurityException (no permission)
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws SecurityException("No permission")
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Error)
         assertTrue((result as ContactEventSyncResult.Error).message.contains("permission"))
     }
 
     @Test
-    fun `syncAnniversaries exception with null message uses class name`() = runTest {
+    fun `syncEvents exception with null message uses class name`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
@@ -235,15 +235,15 @@ class ContactAnniversaryRepositoryTest {
         // Throw exception with null message
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws NullPointerException()
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Error)
         assertEquals("NullPointerException", (result as ContactEventSyncResult.Error).message)
     }
 
     @Test
-    fun `syncAnniversaries returns Success with zero counts when no contacts`() = runTest {
+    fun `syncEvents returns Success with zero counts when no contacts`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
@@ -253,7 +253,7 @@ class ContactAnniversaryRepositoryTest {
         // Empty cursor (no contacts with anniversaries)
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Success)
         val success = result as ContactEventSyncResult.Success
         assertEquals(0, success.added)
@@ -262,9 +262,9 @@ class ContactAnniversaryRepositoryTest {
     }
 
     @Test
-    fun `syncAnniversaries deletes orphaned events for removed contacts`() = runTest {
+    fun `syncEvents deletes orphaned events for removed contacts`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
@@ -286,7 +286,7 @@ class ContactAnniversaryRepositoryTest {
         // No contacts returned
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Success)
         val success = result as ContactEventSyncResult.Success
         assertEquals(1, success.deleted)
@@ -301,7 +301,7 @@ class ContactAnniversaryRepositoryTest {
     fun `getCaldavUrl includes date for unique key per anniversary`() {
         assertEquals(
             "contact_anniversary:abc123:6-15",
-            ContactAnniversaryRepository.getCaldavUrl("abc123", 6, 15)
+            ContactEventType.ANNIVERSARY.getCaldavUrl("abc123", 6, 15)
         )
     }
 
@@ -309,16 +309,16 @@ class ContactAnniversaryRepositoryTest {
     fun `getCaldavUrl with special characters in lookupKey`() {
         assertEquals(
             "contact_anniversary:key/with/slashes:12-25",
-            ContactAnniversaryRepository.getCaldavUrl("key/with/slashes", 12, 25)
+            ContactEventType.ANNIVERSARY.getCaldavUrl("key/with/slashes", 12, 25)
         )
     }
 
     // ==================== Multiple anniversaries per contact ====================
 
     @Test
-    fun `syncAnniversaries deletes old-format caldavUrl events as orphans`() = runTest {
+    fun `syncEvents deletes old-format caldavUrl events as orphans`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
@@ -340,7 +340,7 @@ class ContactAnniversaryRepositoryTest {
         // No contacts returned — old event should be deleted as orphan
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
-        val result = repository.syncAnniversaries()
+        val result = repository.syncEvents()
         assertTrue(result is ContactEventSyncResult.Success)
         assertEquals(1, (result as ContactEventSyncResult.Success).deleted)
         coVerify { eventsDao.deleteById(100L) }
@@ -351,7 +351,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `updateCalendarColor delegates to dao`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns testAccount
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
 
@@ -363,7 +363,7 @@ class ContactAnniversaryRepositoryTest {
     @Test
     fun `getCalendarColor returns null when no calendar`() = runTest {
         coEvery {
-            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactAnniversaryRepository.ACCOUNT_EMAIL)
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.ANNIVERSARY.accountEmail)
         } returns null
 
         assertNull(repository.getCalendarColor())

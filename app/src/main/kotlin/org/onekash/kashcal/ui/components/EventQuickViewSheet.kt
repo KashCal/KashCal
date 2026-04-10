@@ -58,11 +58,15 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
+import org.onekash.kashcal.data.contacts.ContactEventType
+import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.location.looksLikeAddress
+import java.time.LocalDate
+import java.time.ZoneId
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.formatRemindersForDisplay
@@ -263,8 +267,22 @@ fun EventQuickViewSheet(
                     // Repeat info
                     if (isRecurring) {
                         // For exception events (no rrule), show generic "Recurring"
+                        // For master events, append series start date (issue #124)
                         val repeatText = if (event.rrule != null) {
-                            RruleBuilder.formatForDisplay(event.rrule)
+                            val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule)
+                            // No-year contact birthdays/anniversaries have synthetic startTs — skip date
+                            val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
+                            val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
+                            val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
+                            if (endSuffix != null && startDate != null) {
+                                "$freq starting $startDate$endSuffix"
+                            } else if (endSuffix != null) {
+                                "$freq$endSuffix"
+                            } else if (startDate != null) {
+                                "$freq \u00b7 since $startDate"
+                            } else {
+                                freq
+                            }
                         } else {
                             "Recurring"
                         }
@@ -633,6 +651,23 @@ private fun formatEventDateTime(
             "$startDateStr \u00b7 $startTime - $endTime"
         }
     }
+}
+
+/**
+ * Format the series start date string for recurring events (date only, no prefix).
+ *
+ * Same year: "Jan 15"
+ * Different year: "Jan 15, 2023"
+ */
+internal fun formatSeriesStartDateStr(
+    seriesStartTs: Long,
+    isAllDay: Boolean,
+    localZone: ZoneId = ZoneId.systemDefault()
+): String {
+    val startDate = DateTimeUtils.eventTsToLocalDate(seriesStartTs, isAllDay, localZone)
+    val currentYear = LocalDate.now(localZone).year
+    val pattern = if (startDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+    return DateTimeUtils.formatEventDate(seriesStartTs, isAllDay, pattern, localZone)
 }
 
 /**

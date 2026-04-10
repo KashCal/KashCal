@@ -118,7 +118,7 @@ class ContactEventSyncWorker @AssistedInject constructor(
 
             // Sync birthdays if enabled
             if (birthdaysEnabled) {
-                when (val result = birthdayRepository.syncBirthdays()) {
+                when (val result = birthdayRepository.syncEvents()) {
                     is ContactEventSyncResult.Success -> {
                         dataStore.setContactBirthdaysLastSync(System.currentTimeMillis())
                         outputBuilder
@@ -137,7 +137,7 @@ class ContactEventSyncWorker @AssistedInject constructor(
 
             // Sync anniversaries if enabled
             if (anniversariesEnabled) {
-                when (val result = anniversaryRepository.syncAnniversaries()) {
+                when (val result = anniversaryRepository.syncEvents()) {
                     is ContactEventSyncResult.Success -> {
                         dataStore.setContactAnniversariesLastSync(System.currentTimeMillis())
                         outputBuilder

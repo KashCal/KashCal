@@ -776,6 +776,181 @@ class EventQuickViewSheetTest {
         assertTrue("URL should have decoded ampersand", urls[0].url.contains("&b=2"))
     }
 
+    // ========== Series Start Date Tests (Issue #124) ==========
+
+    @Test
+    fun `formatSeriesStartDateStr for timed event in current year omits year`() {
+        val currentYear = LocalDate.now().year
+        val startTs = LocalDate.of(currentYear, 3, 15).atTime(10, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        val result = formatSeriesStartDateStr(startTs, isAllDay = false)
+
+        assertEquals("Mar 15", result)
+    }
+
+    @Test
+    fun `formatSeriesStartDateStr for timed event in different year includes year`() {
+        val startTs = LocalDate.of(2020, 6, 22).atTime(14, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+        val result = formatSeriesStartDateStr(startTs, isAllDay = false)
+
+        assertEquals("Jun 22, 2020", result)
+    }
+
+    @Test
+    fun `formatSeriesStartDateStr for all-day event uses UTC date`() {
+        val startTs = LocalDate.of(2021, 12, 25).atStartOfDay(ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        val result = formatSeriesStartDateStr(startTs, isAllDay = true)
+
+        assertEquals("Dec 25, 2021", result)
+    }
+
+    @Test
+    fun `formatSeriesStartDateStr for all-day event in current year omits year`() {
+        val currentYear = LocalDate.now().year
+        val startTs = LocalDate.of(currentYear, 1, 1).atStartOfDay(ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+
+        val result = formatSeriesStartDateStr(startTs, isAllDay = true)
+
+        assertEquals("Jan 1", result)
+    }
+
+    @Test
+    fun `open-ended recurring event shows since suffix`() {
+        val startTs = LocalDate.of(2023, 3, 6).atTime(9, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=WEEKLY;BYDAY=MO,WE,FR").let {
+            it.copy(startTs = startTs)
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertTrue("Should contain rrule text", repeatText.contains("Weekly on"))
+        assertTrue("Should contain since", repeatText.contains("\u00b7 since"))
+        assertTrue("Should contain year 2023", repeatText.contains("2023"))
+    }
+
+    @Test
+    fun `count-bounded recurring event shows starting prefix`() {
+        val startTs = LocalDate.of(2023, 3, 6).atTime(9, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=DAILY;COUNT=10").let {
+            it.copy(startTs = startTs)
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertTrue("Should contain 'Daily'", repeatText.contains("Daily"))
+        assertTrue("Should contain '10 times'", repeatText.contains("10 times"))
+        assertTrue("Should contain 'starting'", repeatText.contains("starting"))
+        assertTrue("Should contain date", repeatText.contains("Mar 6, 2023"))
+    }
+
+    @Test
+    fun `until-bounded recurring event shows starting and until`() {
+        val startTs = LocalDate.of(2023, 3, 6).atTime(9, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=WEEKLY;UNTIL=20231231T000000Z").let {
+            it.copy(startTs = startTs)
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertTrue("Should contain 'Weekly'", repeatText.contains("Weekly"))
+        assertTrue("Should contain 'starting'", repeatText.contains("starting"))
+        assertTrue("Should contain start date", repeatText.contains("Mar 6, 2023"))
+        assertTrue("Should contain 'until'", repeatText.contains("until"))
+        assertTrue("Should contain until date", repeatText.contains("Dec 31, 2023"))
+    }
+
+    @Test
+    fun `exception event recurrence text does NOT include since suffix`() {
+        val event = createEvent(rrule = null, originalEventId = 100L)
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertEquals("Recurring", repeatText)
+        assertFalse("Should NOT contain since", repeatText.contains("since"))
+    }
+
+    @Test
+    fun `no-year birthday skips since suffix`() {
+        // No-year birthday: contact event with no birthYear in description, synthetic startTs
+        val startTs = LocalDate.of(2025, 4, 13).atStartOfDay(ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=YEARLY").let {
+            it.copy(
+                startTs = startTs, isAllDay = true, description = null,
+                caldavUrl = "contact_birthday:lookup123:4-13"
+            )
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertEquals("Yearly", repeatText)
+        assertFalse("Should NOT contain since", repeatText.contains("since"))
+    }
+
+    @Test
+    fun `known-year anniversary shows since suffix`() {
+        val startTs = LocalDate.of(2018, 6, 15).atStartOfDay(ZoneOffset.UTC)
+            .toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=YEARLY").let {
+            it.copy(
+                startTs = startTs, isAllDay = true, description = "birthYear:2018",
+                caldavUrl = "contact_anniversary:lookup456:6-15"
+            )
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertTrue("Should contain since", repeatText.contains("\u00b7 since"))
+        assertTrue("Should contain year", repeatText.contains("2018"))
+    }
+
+    @Test
+    fun `user-created yearly event always shows since suffix`() {
+        // Regular yearly event (not a contact birthday) — startTs is real
+        val startTs = LocalDate.of(2020, 9, 1).atTime(10, 0)
+            .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val event = createEvent(rrule = "FREQ=YEARLY").let {
+            it.copy(startTs = startTs, description = null, caldavUrl = null)
+        }
+
+        val repeatText = buildRecurrenceText(event)
+
+        assertTrue("Should contain since", repeatText.contains("\u00b7 since"))
+        assertTrue("Should contain year", repeatText.contains("2020"))
+    }
+
+    /**
+     * Mirrors recurrence text logic from EventQuickViewSheet for testing.
+     */
+    private fun buildRecurrenceText(event: Event): String {
+        return if (event.rrule != null) {
+            val (freq, endSuffix) = org.onekash.kashcal.domain.rrule.RruleBuilder.formatForDisplayParts(event.rrule)
+            val isContactEvent = org.onekash.kashcal.data.contacts.ContactEventType.fromCaldavUrl(event.caldavUrl) != null
+            val hasSyntheticStart = isContactEvent && org.onekash.kashcal.data.contacts.ContactEventUtils.decodeEventYear(event.description) == null
+            val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
+            if (endSuffix != null && startDate != null) {
+                "$freq starting $startDate$endSuffix"
+            } else if (endSuffix != null) {
+                "$freq$endSuffix"
+            } else if (startDate != null) {
+                "$freq \u00b7 since $startDate"
+            } else {
+                freq
+            }
+        } else {
+            "Recurring"
+        }
+    }
+
     // ========== Expand Hint Visibility Logic ==========
 
     @Test

@@ -2,9 +2,11 @@ package org.onekash.kashcal.domain.rrule
 
 import java.time.DayOfWeek
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * RRULE builder utility for creating and parsing RFC 5545 recurrence rules.
@@ -365,14 +367,61 @@ object RruleBuilder {
             countMatch != null -> ", ${countMatch.groupValues[1]} times"
             untilMatch != null -> {
                 val dateStr = untilMatch.groupValues[1]
-                val year = dateStr.substring(0, 4)
-                val month = dateStr.substring(4, 6)
-                val day = dateStr.substring(6, 8)
-                ", until $month/$day/$year"
+                val untilDate = LocalDate.of(
+                    dateStr.substring(0, 4).toInt(),
+                    dateStr.substring(4, 6).toInt(),
+                    dateStr.substring(6, 8).toInt()
+                )
+                val currentYear = LocalDate.now().year
+                val pattern = if (untilDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+                val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+                ", until $formatted"
             }
             else -> ""
         }
 
         return freq + endSuffix
+    }
+
+    /**
+     * Format RRULE for display, returning frequency and end condition as separate parts.
+     * Enables callers to insert content between them (e.g., series start date).
+     *
+     * @param rrule RRULE string to format
+     * @return Pair of (frequency text, end suffix or null)
+     *   - First: "Weekly on Mon, Wed", "Daily", etc.
+     *   - Second: ", 10 times" or ", until Jun 15, 2026" or null if open-ended
+     */
+    fun formatForDisplayParts(rrule: String?): Pair<String, String?> {
+        if (rrule.isNullOrBlank()) return "Does not repeat" to null
+
+        // Reuse formatForDisplay's full output and split at the end suffix
+        val countMatch = Regex("COUNT=(\\d+)").find(rrule)
+        val untilMatch = Regex("UNTIL=(\\d{8})").find(rrule)
+        val full = formatForDisplay(rrule)
+
+        return when {
+            countMatch != null -> {
+                val suffix = ", ${countMatch.groupValues[1]} times"
+                val freq = full.removeSuffix(suffix)
+                freq to suffix
+            }
+            untilMatch != null -> {
+                // Reconstruct same suffix as formatForDisplay for removeSuffix to work
+                val dateStr = untilMatch.groupValues[1]
+                val untilDate = LocalDate.of(
+                    dateStr.substring(0, 4).toInt(),
+                    dateStr.substring(4, 6).toInt(),
+                    dateStr.substring(6, 8).toInt()
+                )
+                val currentYear = LocalDate.now().year
+                val pattern = if (untilDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+                val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+                val suffix = ", until $formatted"
+                val freq = full.removeSuffix(suffix)
+                freq to suffix
+            }
+            else -> full to null
+        }
     }
 }

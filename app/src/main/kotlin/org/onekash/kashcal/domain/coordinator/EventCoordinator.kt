@@ -990,7 +990,7 @@ class EventCoordinator @Inject constructor(
      * Check if contact birthday calendar exists.
      */
     suspend fun birthdayCalendarExists(): Boolean {
-        return contactBirthdayRepository.birthdayCalendarExists()
+        return contactBirthdayRepository.calendarExists()
     }
 
     /**
@@ -1023,7 +1023,7 @@ class EventCoordinator @Inject constructor(
      * @return Sync result
      */
     suspend fun syncContactBirthdays(): ContactEventSyncResult {
-        val result = contactBirthdayRepository.syncBirthdays()
+        val result = contactBirthdayRepository.syncEvents()
         if (result is ContactEventSyncResult.Success) {
             triggerWidgetUpdate()
         }
@@ -1076,7 +1076,7 @@ class EventCoordinator @Inject constructor(
      * @return Sync result
      */
     suspend fun syncContactAnniversaries(): ContactEventSyncResult {
-        val result = contactAnniversaryRepository.syncAnniversaries()
+        val result = contactAnniversaryRepository.syncEvents()
         if (result is ContactEventSyncResult.Success) {
             triggerWidgetUpdate()
         }
@@ -1103,7 +1103,7 @@ class EventCoordinator @Inject constructor(
      * Get the number of birthday events.
      */
     suspend fun getContactBirthdayEventCount(): Int {
-        val calendarId = contactBirthdayRepository.getBirthdayCalendarId() ?: return 0
+        val calendarId = contactBirthdayRepository.getCalendarId() ?: return 0
         return eventReader.getEventCountForCalendar(calendarId)
     }
 
@@ -1111,7 +1111,7 @@ class EventCoordinator @Inject constructor(
      * Get the number of anniversary events.
      */
     suspend fun getContactAnniversaryEventCount(): Int {
-        val calendarId = contactAnniversaryRepository.getAnniversaryCalendarId() ?: return 0
+        val calendarId = contactAnniversaryRepository.getCalendarId() ?: return 0
         return eventReader.getEventCountForCalendar(calendarId)
     }
 

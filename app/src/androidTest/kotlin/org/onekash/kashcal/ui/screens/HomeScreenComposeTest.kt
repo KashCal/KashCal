@@ -234,13 +234,13 @@ class HomeScreenComposeTest {
         assert(createEventCalled)
     }
 
-    // ==================== Offline Banner Tests ====================
+    // ==================== Offline Icon Tests ====================
 
     @Test
-    fun homeScreen_showsOfflineBannerWhenOffline() {
+    fun homeScreen_showsOfflineIconWhenOfflineAndConfigured() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState(),
+                uiState = createDefaultUiState().copy(isConfigured = true),
                 isOnline = false,
                 onDateSelected = {},
                 onGoToToday = {},
@@ -250,14 +250,14 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Offline - Changes will sync when connected").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Offline").assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_hidesOfflineBannerWhenOnline() {
+    fun homeScreen_hidesOfflineIconWhenOnline() {
         composeTestRule.setContent {
             HomeScreen(
-                uiState = createDefaultUiState(),
+                uiState = createDefaultUiState().copy(isConfigured = true),
                 isOnline = true,
                 onDateSelected = {},
                 onGoToToday = {},
@@ -267,7 +267,24 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText("Offline - Changes will sync when connected").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Offline").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_hidesOfflineIconWhenNotConfigured() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState().copy(isConfigured = false),
+                isOnline = false,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("Offline").assertDoesNotExist()
     }
 
     // ==================== Calendar Month Header Tests ====================

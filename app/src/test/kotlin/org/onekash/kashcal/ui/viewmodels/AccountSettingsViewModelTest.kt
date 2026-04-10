@@ -1430,6 +1430,17 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `onToggleContactBirthdays enable calls syncContactBirthdays in-process`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactBirthdays(true)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.syncContactBirthdays() }
+    }
+
+    @Test
     fun `onToggleContactBirthdays disable calls onDisabled`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -1453,6 +1464,17 @@ class AccountSettingsViewModelTest {
         coVerify { eventCoordinator.enableContactAnniversaries(any()) }
         coVerify { dataStore.setContactAnniversariesEnabled(true) }
         verify { contactEventManager.onAnniversariesEnabled() }
+    }
+
+    @Test
+    fun `onToggleContactAnniversaries enable calls syncContactAnniversaries in-process`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleContactAnniversaries(true)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.syncContactAnniversaries() }
     }
 
     @Test

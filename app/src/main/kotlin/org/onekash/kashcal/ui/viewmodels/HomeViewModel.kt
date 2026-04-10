@@ -484,8 +484,17 @@ class HomeViewModel @Inject constructor(
      * Pull-to-refresh sync.
      */
     fun refreshSync() {
+        if (!_uiState.value.isConfigured) {
+            Log.d(TAG, "Pull-to-refresh: not configured, skipping")
+            return
+        }
         if (_uiState.value.isSyncing) {
             Log.d(TAG, "Sync already in progress, ignoring refresh")
+            return
+        }
+        if (!networkMonitor.isOnline.value) {
+            Log.d(TAG, "Pull-to-refresh: offline, showing error")
+            showError(CalendarError.Network.Offline)
             return
         }
         suppressSyncIndicator = false  // User-initiated - show spinning icon

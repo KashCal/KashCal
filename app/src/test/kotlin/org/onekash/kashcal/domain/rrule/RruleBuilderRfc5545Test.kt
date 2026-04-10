@@ -302,7 +302,7 @@ class RruleBuilderRfc5545Test {
     @Test
     fun `formatForDisplay with UNTIL suffix`() {
         val display = RruleBuilder.formatForDisplay("FREQ=WEEKLY;UNTIL=20260615T000000Z")
-        assertTrue("Should contain until date", display.contains("until 06/15/2026"))
+        assertTrue("Should contain until date", display.contains("until Jun 15"))
     }
 
     @Test
