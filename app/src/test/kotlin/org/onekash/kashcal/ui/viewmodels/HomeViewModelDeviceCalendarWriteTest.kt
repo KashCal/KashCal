@@ -30,6 +30,7 @@ import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.ui.components.EventFormState
 import java.time.ZoneId
 
 /**
@@ -275,7 +276,6 @@ class HomeViewModelDeviceCalendarWriteTest {
         advanceUntilIdle()
 
         val result = viewModel.deleteDeviceSingleOccurrence(
-            calendarId = 42L,
             masterEventId = 200L,
             originalInstanceTime = 1709280000000L
         )
@@ -285,5 +285,91 @@ class HomeViewModelDeviceCalendarWriteTest {
         assertEquals(1, fakeCalendarProviderRepository.deletedOccurrences.size)
         assertEquals(200L, fakeCalendarProviderRepository.deletedOccurrences[0].masterEventId)
         assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
+    }
+
+    // ==================== handleDeviceEventFormDelete Routing (Bug 1 fix) ====================
+
+    @Test
+    fun `handleDeviceEventFormDelete with occurrenceTs routes to deleteSingleOccurrence`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            editingDeviceEventId = 200L,
+            editingOccurrenceTs = 1709280000000L,
+            selectedCalendarId = 42L,
+            isAllDay = false
+        )
+
+        val result = viewModel.handleDeviceEventFormDelete(formState)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        // Should route to deleteSingleOccurrence, not deleteEvent
+        assertEquals(1, fakeCalendarProviderRepository.deletedOccurrences.size)
+        assertEquals(200L, fakeCalendarProviderRepository.deletedOccurrences[0].masterEventId)
+        assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
+        assertTrue("Should NOT have called deleteEvent", fakeCalendarProviderRepository.deletedEventIds.isEmpty())
+    }
+
+    @Test
+    fun `handleDeviceEventFormDelete without occurrenceTs routes to deleteDeviceEvent`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            editingDeviceEventId = 200L,
+            editingOccurrenceTs = null,  // Not editing a single occurrence
+            selectedCalendarId = 42L,
+            isAllDay = false
+        )
+
+        val result = viewModel.handleDeviceEventFormDelete(formState)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        // Should route to deleteDeviceEvent, not deleteSingleOccurrence
+        assertEquals(1, fakeCalendarProviderRepository.deletedEventIds.size)
+        assertEquals(200L, fakeCalendarProviderRepository.deletedEventIds[0])
+        assertTrue("Should NOT have called deleteSingleOccurrence", fakeCalendarProviderRepository.deletedOccurrences.isEmpty())
+    }
+
+    @Test
+    fun `handleDeviceEventFormDelete without deviceEventId returns failure`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            editingDeviceEventId = null,  // No device event
+            editingOccurrenceTs = null,
+            selectedCalendarId = null
+        )
+
+        val result = viewModel.handleDeviceEventFormDelete(formState)
+        advanceUntilIdle()
+
+        assertTrue(result.isFailure)
+        assertTrue(fakeCalendarProviderRepository.deletedEventIds.isEmpty())
+        assertTrue(fakeCalendarProviderRepository.deletedOccurrences.isEmpty())
+    }
+
+    @Test
+    fun `handleDeviceEventFormDelete passes isAllDay correctly`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            editingDeviceEventId = 300L,
+            editingOccurrenceTs = 1709280000000L,
+            selectedCalendarId = 99L,
+            isAllDay = true
+        )
+
+        val result = viewModel.handleDeviceEventFormDelete(formState)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        val deleted = fakeCalendarProviderRepository.deletedOccurrences[0]
+        assertEquals(true, deleted.isAllDay)
     }
 }

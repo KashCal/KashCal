@@ -485,7 +485,9 @@ class HomeViewModel @Inject constructor(
      */
     fun refreshSync() {
         if (!_uiState.value.isConfigured) {
-            Log.d(TAG, "Pull-to-refresh: not configured, skipping")
+            Log.d(TAG, "Pull-to-refresh: not configured, showing snackbar")
+            showSnackbar("No sync accounts configured")
+            pulseSyncIndicator()
             return
         }
         if (_uiState.value.isSyncing) {
@@ -495,12 +497,28 @@ class HomeViewModel @Inject constructor(
         if (!networkMonitor.isOnline.value) {
             Log.d(TAG, "Pull-to-refresh: offline, showing error")
             showError(CalendarError.Network.Offline)
+            pulseSyncIndicator()
             return
         }
         suppressSyncIndicator = false  // User-initiated - show spinning icon
         syncScheduler.setShowBannerForSync(false)
         Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
+    }
+
+    /**
+     * Briefly pulse isSyncing to dismiss PullToRefreshBox indicator.
+     *
+     * Material3 PullToRefreshBox requires isRefreshing to transition false->true->false
+     * after onRefresh fires. When refreshSync() early-returns without starting a sync,
+     * isSyncing stays false and the indicator gets stuck.
+     */
+    private fun pulseSyncIndicator() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSyncing = true) }
+            delay(50)
+            _uiState.update { it.copy(isSyncing = false) }
+        }
     }
 
     /**
@@ -2472,17 +2490,15 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Delete a single occurrence of a recurring device calendar event.
-     * Creates a STATUS_CANCELED exception in CalendarProvider.
+     * Adds EXDATE to master event in CalendarProvider to exclude the occurrence.
      */
     suspend fun deleteDeviceSingleOccurrence(
-        calendarId: Long,
         masterEventId: Long,
         originalInstanceTime: Long,
         isAllDay: Boolean = false
     ): Result<Unit> {
         return withContext(ioDispatcher) {
             calendarProviderRepository.deleteSingleOccurrence(
-                calendarId = calendarId,
                 masterEventId = masterEventId,
                 originalInstanceTime = originalInstanceTime,
                 isAllDay = isAllDay
@@ -2496,6 +2512,26 @@ class HomeViewModel @Inject constructor(
                     reloadCurrentView()
                 }
             }
+        }
+    }
+
+    /**
+     * Route device event deletion from EventFormSheet based on form state.
+     * When editingOccurrenceTs is set, deletes single occurrence; otherwise deletes entire event.
+     * Mirrors the save routing logic at [saveDeviceEvent].
+     */
+    suspend fun handleDeviceEventFormDelete(formState: EventFormState): Result<Unit> {
+        val deviceEventId = formState.editingDeviceEventId
+            ?: return Result.failure(IllegalStateException("No device event to delete"))
+        val occurrenceTs = formState.editingOccurrenceTs
+        return if (occurrenceTs != null) {
+            deleteDeviceSingleOccurrence(
+                masterEventId = deviceEventId,
+                originalInstanceTime = occurrenceTs,
+                isAllDay = formState.isAllDay
+            )
+        } else {
+            deleteDeviceEvent(deviceEventId)
         }
     }
 

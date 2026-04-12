@@ -308,6 +308,18 @@ class EventCoordinatorTest {
         coVerify { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
+    @Test
+    fun `updateEvent succeeds when reminder scheduling throws`() = runTest {
+        val updatedEvent = testEvent.copy(title = "Updated", reminders = listOf("-PT15M"))
+        coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
+        coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
+
+        val result = coordinator.updateEvent(updatedEvent)
+
+        assertEquals("Updated", result.title)
+        coVerify { eventWriter.updateEvent(any(), any()) }
+    }
+
     // ==================== Edit Single Occurrence Tests ====================
 
     @Test
@@ -1050,6 +1062,22 @@ class EventCoordinatorTest {
         // Assert: Reminders were rescheduled (cancel + schedule)
         coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(movedEvent, any(), any()) }
+    }
+
+    @Test
+    fun `moveEventToCalendar succeeds when reminder scheduling throws`() = runTest {
+        val eventToMove = testEvent.copy(id = 300L, calendarId = localCalendarId)
+        val movedEvent = eventToMove.copy(calendarId = iCloudCalendarId)
+
+        coEvery { eventWriter.moveEventToCalendar(eventToMove.id, iCloudCalendarId) } returns Unit
+        coEvery { eventReader.getEventById(eventToMove.id) } returns movedEvent
+        coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
+
+        // Should NOT throw — reminder failure must not break the move operation
+        coordinator.moveEventToCalendar(eventToMove.id, iCloudCalendarId)
+
+        // Move itself should have completed
+        coVerify { eventWriter.moveEventToCalendar(eventToMove.id, iCloudCalendarId) }
     }
 
     // ==================== Export Tests ====================

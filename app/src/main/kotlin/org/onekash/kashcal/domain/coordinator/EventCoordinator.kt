@@ -195,11 +195,20 @@ class EventCoordinator @Inject constructor(
 
     /**
      * Cancel and reschedule reminders for an event.
-     * Called after event update.
+     * Called after event update or calendar move.
+     *
+     * Catches exceptions so the parent operation (updateEvent, moveEventToCalendar)
+     * succeeds even if reminder scheduling fails. ReminderRefreshWorker provides
+     * eventual recovery (daily scan recreates missing reminders).
      */
     private suspend fun rescheduleRemindersForEvent(event: Event) {
-        reminderScheduler.cancelRemindersForEvent(event.id)
-        scheduleRemindersForEvent(event)
+        try {
+            reminderScheduler.cancelRemindersForEvent(event.id)
+            scheduleRemindersForEvent(event)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to reschedule reminders for event ${event.id}, " +
+                "ReminderRefreshWorker will recover", e)
+        }
     }
 
     // ========== Create Operations ==========

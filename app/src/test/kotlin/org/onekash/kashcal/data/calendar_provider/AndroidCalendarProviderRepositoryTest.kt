@@ -146,6 +146,52 @@ class AndroidCalendarProviderRepositoryTest {
         assertEquals(20260217, endDay) // Inclusive: Feb 17, not Feb 18
     }
 
+    // ========== Duration Parsing ==========
+
+    @Test
+    fun `parseDurationMs handles hours`() {
+        assertEquals(3_600_000L, parseDurationMs("PT1H", false))
+    }
+
+    @Test
+    fun `parseDurationMs handles minutes`() {
+        assertEquals(1_800_000L, parseDurationMs("PT30M", false))
+    }
+
+    @Test
+    fun `parseDurationMs handles hours and minutes`() {
+        assertEquals(5_400_000L, parseDurationMs("PT1H30M", false))
+    }
+
+    @Test
+    fun `parseDurationMs handles days`() {
+        assertEquals(86_400_000L, parseDurationMs("P1D", true))
+        assertEquals(172_800_000L, parseDurationMs("P2D", true))
+    }
+
+    @Test
+    fun `parseDurationMs handles weeks`() {
+        assertEquals(7 * 86_400_000L, parseDurationMs("P1W", true))
+    }
+
+    @Test
+    fun `parseDurationMs returns default for null`() {
+        assertEquals(86_400_000L, parseDurationMs(null, true))   // all-day default: 1 day
+        assertEquals(3_600_000L, parseDurationMs(null, false))    // timed default: 1 hour
+    }
+
+    @Test
+    fun `parseDurationMs returns default for empty string`() {
+        assertEquals(86_400_000L, parseDurationMs("", true))
+        assertEquals(3_600_000L, parseDurationMs("", false))
+    }
+
+    @Test
+    fun `parseDurationMs returns default for malformed`() {
+        assertEquals(3_600_000L, parseDurationMs("garbage", false))
+        assertEquals(86_400_000L, parseDurationMs("INVALID", true))
+    }
+
     // ========== enabledCalendarIds Filtering ==========
 
     @Test

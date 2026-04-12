@@ -762,6 +762,29 @@ object Migrations {
     }
 
     /**
+     * Migration from version 15 to 16.
+     *
+     * Adds columns for three features + one planned feature:
+     * - is_notification_muted: Mute reminders per calendar (Issue #137)
+     * - local_color_override: User color override for CalDAV calendars (Issue #102)
+     * - default_reminder: Default reminder offset per calendar
+     * - end_timezone: Different timezone for event end time (Issue #39)
+     *
+     * All columns use ALTER TABLE ADD COLUMN with defaults - instant, no data rewrite.
+     */
+    val MIGRATION_15_16 = object : Migration(15, 16) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Calendar columns
+            addColumnIfNotExists(db, "calendars", "is_notification_muted", "INTEGER NOT NULL DEFAULT 0")
+            addColumnIfNotExists(db, "calendars", "local_color_override", "INTEGER")
+            addColumnIfNotExists(db, "calendars", "default_reminder", "TEXT")
+
+            // Event columns
+            addColumnIfNotExists(db, "events", "end_timezone", "TEXT")
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -778,6 +801,7 @@ object Migrations {
         MIGRATION_11_12,
         MIGRATION_12_13,
         MIGRATION_13_14,
-        MIGRATION_14_15
+        MIGRATION_14_15,
+        MIGRATION_15_16
     )
 }

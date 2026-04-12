@@ -51,7 +51,6 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     )
 
     data class DeletedOccurrence(
-        val calendarId: Long,
         val masterEventId: Long,
         val originalInstanceTime: Long,
         val isAllDay: Boolean = false
@@ -195,7 +194,6 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     }
 
     override suspend fun deleteSingleOccurrence(
-        calendarId: Long,
         masterEventId: Long,
         originalInstanceTime: Long,
         isAllDay: Boolean
@@ -205,7 +203,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
-        deletedOccurrences.add(DeletedOccurrence(calendarId, masterEventId, originalInstanceTime, isAllDay))
+        deletedOccurrences.add(DeletedOccurrence(masterEventId, originalInstanceTime, isAllDay))
         return Result.success(Unit)
     }
 

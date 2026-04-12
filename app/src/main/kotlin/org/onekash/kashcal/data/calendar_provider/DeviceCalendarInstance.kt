@@ -17,6 +17,11 @@ data class DeviceCalendarInstance(
     val description: String,
     val location: String,
     val startTs: Long,
+    /**
+     * Inclusive end timestamp (UTC ms). For all-day events, this is the last millisecond
+     * of the last day (CalendarProvider's exclusive end minus 1ms), matching Room Event.endTs
+     * convention. For timed events, this is the actual end timestamp.
+     */
     val endTs: Long,
     val startDay: Int,
     val endDay: Int,
@@ -38,9 +43,13 @@ data class DeviceCalendarInstance(
     val originalId: Long?,
     /** Original occurrence time if this is a modified occurrence, null otherwise. */
     val originalInstanceTime: Long?,
-    /** Event timezone from the master event. For exception-specific timezone, query Events table. */
+    /** Event timezone (exception's own timezone for modified occurrences, master's for regular). */
     val timezone: String?,
 ) {
-    /** True if this instance is part of a recurring event series (regular or exception occurrence). */
-    val isPartOfRecurringSeries: Boolean get() = hasRrule || originalId != null
+    /**
+     * True if this instance is part of a recurring event series (regular or exception occurrence).
+     * Checks three signals: RRULE (regular occurrence), ORIGINAL_ID (exception with explicit link),
+     * and ORIGINAL_INSTANCE_TIME (exception where some sync adapters set time but not ORIGINAL_ID).
+     */
+    val isPartOfRecurringSeries: Boolean get() = hasRrule || originalId != null || originalInstanceTime != null
 }

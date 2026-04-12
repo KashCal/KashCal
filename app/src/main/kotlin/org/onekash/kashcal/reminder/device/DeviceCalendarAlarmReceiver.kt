@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
@@ -29,6 +30,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "DeviceCalAlarmReceiver"
+        private const val GOASYNC_TIMEOUT_MS = 9_000L
     }
 
     @Inject
@@ -70,24 +72,29 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
 
         scope.launch {
             try {
-                // Show notification
-                val triggerTime = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_TRIGGER_TIME, System.currentTimeMillis())
-                notificationManager.showNotification(
-                    eventId = eventId,
-                    occurrenceTs = occurrenceTs,
-                    title = title,
-                    location = location,
-                    isAllDay = isAllDay,
-                    calendarColor = calendarColor,
-                    calendarId = calendarId,
-                    triggerTime = triggerTime
-                )
+                val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
+                    // Show notification
+                    val triggerTime = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_TRIGGER_TIME, System.currentTimeMillis())
+                    notificationManager.showNotification(
+                        eventId = eventId,
+                        occurrenceTs = occurrenceTs,
+                        title = title,
+                        location = location,
+                        isAllDay = isAllDay,
+                        calendarColor = calendarColor,
+                        calendarId = calendarId,
+                        triggerTime = triggerTime
+                    )
 
-                Log.d(TAG, "Showed notification for event $maskedEventId")
+                    Log.d(TAG, "Showed notification for event $maskedEventId")
 
-                // Reschedule for next reminder
-                scheduler.rescheduleAfterFire()
-                Log.d(TAG, "Rescheduled for next device calendar reminder")
+                    // Reschedule for next reminder
+                    scheduler.rescheduleAfterFire()
+                    Log.d(TAG, "Rescheduled for next device calendar reminder")
+                }
+                if (completed == null) {
+                    Log.w(TAG, "Device calendar reminder handling timed out for event $maskedEventId")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling device calendar reminder", e)
             } finally {

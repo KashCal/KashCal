@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -59,26 +62,51 @@ fun AppInfoSheet(
                 fontWeight = FontWeight.Light
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Heart
+            // Value line
             Text(
-                text = "❤️",
-                fontSize = 32.sp
+                text = "For you, not your data.",
+                style = MaterialTheme.typography.titleMedium
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Clickable link
+            // Heart (decorative)
+            Text(
+                text = "❤️",
+                fontSize = 32.sp,
+                modifier = Modifier.clearAndSetSemantics { }
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Support button
+            OutlinedButton(
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/one-kash"))
+                    context.startActivity(intent)
+                }
+            ) {
+                Text(
+                    text = "Keep it that way",
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Website link
             Text(
                 text = "kashcal.github.io",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 textDecoration = TextDecoration.Underline,
-                modifier = Modifier.clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.github.io"))
-                    context.startActivity(intent)
-                }
+                modifier = Modifier
+                    .clickable(role = Role.Button) {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.github.io"))
+                        context.startActivity(intent)
+                    }
             )
         }
     }

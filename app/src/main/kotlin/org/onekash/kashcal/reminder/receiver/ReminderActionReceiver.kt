@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import javax.inject.Inject
@@ -29,6 +30,7 @@ class ReminderActionReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "ReminderActionReceiver"
+        private const val GOASYNC_TIMEOUT_MS = 9_000L
     }
 
     @Inject
@@ -36,9 +38,6 @@ class ReminderActionReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var notificationManager: ReminderNotificationManager
-
-    // Scope for async work in receiver
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         val reminderId = intent.getLongExtra(ReminderNotificationManager.EXTRA_REMINDER_ID, -1)
@@ -55,22 +54,27 @@ class ReminderActionReceiver : BroadcastReceiver() {
         // Use goAsync() for database/alarm operations
         val pendingResult = goAsync()
 
-        scope.launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                when (intent.action) {
-                    ReminderNotificationManager.ACTION_SNOOZE -> {
-                        val snoozeDuration = intent.getIntExtra(
-                            ReminderNotificationManager.EXTRA_SNOOZE_DURATION_MINUTES,
-                            ReminderNotificationManager.DEFAULT_SNOOZE_MINUTES
-                        )
-                        handleSnooze(reminderId, snoozeDuration)
+                val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
+                    when (intent.action) {
+                        ReminderNotificationManager.ACTION_SNOOZE -> {
+                            val snoozeDuration = intent.getIntExtra(
+                                ReminderNotificationManager.EXTRA_SNOOZE_DURATION_MINUTES,
+                                ReminderNotificationManager.DEFAULT_SNOOZE_MINUTES
+                            )
+                            handleSnooze(reminderId, snoozeDuration)
+                        }
+                        ReminderNotificationManager.ACTION_DISMISS -> {
+                            handleDismiss(reminderId)
+                        }
+                        else -> {
+                            Log.w(TAG, "Unknown action: ${intent.action}")
+                        }
                     }
-                    ReminderNotificationManager.ACTION_DISMISS -> {
-                        handleDismiss(reminderId)
-                    }
-                    else -> {
-                        Log.w(TAG, "Unknown action: ${intent.action}")
-                    }
+                }
+                if (completed == null) {
+                    Log.w(TAG, "Action handling timed out for reminder $reminderId")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling action for reminder $reminderId", e)

@@ -99,5 +99,30 @@ data class Calendar(
      * Lower values appear first.
      */
     @ColumnInfo(name = "sort_order", defaultValue = "0")
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+
+    /**
+     * Whether notifications are muted for this calendar.
+     * When true, reminders are not scheduled for events in this calendar.
+     * Issue #137: Per-calendar notification control.
+     */
+    @ColumnInfo(name = "is_notification_muted", defaultValue = "0")
+    val isNotificationMuted: Boolean = false,
+
+    /**
+     * User's local color override for this calendar (ARGB integer).
+     * When set, overrides the server-synced color for UI display.
+     * Sync updates calendars.color without touching this field.
+     * Issue #102: Change color for CalDAV calendars.
+     */
+    @ColumnInfo(name = "local_color_override")
+    val localColorOverride: Int? = null,
+
+    /**
+     * Default reminder offset for new events in this calendar.
+     * ISO 8601 duration format (e.g., "-PT15M" for 15 minutes before).
+     * Null means no default reminder.
+     */
+    @ColumnInfo(name = "default_reminder")
+    val defaultReminder: String? = null
 )

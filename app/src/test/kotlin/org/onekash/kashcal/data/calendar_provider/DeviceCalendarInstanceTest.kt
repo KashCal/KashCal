@@ -47,7 +47,6 @@ class DeviceCalendarInstanceTest {
         val fake = FakeCalendarProviderRepository()
 
         val result = fake.deleteSingleOccurrence(
-            calendarId = 1L,
             masterEventId = 200L,
             originalInstanceTime = 1709280000000L,
             isAllDay = false
@@ -66,7 +65,6 @@ class DeviceCalendarInstanceTest {
         fake.exceptionEvents[200L to 1709280000000L] = 500L
 
         val result = fake.deleteSingleOccurrence(
-            calendarId = 1L,
             masterEventId = 200L,
             originalInstanceTime = 1709280000000L,
             isAllDay = false

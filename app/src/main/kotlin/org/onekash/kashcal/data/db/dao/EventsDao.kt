@@ -691,7 +691,7 @@ interface EventsDao {
      * - Boolean: "meeting OR standup" (matches either)
      *
      * @param query FTS search query (caller should format with * for prefix matching)
-     * @return Events matching the search, ordered by start time, max 100 results
+     * @return Events matching the search, ordered by start time, max 1000 results
      */
     @Query("""
         SELECT events.* FROM events
@@ -699,7 +699,7 @@ interface EventsDao {
         WHERE events_fts MATCH :query
         AND events.sync_status != 'PENDING_DELETE'
         ORDER BY events.start_ts ASC
-        LIMIT 100
+        LIMIT 1000
     """)
     suspend fun search(query: String): List<Event>
 
@@ -731,7 +731,7 @@ interface EventsDao {
         AND occurrences.end_ts >= :now
         AND occurrences.is_cancelled = 0
         ORDER BY events.start_ts ASC
-        LIMIT 100
+        LIMIT 1000
     """)
     suspend fun searchFuture(query: String, now: Long): List<Event>
 
@@ -757,7 +757,7 @@ interface EventsDao {
         AND occurrences.end_ts >= :rangeStart
         AND occurrences.is_cancelled = 0
         ORDER BY events.start_ts ASC
-        LIMIT 100
+        LIMIT 1000
     """)
     suspend fun searchInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event>
 
@@ -767,7 +767,12 @@ interface EventsDao {
      * Search events and return with next occurrence timestamp.
      * For "All" filter - includes past events, nextOccurrenceTs = event.startTs.
      *
+     * Excludes exception events (original_event_id IS NULL) to prevent
+     * modified recurring occurrences from inflating results (Issue #149).
+     * Orders by proximity to now so most relevant events appear first.
+     *
      * @param query FTS search query
+     * @param now Current timestamp for proximity ordering
      * @return Events with their start timestamp as next_occurrence_ts
      */
     @Query("""
@@ -776,10 +781,11 @@ interface EventsDao {
         JOIN events_fts ON events.id = events_fts.rowid
         WHERE events_fts MATCH :query
         AND events.sync_status != 'PENDING_DELETE'
-        ORDER BY events.start_ts ASC
-        LIMIT 100
+        AND events.original_event_id IS NULL
+        ORDER BY ABS(events.start_ts - :now) ASC
+        LIMIT 1000
     """)
-    suspend fun searchWithOccurrence(query: String): List<EventWithNextOccurrence>
+    suspend fun searchWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
 
     /**
      * Search events with future occurrences and return next occurrence timestamp.
@@ -804,7 +810,7 @@ interface EventsDao {
         AND occurrences.is_cancelled = 0
         GROUP BY events.id
         ORDER BY next_occurrence_ts ASC
-        LIMIT 100
+        LIMIT 1000
     """)
     suspend fun searchFutureWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
 
@@ -834,7 +840,7 @@ interface EventsDao {
         AND occurrences.is_cancelled = 0
         GROUP BY events.id
         ORDER BY next_occurrence_ts ASC
-        LIMIT 100
+        LIMIT 1000
     """)
     suspend fun searchInRangeWithOccurrence(
         query: String,

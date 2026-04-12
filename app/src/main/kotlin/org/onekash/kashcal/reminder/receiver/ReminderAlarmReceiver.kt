@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
@@ -30,6 +31,7 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "ReminderAlarmReceiver"
+        private const val GOASYNC_TIMEOUT_MS = 9_000L
     }
 
     @Inject
@@ -37,9 +39,6 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var notificationManager: ReminderNotificationManager
-
-    // Scope for async work in receiver
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ReminderScheduler.ACTION_REMINDER_ALARM) {
@@ -58,9 +57,14 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         // Use goAsync() for database access
         val pendingResult = goAsync()
 
-        scope.launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                handleAlarm(reminderId)
+                val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
+                    handleAlarm(reminderId)
+                }
+                if (completed == null) {
+                    Log.w(TAG, "Alarm handling timed out for reminder $reminderId")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling alarm for reminder $reminderId", e)
             } finally {

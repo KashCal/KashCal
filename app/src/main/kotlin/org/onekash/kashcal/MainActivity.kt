@@ -669,9 +669,11 @@ class MainActivity : ComponentActivity() {
                             val event = deviceQuickViewEvent!!
                             coroutineScope.launch {
                                 val masterEventId = event.instance.originalId ?: event.instance.eventId
-                                homeViewModel.deleteDeviceEvent(masterEventId)
-                                showDeviceQuickViewSheet = false
-                                deviceQuickViewEvent = null
+                                val result = homeViewModel.deleteDeviceEvent(masterEventId)
+                                if (result.isSuccess) {
+                                    showDeviceQuickViewSheet = false
+                                    deviceQuickViewEvent = null
+                                }
                             }
                         },
                         onDeleteOccurrence = {
@@ -680,14 +682,15 @@ class MainActivity : ComponentActivity() {
                             coroutineScope.launch {
                                 val masterEventId = event.instance.originalId ?: event.instance.eventId
                                 val originalInstanceTime = event.instance.originalInstanceTime ?: event.startTs
-                                homeViewModel.deleteDeviceSingleOccurrence(
-                                    calendarId = event.instance.calendarId,
+                                val result = homeViewModel.deleteDeviceSingleOccurrence(
                                     masterEventId = masterEventId,
                                     originalInstanceTime = originalInstanceTime,
                                     isAllDay = event.instance.isAllDay
                                 )
-                                showDeviceQuickViewSheet = false
-                                deviceQuickViewEvent = null
+                                if (result.isSuccess) {
+                                    showDeviceQuickViewSheet = false
+                                    deviceQuickViewEvent = null
+                                }
                             }
                         },
                         onDeleteFuture = {
@@ -696,13 +699,15 @@ class MainActivity : ComponentActivity() {
                             coroutineScope.launch {
                                 val masterEventId = event.instance.originalId ?: event.instance.eventId
                                 val fromTimeMs = event.instance.originalInstanceTime ?: event.startTs
-                                homeViewModel.deleteDeviceThisAndFuture(
+                                val result = homeViewModel.deleteDeviceThisAndFuture(
                                     masterEventId = masterEventId,
                                     fromTimeMs = fromTimeMs,
                                     isAllDay = event.instance.isAllDay
                                 )
-                                showDeviceQuickViewSheet = false
-                                deviceQuickViewEvent = null
+                                if (result.isSuccess) {
+                                    showDeviceQuickViewSheet = false
+                                    deviceQuickViewEvent = null
+                                }
                             }
                         },
                         onDuplicate = {
@@ -808,8 +813,8 @@ class MainActivity : ComponentActivity() {
                         onSaveDeviceEvent = { formState ->
                             homeViewModel.saveDeviceEvent(formState)
                         },
-                        onDeleteDeviceEvent = { eventId ->
-                            homeViewModel.deleteDeviceEvent(eventId)
+                        onDeleteDeviceEvent = { formState ->
+                            homeViewModel.handleDeviceEventFormDelete(formState)
                         },
                         deviceCalendarGroups = uiState.deviceCalendarGroups
                     )

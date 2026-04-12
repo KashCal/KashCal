@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
@@ -28,12 +29,11 @@ class TimezoneChangeReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "TimezoneChangeReceiver"
+        private const val GOASYNC_TIMEOUT_MS = 9_000L
     }
 
     @Inject
     lateinit var handler: TimezoneChangeHandler
-
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent?) {
         val reason = when (intent?.action) {
@@ -45,9 +45,14 @@ class TimezoneChangeReceiver : BroadcastReceiver() {
         Log.i(TAG, "Received $reason, updating widgets and rescheduling reminders")
 
         val pendingResult = goAsync()
-        scope.launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                handler.handleChange(reason)
+                val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
+                    handler.handleChange(reason)
+                }
+                if (completed == null) {
+                    Log.w(TAG, "Timezone change handling timed out, WorkManager will complete")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling $reason", e)
             } finally {

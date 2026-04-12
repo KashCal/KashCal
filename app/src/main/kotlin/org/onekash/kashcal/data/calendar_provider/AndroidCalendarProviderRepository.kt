@@ -10,6 +10,8 @@ import android.text.format.DateUtils
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.error.CalendarError
+import org.onekash.kashcal.error.CalendarErrorException
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.ZoneId
@@ -53,7 +55,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Instances.CALENDAR_ACCESS_LEVEL, // 16
             Instances.ORIGINAL_ID,       // 17 - Master event ID for exceptions
             Instances.ORIGINAL_INSTANCE_TIME, // 18 - Original occurrence time for exceptions
-            Instances.EVENT_TIMEZONE     // 19 - Master event timezone
+            Instances.EVENT_TIMEZONE     // 19 - Event timezone (exception's for modified occurrences)
         )
 
         // Column indices
@@ -168,10 +170,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val isAllDay = cursor.getInt(COL_ALL_DAY) == 1
             val accessLevel = cursor.getInt(COL_ACCESS_LEVEL)
 
-            // CalendarProvider uses exclusive end for all-day events:
-            // 1-day event on Feb 15 → END = Feb 16 00:00 UTC.
-            // Subtract 1ms to get inclusive end day code.
-            val endDayMs = if (isAllDay && endMs > beginMs) endMs - 1 else endMs
+            // All-day events: convert CalendarProvider's exclusive end (midnight next day)
+            // to inclusive end (last ms of last day), matching Room Event.endTs convention.
+            // Used for both endTs and endDay to maintain consistent inclusive semantics.
+            val inclusiveEndMs = if (isAllDay && endMs > beginMs) endMs - 1 else endMs
 
             // ORIGINAL_ID is null for regular events, non-null for exceptions
             val originalId = if (!cursor.isNull(COL_ORIGINAL_ID)) {
@@ -181,6 +183,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val originalInstanceTime = if (!cursor.isNull(COL_ORIGINAL_INSTANCE_TIME)) {
                 cursor.getLong(COL_ORIGINAL_INSTANCE_TIME)
             } else null
+
+            val status = cursor.getInt(COL_STATUS)
+
+            // Skip STATUS_CANCELED exception instances — these represent deleted
+            // occurrences of recurring events. CalendarProvider should suppress them
+            // automatically, but some OEM implementations don't.
+            if (status == CalendarContract.Events.STATUS_CANCELED && originalId != null) continue
 
             val rruleString = cursor.getString(COL_RRULE)
 
@@ -192,9 +201,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     description = cursor.getString(COL_DESCRIPTION) ?: "",
                     location = cursor.getString(COL_LOCATION) ?: "",
                     startTs = beginMs,
-                    endTs = endDayMs,
+                    endTs = inclusiveEndMs,
                     startDay = DateTimeUtils.eventTsToDayCode(beginMs, isAllDay),
-                    endDay = DateTimeUtils.eventTsToDayCode(endDayMs, isAllDay),
+                    endDay = DateTimeUtils.eventTsToDayCode(inclusiveEndMs, isAllDay),
                     isAllDay = isAllDay,
                     hasRrule = !rruleString.isNullOrEmpty(),
                     rrule = rruleString,
@@ -202,7 +211,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     calendarId = calendarId,
                     calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME) ?: "",
                     displayColor = cursor.getInt(COL_DISPLAY_COLOR),
-                    status = cursor.getInt(COL_STATUS),
+                    status = status,
                     availability = cursor.getInt(COL_AVAILABILITY),
                     hasAlarm = cursor.getInt(COL_HAS_ALARM) == 1,
                     selfAttendeeStatus = cursor.getInt(COL_SELF_ATTENDEE_STATUS),
@@ -330,10 +339,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Result.success(eventId)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied creating event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error creating event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -351,12 +360,17 @@ class AndroidCalendarProviderRepository @Inject constructor(
         reminders: List<Int>
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone)
+            // Detect exception events: when rrule is null, check if this event has ORIGINAL_ID
+            // (meaning it's an exception to a recurring event). Exception events must NOT have
+            // putNull(RRULE) in ContentValues — it triggers CalendarProvider recurrence cleanup
+            // on the master event.
+            val isException = rrule == null && isExceptionEvent(eventId)
+            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone, isException = isException)
 
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
             if (rowsUpdated == 0) {
-                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+                return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
             }
 
             // Clear existing reminders and rewrite
@@ -379,10 +393,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Result.success(Unit)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied updating event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error updating event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -391,17 +405,17 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
             val rowsDeleted = contentResolver.delete(eventUri, null, null)
             if (rowsDeleted == 0) {
-                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+                return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
             }
 
             Log.d(TAG, "Deleted device event: id=$eventId")
             Result.success(Unit)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied deleting event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -419,9 +433,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
         reminders: List<Int>
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
-            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, null, null, timezone)
+            val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, null, null, timezone, isException = true)
             values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
             values.put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
+            val masterSyncId = getMasterSyncId(masterEventId)
+            if (masterSyncId != null) {
+                values.put(CalendarContract.Events.ORIGINAL_SYNC_ID, masterSyncId)
+            }
             val normalizedOrigTime = if (isAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
             values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedOrigTime)
@@ -454,44 +472,85 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Result.success(eventId)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied creating exception", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error creating exception", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
     override suspend fun deleteSingleOccurrence(
-        calendarId: Long,
         masterEventId: Long,
         originalInstanceTime: Long,
         isAllDay: Boolean
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val existingExceptionId = findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
+            val normalizedTime = if (isAllDay)
+                DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
 
+            // If an exception event already exists (previously edited occurrence),
+            // update its status to CANCELED
+            val existingExceptionId = findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
             if (existingExceptionId != null) {
-                // UPDATE existing exception to CANCELED (avoids duplicate exception events)
                 val values = android.content.ContentValues().apply {
                     put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
                 }
-                val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, existingExceptionId)
-                contentResolver.update(uri, values, null, null)
-                Log.d(TAG, "Updated exception $existingExceptionId to CANCELED: masterId=$masterEventId, origTime=$originalInstanceTime")
+                val exceptionUri = ContentUris.withAppendedId(
+                    CalendarContract.Events.CONTENT_URI, existingExceptionId
+                )
+                contentResolver.update(exceptionUri, values, null, null)
+                Log.d(TAG, "Updated exception $existingExceptionId to STATUS_CANCELED")
             } else {
-                // INSERT new CANCELED exception to hide this occurrence
-                val values = buildCanceledExceptionValues(calendarId, masterEventId, originalInstanceTime, isAllDay)
-                contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
-                Log.d(TAG, "Inserted CANCELED exception: masterId=$masterEventId, origTime=$originalInstanceTime, isAllDay=$isAllDay")
+                // No existing exception — insert a new STATUS_CANCELED exception event.
+                // CalendarProvider uses exception events (not EXDATE) to track canceled occurrences.
+                val masterEvent = getDeviceEvent(masterEventId)
+                    ?: return@withContext Result.failure(
+                        CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
+                    )
+
+                // Build ContentValues directly — exception events are non-recurring and
+                // must use DTEND (not DURATION). CalendarProvider requires DTEND for
+                // non-recurring events; using DURATION causes the exception to be
+                // malformed and not properly suppress the original instance.
+                val durationMs = parseDurationMs(masterEvent.duration, isAllDay)
+                val values = android.content.ContentValues().apply {
+                    put(CalendarContract.Events.CALENDAR_ID, masterEvent.calendarId)
+                    put(CalendarContract.Events.TITLE, masterEvent.title)
+                    put(CalendarContract.Events.DTSTART, normalizedTime)
+                    put(CalendarContract.Events.DTEND, normalizedTime + durationMs)
+                    put(CalendarContract.Events.ALL_DAY, if (isAllDay) 1 else 0)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, if (isAllDay) "UTC" else masterEvent.timezone)
+                    put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
+                    put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedTime)
+                    put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (isAllDay) 1 else 0)
+                    put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
+                    // Exception events must not have recurrence fields
+                    putNull(CalendarContract.Events.RRULE)
+                    putNull(CalendarContract.Events.RDATE)
+                    putNull(CalendarContract.Events.EXDATE)
+                    putNull(CalendarContract.Events.EXRULE)
+                }
+                val masterSyncId = getMasterSyncId(masterEventId)
+                if (masterSyncId != null) {
+                    values.put(CalendarContract.Events.ORIGINAL_SYNC_ID, masterSyncId)
+                }
+
+                val uri = contentResolver.insert(CalendarContract.Events.CONTENT_URI, values)
+                if (uri == null) {
+                    return@withContext Result.failure(
+                        CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed("Failed to insert canceled exception"))
+                    )
+                }
+                Log.d(TAG, "Inserted STATUS_CANCELED exception for master $masterEventId, origTime=$normalizedTime, uri=$uri")
             }
 
             Result.success(Unit)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied deleting occurrence", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error deleting occurrence", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -503,9 +562,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         try {
             val masterEvent = getDeviceEvent(masterEventId)
                 ?: return@withContext Result.failure(
-                    org.onekash.kashcal.error.CalendarErrorException(
-                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound
-                    )
+                    CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
                 )
 
             // If deleting from the first occurrence, delete entire event
@@ -515,8 +572,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
             val rrule = masterEvent.rrule
                 ?: return@withContext Result.failure(
-                    org.onekash.kashcal.error.CalendarErrorException(
-                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed("Recurring event has no RRULE")
+                    CalendarErrorException(
+                        CalendarError.DeviceCalendar.WriteFailed("Recurring event has no RRULE")
                     )
                 )
 
@@ -531,20 +588,42 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
             if (rowsUpdated == 0) {
                 return@withContext Result.failure(
-                    org.onekash.kashcal.error.CalendarErrorException(
-                        org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound
-                    )
+                    CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
                 )
             }
 
-            Log.d(TAG, "Truncated device event RRULE: id=$masterEventId, from=$fromTimeMs, isAllDay=$isAllDay")
+            // Delete orphaned exception events in the truncated range.
+            // CalendarProvider does not auto-cleanup exceptions when RRULE is shortened.
+            val normalizedFrom = if (isAllDay)
+                DateTimeUtils.normalizeToUtcMidnight(fromTimeMs) else fromTimeMs
+            var deletedExceptions = 0
+            try {
+                contentResolver.query(
+                    CalendarContract.Events.CONTENT_URI,
+                    arrayOf(CalendarContract.Events._ID),
+                    "${CalendarContract.Events.ORIGINAL_ID} = ? AND ${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} >= ?",
+                    arrayOf(masterEventId.toString(), normalizedFrom.toString()),
+                    null
+                )?.use { cursor ->
+                    while (cursor.moveToNext()) {
+                        val exceptionId = cursor.getLong(0)
+                        val uri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, exceptionId)
+                        contentResolver.delete(uri, null, null)
+                        deletedExceptions++
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to clean up $deletedExceptions+ orphaned exceptions for master $masterEventId", e)
+            }
+
+            Log.d(TAG, "Truncated device event RRULE: id=$masterEventId, from=$fromTimeMs, isAllDay=$isAllDay, deletedExceptions=$deletedExceptions")
             Result.success(Unit)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied truncating RRULE", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error truncating RRULE", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -557,17 +636,32 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
             if (rowsUpdated == 0) {
-                return@withContext Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.EventNotFound))
+                return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
+            }
+
+            // Move exception events to same calendar (CalendarProvider doesn't cascade)
+            try {
+                val exValues = android.content.ContentValues().apply {
+                    put(CalendarContract.Events.CALENDAR_ID, newCalendarId)
+                }
+                contentResolver.update(
+                    CalendarContract.Events.CONTENT_URI,
+                    exValues,
+                    "${CalendarContract.Events.ORIGINAL_ID} = ?",
+                    arrayOf(eventId.toString())
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to move exception events for master $eventId", e)
             }
 
             Log.d(TAG, "Moved event $eventId to calendar $newCalendarId")
             Result.success(Unit)
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied moving event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.PermissionDenied))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
         } catch (e: Exception) {
             Log.e(TAG, "Error moving event", e)
-            Result.failure(org.onekash.kashcal.error.CalendarErrorException(org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
+            Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error")))
         }
     }
 
@@ -704,6 +798,33 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Log.e(TAG, "Error finding exception event", e)
             null
         }
+    }
+
+    /**
+     * Check whether an event is an exception (has ORIGINAL_ID set).
+     * Used by [updateEvent] to determine whether to omit RRULE from ContentValues.
+     */
+    private fun isExceptionEvent(eventId: Long): Boolean {
+        val cursor = contentResolver.query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+            arrayOf(CalendarContract.Events.ORIGINAL_ID),
+            null, null, null
+        )
+        return cursor?.use { if (it.moveToFirst()) !it.isNull(0) else false } ?: false
+    }
+
+    /**
+     * Read the _SYNC_ID of an event (set by sync adapters).
+     * Used by [createException] to set ORIGINAL_SYNC_ID on exception events
+     * so sync adapters can associate exceptions with their master events.
+     */
+    internal fun getMasterSyncId(eventId: Long): String? {
+        val cursor = contentResolver.query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+            arrayOf(CalendarContract.Events._SYNC_ID),
+            null, null, null
+        )
+        return cursor?.use { if (it.moveToFirst() && !it.isNull(0)) it.getString(0) else null }
     }
 
     // ==================== Reminder Operations (Phase 4) ====================
@@ -945,16 +1066,21 @@ internal fun buildEventValues(
     isAllDay: Boolean,
     rrule: String?,
     duration: String?,
-    timezone: String
+    timezone: String,
+    isException: Boolean = false
 ): android.content.ContentValues {
     val values = android.content.ContentValues()
 
     values.put(android.provider.CalendarContract.Events.TITLE, title)
     if (description != null) {
         values.put(android.provider.CalendarContract.Events.DESCRIPTION, description)
+    } else {
+        values.putNull(android.provider.CalendarContract.Events.DESCRIPTION)
     }
     if (location != null) {
         values.put(android.provider.CalendarContract.Events.EVENT_LOCATION, location)
+    } else {
+        values.putNull(android.provider.CalendarContract.Events.EVENT_LOCATION)
     }
 
     values.put(android.provider.CalendarContract.Events.DTSTART, startTs)
@@ -975,7 +1101,21 @@ internal fun buildEventValues(
         // Explicitly set DTEND to null for recurring events
         values.putNull(android.provider.CalendarContract.Events.DTEND)
     } else {
-        // Single events use DTEND
+        if (!isException) {
+            // Clear RRULE for regular non-recurring events (needed for recurring→non-recurring conversion).
+            // For exceptions: RRULE key must be ABSENT — putNull triggers CalendarProvider
+            // recurrence cleanup on master event via ORIGINAL_ID.
+            values.putNull(android.provider.CalendarContract.Events.RRULE)
+        }
+        // Exception events must not have recurrence fields.
+        // RDATE/EXDATE/EXRULE are safe to null explicitly (no cleanup side effects).
+        if (isException) {
+            values.putNull(android.provider.CalendarContract.Events.RDATE)
+            values.putNull(android.provider.CalendarContract.Events.EXDATE)
+            values.putNull(android.provider.CalendarContract.Events.EXRULE)
+        }
+        values.putNull(android.provider.CalendarContract.Events.DURATION)
+
         if (isAllDay && endTs != null) {
             // Convert inclusive end to exclusive:
             // KashCal stores end as last ms of last day (23:59:59.999)
@@ -1028,6 +1168,38 @@ private fun calculateDuration(startTs: Long, endTs: Long?, isAllDay: Boolean): S
 }
 
 /**
+ * Parse an RFC 5545 duration string to milliseconds.
+ * Handles common formats: P1D, P2D (days), PT1H, PT30M, PT1H30M (time).
+ * Falls back to 1 day for all-day events or 1 hour for timed events.
+ */
+internal fun parseDurationMs(duration: String?, isAllDay: Boolean): Long {
+    val defaultMs = if (isAllDay) 86_400_000L else 3_600_000L
+    if (duration.isNullOrEmpty()) return defaultMs
+    return try {
+        if (duration.startsWith("P") && !duration.contains("T")) {
+            // Date-only duration: P1D, P2W, etc.
+            val cleaned = duration.removePrefix("P")
+            when {
+                cleaned.endsWith("W") -> {
+                    val weeks = cleaned.removeSuffix("W").toLongOrNull() ?: 1
+                    weeks * 7 * 86_400_000L
+                }
+                cleaned.endsWith("D") -> {
+                    val days = cleaned.removeSuffix("D").toLongOrNull() ?: 1
+                    days * 86_400_000L
+                }
+                else -> defaultMs
+            }
+        } else {
+            // Time duration: PT1H, PT30M, PT1H30M — java.time.Duration handles these
+            java.time.Duration.parse(duration).toMillis()
+        }
+    } catch (_: Exception) {
+        defaultMs
+    }
+}
+
+/**
  * Convert YYYYMMDD day code to start-of-day epoch millis (local timezone).
  */
 internal fun dayCodeToStartOfDayMs(dayCode: Int): Long {
@@ -1039,38 +1211,6 @@ internal fun dayCodeToStartOfDayMs(dayCode: Int): Long {
         .toInstant().toEpochMilli()
 }
 
-/**
- * Build ContentValues for a STATUS_CANCELED exception event.
- *
- * For all-day events, sets ALL_DAY=1, EVENT_TIMEZONE=UTC, ORIGINAL_ALL_DAY=1,
- * normalizes ORIGINAL_INSTANCE_TIME to UTC midnight, and uses a 24h DTSTART/DTEND span.
- * For timed events, uses raw timestamps with zero-duration DTSTART=DTEND.
- */
-internal fun buildCanceledExceptionValues(
-    calendarId: Long,
-    masterEventId: Long,
-    originalInstanceTime: Long,
-    isAllDay: Boolean
-): android.content.ContentValues {
-    val normalizedOrigTime = if (isAllDay)
-        DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
-    return android.content.ContentValues().apply {
-        put(CalendarContract.Events.CALENDAR_ID, calendarId)
-        put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
-        put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedOrigTime)
-        put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
-        if (isAllDay) {
-            put(CalendarContract.Events.ALL_DAY, 1)
-            put(CalendarContract.Events.EVENT_TIMEZONE, "UTC")
-            put(CalendarContract.Events.ORIGINAL_ALL_DAY, 1)
-            put(CalendarContract.Events.DTSTART, normalizedOrigTime)
-            put(CalendarContract.Events.DTEND, normalizedOrigTime + 86_400_000L)
-        } else {
-            put(CalendarContract.Events.DTSTART, originalInstanceTime)
-            put(CalendarContract.Events.DTEND, originalInstanceTime)
-        }
-    }
-}
 
 /**
  * Convert YYYYMMDD day code to end-of-day epoch millis (local timezone).
@@ -1085,3 +1225,4 @@ internal fun dayCodeToEndOfDayMs(dayCode: Int): Long {
         .atZone(ZoneId.systemDefault())
         .toInstant().toEpochMilli()
 }
+

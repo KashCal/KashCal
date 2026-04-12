@@ -1285,6 +1285,76 @@ class HomeViewModelTest {
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
+    // ==================== Pull-to-Refresh Not Configured / Offline Tests ====================
+
+    @Test
+    fun `refreshSync when not configured shows snackbar`() = runTest {
+        // Default setup: no accounts configured (isConfigured = false)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfigured)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        assertEquals("No sync accounts configured", viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `refreshSync when not configured does not enqueue sync`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfigured)
+
+        // Clear any init-time calls
+        io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
+
+        viewModel.refreshSync()
+        advanceUntilIdle()
+
+        verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
+    }
+
+    @Test
+    fun `refreshSync when not configured pulses isSyncing for PullToRefreshBox`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isConfigured)
+        assertFalse(viewModel.uiState.value.isSyncing)
+
+        viewModel.refreshSync()
+        testScheduler.runCurrent()
+        assertTrue("isSyncing should be true during pulse", viewModel.uiState.value.isSyncing)
+
+        advanceUntilIdle()
+        assertFalse("isSyncing should be false after pulse", viewModel.uiState.value.isSyncing)
+    }
+
+    @Test
+    fun `refreshSync when offline pulses isSyncing to dismiss indicator`() = runTest {
+        coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
+        coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.isConfigured)
+
+        // Go offline
+        networkStateFlow.value = false
+        advanceUntilIdle()
+        assertFalse(viewModel.uiState.value.isSyncing)
+
+        viewModel.refreshSync()
+        testScheduler.runCurrent()
+        assertTrue("isSyncing should be true during pulse", viewModel.uiState.value.isSyncing)
+
+        advanceUntilIdle()
+        assertFalse("isSyncing should be false after pulse", viewModel.uiState.value.isSyncing)
+    }
+
     // ==================== Sync Banner Tests (Context-Aware) ====================
 
     @Test

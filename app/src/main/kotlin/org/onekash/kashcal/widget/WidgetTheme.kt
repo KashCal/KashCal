@@ -1,61 +1,61 @@
 package org.onekash.kashcal.widget
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.glance.GlanceTheme
 import androidx.glance.color.ColorProvider
+import androidx.glance.unit.ColorProvider
 
 /**
- * Theme colors for the agenda widget.
+ * Theme colors for all KashCal widgets.
  *
- * Uses Glance ColorProvider for automatic light/dark mode support.
- * Colors follow Material Design 3 guidelines.
+ * Uses Material You dynamic colors via GlanceTheme on Android 12+ (minSdk 31).
+ * Properties that delegate to GlanceTheme.colors are @Composable getters — all call sites
+ * are already in @Composable functions, so this is transparent.
+ *
+ * Two properties stay static:
+ * - todayHighlightBackground: uses 20% alpha tint (no opaque M3 equivalent)
+ * - adjacentMonthText: needs to be nearly invisible (no outlineVariant in Glance)
  */
 object WidgetTheme {
 
-    /** Header background - light blue in light mode, dark blue in dark mode */
-    val headerBackground = ColorProvider(
-        day = Color(0xFFE3F2FD),   // Blue 50
-        night = Color(0xFF1A237E)  // Indigo 900
-    )
+    /** Header background — Material You primary container */
+    val headerBackground: ColorProvider
+        @Composable get() = GlanceTheme.colors.primaryContainer
 
-    /** Content background */
-    val contentBackground = ColorProvider(
-        day = Color.White,
-        night = Color(0xFF121212)  // Material dark surface
-    )
+    /** Content/widget background — Glance-specific widget background */
+    val contentBackground: ColorProvider
+        @Composable get() = GlanceTheme.colors.widgetBackground
 
-    /** Primary text color */
-    val primaryText = ColorProvider(
-        day = Color(0xFF212121),   // Gray 900
-        night = Color(0xFFE0E0E0)  // Gray 300
-    )
+    /** Primary text color — Material You on-surface */
+    val primaryText: ColorProvider
+        @Composable get() = GlanceTheme.colors.onSurface
 
-    /** Secondary text color (times, labels) */
-    val secondaryText = ColorProvider(
-        day = Color(0xFF757575),   // Gray 600
-        night = Color(0xFF9E9E9E)  // Gray 500
-    )
+    /** Secondary text color (times, labels) — Material You on-surface-variant */
+    val secondaryText: ColorProvider
+        @Composable get() = GlanceTheme.colors.onSurfaceVariant
 
-    /** Past event text color (dimmed) */
-    val pastEventText = ColorProvider(
-        day = Color(0xFFBDBDBD),   // Gray 400
-        night = Color(0xFF616161)  // Gray 700
-    )
+    /** Past event text color (dimmed) — Material You outline */
+    val pastEventText: ColorProvider
+        @Composable get() = GlanceTheme.colors.outline
 
-    /** Accent color for interactive elements */
-    val accentColor = ColorProvider(
-        day = Color(0xFF2196F3),   // Blue 500
-        night = Color(0xFF64B5F6)  // Blue 300
-    )
+    /** Accent color for interactive elements — Material You primary */
+    val accentColor: ColorProvider
+        @Composable get() = GlanceTheme.colors.primary
 
-    /** Today highlight background (accent with alpha) */
+    /** Today highlight background (accent with alpha) — static, no opaque M3 equivalent */
     val todayHighlightBackground = ColorProvider(
         day = Color(0x332196F3),   // Blue 500, 20% alpha
         night = Color(0x3364B5F6)  // Blue 300, 20% alpha
     )
 
-    /** Divider color */
-    val dividerColor = ColorProvider(
-        day = Color(0xFFE0E0E0),   // Gray 300
-        night = Color(0xFF424242)  // Gray 800
+    /** Adjacent month text color (very faded, for InDate/OutDate cells) — static, no M3 token */
+    val adjacentMonthText = ColorProvider(
+        day = Color(0xFFD0D0D0),   // Very light gray
+        night = Color(0xFF505050)  // Very dark gray
     )
+
+    /** Divider color — Material You outline */
+    val dividerColor: ColorProvider
+        @Composable get() = GlanceTheme.colors.outline
 }

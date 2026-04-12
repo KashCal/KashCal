@@ -529,7 +529,7 @@ class EventReader @Inject constructor(
      * - Phrases: '"team meeting"' (matches exact phrase)
      *
      * @param query Search query (prefix matching applied automatically)
-     * @return Events matching the search, ordered by start time, max 100 results
+     * @return Events matching the search, ordered by start time, max 1000 results
      */
     suspend fun searchEvents(query: String): List<Event> {
         if (query.isBlank()) return emptyList()
@@ -589,7 +589,7 @@ class EventReader @Inject constructor(
         if (query.isBlank()) return emptyList()
         val ftsQuery = query.trim().split("\\s+".toRegex())
             .joinToString(" ") { "$it*" }
-        return eventsDao.searchWithOccurrence(ftsQuery)
+        return eventsDao.searchWithOccurrence(ftsQuery, System.currentTimeMillis())
     }
 
     /**

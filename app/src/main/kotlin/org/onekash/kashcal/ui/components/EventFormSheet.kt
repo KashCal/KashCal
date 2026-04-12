@@ -245,7 +245,7 @@ fun EventFormSheet(
     deviceOccurrenceTs: Long? = null,
     onLoadDeviceEvent: (suspend (Long) -> org.onekash.kashcal.ui.viewmodels.DeviceEventEditData?)? = null,
     onSaveDeviceEvent: (suspend (EventFormState) -> Result<Long>)? = null,
-    onDeleteDeviceEvent: (suspend (Long) -> Result<Unit>)? = null,
+    onDeleteDeviceEvent: (suspend (EventFormState) -> Result<Unit>)? = null,
     deviceCalendarGroups: List<CalendarGroup> = emptyList()
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -990,7 +990,7 @@ fun EventFormSheet(
                                             try {
                                                 // Route to device delete if applicable
                                                 val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
-                                                    onDeleteDeviceEvent!!(state.editingDeviceEventId!!)
+                                                    onDeleteDeviceEvent!!(state)
                                                 } else if (canDeleteRoom && eventId != null) {
                                                     onDelete!!(eventId)
                                                 } else {

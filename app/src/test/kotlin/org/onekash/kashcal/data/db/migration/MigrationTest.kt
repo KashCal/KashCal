@@ -799,10 +799,97 @@ class MigrationTest {
         )
     }
 
+    // ==================== Migration 15 to 16: calendar mute/color/reminder + event end_timezone ====================
+
+    @Test
+    fun `migration 15 to 16 adds calendar columns`() {
+        createV1Schema()
+
+        Migrations.MIGRATION_15_16.migrate(db)
+
+        assertTrue(columnExists("calendars", "is_notification_muted"))
+        assertTrue(columnExists("calendars", "local_color_override"))
+        assertTrue(columnExists("calendars", "default_reminder"))
+    }
+
+    @Test
+    fun `migration 15 to 16 adds event end_timezone column`() {
+        createV1Schema()
+
+        Migrations.MIGRATION_15_16.migrate(db)
+
+        assertTrue(columnExists("events", "end_timezone"))
+    }
+
+    @Test
+    fun `migration 15 to 16 preserves existing data`() {
+        createV1Schema()
+
+        // Insert test data before migration
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Work', -16711936)")
+        db.execSQL("INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) VALUES (1, 'uid-1', 1, 'Team Meeting', 1000, 2000, 'America/New_York', 0, 0, 0)")
+
+        Migrations.MIGRATION_15_16.migrate(db)
+
+        // Verify calendar data preserved
+        db.query("SELECT display_name, color FROM calendars WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Work", cursor.getString(0))
+            assertEquals(-16711936, cursor.getInt(1))
+        }
+
+        // Verify event data preserved
+        db.query("SELECT title, timezone FROM events WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Team Meeting", cursor.getString(0))
+            assertEquals("America/New_York", cursor.getString(1))
+        }
+    }
+
+    @Test
+    fun `migration 15 to 16 is idempotent`() {
+        createV1Schema()
+
+        // Run twice - addColumnIfNotExists prevents crash
+        Migrations.MIGRATION_15_16.migrate(db)
+        Migrations.MIGRATION_15_16.migrate(db)
+
+        assertTrue(columnExists("calendars", "is_notification_muted"))
+        assertTrue(columnExists("calendars", "local_color_override"))
+        assertTrue(columnExists("calendars", "default_reminder"))
+        assertTrue(columnExists("events", "end_timezone"))
+    }
+
+    @Test
+    fun `migration 15 to 16 default values are correct`() {
+        createV1Schema()
+
+        Migrations.MIGRATION_15_16.migrate(db)
+
+        // Insert rows after migration and verify defaults
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Cal', -1)")
+
+        db.query("SELECT is_notification_muted, local_color_override, default_reminder FROM calendars WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))  // is_notification_muted default = 0
+            assertTrue(cursor.isNull(1))       // local_color_override default = NULL
+            assertTrue(cursor.isNull(2))       // default_reminder default = NULL
+        }
+
+        db.execSQL("INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) VALUES (1, 'uid-1', 1, 'Test', 0, 1, 0, 0, 0)")
+
+        db.query("SELECT end_timezone FROM events WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))  // end_timezone default = NULL
+        }
+    }
+
     // ==================== Full Migration Chain ====================
 
     @Test
-    fun `full migration chain 1 to 14 executes without error`() {
+    fun `full migration chain 1 to 16 executes without error`() {
         createV1Schema()
         // createV1Schema() omits Room-generated unique index; add it for migration 13→14
         db.execSQL(
@@ -825,6 +912,8 @@ class MigrationTest {
         Migrations.MIGRATION_11_12.migrate(db)
         Migrations.MIGRATION_12_13.migrate(db)
         Migrations.MIGRATION_13_14.migrate(db)
+        Migrations.MIGRATION_14_15.migrate(db)
+        Migrations.MIGRATION_15_16.migrate(db)
 
         // Verify final schema has all expected tables
         assertTrue(tableExists("accounts"))
@@ -850,13 +939,19 @@ class MigrationTest {
         // Verify migration 13→14 index swap
         assertFalse(isIndexUnique("index_events_original_event_id_original_instance_time"))
         assertTrue(isIndexUnique("index_events_calendar_id_uid_original_instance_time"))
+
+        // Verify migration 15→16 columns
+        assertTrue(columnExists("calendars", "is_notification_muted"))
+        assertTrue(columnExists("calendars", "local_color_override"))
+        assertTrue(columnExists("calendars", "default_reminder"))
+        assertTrue(columnExists("events", "end_timezone"))
     }
 
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(13, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(14, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -887,6 +982,10 @@ class MigrationTest {
         assertEquals(13, migrations[10].endVersion)
         assertEquals(13, migrations[11].startVersion)
         assertEquals(14, migrations[11].endVersion)
+        assertEquals(14, migrations[12].startVersion)
+        assertEquals(15, migrations[12].endVersion)
+        assertEquals(15, migrations[13].startVersion)
+        assertEquals(16, migrations[13].endVersion)
     }
 
     @Test

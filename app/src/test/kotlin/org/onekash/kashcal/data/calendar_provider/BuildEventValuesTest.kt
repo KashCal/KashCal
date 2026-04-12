@@ -3,6 +3,7 @@ package org.onekash.kashcal.data.calendar_provider
 import android.content.ContentValues
 import android.provider.CalendarContract.Events
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -133,6 +134,132 @@ class BuildEventValuesTest {
         assertEquals("Single event should have DTEND", endTs, values.getAsLong(Events.DTEND))
         assertNull("Single event should not have DURATION", values.getAsString(Events.DURATION))
         assertEquals(0, values.getAsInteger(Events.ALL_DAY))
+    }
+
+    @Test
+    fun `non-recurring regular event putNull RRULE for clearing recurrence`() {
+        // When isException=false (default), putNull(RRULE) is needed to clear RRULE
+        // on CalendarProvider when converting a recurring event to non-recurring
+        val values = buildEventValues(
+            title = "Regular Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        assertTrue("RRULE key must be present for regular non-recurring events", values.containsKey(Events.RRULE))
+        assertNull("RRULE value must be null", values.getAsString(Events.RRULE))
+    }
+
+    @Test
+    fun `non-recurring event explicitly nulls DURATION to prevent CalendarProvider inheritance`() {
+        val values = buildEventValues(
+            title = "Exception Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        // DURATION must be explicitly null in ContentValues to prevent CalendarProvider
+        // from inheriting the master event's DURATION when this is used for exception events
+        assertTrue("DURATION key must be present in ContentValues", values.containsKey(Events.DURATION))
+        assertNull("DURATION value must be null", values.getAsString(Events.DURATION))
+    }
+
+    @Test
+    fun `exception event omits RRULE key from ContentValues`() {
+        // Exception events must NOT have RRULE in ContentValues.
+        // putNull(RRULE) triggers CalendarProvider recurrence cleanup on master event.
+        // Key must be ABSENT, not present-as-null.
+        val values = buildEventValues(
+            title = "Exception Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC",
+            isException = true
+        )
+
+        assertFalse("RRULE key must be ABSENT for exception events", values.containsKey(Events.RRULE))
+    }
+
+    @Test
+    fun `exception event still nulls DURATION`() {
+        // putNull(DURATION) is correct for exceptions — prevents CalendarProvider inheritance
+        val values = buildEventValues(
+            title = "Exception Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC",
+            isException = true
+        )
+
+        assertTrue("DURATION key must be present for exceptions", values.containsKey(Events.DURATION))
+        assertNull("DURATION value must be null", values.getAsString(Events.DURATION))
+    }
+
+    @Test
+    fun `exception event explicitly nulls RDATE EXDATE EXRULE`() {
+        // Exception events must have all recurrence fields explicitly null.
+        // RRULE is tested separately (must be ABSENT, not null, to avoid CalendarProvider cleanup).
+        val values = buildEventValues(
+            title = "Exception Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC",
+            isException = true
+        )
+
+        assertTrue("RDATE key must be present", values.containsKey(Events.RDATE))
+        assertNull("RDATE value must be null", values.getAsString(Events.RDATE))
+        assertTrue("EXDATE key must be present", values.containsKey(Events.EXDATE))
+        assertNull("EXDATE value must be null", values.getAsString(Events.EXDATE))
+        assertTrue("EXRULE key must be present", values.containsKey(Events.EXRULE))
+        assertNull("EXRULE value must be null", values.getAsString(Events.EXRULE))
+    }
+
+    @Test
+    fun `exception event sets DTEND correctly`() {
+        val startTs = 1704067200000L
+        val endTs = 1704070800000L
+        val values = buildEventValues(
+            title = "Exception Event",
+            description = null,
+            location = null,
+            startTs = startTs,
+            endTs = endTs,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC",
+            isException = true
+        )
+
+        assertEquals("Exception event must have DTEND set", endTs, values.getAsLong(Events.DTEND))
     }
 
     @Test
@@ -275,6 +402,101 @@ class BuildEventValuesTest {
         )
 
         assertNull(values.getAsString(Events.DESCRIPTION))
+        assertNull(values.getAsString(Events.EVENT_LOCATION))
+    }
+
+    // ========== Bug 2: putNull for description/location (clearing fields) ==========
+
+    @Test
+    fun `null description puts null in ContentValues for CalendarProvider clearing`() {
+        val values = buildEventValues(
+            title = "Event",
+            description = null,
+            location = "Office",
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        // Key must be PRESENT with null value (putNull) so CalendarProvider clears the field.
+        // If key is absent, CalendarProvider preserves the old value on UPDATE.
+        assertTrue("DESCRIPTION key must be present for clearing", values.containsKey(Events.DESCRIPTION))
+        assertNull("DESCRIPTION value must be null", values.getAsString(Events.DESCRIPTION))
+    }
+
+    @Test
+    fun `non-null description puts value in ContentValues`() {
+        val values = buildEventValues(
+            title = "Event",
+            description = "Meeting notes",
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        assertEquals("Meeting notes", values.getAsString(Events.DESCRIPTION))
+    }
+
+    @Test
+    fun `null location puts null in ContentValues for CalendarProvider clearing`() {
+        val values = buildEventValues(
+            title = "Event",
+            description = "Notes",
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        // Same pattern as RRULE/DURATION putNull at lines 985-986
+        assertTrue("EVENT_LOCATION key must be present for clearing", values.containsKey(Events.EVENT_LOCATION))
+        assertNull("EVENT_LOCATION value must be null", values.getAsString(Events.EVENT_LOCATION))
+    }
+
+    @Test
+    fun `non-null location puts value in ContentValues`() {
+        val values = buildEventValues(
+            title = "Event",
+            description = null,
+            location = "Conference Room B",
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        assertEquals("Conference Room B", values.getAsString(Events.EVENT_LOCATION))
+    }
+
+    @Test
+    fun `both null description and location put null keys for clearing`() {
+        val values = buildEventValues(
+            title = "Cleared Event",
+            description = null,
+            location = null,
+            startTs = 1704067200000L,
+            endTs = 1704070800000L,
+            isAllDay = false,
+            rrule = null,
+            duration = null,
+            timezone = "UTC"
+        )
+
+        assertTrue("DESCRIPTION key must be present", values.containsKey(Events.DESCRIPTION))
+        assertNull(values.getAsString(Events.DESCRIPTION))
+        assertTrue("EVENT_LOCATION key must be present", values.containsKey(Events.EVENT_LOCATION))
         assertNull(values.getAsString(Events.EVENT_LOCATION))
     }
 

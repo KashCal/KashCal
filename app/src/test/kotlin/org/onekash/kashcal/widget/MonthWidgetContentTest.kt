@@ -103,7 +103,56 @@ class MonthWidgetContentTest {
         assertEquals("Sun", headers[6])
     }
 
-    // ==================== buildAccessibilityDescription ====================
+    // ==================== formatMonthHeader ====================
+
+    @Test
+    fun `formatMonthHeader omits year when same as current year`() {
+        val result = formatMonthHeader(year = 2026, month0 = 3, currentYear = 2026) // April
+        assertEquals("Apr", result)
+    }
+
+    @Test
+    fun `formatMonthHeader includes year when different from current year`() {
+        val result = formatMonthHeader(year = 2025, month0 = 8, currentYear = 2026) // Sep 2025
+        assertEquals("Sep 2025", result)
+    }
+
+    @Test
+    fun `formatMonthHeader handles January correctly`() {
+        val result = formatMonthHeader(year = 2027, month0 = 0, currentYear = 2026) // Jan 2027
+        assertEquals("Jan 2027", result)
+    }
+
+    @Test
+    fun `formatMonthHeader handles December current year`() {
+        val result = formatMonthHeader(year = 2026, month0 = 11, currentYear = 2026) // Dec
+        assertEquals("Dec", result)
+    }
+
+    // ==================== buildAccessibilityDescription (dayCode overload) ====================
+
+    @Test
+    fun `buildAccessibilityDescription dayCode overload for InDate previous month`() {
+        // Feb 28 dayCode when viewing March grid
+        val desc = buildAccessibilityDescription(20260228, 0)
+        assertEquals("February 28, no events", desc)
+    }
+
+    @Test
+    fun `buildAccessibilityDescription dayCode overload for OutDate next month`() {
+        // April 1 dayCode when viewing March grid
+        val desc = buildAccessibilityDescription(20260401, 2)
+        assertEquals("April 1, 2 events", desc)
+    }
+
+    @Test
+    fun `buildAccessibilityDescription dayCode overload for year boundary`() {
+        // January 2 dayCode when viewing December 2025 grid
+        val desc = buildAccessibilityDescription(20260102, 1)
+        assertEquals("January 2, 1 event", desc)
+    }
+
+    // ==================== buildAccessibilityDescription (original) ====================
 
     @Test
     fun `buildAccessibilityDescription singular event`() {

@@ -47,6 +47,24 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
+ * Format month header text for the widget.
+ * Uses abbreviated month name (SHORT style). Includes year only when different from current year.
+ *
+ * @param year Calendar year of the displayed month
+ * @param month0 0-indexed month (January = 0)
+ * @param currentYear Current year, injectable for testability
+ * @return Formatted header string, e.g. "Apr" or "Sep 2025"
+ */
+internal fun formatMonthHeader(
+    year: Int,
+    month0: Int,
+    currentYear: Int = LocalDate.now().year
+): String {
+    val monthName = Month.of(month0 + 1).getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())
+    return if (year == currentYear) monthName else "$monthName $year"
+}
+
+/**
  * Main content composable for the month widget.
  * Shows a 6x7 calendar grid with day numbers and event indicator dots.
  *
@@ -66,7 +84,7 @@ fun MonthWidgetContent(
     targetMonth0: Int,
     firstDayOfWeek: Int
 ) {
-    val monthName = Month.of(targetMonth0 + 1).getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
+    val headerText = formatMonthHeader(targetYear, targetMonth0)
     val todayDayCode = run {
         val today = LocalDate.now()
         today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
@@ -79,7 +97,7 @@ fun MonthWidgetContent(
             .cornerRadius(16.dp)
     ) {
         // Header: nav arrows + month/year + "+"
-        MonthWidgetHeader(monthName, targetYear, monthOffset)
+        MonthWidgetHeader(headerText, monthOffset)
 
         // Day-of-week headers
         DayOfWeekRow(firstDayOfWeek)
@@ -102,9 +120,7 @@ fun MonthWidgetContent(
                         dayCode = dayCode,
                         events = events,
                         isToday = isToday,
-                        isPast = isPast,
-                        targetYear = targetYear,
-                        targetMonth0 = targetMonth0
+                        isPast = isPast
                     )
                 }
             }
@@ -116,7 +132,7 @@ fun MonthWidgetContent(
  * Month widget header with navigation arrows, month/year title, and "+" button.
  */
 @Composable
-private fun MonthWidgetHeader(monthName: String, year: Int, monthOffset: Int) {
+private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
@@ -163,7 +179,7 @@ private fun MonthWidgetHeader(monthName: String, year: Int, monthOffset: Int) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "$monthName $year",
+                text = headerText,
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
                     fontSize = 15.sp,
@@ -252,18 +268,39 @@ private fun DayCell(
     dayCode: Int,
     events: List<WidgetDataRepository.WidgetEvent>,
     isToday: Boolean,
-    isPast: Boolean,
-    targetYear: Int,
-    targetMonth0: Int
+    isPast: Boolean
 ) {
-    // InDate/OutDate cells are empty
-    if (cell.position != MonthGrid.DayPosition.MonthDate) {
-        Box(modifier = modifier.height(36.dp)) {}
+    val isAdjacentMonth = cell.position != MonthGrid.DayPosition.MonthDate
+    val accessibilityDesc = buildAccessibilityDescription(dayCode, if (isAdjacentMonth) 0 else events.size)
+
+    // Adjacent-month cells: faded day number, tappable, no dots or today highlight
+    if (isAdjacentMonth) {
+        Box(
+            modifier = modifier
+                .height(36.dp)
+                .clickable(
+                    actionStartActivity<MainActivity>(
+                        parameters = actionParametersOf(
+                            ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_DATE,
+                            ActionParameters.Key<Int>(EXTRA_DAY_CODE) to dayCode
+                        )
+                    )
+                )
+                .semantics { contentDescription = accessibilityDesc },
+            contentAlignment = Alignment.TopCenter
+        ) {
+            Text(
+                text = "${cell.dayOfMonth}",
+                style = TextStyle(
+                    color = WidgetTheme.adjacentMonthText,
+                    fontSize = 12.sp
+                )
+            )
+        }
         return
     }
 
     val dotColors = extractDotColors(events)
-    val accessibilityDesc = buildAccessibilityDescription(targetYear, targetMonth0, cell.dayOfMonth, events.size)
 
     val bgModifier = if (isToday) {
         GlanceModifier.background(WidgetTheme.todayHighlightBackground).cornerRadius(6.dp)
@@ -420,6 +457,24 @@ internal fun getDayOfWeekHeaders(firstDayOfWeek: Int): List<String> {
         val javaDow = java.time.DayOfWeek.of(if (calDay == 1) 7 else calDay - 1) // Calendar.SUNDAY=1 → DayOfWeek.SUNDAY=7
         javaDow.getDisplayName(JavaTextStyle.SHORT, locale)
     }
+}
+
+/**
+ * Build accessibility description for a day cell using a dayCode.
+ * Extracts year/month from the dayCode so adjacent-month cells get the correct month name.
+ * Format: "March 15, 2 events" or "March 15, no events"
+ *
+ * @param dayCode YYYYMMDD format day code
+ * @param eventCount Number of events on this day
+ */
+internal fun buildAccessibilityDescription(
+    dayCode: Int,
+    eventCount: Int
+): String {
+    val year = dayCode / 10000
+    val month1 = (dayCode / 100) % 100
+    val day = dayCode % 100
+    return buildAccessibilityDescription(year, month1 - 1, day, eventCount)
 }
 
 /**

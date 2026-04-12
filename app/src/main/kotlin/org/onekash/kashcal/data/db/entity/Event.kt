@@ -118,6 +118,15 @@ data class Event(
     val timezone: String? = null,
 
     /**
+     * IANA timezone identifier for the event end time.
+     * Allows different timezones for start and end (e.g., flights).
+     * Null means same timezone as start (the common case).
+     * Issue #39: Different timezone for beginning and end of event.
+     */
+    @ColumnInfo(name = "end_timezone")
+    val endTimezone: String? = null,
+
+    /**
      * Whether this is an all-day event.
      * All-day events use DATE instead of DATE-TIME in iCal.
      */

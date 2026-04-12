@@ -177,13 +177,11 @@ interface CalendarProviderRepository {
      *
      * Creates a STATUS_CANCELED exception event.
      *
-     * @param calendarId Target calendar ID
      * @param masterEventId Master event ID
      * @param originalInstanceTime Original occurrence timestamp to cancel
      * @return Result.success or CalendarError.DeviceCalendar
      */
     suspend fun deleteSingleOccurrence(
-        calendarId: Long,
         masterEventId: Long,
         originalInstanceTime: Long,
         isAllDay: Boolean

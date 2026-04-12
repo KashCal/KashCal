@@ -242,15 +242,15 @@ class EventsDaoFtsTest : BaseDaoTest() {
     }
 
     @Test
-    fun `search respects limit of 100 results`() = runTest {
-        // Insert 110 events
-        repeat(110) { i ->
+    fun `search respects limit of 1000 results`() = runTest {
+        // Insert 1010 events
+        repeat(1010) { i ->
             eventsDao.insert(createEvent(title = "Meeting $i"))
         }
 
         val results = eventsDao.search("Meeting*")
 
-        assertEquals(100, results.size)
+        assertEquals(1000, results.size)
     }
 
     @Test
@@ -517,7 +517,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
         eventsDao.insert(createEvent(title = "Test Meeting", startTs = jan6))
 
-        val results = eventsDao.searchWithOccurrence("Meeting*")
+        val results = eventsDao.searchWithOccurrence("Meeting*", jan6)
 
         assertEquals(1, results.size)
         assertEquals(jan6, results[0].nextOccurrenceTs)
@@ -525,21 +525,47 @@ class EventsDaoFtsTest : BaseDaoTest() {
     }
 
     @Test
-    fun `searchWithOccurrence returns multiple events ordered by startTs`() = runTest {
-        val jan5 = 1736035200000L
-        val jan6 = 1736121600000L
-        val jan7 = 1736208000000L
+    fun `searchWithOccurrence orders by proximity to now`() = runTest {
+        val now = 1736121600000L  // Jan 6, 2025 00:00 UTC
+        val dayMs = 86400000L
 
-        eventsDao.insert(createEvent(title = "Meeting C", startTs = jan7))
-        eventsDao.insert(createEvent(title = "Meeting A", startTs = jan5))
-        eventsDao.insert(createEvent(title = "Meeting B", startTs = jan6))
+        // Events at varying distances from "now"
+        eventsDao.insert(createEvent(title = "Meeting Far Past", startTs = now - 3 * dayMs))
+        eventsDao.insert(createEvent(title = "Meeting Near Future", startTs = now + 1 * dayMs))
+        eventsDao.insert(createEvent(title = "Meeting Near Past", startTs = now - 1 * dayMs))
+        eventsDao.insert(createEvent(title = "Meeting Far Future", startTs = now + 3 * dayMs))
 
-        val results = eventsDao.searchWithOccurrence("Meeting*")
+        val results = eventsDao.searchWithOccurrence("Meeting*", now)
 
-        assertEquals(3, results.size)
-        assertEquals("Meeting A", results[0].event.title)
-        assertEquals("Meeting B", results[1].event.title)
-        assertEquals("Meeting C", results[2].event.title)
+        assertEquals(4, results.size)
+        // Closest to now first (1 day away), then further (3 days away)
+        assertEquals("Meeting Near Future", results[0].event.title)
+        assertEquals("Meeting Near Past", results[1].event.title)
+        assertEquals("Meeting Far Past", results[2].event.title)
+        assertEquals("Meeting Far Future", results[3].event.title)
+    }
+
+    @Test
+    fun `searchWithOccurrence excludes exception events`() = runTest {
+        val now = 1736121600000L  // Jan 6, 2025 00:00 UTC
+
+        // Create master recurring event
+        val masterId = eventsDao.insert(
+            createEvent(title = "Weekly Meeting", startTs = now)
+                .copy(rrule = "FREQ=WEEKLY")
+        )
+
+        // Create exception event (modified occurrence) with same title
+        eventsDao.insert(
+            createEvent(title = "Weekly Meeting", startTs = now + 86400000L)
+                .copy(originalEventId = masterId, originalInstanceTime = now + 7 * 86400000L)
+        )
+
+        val results = eventsDao.searchWithOccurrence("Weekly*", now)
+
+        // Only master should appear, exception excluded
+        assertEquals(1, results.size)
+        assertEquals(masterId, results[0].event.id)
     }
 
     // ========== searchFutureWithOccurrence Tests (excludes past) ==========

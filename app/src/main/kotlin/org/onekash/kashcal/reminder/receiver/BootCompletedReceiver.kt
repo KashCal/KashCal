@@ -9,6 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
@@ -37,13 +38,11 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
     companion object {
         private const val TAG = "BootCompletedReceiver"
+        private const val GOASYNC_TIMEOUT_MS = 9_000L
     }
 
     @Inject
     lateinit var handler: BootRecoveryHandler
-
-    // Scope for async work in receiver
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
@@ -62,9 +61,14 @@ class BootCompletedReceiver : BroadcastReceiver() {
         // Use goAsync() for database access and alarm scheduling
         val pendingResult = goAsync()
 
-        scope.launch {
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                handler.rescheduleReminders()
+                val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
+                    handler.rescheduleReminders()
+                }
+                if (completed == null) {
+                    Log.w(TAG, "Reminder reschedule timed out, WorkManager will complete")
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Error rescheduling reminders after boot", e)
             } finally {
