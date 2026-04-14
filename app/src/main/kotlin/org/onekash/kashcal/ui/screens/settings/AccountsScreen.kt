@@ -259,7 +259,7 @@ fun AccountsScreen(
             onDismiss = {
                 activeSubSheet = SubSheet.NONE
                 // Reload detail with fresh data
-                selectedAccountId?.let { onObserveAccountDetail(it) }
+                selectedAccountId?.let { id -> onObserveAccountDetail(id) }
             }
         )
     }
@@ -279,7 +279,7 @@ fun AccountsScreen(
                     result.fold(
                         onSuccess = {
                             activeSubSheet = SubSheet.NONE
-                            selectedAccountId?.let { onObserveAccountDetail(it) }
+                            selectedAccountId?.let { id -> onObserveAccountDetail(id) }
                         },
                         onFailure = { error ->
                             passwordError = error.message
@@ -291,7 +291,7 @@ fun AccountsScreen(
                 if (!isPasswordValidating) {
                     activeSubSheet = SubSheet.NONE
                     passwordError = null
-                    selectedAccountId?.let { onObserveAccountDetail(it) }
+                    selectedAccountId?.let { id -> onObserveAccountDetail(id) }
                 }
             }
         )

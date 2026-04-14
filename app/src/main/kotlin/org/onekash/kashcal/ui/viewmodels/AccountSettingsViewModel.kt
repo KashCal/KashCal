@@ -39,7 +39,6 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.writer.EventWriter
-import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
@@ -49,7 +48,6 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
-import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
 import org.onekash.kashcal.sync.scheduler.SyncStatus
@@ -60,7 +58,6 @@ import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.onekash.kashcal.ui.model.CalendarGroup
 import javax.inject.Inject
-import org.onekash.kashcal.data.db.entity.IcsSubscription as IcsSubscriptionEntity
 
 private const val TAG = "AccountSettingsVM"
 
@@ -276,6 +273,9 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _showWeekNumbers = MutableStateFlow(false)
     val showWeekNumbers: StateFlow<Boolean> = _showWeekNumbers.asStateFlow()
+
+    private val _quickAddEnabled = MutableStateFlow(false)
+    val quickAddEnabled: StateFlow<Boolean> = _quickAddEnabled.asStateFlow()
 
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
@@ -604,6 +604,11 @@ class AccountSettingsViewModel @Inject constructor(
                 _syncLookbackDays.value = days
             }
         }
+        viewModelScope.launch {
+            dataStore.quickAddEnabled.collect { enabled ->
+                _quickAddEnabled.value = enabled
+            }
+        }
     }
 
     /**
@@ -612,6 +617,12 @@ class AccountSettingsViewModel @Inject constructor(
     fun setShowEventEmojis(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowEventEmojis(show)
+        }
+    }
+
+    fun setQuickAddEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setQuickAddEnabled(enabled)
         }
     }
 
@@ -1037,7 +1048,7 @@ class AccountSettingsViewModel @Inject constructor(
         val host = try {
             val url = if (serverUrl.startsWith("http")) serverUrl else "https://$serverUrl"
             java.net.URI(url).host ?: return username
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return username
         }
 
@@ -2175,7 +2186,7 @@ class AccountSettingsViewModel @Inject constructor(
     /**
      * Refresh iCloud state after rename (if renamed account is iCloud).
      */
-    private suspend fun refreshICloudState(account: Account) {
+    private fun refreshICloudState(account: Account) {
         if (account.provider != AccountProvider.ICLOUD) return
         val currentState = _uiState.value.iCloudState
         if (currentState is ICloudConnectionState.Connected) {

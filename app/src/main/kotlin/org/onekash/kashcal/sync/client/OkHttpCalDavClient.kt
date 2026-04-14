@@ -116,10 +116,8 @@ class OkHttpCalDavClient : CalDavClient {
         }
     }
 
-    @Volatile
-    private var username: String = ""
-    @Volatile
-    private var password: String = ""
+    private val username: String = ""
+    private val password: String = ""
 
     /**
      * HTTP logging interceptor - logs headers in debug mode.
@@ -299,7 +297,7 @@ class OkHttpCalDavClient : CalDavClient {
     private fun cleanRedirectUrl(url: String, originalScheme: String? = null): String {
         val cleanUrl = url.substringBefore("?").substringBefore("#")
         if (originalScheme == null) return cleanUrl
-        val uri = try { java.net.URI(cleanUrl) } catch (e: Exception) { return cleanUrl }
+        val uri = try { java.net.URI(cleanUrl) } catch (_: Exception) { return cleanUrl }
         if (uri.scheme == originalScheme) return cleanUrl
         return cleanUrl.replaceFirst(Regex("^\\w+://"), "$originalScheme://")
     }
@@ -908,7 +906,7 @@ class OkHttpCalDavClient : CalDavClient {
                         etag = fetchEtag(eventUrl).getOrNull()
                     }
 
-                    CalDavResult.success(Pair(eventUrl, etag ?: ""))
+                    CalDavResult.success(Pair(eventUrl, etag.orEmpty()))
                 }
                 response.code == 412 -> CalDavResult.conflictError("Event already exists")
                 response.code == 401 -> CalDavResult.authError("Authentication failed")
@@ -1038,7 +1036,7 @@ class OkHttpCalDavClient : CalDavClient {
                     }
 
                     Log.d(TAG, "moveEvent: Success, new URL=$destinationUrl, etag=$newEtag")
-                    CalDavResult.success(destinationUrl to (newEtag ?: ""))
+                    CalDavResult.success(destinationUrl to newEtag.orEmpty())
                 }
                 404 -> {
                     Log.d(TAG, "moveEvent: Source not found (404)")
@@ -1117,7 +1115,7 @@ class OkHttpCalDavClient : CalDavClient {
                     return@withContext when {
                         response.isSuccessful -> {
                             // RFC 4791: CalDAV servers MUST advertise "calendar-access" in DAV header
-                            val davHeader = response.header("DAV") ?: ""
+                            val davHeader = response.header("DAV").orEmpty()
                             if (!davHeader.contains("calendar-access", ignoreCase = true)) {
                                 Log.w(TAG, "Server does not advertise CalDAV support. DAV header: $davHeader")
                                 CalDavResult.error(
@@ -1304,7 +1302,7 @@ class OkHttpCalDavClient : CalDavClient {
             val delayMs = targetTime - System.currentTimeMillis()
             // If date is in the past, retry immediately (0 delay)
             delayMs.coerceAtLeast(0)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Log.w(TAG, "Could not parse Retry-After header: $retryAfter, using default")
             DEFAULT_RETRY_AFTER_MS
         }

@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -146,7 +145,7 @@ fun LinkifiedText(
                         if (shouldOpenExternally(url)) {
                             try {
                                 uriHandler.openUri(url)
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
                                 // System will show "No app found" toast
                             }
                         }

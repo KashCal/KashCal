@@ -621,7 +621,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         val allErrors = mutableListOf<org.onekash.kashcal.sync.engine.SyncError>()
         val allChanges = mutableListOf<org.onekash.kashcal.sync.model.SyncChange>()
 
-        for ((index, account) in networkAccounts.withIndex()) {
+        for ((_, account) in networkAccounts.withIndex()) {
             // Skip accounts that don't support CalDAV
             if (!account.provider.supportsCalDAV) {
                 Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
@@ -874,7 +874,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 if (change.type == ChangeType.NEW && !change.isFromInitialSync) {
                     val defaultMinutes = if (event.isAllDay) defaultAllDayMinutes else defaultTimedMinutes
                     val shouldApplyDefaults = event.reminders.isNullOrEmpty() &&
-                        (event.alarmCount ?: 0) == 0 &&
+                        event.alarmCount == 0 &&
                         defaultMinutes != KashCalDataStore.REMINDER_OFF
 
                     if (shouldApplyDefaults) {
@@ -922,7 +922,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 reminderScheduler.scheduleRemindersForEvent(
                     event = event,
                     occurrences = occurrences,
-                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                    calendarColor = calendar.color
                 )
                 scheduled++
             } catch (e: Exception) {
@@ -975,7 +975,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         return if (triggerStr != null) {
             try {
                 SyncTrigger.valueOf(triggerStr)
-            } catch (e: IllegalArgumentException) {
+            } catch (_: IllegalArgumentException) {
                 Log.w(TAG, "Invalid trigger string: $triggerStr, defaulting to BACKGROUND_PERIODIC")
                 SyncTrigger.BACKGROUND_PERIODIC
             }

@@ -67,8 +67,9 @@ class ProviderRegistry @Inject constructor(
         AccountProvider.ICS -> null
         AccountProvider.CONTACTS -> null
         AccountProvider.CALDAV -> {
-            val serverUrl = account.homeSetUrl
-                ?: throw IllegalStateException("CALDAV account ${account.id} missing homeSetUrl")
+            val serverUrl = checkNotNull(account.homeSetUrl) {
+                "CALDAV account ${account.id} missing homeSetUrl"
+            }
             DefaultQuirks(serverUrl)
         }
     }

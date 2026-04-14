@@ -69,16 +69,6 @@ interface CalendarRepository {
     suspend fun getAllCalendars(): List<Calendar>
 
     /**
-     * Get any default calendar for quick event creation.
-     */
-    suspend fun getDefaultCalendar(): Calendar?
-
-    /**
-     * Get default calendar for specific account.
-     */
-    suspend fun getDefaultCalendarForAccount(accountId: Long): Calendar?
-
-    /**
      * Get enabled calendars for sync.
      */
     suspend fun getEnabledCalendars(): List<Calendar>
@@ -109,11 +99,6 @@ interface CalendarRepository {
      * Set all calendars for account visible/hidden.
      */
     suspend fun setAllVisible(accountId: Long, visible: Boolean)
-
-    /**
-     * Set default calendar for account.
-     */
-    suspend fun setDefaultCalendar(accountId: Long, calendarId: Long)
 
     // ========== Sync Metadata ==========
 

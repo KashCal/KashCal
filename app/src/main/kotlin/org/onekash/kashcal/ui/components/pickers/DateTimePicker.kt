@@ -400,7 +400,6 @@ fun InlineDatePickerContent(
     onMonthChange: (JavaCalendar) -> Unit,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    val today = JavaCalendar.getInstance()
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
@@ -567,10 +566,6 @@ fun InlineDatePickerContent(
                                         val isSelected = selectedCal.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
                                             selectedCal.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
                                             selectedCal.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
-
-                                        val isToday = today.get(JavaCalendar.YEAR) == dayCal.get(JavaCalendar.YEAR) &&
-                                            today.get(JavaCalendar.MONTH) == dayCal.get(JavaCalendar.MONTH) &&
-                                            today.get(JavaCalendar.DAY_OF_MONTH) == dayIndex
 
                                         Box(
                                             modifier = Modifier

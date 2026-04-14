@@ -2,7 +2,6 @@ package org.onekash.kashcal
 
 import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -34,6 +33,8 @@ import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.ui.components.DeviceEventQuickViewSheet
 import org.onekash.kashcal.ui.components.EventQuickViewSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
+import org.onekash.kashcal.ui.components.QuickAddDialog
+import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
 import org.onekash.kashcal.ui.components.OnboardingBanner
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
@@ -44,7 +45,6 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
-import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
@@ -96,6 +96,7 @@ class MainActivity : ComponentActivity() {
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
                 val defaultReminderAllDay by homeViewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
                 val defaultEventDuration by homeViewModel.defaultEventDuration.collectAsStateWithLifecycle()
+                val quickAddEnabled by homeViewModel.quickAddEnabled.collectAsStateWithLifecycle()
 
                 val coroutineScope = rememberCoroutineScope()
 
@@ -120,6 +121,9 @@ class MainActivity : ComponentActivity() {
                     pendingPermissionCallback?.invoke(isGranted)
                     pendingPermissionCallback = null
                 }
+
+                // Quick Add dialog state
+                var showQuickAddDialog by remember { mutableStateOf(false) }
 
                 // Event form sheet state
                 var showEventFormSheet by remember { mutableStateOf(false) }
@@ -172,20 +176,23 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                                 is PendingAction.CreateEvent -> {
-                                    // Use provided startTs or default to today at next hour
-                                    val startTs = action.startTs ?: run {
-                                        val now = java.util.Calendar.getInstance()
-                                        val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
-                                        java.util.Calendar.getInstance().apply {
-                                            set(java.util.Calendar.HOUR_OF_DAY, nextHour)
-                                            set(java.util.Calendar.MINUTE, 0)
-                                            set(java.util.Calendar.SECOND, 0)
-                                        }.timeInMillis
+                                    if (quickAddEnabled && !uiState.viewMode.isTimeGrid && action.startTs == null) {
+                                        showQuickAddDialog = true
+                                    } else {
+                                        val startTs = action.startTs ?: run {
+                                            val now = java.util.Calendar.getInstance()
+                                            val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
+                                            java.util.Calendar.getInstance().apply {
+                                                set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                                                set(java.util.Calendar.MINUTE, 0)
+                                                set(java.util.Calendar.SECOND, 0)
+                                            }.timeInMillis
+                                        }
+                                        editingEventId = null
+                                        newEventStartTs = startTs
+                                        eventOccurrenceTs = null
+                                        showEventFormSheet = true
                                     }
-                                    editingEventId = null
-                                    newEventStartTs = startTs
-                                    eventOccurrenceTs = null
-                                    showEventFormSheet = true
                                 }
                                 is PendingAction.OpenSearch -> {
                                     homeViewModel.activateSearch()
@@ -302,52 +309,50 @@ class MainActivity : ComponentActivity() {
                     onCreateEvent = {
                         Log.d(TAG, "Create event clicked")
 
-                        // Check if in a time-grid view (3-day or week)
-                        val isInTimeGridView = uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS ||
-                            uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK
-                        val gridStartHour = if (uiState.viewMode == org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK) 0 else 6
-
-                        val eventTimestamp = if (isInTimeGridView && uiState.weekViewStartDate != 0L) {
-                            // Time-grid view: use current pager position and scroll position
-                            val dayIndex = uiState.weekViewPagerPosition
-
-                            // Calculate visible hour from scroll position
-                            val hourHeightPx = 60 * 2.75f  // Approximate for typical density
-                            val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + gridStartHour
-                            val hour = visibleHour.coerceIn(gridStartHour, if (gridStartHour == 0) 23 else 22)
-
-                            val eventCal = java.util.Calendar.getInstance().apply {
-                                timeInMillis = uiState.weekViewStartDate
-                                add(java.util.Calendar.DAY_OF_YEAR, dayIndex)
-                                set(java.util.Calendar.HOUR_OF_DAY, hour)
-                                set(java.util.Calendar.MINUTE, 0)
-                                set(java.util.Calendar.SECOND, 0)
-                            }
-                            Log.d(TAG, "Time grid FAB: dayIndex=$dayIndex, hour=$hour, gridStartHour=$gridStartHour")
-                            eventCal.timeInMillis
+                        // Quick Add: open dialog for non-time-grid views when enabled
+                        if (quickAddEnabled && !uiState.viewMode.isTimeGrid) {
+                            showQuickAddDialog = true
                         } else {
-                            // Month view: use selected date with next hour
-                            // 0L = no date selected (sentinel from HomeUiState.selectedDate default)
-                            val selectedDateMillis = if (uiState.selectedDate != 0L) {
-                                uiState.selectedDate
-                            } else {
-                                System.currentTimeMillis()
-                            }
-                            val now = java.util.Calendar.getInstance()
-                            val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
-                            val eventCal = java.util.Calendar.getInstance().apply {
-                                timeInMillis = selectedDateMillis
-                                set(java.util.Calendar.HOUR_OF_DAY, nextHour)
-                                set(java.util.Calendar.MINUTE, 0)
-                                set(java.util.Calendar.SECOND, 0)
-                            }
-                            eventCal.timeInMillis
-                        }
+                            val gridStartHour = if (uiState.viewMode == ViewMode.WEEK) 0 else 6
 
-                        editingEventId = null
-                        newEventStartTs = eventTimestamp
-                        eventOccurrenceTs = null
-                        showEventFormSheet = true
+                            val eventTimestamp = if (uiState.viewMode.isTimeGrid && uiState.weekViewStartDate != 0L) {
+                                // Time-grid view: use current pager position and scroll position
+                                val dayIndex = uiState.weekViewPagerPosition
+                                val hourHeightPx = 60 * 2.75f
+                                val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + gridStartHour
+                                val hour = visibleHour.coerceIn(gridStartHour, if (gridStartHour == 0) 23 else 22)
+
+                                val eventCal = java.util.Calendar.getInstance().apply {
+                                    timeInMillis = uiState.weekViewStartDate
+                                    add(java.util.Calendar.DAY_OF_YEAR, dayIndex)
+                                    set(java.util.Calendar.HOUR_OF_DAY, hour)
+                                    set(java.util.Calendar.MINUTE, 0)
+                                    set(java.util.Calendar.SECOND, 0)
+                                }
+                                Log.d(TAG, "Time grid FAB: dayIndex=$dayIndex, hour=$hour, gridStartHour=$gridStartHour")
+                                eventCal.timeInMillis
+                            } else {
+                                val selectedDateMillis = if (uiState.selectedDate != 0L) {
+                                    uiState.selectedDate
+                                } else {
+                                    System.currentTimeMillis()
+                                }
+                                val now = java.util.Calendar.getInstance()
+                                val nextHour = (now.get(java.util.Calendar.HOUR_OF_DAY) + 1) % 24
+                                val eventCal = java.util.Calendar.getInstance().apply {
+                                    timeInMillis = selectedDateMillis
+                                    set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                                    set(java.util.Calendar.MINUTE, 0)
+                                    set(java.util.Calendar.SECOND, 0)
+                                }
+                                eventCal.timeInMillis
+                            }
+
+                            editingEventId = null
+                            newEventStartTs = eventTimestamp
+                            eventOccurrenceTs = null
+                            showEventFormSheet = true
+                        }
                     },
                     onCreateEventWithDateTime = { timestampMs ->
                         Log.d(TAG, "Create event with date/time: $timestampMs")
@@ -380,26 +385,8 @@ class MainActivity : ComponentActivity() {
                     onFilterClick = { showCalendarVisibilitySheet = true },
                     // Info callbacks
                     onInfoClick = { homeViewModel.toggleAppInfoSheet() },
-                    // View picker callbacks
-                    onViewPickerClick = { homeViewModel.showViewPicker() },
-                    onViewPickerDismiss = { homeViewModel.hideViewPicker() },
-                    onViewSelect = { mode ->
-                        homeViewModel.hideViewPicker()
-                        homeViewModel.setViewMode(mode)
-                    },
-                    onSetDefaultView = { mode ->
-                        homeViewModel.setDefaultViewMode(mode)
-                        homeViewModel.showSnackbar("Default view set to ${
-                            when (mode) {
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.MONTH -> "Month"
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.MONTH_FULL -> "Month (Full)"
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.AGENDA -> "Agenda"
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.THREE_DAYS -> "3 Days"
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.WEEK -> "Week"
-                                org.onekash.kashcal.ui.viewmodels.ViewMode.YEAR -> "Year"
-                            }
-                        }")
-                    },
+                    // View picker callback
+                    onViewSelect = { mode -> homeViewModel.setViewMode(mode) },
                     // Year overlay callbacks
                     onMonthHeaderClick = { homeViewModel.toggleYearOverlay() },
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
@@ -736,6 +723,34 @@ class MainActivity : ComponentActivity() {
                             deviceQuickViewEvent = null
                         },
                         timeFormat = uiState.timeFormat
+                    )
+                }
+
+                // Quick Add Dialog
+                if (showQuickAddDialog) {
+                    QuickAddDialog(
+                        onDismiss = { showQuickAddDialog = false },
+                        onSaved = { event ->
+                            showQuickAddDialog = false
+                            homeViewModel.showSnackbar("Event saved")
+                            // Navigate to the event's date
+                            val dayCode = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
+                            val date = org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(dayCode)
+                            homeViewModel.navigateToDate(date)
+                        },
+                        onExpand = { intentData ->
+                            showQuickAddDialog = false
+                            editingEventId = null
+                            newEventStartTs = intentData.startTimeMillis
+                            eventOccurrenceTs = null
+                            calendarIntentData = intentData
+                            calendarIntentInvitees = emptyList()
+                            showEventFormSheet = true
+                        },
+                        onSaveError = { message ->
+                            showQuickAddDialog = false
+                            homeViewModel.showSnackbar(message)
+                        }
                     )
                 }
 

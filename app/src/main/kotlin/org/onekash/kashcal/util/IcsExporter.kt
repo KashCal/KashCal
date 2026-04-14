@@ -58,11 +58,11 @@ fun buildIcsFromDeviceEvent(event: DisplayEvent.Device): String = buildString {
 
     appendLine("SUMMARY:${escapeIcsValue(event.title)}")
 
-    if (!event.description.isNullOrBlank()) {
-        appendLine("DESCRIPTION:${escapeIcsValue(event.description!!)}")
+    if (event.description.isNotBlank()) {
+        appendLine("DESCRIPTION:${escapeIcsValue(event.description)}")
     }
-    if (!event.location.isNullOrBlank()) {
-        appendLine("LOCATION:${escapeIcsValue(event.location!!)}")
+    if (event.location.isNotBlank()) {
+        appendLine("LOCATION:${escapeIcsValue(event.location)}")
     }
     if (event.rrule != null) {
         appendLine("RRULE:${event.rrule}")

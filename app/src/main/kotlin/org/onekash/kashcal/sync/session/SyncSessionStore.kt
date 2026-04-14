@@ -2,7 +2,6 @@ package org.onekash.kashcal.sync.session
 
 import android.content.Context
 import android.util.Log
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import dagger.hilt.android.qualifiers.ApplicationContext

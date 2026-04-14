@@ -413,7 +413,7 @@ class SyncScheduler @Inject constructor(
     /**
      * Get current periodic sync info (for settings UI).
      */
-    suspend fun getPeriodicSyncInfo(): PeriodicSyncInfo? {
+    fun getPeriodicSyncInfo(): PeriodicSyncInfo? {
         val workInfo = workManager.getWorkInfosForUniqueWork(PERIODIC_SYNC_WORK).get()
             .firstOrNull() ?: return null
 

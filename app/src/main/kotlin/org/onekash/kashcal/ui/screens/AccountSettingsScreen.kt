@@ -10,12 +10,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -82,7 +82,6 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.formatDuration
 import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.ui.shared.formatReminderShort
-import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
@@ -219,6 +218,8 @@ fun AccountSettingsScreen(
     // Display settings
     showEventEmojis: Boolean = true,
     onShowEventEmojisChange: (Boolean) -> Unit = {},
+    quickAddEnabled: Boolean = false,
+    onQuickAddEnabledChange: (Boolean) -> Unit = {},
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     onTimeFormatChange: (String) -> Unit = {},
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
@@ -305,6 +306,8 @@ fun AccountSettingsScreen(
                     onRefreshDeviceCalendars = onRefreshDeviceCalendars,
                     showEventEmojis = showEventEmojis,
                     onShowEventEmojisChange = onShowEventEmojisChange,
+                    quickAddEnabled = quickAddEnabled,
+                    onQuickAddEnabledChange = onQuickAddEnabledChange,
                     timeFormat = timeFormat,
                     onTimeFormatChange = onTimeFormatChange,
                     firstDayOfWeek = firstDayOfWeek,
@@ -326,8 +329,8 @@ fun AccountSettingsScreen(
             val iCloudState = uiState.iCloudState
             val notConnectedState = iCloudState as? ICloudConnectionState.NotConnected
             ICloudSignInSheet(
-                appleId = notConnectedState?.appleId ?: "",
-                password = notConnectedState?.password ?: "",
+                appleId = notConnectedState?.appleId.orEmpty(),
+                password = notConnectedState?.password.orEmpty(),
                 showHelp = notConnectedState?.showHelp ?: false,
                 error = notConnectedState?.error,
                 isConnecting = iCloudState is ICloudConnectionState.Connecting,
@@ -435,6 +438,8 @@ private fun FlatSettingsContent(
     onRefreshDeviceCalendars: () -> Unit,
     showEventEmojis: Boolean,
     onShowEventEmojisChange: (Boolean) -> Unit,
+    quickAddEnabled: Boolean,
+    onQuickAddEnabledChange: (Boolean) -> Unit,
     timeFormat: String,
     onTimeFormatChange: (String) -> Unit,
     firstDayOfWeek: Int,
@@ -600,6 +605,12 @@ private fun FlatSettingsContent(
                     onClick = { showDefaultCalendarSheet = true }
                 )
             }
+            SettingsRow(
+                icon = Icons.Default.Edit,
+                label = "Quick Event Add (Beta)",
+                subtitle = if (quickAddEnabled) "On" else "Off",
+                onClick = { onQuickAddEnabledChange(!quickAddEnabled) }
+            )
             SettingsRow(
                 icon = Icons.Default.SentimentSatisfied,
                 label = "Event Emojis",

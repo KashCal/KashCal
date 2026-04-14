@@ -61,14 +61,6 @@ class CalendarRepositoryImpl @Inject constructor(
         return calendarsDao.getAllOnce()
     }
 
-    override suspend fun getDefaultCalendar(): Calendar? {
-        return calendarsDao.getAnyDefaultCalendar()
-    }
-
-    override suspend fun getDefaultCalendarForAccount(accountId: Long): Calendar? {
-        return calendarsDao.getDefaultCalendar(accountId)
-    }
-
     override suspend fun getEnabledCalendars(): List<Calendar> {
         return calendarsDao.getEnabledCalendars()
     }
@@ -93,10 +85,6 @@ class CalendarRepositoryImpl @Inject constructor(
 
     override suspend fun setAllVisible(accountId: Long, visible: Boolean) {
         calendarsDao.setVisibleForAccount(accountId, visible)
-    }
-
-    override suspend fun setDefaultCalendar(accountId: Long, calendarId: Long) {
-        calendarsDao.setDefaultCalendar(accountId, calendarId)
     }
 
     // ========== Sync Metadata ==========

@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -35,7 +34,7 @@ object WeekViewUtils {
     // Visual constants
     val HOUR_HEIGHT = 60.dp
     val MIN_EVENT_HEIGHT = 20.dp
-    val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
+    const val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
     // Infinite day pager constants (THREE_DAYS mode)
     // Using large page count for pseudo-infinite scrolling

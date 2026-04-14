@@ -80,8 +80,7 @@ class LocalFirstSyncIntegrationTest {
             eventsDao = database.eventsDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore,
-            syncSessionStore = syncSessionStore
+            dataStore = dataStore
         )
 
         // Create test account and calendar

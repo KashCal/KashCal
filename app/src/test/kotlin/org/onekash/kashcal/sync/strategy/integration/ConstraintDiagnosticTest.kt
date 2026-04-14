@@ -169,8 +169,7 @@ class ConstraintDiagnosticTest {
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = ICloudQuirks(),
-            dataStore = dataStore,
-            syncSessionStore = syncSessionStore
+            dataStore = dataStore
         )
 
         return TestEnv(db, eventsDao, occurrencesDao, pullStrategy)

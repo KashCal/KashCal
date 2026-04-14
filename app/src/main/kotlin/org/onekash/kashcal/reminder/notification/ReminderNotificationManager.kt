@@ -43,8 +43,6 @@ class ReminderNotificationManager @Inject constructor(
     private val dataStore: KashCalDataStore
 ) {
     companion object {
-        private const val TAG = "ReminderNotificationMgr"
-
         // Intent actions
         const val ACTION_SNOOZE = "org.onekash.kashcal.SNOOZE_REMINDER"
         const val ACTION_DISMISS = "org.onekash.kashcal.DISMISS_REMINDER"

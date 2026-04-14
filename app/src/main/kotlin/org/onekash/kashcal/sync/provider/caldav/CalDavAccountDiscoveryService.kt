@@ -349,13 +349,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
         )
 
         // Create isolated client
-        val quirks = DefaultQuirks(account.homeSetUrl!!)
+        val quirks = DefaultQuirks(account.homeSetUrl)
         val client = calDavClientFactory.createClient(credentials, quirks)
 
         try {
             // Re-discover home sets from principal (handles added/removed home sets)
             val calendarHomeUrls = if (account.principalUrl != null) {
-                val homeResult = client.discoverCalendarHome(account.principalUrl!!)
+                val homeResult = client.discoverCalendarHome(account.principalUrl)
                 if (homeResult.isSuccess()) {
                     (homeResult as CalDavResult.Success).data.sorted()
                 } else {
@@ -831,9 +831,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
 
         // Validate URL
         val uri = URI(url)
-        if (uri.host.isNullOrBlank()) {
-            throw IllegalArgumentException("Invalid URL: missing host")
-        }
+        require(!uri.host.isNullOrBlank()) { "Invalid URL: missing host" }
 
         return url
     }
@@ -991,7 +989,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     Color.parseColor("#$cleanColor")
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Log.w(TAG, "Could not parse color: $colorString, using default")
             DEFAULT_COLORS[index % DEFAULT_COLORS.size]
         }
@@ -1016,7 +1014,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             is java.net.ConnectException ->
                 "Could not connect to server. Please check the server URL and try again."
             else -> {
-                val message = e.message?.lowercase() ?: ""
+                val message = e.message?.lowercase().orEmpty()
                 when {
                     message.contains("timeout") ->
                         "Connection timed out. Please try again."

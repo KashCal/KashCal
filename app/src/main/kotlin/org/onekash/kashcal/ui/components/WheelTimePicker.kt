@@ -359,7 +359,7 @@ fun WheelTimePicker(
                     isCircular = true
                 ) { hour, isSelected ->
                     Text(
-                        text = String.format("%02d", hour),  // Zero-padded
+                        text = String.format(java.util.Locale.ROOT, "%02d", hour),  // Zero-padded
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -390,7 +390,7 @@ fun WheelTimePicker(
                     isCircular = true
                 ) { minute, isSelected ->
                     Text(
-                        text = String.format("%02d", minute),
+                        text = String.format(java.util.Locale.ROOT, "%02d", minute),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -484,7 +484,7 @@ fun WheelTimePicker(
                     isCircular = true
                 ) { minute, isSelected ->
                     Text(
-                        text = String.format("%02d", minute),
+                        text = String.format(java.util.Locale.ROOT, "%02d", minute),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary

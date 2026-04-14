@@ -6,14 +6,11 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.db.entity.OccurrenceWithEventData
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
-import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.domain.model.AccountProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -165,13 +162,6 @@ class EventReader @Inject constructor(
      */
     suspend fun getCalendarById(calendarId: Long): Calendar? {
         return calendarsDao.getById(calendarId)
-    }
-
-    /**
-     * Get default calendar (for new events).
-     */
-    suspend fun getDefaultCalendar(): Calendar? {
-        return calendarsDao.getAnyDefaultCalendar()
     }
 
     /**

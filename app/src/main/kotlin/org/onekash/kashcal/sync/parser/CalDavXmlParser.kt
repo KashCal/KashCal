@@ -221,7 +221,7 @@ class CalDavXmlParser {
             var resourceTypeStatusOk = true  // Status for propstat containing resourcetype
             // RFC 4791 supported-calendar-component-set tracking
             var inSupportedComponentSet = false
-            var currentComponents = mutableSetOf<String>()
+            val currentComponents = mutableSetOf<String>()
 
             while (parser.eventType != XmlPullParser.END_DOCUMENT) {
                 when (parser.eventType) {
@@ -242,7 +242,7 @@ class CalDavXmlParser {
                                 currentPropstatHasResourceType = false
                                 currentPropstatStatus = null
                                 // Reset component tracking for this response
-                                currentComponents = mutableSetOf()
+                                currentComponents.clear()
                             }
                             "propstat" -> {
                                 inPropstat = true
@@ -294,7 +294,7 @@ class CalDavXmlParser {
                             "response" -> {
                                 // Use resourceTypeStatusOk for calendar inclusion (RFC 4918 multi-propstat support)
                                 if (isCalendar && currentHref != null && resourceTypeStatusOk) {
-                                    val href = currentHref!!
+                                    val href = currentHref
                                     val name = currentDisplayName ?: "Unnamed"
                                     calendars.add(
                                         CalDavQuirks.ParsedCalendar(
@@ -375,16 +375,16 @@ class CalDavXmlParser {
                     XmlPullParser.END_TAG -> {
                         if (parser.name == "response") {
                             if (currentHref != null && currentIcalData != null &&
-                                currentIcalData!!.contains("BEGIN:VCALENDAR")) {
+                                currentIcalData.contains("BEGIN:VCALENDAR")) {
                                 events.add(
                                     CalDavQuirks.ParsedEventData(
-                                        href = currentHref!!,
+                                        href = currentHref,
                                         etag = currentEtag,
-                                        icalData = currentIcalData!!
+                                        icalData = currentIcalData
                                     )
                                 )
                             } else if (currentHref != null && currentIcalData == null &&
-                                currentHref!!.endsWith(".ics")) {
+                                currentHref.endsWith(".ics")) {
                                 Log.w(TAG, "Response for ${currentHref} has no calendar-data " +
                                     "— server may not support calendar-data in calendar-query")
                             }
@@ -444,8 +444,8 @@ class CalDavXmlParser {
                     }
                     XmlPullParser.END_TAG -> {
                         if (parser.name == "response") {
-                            if (!isDeleted && currentHref != null && currentHref!!.endsWith(".ics")) {
-                                items.add(Pair(currentHref!!, currentEtag))
+                            if (!isDeleted && currentHref != null && currentHref.endsWith(".ics")) {
+                                items.add(Pair(currentHref, currentEtag))
                             }
                             inResponse = false
                         }
@@ -498,7 +498,7 @@ class CalDavXmlParser {
                     XmlPullParser.END_TAG -> {
                         if (parser.name == "response") {
                             if (isDeleted && currentHref != null) {
-                                deleted.add(currentHref!!)
+                                deleted.add(currentHref)
                             }
                             inResponse = false
                         }
@@ -563,9 +563,9 @@ class CalDavXmlParser {
                         if (parser.name == "response") {
                             if (currentHref != null) {
                                 if (isDeleted) {
-                                    deletedHrefs.add(currentHref!!)
-                                } else if (currentHref!!.endsWith(".ics")) {
-                                    changedItems.add(Pair(currentHref!!, currentEtag))
+                                    deletedHrefs.add(currentHref)
+                                } else if (currentHref.endsWith(".ics")) {
+                                    changedItems.add(Pair(currentHref, currentEtag))
                                 }
                             }
                             inResponse = false

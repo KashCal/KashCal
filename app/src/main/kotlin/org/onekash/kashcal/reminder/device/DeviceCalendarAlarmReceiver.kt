@@ -48,7 +48,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
         // Extract event data from extras
         val eventId = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_EVENT_ID, -1L)
         val occurrenceTs = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_OCCURRENCE_TS, -1L)
-        val title = intent.getStringExtra(DeviceCalendarReminderScheduler.EXTRA_TITLE) ?: ""
+        val title = intent.getStringExtra(DeviceCalendarReminderScheduler.EXTRA_TITLE).orEmpty()
         val location = intent.getStringExtra(DeviceCalendarReminderScheduler.EXTRA_LOCATION)
         val isAllDay = intent.getBooleanExtra(DeviceCalendarReminderScheduler.EXTRA_IS_ALL_DAY, false)
         val calendarColor = intent.getIntExtra(DeviceCalendarReminderScheduler.EXTRA_CALENDAR_COLOR, 0)

@@ -195,10 +195,8 @@ object ContactEventUtils {
         return description.substring(start, end).toIntOrNull()
     }
 
-    /**
-     * Generate RRULE for yearly recurrence (birthdays, anniversaries).
-     */
-    fun generateYearlyRRule(): String = "FREQ=YEARLY;INTERVAL=1"
+    /** RRULE for yearly recurrence (birthdays, anniversaries). */
+    const val YEARLY_RRULE = "FREQ=YEARLY;INTERVAL=1"
 
     /**
      * Calculate the timestamp for a date in a given year.

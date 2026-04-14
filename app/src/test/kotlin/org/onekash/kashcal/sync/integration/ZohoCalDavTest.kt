@@ -101,8 +101,7 @@ class ZohoCalDavTest {
             eventsDao = eventsDao,
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore,
-            syncSessionStore = syncSessionStore
+            dataStore = dataStore
         )
     }
 

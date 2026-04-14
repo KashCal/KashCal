@@ -135,7 +135,6 @@ private fun FullHeightDayCell(
     modifier: Modifier = Modifier
 ) {
     val eventCount = events?.size ?: 0
-    val cellAlpha = if (isInOutDate) 0.3f else 1f
 
     Column(
         modifier = modifier

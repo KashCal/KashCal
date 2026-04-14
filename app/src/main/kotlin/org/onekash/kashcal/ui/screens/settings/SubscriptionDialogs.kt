@@ -35,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -77,7 +76,7 @@ fun AddSubscriptionDialog(
     onDismiss: () -> Unit,
     onAdd: (url: String, name: String, color: Int) -> Unit
 ) {
-    val initialUrlValue = initialUrl ?: ""
+    val initialUrlValue = initialUrl.orEmpty()
     var url by remember { mutableStateOf(initialUrlValue) }
     var name by remember { mutableStateOf("") }
     var selectedColor by remember { mutableStateOf(SubscriptionColors.default) }

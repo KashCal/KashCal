@@ -512,15 +512,6 @@ class EventCoordinatorTest {
     }
 
     @Test
-    fun `getDefaultCalendar delegates to reader`() = runTest {
-        coEvery { eventReader.getDefaultCalendar() } returns localCalendar
-
-        val result = coordinator.getDefaultCalendar()
-
-        assertEquals(localCalendar, result)
-    }
-
-    @Test
     fun `searchEvents delegates to reader`() = runTest {
         val query = "meeting"
         val results = listOf(testEvent, recurringEvent)

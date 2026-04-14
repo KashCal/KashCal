@@ -6,9 +6,6 @@ import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.util.DateTimeUtils
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.util.Calendar
 
 private const val TAG = "DeviceEventMapper"
@@ -77,8 +74,8 @@ fun DeviceEvent.toFormState(
         selectedCalendarColor = displayColor,
         reminders = mappedReminders,
         isAllDay = isAllDay,
-        location = location ?: "",
-        description = description ?: "",
+        location = location.orEmpty(),
+        description = description.orEmpty(),
         rrule = rrule,
         timezone = timezone,
         deviceCalendarGroups = deviceCalendarGroups,

@@ -110,7 +110,7 @@ fun MonthWidgetContent(
             ) {
                 week.forEach { cell ->
                     val dayCode = MonthGrid.computeDayCodeForCell(cell, targetYear, targetMonth0)
-                    val events = monthEvents[dayCode] ?: emptyList()
+                    val events = monthEvents[dayCode].orEmpty()
                     val isToday = dayCode == todayDayCode
                     val isPast = dayCode < todayDayCode
 

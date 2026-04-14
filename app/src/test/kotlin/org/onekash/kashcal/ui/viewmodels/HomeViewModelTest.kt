@@ -1318,7 +1318,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `refreshSync when not configured pulses isSyncing for PullToRefreshBox`() = runTest {
+    fun `refreshSync when not configured does not pulse isSyncing`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -1326,15 +1326,12 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isSyncing)
 
         viewModel.refreshSync()
-        testScheduler.runCurrent()
-        assertTrue("isSyncing should be true during pulse", viewModel.uiState.value.isSyncing)
-
         advanceUntilIdle()
-        assertFalse("isSyncing should be false after pulse", viewModel.uiState.value.isSyncing)
+        assertFalse("isSyncing should stay false when not configured", viewModel.uiState.value.isSyncing)
     }
 
     @Test
-    fun `refreshSync when offline pulses isSyncing to dismiss indicator`() = runTest {
+    fun `refreshSync when offline does not pulse isSyncing`() = runTest {
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -1348,11 +1345,8 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isSyncing)
 
         viewModel.refreshSync()
-        testScheduler.runCurrent()
-        assertTrue("isSyncing should be true during pulse", viewModel.uiState.value.isSyncing)
-
         advanceUntilIdle()
-        assertFalse("isSyncing should be false after pulse", viewModel.uiState.value.isSyncing)
+        assertFalse("isSyncing should stay false when offline", viewModel.uiState.value.isSyncing)
     }
 
     // ==================== Sync Banner Tests (Context-Aware) ====================
@@ -2148,31 +2142,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(0L, viewModel.uiState.value.selectedDate)
-    }
-
-    @Test
-    fun `getDefaultCalendarId returns default from coordinator`() = runTest {
-        val defaultCalendar = testCalendars[0]
-        coEvery { eventCoordinator.getDefaultCalendar() } returns defaultCalendar
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val calendarId = viewModel.getDefaultCalendarId()
-
-        assertEquals(1L, calendarId)
-    }
-
-    @Test
-    fun `getDefaultCalendarId returns null when no default`() = runTest {
-        coEvery { eventCoordinator.getDefaultCalendar() } returns null
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val calendarId = viewModel.getDefaultCalendarId()
-
-        assertEquals(null, calendarId)
     }
 
     @Test
@@ -3233,28 +3202,105 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `setDefaultViewMode persists to DataStore`() = runTest {
+    fun `setViewMode MONTH syncs pager when selectedDate in different month`() = runTest {
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.setDefaultViewMode(ViewMode.AGENDA)
+        // Switch to THREE_DAYS first so we can switch back to MONTH
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        coVerify { dataStore.setDefaultCalendarView("agenda") }
+        // Select a date in June 2025 (different from current viewing month)
+        val juneDate = getTimestamp(2025, 5, 15, 10, 0) // month is 0-indexed: 5 = June
+        viewModel.selectDate(juneDate)
+        advanceUntilIdle()
+
+        // Clear any pending navigation from previous operations
+        viewModel.clearNavigateToMonth()
+        advanceUntilIdle()
+
+        // Switch back to MONTH — should sync pager to June 2025
+        viewModel.setViewMode(ViewMode.MONTH)
+        advanceUntilIdle()
+
+        assertEquals(2025, viewModel.uiState.value.viewingYear)
+        assertEquals(5, viewModel.uiState.value.viewingMonth)
+        assertEquals(2025 to 5, viewModel.uiState.value.pendingNavigateToMonth)
     }
 
     @Test
-    fun `showViewPicker and hideViewPicker toggle state`() = runTest {
+    fun `setViewMode MONTH no-op when selectedDate in same month`() = runTest {
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.showViewPicker)
+        val today = JavaCalendar.getInstance()
+        val currentYear = today.get(JavaCalendar.YEAR)
+        val currentMonth = today.get(JavaCalendar.MONTH)
 
-        viewModel.showViewPicker()
-        assertTrue(viewModel.uiState.value.showViewPicker)
+        // Explicitly select today so selectedDate matches current viewing month
+        viewModel.selectDate(today.timeInMillis)
+        advanceUntilIdle()
 
-        viewModel.hideViewPicker()
-        assertFalse(viewModel.uiState.value.showViewPicker)
+        // Switch to THREE_DAYS then back — selectedDate is still in current month
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
+        advanceUntilIdle()
+
+        // Clear any pending navigation
+        viewModel.clearNavigateToMonth()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.MONTH)
+        advanceUntilIdle()
+
+        // viewingYear/viewingMonth should still be current month
+        assertEquals(currentYear, viewModel.uiState.value.viewingYear)
+        assertEquals(currentMonth, viewModel.uiState.value.viewingMonth)
+        // No pending navigation needed — already on correct month
+        assertEquals(null, viewModel.uiState.value.pendingNavigateToMonth)
+    }
+
+    @Test
+    fun `setViewMode MONTH_FULL syncs pager when selectedDate in different month`() = runTest {
+        every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Switch to THREE_DAYS first
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
+        advanceUntilIdle()
+
+        // Select a date in March 2025
+        val marchDate = getTimestamp(2025, 2, 10, 10, 0) // month 0-indexed: 2 = March
+        viewModel.selectDate(marchDate)
+        advanceUntilIdle()
+
+        // Clear any pending navigation
+        viewModel.clearNavigateToMonth()
+        advanceUntilIdle()
+
+        // Switch to MONTH_FULL — should sync pager to March 2025
+        viewModel.setViewMode(ViewMode.MONTH_FULL)
+        advanceUntilIdle()
+
+        assertEquals(2025, viewModel.uiState.value.viewingYear)
+        assertEquals(2, viewModel.uiState.value.viewingMonth)
+        assertEquals(2025 to 2, viewModel.uiState.value.pendingNavigateToMonth)
+    }
+
+    @Test
+    fun `setViewMode persists to DataStore`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.AGENDA)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setDefaultCalendarView("agenda") }
     }
 
     @Test
@@ -3270,7 +3316,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
-        assertEquals(ViewMode.AGENDA, viewModel.uiState.value.defaultViewMode)
     }
 
     // ==================== Occurrence Extension Tests ====================

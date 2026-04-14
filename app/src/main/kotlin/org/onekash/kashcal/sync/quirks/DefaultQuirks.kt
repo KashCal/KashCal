@@ -118,7 +118,7 @@ class DefaultQuirks(
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
         val hrefLower = href.lowercase()
-        val nameLower = displayName?.lowercase() ?: ""
+        val nameLower = displayName?.lowercase().orEmpty()
 
         return hrefLower.contains("inbox") ||
             hrefLower.contains("outbox") ||
@@ -132,6 +132,7 @@ class DefaultQuirks(
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.timeInMillis = epochMillis
         return String.format(
+            java.util.Locale.ROOT,
             "%04d%02d%02dT000000Z",
             cal.get(Calendar.YEAR),
             cal.get(Calendar.MONTH) + 1,

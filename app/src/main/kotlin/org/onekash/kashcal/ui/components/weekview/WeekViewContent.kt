@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -386,7 +384,7 @@ private fun UnifiedTimeGrid(
                                 Row(modifier = Modifier.fillMaxSize()) {
                                     for (dayOffset in 0 until 7) {
                                         val date = weekStart.plusDays(dayOffset.toLong())
-                                        val dayEvents = normalEventsByDate[date] ?: emptyList()
+                                        val dayEvents = normalEventsByDate[date].orEmpty()
 
                                         DayColumn(
                                             date = date,
@@ -434,7 +432,7 @@ private fun UnifiedTimeGrid(
                                 key = { page -> "grid_$page" }
                             ) { page ->
                                 val date = WeekViewUtils.pageToDate(page)
-                                val dayEvents = normalEventsByDate[date] ?: emptyList()
+                                val dayEvents = normalEventsByDate[date].orEmpty()
 
                                 DayColumn(
                                     date = date,
@@ -628,7 +626,7 @@ private fun AllDayEventsPagerRow(
         // (No HorizontalPager to avoid gesture conflicts with main time grid)
         Row(modifier = Modifier.weight(1f)) {
             visibleDates.forEach { date ->
-                val dayEvents = allDayEventsByDate[date] ?: emptyList()
+                val dayEvents = allDayEventsByDate[date].orEmpty()
 
                 CompactEventCell(
                     events = dayEvents,
@@ -689,7 +687,7 @@ private fun OverflowEventsPagerRow(
         // (No HorizontalPager to avoid gesture conflicts with main time grid)
         Row(modifier = Modifier.weight(1f)) {
             visibleDates.forEach { date ->
-                val dayEvents = overflowEventsByDate[date] ?: emptyList()
+                val dayEvents = overflowEventsByDate[date].orEmpty()
 
                 CompactEventCell(
                     events = dayEvents,
@@ -1001,4 +999,4 @@ fun EmptyWeekView(
     }
 }
 
-private const val DEFAULT_EVENT_COLOR = 0xFF6200EE.toInt()
+

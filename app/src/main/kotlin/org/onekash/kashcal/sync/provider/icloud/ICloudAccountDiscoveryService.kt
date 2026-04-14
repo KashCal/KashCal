@@ -257,7 +257,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
             is java.net.ConnectException ->
                 "Could not connect to iCloud. Please check your internet connection."
             else -> {
-                val message = e.message?.lowercase() ?: ""
+                val message = e.message?.lowercase().orEmpty()
                 when {
                     message.contains("timeout") ->
                         "Connection timed out. Please try again."
@@ -320,7 +320,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
         try {
             // Re-discover home sets from principal (handles added/removed home sets)
             val calendarHomeUrls = if (account.principalUrl != null) {
-                val homeResult = client.discoverCalendarHome(account.principalUrl!!)
+                val homeResult = client.discoverCalendarHome(account.principalUrl)
                 if (homeResult.isSuccess()) {
                     (homeResult as CalDavResult.Success).data.map { url ->
                         ICloudUrlNormalizer.normalize(url) ?: url
@@ -465,7 +465,7 @@ class ICloudAccountDiscoveryService @Inject constructor(
                     Color.parseColor("#$cleanColor")
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Log.w(TAG, "Could not parse color: $colorString, using default")
             DEFAULT_COLORS[index % DEFAULT_COLORS.size]
         }

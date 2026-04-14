@@ -107,17 +107,17 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     results.add(
                         DeviceCalendar(
                             id = cursor.getLong(0),
-                            displayName = cursor.getString(1) ?: "",
+                            displayName = cursor.getString(1).orEmpty(),
                             color = cursor.getInt(2),
-                            accountName = cursor.getString(3) ?: "",
-                            accountType = cursor.getString(4) ?: "",
+                            accountName = cursor.getString(3).orEmpty(),
+                            accountType = cursor.getString(4).orEmpty(),
                             visible = cursor.getInt(5) == 1,
                             accessLevel = cursor.getInt(6)
                         )
                     )
                 }
                 results
-            } ?: emptyList()
+            }.orEmpty()
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
             emptyList()
@@ -146,7 +146,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
-                ?: emptyList()
+                .orEmpty()
 
             // Batch fetch reminders to avoid N+1 queries
             populateReminders(instances)
@@ -197,9 +197,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 DeviceCalendarInstance(
                     instanceId = cursor.getLong(COL_ID),
                     eventId = cursor.getLong(COL_EVENT_ID),
-                    title = cursor.getString(COL_TITLE) ?: "",
-                    description = cursor.getString(COL_DESCRIPTION) ?: "",
-                    location = cursor.getString(COL_LOCATION) ?: "",
+                    title = cursor.getString(COL_TITLE).orEmpty(),
+                    description = cursor.getString(COL_DESCRIPTION).orEmpty(),
+                    location = cursor.getString(COL_LOCATION).orEmpty(),
                     startTs = beginMs,
                     endTs = inclusiveEndMs,
                     startDay = DateTimeUtils.eventTsToDayCode(beginMs, isAllDay),
@@ -209,7 +209,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     rrule = rruleString,
                     reminders = emptyList(), // Populated by batch query after
                     calendarId = calendarId,
-                    calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME) ?: "",
+                    calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME).orEmpty(),
                     displayColor = cursor.getInt(COL_DISPLAY_COLOR),
                     status = status,
                     availability = cursor.getInt(COL_AVAILABILITY),
@@ -249,7 +249,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val instances = contentResolver.query(
                 builder.build(), INSTANCES_PROJECTION, selection, null, SORT_ORDER
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
-                ?: emptyList()
+                .orEmpty()
 
             // Batch fetch reminders to avoid N+1 queries
             populateReminders(instances)
@@ -272,7 +272,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         val remindersMap = getRemindersForEvents(eventIds)
 
         return instances.map { instance ->
-            val reminders = remindersMap[instance.eventId] ?: emptyList()
+            val reminders = remindersMap[instance.eventId].orEmpty()
             instance.copy(reminders = reminders)
         }
     }
@@ -690,7 +690,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         try {
             contentResolver.query(
                 ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
-                EVENTS_PROJECTION,
+                eventsProjection,
                 null, null, null
             )?.use { cursor ->
                 if (cursor.moveToFirst()) {
@@ -720,7 +720,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     results.add(cursor.getInt(0))
                 }
                 results
-            } ?: emptyList()
+            }.orEmpty()
         } catch (e: Exception) {
             Log.w(TAG, "Error reading reminders", e)
             emptyList()
@@ -863,7 +863,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     val eventId = cursor.getLong(COL_EVENT_ID)
                     val beginMs = cursor.getLong(COL_BEGIN)
                     val isAllDay = cursor.getInt(COL_ALL_DAY) == 1
-                    val title = cursor.getString(COL_TITLE) ?: ""
+                    val title = cursor.getString(COL_TITLE).orEmpty()
                     val location = cursor.getString(COL_LOCATION)
                     val displayColor = cursor.getInt(COL_DISPLAY_COLOR)
 
@@ -985,7 +985,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
     // ==================== Events Table Helpers ====================
 
-    private val EVENTS_PROJECTION = arrayOf(
+    private val eventsProjection = arrayOf(
         CalendarContract.Events._ID,                    // 0
         CalendarContract.Events.CALENDAR_ID,            // 1
         CalendarContract.Events.TITLE,                  // 2
@@ -1016,7 +1016,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         return DeviceEvent(
             id = cursor.getLong(0),
             calendarId = cursor.getLong(1),
-            title = cursor.getString(2) ?: "",
+            title = cursor.getString(2).orEmpty(),
             description = cursor.getString(3),
             location = cursor.getString(4),
             startTs = cursor.getLong(5),

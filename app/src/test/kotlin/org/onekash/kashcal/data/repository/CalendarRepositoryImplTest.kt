@@ -146,19 +146,6 @@ class CalendarRepositoryImplTest {
         assertTrue(result.all { it.accountId == 5L })
     }
 
-    @Test
-    fun `getDefaultCalendar returns any default calendar`() = runBlocking {
-        // Setup
-        val defaultCal = testCalendar(id = 1L, displayName = "Default", isDefault = true)
-        coEvery { calendarsDao.getAnyDefaultCalendar() } returns defaultCal
-
-        // Execute
-        val result = calendarRepository.getDefaultCalendar()
-
-        // Verify
-        assertEquals(defaultCal, result)
-    }
-
     // ========== Write Operation Tests ==========
 
     @Test
@@ -233,15 +220,6 @@ class CalendarRepositoryImplTest {
         coVerify { calendarsDao.updateCtag(1L, "ctag-789") }
     }
 
-    @Test
-    fun `setDefaultCalendar sets correct calendar as default`() = runBlocking {
-        // Execute
-        calendarRepository.setDefaultCalendar(5L, 10L)
-
-        // Verify
-        coVerify { calendarsDao.setDefaultCalendar(5L, 10L) }
-    }
-
     // ========== Provider Filter Tests ==========
 
     @Test
@@ -272,18 +250,6 @@ class CalendarRepositoryImplTest {
     }
 
     @Test
-    fun `getDefaultCalendar returns null when no default exists`() = runBlocking {
-        // Setup
-        coEvery { calendarsDao.getAnyDefaultCalendar() } returns null
-
-        // Execute
-        val result = calendarRepository.getDefaultCalendar()
-
-        // Verify
-        assertNull(result)
-    }
-
-    @Test
     fun `deleteCalendar on non-existent ID is no-op`() = runBlocking {
         // Setup - DAO delete silently succeeds even if ID doesn't exist
         coEvery { calendarsDao.deleteById(999L) } just runs
@@ -305,18 +271,6 @@ class CalendarRepositoryImplTest {
 
         // Verify
         assertTrue(result.isEmpty())
-    }
-
-    @Test
-    fun `getDefaultCalendarForAccount returns null when account has no default`() = runBlocking {
-        // Setup
-        coEvery { calendarsDao.getDefaultCalendar(5L) } returns null
-
-        // Execute
-        val result = calendarRepository.getDefaultCalendarForAccount(5L)
-
-        // Verify
-        assertNull(result)
     }
 
     @Test

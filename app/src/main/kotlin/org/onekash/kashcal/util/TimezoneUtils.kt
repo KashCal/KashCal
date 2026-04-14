@@ -2,8 +2,6 @@ package org.onekash.kashcal.util
 
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.TextStyle
 import java.util.Locale
 
 /**
@@ -164,7 +162,7 @@ object TimezoneUtils {
             // Use format pattern to get proper timezone abbreviation
             val formatter = java.time.format.DateTimeFormatter.ofPattern("zzz", Locale.US)
             zdt.format(formatter)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Fallback for invalid zone IDs
             zoneId.substringAfterLast("/").take(3).uppercase()
         }
@@ -204,7 +202,7 @@ object TimezoneUtils {
                     "$sign${absHours}:${absMinutes.toString().padStart(2, '0')}"
                 }
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             "?"
         }
     }
@@ -258,7 +256,7 @@ object TimezoneUtils {
         return try {
             ZoneId.of(zoneId)
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }
@@ -284,7 +282,7 @@ object TimezoneUtils {
             } else {
                 tzid  // Fallback to original
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             tzid  // Fallback to original
         }
     }
@@ -364,7 +362,7 @@ object TimezoneUtils {
                         if (countryCode != null && countryCode != "001") {
                             java.util.Locale("", countryCode).displayCountry
                         } else null
-                    } catch (e: Exception) { null }
+                    } catch (_: Exception) { null }
 
                     TimezoneInfo(
                         zoneId = id,
@@ -373,7 +371,7 @@ object TimezoneUtils {
                         offsetFromDevice = offsetStr,
                         countryName = countryName
                     ) to offset.totalSeconds
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     null
                 }
             }

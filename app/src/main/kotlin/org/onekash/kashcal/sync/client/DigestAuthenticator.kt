@@ -173,9 +173,9 @@ class DigestAuthenticator(
      */
     internal fun buildDigestHeader(request: Request, challenge: DigestChallenge): String {
         val digestUri = request.url.encodedPath +
-            (request.url.encodedQuery?.let { "?$it" } ?: "")
+            (request.url.encodedQuery?.let { "?$it" }.orEmpty())
         val cnonce = generateCnonce()
-        val nc = String.format("%08x", nonceCount)
+        val nc = String.format(java.util.Locale.ROOT, "%08x", nonceCount)
 
         val ha1 = hash("$username:${challenge.realm}:$password", challenge.hashAlgorithm)
         val ha2 = hash("${request.method}:$digestUri", challenge.hashAlgorithm)

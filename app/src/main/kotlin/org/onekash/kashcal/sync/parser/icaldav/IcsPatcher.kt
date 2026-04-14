@@ -55,7 +55,7 @@ object IcsPatcher {
             ?: return generateFresh(event)
 
         val zone = event.timezone?.let {
-            try { ZoneId.of(it) } catch (e: Exception) { null }
+            try { ZoneId.of(it) } catch (_: Exception) { null }
         }
 
         // Merge user's reminder edits with original alarms
@@ -82,7 +82,7 @@ object IcsPatcher {
             geo = formatGeo(event.geoLat, event.geoLon),
             color = event.color?.let { formatColorFromArgb(it) },
             url = event.url,
-            categories = event.categories ?: emptyList()
+            categories = event.categories.orEmpty()
             // The following are PRESERVED from original:
             // attendees, organizer, rawProperties, rdates
         )
@@ -102,7 +102,7 @@ object IcsPatcher {
      */
     fun generateFresh(event: Event): String {
         val zone = event.timezone?.let {
-            try { ZoneId.of(it) } catch (e: Exception) { null }
+            try { ZoneId.of(it) } catch (_: Exception) { null }
         }
 
         // Convert reminder strings to ICalAlarms
@@ -118,10 +118,10 @@ object IcsPatcher {
                         summary = null
                     )
                 } else null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
-        } ?: emptyList()
+        }.orEmpty()
 
         // Create organizer if email is present
         val organizer = event.organizerEmail?.let { email ->
@@ -150,7 +150,7 @@ object IcsPatcher {
             classification = Classification.fromString(event.classification),
             recurrenceId = null,
             alarms = alarms,
-            categories = event.categories ?: emptyList(),
+            categories = event.categories.orEmpty(),
             organizer = organizer,
             attendees = emptyList(),
             color = event.color?.let { formatColorFromArgb(it) },
@@ -161,7 +161,7 @@ object IcsPatcher {
             url = event.url,
             priority = event.priority,
             geo = formatGeo(event.geoLat, event.geoLon),
-            rawProperties = event.extraProperties ?: emptyMap()
+            rawProperties = event.extraProperties.orEmpty()
         )
 
         return generator.generate(icalEvent, method = null, includeVTimezone = true)
@@ -242,7 +242,7 @@ object IcsPatcher {
      */
     private fun generateException(master: Event, exception: Event): String {
         val zone = exception.timezone?.let {
-            try { ZoneId.of(it) } catch (e: Exception) { null }
+            try { ZoneId.of(it) } catch (_: Exception) { null }
         }
 
         // Convert reminder strings to ICalAlarms
@@ -258,10 +258,10 @@ object IcsPatcher {
                         summary = null
                     )
                 } else null
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
-        } ?: emptyList()
+        }.orEmpty()
 
         // Build RECURRENCE-ID from originalInstanceTime
         val recurrenceId = exception.originalInstanceTime?.let { instanceTime ->
@@ -286,7 +286,7 @@ object IcsPatcher {
             classification = Classification.fromString(exception.classification),
             recurrenceId = recurrenceId,
             alarms = alarms,
-            categories = exception.categories ?: emptyList(),
+            categories = exception.categories.orEmpty(),
             organizer = exception.organizerEmail?.let { Organizer(it, exception.organizerName, null) },
             attendees = emptyList(),
             color = exception.color?.let { formatColorFromArgb(it) },
@@ -297,7 +297,7 @@ object IcsPatcher {
             url = exception.url,
             priority = exception.priority,
             geo = formatGeo(exception.geoLat, exception.geoLon),
-            rawProperties = exception.extraProperties ?: emptyMap()
+            rawProperties = exception.extraProperties.orEmpty()
         )
 
         return generator.generate(icalEvent, method = null, includeVTimezone = false)
@@ -348,7 +348,7 @@ object IcsPatcher {
         for (reminderStr in userReminders) {
             val userDuration = try {
                 DurationUtils.parse(reminderStr)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
 
@@ -440,6 +440,6 @@ object IcsPatcher {
      * @return CSS hex color string (e.g., "#FF5733")
      */
     private fun formatColorFromArgb(argb: Int): String {
-        return String.format("#%06X", argb and 0xFFFFFF)
+        return String.format(java.util.Locale.ROOT, "#%06X", argb and 0xFFFFFF)
     }
 }

@@ -71,7 +71,7 @@ class IcsFileReader @Inject constructor(
                     cursor.getString(nameIndex)
                 } else null
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }

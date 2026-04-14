@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -22,7 +23,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -35,7 +35,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import org.onekash.kashcal.ui.components.ViewPickerButton
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -70,9 +71,7 @@ import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.ui.util.MonthPagerUtils
 import androidx.compose.foundation.pager.PagerState
-import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
 import org.onekash.kashcal.domain.EmojiMatcher
-import org.onekash.kashcal.data.db.entity.Calendar
 import android.content.Intent
 import android.net.Uri
 import org.onekash.kashcal.data.db.entity.Event
@@ -82,7 +81,6 @@ import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
-import org.onekash.kashcal.ui.components.formatDisplayEventTimeDisplay
 import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
 import org.onekash.kashcal.ui.components.SyncBanner
@@ -97,13 +95,9 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 
 import java.util.*
 import java.util.Calendar as JavaCalendar
-
-private const val TAG = "HomeScreen"
 
 /**
  * Main calendar screen for KashCal.
@@ -150,11 +144,8 @@ fun HomeScreen(
     onFilterClick: () -> Unit = {},
     // Info callbacks
     onInfoClick: () -> Unit = {},
-    // View picker callbacks
-    onViewPickerClick: () -> Unit = {},
-    onViewPickerDismiss: () -> Unit = {},
+    // View picker callback
     onViewSelect: (ViewMode) -> Unit = {},
-    onSetDefaultView: (ViewMode) -> Unit = {},
     // Year overlay callbacks
     onMonthHeaderClick: () -> Unit = {},
     onYearOverlayDismiss: () -> Unit = {},
@@ -197,13 +188,9 @@ fun HomeScreen(
         DateTimeUtils.getTimePattern(uiState.timeFormat, is24HourDevice)
     }
 
-    // Handle system back button - close overlays before returning to default view
-    // Priority: Search (if active) > Non-default view > Default (close app)
-    BackHandler(enabled = uiState.isSearchActive || uiState.viewMode != uiState.defaultViewMode) {
-        when {
-            uiState.isSearchActive -> onSearchClose()
-            uiState.viewMode != uiState.defaultViewMode -> onViewSelect(uiState.defaultViewMode)
-        }
+    // Handle system back button - close search overlay
+    BackHandler(enabled = uiState.isSearchActive) {
+        onSearchClose()
     }
 
     // Refresh key for today-dependent values - increments on app resume
@@ -289,7 +276,7 @@ fun HomeScreen(
         uiState.pendingNavigateToMonth?.let { (targetYear, targetMonth) ->
             val monthsDiff = (targetYear - todayYear) * 12 + (targetMonth - todayMonth)
             val targetPage = initialPage + monthsDiff
-            pagerState.animateScrollToPage(targetPage)
+            pagerState.scrollToPage(targetPage)
             onClearNavigateToMonth()
         }
     }
@@ -323,7 +310,7 @@ fun HomeScreen(
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
                 onSearchQueryChange = onSearchQueryChange,
-                onViewPickerClick = onViewPickerClick,
+                onViewSelect = onViewSelect,
                 onGoToToday = onGoToToday,
                 onSettingsClick = onSettingsClick,
                 onInfoClick = onInfoClick
@@ -381,10 +368,11 @@ fun HomeScreen(
                                 pendingNavigateToToday = uiState.pendingNavigateToToday,
                                 onNavigateToTodayConsumed = onClearNavigateToToday,
                                 onMonthClick = { year, month ->
-                                    // Switch to MONTH view at selected month
-                                    onViewSelect(ViewMode.MONTH)
+                                    // Update selectedDate BEFORE switching view so that
+                                    // syncPagerToSelectedDate() navigates to the correct month
                                     val cal = JavaCalendar.getInstance().apply { set(year, month, 1) }
                                     onDateSelected(cal.timeInMillis)
+                                    onViewSelect(ViewMode.MONTH)
                                 },
                                 onYearChanged = onEnsureDotsForYear,
                                 onBackToMonth = { onViewSelect(ViewMode.MONTH) }
@@ -531,6 +519,27 @@ fun HomeScreen(
                             }
                         }
                         else -> {
+                            // Prevent one-frame flicker on view transition:
+                            // When switching from THREE_DAYS/WEEK to MONTH, the pager
+                            // re-enters composition at its saved (stale) page. The
+                            // LaunchedEffect that scrolls to the correct page fires
+                            // AFTER the first draw. Hide content until the scroll lands.
+                            // Only active on fresh entry (isFirstComposition resets when
+                            // the else branch is disposed); in-view navigation (YearOverlay,
+                            // Today) is unaffected because isFirstComposition is already false.
+                            var isFirstComposition by remember { mutableStateOf(true) }
+                            LaunchedEffect(uiState.pendingNavigateToMonth) {
+                                if (uiState.pendingNavigateToMonth == null) {
+                                    isFirstComposition = false
+                                }
+                            }
+                            val hideForTransition = isFirstComposition && uiState.pendingNavigateToMonth != null
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .alpha(if (hideForTransition) 0f else 1f)
+                            ) {
                             // Month view with pager
                             // CRITICAL: userScrollEnabled must be true for month view
                             HorizontalPager(
@@ -604,6 +613,7 @@ fun HomeScreen(
                                 onLoadEventsForRange = onLoadEventsForDayPagerRange,
                                 shouldRefreshCache = shouldRefreshDayPagerCache
                             )
+                            } // Column wrapper for transition alpha
                         }
                     }
                 }
@@ -647,18 +657,6 @@ fun HomeScreen(
         )
     }
 
-    // View picker bottom sheet
-    val viewPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    if (uiState.showViewPicker) {
-        org.onekash.kashcal.ui.components.ViewPickerSheet(
-            sheetState = viewPickerSheetState,
-            currentView = uiState.viewMode,
-            defaultView = uiState.defaultViewMode,
-            onViewSelect = onViewSelect,
-            onSetDefault = onSetDefaultView,
-            onDismiss = onViewPickerDismiss
-        )
-    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -671,7 +669,7 @@ private fun HomeTopAppBar(
     onSearchClick: () -> Unit,
     onSearchClose: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onViewPickerClick: () -> Unit,
+    onViewSelect: (ViewMode) -> Unit,
     onGoToToday: () -> Unit,
     onSettingsClick: () -> Unit,
     onInfoClick: () -> Unit
@@ -685,28 +683,50 @@ private fun HomeTopAppBar(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onSearchClose) {
-                            Icon(Icons.Default.Close, contentDescription = "Close", modifier = Modifier.size(28.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(24.dp))
                         }
                         BasicTextField(
                             value = uiState.searchQuery,
                             onValueChange = onSearchQueryChange,
                             modifier = Modifier.weight(1f).focusRequester(searchFocusRequester),
                             singleLine = true,
-                            textStyle = TextStyle(fontSize = 18.sp, color = MaterialTheme.colorScheme.onSurface),
+                            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
                             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                             decorationBox = { innerTextField ->
-                                Box(
+                                Row(
                                     modifier = Modifier
-                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
-                                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                                        .background(MaterialTheme.colorScheme.surfaceContainerHigh, RoundedCornerShape(28.dp))
+                                        .defaultMinSize(minHeight = 48.dp)
+                                        .padding(horizontal = 16.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (uiState.searchQuery.isEmpty()) {
-                                        Text("Search events...", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Box(modifier = Modifier.weight(1f)) {
+                                        if (uiState.searchQuery.isEmpty()) {
+                                            Text(
+                                                "Search events...",
+                                                style = MaterialTheme.typography.bodyLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        innerTextField()
                                     }
-                                    innerTextField()
+                                    if (uiState.searchQuery.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = { onSearchQueryChange("") },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Clear",
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
             )
@@ -723,9 +743,10 @@ private fun HomeTopAppBar(
                 },
                 navigationIcon = {
                     Row {
-                        IconButton(onClick = onViewPickerClick) {
-                            Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = "Calendar view", modifier = Modifier.size(28.dp))
-                        }
+                        ViewPickerButton(
+                            currentView = uiState.viewMode,
+                            onViewSelect = onViewSelect
+                        )
                         IconButton(onClick = onSearchClick) {
                             Icon(Icons.Default.Search, contentDescription = "Search", modifier = Modifier.size(28.dp))
                         }
@@ -841,8 +862,8 @@ private fun CalendarGrid(
     val monthGrid = remember(year, month, firstDayOfWeekPref) {
         MonthGrid.compute(year, month, firstDayOfWeekPref)
     }
-    val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
-    val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
+    val monthKey = remember(year, month) { String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1) }
+    val monthDots = remember(eventDots, monthKey) { eventDots[monthKey].orEmpty() }
 
     val today = remember(refreshKey) { JavaCalendar.getInstance() }
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
@@ -901,7 +922,7 @@ private fun CalendarGrid(
                                 month == today.get(JavaCalendar.MONTH) &&
                                 year == today.get(JavaCalendar.YEAR)
                             val isSelected = selectedInThisMonth && day == selectedCal.get(JavaCalendar.DAY_OF_MONTH)
-                            val dayColors = monthDots[day] ?: emptyList()
+                            val dayColors = monthDots[day].orEmpty()
 
                             Box(
                                 modifier = Modifier
@@ -976,9 +997,16 @@ private fun ColumnScope.DayEventsPager(
     // Calculate stable today reference
     val todayMs = remember { DayPagerUtils.getTodayMidnightMs() }
 
-    // Day pager state
+    // Day pager state — start at selectedDate (not today) so that fresh
+    // creation after search close or view switch doesn't trigger SYNC 1
+    // scrolling the month pager to today's month
+    val selectedPage = if (uiState.selectedDate != 0L) {
+        DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
+    } else {
+        DayPagerUtils.INITIAL_PAGE
+    }
     val dayPagerState = rememberPagerState(
-        initialPage = DayPagerUtils.INITIAL_PAGE
+        initialPage = selectedPage
     ) { DayPagerUtils.TOTAL_PAGES }
 
     val coroutineScope = rememberCoroutineScope()
@@ -1004,7 +1032,7 @@ private fun ColumnScope.DayEventsPager(
 
         if (newYear != uiState.viewingYear || newMonth != uiState.viewingMonth) {
             val monthsDiff = (newYear - todayYear) * 12 + (newMonth - todayMonth)
-            monthPagerState.animateScrollToPage(monthPagerInitialPage + monthsDiff)
+            monthPagerState.scrollToPage(monthPagerInitialPage + monthsDiff)
         }
     }
 

@@ -13,7 +13,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
-import java.util.Locale
 
 /**
  * Today's Agenda widget showing events for the current day.

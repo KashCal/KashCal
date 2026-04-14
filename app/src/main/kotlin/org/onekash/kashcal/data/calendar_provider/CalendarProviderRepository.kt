@@ -1,6 +1,5 @@
 package org.onekash.kashcal.data.calendar_provider
 
-import org.onekash.kashcal.error.CalendarError
 
 /**
  * Repository interface for device calendars from Android's CalendarProvider.

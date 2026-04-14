@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
-import java.util.Calendar
 
 /**
  * DataStore wrapper for KashCal preferences.
@@ -305,7 +304,7 @@ class KashCalDataStore(
     }
 
     val quickAddEnabled: Flow<Boolean>
-        get() = getPreference(PreferencesKeys.QUICK_ADD_ENABLED, true)
+        get() = getPreference(PreferencesKeys.QUICK_ADD_ENABLED, false)
 
     suspend fun setQuickAddEnabled(enabled: Boolean) {
         setPreference(PreferencesKeys.QUICK_ADD_ENABLED, enabled)
@@ -579,7 +578,7 @@ class KashCalDataStore(
      * Returns 0 if calendar has no tracked failures.
      */
     suspend fun getParseFailureRetryCount(calendarId: Long): Int {
-        val json = dataStore.data.first()[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+        val json = dataStore.data.first()[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS].orEmpty()
         return parseRetryCountsJson(json)[calendarId] ?: 0
     }
 
@@ -590,7 +589,7 @@ class KashCalDataStore(
     suspend fun incrementParseFailureRetry(calendarId: Long): Int {
         var newCount = 0
         dataStore.edit { preferences ->
-            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS].orEmpty()
             val counts = parseRetryCountsJson(json).toMutableMap()
             newCount = (counts[calendarId] ?: 0) + 1
             counts[calendarId] = newCount
@@ -605,7 +604,7 @@ class KashCalDataStore(
      */
     suspend fun resetParseFailureRetry(calendarId: Long) {
         dataStore.edit { preferences ->
-            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS] ?: ""
+            val json = preferences[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS].orEmpty()
             val counts = parseRetryCountsJson(json).toMutableMap()
             counts.remove(calendarId)
             if (counts.isEmpty()) {
@@ -638,7 +637,7 @@ class KashCalDataStore(
                     val (id, count) = entry.split(":")
                     id.toLong() to count.toInt()
                 }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyMap()
         }
     }

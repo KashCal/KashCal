@@ -62,7 +62,7 @@ class LocalCalendarInitializer @Inject constructor(
             }
 
             // Check if local calendar exists
-            var localCalendar = calendarsDao.getByCaldavUrl(LOCAL_CALENDAR_URL)
+            val localCalendar = calendarsDao.getByCaldavUrl(LOCAL_CALENDAR_URL)
 
             if (localCalendar == null) {
                 // Create local calendar

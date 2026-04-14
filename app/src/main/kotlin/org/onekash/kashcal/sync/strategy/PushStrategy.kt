@@ -407,12 +407,12 @@ class PushStrategy @Inject constructor(
             return processCreate(operation, eventsCache, emptyMap(), clientToUse)
         }
 
-        val caldavUrl = event.caldavUrl!! // Guaranteed non-null (guard at line 384)
+        val caldavUrl = event.caldavUrl // Guaranteed non-null (guard above)
 
         // Recover etag via PROPFIND if null or empty (server may have omitted <getetag> during pull)
         val effectiveEtag: String
         if (!event.etag.isNullOrEmpty()) {
-            effectiveEtag = event.etag!!
+            effectiveEtag = event.etag
         } else {
             // Same recovery pattern as 412 conflict retry below.
             Log.w(TAG, "Event has no etag, fetching via PROPFIND for ${filenameOf(caldavUrl)}")
@@ -550,7 +550,7 @@ class PushStrategy @Inject constructor(
         }
 
         // Delete from server
-        val etag = event?.etag ?: ""
+        val etag = event?.etag.orEmpty()
         Log.d(TAG, "Deleting event from server: ${event?.title ?: "unknown"} with etag='$etag'")
 
         val result = clientToUse.deleteEvent(caldavUrl, etag)

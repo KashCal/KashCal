@@ -28,7 +28,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,19 +45,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -69,8 +64,6 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.util.CalendarIntentData
-import java.text.SimpleDateFormat
-import java.util.Locale
 import java.util.Calendar as JavaCalendar
 import org.onekash.kashcal.util.DateTimeUtils
 import android.text.format.DateFormat
@@ -86,12 +79,6 @@ import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimePickerCard
 import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
 import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
-import org.onekash.kashcal.ui.components.pickers.isMultiDay
-import org.onekash.kashcal.domain.rrule.RruleBuilder
-import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
-import org.onekash.kashcal.domain.rrule.FrequencyOption
-import org.onekash.kashcal.domain.rrule.MonthlyPattern
-import org.onekash.kashcal.domain.rrule.EndCondition
 
 private const val TAG = "EventFormSheet"
 
@@ -175,7 +162,7 @@ internal fun resolveDefaultCalendar(
                 ResolvedCalendar(cal.id, cal.displayName, cal.color, isDevice = false)
             } else {
                 val fallback = writableCalendars.firstOrNull()
-                ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+                ResolvedCalendar(fallback?.id, fallback?.displayName.orEmpty(), fallback?.color, isDevice = false)
             }
         }
         is DefaultCalendar.Device -> {
@@ -188,12 +175,12 @@ internal fun resolveDefaultCalendar(
                 ResolvedCalendar(deviceCal.id, deviceCal.displayName, deviceCal.color, isDevice = true)
             } else {
                 val fallback = writableCalendars.firstOrNull()
-                ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+                ResolvedCalendar(fallback?.id, fallback?.displayName.orEmpty(), fallback?.color, isDevice = false)
             }
         }
         null -> {
             val fallback = writableCalendars.firstOrNull()
-            ResolvedCalendar(fallback?.id, fallback?.displayName ?: "", fallback?.color, isDevice = false)
+            ResolvedCalendar(fallback?.id, fallback?.displayName.orEmpty(), fallback?.color, isDevice = false)
         }
     }
 }
@@ -333,7 +320,7 @@ fun EventFormSheet(
             if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
         }
 
-        val (defaultCalId, defaultCalName, defaultCalColor, defaultIsDevice) =
+        val resolvedCal =
             resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
 
         var newState = state.copy(
@@ -419,12 +406,12 @@ fun EventFormSheet(
                     endHour = endCal.get(JavaCalendar.HOUR_OF_DAY),
                     endMinute = endCal.get(JavaCalendar.MINUTE),
                     selectedCalendarId = event.calendarId,
-                    selectedCalendarName = eventCalendar?.displayName ?: "",
+                    selectedCalendarName = eventCalendar?.displayName.orEmpty(),
                     selectedCalendarColor = eventCalendar?.color,
                     isAllDay = event.isAllDay,
                     timezone = event.timezone,
-                    location = event.location ?: "",
-                    description = event.description ?: "",
+                    location = event.location.orEmpty(),
+                    description = event.description.orEmpty(),
                     rrule = effectiveRrule,
                     reminders = parsedReminders,
                     truncatedReminderCount = truncatedCount,
@@ -442,10 +429,10 @@ fun EventFormSheet(
             val computedEndMinute = if (endTotalMinutes >= 24 * 60) 59 else endTotalMinutes % 60
 
             newState = newState.copy(
-                selectedCalendarId = defaultCalId,
-                selectedCalendarName = defaultCalName,
-                selectedCalendarColor = defaultCalColor,
-                isDeviceCalendar = defaultIsDevice,
+                selectedCalendarId = resolvedCal.id,
+                selectedCalendarName = resolvedCal.name,
+                selectedCalendarColor = resolvedCal.color,
+                isDeviceCalendar = resolvedCal.isDevice,
                 reminders = if (defaultReminderTimed == REMINDER_OFF) emptyList() else listOf(defaultReminderTimed),
                 endHour = computedEndHour,
                 endMinute = computedEndMinute
@@ -490,14 +477,14 @@ fun EventFormSheet(
 
                 // Use source calendar if writable, otherwise fall back to resolved default
                 val sourceCalendar = writableCalendars.find { it.id == duplicateFrom.calendarId }
-                val sourceCalId = sourceCalendar?.id ?: defaultCalId
-                val sourceCalName = sourceCalendar?.displayName ?: defaultCalName
-                val sourceCalColor = sourceCalendar?.color ?: defaultCalColor
+                val sourceCalId = sourceCalendar?.id ?: resolvedCal.id
+                val sourceCalName = sourceCalendar?.displayName ?: resolvedCal.name
+                val sourceCalColor = sourceCalendar?.color ?: resolvedCal.color
 
                 newState = newState.copy(
                     title = duplicateFrom.title,
-                    location = duplicateFrom.location ?: "",
-                    description = duplicateFrom.description ?: "",
+                    location = duplicateFrom.location.orEmpty(),
+                    description = duplicateFrom.description.orEmpty(),
                     isAllDay = duplicateFrom.isAllDay,
                     dateMillis = displayStartTs,
                     endDateMillis = displayEndTs,
@@ -508,7 +495,7 @@ fun EventFormSheet(
                     selectedCalendarId = sourceCalId,
                     selectedCalendarName = sourceCalName,
                     selectedCalendarColor = sourceCalColor,
-                    isDeviceCalendar = sourceCalendar == null && defaultIsDevice,
+                    isDeviceCalendar = sourceCalendar == null && resolvedCal.isDevice,
                     reminders = dupReminders,
                     rrule = null  // Don't copy recurrence (creates independent event)
                 )
@@ -538,8 +525,8 @@ fun EventFormSheet(
                 val fullDescription = calendarIntentData.getDescriptionWithInvitees(calendarIntentInvitees)
 
                 newState = newState.copy(
-                    title = calendarIntentData.title ?: "",
-                    location = calendarIntentData.location ?: "",
+                    title = calendarIntentData.title.orEmpty(),
+                    location = calendarIntentData.location.orEmpty(),
                     description = fullDescription,
                     isAllDay = calendarIntentData.isAllDay,
                     dateMillis = displayStartTs,
@@ -943,7 +930,7 @@ fun EventFormSheet(
                             )
                         ) {
                             Text(
-                                text = state.error ?: "",
+                                text = state.error.orEmpty(),
                                 modifier = Modifier.padding(16.dp),
                                 color = MaterialTheme.colorScheme.onErrorContainer
                             )
@@ -1285,27 +1272,7 @@ private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 
     return Pair(parsed, truncatedCount)
 }
 
-/**
- * Format date for display with correct timezone handling.
- *
- * Uses DateTimeUtils for proper all-day event handling:
- * - All-day events: Uses UTC to preserve calendar date
- * - Timed events: Uses local timezone
- *
- * @param millis Timestamp in milliseconds
- * @param isAllDay Whether this is for an all-day event
- */
-private fun formatDate(millis: Long, isAllDay: Boolean = false): String {
-    return DateTimeUtils.formatEventDate(millis, isAllDay)
-}
 
-private fun formatTime(hour: Int, minute: Int): String {
-    val calendar = JavaCalendar.getInstance()
-    calendar.set(JavaCalendar.HOUR_OF_DAY, hour)
-    calendar.set(JavaCalendar.MINUTE, minute)
-    val formatter = SimpleDateFormat("h:mm a", Locale.getDefault())
-    return formatter.format(calendar.time)
-}
 
 /**
  * Normalize timestamp to local midnight (00:00:00.000).

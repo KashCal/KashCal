@@ -35,11 +35,8 @@ class SyncNotificationManager @Inject constructor(
     private val channels: SyncNotificationChannels
 ) {
     companion object {
-        private const val TAG = "SyncNotificationManager"
-
         // Request codes for pending intents
         private const val REQUEST_CODE_OPEN_APP = 100
-        private const val REQUEST_CODE_CANCEL_SYNC = 101
     }
 
     /**

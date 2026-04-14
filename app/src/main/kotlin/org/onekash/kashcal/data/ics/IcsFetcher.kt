@@ -48,8 +48,6 @@ private const val MAX_RETRIES = 2
 private const val INITIAL_BACKOFF_MS = 500L
 private const val MAX_BACKOFF_MS = 2000L
 private const val BACKOFF_MULTIPLIER = 2.0
-private const val DEFAULT_RETRY_AFTER_MS = 500L
-
 /**
  * OkHttp-based implementation of IcsFetcher with retry logic.
  *
@@ -263,7 +261,7 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             val date = dateFormat.parse(retryAfter)
             val delayMs = (date?.time ?: return null) - System.currentTimeMillis()
             delayMs.coerceAtLeast(0)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Log.w(TAG, "Could not parse Retry-After header: $retryAfter")
             null
         }

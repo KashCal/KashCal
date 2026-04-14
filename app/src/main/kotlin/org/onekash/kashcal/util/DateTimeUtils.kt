@@ -514,7 +514,7 @@ object DateTimeUtils {
             }
 
             return totalMs
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return null
         }
     }

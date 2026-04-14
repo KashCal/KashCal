@@ -58,8 +58,7 @@ class PullStrategy @Inject constructor(
     private val eventsDao: EventsDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     @Suppress("DEPRECATION") private val defaultQuirks: CalDavQuirks,
-    private val dataStore: KashCalDataStore,
-    private val syncSessionStore: org.onekash.kashcal.sync.session.SyncSessionStore
+    private val dataStore: KashCalDataStore
 ) {
     // icaldav parser instance
     private val icalParser = ICalParser()
@@ -300,7 +299,7 @@ class PullStrategy @Inject constructor(
                     isAllDay = event.isAllDay,
                     isRecurring = !event.rrule.isNullOrBlank(),
                     calendarName = calendar.displayName,
-                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                    calendarColor = calendar.color
                 ))
                 eventsDao.deleteById(event.id)
                 deleted++
@@ -526,7 +525,7 @@ class PullStrategy @Inject constructor(
                     isAllDay = event.isAllDay,
                     isRecurring = !event.rrule.isNullOrBlank(),
                     calendarName = calendar.displayName,
-                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                    calendarColor = calendar.color
                 ))
                 eventsDao.deleteById(event.id)
                 deleted++
@@ -704,7 +703,7 @@ class PullStrategy @Inject constructor(
                     isAllDay = event.isAllDay,
                     isRecurring = !event.rrule.isNullOrBlank(),
                     calendarName = calendar.displayName,
-                    calendarColor = calendar.color ?: 0xFF2196F3.toInt()
+                    calendarColor = calendar.color
                 ))
                 eventsDao.deleteById(event.id)
                 deleted++
@@ -960,7 +959,7 @@ class PullStrategy @Inject constructor(
                         saved // Return from transaction
                     }
                 }
-            } catch (e: SQLiteConstraintException) {
+            } catch (_: SQLiteConstraintException) {
                 // Check if this is a duplicate UID (unique constraint on uid, calendar_id)
                 val existing = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
                 if (existing != null) {
@@ -997,7 +996,7 @@ class PullStrategy @Inject constructor(
                 isAllDay = savedEvent.isAllDay,
                 isRecurring = !savedEvent.rrule.isNullOrBlank(),
                 calendarName = calendar.displayName,
-                calendarColor = calendar.color ?: 0xFF2196F3.toInt(), // Default blue
+                calendarColor = calendar.color,
                 isFromInitialSync = isInitialSync
             ))
         }
@@ -1118,7 +1117,7 @@ class PullStrategy @Inject constructor(
                         saved // Return from transaction
                     }
                 }
-            } catch (e: SQLiteConstraintException) {
+            } catch (_: SQLiteConstraintException) {
                 // Already synced in a prior session. Skip to prevent sync abort loop (issue #55)
                 Log.d(TAG, "Skipped already-synced exception ${meta.parsed.uid} " +
                     "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp})")
@@ -1145,7 +1144,7 @@ class PullStrategy @Inject constructor(
                 isAllDay = savedExceptionEvent.isAllDay,
                 isRecurring = true, // Exception events are always from recurring series
                 calendarName = calendar.displayName,
-                calendarColor = calendar.color ?: 0xFF2196F3.toInt(),
+                calendarColor = calendar.color,
                 isFromInitialSync = isInitialSync
             ))
         }

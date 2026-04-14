@@ -5,7 +5,6 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
-import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -54,7 +53,7 @@ sealed interface DisplayEvent {
         override val isAllDay get() = event.isAllDay
         override val hasRrule get() = event.rrule != null
         override val calendarColor get() = calendar?.color ?: 0
-        override val calendarName get() = calendar?.displayName ?: ""
+        override val calendarName get() = calendar?.displayName.orEmpty()
         override val isReadOnly get() = calendar?.isReadOnly ?: false
     }
 
@@ -139,7 +138,7 @@ fun DisplayEvent.Device.buildShareText(timePattern: String = "h:mm a"): String =
         }
     }
 
-    if (!location.isNullOrEmpty()) {
+    if (location.isNotEmpty()) {
         appendLine("Location: $location")
     }
 

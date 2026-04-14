@@ -1,7 +1,6 @@
 package org.onekash.kashcal.data.db.converter
 
 import androidx.room.TypeConverter
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.ReminderStatus
@@ -33,7 +32,7 @@ class Converters {
     fun toSyncStatus(value: String): SyncStatus {
         return try {
             SyncStatus.valueOf(value)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             SyncStatus.SYNCED
         }
     }
@@ -56,7 +55,7 @@ class Converters {
     fun toReminderStatus(value: String): ReminderStatus {
         return try {
             ReminderStatus.valueOf(value)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             ReminderStatus.PENDING
         }
     }
@@ -100,7 +99,7 @@ class Converters {
         if (value.isNullOrBlank()) return emptyList()
         return try {
             Json.decodeFromString<List<String>>(value)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }
@@ -125,7 +124,7 @@ class Converters {
         if (value.isNullOrBlank()) return emptyMap()
         return try {
             Json.decodeFromString<Map<String, String>>(value)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyMap()
         }
     }

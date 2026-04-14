@@ -29,8 +29,8 @@ object RawIcsParser {
 
         return try {
             val events = parser.parseAllEvents(rawIcal).getOrNull()
-            events?.firstOrNull()?.alarms ?: emptyList()
-        } catch (e: Exception) {
+            events?.firstOrNull()?.alarms.orEmpty()
+        } catch (_: Exception) {
             emptyList()
         }
     }

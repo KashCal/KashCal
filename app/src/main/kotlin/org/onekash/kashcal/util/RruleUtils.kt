@@ -48,10 +48,11 @@ object RruleUtils {
         val day = calendar.get(java.util.Calendar.DAY_OF_MONTH)
 
         if (isAllDay) {
-            return String.format("%04d%02d%02d", year, month, day)
+            return String.format(java.util.Locale.ROOT, "%04d%02d%02d", year, month, day)
         }
 
         return String.format(
+            java.util.Locale.ROOT,
             "%04d%02d%02dT%02d%02d%02dZ",
             year, month, day,
             calendar.get(java.util.Calendar.HOUR_OF_DAY),

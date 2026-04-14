@@ -351,7 +351,7 @@ abstract class BaseContactEventRepository(
             endTs = endTs,
             timezone = "UTC",
             isAllDay = true,
-            rrule = ContactEventUtils.generateYearlyRRule(),
+            rrule = ContactEventUtils.YEARLY_RRULE,
             caldavUrl = eventType.getCaldavUrl(contact.lookupKey, date.month, date.day),
             syncStatus = SyncStatus.SYNCED, // Read-only, no push needed
             dtstamp = System.currentTimeMillis(),

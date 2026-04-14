@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dokka)
     alias(libs.plugins.kotlin.serialization)
@@ -238,6 +239,25 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// Detekt static analysis
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$rootDir/detekt.yml")
+    baseline = file("$rootDir/detekt-baseline.xml")
+    parallel = true
+    // Analyze main sources only (tests have their own conventions)
+    source.setFrom("src/main/kotlin")
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+        sarif.required.set(true)
+    }
+    // Exclude generated files
+    exclude("**/build/**")
 }
 
 // Kover code coverage configuration

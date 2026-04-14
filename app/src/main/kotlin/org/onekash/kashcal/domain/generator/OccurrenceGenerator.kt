@@ -479,7 +479,7 @@ class OccurrenceGenerator @Inject constructor(
             // Step 4: Optionally fast-forward to near range start
             // Only fast-forward if range starts significantly after DTSTART
             val rangeStartSeconds = rangeStartMs / MILLISECONDS_PER_SECOND
-            val rangeEndSeconds = rangeEndMs / MILLISECONDS_PER_SECOND
+
             val optimizedSet: RecurrenceSet = if (rangeStartMs > event.startTs + 30 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND) {
                 // Range starts well after DTSTART - use FastForwarded for performance
                 val fastForwardSeconds = rangeStartSeconds - 30 * SECONDS_PER_DAY
@@ -612,7 +612,7 @@ class OccurrenceGenerator @Inject constructor(
             val month = dateCode.substring(4, 6).toInt() - 1 // 0-indexed for lib-recur
             val day = dateCode.substring(6, 8).toInt()
             DateTime(tz, year, month, day, hour, minute, second)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -710,12 +710,12 @@ class OccurrenceGenerator @Inject constructor(
                 count = rule.count,
                 // UNTIL parsing uses default behavior (not all-day specific)
                 until = rule.until?.let { dateTimeToTimestamp(it, isAllDay = false) },
-                byDay = rule.getByDayPart()?.map { it.toString() } ?: emptyList(),
-                byMonthDay = rule.getByPart(RecurrenceRule.Part.BYMONTHDAY)?.toList() ?: emptyList(),
-                byMonth = rule.getByPart(RecurrenceRule.Part.BYMONTH)?.toList() ?: emptyList(),
-                bySetPos = rule.getByPart(RecurrenceRule.Part.BYSETPOS)?.toList() ?: emptyList()
+                byDay = rule.getByDayPart()?.map { it.toString() }.orEmpty(),
+                byMonthDay = rule.getByPart(RecurrenceRule.Part.BYMONTHDAY)?.toList().orEmpty(),
+                byMonth = rule.getByPart(RecurrenceRule.Part.BYMONTH)?.toList().orEmpty(),
+                bySetPos = rule.getByPart(RecurrenceRule.Part.BYSETPOS)?.toList().orEmpty()
             )
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -782,7 +782,7 @@ class OccurrenceGenerator @Inject constructor(
             }
 
             val rangeStartSeconds = rangeStartMs / MILLISECONDS_PER_SECOND
-            val rangeEndSeconds = rangeEndMs / MILLISECONDS_PER_SECOND
+
             val fastForwardSeconds = rangeStartSeconds - 30 * SECONDS_PER_DAY
             // Must use same DateTime type as DTSTART for lib-recur consistency
             val rangeStartDateTime = if (isAllDay && untilIsAllDay) {
@@ -810,7 +810,7 @@ class OccurrenceGenerator @Inject constructor(
 
             occurrences
 
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
     }

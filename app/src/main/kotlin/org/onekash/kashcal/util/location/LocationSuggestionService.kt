@@ -40,7 +40,7 @@ class LocationSuggestionService @Inject constructor(
      * Shows "Place Name, Address" when place name is meaningful.
      */
     private fun formatDisplayName(featureName: String?, addressLine: String?): String {
-        val address = addressLine ?: ""
+        val address = addressLine.orEmpty()
         val feature = featureName?.trim()
 
         // Skip featureName if:
@@ -86,7 +86,7 @@ class LocationSuggestionService @Inject constructor(
                 } else {
                     // API < 33: Blocking call (on IO dispatcher)
                     @Suppress("DEPRECATION")
-                    val addresses = geocoder.getFromLocationName(query, maxResults) ?: emptyList()
+                    val addresses = geocoder.getFromLocationName(query, maxResults).orEmpty()
                     addresses.map { addr ->
                         AddressSuggestion(
                             displayName = formatDisplayName(addr.featureName, addr.getAddressLine(0)),
@@ -95,7 +95,7 @@ class LocationSuggestionService @Inject constructor(
                         )
                     }
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // Geocoder can fail for various reasons (network, backend unavailable)
                 // Return empty list instead of crashing
                 emptyList()

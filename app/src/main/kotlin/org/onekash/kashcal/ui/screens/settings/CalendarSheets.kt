@@ -36,7 +36,6 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.ui.components.CalendarSelectionMode
 import org.onekash.kashcal.ui.components.GroupedCalendarList
 import org.onekash.kashcal.ui.model.CalendarGroup
-import org.onekash.kashcal.ui.model.PickerCalendar
 
 /**
  * Bottom sheet for toggling calendar visibility with account grouping.

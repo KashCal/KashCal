@@ -76,7 +76,7 @@ class WidgetDataRepository @Inject constructor(
 
         // Build result with exactly 7 entries, sorted within each day
         return dayCodes.associateWith { dayCode ->
-            (eventsMap[dayCode] ?: emptyList())
+            eventsMap[dayCode].orEmpty()
                 .map { toWidgetEvent(it) }
                 .sortedWith(compareBy({ !it.isAllDay }, { it.startTs }))
         }

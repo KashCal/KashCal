@@ -19,9 +19,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -108,6 +106,10 @@ class HomeViewModel @Inject constructor(
     /** Default event duration (minutes) */
     val defaultEventDuration: StateFlow<Int> = dataStore.defaultEventDuration
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
+
+    /** Quick Add enabled state */
+    val quickAddEnabled: StateFlow<Boolean> = dataStore.quickAddEnabled
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /** Time format preference: "system", "12h", or "24h" */
     val timeFormat: StateFlow<String> = dataStore.timeFormat
@@ -209,9 +211,9 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            // Load default view from DataStore before building UI
+            // Load persisted view from DataStore before building UI
             val defaultView = ViewMode.fromKey(dataStore.getDefaultCalendarView())
-            _uiState.update { it.copy(viewMode = defaultView, defaultViewMode = defaultView) }
+            _uiState.update { it.copy(viewMode = defaultView) }
 
             // Load data for the default view
             when (defaultView) {
@@ -440,11 +442,6 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            dataStore.defaultCalendarView.collect { viewKey ->
-                _uiState.update { it.copy(defaultViewMode = ViewMode.fromKey(viewKey)) }
-            }
-        }
-        viewModelScope.launch {
             dataStore.showWeekNumbers.collect { show ->
                 _uiState.update { it.copy(showWeekNumbers = show) }
             }
@@ -487,7 +484,6 @@ class HomeViewModel @Inject constructor(
         if (!_uiState.value.isConfigured) {
             Log.d(TAG, "Pull-to-refresh: not configured, showing snackbar")
             showSnackbar("No sync accounts configured")
-            pulseSyncIndicator()
             return
         }
         if (_uiState.value.isSyncing) {
@@ -497,7 +493,6 @@ class HomeViewModel @Inject constructor(
         if (!networkMonitor.isOnline.value) {
             Log.d(TAG, "Pull-to-refresh: offline, showing error")
             showError(CalendarError.Network.Offline)
-            pulseSyncIndicator()
             return
         }
         suppressSyncIndicator = false  // User-initiated - show spinning icon
@@ -506,20 +501,7 @@ class HomeViewModel @Inject constructor(
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
     }
 
-    /**
-     * Briefly pulse isSyncing to dismiss PullToRefreshBox indicator.
-     *
-     * Material3 PullToRefreshBox requires isRefreshing to transition false->true->false
-     * after onRefresh fires. When refreshSync() early-returns without starting a sync,
-     * isSyncing stays false and the indicator gets stuck.
-     */
-    private fun pulseSyncIndicator() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSyncing = true) }
-            delay(50)
-            _uiState.update { it.copy(isSyncing = false) }
-        }
-    }
+
 
     /**
      * Force full sync (clears sync tokens).
@@ -632,7 +614,7 @@ class HomeViewModel @Inject constructor(
                     // Also load device calendars for EventFormSheet picker
                     val deviceCalendars = try {
                         calendarProviderRepository.getDeviceCalendars()
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         emptyList()
                     }
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
@@ -680,7 +662,7 @@ class HomeViewModel @Inject constructor(
                 // Also load device calendars for EventFormSheet picker
                 val deviceCalendars = try {
                     calendarProviderRepository.getDeviceCalendars()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     emptyList()
                 }
                 val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
@@ -803,7 +785,7 @@ class HomeViewModel @Inject constructor(
                     displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
                 }
 
-                val monthKey = String.format("%04d-%02d", year, month + 1)
+                val monthKey = String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1)
                 val monthDots = mutableMapOf<Int, MutableList<Int>>()
 
                 for ((dayCode, events) in eventsMap) {
@@ -870,7 +852,7 @@ class HomeViewModel @Inject constructor(
                 // Build dots from pre-grouped events (multi-day expansion already handled)
                 for ((dayCode, events) in eventsMap) {
                     val (occYear, occMonth, day) = parseDayFormat(dayCode)
-                    val key = String.format("%04d-%02d", occYear, occMonth + 1)
+                    val key = String.format(java.util.Locale.ROOT, "%04d-%02d", occYear, occMonth + 1)
 
                     val monthMap = dots.getOrPut(key) { mutableMapOf() }
                     val dayColors = monthMap.getOrPut(day) { mutableListOf() }
@@ -932,7 +914,7 @@ class HomeViewModel @Inject constructor(
 
                 for ((dayCode, events) in eventsMap) {
                     val (occYear, occMonth, day) = parseDayFormat(dayCode)
-                    val key = String.format("%04d-%02d", occYear, occMonth + 1)
+                    val key = String.format(java.util.Locale.ROOT, "%04d-%02d", occYear, occMonth + 1)
 
                     val monthMap = dots.getOrPut(key) { mutableMapOf() }
                     val dayColors = monthMap.getOrPut(day) { mutableListOf() }
@@ -1905,7 +1887,7 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Switch calendar view mode.
+     * Switch calendar view mode and persist as default.
      * Handles data loading for each view type and cancels unnecessary jobs.
      */
     fun setViewMode(mode: ViewMode) {
@@ -1913,6 +1895,11 @@ class HomeViewModel @Inject constructor(
         if (oldMode == mode) return
 
         _uiState.update { it.copy(viewMode = mode) }
+
+        // Auto-persist: last-used view becomes the default on next launch
+        viewModelScope.launch {
+            dataStore.setDefaultCalendarView(mode.key)
+        }
 
         when (mode) {
             ViewMode.AGENDA -> loadAgendaEvents()
@@ -1925,9 +1912,11 @@ class HomeViewModel @Inject constructor(
             }
             ViewMode.MONTH -> {
                 agendaEventsJob?.cancel()
+                syncPagerToSelectedDate()
             }
             ViewMode.MONTH_FULL -> {
                 agendaEventsJob?.cancel()
+                syncPagerToSelectedDate()
                 loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
             }
             ViewMode.YEAR -> {
@@ -1938,22 +1927,21 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun showViewPicker() {
-        _uiState.update { it.copy(showViewPicker = true) }
-    }
-
-    fun hideViewPicker() {
-        _uiState.update { it.copy(showViewPicker = false) }
-    }
-
     /**
-     * Persist the user's default view to DataStore.
+     * Sync the month pager to match selectedDate's month on view switch.
+     * Prevents flicker when the user browsed to a different month in THREE_DAYS/WEEK
+     * view, then switches back to MONTH.
      */
-    fun setDefaultViewMode(mode: ViewMode) {
-        viewModelScope.launch {
-            dataStore.setDefaultCalendarView(mode.key)
+    private fun syncPagerToSelectedDate() {
+        val state = _uiState.value
+        val selectedCal = Calendar.getInstance().apply { timeInMillis = state.selectedDate }
+        val year = selectedCal.get(Calendar.YEAR)
+        val month = selectedCal.get(Calendar.MONTH)
+        if (year != state.viewingYear || month != state.viewingMonth) {
+            navigateToMonth(year, month)
         }
     }
+
 
     fun toggleYearOverlay() {
         _uiState.update { it.copy(showYearOverlay = !it.showYearOverlay) }
@@ -2655,8 +2643,8 @@ class HomeViewModel @Inject constructor(
             when {
                 // Editing single occurrence of recurring event
                 formState.editingDeviceEventId != null && formState.editingOccurrenceTs != null -> {
-                    val masterEventId = formState.editingDeviceEventId!!
-                    val originalInstanceTime = formState.editingOccurrenceTs!!
+                    val masterEventId = formState.editingDeviceEventId
+                    val originalInstanceTime = formState.editingOccurrenceTs
 
                     // Check if exception already exists
                     val existingExceptionId = calendarProviderRepository.findExceptionEventId(
@@ -2698,7 +2686,7 @@ class HomeViewModel @Inject constructor(
 
                 // Editing existing event (not occurrence)
                 formState.editingDeviceEventId != null -> {
-                    val eventId = formState.editingDeviceEventId!!
+                    val eventId = formState.editingDeviceEventId
                     calendarProviderRepository.updateEvent(
                         eventId = eventId,
                         title = formState.title,
@@ -2824,15 +2812,6 @@ class HomeViewModel @Inject constructor(
             minutes >= 1440 && minutes % 1440 == 0 -> "-P${minutes / 1440}D"
             minutes >= 60 && minutes % 60 == 0 -> "-PT${minutes / 60}H"
             else -> "-PT${minutes}M"
-        }
-    }
-
-    /**
-     * Get default calendar ID for new events.
-     */
-    suspend fun getDefaultCalendarId(): Long? {
-        return withContext(ioDispatcher) {
-            eventCoordinator.getDefaultCalendar()?.id
         }
     }
 

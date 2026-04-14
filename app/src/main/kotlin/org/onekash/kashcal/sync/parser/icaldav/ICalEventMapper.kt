@@ -201,7 +201,7 @@ object ICalEventMapper {
         } else color
         return try {
             Color.parseColor(expanded)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentException) {
             null // Unsupported format, ignore
         }
     }

@@ -103,7 +103,7 @@ fun DeviceEventQuickViewSheet(
     val canWrite = hasWritePermission && isWritableCalendar
     val isRecurring = displayEvent.isPartOfRecurringSeries
     val hasExpandableContent = remember(displayEvent.description, displayEvent.reminders) {
-        !displayEvent.description.isNullOrBlank() || displayEvent.reminders.isNotEmpty()
+        displayEvent.description.isNotBlank() || displayEvent.reminders.isNotEmpty()
     }
 
     val sheetState = rememberModalBottomSheetState(
@@ -179,7 +179,7 @@ fun DeviceEventQuickViewSheet(
 
                     // Location
                     val location = displayEvent.location
-                    if (!location.isNullOrEmpty()) {
+                    if (location.isNotEmpty()) {
                         val locationContext = LocalContext.current
                         val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
                         val isAddress = remember(location) { looksLikeAddress(location) }

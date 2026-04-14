@@ -100,7 +100,7 @@ fun AllDayEventsRow(
                     beyondViewportPageCount = 2,
                     userScrollEnabled = false  // Scrolling controlled by main pager
                 ) { dayIndex ->
-                    val dayEvents = allDayEvents[dayIndex] ?: emptyList()
+                    val dayEvents = allDayEvents[dayIndex].orEmpty()
 
                     AllDayColumn(
                         events = dayEvents,
@@ -278,7 +278,7 @@ fun StaticAllDayEventsRow(
                 repeat(visibleDays) { offset ->
                     val dayIndex = currentPage + offset
                     if (dayIndex in 0..6) {
-                        val dayEvents = allDayEvents[dayIndex] ?: emptyList()
+                        val dayEvents = allDayEvents[dayIndex].orEmpty()
 
                         AllDayColumn(
                             events = dayEvents,

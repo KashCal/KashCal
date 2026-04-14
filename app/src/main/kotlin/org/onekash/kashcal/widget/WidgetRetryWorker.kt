@@ -7,7 +7,6 @@ import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import java.io.IOException
-import java.net.SocketTimeoutException
 
 private const val TAG = "WidgetRetryWorker"
 private const val MAX_RETRY_ATTEMPTS = 3

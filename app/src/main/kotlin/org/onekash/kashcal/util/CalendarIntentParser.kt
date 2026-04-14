@@ -1,7 +1,6 @@
 package org.onekash.kashcal.util
 
 import android.content.Intent
-import android.net.Uri
 import android.provider.CalendarContract
 import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.ui.util.DayPagerUtils
@@ -31,7 +30,7 @@ data class CalendarIntentData(
      * @return Description with invitees appended, or original description if no invitees
      */
     fun getDescriptionWithInvitees(invitees: List<String>): String {
-        val base = description ?: ""
+        val base = description.orEmpty()
         if (invitees.isEmpty()) return base
         val inviteeLine = "Invitees: ${invitees.joinToString(", ")}"
         return if (base.isEmpty()) inviteeLine else "$base\n\n$inviteeLine"
@@ -203,7 +202,7 @@ object CalendarIntentParser {
             ?.split(",")
             ?.map { it.trim() }
             ?.filter { it.isNotEmpty() }
-            ?: emptyList()
+            .orEmpty()
 
         val data = CalendarIntentData(
             title = intent.getStringExtra(CalendarContract.Events.TITLE),

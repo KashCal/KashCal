@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -101,6 +100,7 @@ class SettingsActivity : ComponentActivity() {
                 val defaultReminderAllDay by viewModel.defaultReminderAllDay.collectAsStateWithLifecycle()
                 val defaultEventDuration by viewModel.defaultEventDuration.collectAsStateWithLifecycle()
                 val showEventEmojis by viewModel.showEventEmojis.collectAsStateWithLifecycle()
+                val quickAddEnabled by viewModel.quickAddEnabled.collectAsStateWithLifecycle()
                 val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
                 val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
                 val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
@@ -463,6 +463,8 @@ class SettingsActivity : ComponentActivity() {
                             // Display settings
                             showEventEmojis = showEventEmojis,
                             onShowEventEmojisChange = viewModel::setShowEventEmojis,
+                            quickAddEnabled = quickAddEnabled,
+                            onQuickAddEnabledChange = viewModel::setQuickAddEnabled,
                             timeFormat = timeFormat,
                             onTimeFormatChange = viewModel::setTimeFormat,
                             firstDayOfWeek = firstDayOfWeek,
@@ -530,8 +532,8 @@ class SettingsActivity : ComponentActivity() {
                         val iCloudState = uiState.iCloudState
                         val notConnectedState = iCloudState as? ICloudConnectionState.NotConnected
                         ICloudSignInSheet(
-                            appleId = notConnectedState?.appleId ?: "",
-                            password = notConnectedState?.password ?: "",
+                            appleId = notConnectedState?.appleId.orEmpty(),
+                            password = notConnectedState?.password.orEmpty(),
                             showHelp = notConnectedState?.showHelp ?: false,
                             error = notConnectedState?.error,
                             isConnecting = iCloudState is ICloudConnectionState.Connecting,

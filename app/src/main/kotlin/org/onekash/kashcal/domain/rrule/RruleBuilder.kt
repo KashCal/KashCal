@@ -271,7 +271,7 @@ object RruleBuilder {
                         .toInstant()
                         .toEpochMilli()
                     EndCondition.Until(millis)
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     EndCondition.Never
                 }
             }

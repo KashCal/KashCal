@@ -96,7 +96,7 @@ fun OverflowEventsRow(
                 repeat(visibleDays) { offset ->
                     val dayIndex = currentPage + offset
                     if (dayIndex in 0..6) {
-                        val dayEvents = overflowEvents[dayIndex] ?: emptyList()
+                        val dayEvents = overflowEvents[dayIndex].orEmpty()
 
                         OverflowColumn(
                             events = dayEvents,

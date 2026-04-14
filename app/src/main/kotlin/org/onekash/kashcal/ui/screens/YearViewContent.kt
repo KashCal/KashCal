@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -240,8 +239,8 @@ private fun MiniMonth(
     val monthGrid = remember(year, month, firstDayOfWeek) {
         MonthGrid.compute(year, month, firstDayOfWeek)
     }
-    val monthKey = remember(year, month) { String.format("%04d-%02d", year, month + 1) }
-    val monthDots = remember(eventDots, monthKey) { eventDots[monthKey] ?: emptyMap() }
+    val monthKey = remember(year, month) { String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1) }
+    val monthDots = remember(eventDots, monthKey) { eventDots[monthKey].orEmpty() }
 
     val isCurrentMonth = year == today.get(Calendar.YEAR) && month == today.get(Calendar.MONTH)
     val todayDay = today.get(Calendar.DAY_OF_MONTH)

@@ -294,12 +294,12 @@ class ContactEventUtilsTest {
     }
 
     // ---------------------------------------------------------------
-    // generateYearlyRRule
+    // YEARLY_RRULE
     // ---------------------------------------------------------------
 
     @Test
-    fun `generateYearlyRRule - returns yearly rule`() {
-        assertEquals("FREQ=YEARLY;INTERVAL=1", ContactEventUtils.generateYearlyRRule())
+    fun `YEARLY_RRULE - returns yearly rule`() {
+        assertEquals("FREQ=YEARLY;INTERVAL=1", ContactEventUtils.YEARLY_RRULE)
     }
 
     // ---------------------------------------------------------------

@@ -558,13 +558,6 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
-     * Get default calendar for new events.
-     */
-    suspend fun getDefaultCalendar(): Calendar? {
-        return eventReader.getDefaultCalendar()
-    }
-
-    /**
      * Set calendar visibility.
      * This is the source of truth for which calendars are visible.
      */
@@ -989,7 +982,7 @@ class EventCoordinator @Inject constructor(
             emptyMap()
         }
         return masterEvents.map { master ->
-            Pair(master, exceptionsByMaster[master.id] ?: emptyList())
+            Pair(master, exceptionsByMaster[master.id].orEmpty())
         }
     }
 

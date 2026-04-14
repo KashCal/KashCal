@@ -363,7 +363,7 @@ class CalDavSyncEngine @Inject constructor(
         val allErrors = mutableListOf<SyncError>()
         val allChanges = mutableListOf<SyncChange>()
 
-        for ((index, calendar) in calendars.withIndex()) {
+        for ((_, calendar) in calendars.withIndex()) {
             if (calendar.isReadOnly) {
                 // Read-only calendars only need pull - create session builder
                 val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL

@@ -149,7 +149,7 @@ class ContactEventSyncWorker @AssistedInject constructor(
                     is ContactEventSyncResult.Error -> {
                         Log.e(TAG, "Anniversary sync failed: ${result.message}")
                         hasError = true
-                        errorMessage = (errorMessage?.let { "$it; " } ?: "") + result.message
+                        errorMessage = (errorMessage?.let { "$it; " }.orEmpty()) + result.message
                     }
                 }
             }

@@ -231,7 +231,7 @@ fun containsUrl(text: String): Boolean {
 fun isMeetingUrl(url: String): Boolean {
     val host = try {
         URI(url.lowercase()).host ?: return false
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         return false
     }
     return MEETING_DOMAINS.any { host == it || host.endsWith(".$it") }
@@ -285,7 +285,7 @@ fun isValidUrl(url: String): Boolean {
             "mailto" -> uri.schemeSpecificPart?.contains("@") == true
             else -> false
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
@@ -299,7 +299,7 @@ fun shouldOpenExternally(url: String): Boolean {
     return try {
         val scheme = URI(url).scheme?.lowercase()
         scheme in listOf("http", "https", "tel", "mailto")
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         false
     }
 }
@@ -332,7 +332,7 @@ private fun getUrlDisplayText(url: String): String {
             "meet.jit.si" in host -> "Jitsi Meet"
             else -> host.removePrefix("www.")
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         url
     }
 }

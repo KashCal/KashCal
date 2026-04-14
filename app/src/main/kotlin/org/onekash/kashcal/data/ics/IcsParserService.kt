@@ -52,7 +52,7 @@ object IcsParserService {
         return when (result) {
             is ParseResult.Success -> {
                 val events = result.value
-                    .filter { it.status?.toICalString() != "CANCELLED" }
+                    .filter { it.status.toICalString() != "CANCELLED" }
                     .map { icalEvent ->
                         ICalEventMapper.toEntity(
                             icalEvent = icalEvent,

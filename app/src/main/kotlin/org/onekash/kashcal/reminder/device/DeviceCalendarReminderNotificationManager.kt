@@ -39,8 +39,6 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     private val dataStore: KashCalDataStore
 ) {
     companion object {
-        private const val TAG = "DeviceCalNotifMgr"
-
         // Notification ID base - separate range from Room reminders (2000-11999)
         const val NOTIFICATION_ID_BASE = 20000
 

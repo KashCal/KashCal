@@ -174,10 +174,6 @@ data class HomeUiState(
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
     /** Current calendar view mode (month grid, agenda list, or 3-day grid) */
     val viewMode: ViewMode = ViewMode.MONTH,
-    /** Show view picker bottom sheet */
-    val showViewPicker: Boolean = false,
-    /** User's persisted default view (opened on launch and Back navigation) */
-    val defaultViewMode: ViewMode = ViewMode.MONTH,
     /** Show year overlay for quick navigation */
     val showYearOverlay: Boolean = false,
 
@@ -253,7 +249,7 @@ data class HomeUiState(
      * Get the key for event dots lookup.
      */
     fun getDotsKey(year: Int, month: Int): String {
-        return String.format("%04d-%02d", year, month + 1)
+        return String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1)
     }
 
     /**
@@ -390,6 +386,9 @@ enum class ViewMode(val key: String) {
     MONTH_FULL("month_full"),
     /** 12-month year overview grid */
     YEAR("year");
+
+    /** True for views that render a scrollable time grid (THREE_DAYS, WEEK). */
+    val isTimeGrid: Boolean get() = this == THREE_DAYS || this == WEEK
 
     companion object {
         fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH
