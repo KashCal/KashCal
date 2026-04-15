@@ -51,18 +51,22 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Bottom sheet for importing ICS file events.
  *
  * Shows event preview list, calendar picker, and import action.
+ * Supports both Room and device calendars as import targets.
  *
  * @param events List of events parsed from ICS file
- * @param calendars Available calendars (read-only calendars are filtered out)
- * @param defaultCalendarId Default calendar to select
+ * @param calendars Available Room calendars (read-only calendars are filtered out)
+ * @param defaultCalendarId Default Room calendar to select
+ * @param deviceCalendarGroups Device calendars grouped by account (writable only)
+ * @param defaultDeviceCalendarId Default device calendar to select
  * @param onDismiss Called when sheet is dismissed
- * @param onImport Called with selected calendar ID and events to import
+ * @param onImport Called with selected calendar ID, events, and whether target is a device calendar
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +74,10 @@ fun IcsImportSheet(
     events: List<Event>,
     calendars: List<Calendar>,
     defaultCalendarId: Long?,
+    deviceCalendarGroups: List<CalendarGroup>,
+    defaultDeviceCalendarId: Long?,
     onDismiss: () -> Unit,
-    onImport: (calendarId: Long, events: List<Event>) -> Unit
+    onImport: (calendarId: Long, events: List<Event>, isDeviceCalendar: Boolean) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -80,16 +86,53 @@ fun IcsImportSheet(
         calendars.filter { !it.isReadOnly }
     }
 
-    // Select default calendar or first writable
-    var selectedCalendarId by remember(defaultCalendarId, writableCalendars) {
-        val defaultId = defaultCalendarId?.takeIf { id ->
-            writableCalendars.any { it.id == id }
-        } ?: writableCalendars.firstOrNull()?.id
-        mutableLongStateOf(defaultId ?: 0L)
+    // All writable device calendars from groups
+    val writableDeviceCalendars = remember(deviceCalendarGroups) {
+        deviceCalendarGroups.flatMap { group ->
+            group.pickerCalendars.filter { it.isWritable }
+        }
     }
 
-    val selectedCalendar = writableCalendars.find { it.id == selectedCalendarId }
+    // Resolve default selection: prefer Room default, fall back to device default
+    val (initialCalendarId, initialIsDevice) = remember(
+        defaultCalendarId, defaultDeviceCalendarId, writableCalendars, writableDeviceCalendars
+    ) {
+        // Try Room default first
+        val roomDefault = defaultCalendarId?.takeIf { id ->
+            writableCalendars.any { it.id == id }
+        }
+        if (roomDefault != null) return@remember roomDefault to false
+
+        // Try device default
+        val deviceDefault = defaultDeviceCalendarId?.takeIf { id ->
+            writableDeviceCalendars.any { it.id == id }
+        }
+        if (deviceDefault != null) return@remember deviceDefault to true
+
+        // Fall back to first writable Room calendar, then first writable device
+        val firstRoom = writableCalendars.firstOrNull()?.id
+        if (firstRoom != null) return@remember firstRoom to false
+
+        val firstDevice = writableDeviceCalendars.firstOrNull()?.id
+        if (firstDevice != null) return@remember firstDevice to true
+
+        0L to false
+    }
+
+    var selectedCalendarId by remember { mutableLongStateOf(initialCalendarId) }
+    var selectedIsDevice by remember { mutableStateOf(initialIsDevice) }
+
+    val (selectedCalendarName, selectedCalendarColor) = if (selectedIsDevice) {
+        val cal = writableDeviceCalendars.find { it.id == selectedCalendarId }
+        cal?.displayName to cal?.color
+    } else {
+        val cal = writableCalendars.find { it.id == selectedCalendarId }
+        cal?.displayName to cal?.color
+    }
+
     var showCalendarPicker by remember { mutableStateOf(false) }
+
+    val hasAnyWritableCalendar = writableCalendars.isNotEmpty() || writableDeviceCalendars.isNotEmpty()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -134,14 +177,19 @@ fun IcsImportSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Calendar picker
-            if (writableCalendars.isNotEmpty()) {
+            if (hasAnyWritableCalendar) {
                 ImportCalendarPicker(
-                    selectedCalendar = selectedCalendar,
-                    availableCalendars = writableCalendars,
+                    selectedCalendarId = selectedCalendarId,
+                    selectedCalendarName = selectedCalendarName,
+                    selectedCalendarColor = selectedCalendarColor,
+                    selectedIsDevice = selectedIsDevice,
+                    writableCalendars = writableCalendars,
+                    deviceCalendarGroups = deviceCalendarGroups,
                     isExpanded = showCalendarPicker,
                     onToggle = { showCalendarPicker = !showCalendarPicker },
-                    onSelect = { calendar ->
-                        selectedCalendarId = calendar.id
+                    onSelect = { id, isDevice ->
+                        selectedCalendarId = id
+                        selectedIsDevice = isDevice
                         showCalendarPicker = false
                     }
                 )
@@ -168,10 +216,10 @@ fun IcsImportSheet(
                 Button(
                     onClick = {
                         if (selectedCalendarId > 0) {
-                            onImport(selectedCalendarId, events)
+                            onImport(selectedCalendarId, events, selectedIsDevice)
                         }
                     },
-                    enabled = selectedCalendarId > 0 && writableCalendars.isNotEmpty()
+                    enabled = selectedCalendarId > 0 && hasAnyWritableCalendar
                 ) {
                     Text(if (events.size == 1) "Add" else "Import")
                 }
@@ -238,14 +286,19 @@ private fun formatEventDateTime(event: Event): String {
 
 /**
  * Calendar picker for import target selection.
+ * Supports both Room and device calendars.
  */
 @Composable
 private fun ImportCalendarPicker(
-    selectedCalendar: Calendar?,
-    availableCalendars: List<Calendar>,
+    selectedCalendarId: Long,
+    selectedCalendarName: String?,
+    selectedCalendarColor: Int?,
+    selectedIsDevice: Boolean,
+    writableCalendars: List<Calendar>,
+    deviceCalendarGroups: List<CalendarGroup>,
     isExpanded: Boolean,
     onToggle: () -> Unit,
-    onSelect: (Calendar) -> Unit
+    onSelect: (id: Long, isDevice: Boolean) -> Unit
 ) {
     OutlinedCard(
         modifier = Modifier.fillMaxWidth()
@@ -268,24 +321,18 @@ private fun ImportCalendarPicker(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    if (selectedCalendar != null) {
+                    if (selectedCalendarColor != null) {
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
                                 .clip(CircleShape)
-                                .background(Color(selectedCalendar.color))
-                        )
-                        Text(
-                            text = selectedCalendar.displayName,
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    } else {
-                        Text(
-                            text = "Select calendar",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                .background(Color(selectedCalendarColor))
                         )
                     }
+                    Text(
+                        text = selectedCalendarName ?: "Select calendar",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                         contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -308,36 +355,98 @@ private fun ImportCalendarPicker(
                         .padding(bottom = 8.dp)
                 ) {
                     HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                    availableCalendars.forEach { calendar ->
-                        Row(
+
+                    // Room calendars
+                    writableCalendars.forEach { calendar ->
+                        ImportCalendarItem(
+                            name = calendar.displayName,
+                            color = calendar.color,
+                            isSelected = !selectedIsDevice && selectedCalendarId == calendar.id,
+                            onClick = { onSelect(calendar.id, false) }
+                        )
+                    }
+
+                    // Device calendars section
+                    val allDeviceCalendars = deviceCalendarGroups.flatMap { it.pickerCalendars }
+                    if (allDeviceCalendars.isNotEmpty()) {
+                        if (writableCalendars.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                        }
+                        Text(
+                            text = "Device Calendars",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(MaterialTheme.shapes.small)
-                                .clickable { onSelect(calendar) }
-                                .background(
-                                    if (selectedCalendar?.id == calendar.id)
-                                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                                    else Color.Transparent
-                                )
-                                .padding(horizontal = 12.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(14.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(calendar.color))
-                            )
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        )
+
+                        deviceCalendarGroups.forEach { group ->
+                            // Account header
                             Text(
-                                text = calendar.displayName,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.weight(1f)
+                                text = group.accountName,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
                             )
+                            // Calendars in group
+                            group.pickerCalendars.filter { it.isWritable }.forEach { pickerCal ->
+                                ImportCalendarItem(
+                                    name = pickerCal.displayName,
+                                    color = pickerCal.color,
+                                    isSelected = selectedIsDevice && selectedCalendarId == pickerCal.id,
+                                    onClick = { onSelect(pickerCal.id, true) }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * Individual calendar item in the import picker list.
+ */
+@Composable
+private fun ImportCalendarItem(
+    name: String,
+    color: Int,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable { onClick() }
+            .background(
+                if (isSelected)
+                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                else Color.Transparent
+            )
+            .padding(horizontal = 12.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(Color(color))
+        )
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f)
+        )
     }
 }

@@ -1080,62 +1080,37 @@ fun EventFormSheet(
                 val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
 
                 if (state.isAllDay) {
-                    // ALL-DAY: Simple clamp - no duration preservation
-                    val normalizedEndDate = normalizeToLocalMidnight(state.endDateMillis)
-                    val newEndDateMillis = if (normalizedDateMillis > normalizedEndDate) {
-                        normalizedDateMillis  // Clamp: end can't be before start
-                    } else {
-                        normalizedEndDate     // Keep end unchanged
-                    }
+                    // ALL-DAY: Preserve day span when start date changes
+                    val normalizedOldStart = normalizeToLocalMidnight(state.dateMillis)
+                    val normalizedOldEnd = normalizeToLocalMidnight(state.endDateMillis)
+                    val daySpanMs = (normalizedOldEnd - normalizedOldStart).coerceAtLeast(0)
+                    val newEndDateMillis = normalizedDateMillis + daySpanMs
                     state = state.copy(
                         dateMillis = normalizedDateMillis,
                         endDateMillis = newEndDateMillis,
                         timezone = timezone
                     )
                 } else {
-                    // TIMED: Simple clamp - no duration preservation
-                    val startDateOnly = normalizeToLocalMidnight(normalizedDateMillis)
-                    val endDateOnly = normalizeToLocalMidnight(state.endDateMillis)
+                    // TIMED: Preserve actual duration when start changes
+                    val oldStartMins = state.startHour * 60 + state.startMinute
+                    val oldEndMins = state.endHour * 60 + state.endMinute
+                    val oldStartDateOnly = normalizeToLocalMidnight(state.dateMillis)
+                    val oldEndDateOnly = normalizeToLocalMidnight(state.endDateMillis)
+                    val dayGapMinutes = ((oldEndDateOnly - oldStartDateOnly) / (60 * 1000)).toInt()
+                    val currentDurationMins = (oldEndMins - oldStartMins) + dayGapMinutes
+                    val durationMins = if (currentDurationMins >= 0) currentDurationMins else defaultEventDuration
 
-                    // Helper: calculate end = start + duration, handling midnight overflow
-                    fun calcEndPlusDuration(dateMls: Long, startHr: Int, startMin: Int): Triple<Long, Int, Int> {
-                        val endMins = startHr * 60 + startMin + defaultEventDuration
-                        return if (endMins >= 24 * 60) {
-                            val nextDay = dateMls + (24 * 60 * 60 * 1000)
-                            Triple(nextDay, (endMins - 24 * 60) / 60, (endMins - 24 * 60) % 60)
-                        } else {
-                            Triple(dateMls, endMins / 60, endMins % 60)
-                        }
-                    }
-
-                    val (newEndDate, newEndHour, newEndMinute) = when {
-                        // Start date > end date: set end = start + duration
-                        startDateOnly > endDateOnly -> {
-                            calcEndPlusDuration(normalizedDateMillis, hour, minute)
-                        }
-                        // Same date: check if start time > end time
-                        startDateOnly == endDateOnly -> {
-                            val startMins = hour * 60 + minute
-                            val endMins = state.endHour * 60 + state.endMinute
-                            if (startMins > endMins) {
-                                calcEndPlusDuration(state.endDateMillis, hour, minute)
-                            } else {
-                                Triple(state.endDateMillis, state.endHour, state.endMinute)
-                            }
-                        }
-                        // Start date < end date: keep end unchanged
-                        else -> {
-                            Triple(state.endDateMillis, state.endHour, state.endMinute)
-                        }
-                    }
+                    val newEndTotalMins = hour * 60 + minute + durationMins
+                    val dayOverflowMs = (newEndTotalMins / (24 * 60)).toLong() * 24L * 60 * 60 * 1000
+                    val remainderMins = newEndTotalMins % (24 * 60)
 
                     state = state.copy(
                         dateMillis = normalizedDateMillis,
                         startHour = hour,
                         startMinute = minute,
-                        endDateMillis = newEndDate,
-                        endHour = newEndHour,
-                        endMinute = newEndMinute,
+                        endDateMillis = normalizedDateMillis + dayOverflowMs,
+                        endHour = remainderMins / 60,
+                        endMinute = remainderMins % 60,
                         timezone = timezone
                     )
                 }

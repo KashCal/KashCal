@@ -18,7 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +40,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.ui.screens.settings.BetaBadge
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.util.CalendarIntentData
@@ -114,6 +115,15 @@ fun QuickAddDialog(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Text("Quick Add", style = MaterialTheme.typography.titleMedium)
+                        BetaBadge()
+                    }
+
                     // Auto-focus and open keyboard after layout
                     LaunchedEffect(Unit) {
                         delay(100) // Wait for focusRequester to attach
@@ -147,7 +157,7 @@ fun QuickAddDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        OutlinedButton(
+                        FilledTonalButton(
                             onClick = {
                                 coroutineScope.launch {
                                     val intentData = viewModel.toCalendarIntentData()

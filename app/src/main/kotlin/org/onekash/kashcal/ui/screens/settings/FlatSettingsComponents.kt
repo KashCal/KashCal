@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
  * @param value Optional value displayed on the right
  * @param subtitle Optional secondary text below label
  * @param onClick Callback when row is tapped
+ * @param badge Optional composable rendered inline after the label (e.g., BetaBadge)
  * @param trailing Optional custom trailing composable (overrides default chevron)
  * @param showChevron Whether to show chevron (default true when trailing is null)
  * @param showDivider Whether to show bottom divider
@@ -61,6 +62,7 @@ fun SettingsRow(
     iconEmoji: String? = null,
     value: String? = null,
     subtitle: String? = null,
+    badge: @Composable (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     showChevron: Boolean = trailing == null,
     showDivider: Boolean = true
@@ -100,10 +102,16 @@ fun SettingsRow(
 
                 // Label and subtitle
                 Column {
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            label,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        badge?.invoke()
+                    }
                     if (subtitle != null) {
                         Text(
                             subtitle,

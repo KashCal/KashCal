@@ -312,8 +312,9 @@ class OccurrenceGeneratorSyncLookbackTest {
     // ========== extendPastOccurrences Sync Lookback Tests ==========
 
     @Test
-    fun `extendPastOccurrences respects sync lookback and does not extend beyond window`() = runTest {
-        // Setup: Set sync lookback to 90 days
+    fun `extendPastOccurrences extends beyond initial window regardless of syncPastDays`() = runTest {
+        // syncPastDays limits initial generation window, not on-demand extension.
+        // On-demand extension is triggered by explicit user navigation — no bandwidth cost.
         every { dataStore.syncPastDays } returns flowOf(90)
 
         // Create daily recurring event starting 2 years ago
@@ -331,20 +332,19 @@ class OccurrenceGeneratorSyncLookbackTest {
         val now = System.currentTimeMillis()
         val pastBefore = occurrencesBefore.filter { it.startTs < now }
 
-        // Act: Try to extend past occurrences to 1 year ago (beyond 90-day lookback)
+        // Act: Extend past occurrences to 1 year ago (beyond initial 90-day window)
         val oneYearAgoMs = now - (365 * MS_PER_DAY)
         val extended = occurrenceGenerator.extendPastOccurrences(event, oneYearAgoMs)
 
-        // Assert: Should NOT extend beyond lookback window
+        // Assert: Should extend — syncPastDays does not limit on-demand extension
         val occurrencesAfter = database.occurrencesDao().getForEvent(event.id)
         val pastAfter = occurrencesAfter.filter { it.startTs < now }
 
-        assertEquals(
-            "extendPastOccurrences should not add occurrences beyond lookback window",
-            pastBefore.size,
-            pastAfter.size
+        assertTrue(
+            "extendPastOccurrences should add occurrences beyond initial window: before=${pastBefore.size}, after=${pastAfter.size}",
+            pastAfter.size > pastBefore.size
         )
-        assertEquals("Should return 0 when target is beyond lookback", 0, extended)
+        assertTrue("Should return positive count when extending", extended > 0)
     }
 
     @Test

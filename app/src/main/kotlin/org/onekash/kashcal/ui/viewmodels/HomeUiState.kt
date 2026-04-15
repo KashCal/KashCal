@@ -12,6 +12,7 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.error.ErrorPresentation
+import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.model.CalendarGroup
 import android.net.Uri
 import org.onekash.kashcal.sync.model.SyncChange
@@ -204,6 +205,8 @@ data class HomeUiState(
     val showSyncBanner: Boolean = false,
     /** Sync banner message */
     val syncBannerMessage: String = "Syncing calendars...",
+    /** Sync banner visual state (dots animation, check icon, warning icon) */
+    val syncBannerState: SyncBannerState = SyncBannerState.Syncing,
 
     // === ERROR STATE ===
     /**

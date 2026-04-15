@@ -1252,4 +1252,184 @@ class EventFormSheetTest {
             )
         )
     }
+
+    // ========== Duration Preservation Tests (start time change) ==========
+
+    /**
+     * Simulates the FIXED onStartTimeConfirm logic for timed events.
+     * Computes actual duration from current state and applies to new start.
+     *
+     * Returns Triple(newEndHour, newEndMinute, newEndDateMillis)
+     */
+    private fun simulateStartTimeChangePreservingDuration(
+        oldStartHour: Int,
+        oldStartMinute: Int,
+        oldEndHour: Int,
+        oldEndMinute: Int,
+        oldStartDateMillis: Long,
+        oldEndDateMillis: Long,
+        newStartHour: Int,
+        newStartMinute: Int,
+        newStartDateMillis: Long = oldStartDateMillis,
+        defaultDuration: Int = 30
+    ): Triple<Int, Int, Long> {
+        val oldStartMins = oldStartHour * 60 + oldStartMinute
+        val oldEndMins = oldEndHour * 60 + oldEndMinute
+        val oldStartDateOnly = normalizeToLocalMidnightTest(oldStartDateMillis)
+        val oldEndDateOnly = normalizeToLocalMidnightTest(oldEndDateMillis)
+        val dayGapMinutes = ((oldEndDateOnly - oldStartDateOnly) / (60 * 1000)).toInt()
+        val currentDurationMins = (oldEndMins - oldStartMins) + dayGapMinutes
+        val durationMins = if (currentDurationMins >= 0) currentDurationMins else defaultDuration
+
+        val newEndTotalMins = newStartHour * 60 + newStartMinute + durationMins
+        val dayOverflowMs = (newEndTotalMins / (24 * 60)).toLong() * 24L * 60 * 60 * 1000
+        val remainderMins = newEndTotalMins % (24 * 60)
+        val newEndDateMillis = newStartDateMillis + dayOverflowMs
+        return Triple(remainderMins / 60, remainderMins % 60, newEndDateMillis)
+    }
+
+    /**
+     * Simulates the FIXED onStartDateConfirm logic for all-day events.
+     * Computes day span from current state and applies to new start date.
+     *
+     * Returns newEndDateMillis.
+     */
+    private fun simulateAllDayStartChangePreservingDaySpan(
+        oldStartDateMillis: Long,
+        oldEndDateMillis: Long,
+        newStartDateMillis: Long
+    ): Long {
+        val normalizedOldStart = normalizeToLocalMidnightTest(oldStartDateMillis)
+        val normalizedOldEnd = normalizeToLocalMidnightTest(oldEndDateMillis)
+        val daySpanMs = (normalizedOldEnd - normalizedOldStart).coerceAtLeast(0)
+        return normalizeToLocalMidnightTest(newStartDateMillis) + daySpanMs
+    }
+
+    @Test
+    fun `start time change preserves actual 2h duration`() {
+        // Given: 10:00-12:00 (2h event)
+        // When: start moves to 14:00
+        // Then: end should be 16:00 (not 14:30 from defaultDuration)
+        val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
+            oldStartHour = 10, oldStartMinute = 0,
+            oldEndHour = 12, oldEndMinute = 0,
+            oldStartDateMillis = 1704106800000L,
+            oldEndDateMillis = 1704106800000L,
+            newStartHour = 14, newStartMinute = 0
+        )
+        assertEquals("End hour should be 16", 16, newEndHour)
+        assertEquals("End minute should be 0", 0, newEndMinute)
+    }
+
+    @Test
+    fun `start date change preserves duration across day boundaries`() {
+        // Given: Jan 1 10:00-12:00 (2h)
+        // When: start moves to Jan 5 14:00
+        // Then: end should be Jan 5 16:00
+        val jan1 = 1704106800000L
+        val jan5 = jan1 + (4 * 24 * 60 * 60 * 1000)
+        val (newEndHour, newEndMinute, newEndDate) = simulateStartTimeChangePreservingDuration(
+            oldStartHour = 10, oldStartMinute = 0,
+            oldEndHour = 12, oldEndMinute = 0,
+            oldStartDateMillis = jan1,
+            oldEndDateMillis = jan1,
+            newStartHour = 14, newStartMinute = 0,
+            newStartDateMillis = jan5
+        )
+        assertEquals("End hour should be 16", 16, newEndHour)
+        assertEquals("End minute should be 0", 0, newEndMinute)
+        assertEquals("End date should be Jan 5", jan5, newEndDate)
+    }
+
+    @Test
+    fun `all-day multi-day preserves day span on start change`() {
+        // Given: 3-day event Jan 1 - Jan 3
+        // When: start moves to Jan 10
+        // Then: end should be Jan 12
+        val jan1 = normalizeToLocalMidnightTest(1704106800000L)
+        val jan3 = jan1 + (2 * 24 * 60 * 60 * 1000)
+        val jan10 = jan1 + (9 * 24 * 60 * 60 * 1000)
+        val jan12 = jan1 + (11 * 24 * 60 * 60 * 1000)
+
+        val newEndDate = simulateAllDayStartChangePreservingDaySpan(
+            oldStartDateMillis = jan1,
+            oldEndDateMillis = jan3,
+            newStartDateMillis = jan10
+        )
+        assertEquals("End should be Jan 12 (2-day span preserved)", jan12, newEndDate)
+    }
+
+    @Test
+    fun `all-day single-day stays single-day on start change`() {
+        // Given: 1-day event Jan 1
+        // When: start moves to Jan 10
+        // Then: end should be Jan 10
+        val jan1 = normalizeToLocalMidnightTest(1704106800000L)
+        val jan10 = jan1 + (9 * 24 * 60 * 60 * 1000)
+
+        val newEndDate = simulateAllDayStartChangePreservingDaySpan(
+            oldStartDateMillis = jan1,
+            oldEndDateMillis = jan1,
+            newStartDateMillis = jan10
+        )
+        assertEquals("End should be Jan 10 (same day)", jan10, newEndDate)
+    }
+
+    @Test
+    fun `start time change preserves 90min duration with midnight overflow`() {
+        // Given: 22:00-23:30 (90 min)
+        // When: start moves to 23:00
+        // Then: end should be 00:30 next day
+        val day1 = 1704106800000L
+        val (newEndHour, newEndMinute, newEndDate) = simulateStartTimeChangePreservingDuration(
+            oldStartHour = 22, oldStartMinute = 0,
+            oldEndHour = 23, oldEndMinute = 30,
+            oldStartDateMillis = day1,
+            oldEndDateMillis = day1,
+            newStartHour = 23, newStartMinute = 0,
+            newStartDateMillis = day1
+        )
+        assertEquals("End hour should be 0 (midnight overflow)", 0, newEndHour)
+        assertEquals("End minute should be 30", 30, newEndMinute)
+        assertTrue("End date should be next day", newEndDate > day1)
+    }
+
+    @Test
+    fun `multi-day timed event preserves 4h duration spanning midnight`() {
+        // Given: Jan 1 22:00 to Jan 2 02:00 (4h)
+        // When: start moves to Jan 5 20:00
+        // Then: end should be Jan 6 00:00
+        val jan1 = 1704106800000L
+        val jan2 = jan1 + (24 * 60 * 60 * 1000)
+        val jan5 = jan1 + (4 * 24 * 60 * 60 * 1000)
+        val jan6 = jan5 + (24 * 60 * 60 * 1000)
+        val (newEndHour, newEndMinute, newEndDate) = simulateStartTimeChangePreservingDuration(
+            oldStartHour = 22, oldStartMinute = 0,
+            oldEndHour = 2, oldEndMinute = 0,
+            oldStartDateMillis = jan1,
+            oldEndDateMillis = jan2,
+            newStartHour = 20, newStartMinute = 0,
+            newStartDateMillis = jan5
+        )
+        assertEquals("End hour should be 0 (midnight)", 0, newEndHour)
+        assertEquals("End minute should be 0", 0, newEndMinute)
+        assertEquals("End date should be Jan 6", jan6, newEndDate)
+    }
+
+    @Test
+    fun `start time change falls back to default for negative duration`() {
+        // Given: end before start (invalid, but possible in state)
+        // When: start changes
+        // Then: should use defaultDuration (30 min)
+        val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
+            oldStartHour = 15, oldStartMinute = 0,
+            oldEndHour = 14, oldEndMinute = 0,
+            oldStartDateMillis = 1704106800000L,
+            oldEndDateMillis = 1704106800000L,
+            newStartHour = 10, newStartMinute = 0,
+            defaultDuration = 30
+        )
+        assertEquals("End hour should be 10:30 (default 30 min)", 10, newEndHour)
+        assertEquals("End minute should be 30", 30, newEndMinute)
+    }
 }

@@ -37,6 +37,7 @@ import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -47,6 +48,7 @@ import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.util.importEventsToDeviceCalendar
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.toDetailUiModel
@@ -1855,6 +1857,19 @@ class AccountSettingsViewModel @Inject constructor(
      */
     suspend fun getDefaultReminderAllDay(): Int {
         return userPreferences.defaultReminderAllDay.first()
+    }
+
+    // ==================== ICS Device Import ====================
+
+    /**
+     * Import ICS events into a device calendar via CalendarProvider.
+     *
+     * @param events Events parsed from ICS file
+     * @param calendarId Target device calendar ID
+     * @return Count of successfully imported events
+     */
+    suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
+        return importEventsToDeviceCalendar(events, calendarId, calendarProviderRepository)
     }
 
     // ==================== Snackbar ====================

@@ -57,6 +57,7 @@ import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
+import org.onekash.kashcal.ui.screens.settings.BetaBadge
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
@@ -577,9 +578,8 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Default.CalendarMonth,
                 label = "Device Calendars",
-                subtitle = if (deviceCalendarsEnabled) {
-                    "Beta · ${enabledDeviceCalendarIds.size} enabled"
-                } else "Beta",
+                subtitle = if (deviceCalendarsEnabled) "${enabledDeviceCalendarIds.size} enabled" else null,
+                badge = { BetaBadge() },
                 onClick = { showDeviceCalendarsSheet = true },
                 showDivider = false
             )
@@ -607,8 +607,9 @@ private fun FlatSettingsContent(
             }
             SettingsRow(
                 icon = Icons.Default.Edit,
-                label = "Quick Event Add (Beta)",
+                label = "Quick Event Add",
                 subtitle = if (quickAddEnabled) "On" else "Off",
+                badge = { BetaBadge() },
                 onClick = { onQuickAddEnabledChange(!quickAddEnabled) }
             )
             SettingsRow(

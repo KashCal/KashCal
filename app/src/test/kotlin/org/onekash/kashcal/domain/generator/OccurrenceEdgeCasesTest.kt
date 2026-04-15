@@ -1493,6 +1493,91 @@ class OccurrenceEdgeCasesTest {
         }
     }
 
+    // ==================== Issue #152: Far-past recurring event not visible ====================
+
+    @Test
+    fun `needingPastExtension finds yearly event when targetTs is after buffer subtraction`() = runTest {
+        // Issue #152: FREQ=YEARLY event starting April 13, 2008.
+        // User navigates to April 13, 2008. extendPastOccurrencesIfNeeded subtracts 6-month buffer,
+        // making targetTs = October 2007. The WHERE clause `e.start_ts < :targetTs` fails because
+        // April 2008 < October 2007 is FALSE.
+        val april2008 = 1208044800000L // April 13, 2008 00:00 UTC
+        val oct2007 = april2008 - (6 * 30L * 24 * 60 * 60 * 1000) // ~October 2007 (6-month buffer)
+
+        val event = Event(
+            uid = "yearly-birthday-152@test.com",
+            calendarId = testCalendarId,
+            title = "Birthday",
+            startTs = april2008,
+            endTs = april2008 + 86400000, // all-day
+            isAllDay = true,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=YEARLY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate occurrences only for 2025-2028 (simulate the default window)
+        val jan2025 = 1735689600000L // Jan 1, 2025
+        val jan2028 = 1830297600000L // Jan 1, 2028
+        occurrenceGenerator.generateOccurrences(savedEvent, jan2025, jan2028)
+
+        // Verify occurrences exist in the expected window
+        val occs = database.occurrencesDao().getForEvent(eventId)
+        assertTrue("Should have occurrences in 2025-2028", occs.isNotEmpty())
+
+        // The bug: targetTs = October 2007 (after 6-month buffer subtraction).
+        // Event starts April 2008. MIN(occ) is April 2025.
+        // The query should find this event because there's a gap between DTSTART and MIN(occ).
+        val needsExtension = database.occurrencesDao().getRecurringEventsNeedingPastExtension(oct2007)
+        assertTrue(
+            "Should find yearly event needing past extension (issue #152)",
+            needsExtension.contains(eventId)
+        )
+    }
+
+    @Test
+    fun `extendPastOccurrences extends yearly event back to DTSTART despite syncPastDays`() = runTest {
+        // Issue #152: Even with the query fixed, syncPastDays (default 365) clamps extension
+        // to now-1yr, which is ~April 2025 — where occurrences already exist.
+        // On-demand extension should reach DTSTART regardless of syncPastDays.
+        val april2008 = 1208044800000L // April 13, 2008 00:00 UTC
+
+        val event = Event(
+            uid = "yearly-extend-152@test.com",
+            calendarId = testCalendarId,
+            title = "Birthday",
+            startTs = april2008,
+            endTs = april2008 + 86400000,
+            isAllDay = true,
+            dtstamp = System.currentTimeMillis(),
+            rrule = "FREQ=YEARLY",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Generate occurrences only for 2025-2028
+        val jan2025 = 1735689600000L
+        val jan2028 = 1830297600000L
+        occurrenceGenerator.generateOccurrences(savedEvent, jan2025, jan2028)
+
+        // Extend back to October 2007 (6 months before DTSTART, simulating the buffer)
+        val oct2007 = april2008 - (6 * 30L * 24 * 60 * 60 * 1000)
+        val extended = occurrenceGenerator.extendPastOccurrences(savedEvent, oct2007)
+
+        assertTrue("Should have extended occurrences back to DTSTART", extended > 0)
+
+        // Verify the earliest occurrence is at or near April 2008 (DTSTART)
+        val minTs = database.occurrencesDao().getMinStartTs(eventId)!!
+        val diffFromDtstart = minTs - april2008
+        assertTrue(
+            "Earliest occurrence should be at DTSTART (April 2008), diff=$diffFromDtstart ms",
+            diffFromDtstart < 86400000 // within 1 day (accounting for all-day alignment)
+        )
+    }
+
     // ==================== Helper Methods ====================
 
     private fun createTestEvent(title: String): Event {

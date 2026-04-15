@@ -46,7 +46,9 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -333,13 +335,23 @@ fun HomeScreen(
         ) {
             // Sync progress banner
             AnimatedVisibility(visible = uiState.showSyncBanner) {
-                SyncBanner(message = uiState.syncBannerMessage)
+                SyncBanner(
+                    message = uiState.syncBannerMessage,
+                    state = uiState.syncBannerState
+                )
             }
 
-            PullToRefreshBox(
-                isRefreshing = uiState.isSyncing,
-                onRefresh = onRefresh,
-                modifier = Modifier.fillMaxSize()
+            val pullToRefreshState = rememberPullToRefreshState()
+            val canPullToRefresh = uiState.isConfigured && isOnline
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pullToRefresh(
+                        isRefreshing = uiState.isSyncing,
+                        state = pullToRefreshState,
+                        enabled = canPullToRefresh,
+                        onRefresh = onRefresh
+                    )
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     when {
@@ -617,6 +629,11 @@ fun HomeScreen(
                         }
                     }
                 }
+                PullToRefreshDefaults.Indicator(
+                    state = pullToRefreshState,
+                    isRefreshing = uiState.isSyncing,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
             }
         }
     }

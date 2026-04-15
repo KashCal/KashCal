@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
@@ -99,17 +98,7 @@ fun DeviceCalendarsSheet(
                         "Device Calendars",
                         style = MaterialTheme.typography.titleLarge
                     )
-                    Text(
-                        "Beta",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier = Modifier
-                            .background(
-                                MaterialTheme.colorScheme.tertiaryContainer,
-                                RoundedCornerShape(4.dp)
-                            )
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    )
+                    BetaBadge()
                 }
                 if (isEnabled && hasReadPermission) {
                     IconButton(onClick = onRefresh) {

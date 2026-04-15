@@ -20,6 +20,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.text.SimpleDateFormat
@@ -751,7 +752,8 @@ class HomeScreenComposeTest {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     showSyncBanner = true,
-                    syncBannerMessage = "Syncing calendars..."
+                    syncBannerMessage = "Syncing calendars...",
+                    syncBannerState = SyncBannerState.Syncing
                 ),
                 isOnline = true,
                 onDateSelected = {},
@@ -771,7 +773,8 @@ class HomeScreenComposeTest {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     showSyncBanner = false,
-                    syncBannerMessage = ""
+                    syncBannerMessage = "",
+                    syncBannerState = SyncBannerState.Syncing
                 ),
                 isOnline = true,
                 onDateSelected = {},

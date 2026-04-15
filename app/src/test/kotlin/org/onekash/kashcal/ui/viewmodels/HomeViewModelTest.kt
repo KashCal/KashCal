@@ -42,6 +42,7 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import java.util.Calendar as JavaCalendar
 
@@ -1368,6 +1369,7 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals("Syncing calendars...", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
         // Force Full Sync shows banner but NOT the spinning icon (suppressSyncIndicator = true)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
@@ -1395,6 +1397,7 @@ class HomeViewModelTest {
         // Banner should still be visible (auto-dismisses after 2 seconds)
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
@@ -1467,6 +1470,7 @@ class HomeViewModelTest {
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Sync failed"))
         assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Network error"))
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
@@ -1500,6 +1504,7 @@ class HomeViewModelTest {
         // Banner should be visible because hasPartialError forces it
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
         assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
         assertFalse("isSyncing should be false", viewModel.uiState.value.isSyncing)
     }
 
@@ -1580,10 +1585,14 @@ class HomeViewModelTest {
 
         val partialMessage = viewModel.uiState.value.syncBannerMessage
         assertEquals("Sync complete with errors", partialMessage)
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
 
         // Reset and test Failed banner message
         syncStatusFlow.value = SyncStatus.Idle
         advanceUntilIdle()
+        // Idle resets state to Syncing
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
+
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "All accounts failed")
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
@@ -1591,6 +1600,7 @@ class HomeViewModelTest {
         val failedMessage = viewModel.uiState.value.syncBannerMessage
         assertTrue("Failed message should contain error", failedMessage.contains("Sync failed"))
         assertTrue("Failed message should contain specific error", failedMessage.contains("All accounts failed"))
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1618,6 +1628,7 @@ class HomeViewModelTest {
         // Banner should show (both showBanner=true AND hasPartialError=true)
         assertTrue("Banner should show", viewModel.uiState.value.showSyncBanner)
         assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1679,6 +1690,7 @@ class HomeViewModelTest {
         // Banner should show for partial error even in pull-to-refresh
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
         assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1703,6 +1715,7 @@ class HomeViewModelTest {
 
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertFalse(viewModel.uiState.value.isSyncing)
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1727,6 +1740,7 @@ class HomeViewModelTest {
 
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertFalse(viewModel.uiState.value.isSyncing)
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
     }
 
     // ==================== Network State Tests ====================
@@ -2203,6 +2217,7 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals("Preparing to sync...", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
 
         // Simulate WorkManager emitting Running
         syncStatusFlow.value = SyncStatus.Running
@@ -2210,6 +2225,7 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals("Syncing calendars...", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
         // Force Full Sync shows banner but NOT spinning icon (suppressSyncIndicator = true)
         assertFalse(viewModel.uiState.value.isSyncing)
 
@@ -2222,6 +2238,7 @@ class HomeViewModelTest {
         // Banner should still be visible (auto-dismisses after 2 seconds)
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
@@ -2292,6 +2309,7 @@ class HomeViewModelTest {
         // isSyncing should be false after failure
         assertFalse(viewModel.uiState.value.isSyncing)
         assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Sync failed"))
+        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
 
         // Should be able to start another sync now
         viewModel.refreshSync()

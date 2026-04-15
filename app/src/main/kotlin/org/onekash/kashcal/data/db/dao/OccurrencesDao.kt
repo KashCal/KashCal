@@ -240,8 +240,8 @@ interface OccurrencesDao {
      * Find recurring master events whose occurrences don't extend back to target date.
      * Used for on-demand past occurrence extension when user navigates far into the past.
      *
-     * Only returns events whose DTSTART is before targetTs (there are potential
-     * un-materialized occurrences in the gap between DTSTART and earliest occurrence).
+     * Returns events where DTSTART is before the earliest materialized occurrence,
+     * indicating a gap that can be filled by RRULE expansion.
      *
      * @param targetTs Target timestamp - events with min occurrence after this need past extension
      * @return List of event IDs that need past occurrence extension
@@ -251,9 +251,9 @@ interface OccurrencesDao {
         INNER JOIN events e ON o.event_id = e.id
         WHERE e.rrule IS NOT NULL
         AND e.original_event_id IS NULL
-        AND e.start_ts < :targetTs
         GROUP BY o.event_id
         HAVING MIN(o.start_ts) > :targetTs
+        AND e.start_ts < MIN(o.start_ts)
     """)
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 

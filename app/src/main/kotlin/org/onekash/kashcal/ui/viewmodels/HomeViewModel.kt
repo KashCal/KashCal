@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
@@ -49,7 +50,10 @@ import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.util.DayPagerUtils
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.computeDurationString
+import org.onekash.kashcal.util.importEventsToDeviceCalendar
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -340,7 +344,8 @@ class HomeViewModel @Inject constructor(
                                 isSyncing = !suppressSyncIndicator,
                                 showSyncBanner = showBanner,
                                 syncBannerMessage = if (status is SyncStatus.Running)
-                                    "Syncing calendars..." else "Preparing to sync..."
+                                    "Syncing calendars..." else "Preparing to sync...",
+                                syncBannerState = SyncBannerState.Syncing
                             )
                         }
                     }
@@ -352,7 +357,9 @@ class HomeViewModel @Inject constructor(
                                 isSyncing = false,
                                 showSyncBanner = showBanner || hasPartialError,
                                 syncBannerMessage = if (hasPartialError)
-                                    "Sync complete with errors" else "Sync complete"
+                                    "Sync complete with errors" else "Sync complete",
+                                syncBannerState = if (hasPartialError)
+                                    SyncBannerState.Error else SyncBannerState.Success
                             )
                         }
                         // Reload events after successful sync
@@ -371,7 +378,8 @@ class HomeViewModel @Inject constructor(
                             it.copy(
                                 isSyncing = false,
                                 showSyncBanner = true,
-                                syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}"
+                                syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}",
+                                syncBannerState = SyncBannerState.Error
                             )
                         }
                         // Auto-dismiss after 3 seconds
@@ -384,7 +392,8 @@ class HomeViewModel @Inject constructor(
                         _uiState.update {
                             it.copy(
                                 showSyncBanner = false,
-                                isSyncing = false
+                                isSyncing = false,
+                                syncBannerState = SyncBannerState.Syncing  // Reset to avoid stale Error flash
                             )
                         }
                     }
@@ -500,8 +509,6 @@ class HomeViewModel @Inject constructor(
         Log.d(TAG, "Pull-to-refresh: starting sync (with icon)")
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
     }
-
-
 
     /**
      * Force full sync (clears sync tokens).
@@ -2616,6 +2623,19 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Import ICS events into a device calendar via CalendarProvider.
+     *
+     * @param events Events parsed from ICS file
+     * @param calendarId Target device calendar ID
+     * @return Count of successfully imported events
+     */
+    suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
+        return withContext(ioDispatcher) {
+            importEventsToDeviceCalendar(events, calendarId, calendarProviderRepository)
+        }
+    }
+
+    /**
      * Save a device event from EventFormState.
      *
      * Routes to appropriate operation:
@@ -2766,29 +2786,6 @@ class HomeViewModel @Inject constructor(
      */
     private fun buildDeviceReminders(reminderMinutes: List<Int>): List<Int> {
         return deduplicateAndSortReminders(reminderMinutes)
-    }
-
-    /**
-     * Compute RFC 5545 duration string for CalendarProvider events.
-     * CalendarProvider requires DURATION instead of DTEND for recurring events.
-     */
-    private fun computeDurationString(startTs: Long, endTs: Long, isAllDay: Boolean): String {
-        val diffMs = endTs - startTs
-        return if (isAllDay) {
-            // All-day events: compute days
-            val days = (diffMs / (24 * 60 * 60 * 1000)).toInt().coerceAtLeast(1)
-            "P${days}D"
-        } else {
-            // Timed events: compute hours and minutes
-            val totalMinutes = (diffMs / (60 * 1000)).toInt()
-            val hours = totalMinutes / 60
-            val minutes = totalMinutes % 60
-            when {
-                hours > 0 && minutes > 0 -> "PT${hours}H${minutes}M"
-                hours > 0 -> "PT${hours}H"
-                else -> "PT${minutes}M"
-            }
-        }
     }
 
     /**

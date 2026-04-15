@@ -73,3 +73,13 @@ CLAUDE.md
 # Claude Code local state
 .claude/
 site/
+
+# TDD tracker files (internal process artifacts)
+*tracker*.json
+
+# Detekt static analysis config (internal)
+detekt.yml
+detekt-baseline.xml
+
+# Docker test server configs (internal testing)
+docker/

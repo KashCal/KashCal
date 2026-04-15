@@ -491,20 +491,26 @@ class SettingsActivity : ComponentActivity() {
 
                     // ICS Import Sheet
                     if (showIcsImportSheet && icsImportEvents.isNotEmpty()) {
-                        // ICS import only supports Room calendars, extract ID if Room type
                         val defaultRoomCalendarId = (defaultCalendar as? DefaultCalendar.Room)?.calendarId
+                        val defaultDeviceCalendarId = (defaultCalendar as? DefaultCalendar.Device)?.calendarId
                         IcsImportSheet(
                             events = icsImportEvents,
                             calendars = calendars,
                             defaultCalendarId = defaultRoomCalendarId,
+                            deviceCalendarGroups = writableDeviceCalendarGroups,
+                            defaultDeviceCalendarId = defaultDeviceCalendarId,
                             onDismiss = {
                                 showIcsImportSheet = false
                                 icsImportEvents = emptyList()
                             },
-                            onImport = { calendarId, events ->
+                            onImport = { calendarId, events, isDeviceCalendar ->
                                 coroutineScope.launch {
                                     try {
-                                        val count = eventCoordinator.importIcsEvents(events, calendarId)
+                                        val count = if (isDeviceCalendar) {
+                                            viewModel.importIcsToDeviceCalendar(events, calendarId)
+                                        } else {
+                                            eventCoordinator.importIcsEvents(events, calendarId)
+                                        }
                                         viewModel.showSnackbar(
                                             "Imported $count event${if (count != 1) "s" else ""}"
                                         )

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,21 @@ fun SectionHeader(title: String) {
         fontWeight = FontWeight.Medium,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
+fun BetaBadge(modifier: Modifier = Modifier) {
+    Text(
+        "Beta",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = modifier
+            .background(
+                MaterialTheme.colorScheme.tertiaryContainer,
+                RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     )
 }
 
