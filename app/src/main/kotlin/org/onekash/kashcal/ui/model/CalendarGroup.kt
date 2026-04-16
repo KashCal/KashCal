@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Unified calendar representation for the calendar picker.
@@ -50,7 +51,8 @@ data class CalendarGroup(
     val accountId: Long,
     val calendars: List<Calendar> = emptyList(),
     val pickerCalendars: List<PickerCalendar> = emptyList(),
-    val isDeviceSection: Boolean = false
+    val isDeviceSection: Boolean = false,
+    val provider: AccountProvider? = null
 ) {
     companion object {
         /**
@@ -71,19 +73,25 @@ data class CalendarGroup(
                 .groupBy { it.accountId }
                 .map { (accountId, accountCalendars) ->
                     val account = accountMap[accountId]
-                    val accountName = account?.displayName
-                        ?: account?.provider?.displayName
-                        ?: "Unknown"
+                    val accountName = when (account?.provider) {
+                        AccountProvider.LOCAL -> "Offline"
+                        else -> account?.displayName
+                            ?: account?.provider?.displayName
+                            ?: "Unknown"
+                    }
+                    val sorted = accountCalendars.sortedBy { it.displayName.lowercase() }
                     CalendarGroup(
                         accountName = accountName,
                         accountId = accountId,
-                        calendars = accountCalendars.sortedBy { it.displayName.lowercase() },
-                        pickerCalendars = accountCalendars
-                            .sortedBy { it.displayName.lowercase() }
-                            .map { PickerCalendar.Room(it) }
+                        calendars = sorted,
+                        pickerCalendars = sorted.map { PickerCalendar.Room(it) },
+                        provider = account?.provider
                     )
                 }
-                .sortedBy { it.accountName.lowercase() }
+                .sortedWith(
+                    compareBy<CalendarGroup> { it.provider == AccountProvider.CONTACTS }
+                        .thenBy { it.accountName.lowercase() }
+                )
         }
 
         /**

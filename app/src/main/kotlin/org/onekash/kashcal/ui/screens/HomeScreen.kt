@@ -36,7 +36,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import org.onekash.kashcal.ui.components.ViewPickerButton
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -52,8 +56,11 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -61,9 +68,11 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.res.Configuration
 import android.text.format.DateFormat
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -80,6 +89,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
@@ -141,9 +151,12 @@ fun HomeScreen(
     onSearchShowDatePicker: () -> Unit = {},
     onSearchHideDatePicker: () -> Unit = {},
     onSearchDateSelected: (Long) -> Unit = {},
-    // Settings/filter callbacks
+    // Settings callback
     onSettingsClick: () -> Unit = {},
-    onFilterClick: () -> Unit = {},
+    // Drawer
+    drawerState: DrawerState? = null,
+    onDrawerToggleCalendar: (Long) -> Unit = {},
+    onDrawerToggleDeviceCalendarVisibility: (Long) -> Unit = {},
     // Info callbacks
     onInfoClick: () -> Unit = {},
     // View picker callback
@@ -182,6 +195,11 @@ fun HomeScreen(
     val initialPage = MonthPagerUtils.INITIAL_PAGE
     val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
     val coroutineScope = rememberCoroutineScope()
+
+    // Adaptive layout based on screen dimensions
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isCompactHeight = isLandscape && configuration.screenHeightDp < 480
 
     // Time format pattern based on user preference and device setting
     val context = LocalContext.current
@@ -292,6 +310,26 @@ fun HomeScreen(
         onDismiss = onYearOverlayDismiss
     )
 
+    val drawerScope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
+        drawerContent = {
+            CalendarDrawer(
+                currentViewMode = uiState.viewMode,
+                calendarGroups = uiState.calendarGroups,
+                deviceCalendarsEnabled = uiState.deviceCalendarsEnabled,
+                enabledDeviceCalendars = uiState.enabledDeviceCalendars,
+                hiddenDeviceCalendarIds = uiState.hiddenDeviceCalendarIds,
+                onViewSelect = { mode ->
+                    drawerScope.launch { drawerState?.close() }
+                    onViewSelect(mode)
+                },
+                onToggleCalendar = onDrawerToggleCalendar,
+                onToggleDeviceCalendarVisibility = onDrawerToggleDeviceCalendarVisibility
+            )
+        }
+    ) {
     Scaffold(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState) { data ->
@@ -309,10 +347,15 @@ fun HomeScreen(
                 isOnline = isOnline,
                 searchFocusRequester = searchFocusRequester,
                 refreshKey = refreshKey,
+                drawerState = drawerState,
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
                 onSearchQueryChange = onSearchQueryChange,
-                onViewSelect = onViewSelect,
+                onMenuClick = {
+                    drawerScope.launch {
+                        if (drawerState?.isOpen == true) drawerState.close() else drawerState?.open()
+                    }
+                },
                 onGoToToday = onGoToToday,
                 onSettingsClick = onSettingsClick,
                 onInfoClick = onInfoClick
@@ -547,32 +590,12 @@ fun HomeScreen(
                             }
                             val hideForTransition = isFirstComposition && uiState.pendingNavigateToMonth != null
 
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .alpha(if (hideForTransition) 0f else 1f)
-                            ) {
-                            // Month view with pager
-                            // CRITICAL: userScrollEnabled must be true for month view
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.Top,
-                                userScrollEnabled = true  // Always enabled in month view
-                            ) { page ->
-                                val monthOffset = page - initialPage
-                                val pageCal = JavaCalendar.getInstance().apply {
-                                    set(todayYear, todayMonth, 1)
-                                    add(JavaCalendar.MONTH, monthOffset)
-                                }
-                                val pageYear = pageCal.get(JavaCalendar.YEAR)
-                                val pageMonth = pageCal.get(JavaCalendar.MONTH)
-
+                            // Month pager content (shared between portrait and landscape)
+                            val monthPagerContent: @Composable (pageYear: Int, pageMonth: Int) -> Unit = { pageYear, pageMonth ->
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    // Month navigation header
                                     MonthNavHeader(
                                         year = pageYear,
                                         month = pageMonth,
@@ -588,15 +611,11 @@ fun HomeScreen(
                                         },
                                         onMonthClick = onMonthHeaderClick
                                     )
-
-                                    // Day of week headers
                                     DayOfWeekHeaders(
                                         firstDayOfWeek = uiState.firstDayOfWeek,
                                         showWeekNumbers = uiState.showWeekNumbers
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
-
-                                    // Calendar grid
                                     CalendarGrid(
                                         year = pageYear,
                                         month = pageMonth,
@@ -605,27 +624,105 @@ fun HomeScreen(
                                         onDateSelected = onDateSelected,
                                         firstDayOfWeekPref = uiState.firstDayOfWeek,
                                         refreshKey = refreshKey,
-                                        showWeekNumbers = uiState.showWeekNumbers
+                                        showWeekNumbers = uiState.showWeekNumbers,
+                                        isCompact = isCompactHeight
                                     )
                                 }
                             }
 
-                            // Day events pager (swipeable) below calendar
-                            HorizontalDivider()
-                            DayEventsPager(
-                                uiState = uiState,
-                                monthPagerState = pagerState,
-                                monthPagerInitialPage = initialPage,
-                                todayYear = todayYear,
-                                todayMonth = todayMonth,
-                                timePattern = timePattern,
-                                onEventClick = onEventClick,
-                                onDeviceEventClick = onDeviceEventClick,
-                                onDateSelected = onDateSelected,
-                                onLoadEventsForRange = onLoadEventsForDayPagerRange,
-                                shouldRefreshCache = shouldRefreshDayPagerCache
-                            )
-                            } // Column wrapper for transition alpha
+                            val transitionAlpha = if (hideForTransition) 0f else 1f
+
+                            // Hoist day pager state above the landscape/portrait branch
+                            // so it survives orientation changes without recreation.
+                            val dayPagerTodayMs = remember { DayPagerUtils.getTodayMidnightMs() }
+                            val dayPagerInitialPage = if (uiState.selectedDate != 0L) {
+                                DayPagerUtils.dateToPage(uiState.selectedDate, dayPagerTodayMs)
+                            } else {
+                                DayPagerUtils.INITIAL_PAGE
+                            }
+                            val dayPagerState = rememberPagerState(
+                                initialPage = dayPagerInitialPage
+                            ) { DayPagerUtils.TOTAL_PAGES }
+
+                            if (isLandscape) {
+                                // Landscape: calendar grid left, day events right
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .alpha(transitionAlpha)
+                                ) {
+                                    // Month pager (left)
+                                    HorizontalPager(
+                                        state = pagerState,
+                                        modifier = Modifier.weight(0.45f),
+                                        verticalAlignment = Alignment.Top,
+                                        userScrollEnabled = true
+                                    ) { page ->
+                                        val monthOffset = page - initialPage
+                                        val pageCal = JavaCalendar.getInstance().apply {
+                                            set(todayYear, todayMonth, 1)
+                                            add(JavaCalendar.MONTH, monthOffset)
+                                        }
+                                        monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
+                                    }
+                                    VerticalDivider()
+                                    // Day events (right)
+                                    Column(modifier = Modifier.weight(0.55f)) {
+                                        DayEventsPager(
+                                            uiState = uiState,
+                                            dayPagerState = dayPagerState,
+                                            dayPagerTodayMs = dayPagerTodayMs,
+                                            monthPagerState = pagerState,
+                                            monthPagerInitialPage = initialPage,
+                                            todayYear = todayYear,
+                                            todayMonth = todayMonth,
+                                            timePattern = timePattern,
+                                            onEventClick = onEventClick,
+                                            onDeviceEventClick = onDeviceEventClick,
+                                            onDateSelected = onDateSelected,
+                                            onLoadEventsForRange = onLoadEventsForDayPagerRange,
+                                            shouldRefreshCache = shouldRefreshDayPagerCache
+                                        )
+                                    }
+                                }
+                            } else {
+                                // Portrait: calendar grid top, day events below
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .alpha(transitionAlpha)
+                                ) {
+                                    HorizontalPager(
+                                        state = pagerState,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.Top,
+                                        userScrollEnabled = true
+                                    ) { page ->
+                                        val monthOffset = page - initialPage
+                                        val pageCal = JavaCalendar.getInstance().apply {
+                                            set(todayYear, todayMonth, 1)
+                                            add(JavaCalendar.MONTH, monthOffset)
+                                        }
+                                        monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
+                                    }
+                                    HorizontalDivider()
+                                    DayEventsPager(
+                                        uiState = uiState,
+                                        dayPagerState = dayPagerState,
+                                        dayPagerTodayMs = dayPagerTodayMs,
+                                        monthPagerState = pagerState,
+                                        monthPagerInitialPage = initialPage,
+                                        todayYear = todayYear,
+                                        todayMonth = todayMonth,
+                                        timePattern = timePattern,
+                                        onEventClick = onEventClick,
+                                        onDeviceEventClick = onDeviceEventClick,
+                                        onDateSelected = onDateSelected,
+                                        onLoadEventsForRange = onLoadEventsForDayPagerRange,
+                                        shouldRefreshCache = shouldRefreshDayPagerCache
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -674,6 +771,8 @@ fun HomeScreen(
         )
     }
 
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -683,14 +782,21 @@ private fun HomeTopAppBar(
     isOnline: Boolean,
     searchFocusRequester: FocusRequester,
     refreshKey: Int,
+    drawerState: DrawerState?,
     onSearchClick: () -> Unit,
     onSearchClose: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onViewSelect: (ViewMode) -> Unit,
+    onMenuClick: () -> Unit,
     onGoToToday: () -> Unit,
     onSettingsClick: () -> Unit,
     onInfoClick: () -> Unit
 ) {
+    val isDrawerOpen = drawerState?.targetValue == DrawerValue.Open
+    val menuRotation by animateFloatAsState(
+        targetValue = if (isDrawerOpen) 180f else 0f,
+        animationSpec = tween(300),
+        label = "menuRotation"
+    )
     when {
         uiState.isSearchActive -> {
             TopAppBar(
@@ -760,10 +866,15 @@ private fun HomeTopAppBar(
                 },
                 navigationIcon = {
                     Row {
-                        ViewPickerButton(
-                            currentView = uiState.viewMode,
-                            onViewSelect = onViewSelect
-                        )
+                        IconButton(onClick = onMenuClick) {
+                            Icon(
+                                Icons.Default.Menu,
+                                contentDescription = if (isDrawerOpen) "Close drawer" else "Open drawer",
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .graphicsLayer { rotationZ = menuRotation }
+                            )
+                        }
                         IconButton(onClick = onSearchClick) {
                             Icon(Icons.Default.Search, contentDescription = "Search", modifier = Modifier.size(28.dp))
                         }
@@ -874,8 +985,11 @@ private fun CalendarGrid(
     onDateSelected: (Long) -> Unit,
     firstDayOfWeekPref: Int = java.util.Calendar.SUNDAY,
     refreshKey: Int = 0,
-    showWeekNumbers: Boolean = false
+    showWeekNumbers: Boolean = false,
+    isCompact: Boolean = false
 ) {
+    val cellHeight = if (isCompact) 32.dp else 44.dp
+
     val monthGrid = remember(year, month, firstDayOfWeekPref) {
         MonthGrid.compute(year, month, firstDayOfWeekPref)
     }
@@ -893,7 +1007,7 @@ private fun CalendarGrid(
             Row(modifier = Modifier.fillMaxWidth()) {
                 if (showWeekNumbers) {
                     Box(
-                        modifier = Modifier.width(24.dp).height(44.dp),
+                        modifier = Modifier.width(24.dp).height(cellHeight),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -909,7 +1023,7 @@ private fun CalendarGrid(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(44.dp)
+                                    .height(cellHeight)
                                     .padding(2.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .clickable {
@@ -929,6 +1043,8 @@ private fun CalendarGrid(
                             ) {
                                 Text(
                                     text = cell.dayOfMonth.toString(),
+                                    style = if (isCompact) MaterialTheme.typography.bodySmall
+                                            else LocalTextStyle.current,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                                 )
                             }
@@ -944,7 +1060,7 @@ private fun CalendarGrid(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(44.dp)
+                                    .height(cellHeight)
                                     .padding(2.dp)
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
@@ -963,6 +1079,8 @@ private fun CalendarGrid(
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                     Text(
                                         text = day.toString(),
+                                        style = if (isCompact) MaterialTheme.typography.bodySmall
+                                                else LocalTextStyle.current,
                                         color = when {
                                             isSelected -> MaterialTheme.colorScheme.onPrimary
                                             isToday -> MaterialTheme.colorScheme.onPrimaryContainer
@@ -1000,6 +1118,8 @@ private fun CalendarGrid(
 @Composable
 private fun ColumnScope.DayEventsPager(
     uiState: HomeUiState,
+    dayPagerState: PagerState,
+    dayPagerTodayMs: Long,
     monthPagerState: PagerState,
     monthPagerInitialPage: Int,
     todayYear: Int,
@@ -1011,20 +1131,7 @@ private fun ColumnScope.DayEventsPager(
     onLoadEventsForRange: (Long) -> Unit,
     shouldRefreshCache: (Long) -> Boolean
 ) {
-    // Calculate stable today reference
-    val todayMs = remember { DayPagerUtils.getTodayMidnightMs() }
-
-    // Day pager state — start at selectedDate (not today) so that fresh
-    // creation after search close or view switch doesn't trigger SYNC 1
-    // scrolling the month pager to today's month
-    val selectedPage = if (uiState.selectedDate != 0L) {
-        DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
-    } else {
-        DayPagerUtils.INITIAL_PAGE
-    }
-    val dayPagerState = rememberPagerState(
-        initialPage = selectedPage
-    ) { DayPagerUtils.TOTAL_PAGES }
+    val todayMs = dayPagerTodayMs
 
     val coroutineScope = rememberCoroutineScope()
 

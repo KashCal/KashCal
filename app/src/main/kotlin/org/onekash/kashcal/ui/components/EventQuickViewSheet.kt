@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Launch
@@ -179,136 +180,138 @@ fun EventQuickViewSheet(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 // Event details
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Title
-                    Text(
-                        text = displayTitle,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                SelectionContainer {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Title
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                    // Date and time - use occurrence timestamp for recurring events
-                    // to show the date the user tapped (not master event's original date)
-                    val displayStartTs = occurrenceTs ?: event.startTs
-                    val duration = event.endTs - event.startTs
-                    val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
-                    Text(
-                        text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, timePattern),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        // Date and time - use occurrence timestamp for recurring events
+                        // to show the date the user tapped (not master event's original date)
+                        val displayStartTs = occurrenceTs ?: event.startTs
+                        val duration = event.endTs - event.startTs
+                        val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
+                        Text(
+                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, timePattern),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                    // Location - clickable if looks like address or contains URL
-                    if (!event.location.isNullOrEmpty()) {
-                        val locationContext = LocalContext.current
-                        val uriHandler = LocalUriHandler.current
-                        val isAddress = remember(event.location) { looksLikeAddress(event.location) }
-                        val hasUrl = remember(event.location) { !isAddress && containsUrl(event.location) }
+                        // Location - clickable if looks like address or contains URL
+                        if (!event.location.isNullOrEmpty()) {
+                            val locationContext = LocalContext.current
+                            val uriHandler = LocalUriHandler.current
+                            val isAddress = remember(event.location) { looksLikeAddress(event.location) }
+                            val hasUrl = remember(event.location) { !isAddress && containsUrl(event.location) }
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = when {
-                                isAddress -> Modifier.clickable { openInMaps(locationContext, event.location) }
-                                hasUrl -> Modifier.clickable {
-                                    // Extract first URL from location and open it
-                                    val urls = org.onekash.kashcal.util.text.extractUrls(event.location, limit = 1)
-                                    urls.firstOrNull()?.let { detected ->
-                                        if (shouldOpenExternally(detected.url)) {
-                                            try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = when {
+                                    isAddress -> Modifier.clickable { openInMaps(locationContext, event.location) }
+                                    hasUrl -> Modifier.clickable {
+                                        // Extract first URL from location and open it
+                                        val urls = org.onekash.kashcal.util.text.extractUrls(event.location, limit = 1)
+                                        urls.firstOrNull()?.let { detected ->
+                                            if (shouldOpenExternally(detected.url)) {
+                                                try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                                            }
                                         }
                                     }
+                                    else -> Modifier
                                 }
-                                else -> Modifier
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = if (isAddress || hasUrl) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = event.location,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isAddress || hasUrl) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (isAddress || hasUrl) {
-                                Spacer(modifier = Modifier.width(4.dp))
+                            ) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = if (isAddress) "Open in maps" else "Open link",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (isAddress || hasUrl) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = event.location,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isAddress || hasUrl) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (isAddress || hasUrl) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Launch,
+                                        contentDescription = if (isAddress) "Open in maps" else "Open link",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    // Repeat info
-                    if (isRecurring) {
-                        // For exception events (no rrule), show generic "Recurring"
-                        // For master events, append series start date (issue #124)
-                        val repeatText = if (event.rrule != null) {
-                            val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule)
-                            // No-year contact birthdays/anniversaries have synthetic startTs — skip date
-                            val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
-                            val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
-                            val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
-                            if (endSuffix != null && startDate != null) {
-                                "$freq starting $startDate$endSuffix"
-                            } else if (endSuffix != null) {
-                                "$freq$endSuffix"
-                            } else if (startDate != null) {
-                                "$freq \u00b7 since $startDate"
+                        // Repeat info
+                        if (isRecurring) {
+                            // For exception events (no rrule), show generic "Recurring"
+                            // For master events, append series start date (issue #124)
+                            val repeatText = if (event.rrule != null) {
+                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule)
+                                // No-year contact birthdays/anniversaries have synthetic startTs — skip date
+                                val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
+                                val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
+                                val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
+                                if (endSuffix != null && startDate != null) {
+                                    "$freq starting $startDate$endSuffix"
+                                } else if (endSuffix != null) {
+                                    "$freq$endSuffix"
+                                } else if (startDate != null) {
+                                    "$freq \u00b7 since $startDate"
+                                } else {
+                                    freq
+                                }
                             } else {
-                                freq
+                                "Recurring"
                             }
-                        } else {
-                            "Recurring"
+                            Text(
+                                text = "\uD83D\uDD01 $repeatText",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        Text(
-                            text = "\uD83D\uDD01 $repeatText",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
 
-                    // Calendar name
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(
-                                    color = Color(calendarColor),
-                                    shape = RoundedCornerShape(50)
-                                )
-                        )
-                        Text(
-                            text = calendarName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Calendar name
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .background(
+                                        color = Color(calendarColor),
+                                        shape = RoundedCornerShape(50)
+                                    )
+                            )
+                            Text(
+                                text = calendarName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -681,90 +684,92 @@ private fun ExpandedContentSection(
     val uriHandler = LocalUriHandler.current
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(max = 300.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
+    SelectionContainer {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .heightIn(max = 300.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
 
-        // URL field (if event has a valid URL)
-        if (validEventUrl != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        if (shouldOpenExternally(validEventUrl)) {
-                            try { uriHandler.openUri(validEventUrl) } catch (_: Exception) {}
+            // URL field (if event has a valid URL)
+            if (validEventUrl != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (shouldOpenExternally(validEventUrl)) {
+                                try { uriHandler.openUri(validEventUrl) } catch (_: Exception) {}
+                            }
                         }
-                    }
-            ) {
-                Icon(
-                    Icons.Default.Link,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = validEventUrl,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Icon(
-                    Icons.AutoMirrored.Filled.Launch,
-                    contentDescription = "Open link",
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        // Notes section (with linkified text)
-        if (!event.description.isNullOrBlank()) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Notes",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LinkifiedText(
-                    text = event.description,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface
+                ) {
+                    Icon(
+                        Icons.Default.Link,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = MaterialTheme.colorScheme.primary
                     )
-                )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = validEventUrl,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        Icons.AutoMirrored.Filled.Launch,
+                        contentDescription = "Open link",
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-        }
 
-        // Reminders section
-        if (formattedReminders != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "\uD83D\uDD14",  // Bell emoji
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = formattedReminders,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Notes section (with linkified text)
+            if (!event.description.isNullOrBlank()) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Notes",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LinkifiedText(
+                        text = event.description,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                }
+            }
+
+            // Reminders section
+            if (formattedReminders != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "\uD83D\uDD14",  // Bell emoji
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = formattedReminders,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

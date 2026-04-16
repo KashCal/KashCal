@@ -29,13 +29,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 
-private data class ViewOption(
+internal data class ViewOption(
     val mode: ViewMode,
     val label: String,
     val icon: ImageVector
 )
 
-private val viewOptions = listOf(
+internal val viewOptions = listOf(
     ViewOption(ViewMode.MONTH, "Month", Icons.Default.CalendarMonth),
     ViewOption(ViewMode.AGENDA, "Agenda", Icons.Default.ViewAgenda),
     ViewOption(ViewMode.MONTH_FULL, "Month (Full)", Icons.Default.GridView),
@@ -44,7 +44,7 @@ private val viewOptions = listOf(
     ViewOption(ViewMode.YEAR, "Year", Icons.Default.CalendarViewMonth)
 )
 
-private fun iconForMode(mode: ViewMode): ImageVector =
+internal fun iconForMode(mode: ViewMode): ImageVector =
     viewOptions.first { it.mode == mode }.icon
 
 /**

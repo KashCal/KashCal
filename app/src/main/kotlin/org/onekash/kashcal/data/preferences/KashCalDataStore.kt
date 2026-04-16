@@ -551,6 +551,42 @@ class KashCalDataStore(
     }
 
     /**
+     * Set of hidden device calendar IDs.
+     * These calendars are enabled (integration + reminders active) but hidden from the calendar view.
+     * Stored as Set<String> (DataStore limitation), converted to/from Set<Long>.
+     */
+    val hiddenDeviceCalendarIds: Flow<Set<Long>>
+        get() = getPreference(PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS, emptySet<String>())
+            .map { strings -> strings.mapNotNull { it.toLongOrNull() }.toSet() }
+
+    suspend fun getHiddenDeviceCalendarIds(): Set<Long> = hiddenDeviceCalendarIds.first()
+
+    suspend fun setHiddenDeviceCalendarIds(ids: Set<Long>) {
+        setPreference(PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS, ids.map { it.toString() }.toSet())
+    }
+
+    /**
+     * Toggle a device calendar's hidden state.
+     * If the calendar is currently hidden, it becomes visible. If visible, it becomes hidden.
+     */
+    suspend fun toggleDeviceCalendarHidden(calendarId: Long) {
+        val current = getHiddenDeviceCalendarIds().toMutableSet()
+        if (calendarId in current) current.remove(calendarId) else current.add(calendarId)
+        setHiddenDeviceCalendarIds(current)
+    }
+
+    /**
+     * Remove a calendar from hidden IDs.
+     * Called when a device calendar is disabled to ensure clean slate on re-enable.
+     */
+    suspend fun removeFromHiddenDeviceCalendarIds(calendarId: Long) {
+        val current = getHiddenDeviceCalendarIds().toMutableSet()
+        if (current.remove(calendarId)) {
+            setHiddenDeviceCalendarIds(current)
+        }
+    }
+
+    /**
      * Whether KashCal should fire reminders for device calendar events.
      * Default: false (opt-in feature to avoid duplicate notifications)
      */

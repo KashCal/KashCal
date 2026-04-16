@@ -165,12 +165,11 @@ class DisplayEventRepository @Inject constructor(
         val roomResults = roomSearcher(query)
 
         val deviceResults = try {
-            val featureEnabled = dataStore.getDeviceCalendarsEnabled()
-            val enabledIds = if (featureEnabled) dataStore.getEnabledDeviceCalendarIds() else emptySet()
-            if (enabledIds.isNotEmpty()) {
+            val visibleIds = getVisibleDeviceCalendarIds()
+            if (visibleIds.isNotEmpty()) {
                 val hideDeclined = !dataStore.getShowDeclinedEvents()
                 calendarProviderRepository.searchInstances(
-                    query, startDayCode, endDayCode, enabledIds, hideDeclined
+                    query, startDayCode, endDayCode, visibleIds, hideDeclined
                 ).map { SearchResult(DisplayEvent.Device(it), it.startTs) }
             } else {
                 emptyList()
@@ -226,12 +225,11 @@ class DisplayEventRepository @Inject constructor(
         endDayCode: Int
     ): List<DisplayEvent> {
         return try {
-            val featureEnabled = dataStore.getDeviceCalendarsEnabled()
-            val enabledIds = if (featureEnabled) dataStore.getEnabledDeviceCalendarIds() else emptySet()
-            if (enabledIds.isNotEmpty()) {
+            val visibleIds = getVisibleDeviceCalendarIds()
+            if (visibleIds.isNotEmpty()) {
                 val hideDeclined = !dataStore.getShowDeclinedEvents()
                 calendarProviderRepository.getInstancesForDayRange(
-                    startDayCode, endDayCode, enabledIds, hideDeclined
+                    startDayCode, endDayCode, visibleIds, hideDeclined
                 ).map { DisplayEvent.Device(it) }
             } else {
                 emptyList()
@@ -240,6 +238,13 @@ class DisplayEventRepository @Inject constructor(
             Log.w(TAG, "Calendar permission revoked, falling back to Room-only", e)
             emptyList()
         }
+    }
+
+    private suspend fun getVisibleDeviceCalendarIds(): Set<Long> {
+        val featureEnabled = dataStore.getDeviceCalendarsEnabled()
+        val enabledIds = if (featureEnabled) dataStore.getEnabledDeviceCalendarIds() else emptySet()
+        val hiddenIds = if (featureEnabled) dataStore.getHiddenDeviceCalendarIds() else emptySet()
+        return enabledIds - hiddenIds
     }
 
     /**

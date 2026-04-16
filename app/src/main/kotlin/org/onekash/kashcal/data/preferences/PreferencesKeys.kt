@@ -152,6 +152,9 @@ object PreferencesKeys {
     /** Enabled device calendar IDs (stored as Set<String>, converted to Set<Long>) */
     val ENABLED_DEVICE_CALENDAR_IDS = stringSetPreferencesKey("enabled_device_calendar_ids")
 
+    /** Hidden device calendar IDs — enabled but hidden from view (stored as Set<String>, converted to Set<Long>) */
+    val HIDDEN_DEVICE_CALENDAR_IDS = stringSetPreferencesKey("hidden_device_calendar_ids")
+
     /** Device calendar reminders enabled (KashCal fires reminders for device calendar events) */
     val DEVICE_CALENDAR_REMINDERS_ENABLED = booleanPreferencesKey("device_calendar_reminders_enabled")
 

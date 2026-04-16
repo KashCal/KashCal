@@ -53,6 +53,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Job
@@ -237,6 +239,7 @@ fun EventFormSheet(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
+    val hapticFeedback = LocalHapticFeedback.current
 
     // Compute time pattern from preference
     val context = LocalContext.current
@@ -280,7 +283,10 @@ fun EventFormSheet(
                         onSave(state)
                     }
                     result.fold(
-                        onSuccess = { onDismiss() },
+                        onSuccess = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onDismiss()
+                        },
                         onFailure = { e ->
                             Log.e(TAG, "Error saving event", e)
                             state = state.copy(
@@ -503,9 +509,19 @@ fun EventFormSheet(
 
             // Handle calendar intent - pre-fill from external app (email client, browser, etc.)
             if (calendarIntentData != null && eventId == null) {
-                val startTs = calendarIntentData.startTimeMillis ?: System.currentTimeMillis()
+                val startTs = calendarIntentData.startTimeMillis ?: run {
+                    // No parsed time — snap to next hour (matches FAB create behavior)
+                    val now = JavaCalendar.getInstance()
+                    val nextHour = (now.get(JavaCalendar.HOUR_OF_DAY) + 1) % 24
+                    JavaCalendar.getInstance().apply {
+                        set(JavaCalendar.HOUR_OF_DAY, nextHour)
+                        set(JavaCalendar.MINUTE, 0)
+                        set(JavaCalendar.SECOND, 0)
+                        set(JavaCalendar.MILLISECOND, 0)
+                    }.timeInMillis
+                }
                 val endTs = calendarIntentData.endTimeMillis
-                    ?: (startTs + 60 * 60 * 1000) // Default 1 hour
+                    ?: (startTs + defaultEventDuration * 60 * 1000L)
 
                 val displayStartTs = if (calendarIntentData.isAllDay) {
                     DateTimeUtils.utcMidnightToLocalDate(startTs)

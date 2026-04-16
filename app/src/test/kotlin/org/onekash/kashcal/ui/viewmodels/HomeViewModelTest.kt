@@ -1763,24 +1763,6 @@ class HomeViewModelTest {
     // ==================== UI Sheet Tests ====================
 
     @Test
-    fun `toggleCalendarVisibilitySheet toggles visibility`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.showCalendarVisibility)
-
-        viewModel.toggleCalendarVisibilitySheet()
-        advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.showCalendarVisibility)
-
-        viewModel.toggleCalendarVisibilitySheet()
-        advanceUntilIdle()
-
-        assertFalse(viewModel.uiState.value.showCalendarVisibility)
-    }
-
-    @Test
     fun `toggleAppInfoSheet toggles visibility`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

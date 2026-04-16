@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -76,7 +75,6 @@ import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
-import org.onekash.kashcal.ui.screens.settings.VisibleCalendarsSheet
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -457,7 +455,6 @@ private fun FlatSettingsContent(
     val scrollState = rememberScrollState()
 
     // Sheet states
-    var showVisibleCalendarsSheet by remember { mutableStateOf(false) }
     var showDefaultCalendarSheet by remember { mutableStateOf(false) }
     var showAlertsSheet by remember { mutableStateOf(false) }
     var showEventEmojisSheet by remember { mutableStateOf(false) }
@@ -471,7 +468,6 @@ private fun FlatSettingsContent(
     var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
     var showSyncLookbackSheet by remember { mutableStateOf(false) }
 
-    val visibleCalendarsSheetState = rememberModalBottomSheetState()
     val defaultCalendarSheetState = rememberModalBottomSheetState()
     val alertsSheetState = rememberModalBottomSheetState()
     val eventEmojisSheetState = rememberModalBottomSheetState()
@@ -486,12 +482,6 @@ private fun FlatSettingsContent(
     val isConnected = iCloudState is ICloudConnectionState.Connected
     val context = LocalContext.current
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
-
-    // Memoized: only recompute when calendars list changes
-    val visibleCalendarCount = remember(calendars) {
-        calendars.count { it.isVisible }
-    }
-    val totalCalendarCount = calendars.size  // O(1), no memoization needed
 
     // Memoized: resolve default calendar name (supports both Room and Device)
     val defaultCalendarName = remember(calendars, deviceCalendars, defaultCalendar) {
@@ -588,15 +578,7 @@ private fun FlatSettingsContent(
         // ==================== DISPLAY Section ====================
         SectionHeader(stringResource(R.string.settings_section_display))
         SettingsCard {
-            // Visible Calendars Row (conditional)
             if (calendars.isNotEmpty()) {
-                SettingsRow(
-                    icon = Icons.Default.Visibility,
-                    label = "Visible Calendars",
-                    value = "$visibleCalendarCount / $totalCalendarCount",
-                    onClick = { showVisibleCalendarsSheet = true }
-                )
-
                 // Default Calendar Row
                 SettingsRow(
                     icon = Icons.Default.Star,
@@ -745,19 +727,6 @@ private fun FlatSettingsContent(
     }
 
     // ==================== Bottom Sheets ====================
-
-    // Visible Calendars Sheet
-    if (showVisibleCalendarsSheet) {
-        VisibleCalendarsSheet(
-            sheetState = visibleCalendarsSheetState,
-            calendarGroups = calendarGroups,
-            onToggleCalendar = onToggleCalendar,
-            // Hidden from main UI but functionality preserved for future use
-            onShowAllCalendars = onShowAllCalendars,
-            onHideAllCalendars = onHideAllCalendars,
-            onDismiss = { showVisibleCalendarsSheet = false }
-        )
-    }
 
     // Device Calendars Sheet
     if (showDeviceCalendarsSheet) {

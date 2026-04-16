@@ -25,7 +25,8 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.ui.components.AppInfoSheet
-import org.onekash.kashcal.ui.components.CalendarVisibilitySheet
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import org.onekash.kashcal.ui.components.EventFormSheet
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.buildShareText
@@ -100,6 +101,15 @@ class MainActivity : ComponentActivity() {
 
                 val coroutineScope = rememberCoroutineScope()
 
+                // Confirmation snackbar for event save — shared across Quick Add, EventFormSheet, and device event paths
+                val showEventSavedSnackbar = { title: String, startTs: Long, isAllDay: Boolean ->
+                    val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
+                    val tp = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
+                    homeViewModel.showSnackbar(
+                        DateTimeUtils.formatEventConfirmation(title, startTs, isAllDay, tp)
+                    )
+                }
+
                 // Notification permission state and manager
                 val notificationPermissionManager = remember {
                     NotificationPermissionManager(this@MainActivity, userPreferencesRepository)
@@ -148,8 +158,8 @@ class MainActivity : ComponentActivity() {
                 var showDeviceQuickViewSheet by remember { mutableStateOf(false) }
                 var deviceQuickViewEvent by remember { mutableStateOf<DisplayEvent.Device?>(null) }
 
-                // Calendar visibility sheet state
-                var showCalendarVisibilitySheet by remember { mutableStateOf(false) }
+                // Drawer state
+                val drawerState = rememberDrawerState(DrawerValue.Closed)
 
                 // ICS import state
                 var icsImportEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
@@ -382,7 +392,10 @@ class MainActivity : ComponentActivity() {
                     onSettingsClick = {
                         launchInternalActivity(Intent(this@MainActivity, SettingsActivity::class.java))
                     },
-                    onFilterClick = { showCalendarVisibilitySheet = true },
+                    // Drawer
+                    drawerState = drawerState,
+                    onDrawerToggleCalendar = { calendarId -> homeViewModel.toggleCalendarVisibility(calendarId) },
+                    onDrawerToggleDeviceCalendarVisibility = { calendarId -> homeViewModel.toggleDeviceCalendarVisibility(calendarId) },
                     // Info callbacks
                     onInfoClick = { homeViewModel.toggleAppInfoSheet() },
                     // View picker callback
@@ -415,18 +428,6 @@ class MainActivity : ComponentActivity() {
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },
                     onEnsureDotsForYear = { year -> homeViewModel.ensureDotsForYear(year) }
                 )
-
-                // Calendar Visibility Sheet
-                if (showCalendarVisibilitySheet) {
-                    CalendarVisibilitySheet(
-                        calendarGroups = uiState.calendarGroups,
-                        onToggleCalendar = { calendarId, _ ->
-                            homeViewModel.toggleCalendarVisibility(calendarId)
-                        },
-                        onShowAll = { homeViewModel.showAllCalendars() },
-                        onDismiss = { showCalendarVisibilitySheet = false }
-                    )
-                }
 
                 // Event Quick View Sheet
                 if (showQuickViewSheet && quickViewEvent != null) {
@@ -732,7 +733,7 @@ class MainActivity : ComponentActivity() {
                         onDismiss = { showQuickAddDialog = false },
                         onSaved = { event ->
                             showQuickAddDialog = false
-                            homeViewModel.showSnackbar("Event saved")
+                            showEventSavedSnackbar(event.title, event.startTs, event.isAllDay)
                             // Navigate to the event's date
                             val dayCode = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
                             val date = org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(dayCode)
@@ -780,7 +781,11 @@ class MainActivity : ComponentActivity() {
                             deviceEventIsAllDay = false
                         },
                         onSave = { formState ->
-                            homeViewModel.saveEvent(formState)
+                            homeViewModel.saveEvent(formState).also { result ->
+                                result.onSuccess { event ->
+                                    showEventSavedSnackbar(event.title, event.startTs, event.isAllDay)
+                                }
+                            }
                         },
                         onDelete = { eventId ->
                             homeViewModel.deleteEvent(eventId)
@@ -826,7 +831,22 @@ class MainActivity : ComponentActivity() {
                             homeViewModel.getDeviceEventForEdit(eventId, deviceEventOccurrenceTs, deviceEventIsAllDay)
                         },
                         onSaveDeviceEvent = { formState ->
-                            homeViewModel.saveDeviceEvent(formState)
+                            homeViewModel.saveDeviceEvent(formState).also { result ->
+                                result.onSuccess {
+                                    val startTs = if (formState.isAllDay) {
+                                        DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
+                                    } else {
+                                        java.time.Instant.ofEpochMilli(formState.dateMillis)
+                                            .atZone(java.time.ZoneId.systemDefault())
+                                            .toLocalDate()
+                                            .atTime(formState.startHour, formState.startMinute)
+                                            .atZone(java.time.ZoneId.systemDefault())
+                                            .toInstant()
+                                            .toEpochMilli()
+                                    }
+                                    showEventSavedSnackbar(formState.title, startTs, formState.isAllDay)
+                                }
+                            }
                         },
                         onDeleteDeviceEvent = { formState ->
                             homeViewModel.handleDeviceEventFormDelete(formState)

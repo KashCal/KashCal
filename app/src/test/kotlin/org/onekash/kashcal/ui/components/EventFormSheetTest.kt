@@ -1432,4 +1432,146 @@ class EventFormSheetTest {
         assertEquals("End hour should be 10:30 (default 30 min)", 10, newEndHour)
         assertEquals("End minute should be 30", 30, newEndMinute)
     }
+
+    // ========== Calendar Intent / Quick Add Expand Duration Tests ==========
+
+    /**
+     * Simulates the calendar intent data path in EventFormSheet (lines 505-540).
+     * This is the code path used when:
+     * - Quick Add "More options" sends CalendarIntentData to EventFormSheet
+     * - External apps (Gmail, browsers) use ACTION_INSERT
+     *
+     * Returns Pair(startTs, endTs) as computed by the form.
+     */
+    private fun simulateCalendarIntentPath(
+        intentStartMillis: Long?,
+        intentEndMillis: Long?,
+        defaultEventDuration: Int,
+        currentHourOfDay: Int = 14 // for testing next-hour snap
+    ): Pair<Long, Long> {
+        val startTs = intentStartMillis ?: run {
+            // No parsed time — snap to next hour (matches FAB create behavior)
+            val nextHour = (currentHourOfDay + 1) % 24
+            val cal = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, nextHour)
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            cal.timeInMillis
+        }
+        val endTs = intentEndMillis
+            ?: (startTs + defaultEventDuration * 60 * 1000L)
+        return Pair(startTs, endTs)
+    }
+
+    @Test
+    fun `intent data with null times uses default duration not hardcoded 1 hour`() {
+        // Regression: was hardcoded to 60*60*1000 (1 hour)
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 30
+        )
+        val durationMinutes = (endTs - startTs) / (60 * 1000)
+        assertEquals("Duration should be 30 min (user setting), not 60", 30, durationMinutes)
+    }
+
+    @Test
+    fun `intent data with null times and 15 min default uses 15 min`() {
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 15
+        )
+        val durationMinutes = (endTs - startTs) / (60 * 1000)
+        assertEquals(15, durationMinutes)
+    }
+
+    @Test
+    fun `intent data with null times and 2 hour default uses 2 hours`() {
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 120
+        )
+        val durationMinutes = (endTs - startTs) / (60 * 1000)
+        assertEquals(120, durationMinutes)
+    }
+
+    @Test
+    fun `intent data with start time but null end uses default duration`() {
+        val startMs = 1704110400000L // some fixed timestamp
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = startMs,
+            intentEndMillis = null,
+            defaultEventDuration = 30
+        )
+        assertEquals("Start should be passed through", startMs, startTs)
+        assertEquals("End should be start + 30 min", startMs + 30 * 60 * 1000L, endTs)
+    }
+
+    @Test
+    fun `intent data with start time but null end uses 60 min default`() {
+        val startMs = 1704110400000L
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = startMs,
+            intentEndMillis = null,
+            defaultEventDuration = 60
+        )
+        assertEquals(startMs, startTs)
+        assertEquals(startMs + 60 * 60 * 1000L, endTs)
+    }
+
+    @Test
+    fun `intent data with both start and end preserves them`() {
+        val startMs = 1704110400000L
+        val endMs = 1704117600000L // 2 hours later
+        val (startTs, endTs) = simulateCalendarIntentPath(
+            intentStartMillis = startMs,
+            intentEndMillis = endMs,
+            defaultEventDuration = 30 // should be ignored
+        )
+        assertEquals("Start preserved", startMs, startTs)
+        assertEquals("End preserved (not overwritten by default)", endMs, endTs)
+    }
+
+    @Test
+    fun `intent data null start snaps to next hour`() {
+        val (startTs, _) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 30,
+            currentHourOfDay = 14 // 2 PM
+        )
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = startTs }
+        assertEquals("Should snap to next hour (3 PM)", 15, cal.get(java.util.Calendar.HOUR_OF_DAY))
+        assertEquals("Minute should be 0", 0, cal.get(java.util.Calendar.MINUTE))
+        assertEquals("Second should be 0", 0, cal.get(java.util.Calendar.SECOND))
+    }
+
+    @Test
+    fun `intent data null start at 23h wraps to 0h`() {
+        val (startTs, _) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 30,
+            currentHourOfDay = 23
+        )
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = startTs }
+        assertEquals("Should wrap to midnight", 0, cal.get(java.util.Calendar.HOUR_OF_DAY))
+        assertEquals("Minute should be 0", 0, cal.get(java.util.Calendar.MINUTE))
+    }
+
+    @Test
+    fun `intent data null start at 0h snaps to 1h`() {
+        val (startTs, _) = simulateCalendarIntentPath(
+            intentStartMillis = null,
+            intentEndMillis = null,
+            defaultEventDuration = 30,
+            currentHourOfDay = 0
+        )
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = startTs }
+        assertEquals("Should snap to 1 AM", 1, cal.get(java.util.Calendar.HOUR_OF_DAY))
+    }
 }

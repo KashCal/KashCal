@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -249,7 +248,7 @@ fun DeviceCalendarsSheet(
                                             style = MaterialTheme.typography.bodyMedium,
                                             modifier = Modifier.weight(1f)
                                         )
-                                        Checkbox(
+                                        Switch(
                                             checked = isChecked,
                                             onCheckedChange = { checked ->
                                                 onToggleCalendar(calendar.id, checked)

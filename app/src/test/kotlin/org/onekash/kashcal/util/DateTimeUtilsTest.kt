@@ -1124,4 +1124,83 @@ class DateTimeUtilsTest {
         assertEquals("HH:mm", DateTimeUtils.getTimePattern("system", is24HourDevice = true))
         assertEquals("h:mm a", DateTimeUtils.getTimePattern("system", is24HourDevice = false))
     }
+
+    // ==================== formatEventConfirmation Tests ====================
+
+    @Test
+    fun `formatEventConfirmation timed event shows title and date-time`() {
+        // Apr 21, 2026 10:00 AM UTC -> local time depends on zone
+        // Use UTC zone for predictable test output
+        val startTs = 1745226000000L // Apr 21, 2026 09:00 UTC
+        val result = DateTimeUtils.formatEventConfirmation(
+            title = "Dentist",
+            startTs = startTs,
+            isAllDay = false,
+            timePattern = "h:mm a",
+            localZone = ZoneId.of("UTC")
+        )
+        // Should contain title and time
+        assertTrue("Should contain title", result.startsWith("Dentist"))
+        assertTrue("Should contain separator", result.contains(" · "))
+        assertTrue("Should contain time", result.contains("9:00 AM"))
+    }
+
+    @Test
+    fun `formatEventConfirmation all-day event shows title and date without time`() {
+        val startTs = 1745193600000L // Apr 21, 2026 00:00 UTC
+        val result = DateTimeUtils.formatEventConfirmation(
+            title = "Birthday",
+            startTs = startTs,
+            isAllDay = true,
+            timePattern = "h:mm a",
+            localZone = ZoneId.of("UTC")
+        )
+        assertTrue("Should contain title", result.startsWith("Birthday"))
+        assertTrue("Should contain separator", result.contains(" · "))
+        assertTrue("Should contain 'All day'", result.contains("All day"))
+        assertFalse("Should not contain AM/PM", result.contains("AM") || result.contains("PM"))
+    }
+
+    @Test
+    fun `formatEventConfirmation long title is truncated`() {
+        val startTs = 1745226000000L
+        val longTitle = "Very Important Meeting With the Board of Directors"
+        val result = DateTimeUtils.formatEventConfirmation(
+            title = longTitle,
+            startTs = startTs,
+            isAllDay = false,
+            timePattern = "h:mm a",
+            localZone = ZoneId.of("UTC")
+        )
+        // Title portion should be truncated
+        val titlePart = result.substringBefore(" · ")
+        assertTrue("Title should be truncated to 30 chars or less", titlePart.length <= 33) // 30 + "..."
+        assertTrue("Should end with ellipsis", titlePart.endsWith("…"))
+    }
+
+    @Test
+    fun `formatEventConfirmation short title is not truncated`() {
+        val startTs = 1745226000000L
+        val result = DateTimeUtils.formatEventConfirmation(
+            title = "Coffee",
+            startTs = startTs,
+            isAllDay = false,
+            timePattern = "h:mm a",
+            localZone = ZoneId.of("UTC")
+        )
+        assertTrue("Short title should not be truncated", result.startsWith("Coffee · "))
+    }
+
+    @Test
+    fun `formatEventConfirmation respects 24h time pattern`() {
+        val startTs = 1745258400000L // Apr 21, 2026 18:00 UTC
+        val result = DateTimeUtils.formatEventConfirmation(
+            title = "Dinner",
+            startTs = startTs,
+            isAllDay = false,
+            timePattern = "HH:mm",
+            localZone = ZoneId.of("UTC")
+        )
+        assertTrue("Should contain 24h time", result.contains("18:00"))
+    }
 }

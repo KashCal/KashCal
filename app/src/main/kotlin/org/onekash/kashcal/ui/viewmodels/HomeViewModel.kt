@@ -203,6 +203,9 @@ class HomeViewModel @Inject constructor(
             // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
             observeCalendars()
 
+            // Observe device calendar drawer state (enabled, visible IDs, calendar list)
+            observeDeviceCalendarDrawerState()
+
             // Check if any sync-capable account is configured
             checkAccountStatus()
 
@@ -690,6 +693,48 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
+     * Observe device calendar drawer state: feature enabled, enabled IDs, hidden IDs.
+     * Loads device calendar list only when enabled/enabledIds change (ContentResolver query).
+     * Hidden IDs updates skip the query since only visibility state changes.
+     */
+    private fun observeDeviceCalendarDrawerState() {
+        // Observe enabled state + enabled IDs — reload calendar list from ContentProvider
+        viewModelScope.launch {
+            combine(
+                dataStore.deviceCalendarsEnabled,
+                dataStore.enabledDeviceCalendarIds
+            ) { enabled, enabledIds ->
+                Pair(enabled, enabledIds)
+            }.collect { (enabled, enabledIds) ->
+                val deviceCalendars = if (enabled && enabledIds.isNotEmpty()) {
+                    try {
+                        calendarProviderRepository.getDeviceCalendars()
+                            .filter { it.id in enabledIds }
+                    } catch (_: Exception) {
+                        emptyList()
+                    }
+                } else {
+                    emptyList()
+                }
+                _uiState.update {
+                    it.copy(
+                        deviceCalendarsEnabled = enabled,
+                        enabledDeviceCalendars = deviceCalendars.toPersistentList()
+                    )
+                }
+            }
+        }
+        // Observe hidden IDs separately — lightweight state update, no ContentProvider query
+        viewModelScope.launch {
+            dataStore.hiddenDeviceCalendarIds.collect { hiddenIds ->
+                _uiState.update {
+                    it.copy(hiddenDeviceCalendarIds = hiddenIds.toPersistentSet())
+                }
+            }
+        }
+    }
+
+    /**
      * Refresh calendars list.
      */
     fun refreshCalendars() {
@@ -734,10 +779,14 @@ class HomeViewModel @Inject constructor(
     }
 
     /**
-     * Toggle calendar visibility sheet.
+     * Toggle device calendar visibility in the drawer.
+     * Uses hiddenDeviceCalendarIds preference — doesn't affect reminders or enablement.
      */
-    fun toggleCalendarVisibilitySheet() {
-        _uiState.update { it.copy(showCalendarVisibility = !it.showCalendarVisibility) }
+    fun toggleDeviceCalendarVisibility(calendarId: Long) {
+        viewModelScope.launch {
+            dataStore.toggleDeviceCalendarHidden(calendarId)
+            reloadCurrentView()
+        }
     }
 
     // ==================== Event Dots ====================

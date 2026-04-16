@@ -18,7 +18,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -27,9 +27,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -40,7 +42,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.ui.screens.settings.BetaBadge
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.util.CalendarIntentData
@@ -59,6 +60,7 @@ fun QuickAddDialog(
     val isSaving by viewModel.isSaving.collectAsState()
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val hapticFeedback = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
     // Reset state when dialog appears
@@ -69,7 +71,10 @@ fun QuickAddDialog(
     val onSave: () -> Unit = {
         coroutineScope.launch {
             viewModel.save()
-                .onSuccess { event -> onSaved(event) }
+                .onSuccess { event ->
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onSaved(event)
+                }
                 .onFailure { e ->
                     if (e is DeviceCalendarException) {
                         // Default is a device calendar — redirect to full form
@@ -115,15 +120,6 @@ fun QuickAddDialog(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Text("Quick Add", style = MaterialTheme.typography.titleMedium)
-                        BetaBadge()
-                    }
-
                     // Auto-focus and open keyboard after layout
                     LaunchedEffect(Unit) {
                         delay(100) // Wait for focusRequester to attach
@@ -157,7 +153,7 @@ fun QuickAddDialog(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        FilledTonalButton(
+                        TextButton(
                             onClick = {
                                 coroutineScope.launch {
                                     val intentData = viewModel.toCalendarIntentData()
@@ -165,7 +161,7 @@ fun QuickAddDialog(
                                 }
                             }
                         ) {
-                            Text("Expand")
+                            Text("More options")
                         }
                         Button(
                             onClick = onSave,

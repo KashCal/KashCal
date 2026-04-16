@@ -368,6 +368,35 @@ object DateTimeUtils {
         return zdt.format(formatter)
     }
 
+    /**
+     * Format a confirmation string for event save snackbar.
+     *
+     * Timed: "Dentist · Mon, Apr 21, 10:00 AM"
+     * All-day: "Birthday · Mon, Apr 21 (All day)"
+     *
+     * @param title Event title (truncated to 30 chars if longer)
+     * @param startTs Start timestamp in milliseconds
+     * @param isAllDay Whether this is an all-day event
+     * @param timePattern Time format pattern (e.g., "h:mm a" or "HH:mm")
+     * @param localZone Timezone for timed events (default: system)
+     */
+    fun formatEventConfirmation(
+        title: String,
+        startTs: Long,
+        isAllDay: Boolean,
+        timePattern: String = "h:mm a",
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): String {
+        val displayTitle = if (title.length > 30) title.take(30) + "…" else title
+        val dateStr = formatEventDateShort(startTs, isAllDay, localZone)
+        return if (isAllDay) {
+            "$displayTitle · $dateStr (All day)"
+        } else {
+            val timeStr = formatEventTime(startTs, isAllDay, timePattern, localZone)
+            "$displayTitle · $dateStr, $timeStr"
+        }
+    }
+
     // ==================== Conversion Functions ====================
 
     /**

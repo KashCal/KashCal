@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Launch
@@ -151,126 +152,128 @@ fun DeviceEventQuickViewSheet(
                 Spacer(modifier = Modifier.width(16.dp))
 
                 // Event details
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    // Title
-                    Text(
-                        text = displayTitle,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                SelectionContainer {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Title
+                        Text(
+                            text = displayTitle,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                    // Date and time
-                    Text(
-                        text = formatDeviceEventDateTime(
-                            displayEvent.startTs,
-                            displayEvent.endTs,
-                            displayEvent.isAllDay,
-                            timePattern
-                        ),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                        // Date and time
+                        Text(
+                            text = formatDeviceEventDateTime(
+                                displayEvent.startTs,
+                                displayEvent.endTs,
+                                displayEvent.isAllDay,
+                                timePattern
+                            ),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
 
-                    // Location
-                    val location = displayEvent.location
-                    if (location.isNotEmpty()) {
-                        val locationContext = LocalContext.current
-                        val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-                        val isAddress = remember(location) { looksLikeAddress(location) }
-                        val hasUrl = remember(location) { !isAddress && containsUrl(location) }
+                        // Location
+                        val location = displayEvent.location
+                        if (location.isNotEmpty()) {
+                            val locationContext = LocalContext.current
+                            val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                            val isAddress = remember(location) { looksLikeAddress(location) }
+                            val hasUrl = remember(location) { !isAddress && containsUrl(location) }
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = when {
-                                isAddress -> Modifier.clickable { openInMaps(locationContext, location) }
-                                hasUrl -> Modifier.clickable {
-                                    val urls = extractUrls(location, limit = 1)
-                                    urls.firstOrNull()?.let { detected ->
-                                        if (shouldOpenExternally(detected.url)) {
-                                            try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = when {
+                                    isAddress -> Modifier.clickable { openInMaps(locationContext, location) }
+                                    hasUrl -> Modifier.clickable {
+                                        val urls = extractUrls(location, limit = 1)
+                                        urls.firstOrNull()?.let { detected ->
+                                            if (shouldOpenExternally(detected.url)) {
+                                                try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
+                                            }
                                         }
                                     }
+                                    else -> Modifier
                                 }
-                                else -> Modifier
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
-                                contentDescription = null,
-                                modifier = Modifier.size(16.dp),
-                                tint = if (isAddress || hasUrl) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = location,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isAddress || hasUrl) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                            if (isAddress || hasUrl) {
-                                Spacer(modifier = Modifier.width(4.dp))
+                            ) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = if (isAddress) "Open in maps" else "Open link",
-                                    modifier = Modifier.size(14.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = if (isAddress || hasUrl) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    }
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = location,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isAddress || hasUrl) {
+                                        MaterialTheme.colorScheme.primary
+                                    } else {
+                                        MaterialTheme.colorScheme.onSurfaceVariant
+                                    },
+                                    textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (isAddress || hasUrl) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.Launch,
+                                        contentDescription = if (isAddress) "Open in maps" else "Open link",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    // Repeat info
-                    if (displayEvent.hasRrule) {
-                        val repeatText = remember(displayEvent.rrule) {
-                            displayEvent.rrule?.let { rrule ->
-                                try {
-                                    RruleBuilder.formatForDisplay(rrule)
-                                } catch (_: Exception) {
-                                    "Recurring" // Fallback for malformed RRULE
-                                }
-                            } ?: "Recurring"
+                        // Repeat info
+                        if (displayEvent.hasRrule) {
+                            val repeatText = remember(displayEvent.rrule) {
+                                displayEvent.rrule?.let { rrule ->
+                                    try {
+                                        RruleBuilder.formatForDisplay(rrule)
+                                    } catch (_: Exception) {
+                                        "Recurring" // Fallback for malformed RRULE
+                                    }
+                                } ?: "Recurring"
+                            }
+                            Text(
+                                text = "\uD83D\uDD01 $repeatText",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
-                        Text(
-                            text = "\uD83D\uDD01 $repeatText",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
 
-                    // Calendar name
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(10.dp)
-                                .background(
-                                    color = Color(displayEvent.calendarColor),
-                                    shape = RoundedCornerShape(50)
-                                )
-                        )
-                        Text(
-                            text = displayEvent.calendarName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        // Calendar name
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .background(
+                                        color = Color(displayEvent.calendarColor),
+                                        shape = RoundedCornerShape(50)
+                                    )
+                            )
+                            Text(
+                                text = displayEvent.calendarName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
             }
@@ -580,55 +583,57 @@ private fun DeviceEventDescriptionSection(
 
     val scrollState = rememberScrollState()
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(max = 300.dp)
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        HorizontalDivider(
-            color = MaterialTheme.colorScheme.outlineVariant,
-            modifier = Modifier.padding(vertical = 4.dp)
-        )
+    SelectionContainer {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .heightIn(max = 300.dp)
+                .verticalScroll(scrollState),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(vertical = 4.dp)
+            )
 
-        // Notes section (with linkified text)
-        if (hasDescription) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                Text(
-                    text = "Notes",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                LinkifiedText(
-                    text = description!!,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface
+            // Notes section (with linkified text)
+            if (hasDescription) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = "Notes",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
+                    LinkifiedText(
+                        text = description!!,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                }
             }
-        }
 
-        // Reminders section
-        val formattedReminders = remember(reminders) {
-            formatRemindersFromMinutes(reminders)
-        }
-        if (formattedReminders != null) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "\uD83D\uDD14", // Bell emoji
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = formattedReminders,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            // Reminders section
+            val formattedReminders = remember(reminders) {
+                formatRemindersFromMinutes(reminders)
+            }
+            if (formattedReminders != null) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "\uD83D\uDD14", // Bell emoji
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = formattedReminders,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

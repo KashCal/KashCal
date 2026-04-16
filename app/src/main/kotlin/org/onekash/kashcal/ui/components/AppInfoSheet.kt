@@ -84,7 +84,7 @@ fun AppInfoSheet(
             // Support button
             OutlinedButton(
                 onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/sponsors/one-kash"))
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.onekash.org/donate/"))
                     context.startActivity(intent)
                 }
             ) {
@@ -98,13 +98,13 @@ fun AppInfoSheet(
 
             // Website link
             Text(
-                text = "kashcal.github.io",
+                text = "kashcal.onekash.org",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.primary,
                 textDecoration = TextDecoration.Underline,
                 modifier = Modifier
                     .clickable(role = Role.Button) {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.github.io"))
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://kashcal.onekash.org/"))
                         context.startActivity(intent)
                     }
             )

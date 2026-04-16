@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
+import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -97,8 +98,12 @@ data class HomeUiState(
     val deviceCalendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
     /** Default calendar for new events (supports both Room and Device) */
     val defaultCalendar: DefaultCalendar? = null,
-    /** Show calendar visibility sheet */
-    val showCalendarVisibility: Boolean = false,
+    /** Device calendars feature enabled */
+    val deviceCalendarsEnabled: Boolean = false,
+    /** Enabled device calendars (for drawer visibility toggles) */
+    val enabledDeviceCalendars: ImmutableList<DeviceCalendar> = persistentListOf(),
+    /** Hidden device calendar IDs (enabled but hidden from view) */
+    val hiddenDeviceCalendarIds: PersistentSet<Long> = persistentSetOf(),
 
     // === SYNC STATE ===
     /** Is sync currently in progress */

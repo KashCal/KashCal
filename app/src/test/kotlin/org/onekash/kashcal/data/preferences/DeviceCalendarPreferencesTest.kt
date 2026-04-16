@@ -126,4 +126,58 @@ class DeviceCalendarPreferencesTest {
         dataStore.setEnabledDeviceCalendarIds(largeIds)
         assertEquals(largeIds, dataStore.getEnabledDeviceCalendarIds())
     }
+
+    // ========== hiddenDeviceCalendarIds ==========
+
+    @Test
+    fun `hiddenDeviceCalendarIds defaults to empty set`() = runTest {
+        val ids = dataStore.getHiddenDeviceCalendarIds()
+        assertTrue(ids.isEmpty())
+    }
+
+    @Test
+    fun `setHiddenDeviceCalendarIds round-trip with single id`() = runTest {
+        dataStore.setHiddenDeviceCalendarIds(setOf(42L))
+        assertEquals(setOf(42L), dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `setHiddenDeviceCalendarIds round-trip with multiple ids`() = runTest {
+        val ids = setOf(5L, 10L, 200L)
+        dataStore.setHiddenDeviceCalendarIds(ids)
+        assertEquals(ids, dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `toggleDeviceCalendarHidden adds id when absent`() = runTest {
+        dataStore.toggleDeviceCalendarHidden(42L)
+        assertEquals(setOf(42L), dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `toggleDeviceCalendarHidden removes id when present`() = runTest {
+        dataStore.setHiddenDeviceCalendarIds(setOf(42L, 100L))
+        dataStore.toggleDeviceCalendarHidden(42L)
+        assertEquals(setOf(100L), dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `removeFromHiddenDeviceCalendarIds removes single id`() = runTest {
+        dataStore.setHiddenDeviceCalendarIds(setOf(1L, 2L, 3L))
+        dataStore.removeFromHiddenDeviceCalendarIds(2L)
+        assertEquals(setOf(1L, 3L), dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `removeFromHiddenDeviceCalendarIds no-op when id not present`() = runTest {
+        dataStore.setHiddenDeviceCalendarIds(setOf(1L, 2L))
+        dataStore.removeFromHiddenDeviceCalendarIds(99L)
+        assertEquals(setOf(1L, 2L), dataStore.getHiddenDeviceCalendarIds())
+    }
+
+    @Test
+    fun `hiddenDeviceCalendarIds flow emits empty default`() = runTest {
+        val ids = dataStore.hiddenDeviceCalendarIds.first()
+        assertTrue(ids.isEmpty())
+    }
 }
