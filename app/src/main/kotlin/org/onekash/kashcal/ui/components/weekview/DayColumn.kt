@@ -1,7 +1,9 @@
 package org.onekash.kashcal.ui.components.weekview
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.offset
@@ -13,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -33,7 +36,7 @@ import java.time.LocalDate
  * @param isToday True if this column is today
  * @param onEventClick Called when an event is tapped
  * @param onOverflowClick Called when "+N more" badge is tapped (with list of overflow events)
- * @param onLongPress Called when user long-presses on empty space (hour, minute snapped to 15-min intervals)
+ * @param onEmptyTap Called when user taps on empty space (hour, minute snapped to 15-min intervals)
  * @param modifier Modifier for the column
  */
 @Composable
@@ -44,16 +47,20 @@ fun DayColumn(
     isToday: Boolean = false,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
-    is24Hour: Boolean = false,
     startHour: Int = WeekViewUtils.START_HOUR,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
-    onLongPress: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
+    onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
+    onEventDragStart: ((DisplayEvent, Offset) -> Unit)? = null,
+    onEventDrag: ((Offset) -> Unit)? = null,
+    onEventDragEnd: (() -> Unit)? = null,
+    onEventDragCancel: (() -> Unit)? = null,
+    isDropTarget: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Calculate positioned events
-    val endHour = if (startHour == 0) WeekViewUtils.FULL_DAY_END_HOUR else WeekViewUtils.END_HOUR
-    val positionedEvents = remember(events, date, startHour) {
+    val endHour = WeekViewUtils.END_HOUR
+    val positionedEvents = remember(events, date, startHour, hourHeight) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
         WeekViewUtils.positionEventsForDay(events, dayIndex, hourHeight, startHour, endHour)
     }
@@ -64,6 +71,7 @@ fun DayColumn(
     }
 
     val todayBorderColor = MaterialTheme.colorScheme.primary
+    val dropTargetColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
     val dividerColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     val density = LocalDensity.current
     val hourHeightPx = with(density) { hourHeight.toPx() }
@@ -72,8 +80,14 @@ fun DayColumn(
         modifier = modifier
             .fillMaxHeight()
             .then(
+                if (isDropTarget) {
+                    Modifier.background(dropTargetColor)
+                } else {
+                    Modifier
+                }
+            )
+            .then(
                 if (isToday) {
-                    // Today uses a colored border (per spec)
                     Modifier.border(
                         width = 2.dp,
                         color = todayBorderColor,
@@ -83,21 +97,22 @@ fun DayColumn(
                     Modifier
                 }
             )
-            .pointerInput(date, startHour) {
-                detectTapGestures(
-                    onLongPress = { offset ->
-                        // Calculate time from y offset
-                        val minutesFromGridStart = (offset.y / hourHeightPx * 60).toInt()
-                        val totalMinutes = startHour * 60 + minutesFromGridStart
-                        val hour = (totalMinutes / 60).coerceIn(0, 23)
-                        // Snap to 15-minute intervals
-                        val minute = ((totalMinutes % 60) / 15) * 15
-                        onLongPress(date, hour, minute)
-                    }
-                )
-            }
     ) {
         val columnWidth = maxWidth
+
+        // Background tap target — below events in z-order so event taps hit EventBlock first
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .pointerInput(date, startHour, hourHeight) {
+                    detectTapGestures(
+                        onTap = { offset ->
+                            val (hour, minute) = WeekViewUtils.offsetToTime(offset.y, hourHeightPx, startHour = startHour)
+                            onEmptyTap(date, hour, minute)
+                        }
+                    )
+                }
+        )
 
         // Render event groups
         groupedEvents.forEach { group ->
@@ -108,20 +123,26 @@ fun DayColumn(
                 val eventWidth = columnWidth * positioned.widthFraction
                 val eventLeft = columnWidth * positioned.leftFraction
 
+                val isDraggable = onEventDragStart != null &&
+                    !positioned.displayEvent.isReadOnly &&
+                    !positioned.displayEvent.isAllDay
+
                 EventBlock(
                     displayEvent = positioned.displayEvent,
                     height = positioned.height,
-                    clampedStart = positioned.clampedStart,
-                    clampedEnd = positioned.clampedEnd,
-                    originalStartMinutes = positioned.originalStartMinutes,
-                    originalEndMinutes = positioned.originalEndMinutes,
                     showEventEmojis = showEventEmojis,
                     timePattern = timePattern,
-                    is24Hour = is24Hour,
                     onClick = { onEventClick(positioned.displayEvent) },
+                    isDraggable = isDraggable,
+                    onDragStart = if (isDraggable) { offset ->
+                        onEventDragStart?.invoke(positioned.displayEvent, offset)
+                    } else null,
+                    onDrag = onEventDrag,
+                    onDragEnd = onEventDragEnd,
+                    onDragCancel = onEventDragCancel,
                     modifier = Modifier
                         .offset(x = eventLeft, y = positioned.topOffset)
-                        .width(eventWidth - 2.dp)  // 2dp gap between overlapping events
+                        .width(eventWidth - 2.dp)
                         .padding(horizontal = 1.dp)
                 )
             }
@@ -165,15 +186,14 @@ private fun groupOverlappingEvents(
 ): List<List<WeekViewUtils.PositionedEvent>> {
     if (events.isEmpty()) return emptyList()
 
-    val sorted = events.sortedBy { it.originalStartMinutes }
+    val sorted = events.sortedBy { it.startMinutes }
     val groups = mutableListOf<MutableList<WeekViewUtils.PositionedEvent>>()
 
     for (event in sorted) {
-        // Find existing group that overlaps with this event
         val overlappingGroup = groups.find { group ->
             group.any { other ->
-                event.originalStartMinutes < other.originalEndMinutes &&
-                    event.originalEndMinutes > other.originalStartMinutes
+                event.startMinutes < other.endMinutes &&
+                    event.endMinutes > other.startMinutes
             }
         }
 

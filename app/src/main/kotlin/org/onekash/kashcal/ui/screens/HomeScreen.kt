@@ -1,6 +1,8 @@
 package org.onekash.kashcal.ui.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -99,10 +101,12 @@ import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
+import org.onekash.kashcal.ui.viewmodels.EditScope
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.viewmodels.DateFilter
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.util.DateTimeUtils
+import java.time.LocalDate
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -173,7 +177,11 @@ fun HomeScreen(
     onWeekDatePickerDismiss: () -> Unit = {},
     onWeekDateSelected: (Long) -> Unit = {},
     onWeekScrollPositionChange: (Int) -> Unit = {},
+    onWeekHourHeightChange: (Float) -> Unit = {},
     onClearPendingWeekPagerPosition: () -> Unit = {},
+    onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
+    onConfirmReschedule: (EditScope) -> Unit = {},
+    onCancelPendingReschedule: () -> Unit = {},
     // Resume callback (reload stale data on app resume)
     onResume: () -> Unit = {},
     // Agenda scroll callback
@@ -484,6 +492,8 @@ fun HomeScreen(
                                             isLoading = uiState.isLoadingWeekView,
                                             error = uiState.weekViewError,
                                             scrollPosition = uiState.weekViewScrollPosition,
+                                            hourHeight = uiState.weekViewHourHeight,
+                                            onHourHeightChange = onWeekHourHeightChange,
                                             showEventEmojis = uiState.showEventEmojis,
                                             timePattern = timePattern,
                                             weekMode = uiState.viewMode == ViewMode.WEEK,
@@ -495,8 +505,7 @@ fun HomeScreen(
                                                     is DisplayEvent.Device -> onDeviceEventClick(displayEvent)
                                                 }
                                             },
-                                            onLongPress = { date, hour, minute ->
-                                                // Convert date/time to timestamp for event creation
+                                            onEmptyTap = { date, hour, minute ->
                                                 val calendar = JavaCalendar.getInstance().apply {
                                                     set(date.year, date.monthValue - 1, date.dayOfMonth, hour, minute, 0)
                                                     set(JavaCalendar.MILLISECOND, 0)
@@ -507,6 +516,7 @@ fun HomeScreen(
                                             onPageChanged = onDayPagerPageChanged,
                                             pendingNavigateToPage = uiState.pendingWeekViewPagerPosition,
                                             onNavigationConsumed = onClearPendingWeekPagerPosition,
+                                            onReschedule = onReschedule,
                                             modifier = Modifier.fillMaxSize()
                                         )
                                     }
@@ -768,6 +778,32 @@ fun HomeScreen(
             onDeviceEventClick = onDeviceEventClick,
             onCreateEvent = onCreateEventWithDateTime,
             onDismiss = onDismissDayDetail
+        )
+    }
+
+    // Recurring event edit scope dialog (drag-to-reschedule)
+    uiState.pendingDragReschedule?.let { pending ->
+        val isDeviceRecurring = pending.displayEvent is DisplayEvent.Device
+        AlertDialog(
+            onDismissRequest = onCancelPendingReschedule,
+            title = { Text("Edit recurring event") },
+            text = { Text("This is a recurring event. How would you like to apply this change?") },
+            confirmButton = {
+                TextButton(onClick = { onConfirmReschedule(EditScope.THIS_EVENT) }) {
+                    Text("This event")
+                }
+            },
+            dismissButton = {
+                if (isDeviceRecurring) {
+                    TextButton(onClick = onCancelPendingReschedule) {
+                        Text("Cancel")
+                    }
+                } else {
+                    TextButton(onClick = { onConfirmReschedule(EditScope.ALL_EVENTS) }) {
+                        Text("All events")
+                    }
+                }
+            }
         )
     }
 

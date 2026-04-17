@@ -216,11 +216,21 @@ object WordTokenizer {
         // Resolve end time first (it always has a meridiem)
         val endHour = resolveMeridiemHour(endHourRaw, endMeridiem) ?: return null
 
-        // Resolve start time: use its own meridiem if present, otherwise infer from end meridiem
+        // Resolve start time: use its own meridiem if present, otherwise infer from context
         val startHour = if (startMeridiem != null) {
             resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
         } else {
-            resolveMeridiemHour(startHourRaw, endMeridiem) ?: return null
+            // No explicit meridiem on start — try end's meridiem first
+            val sameAsEnd = resolveMeridiemHour(startHourRaw, endMeridiem) ?: return null
+            val endTime24 = endHour * 60 + endMinute
+            val startSame = sameAsEnd * 60 + startMinute
+            if (startSame > endTime24) {
+                // "9-5pm" → 21:00-17:00 doesn't make sense; flip to AM → 9:00-17:00
+                val oppositeMeridiem = if (endMeridiem.startsWith("p")) "am" else "pm"
+                resolveMeridiemHour(startHourRaw, oppositeMeridiem) ?: sameAsEnd
+            } else {
+                sameAsEnd
+            }
         }
 
         val startTime = LocalTime.of(startHour, startMinute)

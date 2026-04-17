@@ -57,7 +57,6 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.text.formatRemindersFromMinutes
-import org.onekash.kashcal.util.location.looksLikeAddress
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
@@ -179,19 +178,16 @@ fun DeviceEventQuickViewSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        // Location
                         val location = displayEvent.location
                         if (location.isNotEmpty()) {
                             val locationContext = LocalContext.current
                             val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
-                            val isAddress = remember(location) { looksLikeAddress(location) }
-                            val hasUrl = remember(location) { !isAddress && containsUrl(location) }
+                            val hasUrl = remember(location) { containsUrl(location) }
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = when {
-                                    isAddress -> Modifier.clickable { openInMaps(locationContext, location) }
-                                    hasUrl -> Modifier.clickable {
+                                modifier = if (hasUrl) {
+                                    Modifier.clickable {
                                         val urls = extractUrls(location, limit = 1)
                                         urls.firstOrNull()?.let { detected ->
                                             if (shouldOpenExternally(detected.url)) {
@@ -199,41 +195,32 @@ fun DeviceEventQuickViewSheet(
                                             }
                                         }
                                     }
-                                    else -> Modifier
+                                } else {
+                                    Modifier.clickable { openInMaps(locationContext, location) }
                                 }
                             ) {
                                 Icon(
                                     imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = if (isAddress || hasUrl) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = location,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isAddress || hasUrl) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                    textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                if (isAddress || hasUrl) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.Launch,
-                                        contentDescription = if (isAddress) "Open in maps" else "Open link",
-                                        modifier = Modifier.size(14.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Launch,
+                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
 

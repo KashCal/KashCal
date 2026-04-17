@@ -6,46 +6,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 
 /**
- * Detect if text looks like a street address.
- *
- * Uses word boundaries to avoid false positives like:
- * - "Dr. Smith" (dr as title, not drive)
- * - "Standup meeting" (st as part of word)
- * - "My Way Productions" (way as part of name)
- *
- * Positive detection requires:
- * - At least one digit (street number)
- * - At least one letter (street name)
- * - Either a street word OR comma-separated parts (city, state)
- *
- * @param text The location text to check
- * @return true if text appears to be a street address
- */
-fun looksLikeAddress(text: String): Boolean {
-    if (text.isBlank()) return false
-
-    val hasNumber = text.any { it.isDigit() }
-    val hasLetters = text.any { it.isLetter() }
-
-    if (!hasNumber || !hasLetters) return false
-
-    // Street words - must match as whole words (word boundary detection)
-    val streetWords = setOf(
-        "st", "street", "ave", "avenue", "blvd", "boulevard",
-        "road", "rd", "drive", "dr", "lane", "ln", "way",
-        "ct", "court", "pl", "place", "pkwy", "parkway",
-        "cir", "circle", "ter", "terrace", "hwy", "highway"
-    )
-
-    // Split into words and check for exact match
-    val words = text.lowercase().split(Regex("[\\s,]+"))
-    val hasStreetWord = words.any { it in streetWords }
-
-    // Address pattern: has number + letters + (street word OR comma-separated parts like "City, State")
-    return hasStreetWord || text.count { it == ',' } >= 1
-}
-
-/**
  * Open address in maps app with app chooser dialog.
  *
  * Uses geo: URI scheme (RFC 5870) supported by most maps applications.

@@ -63,11 +63,11 @@ import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.util.DateTimeUtils
-import org.onekash.kashcal.util.location.looksLikeAddress
 import java.time.LocalDate
 import java.time.ZoneId
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
+import org.onekash.kashcal.util.text.extractUrls
 import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
 import org.onekash.kashcal.util.text.shouldOpenExternally
@@ -206,61 +206,48 @@ fun EventQuickViewSheet(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        // Location - clickable if looks like address or contains URL
                         if (!event.location.isNullOrEmpty()) {
                             val locationContext = LocalContext.current
                             val uriHandler = LocalUriHandler.current
-                            val isAddress = remember(event.location) { looksLikeAddress(event.location) }
-                            val hasUrl = remember(event.location) { !isAddress && containsUrl(event.location) }
+                            val hasUrl = remember(event.location) { containsUrl(event.location) }
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = when {
-                                    isAddress -> Modifier.clickable { openInMaps(locationContext, event.location) }
-                                    hasUrl -> Modifier.clickable {
-                                        // Extract first URL from location and open it
-                                        val urls = org.onekash.kashcal.util.text.extractUrls(event.location, limit = 1)
+                                modifier = if (hasUrl) {
+                                    Modifier.clickable {
+                                        val urls = extractUrls(event.location, limit = 1)
                                         urls.firstOrNull()?.let { detected ->
                                             if (shouldOpenExternally(detected.url)) {
                                                 try { uriHandler.openUri(detected.url) } catch (_: Exception) {}
                                             }
                                         }
                                     }
-                                    else -> Modifier
+                                } else {
+                                    Modifier.clickable { openInMaps(locationContext, event.location) }
                                 }
                             ) {
                                 Icon(
                                     imageVector = if (hasUrl) Icons.Default.Link else Icons.Default.Place,
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = if (isAddress || hasUrl) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    }
+                                    tint = MaterialTheme.colorScheme.primary
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = event.location,
                                     style = MaterialTheme.typography.bodyMedium,
-                                    color = if (isAddress || hasUrl) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                    textDecoration = if (isAddress || hasUrl) TextDecoration.Underline else null,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    textDecoration = TextDecoration.Underline,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis
                                 )
-                                if (isAddress || hasUrl) {
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.Launch,
-                                        contentDescription = if (isAddress) "Open in maps" else "Open link",
-                                        modifier = Modifier.size(14.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Launch,
+                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
+                                    modifier = Modifier.size(14.dp),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
                             }
                         }
 

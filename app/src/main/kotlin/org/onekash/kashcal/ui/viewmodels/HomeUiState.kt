@@ -16,6 +16,7 @@ import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.model.CalendarGroup
 import android.net.Uri
+import java.time.LocalDate
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.util.CalendarIntentData
 
@@ -156,6 +157,8 @@ data class HomeUiState(
     val weekViewError: String? = null,
     /** Scroll position in week time grid (pixels) for state preservation */
     val weekViewScrollPosition: Int = 0,
+    /** Hour height in dp for pinch-to-zoom (30-150 range) */
+    val weekViewHourHeight: Float = 60f,
     /** Current pager position (day index 0-6) for context-aware FAB */
     val weekViewPagerPosition: Int = 0,
     /** Pending pager position to scroll to (null = no pending navigation) */
@@ -229,6 +232,9 @@ data class HomeUiState(
     val showErrorBanner: Boolean = false,
     /** URL to open in browser (set by error actions) */
     val pendingUrlToOpen: String? = null,
+
+    /** Pending drag reschedule for recurring event (shows edit scope dialog) */
+    val pendingDragReschedule: PendingDragReschedule? = null,
 
     // === DISPLAY PREFERENCES ===
     /** Show auto-detected emojis in event titles */
@@ -402,3 +408,12 @@ enum class ViewMode(val key: String) {
         fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH
     }
 }
+
+enum class EditScope { THIS_EVENT, ALL_EVENTS }
+
+@Immutable
+data class PendingDragReschedule(
+    val displayEvent: DisplayEvent,
+    val targetDate: LocalDate,
+    val targetStartMinutes: Int
+)

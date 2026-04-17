@@ -1413,6 +1413,10 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(weekViewScrollPosition = position) }
     }
 
+    fun setWeekViewHourHeight(height: Float) {
+        _uiState.update { it.copy(weekViewHourHeight = height.coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)) }
+    }
+
     /**
      * Save week view pager position for context-aware FAB.
      */
@@ -2318,6 +2322,138 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 Log.e(TAG, "Error saving event", e)
                 Result.failure(e)
+            }
+        }
+    }
+
+    fun rescheduleEvent(
+        displayEvent: DisplayEvent,
+        targetDate: LocalDate,
+        targetStartMinutes: Int,
+        editScope: EditScope = EditScope.THIS_EVENT
+    ) {
+        val isRecurringNeedingDialog = when (displayEvent) {
+            is DisplayEvent.Room -> displayEvent.event.rrule != null && displayEvent.event.originalEventId == null
+            is DisplayEvent.Device -> displayEvent.instance.hasRrule
+        }
+        if (isRecurringNeedingDialog && editScope == EditScope.THIS_EVENT) {
+            _uiState.update {
+                it.copy(pendingDragReschedule = PendingDragReschedule(displayEvent, targetDate, targetStartMinutes))
+            }
+            return
+        }
+
+        performReschedule(displayEvent, targetDate, targetStartMinutes, editScope)
+    }
+
+    fun confirmReschedule(editScope: EditScope) {
+        val pending = _uiState.value.pendingDragReschedule ?: return
+        _uiState.update { it.copy(pendingDragReschedule = null) }
+        performReschedule(pending.displayEvent, pending.targetDate, pending.targetStartMinutes, editScope)
+    }
+
+    fun cancelPendingReschedule() {
+        _uiState.update { it.copy(pendingDragReschedule = null) }
+    }
+
+    private fun performReschedule(
+        displayEvent: DisplayEvent,
+        targetDate: LocalDate,
+        targetStartMinutes: Int,
+        editScope: EditScope
+    ) {
+        viewModelScope.launch {
+            try {
+                val durationMs = displayEvent.endTs - displayEvent.startTs
+                val durationMinutes = (durationMs / 60000).toInt()
+                val clampedStart = WeekViewUtils.clampDragStartMinutes(targetStartMinutes, durationMinutes)
+                val (newStartTs, newEndTs) = WeekViewUtils.calculateNewTimestamps(
+                    targetDate, clampedStart, durationMinutes
+                )
+
+                withContext(ioDispatcher) {
+                    when (displayEvent) {
+                        is DisplayEvent.Room -> {
+                            val event = displayEvent.event
+                            val isRecurring = event.rrule != null
+                            val isException = event.originalEventId != null
+
+                            when {
+                                !isRecurring || isException -> {
+                                    eventCoordinator.updateEvent(
+                                        event.copy(startTs = newStartTs, endTs = newEndTs, updatedAt = System.currentTimeMillis())
+                                    )
+                                }
+                                editScope == EditScope.THIS_EVENT -> {
+                                    val masterEventId = event.originalEventId ?: event.id
+                                    eventCoordinator.editSingleOccurrence(
+                                        masterEventId = masterEventId,
+                                        occurrenceTimeMs = displayEvent.occurrence.startTs,
+                                        changes = { master ->
+                                            master.copy(
+                                                startTs = newStartTs,
+                                                endTs = newEndTs,
+                                                rrule = null,
+                                                updatedAt = System.currentTimeMillis()
+                                            )
+                                        }
+                                    )
+                                }
+                                editScope == EditScope.ALL_EVENTS -> {
+                                    val delta = newStartTs - displayEvent.startTs
+                                    eventCoordinator.updateEvent(
+                                        event.copy(
+                                            startTs = event.startTs + delta,
+                                            endTs = event.endTs + delta,
+                                            updatedAt = System.currentTimeMillis()
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        is DisplayEvent.Device -> {
+                            val instance = displayEvent.instance
+                            val tz = instance.timezone ?: java.util.TimeZone.getDefault().id
+                            if (instance.hasRrule && editScope == EditScope.THIS_EVENT) {
+                                calendarProviderRepository.createException(
+                                    calendarId = instance.calendarId,
+                                    masterEventId = instance.eventId,
+                                    originalInstanceTime = instance.startTs,
+                                    title = instance.title,
+                                    description = instance.description,
+                                    location = instance.location,
+                                    startTs = newStartTs,
+                                    endTs = newEndTs,
+                                    isAllDay = instance.isAllDay,
+                                    timezone = tz,
+                                    reminders = instance.reminders
+                                )
+                            } else {
+                                calendarProviderRepository.updateEvent(
+                                    eventId = instance.eventId,
+                                    title = instance.title,
+                                    description = instance.description,
+                                    location = instance.location,
+                                    startTs = newStartTs,
+                                    endTs = newEndTs,
+                                    isAllDay = instance.isAllDay,
+                                    rrule = instance.rrule,
+                                    duration = null,
+                                    timezone = tz,
+                                    reminders = instance.reminders
+                                )
+                            }
+                        }
+                    }
+                }
+
+                reloadCurrentView()
+                showSnackbar("Event rescheduled")
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error rescheduling event", e)
+                showSnackbar("Failed to reschedule: ${e.message}")
             }
         }
     }

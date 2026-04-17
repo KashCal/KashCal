@@ -53,6 +53,7 @@ import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.util.CalendarContractAction
 import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.util.DateTimeUtils
 import javax.inject.Inject
 
@@ -323,14 +324,13 @@ class MainActivity : ComponentActivity() {
                         if (quickAddEnabled && !uiState.viewMode.isTimeGrid) {
                             showQuickAddDialog = true
                         } else {
-                            val gridStartHour = if (uiState.viewMode == ViewMode.WEEK) 0 else 6
+                            val gridStartHour = WeekViewUtils.START_HOUR
 
                             val eventTimestamp = if (uiState.viewMode.isTimeGrid && uiState.weekViewStartDate != 0L) {
-                                // Time-grid view: use current pager position and scroll position
                                 val dayIndex = uiState.weekViewPagerPosition
-                                val hourHeightPx = 60 * 2.75f
+                                val hourHeightPx = uiState.weekViewHourHeight * resources.displayMetrics.density
                                 val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + gridStartHour
-                                val hour = visibleHour.coerceIn(gridStartHour, if (gridStartHour == 0) 23 else 22)
+                                val hour = visibleHour.coerceIn(gridStartHour, 23)
 
                                 val eventCal = java.util.Calendar.getInstance().apply {
                                     timeInMillis = uiState.weekViewStartDate
@@ -412,7 +412,13 @@ class MainActivity : ComponentActivity() {
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
                     onWeekDateSelected = { dateMs -> homeViewModel.onWeekViewDateSelected(dateMs) },
                     onWeekScrollPositionChange = { position -> homeViewModel.setWeekViewScrollPosition(position) },
+                    onWeekHourHeightChange = { height -> homeViewModel.setWeekViewHourHeight(height) },
                     onClearPendingWeekPagerPosition = { homeViewModel.clearPendingWeekViewPagerPosition() },
+                    onReschedule = { displayEvent, targetDate, targetStartMinutes ->
+                        homeViewModel.rescheduleEvent(displayEvent, targetDate, targetStartMinutes)
+                    },
+                    onConfirmReschedule = { editScope -> homeViewModel.confirmReschedule(editScope) },
+                    onCancelPendingReschedule = { homeViewModel.cancelPendingReschedule() },
                     // Agenda scroll callback
                     onResume = { homeViewModel.onAppResume() },
                     onClearScrollAgendaToTop = { homeViewModel.clearScrollAgendaToTop() },

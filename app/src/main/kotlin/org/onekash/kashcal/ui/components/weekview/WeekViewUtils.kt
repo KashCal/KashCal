@@ -5,6 +5,7 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -18,22 +19,23 @@ import org.onekash.kashcal.util.DateTimeUtils
  * Handles:
  * - Week/date calculations
  * - Range formatting for header
- * - Time snapping for long-press
- * - Event clamping to visible range (6am-11pm)
+ * - Time snapping for event creation
  * - Event positioning and overlap detection
  */
 object WeekViewUtils {
 
-    // Time grid constants
-    const val START_HOUR = 6     // 6 AM
-    const val END_HOUR = 23      // 11 PM (grid shows up to 11pm)
-    const val TOTAL_HOURS = END_HOUR - START_HOUR  // 17 hours
+    // Time grid constants (full 24-hour grid for all views)
+    const val START_HOUR = 0
+    const val END_HOUR = 24
+    const val TOTAL_HOURS = END_HOUR - START_HOUR  // 24 hours
     const val MINUTES_PER_HOUR = 60
     const val SNAP_INTERVAL_MINUTES = 15
 
     // Visual constants
     val HOUR_HEIGHT = 60.dp
     val MIN_EVENT_HEIGHT = 20.dp
+    const val MIN_HOUR_HEIGHT_DP = 30f
+    const val MAX_HOUR_HEIGHT_DP = 150f
     const val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
 
     // Infinite day pager constants (THREE_DAYS mode)
@@ -46,11 +48,6 @@ object WeekViewUtils {
     // Week pager constants (WEEK mode — 1 page = 1 week)
     const val TOTAL_WEEK_PAGES = 1000  // ~500 weeks each direction
     const val CENTER_WEEK_PAGE = TOTAL_WEEK_PAGES / 2
-
-    // Full 24-hour grid constants for WEEK mode
-    const val FULL_DAY_START_HOUR = 0
-    const val FULL_DAY_END_HOUR = 24
-    const val FULL_DAY_TOTAL_HOURS = 24
 
     // ==================== Day Pager Functions ====================
 
@@ -211,66 +208,6 @@ object WeekViewUtils {
         return Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate()
     }
 
-    /**
-     * Time slot classification for events.
-     * Events are categorized based on their relationship to the visible grid (6am-11pm).
-     */
-    enum class TimeSlot {
-        /** Event occurs entirely before 6am */
-        EARLY,
-        /** Event overlaps with the visible grid (6am-11pm) */
-        NORMAL,
-        /** Event occurs entirely after 11pm */
-        LATE
-    }
-
-    /**
-     * Classify an event based on its time relative to the visible grid.
-     *
-     * - EARLY: Event ends at or before 6am
-     * - LATE: Event starts at or after 11pm
-     * - NORMAL: Event overlaps with 6am-11pm range
-     *
-     * @param displayEvent The event to classify
-     * @return TimeSlot indicating where the event belongs
-     */
-    fun classifyTimeSlot(displayEvent: DisplayEvent): TimeSlot {
-        val startTime = Instant.ofEpochMilli(displayEvent.startTs)
-            .atZone(ZoneId.systemDefault())
-        val endTime = Instant.ofEpochMilli(displayEvent.endTs)
-            .atZone(ZoneId.systemDefault())
-
-        val startMinutes = startTime.hour * MINUTES_PER_HOUR + startTime.minute
-        val endMinutes = endTime.hour * MINUTES_PER_HOUR + endTime.minute
-
-        val gridStartMinutes = START_HOUR * MINUTES_PER_HOUR  // 360 (6am)
-        val gridEndMinutes = END_HOUR * MINUTES_PER_HOUR      // 1380 (11pm)
-
-        return when {
-            // Event ends at or before 6am - it's an early event
-            endMinutes <= gridStartMinutes -> TimeSlot.EARLY
-            // Event starts at or after 11pm - it's a late event
-            startMinutes >= gridEndMinutes -> TimeSlot.LATE
-            // Event overlaps with the grid
-            else -> TimeSlot.NORMAL
-        }
-    }
-
-    /**
-     * Format time for overflow row display (e.g., "5:30am" or "05:30").
-     *
-     * @param timestampMs Event start timestamp
-     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
-     */
-    fun formatOverflowTime(timestampMs: Long, timePattern: String = "h:mma"): String {
-        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-        return Instant.ofEpochMilli(timestampMs)
-            .atZone(ZoneId.systemDefault())
-            .toLocalTime()
-            .format(formatter)
-            .lowercase(Locale.getDefault())
-    }
-
     // ==================== Week Calculations ====================
 
     /**
@@ -422,54 +359,6 @@ object WeekViewUtils {
         return hour.coerceIn(0, 23) to minute.coerceIn(0, 59)
     }
 
-    // ==================== Event Clamping ====================
-
-    /**
-     * Result of clamping an event to the visible time range.
-     */
-    data class ClampResult(
-        /** Display start time in minutes from midnight */
-        val displayStartMinutes: Int,
-        /** Display end time in minutes from midnight */
-        val displayEndMinutes: Int,
-        /** True if event starts before 6am (clamped) */
-        val clampedStart: Boolean,
-        /** True if event ends after 11pm (clamped) */
-        val clampedEnd: Boolean,
-        /** Original start time (for indicator text) */
-        val originalStartMinutes: Int,
-        /** Original end time (for indicator text) */
-        val originalEndMinutes: Int
-    )
-
-    /**
-     * Clamp event times to the visible range (6am-11pm).
-     * Events starting before 6am are clamped to 6am with an indicator.
-     * Events ending after 11pm are clamped to 11pm with an indicator.
-     *
-     * @param startMinutes Start time in minutes from midnight
-     * @param endMinutes End time in minutes from midnight
-     * @return ClampResult with display times and clamping indicators
-     */
-    fun clampToVisibleRange(
-        startMinutes: Int,
-        endMinutes: Int,
-        startHour: Int = START_HOUR,
-        endHour: Int = END_HOUR
-    ): ClampResult {
-        val gridStartMinutes = startHour * MINUTES_PER_HOUR
-        val gridEndMinutes = endHour * MINUTES_PER_HOUR
-
-        return ClampResult(
-            displayStartMinutes = startMinutes.coerceIn(gridStartMinutes, gridEndMinutes),
-            displayEndMinutes = endMinutes.coerceIn(gridStartMinutes, gridEndMinutes),
-            clampedStart = startMinutes < gridStartMinutes,
-            clampedEnd = endMinutes > gridEndMinutes,
-            originalStartMinutes = startMinutes,
-            originalEndMinutes = endMinutes
-        )
-    }
-
     /**
      * Format hour for time grid labels (e.g., "6a", "12p" or "06", "12").
      *
@@ -486,30 +375,6 @@ object WeekViewUtils {
                 hour < 12 -> "${hour}a"
                 hour == 12 -> "12p"
                 else -> "${hour - 12}p"
-            }
-        }
-    }
-
-    /**
-     * Format time for clamped indicator (e.g., "5:30am" or "05:30").
-     *
-     * @param minutes Time in minutes from midnight
-     * @param is24Hour True for 24-hour format (e.g., "05:30"), false for 12-hour (e.g., "5:30am")
-     * @return Formatted time string
-     */
-    fun formatClampIndicatorTime(minutes: Int, is24Hour: Boolean = false): String {
-        val hour = minutes / MINUTES_PER_HOUR
-        val minute = minutes % MINUTES_PER_HOUR
-
-        return if (is24Hour) {
-            String.format(Locale.getDefault(), "%02d:%02d", hour, minute)
-        } else {
-            val hour12 = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
-            val amPm = if (hour < 12) "am" else "pm"
-            if (minute == 0) {
-                "$hour12$amPm"
-            } else {
-                "$hour12:${minute.toString().padStart(2, '0')}$amPm"
             }
         }
     }
@@ -561,27 +426,14 @@ object WeekViewUtils {
      */
     data class PositionedEvent(
         val displayEvent: DisplayEvent,
-        /** Top offset from grid start (relative to 6am) */
         val topOffset: Dp,
-        /** Height of the event block */
         val height: Dp,
-        /** Horizontal position as fraction (0.0 = left edge, 1.0 = right edge) */
         val leftFraction: Float,
-        /** Width as fraction of column width */
         val widthFraction: Float,
-        /** Index in overlap group (0 = leftmost) */
         val overlapIndex: Int,
-        /** Total events in overlap group */
         val overlapTotal: Int,
-        /** True if start time is clamped (show indicator) */
-        val clampedStart: Boolean,
-        /** True if end time is clamped (show indicator) */
-        val clampedEnd: Boolean,
-        /** Original start time for indicator */
-        val originalStartMinutes: Int,
-        /** Original end time for indicator */
-        val originalEndMinutes: Int,
-        /** Day index within week (0=Sunday) */
+        val startMinutes: Int,
+        val endMinutes: Int,
         val dayIndex: Int
     )
 
@@ -658,15 +510,15 @@ object WeekViewUtils {
             val widthFraction = 1f / slotsInCluster
             val leftFraction = slotIndex * widthFraction
 
-            // Clamp to visible range
-            val clampResult = clampToVisibleRange(span.startMinutes, span.endMinutes, startHour, endHour)
+            val gridStartMinutes = startHour * MINUTES_PER_HOUR
+            val gridEndMinutes = endHour * MINUTES_PER_HOUR
+            val displayStart = span.startMinutes.coerceIn(gridStartMinutes, gridEndMinutes)
+            val displayEnd = span.endMinutes.coerceIn(gridStartMinutes, gridEndMinutes)
 
-            // Skip if entirely outside visible range
-            if (clampResult.displayEndMinutes <= clampResult.displayStartMinutes) return@mapIndexedNotNull null
+            if (displayEnd <= displayStart) return@mapIndexedNotNull null
 
-            // Calculate visual position
-            val topMinutes = clampResult.displayStartMinutes - startHour * MINUTES_PER_HOUR
-            val durationMinutes = clampResult.displayEndMinutes - clampResult.displayStartMinutes
+            val topMinutes = displayStart - gridStartMinutes
+            val durationMinutes = displayEnd - displayStart
 
             val topOffset = (topMinutes.toFloat() / MINUTES_PER_HOUR * hourHeight.value).dp
             val height = maxOf(
@@ -682,10 +534,8 @@ object WeekViewUtils {
                 widthFraction = widthFraction,
                 overlapIndex = slotIndex,
                 overlapTotal = slotsInCluster,
-                clampedStart = clampResult.clampedStart,
-                clampedEnd = clampResult.clampedEnd,
-                originalStartMinutes = span.startMinutes,
-                originalEndMinutes = span.endMinutes,
+                startMinutes = span.startMinutes,
+                endMinutes = span.endMinutes,
                 dayIndex = dayIndex
             )
         }
@@ -827,5 +677,80 @@ object WeekViewUtils {
             DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
         }
         return date.format(formatter)
+    }
+
+    // ==================== Drag-to-Reschedule ====================
+
+    data class DragState(
+        val isDragging: Boolean = false,
+        val draggedEvent: DisplayEvent? = null,
+        val originalDate: LocalDate = LocalDate.MIN,
+        val originalStartMinutes: Int = 0,
+        val currentOffsetX: Float = 0f,
+        val currentOffsetY: Float = 0f,
+        val targetDate: LocalDate? = null,
+        val targetStartMinutes: Int = 0,
+        val eventHeight: Dp = 0.dp,
+        val durationMinutes: Int = 0
+    ) {
+        companion object {
+            val Idle = DragState()
+        }
+    }
+
+    fun minutesToTimeLabel(totalMinutes: Int, is24Hour: Boolean): String {
+        val h = totalMinutes / MINUTES_PER_HOUR
+        val m = totalMinutes % MINUTES_PER_HOUR
+        return if (is24Hour) {
+            "$h:${String.format(Locale.getDefault(), "%02d", m)}"
+        } else {
+            val period = if (h < 12) "AM" else "PM"
+            val displayHour = when {
+                h == 0 -> 12
+                h > 12 -> h - 12
+                else -> h
+            }
+            "$displayHour:${String.format(Locale.getDefault(), "%02d", m)} $period"
+        }
+    }
+
+    fun calculateDragTarget(
+        fingerX: Float,
+        fingerY: Float,
+        columnWidth: Float,
+        visibleDates: List<LocalDate>,
+        hourHeightPx: Float,
+        scrollOffsetPx: Int,
+        startHour: Int = START_HOUR
+    ): Pair<LocalDate, Int> {
+        val columnIndex = (fingerX / columnWidth).toInt().coerceIn(0, visibleDates.size - 1)
+        val date = visibleDates[columnIndex]
+
+        val absoluteY = fingerY + scrollOffsetPx
+        val totalMinutesRaw = startHour * MINUTES_PER_HOUR + (absoluteY / hourHeightPx * MINUTES_PER_HOUR).toInt()
+        val snappedMinutes = snapToQuarterHour(totalMinutesRaw.coerceAtLeast(0))
+            .coerceIn(0, END_HOUR * MINUTES_PER_HOUR - 1)
+
+        return date to snappedMinutes
+    }
+
+    fun clampDragStartMinutes(startMinutes: Int, durationMinutes: Int): Int {
+        val maxStart = END_HOUR * MINUTES_PER_HOUR - 1 - durationMinutes
+        return startMinutes.coerceIn(0, maxStart.coerceAtLeast(0))
+    }
+
+    fun calculateNewTimestamps(
+        targetDate: LocalDate,
+        targetStartMinutes: Int,
+        durationMinutes: Int
+    ): Pair<Long, Long> {
+        val zone = ZoneId.systemDefault()
+        val startTime = LocalTime.of(
+            targetStartMinutes / MINUTES_PER_HOUR,
+            targetStartMinutes % MINUTES_PER_HOUR
+        )
+        val startTs = targetDate.atTime(startTime).atZone(zone).toInstant().toEpochMilli()
+        val endTs = startTs + durationMinutes.toLong() * 60 * 1000
+        return startTs to endTs
     }
 }

@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.DateTimeUtils
-import org.onekash.kashcal.util.location.looksLikeAddress
 import org.onekash.kashcal.util.text.cleanHtmlEntities
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
@@ -557,47 +556,45 @@ class EventQuickViewSheetTest {
         assertFalse("Event with empty reminders should not be expandable", hasExpandableContent(event))
     }
 
-    // ========== Location Precedence Tests ==========
+    // ========== Location Tappability Tests ==========
 
     @Test
-    fun `location with address takes precedence over URL`() {
-        // Per plan: precedence is address first, then URL
+    fun `location with address opens in maps`() {
         val location = "123 Main St, City"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+        val hasUrl = containsUrl(location)
 
-        assertTrue("Should detect as address", isAddress)
-        assertFalse("Should not treat as URL since address detected", hasUrl)
+        assertFalse("Address should not be detected as URL", hasUrl)
     }
 
     @Test
-    fun `location with URL only treated as URL`() {
+    fun `location with URL opens in browser`() {
         val location = "https://zoom.us/j/123456"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+        val hasUrl = containsUrl(location)
 
-        assertFalse("Should not detect as address", isAddress)
         assertTrue("Should detect URL", hasUrl)
     }
 
     @Test
-    fun `location with plain text neither address nor URL`() {
-        val location = "Conference Room A"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+    fun `location with plain place name opens in maps`() {
+        val location = "abc pizza"
+        val hasUrl = containsUrl(location)
 
-        assertFalse("Should not detect as address", isAddress)
-        assertFalse("Should not detect as URL", hasUrl)
+        assertFalse("Place name should not be detected as URL", hasUrl)
     }
 
     @Test
-    fun `mixed location with URL but no address treated as URL`() {
-        // Example: "Office, https://meet.google.com/xyz"
-        val location = "Office, https://meet.google.com/xyz"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+    fun `location with room name opens in maps`() {
+        val location = "Conference Room A"
+        val hasUrl = containsUrl(location)
 
-        assertFalse("Should not detect as address (no number + street word)", isAddress)
+        assertFalse("Room name should not be detected as URL", hasUrl)
+    }
+
+    @Test
+    fun `mixed location with URL opens in browser`() {
+        val location = "Office, https://meet.google.com/xyz"
+        val hasUrl = containsUrl(location)
+
         assertTrue("Should detect URL in location", hasUrl)
     }
 
@@ -702,49 +699,38 @@ class EventQuickViewSheetTest {
         assertEquals("https://zoom.us/j/123456", validUrl)
     }
 
-    // ========== Location with Both Address and URL ==========
+    // ========== Location with Both Text and URL ==========
 
     @Test
-    fun `location with address AND URL uses address behavior`() {
-        // Per plan Section 10: address takes precedence
+    fun `location with address AND URL opens in browser`() {
         val location = "123 Main St, City https://zoom.us/j/123"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+        val hasUrl = containsUrl(location)
 
-        assertTrue("Should detect as address first", isAddress)
-        assertFalse("URL check skipped when address detected", hasUrl)
+        assertTrue("URL detected, opens in browser", hasUrl)
     }
 
     @Test
-    fun `location with URL followed by address text`() {
+    fun `location with URL followed by address text opens in browser`() {
         val location = "https://zoom.us/j/123 at 123 Main St"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+        val hasUrl = containsUrl(location)
 
-        // Address detection should still work even with URL prefix
-        assertTrue("Should detect address pattern", isAddress)
-        assertFalse("URL check skipped when address detected", hasUrl)
+        assertTrue("URL detected, opens in browser", hasUrl)
     }
 
     @Test
-    fun `location with meeting link and room name without comma`() {
-        // Note: "Room 5B, ..." with comma IS detected as address (number + letters + comma)
-        // So use a format without comma
+    fun `location with meeting link and room name opens in browser`() {
         val location = "Room B - https://meet.google.com/abc-defg"
-        val isAddress = looksLikeAddress(location)
-        val hasUrl = !isAddress && containsUrl(location)
+        val hasUrl = containsUrl(location)
 
-        assertFalse("Room B without number pattern is not an address", isAddress)
-        assertTrue("Should detect URL since not an address", hasUrl)
+        assertTrue("URL detected in mixed location", hasUrl)
     }
 
     @Test
-    fun `location with comma triggers address detection`() {
-        // Per looksLikeAddress: number + letters + comma = address
-        val location = "Room 5B, Join at link"
-        val isAddress = looksLikeAddress(location)
+    fun `location with comma but no URL opens in maps`() {
+        val location = "Room 5B, Join at meeting"
+        val hasUrl = containsUrl(location)
 
-        assertTrue("Comma with number and letters is treated as address", isAddress)
+        assertFalse("No URL, opens in maps", hasUrl)
     }
 
     // ========== HTML Entity Handling in Description ==========

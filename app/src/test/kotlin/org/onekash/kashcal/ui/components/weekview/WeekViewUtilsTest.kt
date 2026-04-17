@@ -337,160 +337,6 @@ class WeekViewUtilsTest {
         assertEquals(60, result)
     }
 
-    // ==================== Event Clamping Tests ====================
-
-    @Test
-    fun `clamp event starting at 5am to 6am with indicator`() {
-        // 5:00 AM = 300 minutes
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 300,
-            endMinutes = 480  // 8:00 AM
-        )
-
-        assertEquals(360, result.displayStartMinutes)  // 6:00 AM
-        assertEquals(480, result.displayEndMinutes)    // 8:00 AM unchanged
-        assertTrue(result.clampedStart)
-        assertFalse(result.clampedEnd)
-        assertEquals(300, result.originalStartMinutes)
-    }
-
-    @Test
-    fun `clamp event ending at midnight to 11pm with indicator`() {
-        // Event from 10pm to midnight
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 22 * 60,  // 10:00 PM = 1320
-            endMinutes = 24 * 60     // 12:00 AM = 1440
-        )
-
-        assertEquals(1320, result.displayStartMinutes)  // 10:00 PM unchanged
-        assertEquals(1380, result.displayEndMinutes)    // 11:00 PM (clamped)
-        assertFalse(result.clampedStart)
-        assertTrue(result.clampedEnd)
-        assertEquals(1440, result.originalEndMinutes)
-    }
-
-    @Test
-    fun `event within range not clamped`() {
-        // Event from 9am to 5pm
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 9 * 60,   // 540
-            endMinutes = 17 * 60     // 1020
-        )
-
-        assertEquals(540, result.displayStartMinutes)
-        assertEquals(1020, result.displayEndMinutes)
-        assertFalse(result.clampedStart)
-        assertFalse(result.clampedEnd)
-    }
-
-    @Test
-    fun `event spanning entire day clamped both ends`() {
-        // Event from midnight to midnight (all day)
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 0,
-            endMinutes = 24 * 60
-        )
-
-        assertEquals(360, result.displayStartMinutes)   // 6:00 AM
-        assertEquals(1380, result.displayEndMinutes)    // 11:00 PM
-        assertTrue(result.clampedStart)
-        assertTrue(result.clampedEnd)
-    }
-
-    // ==================== clampToVisibleRange with startHour/endHour Tests ====================
-
-    @Test
-    fun `clampToVisibleRange with 24h range does not clamp any event`() {
-        // 3am-5am event — would be clamped in 6-23 range, but not in 0-24
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 3 * 60,
-            endMinutes = 5 * 60,
-            startHour = 0,
-            endHour = 24
-        )
-
-        assertEquals(3 * 60, result.displayStartMinutes)
-        assertEquals(5 * 60, result.displayEndMinutes)
-        assertFalse(result.clampedStart)
-        assertFalse(result.clampedEnd)
-    }
-
-    @Test
-    fun `clampToVisibleRange with 24h range preserves midnight event`() {
-        // Midnight to 1am event
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 0,
-            endMinutes = 60,
-            startHour = 0,
-            endHour = 24
-        )
-
-        assertEquals(0, result.displayStartMinutes)
-        assertEquals(60, result.displayEndMinutes)
-        assertFalse(result.clampedStart)
-        assertFalse(result.clampedEnd)
-    }
-
-    @Test
-    fun `clampToVisibleRange with 24h range preserves late night event`() {
-        // 11pm-midnight event
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 23 * 60,
-            endMinutes = 24 * 60,
-            startHour = 0,
-            endHour = 24
-        )
-
-        assertEquals(23 * 60, result.displayStartMinutes)
-        assertEquals(24 * 60, result.displayEndMinutes)
-        assertFalse(result.clampedStart)
-        assertFalse(result.clampedEnd)
-    }
-
-    @Test
-    fun `clampToVisibleRange default params match 6am-11pm (backward compat)`() {
-        // 5am event — should still clamp with default params
-        val result = WeekViewUtils.clampToVisibleRange(
-            startMinutes = 5 * 60,
-            endMinutes = 8 * 60
-        )
-
-        assertEquals(6 * 60, result.displayStartMinutes)
-        assertTrue(result.clampedStart)
-    }
-
-    // ==================== Time Formatting Tests ====================
-
-    @Test
-    fun `formatClampIndicatorTime formats 5am correctly`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(5 * 60)
-        assertEquals("5am", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime formats 5_30am correctly`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(5 * 60 + 30)
-        assertEquals("5:30am", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime formats midnight correctly`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(0)
-        assertEquals("12am", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime formats noon correctly`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(12 * 60)
-        assertEquals("12pm", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime formats 11_45pm correctly`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(23 * 60 + 45)
-        assertEquals("11:45pm", result)
-    }
-
     // ==================== Weekend Detection Tests ====================
 
     @Test
@@ -532,18 +378,18 @@ class WeekViewUtilsTest {
     // ==================== Offset to Time Tests ====================
 
     @Test
-    fun `offsetToTime at top returns 6am`() {
+    fun `offsetToTime at top returns midnight`() {
         val (hour, minute) = WeekViewUtils.offsetToTime(0f, 60f, snap = false)
-        assertEquals(6, hour)
+        assertEquals(0, hour)
         assertEquals(0, minute)
     }
 
     @Test
     fun `offsetToTime with snap rounds to quarter hour`() {
-        // 6:17 should snap to 6:15
+        // 0:17 should snap to 0:15
         val minuteOffset = 17f / 60f * 60f  // 17 minutes into the grid
         val (hour, minute) = WeekViewUtils.offsetToTime(minuteOffset, 60f, snap = true)
-        assertEquals(6, hour)
+        assertEquals(0, hour)
         assertEquals(15, minute)
     }
 
@@ -847,8 +693,8 @@ class WeekViewUtilsTest {
     }
 
     @Test
-    fun `offsetToTime with startHour 6 at top returns 6am (backward compat)`() {
-        val (hour, minute) = WeekViewUtils.offsetToTime(0f, 60f, snap = false, startHour = WeekViewUtils.START_HOUR)
+    fun `offsetToTime with explicit startHour 6 at top returns 6am`() {
+        val (hour, minute) = WeekViewUtils.offsetToTime(0f, 60f, snap = false, startHour = 6)
         assertEquals(6, hour)
         assertEquals(0, minute)
     }
@@ -884,56 +730,5 @@ class WeekViewUtilsTest {
 
         assertTrue("Expected 12h format with 2:00, got: $result", result.contains("2:00"))
         assertTrue("Expected 12h format with pm, got: $result", result.lowercase().contains("pm"))
-    }
-
-    @Test
-    fun `formatOverflowTime with 24h pattern shows 24h format`() {
-        // 5:00 AM UTC
-        val fiveAm = 1767657600000L + (5 * 60 * 60 * 1000)
-
-        val result = WeekViewUtils.formatOverflowTime(fiveAm, "HH:mm")
-
-        assertEquals("05:00", result)
-    }
-
-    @Test
-    fun `formatOverflowTime with 12h pattern shows 12h format`() {
-        val fiveAm = 1767657600000L + (5 * 60 * 60 * 1000)
-
-        val result = WeekViewUtils.formatOverflowTime(fiveAm, "h:mma")
-
-        assertEquals("5:00am", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime 24h format midnight`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(0, is24Hour = true)
-        assertEquals("00:00", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime 24h format noon`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(12 * 60, is24Hour = true)
-        assertEquals("12:00", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime 24h format 5am`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(5 * 60, is24Hour = true)
-        assertEquals("05:00", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime 24h format 11_45pm`() {
-        val result = WeekViewUtils.formatClampIndicatorTime(23 * 60 + 45, is24Hour = true)
-        assertEquals("23:45", result)
-    }
-
-    @Test
-    fun `formatClampIndicatorTime 12h format preserves existing behavior`() {
-        // Verify backward compatibility - default (is24Hour=false) unchanged
-        assertEquals("5am", WeekViewUtils.formatClampIndicatorTime(5 * 60, is24Hour = false))
-        assertEquals("12am", WeekViewUtils.formatClampIndicatorTime(0, is24Hour = false))
-        assertEquals("12pm", WeekViewUtils.formatClampIndicatorTime(12 * 60, is24Hour = false))
     }
 }

@@ -1,0 +1,5 @@
+• Drag-to-reschedule events in week and 3-day views
+• Pinch-to-zoom hour rows with haptic feedback
+• Tap empty space to create event at that time
+• Tappable event locations open in maps
+• Text selection in event quick view sheets

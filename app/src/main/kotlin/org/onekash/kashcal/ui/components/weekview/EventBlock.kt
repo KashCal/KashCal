@@ -2,6 +2,10 @@ package org.onekash.kashcal.ui.components.weekview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,7 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -22,41 +28,18 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 
-/**
- * Displays a single event block in the week view time grid.
- *
- * Text truncation priority (based on available height):
- * 1. Title (always shown, 1-2 lines depending on height)
- * 2. Time (only if height >= 36dp)
- * 3. Location (only if height >= 56dp)
- *
- * Shows clamp indicators when event is outside visible time range (6am-11pm):
- * - "^ starts 5:30am" if event starts before 6am
- * - "v ends 12:00am" if event ends after 11pm
- *
- * @param displayEvent The event to display
- * @param height Height of the block (determines what content is shown)
- * @param clampedStart True if event starts before visible range
- * @param clampedEnd True if event ends after visible range
- * @param originalStartMinutes Original start time in minutes (for clamp indicator)
- * @param originalEndMinutes Original end time in minutes (for clamp indicator)
- * @param timePattern DateTimeFormatter pattern for time range (e.g., "h:mma" for 12h, "HH:mm" for 24h)
- * @param is24Hour True for 24-hour format in clamp indicators
- * @param onClick Called when event is tapped
- * @param modifier Modifier for the container
- */
 @Composable
 fun EventBlock(
     displayEvent: DisplayEvent,
     height: Dp,
-    clampedStart: Boolean = false,
-    clampedEnd: Boolean = false,
-    originalStartMinutes: Int = 0,
-    originalEndMinutes: Int = 0,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
-    is24Hour: Boolean = false,
     onClick: () -> Unit,
+    isDraggable: Boolean = false,
+    onDragStart: ((Offset) -> Unit)? = null,
+    onDrag: ((Offset) -> Unit)? = null,
+    onDragEnd: (() -> Unit)? = null,
+    onDragCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val color = displayEvent.calendarColor
@@ -73,28 +56,45 @@ fun EventBlock(
     val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
     val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
 
+    val gestureModifier = if (isDraggable && onDragStart != null) {
+        Modifier.pointerInput(Unit) {
+            awaitEachGesture {
+                val down = awaitFirstDown()
+                val longPress = awaitLongPressOrCancellation(down.id)
+                if (longPress != null) {
+                    onDragStart(longPress.position)
+                    var dragged = false
+                    drag(longPress.id) { change ->
+                        dragged = true
+                        change.consume()
+                        onDrag?.invoke(change.position - change.previousPosition)
+                    }
+                    if (dragged) {
+                        onDragEnd?.invoke()
+                    } else {
+                        onDragCancel?.invoke()
+                    }
+                } else {
+                    onClick()
+                }
+            }
+        }
+    } else {
+        Modifier.clickable(onClick = onClick)
+    }
+
     Box(
         modifier = modifier
-            .height(height)  // Apply the calculated height
+            .height(height)
             .clip(RoundedCornerShape(4.dp))
             .background(backgroundColor)
-            .clickable(onClick = onClick)
+            .then(gestureModifier)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
-            // Clamp indicator (start) - shown above title
-            if (clampedStart) {
-                Text(
-                    text = "\u2191 ${WeekViewUtils.formatClampIndicatorTime(originalStartMinutes, is24Hour)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.8f),
-                    maxLines = 1
-                )
-            }
-
             // Title (always shown)
             Text(
                 text = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis),
@@ -127,15 +127,6 @@ fun EventBlock(
                 )
             }
 
-            // Clamp indicator (end) - shown at bottom
-            if (clampedEnd) {
-                Text(
-                    text = "\u2193 ${WeekViewUtils.formatClampIndicatorTime(originalEndMinutes, is24Hour)}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = textColor.copy(alpha = 0.8f),
-                    maxLines = 1
-                )
-            }
         }
     }
 }
