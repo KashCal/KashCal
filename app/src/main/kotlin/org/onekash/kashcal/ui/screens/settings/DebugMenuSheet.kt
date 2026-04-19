@@ -39,9 +39,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.onekash.kashcal.ui.shared.SYNC_OPTIONS
+import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.shared.getSyncOptions
 import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
 
 /**
@@ -84,7 +87,7 @@ fun DebugMenuSheet(
         ) {
             // Header
             Text(
-                "Developer Options",
+                stringResource(R.string.settings_developer_options),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
@@ -96,8 +99,8 @@ fun DebugMenuSheet(
             // Force Full Sync
             DebugMenuItem(
                 icon = Icons.Default.Refresh,
-                label = "Force Full Sync",
-                subtitle = "Re-download all calendar data",
+                label = stringResource(R.string.settings_force_sync),
+                subtitle = stringResource(R.string.settings_force_sync_subtitle),
                 onClick = { showForceFullSyncDialog = true }
             )
 
@@ -109,8 +112,8 @@ fun DebugMenuSheet(
             // Sync History
             DebugMenuItem(
                 emoji = "📊",
-                label = "Sync History",
-                subtitle = "View sync sessions (last 48 hours)",
+                label = stringResource(R.string.settings_sync_history),
+                subtitle = stringResource(R.string.settings_sync_history_subtitle),
                 onClick = {
                     onShowSyncLogs()
                     onDismiss()
@@ -144,11 +147,11 @@ fun DebugMenuSheet(
                         )
                         Column {
                             Text(
-                                "Sync Frequency",
+                                stringResource(R.string.settings_sync_frequency),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                formatSyncInterval(syncIntervalMs),
+                                formatSyncInterval(syncIntervalMs, LocalContext.current.resources),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -173,7 +176,7 @@ fun DebugMenuSheet(
                             .fillMaxWidth()
                             .padding(start = 52.dp, end = 16.dp)
                     ) {
-                        SYNC_OPTIONS.forEach { option ->
+                        getSyncOptions(LocalContext.current.resources).forEach { option ->
                             SyncOptionRow(
                                 label = option.label,
                                 isSelected = option.intervalMs == syncIntervalMs,
@@ -193,20 +196,20 @@ fun DebugMenuSheet(
     if (showForceFullSyncDialog) {
         AlertDialog(
             onDismissRequest = { showForceFullSyncDialog = false },
-            title = { Text("Force Full Sync?") },
-            text = { Text("This will re-download all calendar data from the server. Local changes will be preserved.") },
+            title = { Text(stringResource(R.string.dialog_force_sync_title)) },
+            text = { Text(stringResource(R.string.dialog_force_sync_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showForceFullSyncDialog = false
                     onForceFullSync()
                     onDismiss()
                 }) {
-                    Text("Sync Now")
+                    Text(stringResource(R.string.action_sync_now))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showForceFullSyncDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
             }
         )
@@ -302,7 +305,7 @@ private fun SyncOptionRow(
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp)
             )

@@ -51,7 +51,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
 import org.onekash.kashcal.ui.components.pickers.argbToHex
 
@@ -131,7 +133,7 @@ fun AddSubscriptionDialog(
         ) {
             // Title
             Text(
-                "Add Calendar Subscription",
+                stringResource(R.string.dialog_add_subscription),
                 style = MaterialTheme.typography.titleLarge
             )
 
@@ -144,8 +146,8 @@ fun AddSubscriptionDialog(
                     url = it
                     fetchState = FetchCalendarState.Idle
                 },
-                label = { Text("Calendar URL") },
-                placeholder = { Text("https://...") },
+                label = { Text(stringResource(R.string.label_calendar_url)) },
+                placeholder = { Text(stringResource(R.string.placeholder_url)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -173,7 +175,7 @@ fun AddSubscriptionDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(if (fetchState is FetchCalendarState.Loading) "Fetching..." else "Fetch Calendar")
+                Text(if (fetchState is FetchCalendarState.Loading) stringResource(R.string.status_fetching) else stringResource(R.string.action_fetch_calendar))
             }
 
             // Fetch Result Feedback
@@ -183,7 +185,7 @@ fun AddSubscriptionDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Calendar Name") },
+                label = { Text(stringResource(R.string.label_calendar_name)) },
                 singleLine = true,
                 enabled = fetchState is FetchCalendarState.Success,
                 modifier = Modifier.fillMaxWidth()
@@ -197,7 +199,7 @@ fun AddSubscriptionDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Color:", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.label_color), style = MaterialTheme.typography.bodySmall)
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -228,14 +230,14 @@ fun AddSubscriptionDialog(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Discard")
+                        Text(stringResource(R.string.action_discard))
                     }
                 } else {
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                 }
                 Button(
@@ -243,7 +245,7 @@ fun AddSubscriptionDialog(
                     enabled = fetchState is FetchCalendarState.Success && name.isNotBlank(),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Add")
+                    Text(stringResource(R.string.action_add))
                 }
             }
         }
@@ -337,7 +339,7 @@ fun EditSubscriptionDialog(
         ) {
             // Title
             Text(
-                "Edit Subscription",
+                stringResource(R.string.dialog_edit_subscription),
                 style = MaterialTheme.typography.titleLarge
             )
 
@@ -347,7 +349,7 @@ fun EditSubscriptionDialog(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.label_name)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -360,7 +362,7 @@ fun EditSubscriptionDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Color:", style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(R.string.label_color), style = MaterialTheme.typography.bodySmall)
                 Box(
                     modifier = Modifier
                         .size(32.dp)
@@ -402,14 +404,14 @@ fun EditSubscriptionDialog(
                             contentColor = MaterialTheme.colorScheme.error
                         )
                     ) {
-                        Text("Discard")
+                        Text(stringResource(R.string.action_discard))
                     }
                 } else {
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                 }
                 Button(
@@ -417,7 +419,7 @@ fun EditSubscriptionDialog(
                     enabled = name.isNotBlank(),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Save")
+                    Text(stringResource(R.string.action_save))
                 }
             }
         }
@@ -455,7 +457,7 @@ private fun FetchResultFeedback(fetchState: FetchCalendarState) {
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    "Found: ${fetchState.eventCount} events",
+                    stringResource(R.string.label_found_events, fetchState.eventCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = AccentColors.Green
                 )
@@ -494,7 +496,7 @@ private fun SyncIntervalPicker(
     onIntervalSelected: (Int) -> Unit
 ) {
     Column {
-        Text("Sync Interval:", style = MaterialTheme.typography.bodySmall)
+        Text(stringResource(R.string.label_sync_interval), style = MaterialTheme.typography.bodySmall)
         Spacer(modifier = Modifier.height(8.dp))
 
         // Current selection as clickable row
@@ -551,7 +553,7 @@ private fun SyncIntervalPicker(
                         if (isSelected) {
                             Icon(
                                 Icons.Default.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.cd_selected),
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(18.dp)
                             )

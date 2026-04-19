@@ -1,0 +1,890 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Mai napirend</string>
+    <string name="widget_description">A mai naptári eseményeket mutatja</string>
+    <string name="week_widget_name">Heti nézet</string>
+    <string name="week_widget_description">A következő 7 nap naptári eseményeit mutatja</string>
+    <string name="month_widget_name">Havi nézet</string>
+    <string name="month_widget_description">Teljes havi naptárrács eseményjelzőkkel</string>
+    <string name="date_widget_name">Dátum</string>
+    <string name="date_widget_description">A mai dátumot mutatja alkalmazásikon-szerűen</string>
+    <string name="widget_no_events_today">Nincs esemény ma</string>
+    <string name="widget_add_event">+ Esemény hozzáadása</string>
+    <string name="widget_no_events">Nincs esemény</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Új esemény</string>
+    <string name="shortcut_new_event_long">Új esemény létrehozása</string>
+    <string name="shortcut_today">Ma</string>
+    <string name="shortcut_today_long">Ugrás a mai napra</string>
+    <string name="shortcut_search">Keresés</string>
+    <string name="shortcut_search_long">Események keresése</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Újra</string>
+    <string name="action_try_again">Próbáld újra</string>
+    <string name="action_cancel">Mégse</string>
+    <string name="action_close">Bezárás</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Most nem</string>
+    <string name="action_sign_in">Bejelentkezés</string>
+    <string name="action_select">Kiválasztás</string>
+    <string name="action_show_password">Jelszó mutatása</string>
+    <string name="action_hide_password">Jelszó elrejtése</string>
+    <string name="action_sign_out">Kijelentkezés</string>
+    <string name="action_learn_more">Tudj meg többet</string>
+    <string name="action_open_apple_id">Apple ID megnyitása</string>
+    <string name="action_open_settings">Beállítások megnyitása</string>
+    <string name="action_force_sync">Kényszerített szinkronizálás</string>
+    <string name="action_sync_now">Szinkronizálás most</string>
+    <string name="action_details">Részletek</string>
+    <string name="action_set_up">Beállítás</string>
+    <string name="action_report_issue">Hiba bejelentése</string>
+    <string name="action_view">Megtekintés</string>
+    <string name="action_enable">Engedélyezés</string>
+    <string name="action_done">Kész</string>
+    <string name="action_save">Mentés</string>
+    <string name="action_add">Hozzáadás</string>
+    <string name="action_edit">Szerkesztés</string>
+    <string name="action_delete">Törlés</string>
+    <string name="action_confirm">Megerősítés</string>
+    <string name="action_discard">Elvetés</string>
+    <string name="action_dismiss">Elrejtés</string>
+    <string name="action_show_all">Összes mutatása</string>
+    <string name="action_connect">Csatlakozás</string>
+    <string name="action_duplicate">Másolat</string>
+    <string name="action_share">Megosztás</string>
+    <string name="action_export_ics">Exportálás .ics-ként</string>
+    <string name="action_confirm_delete">Törlés megerősítése</string>
+    <string name="action_delete_event">Esemény törlése</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Csak ezt</string>
+    <string name="recurring_this_and_future">Ezt és az összes jövőbelit</string>
+    <string name="recurring_just_occurrence">Csak ezt az előfordulást</string>
+    <string name="recurring_all_occurrences">Összes előfordulás</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Esemény címe</string>
+    <string name="label_location">Helyszín</string>
+    <string name="label_location_hint">Cím, szoba vagy találkozó link</string>
+    <string name="label_notes">Jegyzetek</string>
+    <string name="label_starts">Kezdés</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Alkalmazásjelszó</string>
+    <string name="label_password_hint">16 karakter, kötőjelek opcionálisak</string>
+    <string name="label_calendar_url">Naptár URL</string>
+    <string name="label_calendar_name">Naptár neve</string>
+    <string name="label_name">Név</string>
+    <string name="label_hex_color">Hex szín</string>
+    <string name="label_enter_hex">Adj meg 6 hex karaktert (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Mind</string>
+    <string name="view_week">Hét</string>
+    <string name="view_month">Hónap</string>
+    <string name="label_all_day">Egész napos</string>
+    <string name="label_today">Ma</string>
+    <string name="label_go_to_date">Ugrás dátumra</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Beállítások</string>
+    <string name="settings_time_format">Időformátum</string>
+    <string name="settings_start_week_on">Hét kezdőnapja</string>
+    <string name="settings_event_emojis">Esemény emojik</string>
+    <string name="settings_emoji_subtitle">Emojik megjelenítése az eseménycímek alapján</string>
+    <string name="settings_force_sync">Teljes szinkronizálás kényszerítése</string>
+    <string name="settings_force_sync_subtitle">Összes naptáradat újratöltése</string>
+    <string name="settings_sync_history">Szinkronizálási előzmények</string>
+    <string name="settings_sync_history_subtitle">Szinkronizálási munkamenetek megtekintése (utolsó 48 óra)</string>
+    <string name="settings_import_subtitle">.ics fájl importálása</string>
+    <string name="settings_export_subtitle">Biztonsági mentés .ics fájlba</string>
+    <string name="settings_birthday_reminder">Születésnapi emlékeztető</string>
+    <string name="settings_use_device_timezone">Eszköz időzónájának használata</string>
+    <string name="settings_section_my_calendars">Naptáraim</string>
+    <string name="settings_section_display">Megjelenés</string>
+    <string name="settings_section_notifications">Értesítések</string>
+    <string name="settings_section_sync">Szinkronizálás</string>
+    <string name="settings_section_data">Adatok</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Naptárad van?</string>
+    <string name="onboarding_got_you">Segítünk.</string>
+    <string name="onboarding_connect_prompt">Csatlakozz az iCloud-hoz, hogy itt lásd az eseményeidet</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">iCloud csatlakoztatása</string>
+    <string name="signin_caldav_title">CalDAV fiók hozzáadása</string>
+    <string name="signin_connected_to">Csatlakozva: %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Új esemény</string>
+    <string name="dialog_edit_event_title">Esemény szerkesztése</string>
+    <string name="dialog_force_sync_title">Teljes szinkronizálás?</string>
+    <string name="dialog_force_sync_message">Ez az összes naptáradatot újratölti a szerverről. A helyi módosítások megmaradnak.</string>
+    <string name="dialog_enable_notifications">Értesítések engedélyezése?</string>
+    <string name="dialog_delete_title">\"%1$s\" törlése</string>
+    <string name="dialog_edit_title">\"%1$s\" szerkesztése</string>
+    <string name="dialog_action_required">Ez a művelet szükséges a folytatáshoz.</string>
+    <string name="dialog_add_to_calendar">Hozzáadás a naptárhoz</string>
+    <string name="dialog_select_calendar">Naptár kiválasztása</string>
+    <string name="dialog_choose_color">Szín kiválasztása</string>
+    <string name="dialog_add_subscription">Feliratkozás hozzáadása</string>
+    <string name="dialog_edit_subscription">Feliratkozás szerkesztése</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Nincs esemény ezen a héten</string>
+    <string name="status_more_events">+%1$d további</string>
+    <string name="status_no_sync_sessions">Még nincs szinkronizálási munkamenet.\n\nIndíts szinkronizálást a naptárnézetben lefelé húzással.</string>
+    <string name="status_no_writable_calendars">Nincs írható naptár</string>
+    <string name="status_events_count">%1$d esemény</string>
+    <string name="status_sync_changes">Szinkronizálási változások</string>
+    <string name="status_sync_history">Szinkronizálási előzmények</string>
+    <string name="status_parse_failures">Feldolgozási hibák</string>
+    <string name="status_error">Hiba</string>
+    <string name="status_failed_to_parse">⚠ %1$d feldolgozása sikertelen</string>
+    <string name="status_built_with_love">Szeretettel készült</string>
+    <string name="status_in_austin">Austin-ban</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Szinkronizálás kész</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Bejelentkezés sikertelen</string>
+    <string name="error_auth_invalid_credentials">Érvénytelen Apple ID vagy alkalmazásjelszó. Ellenőrizd az adataidat és próbáld újra.</string>
+    <string name="error_auth_app_specific_password_required">Az iCloud alkalmazásjelszót igényel. A rendes Apple ID jelszavad itt nem működik.</string>
+    <string name="error_auth_session_expired_title">Munkamenet lejárt</string>
+    <string name="error_auth_session_expired">Az iCloud munkameneted lejárt. A szinkronizálás folytatásához jelentkezz be újra.</string>
+    <string name="error_auth_account_locked">Az Apple ID-d zárolva van. A feloldáshoz látogass el az appleid.apple.com oldalra.</string>
+
+    <string name="error_network_offline">Offline vagy. A módosítások online állapotban szinkronizálódnak.</string>
+    <string name="error_network_timeout">A kapcsolat időtúllépés miatt megszakadt. Ellenőrizd az internetedet és próbáld újra.</string>
+    <string name="error_network_ssl">A biztonságos kapcsolat sikertelen. Ellenőrizd a hálózati beállításaidat.</string>
+    <string name="error_network_unknown_host">Nem sikerült elérni az iCloud-ot. Ellenőrizd az internetkapcsolatodat.</string>
+    <string name="error_network_connection_failed">A kapcsolódás sikertelen. Próbáld újra.</string>
+
+    <string name="error_server_unavailable">Az iCloud átmenetileg nem elérhető. Próbáld újra később.</string>
+    <string name="error_server_rate_limited">Túl sok kérés. Várj egy kicsit és próbáld újra.</string>
+    <string name="error_server_forbidden">Hozzáférés megtagadva. Lehet, hogy nincs jogosultságod ehhez a naptárhoz.</string>
+    <string name="error_server_not_found">A kért elem nem található a szerveren.</string>
+    <string name="error_conflict_title">Szinkronizálási ütközés</string>
+    <string name="error_conflict_generic">Ez az esemény egy másik eszközön módosult. A legfrissebb verzióhoz kényszeríts szinkronizálást.</string>
+    <string name="error_conflict_with_event">\"%1$s\" egy másik eszközön módosult. A legfrissebb verzióhoz kényszeríts szinkronizálást.</string>
+    <string name="error_sync_token_expired">A szinkronizálási adatok lejártak. Teljes szinkronizálás…</string>
+
+    <string name="error_event_not_found">Esemény nem található.</string>
+    <string name="error_calendar_not_found">Naptár nem található.</string>
+    <string name="error_calendar_read_only">A(z) \"%1$s\" naptárban nem módosíthatók az események (csak olvasható naptár).</string>
+    <string name="error_event_invalid_data">Érvénytelen eseményadatok. Ellenőrizd a kezdő és záró időpontot.</string>
+    <string name="error_event_invalid_recurrence">Érvénytelen ismétlődési minta.</string>
+
+    <string name="error_display_name_exists">Már létezik \"%1$s\" nevű fiók.</string>
+
+    <string name="error_import_file_not_found">A fájl nem található vagy nem olvasható.</string>
+    <string name="error_import_invalid_format">Érvénytelen naptárfájl formátum.</string>
+    <string name="error_import_partial">%1$d esemény importálva, %2$d sikertelen.</string>
+    <string name="error_export_failed">Az események exportálása sikertelen.</string>
+    <string name="error_export_no_events">Nincs exportálható esemény.</string>
+    <string name="error_end_before_start">A befejezési időnek a kezdés után kell lennie</string>
+
+    <string name="error_storage_full_title">Tárhely megtelt</string>
+    <string name="error_storage_full">Nincs elég tárhely. Szabadíts fel helyet és próbáld újra.</string>
+    <string name="error_database_corruption_title">Adathiba</string>
+    <string name="error_database_corruption">A naptáradataid megsérülhettek. Kérjük, lépj kapcsolatba a támogatással.</string>
+    <string name="error_migration_title">Frissítési hiba</string>
+    <string name="error_migration_failed">Az alkalmazásadatok frissítése sikertelen. Kérjük, telepítsd újra az alkalmazást.</string>
+
+    <string name="error_permission_notification_title">Értesítések engedélyezése?</string>
+    <string name="error_permission_notification">A KashCal értesítési engedélyre van szüksége a közelgő eseményekre való emlékeztetéshez.</string>
+    <string name="error_permission_alarm_title">Pontos riasztások engedélyezése?</string>
+    <string name="error_permission_alarm">A KashCal pontos riasztási engedélyre van szüksége a precíz emlékeztetőkhöz.</string>
+    <string name="error_permission_storage">Tárolási engedély szükséges az importáláshoz/exportáláshoz.</string>
+
+    <string name="error_device_calendar_title">Naptárhiba</string>
+    <string name="error_device_calendar_write_failed">Nem sikerült menteni az eszköz naptárába. Próbáld újra.</string>
+    <string name="error_device_calendar_permission">Naptár írási engedély szükséges. Adj engedélyt a Beállításokban.</string>
+    <string name="error_device_calendar_not_found">Naptár nem található. Lehet, hogy eltávolították.</string>
+    <string name="error_device_event_not_found">Esemény nem található. Lehet, hogy törölték.</string>
+    <string name="error_device_calendar_read_only">Ez a naptár csak olvasható.</string>
+
+    <string name="error_sync_no_accounts">Nincs beállított iCloud fiók. Állítsd be az iCloud-ot a naptáraid szinkronizálásához.</string>
+    <string name="error_sync_partial">%1$d naptár szinkronizálva, %2$d sikertelen.</string>
+
+    <string name="error_unknown">Valami hiba történt. Próbáld újra.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Kiválasztva</string>
+    <string name="cd_back">Vissza</string>
+    <string name="cd_close">Bezárás</string>
+    <string name="cd_search">Keresés</string>
+    <string name="cd_create_event">Esemény létrehozása</string>
+    <string name="cd_settings">Beállítások</string>
+    <string name="cd_today">Ma</string>
+    <string name="cd_previous_week">Előző hét</string>
+    <string name="cd_next_week">Következő hét</string>
+    <string name="cd_delete">Törlés</string>
+    <string name="cd_refresh">Frissítés</string>
+    <string name="cd_more_options">További lehetőségek</string>
+    <string name="cd_duplicate">Másolat</string>
+    <string name="cd_share">Megosztás</string>
+    <string name="cd_export_ics">Exportálás ICS-ként</string>
+    <string name="cd_open_link">Link megnyitása</string>
+    <string name="cd_open_maps">Megnyitás térképen</string>
+    <string name="cd_copy_clipboard">Másolás vágólapra</string>
+    <string name="cd_clear_history">Előzmények törlése</string>
+    <string name="cd_recurring">Ismétlődő</string>
+    <string name="cd_enabled">Engedélyezve</string>
+    <string name="cd_sync_error">Szinkronizálási hiba</string>
+    <string name="cd_select_option">Lehetőség kiválasztása</string>
+    <string name="cd_select_label">%1$s kiválasztása</string>
+    <string name="cd_wheel_picker">Görgős választó %1$d lehetőséggel</string>
+    <string name="cd_version_info">KashCal verzió %1$s. Hosszú nyomás a hibakeresési lehetőségekért.</string>
+    <string name="cd_color_slider">Színcsúszka, jelenleg %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d fok</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Naptár</string>
+    <string name="label_color">Szín:</string>
+    <string name="label_repeat">Ismétlés</string>
+    <string name="label_sync_interval">Szinkronizálási időköz:</string>
+    <string name="label_scheduled_events">Időzített események</string>
+    <string name="label_all_day_events">Egész napos események</string>
+    <string name="label_server_url">Szerver URL</string>
+    <string name="label_username">Felhasználónév</string>
+    <string name="label_password">Jelszó</string>
+    <string name="label_display_name_optional">Megjelenítendő név (opcionális)</string>
+
+    <string name="placeholder_search_events">Események keresése…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Alapértelmezetten https://, ha nincs megadva</string>
+    <string name="hint_name_shown_in_settings">A beállításokban megjelenő név</string>
+    <string name="caldav_trust_insecure_subtitle">Önaláírt tanúsítványokhoz vagy helyi HTTP szerverekhez</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Után</string>
+    <string name="label_recurrence_occurrences">előfordulás</string>
+    <string name="label_recurrence_on_date">Adott dátumon</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Látható naptárak</string>
+    <string name="settings_default_calendar">Alapértelmezett naptár</string>
+    <string name="settings_default_event_length">Alapértelmezett eseményhossz</string>
+    <string name="settings_default_alerts">Alapértelmezett figyelmeztetések</string>
+    <string name="settings_notifications">Értesítések</string>
+    <string name="settings_new_events">Új események</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Rendszer alapértelmezett</string>
+    <string name="option_12_hour">12 órás</string>
+    <string name="option_24_hour">24 órás</string>
+    <string name="option_sunday">Vasárnap</string>
+    <string name="option_monday">Hétfő</string>
+    <string name="option_saturday">Szombat</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Nem található esemény</string>
+    <string name="empty_no_upcoming_events">Nincs közelgő esemény</string>
+    <string name="empty_no_calendars">Nincs elérhető naptár</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Csatlakozás…</string>
+    <string name="status_fetching">Letöltés…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Naptár letöltése</string>
+    <string name="action_import_from_file">Importálás fájlból</string>
+    <string name="action_export_local_calendar">Helyi naptár exportálása</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Az alkalmazásjelszavak lehetővé teszik a bejelentkezést harmadik féltől származó alkalmazásokba a fő Apple ID jelszavad megosztása nélkül.</string>
+    <string name="help_app_password_steps_header">Létrehozás lépései:</string>
+    <string name="help_app_password_step_1">1. Nyisd meg az appleid.apple.com oldalt</string>
+    <string name="help_app_password_step_2">2. Jelentkezz be az Apple ID-ddel</string>
+    <string name="help_app_password_step_3">3. Nyisd meg a Bejelentkezés és biztonság részt</string>
+    <string name="help_app_password_step_4">4. Kattints az Alkalmazásjelszavak-ra</string>
+    <string name="help_app_password_step_5">5. Kattints a Létrehozás-ra és másold ide</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">A KashCal értesítési engedélyre van szüksége a közelgő eseményekre való emlékeztetéshez.</string>
+    <string name="dialog_notification_permission_settings_hint">Ezt később a Beállításokban módosíthatod.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Fiókok</string>
+    <string name="accounts_section_connected">Csatlakoztatva</string>
+    <string name="accounts_section_add">Fiók hozzáadása</string>
+    <string name="accounts_empty_title">Nincs csatlakoztatott fiók</string>
+    <string name="accounts_empty_subtitle">Adj hozzá fiókot a naptáraid eszközök közötti szinkronizálásához</string>
+    <string name="accounts_row_label">iCloud, Nextcloud és több</string>
+    <string name="accounts_add_icloud">iCloud hozzáadása</string>
+    <string name="accounts_add_caldav">CalDAV hozzáadása</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail és több</string>
+    <string name="accounts_caldav_help_title">Mi az a CalDAV?</string>
+    <string name="accounts_caldav_help_description">A CalDAV nyílt szabvány naptárak szinkronizálásához. Támogatják:</string>
+    <string name="accounts_caldav_help_more">és több</string>
+    <string name="accounts_calendars_syncing">Szinkronizálás…</string>
+    <string name="accounts_cd_icloud_icon">iCloud fiók</string>
+    <string name="accounts_cd_caldav_icon">CalDAV fiók</string>
+    <string name="accounts_cd_back">Vissza</string>
+    <string name="accounts_sync_issue">Szinkronizálási probléma</string>
+    <string name="accounts_cd_sync_warning">Szinkronizálási figyelmeztetés</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Feliratkozások</string>
+    <string name="subscriptions_section_ics_calendars">ICS naptárak</string>
+    <string name="subscriptions_section_add">Hozzáadás</string>
+    <string name="subscriptions_empty_ics">Nincs ICS feliratkozás</string>
+    <string name="subscriptions_empty_ics_hint">Adj hozzá naptárhírcsatornát az események megtekintéséhez</string>
+    <string name="subscriptions_add_ics">ICS naptár hozzáadása</string>
+    <string name="subscriptions_row_label">Ünnepek, iskola és több</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Születésnapok és évfordulók</string>
+    <string name="birthdays_section_title">Születésnapok</string>
+    <string name="anniversaries_section_title">Évfordulók</string>
+    <string name="settings_contact_birthdays">Névjegy születésnapok</string>
+    <string name="settings_contact_birthdays_description">Születésnapok megjelenítése a telefon névjegyeiből egész napos naptáreseményekként.</string>
+    <string name="settings_contact_anniversaries">Névjegy évfordulók</string>
+    <string name="settings_contact_anniversaries_description">Évfordulók megjelenítése a telefon névjegyeiből egész napos naptáreseményekként.</string>
+    <string name="settings_anniversary_reminder">Évfordulós emlékeztető</string>
+    <string name="settings_calendar_color">Naptár szín</string>
+    <string name="settings_default_reminder">Alapértelmezett emlékeztető</string>
+    <string name="action_change">Módosítás</string>
+    <string name="settings_contacts_footer">Az eszköz névjegyeiből olvas. Névjegy engedély szükséges.</string>
+    <string name="settings_contacts_permission_required">Névjegy engedély szükséges</string>
+    <string name="subscriptions_cd_back">Vissza</string>
+    <string name="subscriptions_cd_add">Feliratkozás hozzáadása</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">SZINKRONIZÁLÁS</string>
+    <string name="account_detail_section_calendars">NAPTÁRAK</string>
+    <string name="account_detail_section_account">FIÓK</string>
+    <string name="account_detail_enabled">Engedélyezve</string>
+    <string name="account_detail_enabled_subtitle">Fiók automatikus szinkronizálása</string>
+    <string name="account_detail_sync_now">Szinkronizálás most</string>
+    <string name="account_detail_syncing">Szinkronizálás…</string>
+    <string name="account_detail_discovering">Felderítés…</string>
+    <string name="account_detail_discover_calendars">Új naptárak felderítése</string>
+    <string name="account_detail_change_password">Jelszó módosítása</string>
+    <string name="account_detail_sign_out">Kijelentkezés</string>
+    <string name="account_detail_never_synced">Még nem szinkronizálva</string>
+    <string name="account_detail_last_success">Utolsó sikeres: %1$s</string>
+    <string name="account_detail_cd_rename">Átnevezés</string>
+    <string name="account_detail_cd_show_password">Jelszó mutatása</string>
+    <string name="account_detail_cd_hide_password">Jelszó elrejtése</string>
+
+    <string name="sync_failure_notification_title">Szinkronizálási probléma: %1$s</string>
+    <string name="sync_failure_notification_text">A naptár szinkronizálás %1$d alkalommal sikertelen volt</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Fiók átnevezése</string>
+    <string name="rename_account_label">Fiók neve</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Jelszó módosítása</string>
+    <string name="change_password_label_icloud">Alkalmazásjelszó</string>
+    <string name="change_password_label_default">Jelszó</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Eszköz naptárak</string>
+    <string name="settings_quick_event_add">Gyors esemény hozzáadás</string>
+    <string name="settings_week_numbers">Hétszámok</string>
+    <string name="settings_widget_event_limit">Widget eseménykorlát</string>
+    <string name="settings_sync_lookback">Szinkronizálási visszatekintés</string>
+    <string name="settings_auto_detect_emojis">Emojik automatikus felismerése</string>
+    <string name="settings_events_per_day">Napi esemény</string>
+    <string name="settings_not_set">Nincs beállítva</string>
+    <string name="settings_on">Be</string>
+    <string name="settings_off">Ki</string>
+    <string name="settings_tap_to_enable">Koppints az engedélyezéshez</string>
+    <string name="settings_device_calendars_enabled">%1$d engedélyezve</string>
+    <string name="settings_per_day">Napi %1$d</string>
+    <string name="signin_icloud_help_question">Mi az az alkalmazásjelszó?</string>
+    <string name="caldav_trust_insecure_label">Nem biztonságos kapcsolat megbízása</string>
+    <string name="action_add_another">Még egy hozzáadása</string>
+    <string name="account_connected_found_calendars">%1$d naptár található ehhez: %2$s.</string>
+    <string name="account_connected_syncing_hint">Szinkronizálás folyamatban \u2014 az események hamarosan megjelennek.</string>
+    <string name="settings_time_format_currently_24h">Jelenleg: 24 órás (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Jelenleg: 12 órás (%1$s)</string>
+    <string name="settings_time_format_example">Példa: %1$s</string>
+    <string name="settings_system_default_with_value">Rendszer alapértelmezett (%1$s)</string>
+    <string name="alert_none">Nincs</string>
+    <string name="cd_collapse">Összecsukás</string>
+    <string name="cd_expand">Kinyitás</string>
+    <string name="cd_hide_calendar">Naptár elrejtése</string>
+    <string name="cd_show_calendar">Naptár megjelenítése</string>
+    <string name="cd_pick_month_year">Hónap és év kiválasztása</string>
+    <string name="cd_previous_month">Előző hónap</string>
+    <string name="cd_next_month">Következő hónap</string>
+    <string name="cd_month_year_picker">Hónap és év választó</string>
+    <string name="cd_remove_alert">Figyelmeztetés eltávolítása</string>
+    <string name="cd_warning">Figyelmeztetés</string>
+    <string name="cd_refresh_calendars">Naptárak frissítése</string>
+    <string name="cd_timezone_tap_to_change">Időzóna: %1$s, koppints a módosításhoz</string>
+    <string name="cd_day_events">%1$d. nap, %2$d esemény</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Gyakoriság</string>
+    <string name="label_on_days">Napokon</string>
+    <string name="label_pattern">Minta</string>
+    <string name="label_ends">Befejezés</string>
+    <string name="label_alerts">Figyelmeztetések</string>
+    <string name="label_add_alert">Figyelmeztetés hozzáadása</string>
+    <string name="label_recurrence_never">Soha</string>
+    <string name="label_tomorrow">Holnap</string>
+    <string name="label_yesterday">Tegnap</string>
+    <string name="label_device_calendars">Eszköz naptárak</string>
+    <string name="label_default_calendar_hint">Az új események ebben a naptárban jönnek létre</string>
+    <string name="label_visible_count">%1$d / %2$d látható</string>
+    <string name="label_enabled_count">%1$d / %2$d engedélyezve</string>
+    <string name="label_reminders_truncated">%1$d nem látható (%2$d összesen, max. %3$d szerkeszthető)</string>
+    <string name="label_found_events">Találat: %1$d esemény</string>
+    <string name="label_open_debug_menu">Hibakeresési menü megnyitása</string>
+    <string name="placeholder_search">Keresés\u2026</string>
+    <string name="status_sync_paused">Szinkronizálás szüneteltetve</string>
+    <string name="status_not_synced">Nincs szinkronizálva</string>
+    <string name="status_sync_error">Szinkronizálási hiba</string>
+    <string name="status_minutes_ago">%1$d perce</string>
+    <string name="status_hours_ago">%1$d órája</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Események megjelenítése az eszközön lévő más naptáralkalmazásokból (szinkronizálási adapterek, helyi naptárak).</string>
+    <string name="device_calendars_permission_required">Naptár engedély szükséges. Koppints az Engedélyezés-re a hozzáférés megadásához.</string>
+    <string name="device_calendars_read_only_access">Csak olvasási hozzáférés</string>
+    <string name="device_calendars_grant_write">Írási engedély megadása az eszköz naptáreseményeinek szerkesztéséhez</string>
+    <string name="device_calendars_grant">Megadás</string>
+    <string name="device_calendars_none_found">Nem található eszköz naptár.</string>
+    <string name="device_calendars_local">Helyi</string>
+    <string name="device_calendars_show_declined">Elutasított események megjelenítése</string>
+    <string name="device_calendars_reminders">Emlékeztetők</string>
+    <string name="device_calendars_reminders_desc">Értesítések az eszköz naptáreseményeiről</string>
+    <string name="device_calendars_read_only_no_write">Csak olvasható (nincs írási engedély)</string>
+    <string name="device_calendars_read_only_calendar">Csak olvasható (a naptár csak olvasható)</string>
+
+    <string name="settings_developer_options">Fejlesztői beállítások</string>
+    <string name="settings_sync_frequency">Szinkronizálási gyakoriság</string>
+    <string name="settings_preview">ELŐNÉZET</string>
+    <string name="settings_n_events">%1$d esemény</string>
+    <string name="settings_n_events_default">%1$d esemény (alapértelmezett)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Naptárak</string>
+    <string name="drawer_contacts">Névjegyek</string>
+    <string name="drawer_device_calendars">Eszköz naptárak</string>
+    <string name="drawer_share_feedback">Visszajelzés küldése</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Neked készült, nem az adataidért.</string>
+    <string name="action_keep_it_that_way">Maradjon is így</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Már szinkronizálva</string>
+    <string name="status_warnings">Figyelmeztetések</string>
+    <string name="sync_history_events_failed">Sikertelen események</string>
+    <string name="sync_history_abandoned_max_retries">Feladva (max. próbálkozás)</string>
+    <string name="sync_history_events_skipped">Kihagyott események</string>
+    <string name="sync_history_duration">Időtartam</string>
+    <string name="sync_history_already_synced_count">%1$d már szinkronizálva</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Nincs esemény</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Offline vagy</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Kijelentkezés: %1$s?</string>
+    <string name="dialog_sign_out_message">%1$s fiókkal vagy bejelentkezve. A kijelentkezés eltávolítja a szinkronizált naptárakat erről az eszközről.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d fiók</item>
+        <item quantity="other">%1$d fiók</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 naptár</item>
+        <item quantity="other">%1$s \u00B7 %2$d naptár</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d feliratkozás</item>
+        <item quantity="other">%1$d feliratkozás</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Szinkronizálás sikertelen (%1$d próbálkozás)</item>
+        <item quantity="other">Szinkronizálás sikertelen (%1$d próbálkozás)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d naptár</item>
+        <item quantity="other">%1$d naptár</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d naptár (%2$d új)</item>
+        <item quantity="other">%1$d naptár (%2$d új)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d esemény</item>
+        <item quantity="other">%1$d esemény</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d születésnap</item>
+        <item quantity="other">%1$d születésnap</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d évforduló</item>
+        <item quantity="other">%1$d évforduló</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ még %1$d</item>
+        <item quantity="other">+ még %1$d</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Esemény hozzáadása</item>
+        <item quantity="other">%1$d esemény importálása</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Hozzáadás</item>
+        <item quantity="other">Importálás</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026és még %1$d</item>
+        <item quantity="other">\u2026és még %1$d</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d esemény importálva</item>
+        <item quantity="other">%1$d esemény importálva</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">%1$d esemény exportálva</item>
+        <item quantity="other">%1$d esemény exportálva</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d esemény</item>
+        <item quantity="other">%1$d esemény</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d perc</item>
+        <item quantity="other">%1$d perc</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d perc</item>
+        <item quantity="other">%1$d perc</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d óra</item>
+        <item quantity="other">%1$d óra</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d nap</item>
+        <item quantity="other">%1$d nap</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d hét</item>
+        <item quantity="other">%1$d hét</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d hónap</item>
+        <item quantity="other">%1$d hónap</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d év</item>
+        <item quantity="other">%1$d év</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d mp</item>
+        <item quantity="other">%1$d mp</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d perccel előtte</item>
+        <item quantity="other">%1$d perccel előtte</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d órával előtte</item>
+        <item quantity="other">%1$d órával előtte</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d nappal előtte</item>
+        <item quantity="other">%1$d nappal előtte</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d héttel előtte</item>
+        <item quantity="other">%1$d héttel előtte</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Ismétlődő esemény szerkesztése</string>
+    <string name="dialog_delete_recurring_title">Ismétlődő esemény törlése</string>
+    <string name="dialog_edit_recurring_message">Ez egy ismétlődő esemény. Hogyan szeretnéd alkalmazni a változtatást?</string>
+    <string name="recurring_this_event">Ez az esemény</string>
+    <string name="recurring_all_events">Összes esemény</string>
+    <string name="empty_pick_a_day">Válassz egy napot. Ragadd meg.</string>
+    <string name="empty_no_events_day">Semmi látnivaló; menj ki a szabadba?</string>
+    <string name="label_upcoming_events">Közelgő események</string>
+    <string name="filter_date">Dátum</string>
+    <string name="label_select_date">Válassz dátumot</string>
+    <string name="hint_tap_date_range">Egy naphoz koppints ugyanarra, időszakhoz másik dátumra</string>
+
+    <string name="cd_clear">Törlés</string>
+    <string name="cd_offline">Offline</string>
+    <string name="cd_previous">Előző</string>
+    <string name="cd_next">Következő</string>
+    <string name="cd_open_drawer">Fiók megnyitása</string>
+    <string name="cd_close_drawer">Fiók bezárása</string>
+    <string name="cd_calendar_view">Naptár nézet</string>
+    <string name="cd_active_view">Aktív nézet</string>
+
+    <string name="view_agenda">Napirend</string>
+    <string name="view_month_full">Hónap (teljes)</string>
+    <string name="view_three_days">3 nap</string>
+    <string name="view_year">Év</string>
+
+    <string name="label_go_to_month">Ugrás hónapra</string>
+
+    <string name="action_more_options">További lehetőségek</string>
+
+    <string name="label_duration_days">nap</string>
+    <string name="label_duration_hrs">óra</string>
+    <string name="label_duration_min">perc</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">A hónap %1$d. napján</string>
+    <string name="recurrence_on_last_day">A hónap utolsó napján</string>
+    <string name="recurrence_on_nth_weekday">A(z) %1$s %2$s</string>
+    <string name="ordinal_1st">1.</string>
+    <string name="ordinal_2nd">2.</string>
+    <string name="ordinal_3rd">3.</string>
+    <string name="ordinal_4th">4.</string>
+    <string name="ordinal_nth">%1$d.</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d új</string>
+    <string name="sync_summary_updated">%1$d frissítve</string>
+    <string name="sync_summary_removed">%1$d eltávolítva</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Előző 3 nap</string>
+    <string name="cd_next_3_days">Következő 3 nap</string>
+    <string name="cd_circular_scrolling">Körkörös görgetés engedélyezve</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Nincs emlékeztető</string>
+    <string name="reminder_at_time_of_event">Az esemény időpontjában</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s előtt</string>
+    <string name="reminder_time_after">%1$s után</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">Az esemény napján 9 AM</string>
+    <string name="reminder_day_of_event_24h">Az esemény napján 09:00</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s előtt 9 AM-kor</string>
+    <string name="reminder_before_at_24h">%1$s előtt 09:00-kor</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Ki</string>
+    <string name="reminder_short_at_event">Eseménykor</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dp</string>
+    <string name="reminder_short_hours">%1$dó</string>
+    <string name="reminder_short_days">%1$dn</string>
+    <string name="reminder_short_weeks">%1$dh</string>
+    <string name="reminder_summary_none">Nincs</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dó %2$dp</string>
+    <string name="duration_compact_short">%1$dó%2$dp</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Csak kézi</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Összes esemény</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Elhalasztás</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Most kezdődik</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Holnap, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Szinkronizálás kész</string>
+    <string name="sync_notification_partial">Szinkronizálás részben kész</string>
+    <string name="sync_notification_auth_failed">Szinkronizálás hitelesítése sikertelen</string>
+    <string name="sync_notification_auth_reauth">Kérjük, hitelesítse újra a fiókját</string>
+    <string name="sync_notification_failed">Szinkronizálás sikertelen</string>
+    <string name="sync_notification_parse_title">Néhány esemény nem szinkronizálható</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s a(z) %2$s naptárban nem szinkronizálható. Próbálja a Kényszerített szinkronizálást a Beállításokban.</string>
+    <string name="sync_notification_conflict_title">Szinkronizálási ütközés megoldva</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">A(z) \"%1$s\" helyi módosításai elvesztek szinkronizálási ütközés miatt. A szerver verziója lesz használva.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">%1$s helyi módosításai elvesztek szinkronizálási ütközések miatt. A szerver verziói lesznek használva.</string>
+    <string name="sync_notification_expired_title">Szinkronizálási változások lejártak</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s nem szinkronizálható 30 nap után. A szerver verziója lesz használva. Próbálja a Kényszerített szinkronizálást.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d naptár szinkronizálva</item>
+        <item quantity="other">%1$d naptár szinkronizálva</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d változás</item>
+        <item quantity="other">, %1$d változás</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d hiba</item>
+        <item quantity="other">, %1$d hiba</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s %2$s. születésnapja</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s születésnapja</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s %2$s. évfordulója</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s évfordulója</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Naptárak szinkronizálása\u2026</string>
+    <string name="sync_banner_preparing">Szinkronizálás előkészítése\u2026</string>
+    <string name="sync_banner_complete_errors">Szinkronizálás hibákkal befejeződött</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Szinkronizálás sikertelen: %1$s</string>
+    <string name="error_unknown_error">Ismeretlen hiba</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Új esemény: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d új esemény</item>
+        <item quantity="other">%1$d új esemény</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d esemény frissítve</item>
+        <item quantity="other">%1$d esemény frissítve</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d esemény eltávolítva</item>
+        <item quantity="other">%1$d esemény eltávolítva</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d naptárfrissítés</item>
+        <item quantity="other">%1$d naptárfrissítés</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">%1$d. nap / %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">1. nap / %1$d \u00b7 kezdés %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">%1$d. nap / %2$d \u00b7 vége %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Egész nap</string>
+    <string name="event_date_all_day">%1$s \u00b7 Egész nap</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Egész nap)</string>
+    <string name="event_date_all_day_parens">%1$s (Egész nap)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Esemény mentése</string>
+    <!-- Badges -->
+    <string name="badge_beta">Béta</string>
+    <string name="badge_new">Új</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Piros</string>
+    <string name="color_orange">Narancssárga</string>
+    <string name="color_yellow">Sárga</string>
+    <string name="color_green">Zöld</string>
+    <string name="color_cyan">Cián</string>
+    <string name="color_blue">Kék</string>
+    <string name="color_purple">Lila</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Megbeszélés linkje: %1$s</string>
+    <string name="cd_phone_number">Telefonszám</string>
+    <string name="cd_email_link">E-mail: %1$s</string>
+    <string name="cd_web_link">Hivatkozás: %1$s</string>
+    <string name="cd_text_with_links">Szöveg %1$d hivatkozással: %2$s</string>
+    <string name="cd_text_with_link">Szöveg 1 hivatkozással: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">%1$d. nap / %2$d (Egész nap)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d szinkronizálás   \u2191%2$d feltöltve   \u2193%3$d letöltve</string>
+    <string name="sync_history_stats_issues">%1$d szinkronizálás   \u2191%2$d feltöltve   \u2193%3$d letöltve   \u26a0 %4$d probléma</string>
+    <string name="sync_history_failed">Sikertelen</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Óránként</string>
+    <string name="ics_sync_every_n_hours">%1$d óránként</string>
+    <string name="ics_sync_daily">Naponta</string>
+    <string name="ics_sync_weekly">Hetente</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL szükséges</string>
+    <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Egész nap)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <!-- Widget and Channel strings -->
+    <string name="cd_widget_calendar">Naptár</string>
+    <string name="cd_widget_add_event">Esemény hozzáadása</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">nincsenek események</string>
+    <string name="channel_event_reminders">Eseményemlékeztetők</string>
+    <string name="channel_event_reminders_desc">Értesítések a közelgő naptáreseményekről</string>
+    <string name="channel_sync_progress">Szinkronizálás folyamata</string>
+    <string name="channel_sync_progress_desc">A naptárak szinkronizálásának előrehaladását mutatja</string>
+    <string name="channel_sync_status">Szinkronizálás állapota</string>
+    <string name="channel_sync_status_desc">Értesítések a szinkronizálás befejezéséről és hibákról</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">Nem ismétlődik</string>
+    <string name="rrule_freq_daily">Naponta</string>
+    <string name="rrule_freq_weekly">Hetente</string>
+    <string name="rrule_freq_biweekly">Kéthetente</string>
+    <string name="rrule_freq_monthly">Havonta</string>
+    <string name="rrule_freq_quarterly">Negyedévente</string>
+    <string name="rrule_freq_yearly">Évente</string>
+    <string name="rrule_repeats">Ismétlődik</string>
+    <string name="rrule_every_n_days">%1$d naponta</string>
+    <string name="rrule_every_n_weeks">%1$d hetente</string>
+    <string name="rrule_every_n_months">%1$d havonta</string>
+    <string name="rrule_every_n_years">%1$d évente</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s az utolsó napon</string>
+    <string name="rrule_freq_on_day_n">%1$s a %2$d. napon</string>
+    <string name="rrule_ordinal_last">utolsó</string>
+    <string name="rrule_until_suffix">, eddig: %1$s</string>
+    <string name="rrule_freq_never">Soha</string>
+    <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 óta: %2$s</string>
+
+    <!-- Recurrence count plural -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d alkalommal</item>
+        <item quantity="other">, %1$d alkalommal</item>
+    </plurals>
+
+</resources>

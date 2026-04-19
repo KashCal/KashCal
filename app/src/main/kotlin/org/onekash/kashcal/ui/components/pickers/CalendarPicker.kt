@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
@@ -90,7 +92,7 @@ fun CalendarPickerCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Calendar", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.label_calendar), style = MaterialTheme.typography.bodyMedium)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -104,12 +106,12 @@ fun CalendarPickerCard(
                         )
                     }
                     Text(
-                        selectedCalendarName.ifEmpty { "Select calendar" },
+                        selectedCalendarName.ifEmpty { stringResource(R.string.dialog_select_calendar) },
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Icon(
                         if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -135,7 +137,7 @@ fun CalendarPickerCard(
 
                     if (!hasAnyCalendars) {
                         Text(
-                            "No calendars available",
+                            stringResource(R.string.empty_no_calendars),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(12.dp)
@@ -172,7 +174,7 @@ fun CalendarPickerCard(
                                 color = MaterialTheme.colorScheme.outlineVariant
                             )
                             Text(
-                                text = "Device Calendars",
+                                text = stringResource(R.string.label_device_calendars),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier
@@ -286,7 +288,7 @@ private fun CalendarItem(
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
@@ -333,7 +335,7 @@ private fun PickerCalendarItem(
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )
@@ -360,7 +362,7 @@ fun SimpleCalendarPicker(
         val allCalendars = calendarGroups.flatMap { it.calendars }
         if (allCalendars.isEmpty()) {
             Text(
-                "No calendars available",
+                stringResource(R.string.empty_no_calendars),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(12.dp)

@@ -416,7 +416,7 @@ class SettingsActivity : ComponentActivity() {
                                                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                             }
                                             startActivity(Intent.createChooser(intent, "Export Calendar"))
-                                            viewModel.showSnackbar("Exported ${events.size} event${if (events.size != 1) "s" else ""}")
+                                            viewModel.showSnackbar(resources.getQuantityString(R.plurals.exported_events, events.size, events.size))
                                         }.onFailure { e ->
                                             Log.e(TAG, "Failed to export calendar", e)
                                             viewModel.showSnackbar("Export failed")
@@ -512,7 +512,7 @@ class SettingsActivity : ComponentActivity() {
                                             eventCoordinator.importIcsEvents(events, calendarId)
                                         }
                                         viewModel.showSnackbar(
-                                            "Imported $count event${if (count != 1) "s" else ""}"
+                                            resources.getQuantityString(R.plurals.imported_events, count, count)
                                         )
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Failed to import events", e)

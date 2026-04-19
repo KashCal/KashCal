@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 
 /**
  * Swipeable subscription item with swipe-left-to-delete gesture.
@@ -81,7 +83,7 @@ fun SwipeableSubscriptionItem(
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete",
+                    contentDescription = stringResource(R.string.cd_delete),
                     tint = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
@@ -130,7 +132,7 @@ fun SwipeableSubscriptionItem(
                             if (hasError) {
                                 Icon(
                                     imageVector = Icons.Default.Warning,
-                                    contentDescription = "Sync error",
+                                    contentDescription = stringResource(R.string.cd_sync_error),
                                     tint = MaterialTheme.colorScheme.error,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -152,7 +154,7 @@ fun SwipeableSubscriptionItem(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh",
+                            contentDescription = stringResource(R.string.cd_refresh),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
@@ -181,7 +183,7 @@ private fun SubscriptionStatusText(
 ) {
     if (hasError) {
         Text(
-            subscription.lastError ?: "Sync error",
+            subscription.lastError ?: stringResource(R.string.status_sync_error),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.error,
             maxLines = 1,
@@ -189,28 +191,22 @@ private fun SubscriptionStatusText(
         )
     } else if (!subscription.enabled) {
         Text(
-            "Sync paused",
+            stringResource(R.string.status_sync_paused),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     } else {
+        val lastSyncText = if (subscription.lastSync <= 0) {
+            stringResource(R.string.status_not_synced)
+        } else {
+            val ago = ((System.currentTimeMillis() - subscription.lastSync) / 60000).toInt()
+            if (ago < 60) stringResource(R.string.status_minutes_ago, ago)
+            else stringResource(R.string.status_hours_ago, ago / 60)
+        }
         Text(
-            formatLastSyncTime(subscription.lastSync),
+            lastSyncText,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
-}
-
-/**
- * Format last sync time as a human-readable string.
- *
- * @param lastSyncMs Last sync timestamp in milliseconds, 0 if never synced
- * @return Formatted string like "5m ago", "2h ago", or "Not synced"
- */
-fun formatLastSyncTime(lastSyncMs: Long): String {
-    if (lastSyncMs <= 0) return "Not synced"
-
-    val ago = (System.currentTimeMillis() - lastSyncMs) / 60000
-    return if (ago < 60) "${ago}m ago" else "${ago / 60}h ago"
 }

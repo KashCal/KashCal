@@ -20,10 +20,13 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.repository.AccountRepository
+import org.robolectric.RobolectricTestRunner
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
@@ -60,6 +63,7 @@ import java.util.Calendar as JavaCalendar
  * - Network state transitions
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
@@ -783,7 +787,7 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("me")
         advanceUntilIdle()
 
-        // By default searchIncludePast is false, so calls searchEventsExcludingPastWithNextOccurrence
+        // Default filter is Upcoming, so calls searchEventsExcludingPastWithNextOccurrence
         coVerify { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
         assertTrue(viewModel.uiState.value.searchResults.size >= 0)
     }
@@ -802,7 +806,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `toggleSearchIncludePast toggles flag and re-searches`() = runTest {
+    fun `setSearchDateFilter AnyTime re-searches with include past`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -810,22 +814,22 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.searchIncludePast)
-        // First search uses searchEventsExcludingPastWithNextOccurrence (default)
+        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
+        // First search uses searchEventsExcludingPastWithNextOccurrence (default Upcoming)
         coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("test") }
 
-        viewModel.toggleSearchIncludePast()
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.searchIncludePast)
-        // After toggle, should call searchEventsWithNextOccurrence (include past)
+        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
+        // After setting AnyTime, should call searchEventsWithNextOccurrence (include past)
         coVerify(exactly = 1) { eventReader.searchEventsWithNextOccurrence("test") }
     }
 
     // ==================== Search Lookback Tests ====================
 
     @Test
-    fun `search with syncPastDays 730 and include past uses 730 day lookback`() = runTest {
+    fun `search with syncPastDays 730 and AnyTime filter uses 730 day lookback`() = runTest {
         every { dataStore.syncPastDays } returns flowOf(730)
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -834,8 +838,8 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
-        // Toggle include past
-        viewModel.toggleSearchIncludePast()
+        // Set AnyTime filter to include past
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
         // Verify startDayCode passed to displayEventRepository is ~730 days ago (±1 day for midnight)
@@ -853,7 +857,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `search with syncPastDays MAX_VALUE and include past uses 10 year lookback`() = runTest {
+    fun `search with syncPastDays MAX_VALUE and AnyTime filter uses 10 year lookback`() = runTest {
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -862,8 +866,8 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
-        // Toggle include past
-        viewModel.toggleSearchIncludePast()
+        // Set AnyTime filter to include past
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
         // Verify startDayCode passed to displayEventRepository is ~10 years ago (±1 day)
@@ -951,49 +955,64 @@ class HomeViewModelTest {
     // ==================== Search Date Filter Tests ====================
 
     @Test
-    fun `setSearchDateFilter AnyTime enables searchIncludePast`() = runTest {
+    fun `activateSearch defaults to Upcoming filter`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Start with non-AnyTime filter
-        viewModel.setSearchDateFilter(DateFilter.Today)
+        viewModel.activateSearch()
         advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.searchIncludePast)
 
-        // Select AnyTime — should auto-enable searchIncludePast
-        viewModel.setSearchDateFilter(DateFilter.AnyTime)
-        advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.searchIncludePast)
+        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
     }
 
     @Test
-    fun `setSearchDateFilter Today resets searchIncludePast to false`() = runTest {
+    fun `setSearchDateFilter AnyTime uses include-past query`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Enable searchIncludePast via AnyTime
+        viewModel.activateSearch()
+        viewModel.updateSearchQuery("test")
+        advanceUntilIdle()
+
         viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.searchIncludePast)
 
-        // Switch to Today — should reset
-        viewModel.setSearchDateFilter(DateFilter.Today)
-        advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.searchIncludePast)
+        assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
+        coVerify { eventReader.searchEventsWithNextOccurrence("test") }
     }
 
     @Test
-    fun `setSearchDateFilter from AnyTime to ThisWeek resets searchIncludePast`() = runTest {
+    fun `setSearchDateFilter from AnyTime to ThisWeek switches to range query`() = runTest {
         val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.activateSearch()
+        viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
         viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
-        assertTrue(viewModel.uiState.value.searchIncludePast)
 
         viewModel.setSearchDateFilter(DateFilter.ThisWeek)
         advanceUntilIdle()
-        assertFalse(viewModel.uiState.value.searchIncludePast)
+
+        assertEquals(DateFilter.ThisWeek, viewModel.uiState.value.searchDateFilter)
+        coVerify { eventReader.searchEventsInRangeWithNextOccurrence("test", any(), any()) }
+    }
+
+    @Test
+    fun `deactivateSearch resets filter to Upcoming`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.activateSearch()
+        viewModel.setSearchDateFilter(DateFilter.AnyTime)
+        advanceUntilIdle()
+
+        viewModel.deactivateSearch()
+        advanceUntilIdle()
+
+        assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
     }
 
     // ==================== Agenda Tests ====================
@@ -1368,7 +1387,6 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertEquals("Syncing calendars...", viewModel.uiState.value.syncBannerMessage)
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
         // Force Full Sync shows banner but NOT the spinning icon (suppressSyncIndicator = true)
         assertFalse(viewModel.uiState.value.isSyncing)
@@ -1396,7 +1414,6 @@ class HomeViewModelTest {
 
         // Banner should still be visible (auto-dismisses after 2 seconds)
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
         assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
@@ -1468,9 +1485,8 @@ class HomeViewModelTest {
 
         // Banner should still be visible (auto-dismisses after 3 seconds)
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Sync failed"))
-        assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Network error"))
         assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals("Network error", viewModel.uiState.value.syncErrorDetail)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
@@ -1503,8 +1519,7 @@ class HomeViewModelTest {
 
         // Banner should be visible because hasPartialError forces it
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
-        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
         assertFalse("isSyncing should be false", viewModel.uiState.value.isSyncing)
     }
 
@@ -1564,7 +1579,7 @@ class HomeViewModelTest {
         // Banner should NOT show because showBanner=false and hasPartialError=false
         assertFalse("Banner should not show for clean pull-to-refresh success",
             viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
+        assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1583,9 +1598,8 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        val partialMessage = viewModel.uiState.value.syncBannerMessage
-        assertEquals("Sync complete with errors", partialMessage)
-        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
+        assertNull(viewModel.uiState.value.syncErrorDetail)
 
         // Reset and test Failed banner message
         syncStatusFlow.value = SyncStatus.Idle
@@ -1597,10 +1611,8 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        val failedMessage = viewModel.uiState.value.syncBannerMessage
-        assertTrue("Failed message should contain error", failedMessage.contains("Sync failed"))
-        assertTrue("Failed message should contain specific error", failedMessage.contains("All accounts failed"))
         assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals("All accounts failed", viewModel.uiState.value.syncErrorDetail)
     }
 
     @Test
@@ -1627,8 +1639,7 @@ class HomeViewModelTest {
 
         // Banner should show (both showBanner=true AND hasPartialError=true)
         assertTrue("Banner should show", viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
-        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -1689,8 +1700,7 @@ class HomeViewModelTest {
 
         // Banner should show for partial error even in pull-to-refresh
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete with errors", viewModel.uiState.value.syncBannerMessage)
-        assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
     }
 
     @Test
@@ -2198,15 +2208,13 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertEquals("Preparing to sync...", viewModel.uiState.value.syncBannerMessage)
-        assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
+        assertEquals(SyncBannerState.Preparing, viewModel.uiState.value.syncBannerState)
 
         // Simulate WorkManager emitting Running
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertEquals("Syncing calendars...", viewModel.uiState.value.syncBannerMessage)
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
         // Force Full Sync shows banner but NOT spinning icon (suppressSyncIndicator = true)
         assertFalse(viewModel.uiState.value.isSyncing)
@@ -2219,7 +2227,6 @@ class HomeViewModelTest {
 
         // Banner should still be visible (auto-dismisses after 2 seconds)
         assertTrue(viewModel.uiState.value.showSyncBanner)
-        assertEquals("Sync complete", viewModel.uiState.value.syncBannerMessage)
         assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
@@ -2290,8 +2297,8 @@ class HomeViewModelTest {
 
         // isSyncing should be false after failure
         assertFalse(viewModel.uiState.value.isSyncing)
-        assertTrue(viewModel.uiState.value.syncBannerMessage.contains("Sync failed"))
         assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
+        assertEquals("Network error", viewModel.uiState.value.syncErrorDetail)
 
         // Should be able to start another sync now
         viewModel.refreshSync()
@@ -3264,6 +3271,29 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `goToToday in MONTH_FULL calls loadMonthEvents`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        // Switch to MONTH_FULL
+        viewModel.setViewMode(ViewMode.MONTH_FULL)
+        advanceUntilIdle()
+
+        // Navigate away to a different month
+        viewModel.setViewingMonth(2027, 5)
+        advanceUntilIdle()
+
+        // Press Today — should trigger getDisplayEventsForDateRange again
+        viewModel.goToToday()
+        advanceUntilIdle()
+
+        // Verify getDisplayEventsForDateRange was called at least twice:
+        // once for setViewMode(MONTH_FULL), once for setViewingMonth, and once for goToToday
+        verify(atLeast = 3) { displayEventRepository.getDisplayEventsForDateRange(any(), any()) }
+        assertTrue(viewModel.uiState.value.pendingNavigateToToday)
+    }
+
+    @Test
     fun `setViewMode MONTH_FULL syncs pager when selectedDate in different month`() = runTest {
         every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
 
@@ -3336,6 +3366,21 @@ class HomeViewModelTest {
         // Both forward and past extension should be called
         coVerify { eventCoordinator.extendOccurrencesIfNeeded(any()) }
         coVerify { eventCoordinator.extendPastOccurrencesIfNeeded(any()) }
+    }
+
+    @Test
+    fun `setViewingMonth calls repairMissingOccurrences alongside extension`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
+        coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
+        coEvery { eventCoordinator.repairMissingOccurrences() } returns 2
+
+        viewModel.setViewingMonth(2020, 2)
+        advanceUntilIdle()
+
+        coVerify { eventCoordinator.repairMissingOccurrences() }
     }
 
     // ==================== Helper Functions ====================

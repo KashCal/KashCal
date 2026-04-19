@@ -88,7 +88,7 @@ class AgendaWidget : GlanceAppWidget() {
         return DateTimeUtils.formatEventDate(
             timestampMs = System.currentTimeMillis(),
             isAllDay = false,
-            pattern = "EEEE, MMM d"
+            pattern = DateTimeUtils.localizedPattern("EEEEMMMd")
         )
     }
 }

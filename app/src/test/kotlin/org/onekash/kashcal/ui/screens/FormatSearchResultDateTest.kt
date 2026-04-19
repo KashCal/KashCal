@@ -3,6 +3,8 @@ package org.onekash.kashcal.ui.screens
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import org.onekash.kashcal.data.db.entity.Event
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -14,6 +16,7 @@ import java.time.ZonedDateTime
  * IMPORTANT: All-day events use UTC for date calculations to preserve calendar dates.
  * Timed events use local timezone for user's perspective.
  */
+@RunWith(RobolectricTestRunner::class)
 class FormatSearchResultDateTest {
 
     // Fixed timezone for deterministic tests (used for timed events)

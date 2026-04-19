@@ -1,5 +1,6 @@
 package org.onekash.kashcal.data.contacts
 
+import android.content.res.Resources
 import android.provider.ContactsContract
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
 
@@ -20,6 +21,7 @@ enum class ContactEventType(
     val contactEventTypeId: Int,
     val logTag: String,
     val formatTitle: (name: String, year: Int?, occurrenceTs: Long) -> String,
+    val formatTitleI18n: (name: String, year: Int?, occurrenceTs: Long, resources: Resources) -> String,
 ) {
     BIRTHDAY(
         accountEmail = "contact_birthdays",
@@ -31,6 +33,7 @@ enum class ContactEventType(
         contactEventTypeId = ContactsContract.CommonDataKinds.Event.TYPE_BIRTHDAY,
         logTag = "ContactBirthdayRepo",
         formatTitle = ContactEventUtils::formatBirthdayTitle,
+        formatTitleI18n = ContactEventUtils::formatBirthdayTitle,
     ),
     ANNIVERSARY(
         accountEmail = "contact_anniversaries",
@@ -42,6 +45,7 @@ enum class ContactEventType(
         contactEventTypeId = ContactsContract.CommonDataKinds.Event.TYPE_ANNIVERSARY,
         logTag = "ContactAnniversaryRepo",
         formatTitle = ContactEventUtils::formatAnniversaryTitle,
+        formatTitleI18n = ContactEventUtils::formatAnniversaryTitle,
     );
 
     fun getCaldavUrl(lookupKey: String, month: Int, day: Int): String =

@@ -13,6 +13,11 @@ object RelativeDateRule : ParseRule {
             val keyword = token.value as? String ?: continue
             val refDate = context.reference.toLocalDate()
 
+            if (keyword == "ALL_DAY") {
+                context.consume(index)
+                continue
+            }
+
             val date = when (keyword) {
                 "today" -> refDate
                 "tomorrow" -> refDate.plusDays(1)

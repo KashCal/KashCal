@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
@@ -13,7 +14,6 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
-import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
@@ -34,22 +34,54 @@ import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.ui.util.DayPagerUtils
-import java.time.Instant
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
 
-/**
- * Main content composable for the week widget.
- * Shows 7 days (today + 6) in a scrollable list with events for each day.
- *
- * @param weekEvents Map of day code to events for that day
- * @param showEventEmojis Whether to show auto-detected emojis in event titles
- * @param timePattern Time format pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
- * @param maxEventsPerDay Maximum events to show per day before overflow indicator
- */
+internal sealed class WeekWidgetItem(val itemId: Long) {
+    data class Header(val dayCode: Int, val eventCount: Int) :
+        WeekWidgetItem(dayCode.toLong())
+
+    data class Event(val dayCode: Int, val event: WidgetDataRepository.WidgetEvent) :
+        WeekWidgetItem(dayCode.toLong() * 100_000 + event.eventId + ITEM_ID_EVENT_OFFSET)
+
+    data class Empty(val dayCode: Int) :
+        WeekWidgetItem(dayCode.toLong() + ITEM_ID_EMPTY_OFFSET)
+
+    data class Overflow(val dayCode: Int, val count: Int) :
+        WeekWidgetItem(dayCode.toLong() + ITEM_ID_OVERFLOW_OFFSET)
+
+    companion object {
+        const val ITEM_ID_EVENT_OFFSET = 100_000_000L
+        const val ITEM_ID_EMPTY_OFFSET = 200_000_000L
+        const val ITEM_ID_OVERFLOW_OFFSET = 300_000_000L
+    }
+}
+
+internal fun buildFlatWeekItems(
+    weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
+    maxEventsPerDay: Int
+): List<WeekWidgetItem> {
+    val items = mutableListOf<WeekWidgetItem>()
+    weekEvents.forEach { (dayCode, events) ->
+        items.add(WeekWidgetItem.Header(dayCode, events.size))
+        if (events.isEmpty()) {
+            items.add(WeekWidgetItem.Empty(dayCode))
+        } else {
+            val visible = events.take(maxEventsPerDay)
+            visible.forEach { event ->
+                items.add(WeekWidgetItem.Event(dayCode, event))
+            }
+            if (events.size > maxEventsPerDay) {
+                items.add(WeekWidgetItem.Overflow(dayCode, events.size - maxEventsPerDay))
+            }
+        }
+    }
+    return items
+}
+
 @Composable
 fun WeekWidgetContent(
     weekEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
@@ -57,31 +89,36 @@ fun WeekWidgetContent(
     timePattern: String = "h:mma",
     maxEventsPerDay: Int = 5
 ) {
+    val flatItems = buildFlatWeekItems(weekEvents, maxEventsPerDay)
+    val today = LocalDate.now()
+    val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
+
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(WidgetTheme.contentBackground)
             .cornerRadius(16.dp)
     ) {
-        // Header with date range
         WeekWidgetHeader(weekEvents.keys.toList())
 
-        // Scrollable day list (LazyColumn for 7 days)
         LazyColumn(
             modifier = GlanceModifier.fillMaxSize()
         ) {
-            items(
-                items = weekEvents.toList(),
-                itemId = { (dayCode, _) -> dayCode.toLong() }
-            ) { (dayCode, events) ->
-                DaySection(
-                    dayCode = dayCode,
-                    events = events,
-                    showEventEmojis = showEventEmojis,
-                    maxEventsPerDay = maxEventsPerDay,
-                    timePattern = timePattern,
-                    isToday = isToday(dayCode)
-                )
+            flatItems.forEach { widgetItem ->
+                when (widgetItem) {
+                    is WeekWidgetItem.Header -> item(itemId = widgetItem.itemId) {
+                        DayHeader(widgetItem.dayCode, widgetItem.eventCount, widgetItem.dayCode == todayCode)
+                    }
+                    is WeekWidgetItem.Event -> item(itemId = widgetItem.itemId) {
+                        CompactEventRow(widgetItem.event, widgetItem.dayCode, showEventEmojis, timePattern)
+                    }
+                    is WeekWidgetItem.Empty -> item(itemId = widgetItem.itemId) {
+                        EmptyDayRow(widgetItem.dayCode)
+                    }
+                    is WeekWidgetItem.Overflow -> item(itemId = widgetItem.itemId) {
+                        OverflowRow(widgetItem.dayCode, widgetItem.count)
+                    }
+                }
             }
         }
     }
@@ -103,7 +140,6 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
             .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Left region: taps go to today
         Row(
             modifier = GlanceModifier
                 .defaultWeight()
@@ -125,7 +161,6 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
                 )
             )
         }
-        // Right region: "+" button with 40dp touch target
         Box(
             modifier = GlanceModifier
                 .size(40.dp)
@@ -140,49 +175,13 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = "Add event",
+                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
                 modifier = GlanceModifier.size(20.dp)
             )
         }
     }
 }
 
-/**
- * Single day section with day header and events list.
- */
-@Composable
-private fun DaySection(
-    dayCode: Int,
-    events: List<WidgetDataRepository.WidgetEvent>,
-    showEventEmojis: Boolean,
-    maxEventsPerDay: Int,
-    timePattern: String,
-    isToday: Boolean
-) {
-    Column(
-        modifier = GlanceModifier.fillMaxWidth()
-    ) {
-        // Day header (e.g., "Saturday 7" or "Monday 9")
-        DayHeader(dayCode, events.size, isToday)
-
-        if (events.isEmpty()) {
-            EmptyDayRow(dayCode)
-        } else {
-            val visibleEvents = events.take(maxEventsPerDay)
-            visibleEvents.forEach { event ->
-                CompactEventRow(event, showEventEmojis, timePattern)
-            }
-            if (events.size > maxEventsPerDay) {
-                OverflowRow(dayCode, events.size - maxEventsPerDay)
-            }
-        }
-    }
-}
-
-/**
- * Day header showing day name and date.
- * Tapping navigates to that day in the app.
- */
 @Composable
 private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
     val backgroundColor = if (isToday) {
@@ -217,7 +216,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
         if (isToday) {
             Spacer(modifier = GlanceModifier.width(6.dp))
             Text(
-                text = "Today",
+                text = LocalContext.current.getString(R.string.label_today),
                 style = TextStyle(
                     color = WidgetTheme.accentColor,
                     fontSize = 11.sp,
@@ -228,7 +227,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
         Spacer(modifier = GlanceModifier.defaultWeight())
         if (eventCount > 0) {
             Text(
-                text = "$eventCount event${if (eventCount != 1) "s" else ""}",
+                text = LocalContext.current.resources.getQuantityString(R.plurals.widget_event_count_plural, eventCount, eventCount),
                 style = TextStyle(
                     color = WidgetTheme.secondaryText,
                     fontSize = 11.sp
@@ -238,10 +237,6 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
     }
 }
 
-/**
- * Empty day row with "No events" text.
- * Tapping creates a new event on that day.
- */
 @Composable
 private fun EmptyDayRow(dayCode: Int) {
     val dayStartTs = DayPagerUtils.dayCodeToMs(dayCode)
@@ -261,7 +256,7 @@ private fun EmptyDayRow(dayCode: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "No events",
+            text = LocalContext.current.getString(R.string.widget_no_events),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
                 fontSize = 12.sp
@@ -270,13 +265,10 @@ private fun EmptyDayRow(dayCode: Int) {
     }
 }
 
-/**
- * Compact event row showing time and title.
- * Tapping opens the event quick view.
- */
 @Composable
 private fun CompactEventRow(
     event: WidgetDataRepository.WidgetEvent,
+    dayCode: Int,
     showEventEmojis: Boolean,
     timePattern: String
 ) {
@@ -299,7 +291,6 @@ private fun CompactEventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Calendar color dot
         Box(
             modifier = GlanceModifier
                 .size(6.dp)
@@ -309,9 +300,9 @@ private fun CompactEventRow(
 
         Spacer(modifier = GlanceModifier.width(8.dp))
 
-        // Time
+        val allDayText = LocalContext.current.getString(R.string.label_all_day)
         Text(
-            text = formatCompactTime(event, timePattern),
+            text = formatWidgetEventTime(event, dayCode, timePattern, allDayText),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
                 fontSize = 11.sp,
@@ -322,7 +313,6 @@ private fun CompactEventRow(
 
         Spacer(modifier = GlanceModifier.width(4.dp))
 
-        // Title
         Text(
             text = displayTitle,
             style = TextStyle(
@@ -336,10 +326,6 @@ private fun CompactEventRow(
     }
 }
 
-/**
- * Overflow indicator showing how many more events exist.
- * Tapping navigates to that day in the app.
- */
 @Composable
 private fun OverflowRow(dayCode: Int, count: Int) {
     Row(
@@ -356,27 +342,14 @@ private fun OverflowRow(dayCode: Int, count: Int) {
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Spacer(modifier = GlanceModifier.width(14.dp))  // Align with event text
+        Spacer(modifier = GlanceModifier.width(14.dp))
         Text(
-            text = "+$count more",
+            text = LocalContext.current.getString(R.string.status_more_events, count),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
                 fontSize = 11.sp
             )
         )
-    }
-}
-
-/** Format event time compactly (e.g., "9:00a" or "All day") */
-private fun formatCompactTime(event: WidgetDataRepository.WidgetEvent, timePattern: String): String {
-    return if (event.isAllDay) {
-        "All day"
-    } else {
-        val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
-        Instant.ofEpochMilli(event.startTs)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
-            .lowercase(Locale.getDefault())
     }
 }
 
@@ -389,8 +362,7 @@ private fun formatCompactTime(event: WidgetDataRepository.WidgetEvent, timePatte
 internal fun formatWeekHeaderRange(firstDay: Int, lastDay: Int): String {
     val firstDate = DayPagerUtils.dayCodeToLocalDate(firstDay)
     val lastDate = DayPagerUtils.dayCodeToLocalDate(lastDay)
-    val monthDay = DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault())
-    // Note: uses en-dash (U+2013), not hyphen
+    val monthDay = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("MMMMd"), Locale.getDefault())
     return if (firstDate.month == lastDate.month) {
         "${firstDate.format(monthDay)} \u2013 ${lastDate.dayOfMonth}"
     } else {
@@ -398,19 +370,8 @@ internal fun formatWeekHeaderRange(firstDay: Int, lastDay: Int): String {
     }
 }
 
-/**
- * Format day name for day header. Full name + day number.
- * e.g., "Monday 10", "Wednesday 12"
- */
 internal fun formatDayHeaderText(dayCode: Int): String {
     val date = DayPagerUtils.dayCodeToLocalDate(dayCode)
     val dayName = date.dayOfWeek.getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
     return "$dayName ${date.dayOfMonth}"
-}
-
-/** Check if dayCode is today */
-private fun isToday(dayCode: Int): Boolean {
-    val today = LocalDate.now()
-    val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
-    return dayCode == todayCode
 }

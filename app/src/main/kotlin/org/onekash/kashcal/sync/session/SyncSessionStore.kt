@@ -20,6 +20,7 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Persistent store for sync session history.
@@ -128,7 +129,7 @@ class SyncSessionStore @Inject constructor(
      * Simplified format matching the UI display.
      */
     fun getExportText(): String {
-        val dateFormat = SimpleDateFormat("MMM d, HH:mm", Locale.US)
+        val dateFormat = SimpleDateFormat(DateTimeUtils.localizedPattern("MMMdHmm"), Locale.getDefault())
         val sessions = _sessions.value
         val stats = getSummaryStats(sessions)
 

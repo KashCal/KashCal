@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Dienas kārtība</string>
+    <string name="widget_description">Rāda šodienas kalendāra notikumus</string>
+    <string name="week_widget_name">Nedēļas skats</string>
+    <string name="week_widget_description">Rāda kalendāra notikumus nākamajām 7 dienām</string>
+    <string name="month_widget_name">Mēneša skats</string>
+    <string name="month_widget_description">Rāda pilnu mēneša kalendāra režģi ar notikumu punktiem</string>
+    <string name="date_widget_name">Datums</string>
+    <string name="date_widget_description">Rāda šodienas datumu kā lietotnes ikonu</string>
+    <string name="widget_no_events_today">Šodien nav notikumu</string>
+    <string name="widget_add_event">+ Pievienot notikumu</string>
+    <string name="widget_no_events">Nav notikumu</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Jauns notikums</string>
+    <string name="shortcut_new_event_long">Izveidot jaunu notikumu</string>
+    <string name="shortcut_today">Šodien</string>
+    <string name="shortcut_today_long">Pāriet uz šodienu</string>
+    <string name="shortcut_search">Meklēt</string>
+    <string name="shortcut_search_long">Meklēt notikumus</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Mēģināt vēlreiz</string>
+    <string name="action_try_again">Mēģināt vēlreiz</string>
+    <string name="action_cancel">Atcelt</string>
+    <string name="action_close">Aizvērt</string>
+    <string name="action_ok">Labi</string>
+    <string name="action_not_now">Ne tagad</string>
+    <string name="action_sign_in">Pierakstīties</string>
+    <string name="action_select">Izvēlēties</string>
+    <string name="action_show_password">Rādīt paroli</string>
+    <string name="action_hide_password">Slēpt paroli</string>
+    <string name="action_sign_out">Izrakstīties</string>
+    <string name="action_learn_more">Uzzināt vairāk</string>
+    <string name="action_open_apple_id">Atvērt Apple ID</string>
+    <string name="action_open_settings">Atvērt iestatījumus</string>
+    <string name="action_force_sync">Piespiedu sinhronizācija</string>
+    <string name="action_sync_now">Sinhronizēt tagad</string>
+    <string name="action_details">Detaļas</string>
+    <string name="action_set_up">Iestatīt</string>
+    <string name="action_report_issue">Ziņot par problēmu</string>
+    <string name="action_view">Skatīt</string>
+    <string name="action_enable">Iespējot</string>
+    <string name="action_done">Gatavs</string>
+    <string name="action_save">Saglabāt</string>
+    <string name="action_add">Pievienot</string>
+    <string name="action_edit">Rediģēt</string>
+    <string name="action_delete">Dzēst</string>
+    <string name="action_confirm">Apstiprināt</string>
+    <string name="action_discard">Atmest</string>
+    <string name="action_dismiss">Noraidīt</string>
+    <string name="action_show_all">Rādīt visus</string>
+    <string name="action_connect">Savienot</string>
+    <string name="action_duplicate">Dublēt</string>
+    <string name="action_share">Dalīties</string>
+    <string name="action_export_ics">Eksportēt kā .ics</string>
+    <string name="action_confirm_delete">Apstiprināt dzēšanu</string>
+    <string name="action_delete_event">Dzēst notikumu</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Tikai šo</string>
+    <string name="recurring_this_and_future">Šo un visus nākamos</string>
+    <string name="recurring_just_occurrence">Tikai šo reizi</string>
+    <string name="recurring_all_occurrences">Visas reizes</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Notikuma nosaukums</string>
+    <string name="label_location">Vieta</string>
+    <string name="label_location_hint">Adrese, telpa vai sapulces saite</string>
+    <string name="label_notes">Piezīmes</string>
+    <string name="label_starts">Sākas</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Lietotnes parole</string>
+    <string name="label_password_hint">16 rakstzīmes, defises nav obligātas</string>
+    <string name="label_calendar_url">Kalendāra URL</string>
+    <string name="label_calendar_name">Kalendāra nosaukums</string>
+    <string name="label_name">Nosaukums</string>
+    <string name="label_hex_color">Hex krāsa</string>
+    <string name="label_enter_hex">Ievadiet 6 hex rakstzīmes (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Visi</string>
+    <string name="view_week">Nedēļa</string>
+    <string name="view_month">Mēnesis</string>
+    <string name="label_all_day">Visu dienu</string>
+    <string name="label_today">Šodien</string>
+    <string name="label_go_to_date">Pāriet uz datumu</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Iestatījumi</string>
+    <string name="settings_time_format">Laika formāts</string>
+    <string name="settings_start_week_on">Nedēļa sākas</string>
+    <string name="settings_event_emojis">Notikumu emocijzīmes</string>
+    <string name="settings_emoji_subtitle">Rādīt emocijzīmes pēc notikumu nosaukumiem</string>
+    <string name="settings_force_sync">Piespiedu pilna sinhronizācija</string>
+    <string name="settings_force_sync_subtitle">Lejupielādēt visus kalendāra datus no jauna</string>
+    <string name="settings_sync_history">Sinhronizācijas vēsture</string>
+    <string name="settings_sync_history_subtitle">Skatīt sinhronizācijas sesijas (pēdējās 48 stundas)</string>
+    <string name="settings_import_subtitle">Importēt .ics failu</string>
+    <string name="settings_export_subtitle">Dublējums .ics failā</string>
+    <string name="settings_birthday_reminder">Dzimšanas dienas atgādinājums</string>
+    <string name="settings_use_device_timezone">Izmantot ierīces laika joslu</string>
+    <string name="settings_section_my_calendars">Mani kalendāri</string>
+    <string name="settings_section_display">Izskats</string>
+    <string name="settings_section_notifications">Paziņojumi</string>
+    <string name="settings_section_sync">Sinhronizācija</string>
+    <string name="settings_section_data">Dati</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">Mēs tev palīdzēsim.</string>
+    <string name="onboarding_connect_prompt">Savienojiet iCloud, lai šeit redzētu savus notikumus</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Savienot iCloud</string>
+    <string name="signin_caldav_title">Pievienot CalDAV kontu</string>
+    <string name="signin_connected_to">Savienots ar %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Jauns notikums</string>
+    <string name="dialog_edit_event_title">Rediģēt notikumu</string>
+    <string name="dialog_force_sync_title">Piespiedu pilna sinhronizācija?</string>
+    <string name="dialog_force_sync_message">Tiks lejupielādēti visi kalendāra dati no servera. Lokālās izmaiņas tiks saglabātas.</string>
+    <string name="dialog_enable_notifications">Iespējot paziņojumus?</string>
+    <string name="dialog_delete_title">Dzēst \"%1$s\"</string>
+    <string name="dialog_edit_title">Rediģēt \"%1$s\"</string>
+    <string name="dialog_action_required">Šī darbība ir nepieciešama, lai turpinātu.</string>
+    <string name="dialog_add_to_calendar">Pievienot kalendāram</string>
+    <string name="dialog_select_calendar">Izvēlēties kalendāru</string>
+    <string name="dialog_choose_color">Izvēlēties krāsu</string>
+    <string name="dialog_add_subscription">Pievienot abonementu</string>
+    <string name="dialog_edit_subscription">Rediģēt abonementu</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Šonedēļ nav notikumu</string>
+    <string name="status_more_events">+%1$d vēl</string>
+    <string name="status_no_sync_sessions">Vēl nav sinhronizācijas sesiju.\n\nVelciet uz leju kalendāra skatā, lai sāktu sinhronizāciju.</string>
+    <string name="status_no_writable_calendars">Nav pieejamu rediģējamu kalendāru</string>
+    <string name="status_events_count">%1$d notikumi</string>
+    <string name="status_sync_changes">Sinhronizācijas izmaiņas</string>
+    <string name="status_sync_history">Sinhronizācijas vēsture</string>
+    <string name="status_parse_failures">Parsēšanas kļūdas</string>
+    <string name="status_error">Kļūda</string>
+    <string name="status_failed_to_parse">⚠ %1$d neizdevās parsēt</string>
+    <string name="status_built_with_love">Veidots ar mīlestību</string>
+    <string name="status_in_austin">Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Sinhronizācija pabeigta</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Pierakstīšanās neizdevās</string>
+    <string name="error_auth_invalid_credentials">Nederīgs Apple ID vai lietotnes parole. Lūdzu, pārbaudiet savus akreditācijas datus un mēģiniet vēlreiz.</string>
+    <string name="error_auth_app_specific_password_required">iCloud prasa lietotnes paroli. Jūsu parastā Apple ID parole šeit nedarbosies.</string>
+    <string name="error_auth_session_expired_title">Sesija beigusies</string>
+    <string name="error_auth_session_expired">Jūsu iCloud sesija ir beigusies. Lūdzu, pierakstieties vēlreiz, lai turpinātu sinhronizāciju.</string>
+    <string name="error_auth_account_locked">Jūsu Apple ID ir bloķēts. Lūdzu, apmeklējiet appleid.apple.com, lai to atbloķētu.</string>
+
+    <string name="error_network_offline">Jūs esat bezsaistē. Izmaiņas tiks sinhronizētas, kad atkal būsiet tiešsaistē.</string>
+    <string name="error_network_timeout">Savienojuma noildze. Lūdzu, pārbaudiet internetu un mēģiniet vēlreiz.</string>
+    <string name="error_network_ssl">Drošs savienojums neizdevās. Lūdzu, pārbaudiet tīkla iestatījumus.</string>
+    <string name="error_network_unknown_host">Neizdevās sasniegt iCloud. Lūdzu, pārbaudiet interneta savienojumu.</string>
+    <string name="error_network_connection_failed">Savienojums neizdevās. Lūdzu, mēģiniet vēlreiz.</string>
+
+    <string name="error_server_unavailable">iCloud pagaidām nav pieejams. Lūdzu, mēģiniet vēlāk.</string>
+    <string name="error_server_rate_limited">Pārāk daudz pieprasījumu. Lūdzu, nedaudz uzgaidiet un mēģiniet vēlreiz.</string>
+    <string name="error_server_forbidden">Piekļuve liegta. Iespējams, jums nav atļaujas šim kalendāram.</string>
+    <string name="error_server_not_found">Pieprasītais elements nav atrasts serverī.</string>
+    <string name="error_conflict_title">Sinhronizācijas konflikts</string>
+    <string name="error_conflict_generic">Šis notikums tika mainīts citā ierīcē. Veiciet piespiedu sinhronizāciju, lai iegūtu jaunāko versiju.</string>
+    <string name="error_conflict_with_event">\"%1$s\" tika mainīts citā ierīcē. Veiciet piespiedu sinhronizāciju, lai iegūtu jaunāko versiju.</string>
+    <string name="error_sync_token_expired">Sinhronizācijas dati novecojuši. Veic pilnu sinhronizāciju\u2026</string>
+
+    <string name="error_event_not_found">Notikums nav atrasts.</string>
+    <string name="error_calendar_not_found">Kalendārs nav atrasts.</string>
+    <string name="error_calendar_read_only">Nevar mainīt notikumus kalendārā \"%1$s\" (tikai lasāms kalendārs).</string>
+    <string name="error_event_invalid_data">Nederīgi notikuma dati. Lūdzu, pārbaudiet sākuma un beigu laikus.</string>
+    <string name="error_event_invalid_recurrence">Nederīgs atkārtošanās modelis.</string>
+
+    <string name="error_display_name_exists">Konts ar nosaukumu \"%1$s\" jau pastāv.</string>
+
+    <string name="error_import_file_not_found">Fails nav atrasts vai nav lasāms.</string>
+    <string name="error_import_invalid_format">Nederīgs kalendāra faila formāts.</string>
+    <string name="error_import_partial">Importēti %1$d notikumi, %2$d neizdevās.</string>
+    <string name="error_export_failed">Neizdevās eksportēt notikumus.</string>
+    <string name="error_export_no_events">Nav notikumu eksportēšanai.</string>
+    <string name="error_end_before_start">Beigu laikam jābūt pēc sākuma laika</string>
+
+    <string name="error_storage_full_title">Krātuve pilna</string>
+    <string name="error_storage_full">Nepietiek vietas krātuvē. Lūdzu, atbrīvojiet vietu un mēģiniet vēlreiz.</string>
+    <string name="error_database_corruption_title">Datu kļūda</string>
+    <string name="error_database_corruption">Jūsu kalendāra dati var būt bojāti. Lūdzu, sazinieties ar atbalstu.</string>
+    <string name="error_migration_title">Atjaunināšanas kļūda</string>
+    <string name="error_migration_failed">Neizdevās atjaunināt lietotnes datus. Lūdzu, pārinstalējiet lietotni.</string>
+
+    <string name="error_permission_notification_title">Iespējot paziņojumus?</string>
+    <string name="error_permission_notification">KashCal nepieciešama paziņojumu atļauja, lai atgādinātu par gaidāmajiem notikumiem.</string>
+    <string name="error_permission_alarm_title">Iespējot precīzus modinātājus?</string>
+    <string name="error_permission_alarm">KashCal nepieciešama precīzu modinātāju atļauja precīziem atgādinājumiem.</string>
+    <string name="error_permission_storage">Krātuves atļauja nepieciešama importēšanai/eksportēšanai.</string>
+
+    <string name="error_device_calendar_title">Kalendāra kļūda</string>
+    <string name="error_device_calendar_write_failed">Neizdevās saglabāt ierīces kalendārā. Lūdzu, mēģiniet vēlreiz.</string>
+    <string name="error_device_calendar_permission">Nepieciešama kalendāra rakstīšanas atļauja. Lūdzu, piešķiriet atļauju iestatījumos.</string>
+    <string name="error_device_calendar_not_found">Kalendārs nav atrasts. Iespējams, tas tika noņemts.</string>
+    <string name="error_device_event_not_found">Notikums nav atrasts. Iespējams, tas tika dzēsts.</string>
+    <string name="error_device_calendar_read_only">Šis kalendārs ir tikai lasāms.</string>
+
+    <string name="error_sync_no_accounts">Nav konfigurēts iCloud konts. Iestatiet iCloud, lai sinhronizētu kalendārus.</string>
+    <string name="error_sync_partial">Sinhronizēti %1$d kalendāri, %2$d neizdevās.</string>
+
+    <string name="error_unknown">Kaut kas nogāja greizi. Lūdzu, mēģiniet vēlreiz.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Atlasīts</string>
+    <string name="cd_back">Atpakaļ</string>
+    <string name="cd_close">Aizvērt</string>
+    <string name="cd_search">Meklēt</string>
+    <string name="cd_create_event">Izveidot notikumu</string>
+    <string name="cd_settings">Iestatījumi</string>
+    <string name="cd_today">Šodien</string>
+    <string name="cd_previous_week">Iepriekšējā nedēļa</string>
+    <string name="cd_next_week">Nākamā nedēļa</string>
+    <string name="cd_delete">Dzēst</string>
+    <string name="cd_refresh">Atsvaidzināt</string>
+    <string name="cd_more_options">Vairāk iespēju</string>
+    <string name="cd_duplicate">Dublēt</string>
+    <string name="cd_share">Dalīties</string>
+    <string name="cd_export_ics">Eksportēt kā ICS</string>
+    <string name="cd_open_link">Atvērt saiti</string>
+    <string name="cd_open_maps">Atvērt kartēs</string>
+    <string name="cd_copy_clipboard">Kopēt starpliktuvē</string>
+    <string name="cd_clear_history">Notīrīt vēsturi</string>
+    <string name="cd_recurring">Atkārtojošs</string>
+    <string name="cd_enabled">Iespējots</string>
+    <string name="cd_sync_error">Sinhronizācijas kļūda</string>
+    <string name="cd_select_option">Izvēlēties iespēju</string>
+    <string name="cd_select_label">Izvēlēties %1$s</string>
+    <string name="cd_wheel_picker">Ritenīša izvēle ar %1$d iespējām</string>
+    <string name="cd_version_info">KashCal versija %1$s. Ilgi turiet, lai atvērtu atkļūdošanas iespējas.</string>
+    <string name="cd_color_slider">Krāsu slīdnis, pašlaik %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d grādi</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Kalendārs</string>
+    <string name="label_color">Krāsa:</string>
+    <string name="label_repeat">Atkārtot</string>
+    <string name="label_sync_interval">Sinhronizācijas intervāls:</string>
+    <string name="label_scheduled_events">Ieplānotie notikumi</string>
+    <string name="label_all_day_events">Visas dienas notikumi</string>
+    <string name="label_server_url">Servera URL</string>
+    <string name="label_username">Lietotājvārds</string>
+    <string name="label_password">Parole</string>
+    <string name="label_display_name_optional">Attēlojamais vārds (neobligāts)</string>
+
+    <string name="placeholder_search_events">Meklēt notikumus\u2026</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Pēc noklusējuma izmanto https://, ja nav norādīts</string>
+    <string name="hint_name_shown_in_settings">Nosaukums, kas redzams iestatījumos</string>
+    <string name="caldav_trust_insecure_subtitle">Pašparakstītiem sertifikātiem vai lokāliem HTTP serveriem</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Pēc</string>
+    <string name="label_recurrence_occurrences">reizēm</string>
+    <string name="label_recurrence_on_date">Datumā</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Redzamie kalendāri</string>
+    <string name="settings_default_calendar">Noklusējuma kalendārs</string>
+    <string name="settings_default_event_length">Noklusējuma notikuma garums</string>
+    <string name="settings_default_alerts">Noklusējuma atgādinājumi</string>
+    <string name="settings_notifications">Paziņojumi</string>
+    <string name="settings_new_events">Jauni notikumi</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Sistēmas noklusējums</string>
+    <string name="option_12_hour">12 stundu</string>
+    <string name="option_24_hour">24 stundu</string>
+    <string name="option_sunday">Svētdiena</string>
+    <string name="option_monday">Pirmdiena</string>
+    <string name="option_saturday">Sestdiena</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Notikumi nav atrasti</string>
+    <string name="empty_no_upcoming_events">Nav gaidāmu notikumu</string>
+    <string name="empty_no_calendars">Nav pieejamu kalendāru</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Savienojas\u2026</string>
+    <string name="status_fetching">Ielādē\u2026</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Ielādēt kalendāru</string>
+    <string name="action_import_from_file">Importēt no faila</string>
+    <string name="action_export_local_calendar">Eksportēt lokālo kalendāru</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Lietotņu paroles ļauj pierakstīties trešo pušu lietotnēs, nedalot savu galveno Apple ID paroli.</string>
+    <string name="help_app_password_steps_header">Lai izveidotu:</string>
+    <string name="help_app_password_step_1">1. Dodieties uz appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Pierakstieties ar savu Apple ID</string>
+    <string name="help_app_password_step_3">3. Dodieties uz Pierakstīšanās un drošība</string>
+    <string name="help_app_password_step_4">4. Noklikšķiniet uz Lietotņu paroles</string>
+    <string name="help_app_password_step_5">5. Noklikšķiniet Ģenerēt un kopējiet šeit</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal nepieciešama paziņojumu atļauja, lai atgādinātu par gaidāmajiem notikumiem.</string>
+    <string name="dialog_notification_permission_settings_hint">Vēlāk to var mainīt iestatījumos.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Konti</string>
+    <string name="accounts_section_connected">Savienoti</string>
+    <string name="accounts_section_add">Pievienot kontu</string>
+    <string name="accounts_empty_title">Nav savienotu kontu</string>
+    <string name="accounts_empty_subtitle">Pievienojiet kontu, lai sinhronizētu kalendārus starp ierīcēm</string>
+    <string name="accounts_row_label">iCloud, Nextcloud un citi</string>
+    <string name="accounts_add_icloud">Pievienot iCloud</string>
+    <string name="accounts_add_caldav">Pievienot CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail un citi</string>
+    <string name="accounts_caldav_help_title">Kas ir CalDAV?</string>
+    <string name="accounts_caldav_help_description">CalDAV ir atvērts standarts kalendāru sinhronizēšanai. Atbalsta:</string>
+    <string name="accounts_caldav_help_more">un citi</string>
+    <string name="accounts_calendars_syncing">Sinhronizē\u2026</string>
+    <string name="accounts_cd_icloud_icon">iCloud konts</string>
+    <string name="accounts_cd_caldav_icon">CalDAV konts</string>
+    <string name="accounts_cd_back">Doties atpakaļ</string>
+    <string name="accounts_sync_issue">Sinhronizācijas problēma</string>
+    <string name="accounts_cd_sync_warning">Sinhronizācijas brīdinājums</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Abonementi</string>
+    <string name="subscriptions_section_ics_calendars">ICS kalendāri</string>
+    <string name="subscriptions_section_add">Pievienot</string>
+    <string name="subscriptions_empty_ics">Nav ICS abonementu</string>
+    <string name="subscriptions_empty_ics_hint">Pievienojiet kalendāra plūsmu, lai redzētu notikumus</string>
+    <string name="subscriptions_add_ics">Pievienot ICS kalendāru</string>
+    <string name="subscriptions_row_label">Svētki, skola un citi</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Dzimšanas dienas un jubilejas</string>
+    <string name="birthdays_section_title">Dzimšanas dienas</string>
+    <string name="anniversaries_section_title">Jubilejas</string>
+    <string name="settings_contact_birthdays">Kontaktu dzimšanas dienas</string>
+    <string name="settings_contact_birthdays_description">Rādīt dzimšanas dienas no tālruņa kontaktiem kā visas dienas kalendāra notikumus.</string>
+    <string name="settings_contact_anniversaries">Kontaktu jubilejas</string>
+    <string name="settings_contact_anniversaries_description">Rādīt jubilejas no tālruņa kontaktiem kā visas dienas kalendāra notikumus.</string>
+    <string name="settings_anniversary_reminder">Jubilejas atgādinājums</string>
+    <string name="settings_calendar_color">Kalendāra krāsa</string>
+    <string name="settings_default_reminder">Noklusējuma atgādinājums</string>
+    <string name="action_change">Mainīt</string>
+    <string name="settings_contacts_footer">Lasa no ierīces kontaktiem. Nepieciešama kontaktu atļauja.</string>
+    <string name="settings_contacts_permission_required">Nepieciešama kontaktu atļauja</string>
+    <string name="subscriptions_cd_back">Doties atpakaļ</string>
+    <string name="subscriptions_cd_add">Pievienot abonementu</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">SINHRONIZĀCIJA</string>
+    <string name="account_detail_section_calendars">KALENDĀRI</string>
+    <string name="account_detail_section_account">KONTS</string>
+    <string name="account_detail_enabled">Iespējots</string>
+    <string name="account_detail_enabled_subtitle">Automātiski sinhronizēt šo kontu</string>
+    <string name="account_detail_sync_now">Sinhronizēt tagad</string>
+    <string name="account_detail_syncing">Sinhronizē\u2026</string>
+    <string name="account_detail_discovering">Atklāj\u2026</string>
+    <string name="account_detail_discover_calendars">Atklāt jaunus kalendārus</string>
+    <string name="account_detail_change_password">Mainīt paroli</string>
+    <string name="account_detail_sign_out">Izrakstīties</string>
+    <string name="account_detail_never_synced">Nekad nav sinhronizēts</string>
+    <string name="account_detail_last_success">Pēdējā veiksmīgā: %1$s</string>
+    <string name="account_detail_cd_rename">Pārdēvēt</string>
+    <string name="account_detail_cd_show_password">Rādīt paroli</string>
+    <string name="account_detail_cd_hide_password">Slēpt paroli</string>
+
+    <string name="sync_failure_notification_title">Sinhronizācijas problēma ar %1$s</string>
+    <string name="sync_failure_notification_text">Kalendāra sinhronizācija neizdevās %1$d reizes</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Pārdēvēt kontu</string>
+    <string name="rename_account_label">Konta nosaukums</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Mainīt paroli</string>
+    <string name="change_password_label_icloud">Lietotnes parole</string>
+    <string name="change_password_label_default">Parole</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Ierīces kalendāri</string>
+    <string name="settings_quick_event_add">Ātrā notikuma pievienošana</string>
+    <string name="settings_week_numbers">Nedēļu numuri</string>
+    <string name="settings_widget_event_limit">Logrīka notikumu limits</string>
+    <string name="settings_sync_lookback">Sinhronizācijas atskats</string>
+    <string name="settings_auto_detect_emojis">Automātiski noteikt emocijzīmes</string>
+    <string name="settings_events_per_day">Notikumi dienā</string>
+    <string name="settings_not_set">Nav iestatīts</string>
+    <string name="settings_on">Ieslēgts</string>
+    <string name="settings_off">Izslēgts</string>
+    <string name="settings_tap_to_enable">Pieskarieties, lai iespējotu</string>
+    <string name="settings_device_calendars_enabled">%1$d iespējoti</string>
+    <string name="settings_per_day">%1$d dienā</string>
+    <string name="signin_icloud_help_question">Kas ir lietotnes parole?</string>
+    <string name="caldav_trust_insecure_label">Uzticēties nedrošam savienojumam</string>
+    <string name="action_add_another">Pievienot vēl</string>
+    <string name="account_connected_found_calendars">Atrasti %1$d kalendāri kontam %2$s.</string>
+    <string name="account_connected_syncing_hint">Sinhronizācija notiek \u2014 notikumi drīz parādīsies.</string>
+    <string name="settings_time_format_currently_24h">Pašlaik: 24 stundu (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Pašlaik: 12 stundu (%1$s)</string>
+    <string name="settings_time_format_example">Piemērs: %1$s</string>
+    <string name="settings_system_default_with_value">Sistēmas noklusējums (%1$s)</string>
+    <string name="alert_none">Nav</string>
+    <string name="cd_collapse">Sakļaut</string>
+    <string name="cd_expand">Izvērst</string>
+    <string name="cd_hide_calendar">Slēpt kalendāru</string>
+    <string name="cd_show_calendar">Rādīt kalendāru</string>
+    <string name="cd_pick_month_year">Izvēlēties mēnesi un gadu</string>
+    <string name="cd_previous_month">Iepriekšējais mēnesis</string>
+    <string name="cd_next_month">Nākamais mēnesis</string>
+    <string name="cd_month_year_picker">Mēneša un gada izvēle</string>
+    <string name="cd_remove_alert">Noņemt atgādinājumu</string>
+    <string name="cd_warning">Brīdinājums</string>
+    <string name="cd_refresh_calendars">Atsvaidzināt kalendārus</string>
+    <string name="cd_timezone_tap_to_change">Laika josla: %1$s, pieskarieties, lai mainītu</string>
+    <string name="cd_day_events">Diena %1$d, %2$d notikumi</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Biežums</string>
+    <string name="label_on_days">Dienās</string>
+    <string name="label_pattern">Modelis</string>
+    <string name="label_ends">Beidzas</string>
+    <string name="label_alerts">Atgādinājumi</string>
+    <string name="label_add_alert">Pievienot atgādinājumu</string>
+    <string name="label_recurrence_never">Nekad</string>
+    <string name="label_tomorrow">Rīt</string>
+    <string name="label_yesterday">Vakar</string>
+    <string name="label_device_calendars">Ierīces kalendāri</string>
+    <string name="label_default_calendar_hint">Jauni notikumi tiks veidoti šajā kalendārā</string>
+    <string name="label_visible_count">%1$d / %2$d redzami</string>
+    <string name="label_enabled_count">%1$d / %2$d iespējoti</string>
+    <string name="label_reminders_truncated">%1$d nav rādīti (%2$d kopā, maks. %3$d rediģējami)</string>
+    <string name="label_found_events">Atrasti: %1$d notikumi</string>
+    <string name="label_open_debug_menu">Atvērt atkļūdošanas izvēlni</string>
+    <string name="placeholder_search">Meklēt\u2026</string>
+    <string name="status_sync_paused">Sinhronizācija pauzēta</string>
+    <string name="status_not_synced">Nav sinhronizēts</string>
+    <string name="status_sync_error">Sinhronizācijas kļūda</string>
+    <string name="status_minutes_ago">pirms %1$d min</string>
+    <string name="status_hours_ago">pirms %1$d st</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Rādīt notikumus no citām kalendāra lietotnēm jūsu ierīcē (sinhronizācijas adapteri, lokālie kalendāri).</string>
+    <string name="device_calendars_permission_required">Nepieciešama kalendāra atļauja. Pieskarieties Iespējot, lai piešķirtu piekļuvi.</string>
+    <string name="device_calendars_read_only_access">Tikai lasīšanas piekļuve</string>
+    <string name="device_calendars_grant_write">Piešķiriet rakstīšanas atļauju, lai rediģētu ierīces kalendāra notikumus</string>
+    <string name="device_calendars_grant">Piešķirt</string>
+    <string name="device_calendars_none_found">Ierīces kalendāri nav atrasti.</string>
+    <string name="device_calendars_local">Lokāls</string>
+    <string name="device_calendars_show_declined">Rādīt noraidītos notikumus</string>
+    <string name="device_calendars_reminders">Atgādinājumi</string>
+    <string name="device_calendars_reminders_desc">Saņemt paziņojumus par ierīces kalendāra notikumiem</string>
+    <string name="device_calendars_read_only_no_write">Tikai lasāms (nav rakstīšanas atļaujas)</string>
+    <string name="device_calendars_read_only_calendar">Tikai lasāms (kalendārs ir tikai lasāms)</string>
+
+    <string name="settings_developer_options">Izstrādātāja iespējas</string>
+    <string name="settings_sync_frequency">Sinhronizācijas biežums</string>
+    <string name="settings_preview">PRIEKŠSKATĪJUMS</string>
+    <string name="settings_n_events">%1$d notikumi</string>
+    <string name="settings_n_events_default">%1$d notikumi (noklusējums)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Kalendāri</string>
+    <string name="drawer_contacts">Kontakti</string>
+    <string name="drawer_device_calendars">Ierīces kalendāri</string>
+    <string name="drawer_share_feedback">Dalīties ar atsauksmēm</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Tev, nevis taviem datiem.</string>
+    <string name="action_keep_it_that_way">Lai tā arī paliek</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Jau sinhronizēts</string>
+    <string name="status_warnings">Brīdinājumi</string>
+    <string name="sync_history_events_failed">Notikumi neizdevās</string>
+    <string name="sync_history_abandoned_max_retries">Pārtraukts (maks. mēģinājumi)</string>
+    <string name="sync_history_events_skipped">Notikumi izlaisti</string>
+    <string name="sync_history_duration">Ilgums</string>
+    <string name="sync_history_already_synced_count">%1$d jau sinhronizēti</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Nav notikumu</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Jūs esat bezsaistē</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Izrakstīties no %1$s?</string>
+    <string name="dialog_sign_out_message">Jūs esat pierakstījies kā %1$s. Izrakstīšanās noņems sinhronizētos kalendārus no šīs ierīces.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- Latvian: zero (0), one (1, 21, 31...), other (2-20, 22-30...) -->
+    <plurals name="accounts_count">
+        <item quantity="zero">%1$d kontu</item>
+        <item quantity="one">%1$d konts</item>
+        <item quantity="other">%1$d konti</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="zero">%1$s \u00B7 %2$d kalendāru</item>
+        <item quantity="one">%1$s \u00B7 1 kalendārs</item>
+        <item quantity="other">%1$s \u00B7 %2$d kalendāri</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="zero">%1$d abonementu</item>
+        <item quantity="one">%1$d abonements</item>
+        <item quantity="other">%1$d abonementi</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="zero">Sinhronizācija neizdevās (%1$d mēģinājumu)</item>
+        <item quantity="one">Sinhronizācija neizdevās (%1$d mēģinājums)</item>
+        <item quantity="other">Sinhronizācija neizdevās (%1$d mēģinājumi)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="zero">%1$d kalendāru</item>
+        <item quantity="one">%1$d kalendārs</item>
+        <item quantity="other">%1$d kalendāri</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="zero">%1$d kalendāru (%2$d jauni)</item>
+        <item quantity="one">%1$d kalendārs (%2$d jauns)</item>
+        <item quantity="other">%1$d kalendāri (%2$d jauni)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="zero">%1$d notikumu</item>
+        <item quantity="one">%1$d notikums</item>
+        <item quantity="other">%1$d notikumi</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="zero">%1$d dzimšanas dienu</item>
+        <item quantity="one">%1$d dzimšanas diena</item>
+        <item quantity="other">%1$d dzimšanas dienas</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="zero">%1$d jubileju</item>
+        <item quantity="one">%1$d jubileja</item>
+        <item quantity="other">%1$d jubilejas</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="zero">+ vēl %1$d</item>
+        <item quantity="one">+ vēl %1$d</item>
+        <item quantity="other">+ vēl %1$d</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="zero">Importēt %1$d notikumu</item>
+        <item quantity="one">Pievienot notikumu</item>
+        <item quantity="other">Importēt %1$d notikumus</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="zero">Importēt</item>
+        <item quantity="one">Pievienot</item>
+        <item quantity="other">Importēt</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="zero">\u2026un vēl %1$d</item>
+        <item quantity="one">\u2026un vēl %1$d</item>
+        <item quantity="other">\u2026un vēl %1$d</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="zero">Importēti %1$d notikumu</item>
+        <item quantity="one">Importēts %1$d notikums</item>
+        <item quantity="other">Importēti %1$d notikumi</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="zero">Eksportēti %1$d notikumu</item>
+        <item quantity="one">Eksportēts %1$d notikums</item>
+        <item quantity="other">Eksportēti %1$d notikumi</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="zero">%1$d notikumu</item>
+        <item quantity="one">%1$d notikums</item>
+        <item quantity="other">%1$d notikumi</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="zero">%1$d minūšu</item>
+        <item quantity="one">%1$d minūte</item>
+        <item quantity="other">%1$d minūtes</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="zero">%1$d min</item>
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="zero">%1$d stundu</item>
+        <item quantity="one">%1$d stunda</item>
+        <item quantity="other">%1$d stundas</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="zero">%1$d dienu</item>
+        <item quantity="one">%1$d diena</item>
+        <item quantity="other">%1$d dienas</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="zero">%1$d nedēļu</item>
+        <item quantity="one">%1$d nedēļa</item>
+        <item quantity="other">%1$d nedēļas</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="zero">%1$d mēnešu</item>
+        <item quantity="one">%1$d mēnesis</item>
+        <item quantity="other">%1$d mēneši</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="zero">%1$d gadu</item>
+        <item quantity="one">%1$d gads</item>
+        <item quantity="other">%1$d gadi</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="zero">%1$d sek</item>
+        <item quantity="one">%1$d sek</item>
+        <item quantity="other">%1$d sek</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="zero">%1$d minūšu pirms</item>
+        <item quantity="one">%1$d minūte pirms</item>
+        <item quantity="other">%1$d minūtes pirms</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="zero">%1$d stundu pirms</item>
+        <item quantity="one">%1$d stunda pirms</item>
+        <item quantity="other">%1$d stundas pirms</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="zero">%1$d dienu pirms</item>
+        <item quantity="one">%1$d diena pirms</item>
+        <item quantity="other">%1$d dienas pirms</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="zero">%1$d nedēļu pirms</item>
+        <item quantity="one">%1$d nedēļa pirms</item>
+        <item quantity="other">%1$d nedēļas pirms</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Rediģēt atkārtojošos notikumu</string>
+    <string name="dialog_delete_recurring_title">Dzēst atkārtojošos notikumu</string>
+    <string name="dialog_edit_recurring_message">Šis ir atkārtojošs notikums. Kā vēlaties piemērot šo izmaiņu?</string>
+    <string name="recurring_this_event">Šo notikumu</string>
+    <string name="recurring_all_events">Visus notikumus</string>
+    <string name="empty_pick_a_day">Izvēlies dienu. Izdzīvo to.</string>
+    <string name="empty_no_events_day">Nekas te nav; varbūt iziesi ārā?</string>
+    <string name="label_upcoming_events">Gaidāmie notikumi</string>
+    <string name="filter_date">Datums</string>
+    <string name="label_select_date">Izvēlēties datumu</string>
+    <string name="hint_tap_date_range">Pieskarieties tam pašam datumam vienai dienai vai citam datumam diapazonam</string>
+
+    <string name="cd_clear">Notīrīt</string>
+    <string name="cd_offline">Bezsaistē</string>
+    <string name="cd_previous">Iepriekšējais</string>
+    <string name="cd_next">Nākamais</string>
+    <string name="cd_open_drawer">Atvērt izvēlni</string>
+    <string name="cd_close_drawer">Aizvērt izvēlni</string>
+    <string name="cd_calendar_view">Kalendāra skats</string>
+    <string name="cd_active_view">Aktīvais skats</string>
+
+    <string name="view_agenda">Dienas kārtība</string>
+    <string name="view_month_full">Mēnesis (pilns)</string>
+    <string name="view_three_days">3 dienas</string>
+    <string name="view_year">Gads</string>
+
+    <string name="label_go_to_month">Pāriet uz mēnesi</string>
+
+    <string name="action_more_options">Vairāk iespēju</string>
+
+    <string name="label_duration_days">dienas</string>
+    <string name="label_duration_hrs">st</string>
+    <string name="label_duration_min">min</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">%1$d. datumā</string>
+    <string name="recurrence_on_last_day">Mēneša pēdējā dienā</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="ordinal_1st">1.</string>
+    <string name="ordinal_2nd">2.</string>
+    <string name="ordinal_3rd">3.</string>
+    <string name="ordinal_4th">4.</string>
+    <string name="ordinal_nth">%1$d.</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d jauni</string>
+    <string name="sync_summary_updated">%1$d atjaunināti</string>
+    <string name="sync_summary_removed">%1$d noņemti</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Iepriekšējās 3 dienas</string>
+    <string name="cd_next_3_days">Nākamās 3 dienas</string>
+    <string name="cd_circular_scrolling">Apļveida ritināšana iespējota</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Bez atgādinājuma</string>
+    <string name="reminder_at_time_of_event">Notikuma laikā</string>
+    <string name="reminder_time_before">%1$s pirms</string>
+    <string name="reminder_time_after">%1$s pēc</string>
+    <string name="reminder_day_of_event_12h">9 AM notikuma dienā</string>
+    <string name="reminder_day_of_event_24h">09:00 notikuma dienā</string>
+    <string name="reminder_before_at_12h">%1$s pirms plkst. 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s pirms plkst. 09:00</string>
+    <string name="reminder_short_off">Izsl.</string>
+    <string name="reminder_short_at_event">Sākumā</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dmin</string>
+    <string name="reminder_short_hours">%1$dst</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$dned</string>
+    <string name="reminder_summary_none">Nav</string>
+    <string name="duration_compact">%1$dst %2$dmin</string>
+    <string name="duration_compact_short">%1$dst%2$dmin</string>
+    <string name="sync_manual_only">Tikai manuāli</string>
+    <string name="sync_lookback_all">Visi notikumi</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Atlikt</string>
+    <string name="notification_starting_now">Sākas tagad</string>
+    <string name="notification_tomorrow_time">Rīt, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Sinhronizācija pabeigta</string>
+    <string name="sync_notification_partial">Sinhronizācija daļēji pabeigta</string>
+    <string name="sync_notification_auth_failed">Sinhronizācijas autentifikācijas kļūda</string>
+    <string name="sync_notification_auth_reauth">Lūdzu, piesakieties kontā atkārtoti</string>
+    <string name="sync_notification_failed">Sinhronizācijas kļūda</string>
+    <string name="sync_notification_parse_title">Dažus notikumus neizdevās sinhronizēt</string>
+    <string name="sync_notification_parse_content">%1$s kalendārī %2$s neizdevās sinhronizēt. Mēģiniet piespiedu sinhronizāciju iestatījumos.</string>
+    <string name="sync_notification_conflict_title">Sinhronizācijas konflikts atrisināts</string>
+    <string name="sync_notification_conflict_single">Lokālās izmaiņas \"%1$s\" zaudētas sinhronizācijas konflikta dēļ. Tiks izmantota servera versija.</string>
+    <string name="sync_notification_conflict_multi">Lokālās izmaiņas %1$s zaudētas sinhronizācijas konfliktu dēļ. Tiks izmantotas servera versijas.</string>
+    <string name="sync_notification_expired_title">Sinhronizācijas izmaiņas beidzies</string>
+    <string name="sync_notification_expired_content">%1$s neizdevās sinhronizēt 30 dienu laikā. Tiks izmantota servera versija. Piespiedu sinhronizācija, lai mēģinātu vēlreiz.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="zero">Sinhronizēti %1$d kalendāru</item>
+        <item quantity="one">Sinhronizēts %1$d kalendārs</item>
+        <item quantity="other">Sinhronizēti %1$d kalendāri</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="zero">, %1$d izmaiņu</item>
+        <item quantity="one">, %1$d izmaiņa</item>
+        <item quantity="other">, %1$d izmaiņas</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="zero">, %1$d kļūdu</item>
+        <item quantity="one">, %1$d kļūda</item>
+        <item quantity="other">, %1$d kļūdas</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%1$s — %2$s dzimšanas diena</string>
+    <string name="contact_birthday">%1$s — dzimšanas diena</string>
+    <string name="contact_anniversary_with_age">%1$s — %2$s gadadiena</string>
+    <string name="contact_anniversary">%1$s — gadadiena</string>
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Sinhronizē kalendārus…</string>
+    <string name="sync_banner_preparing">Gatavo sinhronizācijai…</string>
+    <string name="sync_banner_complete_errors">Sinhronizācija pabeigta ar kļūdām</string>
+    <string name="sync_banner_failed">Sinhronizācijas kļūda: %1$s</string>
+    <string name="error_unknown_error">Nezināma kļūda</string>
+    <string name="sync_snackbar_new_event">Jauns notikums: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="zero">%1$d jaunu notikumu</item>
+        <item quantity="one">%1$d jauns notikums</item>
+        <item quantity="other">%1$d jauni notikumi</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="zero">%1$d notikumu atjaunināti</item>
+        <item quantity="one">%1$d notikums atjaunināts</item>
+        <item quantity="other">%1$d notikumi atjaunināti</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="zero">%1$d notikumu noņemti</item>
+        <item quantity="one">%1$d notikums noņemts</item>
+        <item quantity="other">%1$d notikumi noņemti</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="zero">%1$d kalendāra atjauninājumu</item>
+        <item quantity="one">%1$d kalendāra atjauninājums</item>
+        <item quantity="other">%1$d kalendāra atjauninājumi</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">Diena %1$d no %2$d</string>
+    <string name="day_starts">Diena 1 no %1$d · sākas %2$s</string>
+    <string name="day_ends">Diena %1$d no %2$d · beidzas %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Visu dienu</string>
+    <string name="event_date_all_day">%1$s · Visu dienu</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Visu dienu)</string>
+    <string name="event_date_all_day_parens">%1$s (Visu dienu)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Saglabāt notikumu</string>
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Jauns</string>
+    <string name="color_red">Sarkans</string>
+    <string name="color_orange">Oranžs</string>
+    <string name="color_yellow">Dzeltens</string>
+    <string name="color_green">Zaļš</string>
+    <string name="color_cyan">Ciāns</string>
+    <string name="color_blue">Zils</string>
+    <string name="color_purple">Violets</string>
+    <string name="cd_meeting_link">Sapulces saite: %1$s</string>
+    <string name="cd_phone_number">Tālruņa numurs</string>
+    <string name="cd_email_link">E-pasts: %1$s</string>
+    <string name="cd_web_link">Saite: %1$s</string>
+    <string name="cd_text_with_links">Teksts ar %1$d saitēm: %2$s</string>
+    <string name="cd_text_with_link">Teksts ar 1 saiti: %1$s</string>
+    <string name="day_x_of_y_all_day">Diena %1$d no %2$d (Visu dienu)</string>
+    <string name="sync_history_stats">%1$d sinhr.   ↑%2$d nosūt.   ↓%3$d saņemt.</string>
+    <string name="sync_history_stats_issues">%1$d sinhr.   ↑%2$d nosūt.   ↓%3$d saņemt.   ⚠ %4$d problēmas</string>
+    <string name="sync_history_failed">Kļūda</string>
+    <string name="ics_sync_every_hour">Katru stundu</string>
+    <string name="ics_sync_every_n_hours">Ik pēc %1$d stundām</string>
+    <string name="ics_sync_daily">Katru dienu</string>
+    <string name="ics_sync_weekly">Katru nedēļu</string>
+    <string name="ics_url_required">Nepieciešams URL</string>
+    <string name="ics_url_invalid_scheme">URL jāsākas ar http://, https:// vai webcal://</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Visu dienu)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
+
+    <!-- Widget and Channel strings -->
+    <string name="cd_widget_calendar">Kalendārs</string>
+    <string name="cd_widget_add_event">Pievienot notikumu</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">nav notikumu</string>
+    <string name="channel_event_reminders">Notikumu atgādinājumi</string>
+    <string name="channel_event_reminders_desc">Paziņojumi par gaidāmajiem kalendāra notikumiem</string>
+    <string name="channel_sync_progress">Sinhronizācijas progress</string>
+    <string name="channel_sync_progress_desc">Rāda progresu, sinhronizējot kalendārus</string>
+    <string name="channel_sync_status">Sinhronizācijas statuss</string>
+    <string name="channel_sync_status_desc">Paziņojumi par sinhronizācijas pabeigšanu un kļūdām</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">Neatkārtojas</string>
+    <string name="rrule_freq_daily">Katru dienu</string>
+    <string name="rrule_freq_weekly">Katru nedēļu</string>
+    <string name="rrule_freq_biweekly">Ik pēc divām nedēļām</string>
+    <string name="rrule_freq_monthly">Katru mēnesi</string>
+    <string name="rrule_freq_quarterly">Katru ceturksni</string>
+    <string name="rrule_freq_yearly">Katru gadu</string>
+    <string name="rrule_repeats">Atkārtojas</string>
+    <string name="rrule_every_n_days">Ik pēc %1$d dienām</string>
+    <string name="rrule_every_n_weeks">Ik pēc %1$d nedēļām</string>
+    <string name="rrule_every_n_months">Ik pēc %1$d mēnešiem</string>
+    <string name="rrule_every_n_years">Ik pēc %1$d gadiem</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s pēdējā dienā</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d. dienā</string>
+    <string name="rrule_ordinal_last">pēdējais</string>
+    <string name="rrule_until_suffix">, līdz %1$s</string>
+    <string name="rrule_freq_never">Nekad</string>
+    <string name="rrule_starting">%1$s sākot ar %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 kopš %2$s</string>
+
+    <!-- Recurrence count plural -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="zero">, %1$d reižu</item>
+        <item quantity="one">, %1$d reizi</item>
+        <item quantity="other">, %1$d reizes</item>
+    </plurals>
+
+</resources>

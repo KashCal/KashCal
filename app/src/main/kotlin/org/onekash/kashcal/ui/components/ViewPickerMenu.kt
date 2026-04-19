@@ -26,26 +26,37 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 
 internal data class ViewOption(
     val mode: ViewMode,
-    val label: String,
     val icon: ImageVector
 )
 
 internal val viewOptions = listOf(
-    ViewOption(ViewMode.MONTH, "Month", Icons.Default.CalendarMonth),
-    ViewOption(ViewMode.AGENDA, "Agenda", Icons.Default.ViewAgenda),
-    ViewOption(ViewMode.MONTH_FULL, "Month (Full)", Icons.Default.GridView),
-    ViewOption(ViewMode.THREE_DAYS, "3 Days", Icons.Default.ViewWeek),
-    ViewOption(ViewMode.WEEK, "Week", Icons.Default.DateRange),
-    ViewOption(ViewMode.YEAR, "Year", Icons.Default.CalendarViewMonth)
+    ViewOption(ViewMode.MONTH, Icons.Default.CalendarMonth),
+    ViewOption(ViewMode.AGENDA, Icons.Default.ViewAgenda),
+    ViewOption(ViewMode.MONTH_FULL, Icons.Default.GridView),
+    ViewOption(ViewMode.THREE_DAYS, Icons.Default.ViewWeek),
+    ViewOption(ViewMode.WEEK, Icons.Default.DateRange),
+    ViewOption(ViewMode.YEAR, Icons.Default.CalendarViewMonth)
 )
 
 internal fun iconForMode(mode: ViewMode): ImageVector =
     viewOptions.first { it.mode == mode }.icon
+
+@Composable
+internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
+    ViewMode.MONTH -> stringResource(R.string.view_month)
+    ViewMode.AGENDA -> stringResource(R.string.view_agenda)
+    ViewMode.MONTH_FULL -> stringResource(R.string.view_month_full)
+    ViewMode.THREE_DAYS -> stringResource(R.string.view_three_days)
+    ViewMode.WEEK -> stringResource(R.string.view_week)
+    ViewMode.YEAR -> stringResource(R.string.view_year)
+}
 
 /**
  * View mode button with dropdown menu.
@@ -66,7 +77,7 @@ fun ViewPickerButton(
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = iconForMode(currentView),
-                    contentDescription = "Calendar view",
+                    contentDescription = stringResource(R.string.cd_calendar_view),
                     modifier = Modifier.size(24.dp)
                 )
                 Icon(
@@ -88,7 +99,7 @@ fun ViewPickerButton(
             viewOptions.forEach { option ->
                 val isActive = currentView == option.mode
                 DropdownMenuItem(
-                    text = { Text(option.label) },
+                    text = { Text(viewModeLabel(option.mode)) },
                     onClick = {
                         expanded = false
                         onViewSelect(option.mode)
@@ -105,7 +116,7 @@ fun ViewPickerButton(
                         {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Active view",
+                                contentDescription = stringResource(R.string.cd_active_view),
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }

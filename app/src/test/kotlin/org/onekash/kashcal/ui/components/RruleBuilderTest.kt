@@ -3,6 +3,8 @@ package org.onekash.kashcal.ui.components
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import java.time.DayOfWeek
@@ -12,6 +14,7 @@ import java.time.DayOfWeek
  *
  * RFC 5545 RRULE format: "FREQ=frequency;...additional params"
  */
+@RunWith(RobolectricTestRunner::class)
 class RruleBuilderTest {
 
     // ========== Basic Frequency Tests ==========

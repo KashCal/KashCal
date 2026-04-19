@@ -12,8 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 /**
  * Section header for settings screens.
@@ -35,7 +37,22 @@ fun SectionHeader(title: String) {
 @Composable
 fun BetaBadge(modifier: Modifier = Modifier) {
     Text(
-        "Beta",
+        stringResource(R.string.badge_beta),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onTertiaryContainer,
+        modifier = modifier
+            .background(
+                MaterialTheme.colorScheme.tertiaryContainer,
+                RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
+    )
+}
+
+@Composable
+fun NewBadge(modifier: Modifier = Modifier) {
+    Text(
+        stringResource(R.string.badge_new),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onTertiaryContainer,
         modifier = modifier

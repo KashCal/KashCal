@@ -4,6 +4,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+internal fun isDotOnly(text: String): Boolean =
+    text.contains('.') && !text.contains('/') && !text.contains('-')
+
 class ParseContext(val reference: LocalDateTime) {
 
     // Date components (priority: absoluteDate > relativeDate > weekdayDate > dateKeywordDate)
@@ -16,8 +19,14 @@ class ParseContext(val reference: LocalDateTime) {
     var time: LocalTime? = null
     var endTime: LocalTime? = null
 
+    // End date (for multi-day events like "Friday to Sunday")
+    var endDate: LocalDate? = null
+
     // Location component
     var location: String? = null
+
+    // Timezone component
+    var timezone: String? = null
 
     // Recurrence component
     var rrule: String? = null
@@ -40,6 +49,13 @@ class ParseContext(val reference: LocalDateTime) {
     fun isConsumed(index: Int): Boolean = index in consumedIndices
 
     fun getConsumedIndices(): Set<Int> = consumedIndices.toSet()
+
+    fun findNextUnconsumed(tokens: List<*>, fromIndex: Int): Int? {
+        for (i in fromIndex until tokens.size) {
+            if (!isConsumed(i)) return i
+        }
+        return null
+    }
 
     fun resolveDate(): LocalDate {
         return absoluteDate

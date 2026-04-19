@@ -54,7 +54,9 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 // iCloud brand color
 private val iCloudBlue = Color(0xFF5AC8FA)
@@ -160,7 +162,7 @@ fun ICloudSignInSheet(
 
             // Title
             Text(
-                text = "Connect iCloud",
+                text = stringResource(R.string.signin_icloud_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -171,8 +173,8 @@ fun ICloudSignInSheet(
             OutlinedTextField(
                 value = appleId,
                 onValueChange = onAppleIdChange,
-                label = { Text("Apple ID") },
-                placeholder = { Text("email@icloud.com") },
+                label = { Text(stringResource(R.string.label_apple_id)) },
+                placeholder = { Text(stringResource(R.string.placeholder_email)) },
                 singleLine = true,
                 enabled = !isConnecting,
                 modifier = Modifier.fillMaxWidth(),
@@ -195,9 +197,9 @@ fun ICloudSignInSheet(
                     val cleaned = newValue.replace("-", "").take(16)
                     onPasswordChange(cleaned)
                 },
-                label = { Text("App-Specific Password") },
-                placeholder = { Text("xxxx-xxxx-xxxx-xxxx") },
-                supportingText = { Text("16 characters, dashes optional") },
+                label = { Text(stringResource(R.string.label_app_password)) },
+                placeholder = { Text(stringResource(R.string.placeholder_password)) },
+                supportingText = { Text(stringResource(R.string.label_password_hint)) },
                 singleLine = true,
                 enabled = !isConnecting,
                 modifier = Modifier.fillMaxWidth(),
@@ -217,7 +219,7 @@ fun ICloudSignInSheet(
                             } else {
                                 Icons.Filled.Visibility
                             },
-                            contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                            contentDescription = if (passwordVisible) stringResource(R.string.action_hide_password) else stringResource(R.string.action_show_password)
                         )
                     }
                 },
@@ -253,7 +255,7 @@ fun ICloudSignInSheet(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    "What's an app-specific password?",
+                    stringResource(R.string.signin_icloud_help_question),
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -278,20 +280,20 @@ fun ICloudSignInSheet(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
-                            "App-specific passwords let you sign in to third-party apps without sharing your main Apple ID password.",
+                            stringResource(R.string.help_app_password_description),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            "To create one:",
+                            stringResource(R.string.help_app_password_steps_header),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
-                        Text("1. Go to appleid.apple.com", style = MaterialTheme.typography.bodySmall)
-                        Text("2. Sign in with your Apple ID", style = MaterialTheme.typography.bodySmall)
-                        Text("3. Go to Sign-In and Security", style = MaterialTheme.typography.bodySmall)
-                        Text("4. Click App-Specific Passwords", style = MaterialTheme.typography.bodySmall)
-                        Text("5. Click Generate and copy here", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.help_app_password_step_1), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.help_app_password_step_2), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.help_app_password_step_3), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.help_app_password_step_4), style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.help_app_password_step_5), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -331,9 +333,9 @@ fun ICloudSignInSheet(
                         color = MaterialTheme.colorScheme.onPrimary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Connecting...", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.status_connecting), style = MaterialTheme.typography.titleMedium)
                 } else {
-                    Text("Sign In", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.action_sign_in), style = MaterialTheme.typography.titleMedium)
                 }
             }
 
@@ -344,7 +346,7 @@ fun ICloudSignInSheet(
                 onClick = onDismiss,
                 enabled = !isConnecting
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     }

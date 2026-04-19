@@ -22,11 +22,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.VerticalWheelPicker
 import org.onekash.kashcal.ui.shared.PresetChip
 import org.onekash.kashcal.ui.shared.componentsToMinutes
@@ -63,6 +66,7 @@ fun WheelDurationPicker(
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
+    val resources = LocalContext.current.resources
 
     // Decompose total minutes into wheel components
     // Round minutes to nearest 5 for wheel display (preserves original until user edits)
@@ -157,7 +161,7 @@ fun WheelDurationPicker(
 
             // "days" label
             Text(
-                text = "days",
+                text = stringResource(R.string.label_duration_days),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -187,7 +191,7 @@ fun WheelDurationPicker(
 
             // "hours" label
             Text(
-                text = "hrs",
+                text = stringResource(R.string.label_duration_hrs),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -217,7 +221,7 @@ fun WheelDurationPicker(
 
             // "min" label
             Text(
-                text = "min",
+                text = stringResource(R.string.label_duration_min),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -227,7 +231,7 @@ fun WheelDurationPicker(
 
         // Duration summary
         Text(
-            text = formatReminderDuration(currentTotal, isAllDay, use24Hour),
+            text = formatReminderDuration(currentTotal, isAllDay, use24Hour, resources),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
@@ -244,7 +248,7 @@ fun WheelDurationPicker(
             },
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Done")
+            Text(stringResource(R.string.action_done))
         }
     }
 }

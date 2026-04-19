@@ -76,7 +76,7 @@ fun RenameAccountSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text(stringResource(R.string.rename_account_cancel))
+                    Text(stringResource(R.string.action_cancel))
                 }
 
                 Button(
@@ -87,7 +87,7 @@ fun RenameAccountSheet(
                     modifier = Modifier.weight(1f),
                     enabled = name.trim().isNotEmpty()
                 ) {
-                    Text(stringResource(R.string.rename_account_save))
+                    Text(stringResource(R.string.action_save))
                 }
             }
         }

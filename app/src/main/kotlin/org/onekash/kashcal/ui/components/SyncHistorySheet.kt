@@ -45,16 +45,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.onekash.kashcal.R
 import org.onekash.kashcal.sync.session.SyncSession
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncStatus
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 /**
  * Simplified bottom sheet displaying sync session history.
@@ -90,7 +88,7 @@ fun SyncHistorySheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Sync History",
+                    text = stringResource(R.string.status_sync_history),
                     style = MaterialTheme.typography.titleLarge
                 )
 
@@ -100,12 +98,12 @@ fun SyncHistorySheet(
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                         clipboard.setPrimaryClip(ClipData.newPlainText("Sync History", text))
                     }) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy to clipboard")
+                        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.cd_copy_clipboard))
                     }
                     IconButton(onClick = {
                         syncSessionStore.clear()
                     }) {
-                        Icon(Icons.Default.Delete, contentDescription = "Clear history")
+                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.cd_clear_history))
                     }
                 }
             }
@@ -125,7 +123,7 @@ fun SyncHistorySheet(
             // Session List
             if (sessions.isEmpty()) {
                 Text(
-                    text = "No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.",
+                    text = stringResource(R.string.status_no_sync_sessions),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 32.dp)
@@ -174,13 +172,10 @@ private fun SyncSummaryLine(
         color = backgroundColor
     ) {
         Text(
-            text = buildString {
-                append("$totalSyncs syncs")
-                append("   ↑$totalPushed pushed")
-                append("   ↓$totalPulled pulled")
-                if (issueCount > 0) {
-                    append("   ⚠ $issueCount issues")
-                }
+            text = if (issueCount > 0) {
+                stringResource(R.string.sync_history_stats_issues, totalSyncs, totalPushed, totalPulled, issueCount)
+            } else {
+                stringResource(R.string.sync_history_stats, totalSyncs, totalPushed, totalPulled)
             },
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(12.dp)
@@ -261,7 +256,7 @@ private fun SyncSessionCard(session: SyncSession) {
 
             // Row 2: Fetched → changes summary
             Text(
-                text = buildChangeSummary(session),
+                text = buildChangeSummary(session, stringResource(R.string.sync_history_failed)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -269,7 +264,7 @@ private fun SyncSessionCard(session: SyncSession) {
             // Row 3 (optional): Parse failure warning
             if (session.hasParseFailures && !expanded) {
                 Text(
-                    text = "⚠ ${session.skippedParseError} failed to parse",
+                    text = stringResource(R.string.status_failed_to_parse, session.skippedParseError),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFFFFA000)
                 )
@@ -278,7 +273,7 @@ private fun SyncSessionCard(session: SyncSession) {
             // Row 4 (optional): Already-synced info
             if (session.hasAlreadySynced && !expanded) {
                 Text(
-                    text = "${session.skippedAlreadySynced} already synced",
+                    text = stringResource(R.string.sync_history_already_synced_count, session.skippedAlreadySynced),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -294,19 +289,19 @@ private fun SyncSessionCard(session: SyncSession) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    DetailRow("Duration", "${session.durationMs}ms")
+                    DetailRow(stringResource(R.string.sync_history_duration), "${session.durationMs}ms")
 
                     // Parse failure details
                     if (session.hasParseFailures) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Parse Failures",
+                            text = stringResource(R.string.status_parse_failures),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFA000)
                         )
-                        DetailRow("Events failed", session.skippedParseError.toString())
+                        DetailRow(stringResource(R.string.sync_history_events_failed), session.skippedParseError.toString())
                         if (session.abandonedParseErrors > 0) {
-                            DetailRow("Abandoned (max retries)", session.abandonedParseErrors.toString())
+                            DetailRow(stringResource(R.string.sync_history_abandoned_max_retries), session.abandonedParseErrors.toString())
                         }
                     }
 
@@ -314,18 +309,18 @@ private fun SyncSessionCard(session: SyncSession) {
                     if (session.hasAlreadySynced) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Already Synced",
+                            text = stringResource(R.string.status_already_synced),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        DetailRow("Events skipped", session.skippedAlreadySynced.toString())
+                        DetailRow(stringResource(R.string.sync_history_events_skipped), session.skippedAlreadySynced.toString())
                     }
 
                     // Warnings (silently handled issues)
                     if (session.hasWarnings) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Warnings",
+                            text = stringResource(R.string.status_warnings),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFFFA000)
                         )
@@ -343,7 +338,7 @@ private fun SyncSessionCard(session: SyncSession) {
                     if (session.errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Error",
+                            text = stringResource(R.string.status_error),
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFFE53935)
                         )
@@ -362,9 +357,10 @@ private fun SyncSessionCard(session: SyncSession) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
             ) {
+                val expandCollapseDescription = if (expanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand)
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    contentDescription = expandCollapseDescription,
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -377,10 +373,10 @@ private fun SyncSessionCard(session: SyncSession) {
  * Build the change summary line.
  * Format: "↑N   ↓ +Y ~Z -W" or error message
  */
-private fun buildChangeSummary(session: SyncSession): String {
+private fun buildChangeSummary(session: SyncSession, failedLabel: String = "Failed"): String {
     return when {
         session.status == SyncStatus.FAILED -> {
-            session.errorMessage ?: session.errorType?.name ?: "Failed"
+            session.errorMessage ?: session.errorType?.name ?: failedLabel
         }
         !session.hasAnyChanges -> {
             "↑ 0   ↓ 0"
@@ -423,16 +419,5 @@ private fun DetailRow(label: String, value: String) {
 }
 
 private fun formatRelativeTime(timestamp: Long): String {
-    val now = System.currentTimeMillis()
-    val diff = now - timestamp
-
-    return when {
-        diff < TimeUnit.MINUTES.toMillis(1) -> "just now"
-        diff < TimeUnit.HOURS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toMinutes(diff)}m ago"
-        diff < TimeUnit.DAYS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toHours(diff)}h ago"
-        else -> {
-            val sdf = SimpleDateFormat("MMM d, HH:mm", Locale.US)
-            sdf.format(Date(timestamp))
-        }
-    }
+    return org.onekash.kashcal.util.DateTimeUtils.formatRelativeTime(timestamp)
 }

@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.ui.components.CalendarSelectionMode
 import org.onekash.kashcal.ui.components.GroupedCalendarList
@@ -79,13 +81,13 @@ fun VisibleCalendarsSheet(
         ) {
             // Header with count
             Text(
-                "Visible Calendars",
+                stringResource(R.string.settings_visible_calendars),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
             Text(
-                "$visibleCount / $totalCount visible",
+                stringResource(R.string.label_visible_count, visibleCount, totalCount),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -105,7 +107,7 @@ fun VisibleCalendarsSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "No calendars available",
+                        stringResource(R.string.empty_no_calendars),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -169,13 +171,13 @@ fun DefaultCalendarSheet(
         ) {
             // Header
             Text(
-                "Default Calendar",
+                stringResource(R.string.settings_default_calendar),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
             )
 
             Text(
-                "New events will be created in this calendar",
+                stringResource(R.string.label_default_calendar_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
@@ -194,7 +196,7 @@ fun DefaultCalendarSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "No calendars available",
+                        stringResource(R.string.empty_no_calendars),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -243,7 +245,7 @@ fun DefaultCalendarSheet(
                                     color = MaterialTheme.colorScheme.outlineVariant
                                 )
                                 Text(
-                                    text = "Device Calendars",
+                                    text = stringResource(R.string.label_device_calendars),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier
@@ -341,7 +343,7 @@ private fun DefaultCalendarItem(
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )

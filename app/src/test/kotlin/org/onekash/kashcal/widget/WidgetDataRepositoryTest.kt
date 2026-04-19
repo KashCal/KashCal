@@ -46,7 +46,8 @@ class WidgetDataRepositoryTest {
     @Before
     fun setup() {
         displayEventRepository = mockk(relaxed = true)
-        repository = WidgetDataRepository(displayEventRepository)
+        val mockContext: android.content.Context = mockk(relaxed = true)
+        repository = WidgetDataRepository(mockContext, displayEventRepository)
     }
 
     // ========== Empty State Tests ==========

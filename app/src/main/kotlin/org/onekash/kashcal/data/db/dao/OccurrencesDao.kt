@@ -258,6 +258,20 @@ interface OccurrencesDao {
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 
     /**
+     * Find recurring master events with zero materialized occurrences.
+     */
+    @Query("""
+        SELECT e.id FROM events e
+        LEFT JOIN occurrences o ON e.id = o.event_id
+        WHERE e.rrule IS NOT NULL
+        AND e.original_event_id IS NULL
+        AND e.sync_status != 'PENDING_DELETE'
+        GROUP BY e.id
+        HAVING COUNT(o.id) = 0
+    """)
+    suspend fun getRecurringEventsWithNoOccurrences(): List<Long>
+
+    /**
      * Get occurrence at specific time for event.
      */
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId AND start_ts = :startTs")

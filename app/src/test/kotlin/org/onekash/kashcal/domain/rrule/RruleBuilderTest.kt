@@ -4,12 +4,15 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**
  * Unit tests for RruleBuilder.
  * Verifies RFC 5545 RRULE generation and parsing.
  */
+@RunWith(RobolectricTestRunner::class)
 class RruleBuilderTest {
 
     // ==================== Building RRULE Strings ====================

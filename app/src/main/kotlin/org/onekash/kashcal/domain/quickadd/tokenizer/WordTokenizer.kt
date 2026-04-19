@@ -17,7 +17,8 @@ object WordTokenizer {
         "2moro" to "tomorrow", "2morrow" to "tomorrow",
         "yesterday" to "yesterday", "yday" to "yesterday", "ystrday" to "yesterday",
         "day_before_yesterday" to "day_before_yesterday",
-        "day_after_tomorrow" to "day_after_tomorrow"
+        "day_after_tomorrow" to "day_after_tomorrow",
+        "all_day" to "ALL_DAY"
     )
 
     private val months = mapOf(
@@ -51,12 +52,19 @@ object WordTokenizer {
         "ago" to "AGO", "from" to "FROM",
         "next" to "NEXT", "this" to "THIS", "last" to "LAST",
         "now" to "NOW", "the" to "THE", "on" to "ON",
-        "for" to "FOR", "to" to "TO", "every" to "EVERY"
+        "for" to "FOR", "to" to "TO", "every" to "EVERY",
+        "quarter_past" to "QUARTER_PAST", "half_past" to "HALF_PAST", "quarter_to" to "QUARTER_TO",
+        "times" to "TIMES", "until" to "UNTIL"
     )
 
     private val timeKeywords = mapOf(
         "noon" to LocalTime.NOON,
-        "midnight" to LocalTime.MIDNIGHT
+        "midnight" to LocalTime.MIDNIGHT,
+        "morning" to LocalTime.of(8, 0),
+        "afternoon" to LocalTime.of(14, 0),
+        "evening" to LocalTime.of(18, 0),
+        "night" to LocalTime.of(20, 0),
+        "tonight" to LocalTime.of(20, 0)
     )
 
     private val recurrenceKeywords = mapOf(
@@ -70,6 +78,19 @@ object WordTokenizer {
 
     private val meridiems = setOf(
         "am", "pm", "a.m", "p.m", "a.m.", "p.m."
+    )
+
+    private val timezoneAbbreviations = mapOf(
+        "est" to "America/New_York",
+        "edt" to "America/New_York",
+        "cst" to "America/Chicago",
+        "cdt" to "America/Chicago",
+        "mst" to "America/Denver",
+        "mdt" to "America/Denver",
+        "pst" to "America/Los_Angeles",
+        "pdt" to "America/Los_Angeles",
+        "utc" to "UTC",
+        "gmt" to "GMT"
     )
 
     private val units = mapOf(
@@ -88,10 +109,10 @@ object WordTokenizer {
 
     // ==================== Regex Patterns ====================
 
-    // Time range: "2-3pm", "10:30-11:30am", "11pm-1am"
+    // Time range: "2-3pm", "10:30-11:30am", "3.15-4.30pm", "11pm-1am"
     // Must require meridiem on at least one side to disambiguate from structured dates
     private val timeRangeRegex = Regex(
-        """(\d{1,2})(?::(\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?::(\d{2}))?(am|pm|a\.m\.?|p\.m\.?)""",
+        """(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)""",
         RegexOption.IGNORE_CASE
     )
 
@@ -100,9 +121,10 @@ object WordTokenizer {
         """(\d{1,4})[/\-.](\d{1,2})(?:[/\-.](\d{1,4}))?"""
     )
 
-    // Time: "3pm", "3:30pm", "15:00", "3:30" — requires colon OR meridiem (bare "15" is not time)
+    // Time: "3pm", "3:30pm", "3.30pm", "15:00", "3:30" — requires colon/dot OR meridiem (bare "15" is not time)
+    // Alternation order: colon form | dot form (meridiem required) | meridiem-only form
     private val timeRegex = Regex(
-        """(\d{1,2})(?::(\d{2}))\s*(am|pm|a\.m\.?|p\.m\.?)?|(\d{1,2})\s*(am|pm|a\.m\.?|p\.m\.?)""",
+        """(\d{1,2})(?::(\d{2}))\s*(am|pm|a\.m\.?|p\.m\.?)?|(\d{1,2})\.(\d{2})\s*(am|pm|a\.m\.?|p\.m\.?)|(\d{1,2})\s*(am|pm|a\.m\.?|p\.m\.?)""",
         RegexOption.IGNORE_CASE
     )
 
@@ -160,6 +182,11 @@ object WordTokenizer {
         // 6. Meridiem (am, pm) — must check before units to avoid conflicts with "min"
         if (word in meridiems) {
             return Token(TokenType.MERIDIEM, word, word, originalText)
+        }
+
+        // 6a. Timezone abbreviations (EST, PST, UTC, etc.) — after meridiem, before recurrence
+        timezoneAbbreviations[word]?.let {
+            return Token(TokenType.TIMEZONE, word, it, originalText)
         }
 
         // 6b. Recurrence keywords (daily, weekly, etc.) — before units and general keywords
@@ -249,7 +276,7 @@ object WordTokenizer {
     }
 
     private fun parseTime(word: String, match: MatchResult, originalText: String = word): Token? {
-        // Two alternations: group 1-3 = colon form, group 4-5 = meridiem-only form
+        // Three alternations: group 1-3 = colon form, group 4-6 = dot form, group 7-8 = meridiem-only form
         val hour: Int
         val minute: Int
         val meridiem: String
@@ -259,11 +286,16 @@ object WordTokenizer {
             hour = match.groupValues[1].toIntOrNull() ?: return null
             minute = match.groupValues[2].toIntOrNull() ?: 0
             meridiem = match.groupValues[3].lowercase().replace(".", "")
+        } else if (match.groupValues[4].isNotEmpty()) {
+            // Dot form: "3.30pm" (meridiem required)
+            hour = match.groupValues[4].toIntOrNull() ?: return null
+            minute = match.groupValues[5].toIntOrNull() ?: 0
+            meridiem = match.groupValues[6].lowercase().replace(".", "")
         } else {
             // Meridiem-only form: "3pm"
-            hour = match.groupValues[4].toIntOrNull() ?: return null
+            hour = match.groupValues[7].toIntOrNull() ?: return null
             minute = 0
-            meridiem = match.groupValues[5].lowercase().replace(".", "")
+            meridiem = match.groupValues[8].lowercase().replace(".", "")
         }
 
         if (minute > 59) return null

@@ -2,7 +2,6 @@ package org.onekash.kashcal.util.text
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -375,71 +374,6 @@ class UrlUtilsTest {
     fun `cleanHtmlEntities - preserves normal text`() {
         val text = "Normal text without entities"
         assertEquals(text, cleanHtmlEntities(text))
-    }
-
-    // ========== Reminder Duration Formatting ==========
-
-    @Test
-    fun `formatDuration - formats minutes`() {
-        assertEquals("15 min before", formatDuration("-PT15M"))
-        assertEquals("30 min before", formatDuration("-PT30M"))
-        assertEquals("1 min before", formatDuration("-PT1M"))
-    }
-
-    @Test
-    fun `formatDuration - formats hours`() {
-        assertEquals("1 hour before", formatDuration("-PT1H"))
-        assertEquals("2 hours before", formatDuration("-PT2H"))
-    }
-
-    @Test
-    fun `formatDuration - formats days`() {
-        assertEquals("1 day before", formatDuration("-P1D"))
-        assertEquals("2 days before", formatDuration("-P2D"))
-        assertEquals("7 days before", formatDuration("-P7D"))
-    }
-
-    @Test
-    fun `formatDuration - formats combined durations`() {
-        assertEquals("1 hour 30 min before", formatDuration("-PT1H30M"))
-        assertEquals("1 day 2 hours before", formatDuration("-P1DT2H"))
-    }
-
-    @Test
-    fun `formatDuration - handles positive duration (after)`() {
-        assertEquals("30 min after", formatDuration("PT30M"))
-        assertEquals("1 hour after", formatDuration("PT1H"))
-    }
-
-    @Test
-    fun `formatDuration - handles zero duration`() {
-        assertEquals("At event time", formatDuration("PT0M"))
-        assertEquals("At event time", formatDuration("P0D"))
-    }
-
-    @Test
-    fun `formatDuration - returns null for invalid duration`() {
-        assertNull(formatDuration(""))
-        assertNull(formatDuration("invalid"))
-        assertNull(formatDuration("15 minutes"))
-    }
-
-    @Test
-    fun `formatRemindersForDisplay - formats list`() {
-        val reminders = listOf("-PT15M", "-P1D")
-        assertEquals("15 min before, 1 day before", formatRemindersForDisplay(reminders))
-    }
-
-    @Test
-    fun `formatRemindersForDisplay - returns null for empty`() {
-        assertNull(formatRemindersForDisplay(null))
-        assertNull(formatRemindersForDisplay(emptyList()))
-    }
-
-    @Test
-    fun `formatRemindersForDisplay - skips invalid entries`() {
-        val reminders = listOf("-PT15M", "invalid", "-PT1H")
-        assertEquals("15 min before, 1 hour before", formatRemindersForDisplay(reminders))
     }
 
     // ========== URL Without Protocol ==========

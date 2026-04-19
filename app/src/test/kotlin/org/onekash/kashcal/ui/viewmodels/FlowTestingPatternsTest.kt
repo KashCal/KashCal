@@ -23,7 +23,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.repository.AccountRepository
+import org.robolectric.RobolectricTestRunner
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -49,6 +51,7 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
  * Reference: https://developer.android.com/kotlin/flow/test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class FlowTestingPatternsTest {
 
     private val testDispatcher = StandardTestDispatcher()

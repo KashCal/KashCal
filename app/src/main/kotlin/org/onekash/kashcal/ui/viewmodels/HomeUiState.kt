@@ -125,10 +125,8 @@ data class HomeUiState(
     val searchQuery: String = "",
     /** Search results (Room + device events) with display timestamp */
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
-    /** Include past events in search */
-    val searchIncludePast: Boolean = false,
-    /** Date filter for search (Any time, Today, This Week, etc.) */
-    val searchDateFilter: DateFilter = DateFilter.AnyTime,
+    /** Date filter for search. Upcoming = future-only (default, no chip selected). AnyTime = include past. */
+    val searchDateFilter: DateFilter = DateFilter.Upcoming,
     /** Show search date picker bottom sheet */
     val showSearchDatePicker: Boolean = false,
     /**
@@ -211,10 +209,10 @@ data class HomeUiState(
     // === SYNC BANNER STATE ===
     /** Show sync progress banner */
     val showSyncBanner: Boolean = false,
-    /** Sync banner message */
-    val syncBannerMessage: String = "Syncing calendars...",
     /** Sync banner visual state (dots animation, check icon, warning icon) */
     val syncBannerState: SyncBannerState = SyncBannerState.Syncing,
+    /** Raw error detail for Failed state (Compose resolves the full message) */
+    val syncErrorDetail: String? = null,
 
     // === ERROR STATE ===
     /**
@@ -250,13 +248,13 @@ data class HomeUiState(
      * Format the current viewing month/year for display.
      */
     fun getMonthYearLabel(): String {
-        val monthNames = listOf(
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        )
-        // Safe access with bounds checking (viewingMonth should always be 0-11)
-        val monthName = monthNames.getOrElse(viewingMonth) { "Invalid" }
-        return "$monthName $viewingYear"
+        val cal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.YEAR, viewingYear)
+            set(java.util.Calendar.MONTH, viewingMonth)
+            set(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
+        val pattern = org.onekash.kashcal.util.DateTimeUtils.localizedPattern("yMMMM")
+        return java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(cal.time)
     }
 
     /**

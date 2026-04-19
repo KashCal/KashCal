@@ -7,6 +7,7 @@ import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.onekash.kashcal.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -50,10 +51,10 @@ class ReminderNotificationChannels @Inject constructor(
 
         val channel = NotificationChannel(
             CHANNEL_REMINDERS,
-            "Event Reminders",
+            context.getString(R.string.channel_event_reminders),
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Notifications for upcoming calendar events"
+            description = context.getString(R.string.channel_event_reminders_desc)
             setShowBadge(true)
             enableVibration(true)
             enableLights(true)

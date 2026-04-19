@@ -26,6 +26,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.model.CalendarGroup
 
@@ -69,7 +71,7 @@ fun GroupedCalendarList(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "No calendars available",
+                stringResource(R.string.empty_no_calendars),
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
@@ -197,7 +199,7 @@ private fun GroupedCalendarItem(
                 if (isSelected) {
                     Icon(
                         Icons.Default.Check,
-                        contentDescription = "Selected",
+                        contentDescription = stringResource(R.string.cd_selected),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(24.dp)
                     )

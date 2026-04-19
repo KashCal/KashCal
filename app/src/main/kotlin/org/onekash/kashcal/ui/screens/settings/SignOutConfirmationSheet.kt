@@ -15,7 +15,9 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 /**
  * Confirmation bottom sheet for signing out of iCloud.
@@ -75,13 +77,13 @@ fun GenericSignOutConfirmationSheet(
         ) {
             // Title
             Text(
-                "Sign Out of $providerName?",
+                stringResource(R.string.dialog_sign_out_title, providerName),
                 style = MaterialTheme.typography.titleLarge
             )
 
             // Description
             Text(
-                "You are signed in as $email. Signing out will remove synced calendars from this device.",
+                stringResource(R.string.dialog_sign_out_message, email),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -98,7 +100,7 @@ fun GenericSignOutConfirmationSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
 
                 // Sign Out button (destructive)
@@ -112,7 +114,7 @@ fun GenericSignOutConfirmationSheet(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Sign Out")
+                    Text(stringResource(R.string.action_sign_out))
                 }
             }
         }

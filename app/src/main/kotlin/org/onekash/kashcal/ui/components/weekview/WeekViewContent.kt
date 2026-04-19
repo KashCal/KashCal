@@ -72,6 +72,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -745,7 +747,7 @@ private fun DayHeaderCell(
                         if (isToday) {
                             Modifier
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
+                                .background(MaterialTheme.colorScheme.inverseSurface)
                                 .padding(horizontal = 4.dp, vertical = 1.dp)
                         } else {
                             Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
@@ -757,7 +759,7 @@ private fun DayHeaderCell(
                     text = dayNumber,
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                    color = if (isToday) MaterialTheme.colorScheme.inverseOnSurface else textColor,
                     textAlign = TextAlign.Center
                 )
             }
@@ -783,7 +785,7 @@ private fun DayHeaderCell(
                         if (isToday) {
                             Modifier
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primary)
+                                .background(MaterialTheme.colorScheme.inverseSurface)
                                 .padding(horizontal = 6.dp, vertical = 2.dp)
                         } else {
                             Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -795,7 +797,7 @@ private fun DayHeaderCell(
                     text = dayNumber,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                    color = if (isToday) MaterialTheme.colorScheme.inverseOnSurface else textColor,
                     textAlign = TextAlign.Center
                 )
             }
@@ -836,7 +838,7 @@ private fun AllDayEventsPagerRow(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "All day",
+                text = stringResource(R.string.label_all_day),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -891,7 +893,7 @@ private fun CompactEventCell(
 
         if (events.size > 1) {
             Text(
-                text = "+${events.size - 1} more",
+                text = stringResource(R.string.status_more_events, events.size - 1),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.primary,
@@ -1109,7 +1111,7 @@ fun EmptyWeekView(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "No events this week",
+            text = stringResource(R.string.status_no_events_week),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

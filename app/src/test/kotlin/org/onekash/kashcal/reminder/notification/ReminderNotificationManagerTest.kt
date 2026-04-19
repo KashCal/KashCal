@@ -389,6 +389,28 @@ class ReminderNotificationManagerTest {
         )
     }
 
+    // ==================== setWhen Rounding Offset Tests ====================
+
+    @Test
+    fun `buildNotification sets when to occurrenceTime plus 30s rounding offset`() = runBlocking {
+        val occurrenceTime = System.currentTimeMillis() + 900_000L
+
+        val reminder = createTestReminder(
+            id = 1L,
+            eventId = 100L,
+            eventTitle = "Test Meeting",
+            occurrenceTime = occurrenceTime
+        )
+
+        val notification = manager.buildNotification(reminder)
+
+        assertEquals(
+            "setWhen should include 30s rounding offset to convert Android's floor to round",
+            occurrenceTime + 30_000L,
+            notification.`when`
+        )
+    }
+
     // ==================== Time Formatting Tests ====================
 
     @Test

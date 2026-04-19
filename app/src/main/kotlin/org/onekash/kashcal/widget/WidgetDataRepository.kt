@@ -1,5 +1,7 @@
 package org.onekash.kashcal.widget
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
@@ -19,6 +21,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class WidgetDataRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val displayEventRepository: DisplayEventRepository
 ) {
     /**
@@ -33,7 +36,8 @@ class WidgetDataRepository @Inject constructor(
         val isAllDay: Boolean,
         val calendarColor: Int,
         val isPast: Boolean,
-        val isDeviceEvent: Boolean
+        val isDeviceEvent: Boolean,
+        val startDay: Int
     )
 
     /**
@@ -115,7 +119,7 @@ class WidgetDataRepository @Inject constructor(
             occurrenceStartTs = displayEvent.startTs,
             title = when (displayEvent) {
                 is DisplayEvent.Room -> ContactEventTitleFormatter.format(
-                    displayEvent.event, displayEvent.startTs
+                    displayEvent.event, displayEvent.startTs, context.resources
                 )
                 is DisplayEvent.Device -> displayEvent.title
             },
@@ -124,7 +128,8 @@ class WidgetDataRepository @Inject constructor(
             isAllDay = displayEvent.isAllDay,
             calendarColor = displayEvent.calendarColor.takeIf { it != 0 } ?: DEFAULT_CALENDAR_COLOR,
             isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay),
-            isDeviceEvent = displayEvent is DisplayEvent.Device
+            isDeviceEvent = displayEvent is DisplayEvent.Device,
+            startDay = displayEvent.startDay
         )
     }
 

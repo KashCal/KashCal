@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -171,7 +172,7 @@ fun AccountDetailSheet(
                         stringResource(R.string.account_detail_discovering)
                     is AccountDetailDiscoverStatus.Done -> {
                         if (discoverStatus.newCount > 0) {
-                            stringResource(R.string.account_detail_calendar_count_new, discoverStatus.totalCount, discoverStatus.newCount)
+                            pluralStringResource(R.plurals.account_detail_calendar_count_new, discoverStatus.totalCount, discoverStatus.totalCount, discoverStatus.newCount)
                         } else {
                             formatCalendarCount(account.calendarCount)
                         }
@@ -269,11 +270,7 @@ fun AccountDetailSheet(
  */
 @Composable
 private fun formatCalendarCount(count: Int): String {
-    return if (count == 1) {
-        stringResource(R.string.account_detail_calendar_count_one)
-    } else {
-        stringResource(R.string.account_detail_calendar_count_other, count)
-    }
+    return pluralStringResource(R.plurals.account_detail_calendar_count, count, count)
 }
 
 /**
@@ -329,11 +326,7 @@ private fun SyncStatusRow(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = if (consecutiveSyncFailures == 1) {
-                            stringResource(R.string.account_detail_failure_one, consecutiveSyncFailures)
-                        } else {
-                            stringResource(R.string.account_detail_failure_other, consecutiveSyncFailures)
-                        },
+                        text = pluralStringResource(R.plurals.account_detail_failure, consecutiveSyncFailures, consecutiveSyncFailures),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.error
                     )

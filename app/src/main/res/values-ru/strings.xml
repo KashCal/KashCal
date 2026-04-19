@@ -1,0 +1,915 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Повестка дня</string>
+    <string name="widget_description">Показывает события на сегодня</string>
+    <string name="week_widget_name">Неделя</string>
+    <string name="week_widget_description">Показывает события на ближайшие 7 дней</string>
+    <string name="month_widget_name">Месяц</string>
+    <string name="month_widget_description">Показывает сетку месяца с точками событий</string>
+    <string name="date_widget_name">Дата</string>
+    <string name="date_widget_description">Показывает сегодняшнюю дату как значок</string>
+    <string name="widget_no_events_today">Нет событий на сегодня</string>
+    <string name="widget_add_event">+ Добавить событие</string>
+    <string name="widget_no_events">Нет событий</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Новое событие</string>
+    <string name="shortcut_new_event_long">Создать новое событие</string>
+    <string name="shortcut_today">Сегодня</string>
+    <string name="shortcut_today_long">Перейти к сегодня</string>
+    <string name="shortcut_search">Поиск</string>
+    <string name="shortcut_search_long">Поиск событий</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Повторить</string>
+    <string name="action_try_again">Попробовать снова</string>
+    <string name="action_cancel">Отмена</string>
+    <string name="action_close">Закрыть</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Не сейчас</string>
+    <string name="action_sign_in">Войти</string>
+    <string name="action_select">Выбрать</string>
+    <string name="action_show_password">Показать пароль</string>
+    <string name="action_hide_password">Скрыть пароль</string>
+    <string name="action_sign_out">Выйти</string>
+    <string name="action_learn_more">Подробнее</string>
+    <string name="action_open_apple_id">Открыть Apple ID</string>
+    <string name="action_open_settings">Открыть настройки</string>
+    <string name="action_force_sync">Принудительная синхронизация</string>
+    <string name="action_sync_now">Синхронизировать</string>
+    <string name="action_details">Подробности</string>
+    <string name="action_set_up">Настроить</string>
+    <string name="action_report_issue">Сообщить о проблеме</string>
+    <string name="action_view">Просмотр</string>
+    <string name="action_enable">Включить</string>
+    <string name="action_done">Готово</string>
+    <string name="action_save">Сохранить</string>
+    <string name="action_add">Добавить</string>
+    <string name="action_edit">Изменить</string>
+    <string name="action_delete">Удалить</string>
+    <string name="action_confirm">Подтвердить</string>
+    <string name="action_discard">Отклонить</string>
+    <string name="action_dismiss">Закрыть</string>
+    <string name="action_show_all">Показать все</string>
+    <string name="action_connect">Подключить</string>
+    <string name="action_duplicate">Дублировать</string>
+    <string name="action_share">Поделиться</string>
+    <string name="action_export_ics">Экспорт в .ics</string>
+    <string name="action_confirm_delete">Подтвердить удаление</string>
+    <string name="action_delete_event">Удалить событие</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Только это</string>
+    <string name="recurring_this_and_future">Это и все будущие</string>
+    <string name="recurring_just_occurrence">Только это повторение</string>
+    <string name="recurring_all_occurrences">Все повторения</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Название события</string>
+    <string name="label_location">Место</string>
+    <string name="label_location_hint">Адрес, комната или ссылка на встречу</string>
+    <string name="label_notes">Заметки</string>
+    <string name="label_starts">Начало</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Пароль приложения</string>
+    <string name="label_password_hint">16 символов, дефисы необязательны</string>
+    <string name="label_calendar_url">URL календаря</string>
+    <string name="label_calendar_name">Название календаря</string>
+    <string name="label_name">Название</string>
+    <string name="label_hex_color">Hex-цвет</string>
+    <string name="label_enter_hex">Введите 6 hex-символов (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Все</string>
+    <string name="view_week">Неделя</string>
+    <string name="view_month">Месяц</string>
+    <string name="label_all_day">Весь день</string>
+    <string name="label_today">Сегодня</string>
+    <string name="label_go_to_date">Перейти к дате</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_time_format">Формат времени</string>
+    <string name="settings_start_week_on">Начало недели</string>
+    <string name="settings_event_emojis">Эмодзи событий</string>
+    <string name="settings_emoji_subtitle">Показывать эмодзи по названию события</string>
+    <string name="settings_force_sync">Полная синхронизация</string>
+    <string name="settings_force_sync_subtitle">Загрузить все данные заново</string>
+    <string name="settings_sync_history">История синхронизации</string>
+    <string name="settings_sync_history_subtitle">Показать сеансы синхронизации (за 48 часов)</string>
+    <string name="settings_import_subtitle">Импортировать файл .ics</string>
+    <string name="settings_export_subtitle">Сохранить в файл .ics</string>
+    <string name="settings_birthday_reminder">Напоминание о дне рождения</string>
+    <string name="settings_use_device_timezone">Часовой пояс устройства</string>
+    <string name="settings_section_my_calendars">Мои календари</string>
+    <string name="settings_section_display">Оформление</string>
+    <string name="settings_section_notifications">Уведомления</string>
+    <string name="settings_section_sync">Синхронизация</string>
+    <string name="settings_section_data">Данные</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Календарь Apple?</string>
+    <string name="onboarding_got_you">Поможем разобраться.</string>
+    <string name="onboarding_connect_prompt">Подключите iCloud, чтобы видеть свои события здесь</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Подключить iCloud</string>
+    <string name="signin_caldav_title">Добавить учётную запись CalDAV</string>
+    <string name="signin_connected_to">Подключено к %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Новое событие</string>
+    <string name="dialog_edit_event_title">Редактирование события</string>
+    <string name="dialog_force_sync_title">Полная синхронизация?</string>
+    <string name="dialog_force_sync_message">Все данные будут загружены с сервера заново. Локальные изменения сохранятся.</string>
+    <string name="dialog_enable_notifications">Включить уведомления?</string>
+    <string name="dialog_delete_title">Удалить «%1$s»</string>
+    <string name="dialog_edit_title">Изменить «%1$s»</string>
+    <string name="dialog_action_required">Это действие необходимо для продолжения.</string>
+    <string name="dialog_add_to_calendar">Добавить в календарь</string>
+    <string name="dialog_select_calendar">Выбрать календарь</string>
+    <string name="dialog_choose_color">Выбрать цвет</string>
+    <string name="dialog_add_subscription">Добавить подписку</string>
+    <string name="dialog_edit_subscription">Изменить подписку</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Нет событий на этой неделе</string>
+    <string name="status_more_events">+%1$d ещё</string>
+    <string name="status_no_sync_sessions">Нет сеансов синхронизации.\n\nПотяните вниз на экране календаря, чтобы запустить синхронизацию.</string>
+    <string name="status_no_writable_calendars">Нет доступных для записи календарей</string>
+    <string name="status_events_count">Событий: %1$d</string>
+    <string name="status_sync_changes">Изменения синхронизации</string>
+    <string name="status_sync_history">История синхронизации</string>
+    <string name="status_parse_failures">Ошибки разбора</string>
+    <string name="status_error">Ошибка</string>
+    <string name="status_failed_to_parse">⚠ Не удалось разобрать: %1$d</string>
+    <string name="status_built_with_love">Сделано с любовью</string>
+    <string name="status_in_austin">в Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Синхронизация завершена</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Ошибка входа</string>
+    <string name="error_auth_invalid_credentials">Неверный Apple ID или пароль приложения. Проверьте данные и попробуйте снова.</string>
+    <string name="error_auth_app_specific_password_required">iCloud требует пароль приложения. Обычный пароль Apple ID не подойдёт.</string>
+    <string name="error_auth_session_expired_title">Сессия истекла</string>
+    <string name="error_auth_session_expired">Сессия iCloud истекла. Войдите снова для продолжения синхронизации.</string>
+    <string name="error_auth_account_locked">Apple ID заблокирован. Перейдите на appleid.apple.com для разблокировки.</string>
+
+    <string name="error_network_offline">Нет сети. Изменения синхронизируются при подключении.</string>
+    <string name="error_network_timeout">Время ожидания истекло. Проверьте интернет и попробуйте снова.</string>
+    <string name="error_network_ssl">Ошибка безопасного соединения. Проверьте настройки сети.</string>
+    <string name="error_network_unknown_host">Не удалось подключиться к iCloud. Проверьте интернет-соединение.</string>
+    <string name="error_network_connection_failed">Ошибка подключения. Попробуйте снова.</string>
+
+    <string name="error_server_unavailable">iCloud временно недоступен. Попробуйте позже.</string>
+    <string name="error_server_rate_limited">Слишком много запросов. Подождите немного и попробуйте снова.</string>
+    <string name="error_server_forbidden">Доступ запрещён. Возможно, у вас нет прав на этот календарь.</string>
+    <string name="error_server_not_found">Запрошенный элемент не найден на сервере.</string>
+    <string name="error_conflict_title">Конфликт синхронизации</string>
+    <string name="error_conflict_generic">Это событие было изменено на другом устройстве. Выполните полную синхронизацию для получения актуальной версии.</string>
+    <string name="error_conflict_with_event">«%1$s» было изменено на другом устройстве. Выполните полную синхронизацию для получения актуальной версии.</string>
+    <string name="error_sync_token_expired">Данные синхронизации устарели. Выполняется полная синхронизация…</string>
+
+    <string name="error_event_not_found">Событие не найдено.</string>
+    <string name="error_calendar_not_found">Календарь не найден.</string>
+    <string name="error_calendar_read_only">Нельзя изменять события в «%1$s» (календарь только для чтения).</string>
+    <string name="error_event_invalid_data">Неверные данные события. Проверьте время начала и окончания.</string>
+    <string name="error_event_invalid_recurrence">Неверный шаблон повторения.</string>
+
+    <string name="error_display_name_exists">Учётная запись «%1$s» уже существует.</string>
+
+    <string name="error_import_file_not_found">Файл не найден или не может быть прочитан.</string>
+    <string name="error_import_invalid_format">Неверный формат файла календаря.</string>
+    <string name="error_import_partial">Импортировано событий: %1$d, ошибок: %2$d.</string>
+    <string name="error_export_failed">Не удалось экспортировать события.</string>
+    <string name="error_export_no_events">Нет событий для экспорта.</string>
+    <string name="error_end_before_start">Время окончания должно быть позже времени начала</string>
+
+    <string name="error_storage_full_title">Хранилище заполнено</string>
+    <string name="error_storage_full">Недостаточно места. Освободите место и попробуйте снова.</string>
+    <string name="error_database_corruption_title">Ошибка данных</string>
+    <string name="error_database_corruption">Данные календаря могут быть повреждены. Обратитесь в поддержку.</string>
+    <string name="error_migration_title">Ошибка обновления</string>
+    <string name="error_migration_failed">Не удалось обновить данные. Переустановите приложение.</string>
+
+    <string name="error_permission_notification_title">Включить уведомления?</string>
+    <string name="error_permission_notification">KashCal нужно разрешение на уведомления для напоминаний о событиях.</string>
+    <string name="error_permission_alarm_title">Разрешить точные будильники?</string>
+    <string name="error_permission_alarm">KashCal нужно разрешение на точные будильники для своевременных напоминаний.</string>
+    <string name="error_permission_storage">Для импорта/экспорта требуется разрешение на доступ к хранилищу.</string>
+
+    <string name="error_device_calendar_title">Ошибка календаря</string>
+    <string name="error_device_calendar_write_failed">Не удалось сохранить в календарь устройства. Попробуйте снова.</string>
+    <string name="error_device_calendar_permission">Требуется разрешение на запись в календарь. Предоставьте доступ в настройках.</string>
+    <string name="error_device_calendar_not_found">Календарь не найден. Возможно, он был удалён.</string>
+    <string name="error_device_event_not_found">Событие не найдено. Возможно, оно было удалено.</string>
+    <string name="error_device_calendar_read_only">Этот календарь доступен только для чтения.</string>
+
+    <string name="error_sync_no_accounts">Учётная запись iCloud не настроена. Настройте iCloud для синхронизации календарей.</string>
+    <string name="error_sync_partial">Синхронизировано календарей: %1$d, ошибок: %2$d.</string>
+
+    <string name="error_unknown">Что-то пошло не так. Попробуйте снова.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Выбрано</string>
+    <string name="cd_back">Назад</string>
+    <string name="cd_close">Закрыть</string>
+    <string name="cd_search">Поиск</string>
+    <string name="cd_create_event">Создать событие</string>
+    <string name="cd_settings">Настройки</string>
+    <string name="cd_today">Сегодня</string>
+    <string name="cd_previous_week">Предыдущая неделя</string>
+    <string name="cd_next_week">Следующая неделя</string>
+    <string name="cd_delete">Удалить</string>
+    <string name="cd_refresh">Обновить</string>
+    <string name="cd_more_options">Дополнительные параметры</string>
+    <string name="cd_duplicate">Дублировать</string>
+    <string name="cd_share">Поделиться</string>
+    <string name="cd_export_ics">Экспорт в ICS</string>
+    <string name="cd_open_link">Открыть ссылку</string>
+    <string name="cd_open_maps">Открыть в картах</string>
+    <string name="cd_copy_clipboard">Копировать в буфер обмена</string>
+    <string name="cd_clear_history">Очистить историю</string>
+    <string name="cd_recurring">Повторяющееся</string>
+    <string name="cd_enabled">Включено</string>
+    <string name="cd_sync_error">Ошибка синхронизации</string>
+    <string name="cd_select_option">Выбрать вариант</string>
+    <string name="cd_select_label">Выбрать %1$s</string>
+    <string name="cd_wheel_picker">Колёсико выбора, вариантов: %1$d</string>
+    <string name="cd_version_info">KashCal версия %1$s. Долгое нажатие для отладки.</string>
+    <string name="cd_color_slider">Ползунок цвета, сейчас %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d градусов</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Календарь</string>
+    <string name="label_color">Цвет:</string>
+    <string name="label_repeat">Повторение</string>
+    <string name="label_sync_interval">Интервал синхронизации:</string>
+    <string name="label_scheduled_events">Запланированные события</string>
+    <string name="label_all_day_events">События на весь день</string>
+    <string name="label_server_url">URL сервера</string>
+    <string name="label_username">Имя пользователя</string>
+    <string name="label_password">Пароль</string>
+    <string name="label_display_name_optional">Отображаемое имя (необязательно)</string>
+
+    <string name="placeholder_search_events">Поиск событий…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">По умолчанию используется https://</string>
+    <string name="hint_name_shown_in_settings">Имя, отображаемое в настройках</string>
+    <string name="caldav_trust_insecure_subtitle">Для самоподписанных сертификатов или локальных HTTP-серверов</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">После</string>
+    <string name="label_recurrence_occurrences">повторений</string>
+    <string name="label_recurrence_on_date">До даты</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Видимые календари</string>
+    <string name="settings_default_calendar">Календарь по умолчанию</string>
+    <string name="settings_default_event_length">Длительность события по умолчанию</string>
+    <string name="settings_default_alerts">Напоминания по умолчанию</string>
+    <string name="settings_notifications">Уведомления</string>
+    <string name="settings_new_events">Новые события</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Системный</string>
+    <string name="option_12_hour">12-часовой</string>
+    <string name="option_24_hour">24-часовой</string>
+    <string name="option_sunday">Воскресенье</string>
+    <string name="option_monday">Понедельник</string>
+    <string name="option_saturday">Суббота</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Событий не найдено</string>
+    <string name="empty_no_upcoming_events">Нет предстоящих событий</string>
+    <string name="empty_no_calendars">Нет доступных календарей</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Подключение…</string>
+    <string name="status_fetching">Загрузка…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Загрузить календарь</string>
+    <string name="action_import_from_file">Импорт из файла</string>
+    <string name="action_export_local_calendar">Экспорт локального календаря</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Пароли приложений позволяют входить в сторонние приложения, не раскрывая основной пароль Apple ID.</string>
+    <string name="help_app_password_steps_header">Чтобы создать пароль:</string>
+    <string name="help_app_password_step_1">1. Перейдите на appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Войдите с помощью Apple ID</string>
+    <string name="help_app_password_step_3">3. Откройте раздел «Вход и безопасность»</string>
+    <string name="help_app_password_step_4">4. Нажмите «Пароли приложений»</string>
+    <string name="help_app_password_step_5">5. Нажмите «Создать» и скопируйте пароль сюда</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal нужно разрешение на уведомления для напоминаний о событиях.</string>
+    <string name="dialog_notification_permission_settings_hint">Это можно изменить позже в настройках.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Учётные записи</string>
+    <string name="accounts_section_connected">Подключённые</string>
+    <string name="accounts_section_add">Добавить учётную запись</string>
+    <string name="accounts_empty_title">Нет подключённых учётных записей</string>
+    <string name="accounts_empty_subtitle">Добавьте учётную запись для синхронизации календарей между устройствами</string>
+    <string name="accounts_row_label">iCloud, Nextcloud и другие</string>
+    <string name="accounts_add_icloud">Добавить iCloud</string>
+    <string name="accounts_add_caldav">Добавить CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail и другие</string>
+    <string name="accounts_caldav_help_title">Что такое CalDAV?</string>
+    <string name="accounts_caldav_help_description">CalDAV — открытый стандарт синхронизации календарей. Поддерживается:</string>
+    <string name="accounts_caldav_help_more">и другими</string>
+    <string name="accounts_calendars_syncing">Синхронизация…</string>
+    <string name="accounts_cd_icloud_icon">Учётная запись iCloud</string>
+    <string name="accounts_cd_caldav_icon">Учётная запись CalDAV</string>
+    <string name="accounts_cd_back">Назад</string>
+    <string name="accounts_sync_issue">Проблема синхронизации</string>
+    <string name="accounts_cd_sync_warning">Предупреждение синхронизации</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Подписки</string>
+    <string name="subscriptions_section_ics_calendars">Календари ICS</string>
+    <string name="subscriptions_section_add">Добавить</string>
+    <string name="subscriptions_empty_ics">Нет подписок ICS</string>
+    <string name="subscriptions_empty_ics_hint">Добавьте ленту календаря для просмотра событий</string>
+    <string name="subscriptions_add_ics">Добавить календарь ICS</string>
+    <string name="subscriptions_row_label">Праздники, школа и другое</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Дни рождения и годовщины</string>
+    <string name="birthdays_section_title">Дни рождения</string>
+    <string name="anniversaries_section_title">Годовщины</string>
+    <string name="settings_contact_birthdays">Дни рождения из контактов</string>
+    <string name="settings_contact_birthdays_description">Показывать дни рождения из контактов как события на весь день.</string>
+    <string name="settings_contact_anniversaries">Годовщины из контактов</string>
+    <string name="settings_contact_anniversaries_description">Показывать годовщины из контактов как события на весь день.</string>
+    <string name="settings_anniversary_reminder">Напоминание о годовщине</string>
+    <string name="settings_calendar_color">Цвет календаря</string>
+    <string name="settings_default_reminder">Напоминание по умолчанию</string>
+    <string name="action_change">Изменить</string>
+    <string name="settings_contacts_footer">Данные берутся из контактов устройства. Требуется разрешение на доступ к контактам.</string>
+    <string name="settings_contacts_permission_required">Требуется разрешение на доступ к контактам</string>
+    <string name="subscriptions_cd_back">Назад</string>
+    <string name="subscriptions_cd_add">Добавить подписку</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">СИНХРОНИЗАЦИЯ</string>
+    <string name="account_detail_section_calendars">КАЛЕНДАРИ</string>
+    <string name="account_detail_section_account">УЧЁТНАЯ ЗАПИСЬ</string>
+    <string name="account_detail_enabled">Включено</string>
+    <string name="account_detail_enabled_subtitle">Автоматическая синхронизация</string>
+    <string name="account_detail_sync_now">Синхронизировать</string>
+    <string name="account_detail_syncing">Синхронизация…</string>
+    <string name="account_detail_discovering">Обнаружение…</string>
+    <string name="account_detail_discover_calendars">Найти новые календари</string>
+    <string name="account_detail_change_password">Изменить пароль</string>
+    <string name="account_detail_sign_out">Выйти</string>
+    <string name="account_detail_never_synced">Не синхронизировано</string>
+    <string name="account_detail_last_success">Последняя синхронизация: %1$s</string>
+    <string name="account_detail_cd_rename">Переименовать</string>
+    <string name="account_detail_cd_show_password">Показать пароль</string>
+    <string name="account_detail_cd_hide_password">Скрыть пароль</string>
+
+    <string name="sync_failure_notification_title">Проблема синхронизации с %1$s</string>
+    <string name="sync_failure_notification_text">Синхронизация не удалась %1$d раз</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Переименовать учётную запись</string>
+    <string name="rename_account_label">Название учётной записи</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Изменить пароль</string>
+    <string name="change_password_label_icloud">Пароль приложения</string>
+    <string name="change_password_label_default">Пароль</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Календари устройства</string>
+    <string name="settings_quick_event_add">Быстрое добавление</string>
+    <string name="settings_week_numbers">Номера недель</string>
+    <string name="settings_widget_event_limit">Лимит событий в виджете</string>
+    <string name="settings_sync_lookback">Глубина синхронизации</string>
+    <string name="settings_auto_detect_emojis">Автоопределение эмодзи</string>
+    <string name="settings_events_per_day">Событий в день</string>
+    <string name="settings_not_set">Не задано</string>
+    <string name="settings_on">Вкл.</string>
+    <string name="settings_off">Выкл.</string>
+    <string name="settings_tap_to_enable">Нажмите для включения</string>
+    <string name="settings_device_calendars_enabled">Включено: %1$d</string>
+    <string name="settings_per_day">%1$d в день</string>
+    <string name="signin_icloud_help_question">Что такое пароль приложения?</string>
+    <string name="caldav_trust_insecure_label">Разрешить небезопасное соединение</string>
+    <string name="action_add_another">Добавить ещё</string>
+    <string name="account_connected_found_calendars">Найдено календарей: %1$d для %2$s.</string>
+    <string name="account_connected_syncing_hint">Идёт синхронизация — события скоро появятся.</string>
+    <string name="settings_time_format_currently_24h">Сейчас: 24-часовой (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Сейчас: 12-часовой (%1$s)</string>
+    <string name="settings_time_format_example">Пример: %1$s</string>
+    <string name="settings_system_default_with_value">Системный (%1$s)</string>
+    <string name="alert_none">Нет</string>
+    <string name="cd_collapse">Свернуть</string>
+    <string name="cd_expand">Развернуть</string>
+    <string name="cd_hide_calendar">Скрыть календарь</string>
+    <string name="cd_show_calendar">Показать календарь</string>
+    <string name="cd_pick_month_year">Выбрать месяц и год</string>
+    <string name="cd_previous_month">Предыдущий месяц</string>
+    <string name="cd_next_month">Следующий месяц</string>
+    <string name="cd_month_year_picker">Выбор месяца и года</string>
+    <string name="cd_remove_alert">Удалить напоминание</string>
+    <string name="cd_warning">Предупреждение</string>
+    <string name="cd_refresh_calendars">Обновить календари</string>
+    <string name="cd_timezone_tap_to_change">Часовой пояс: %1$s, нажмите для изменения</string>
+    <string name="cd_day_events">День %1$d, событий: %2$d</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Частота</string>
+    <string name="label_on_days">По дням</string>
+    <string name="label_pattern">Шаблон</string>
+    <string name="label_ends">Заканчивается</string>
+    <string name="label_alerts">Напоминания</string>
+    <string name="label_add_alert">Добавить напоминание</string>
+    <string name="label_recurrence_never">Никогда</string>
+    <string name="label_tomorrow">Завтра</string>
+    <string name="label_yesterday">Вчера</string>
+    <string name="label_device_calendars">Календари устройства</string>
+    <string name="label_default_calendar_hint">Новые события создаются в этом календаре</string>
+    <string name="label_visible_count">%1$d / %2$d видимых</string>
+    <string name="label_enabled_count">%1$d / %2$d включено</string>
+    <string name="label_reminders_truncated">%1$d не показано (%2$d всего, макс. %3$d редактируемых)</string>
+    <string name="label_found_events">Найдено: %1$d событий</string>
+    <string name="label_open_debug_menu">Открыть меню отладки</string>
+    <string name="placeholder_search">Поиск\u2026</string>
+    <string name="status_sync_paused">Синхронизация приостановлена</string>
+    <string name="status_not_synced">Не синхронизировано</string>
+    <string name="status_sync_error">Ошибка синхронизации</string>
+    <string name="status_minutes_ago">%1$d мин. назад</string>
+    <string name="status_hours_ago">%1$d ч. назад</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Показать события из других календарных приложений на устройстве.</string>
+    <string name="device_calendars_permission_required">Требуется разрешение на доступ к календарю. Нажмите «Включить» для предоставления доступа.</string>
+    <string name="device_calendars_read_only_access">Только чтение</string>
+    <string name="device_calendars_grant_write">Предоставьте разрешение на запись для редактирования событий</string>
+    <string name="device_calendars_grant">Разрешить</string>
+    <string name="device_calendars_none_found">Календари устройства не найдены.</string>
+    <string name="device_calendars_local">Локальный</string>
+    <string name="device_calendars_show_declined">Показывать отклонённые события</string>
+    <string name="device_calendars_reminders">Напоминания</string>
+    <string name="device_calendars_reminders_desc">Получать уведомления о событиях календаря устройства</string>
+    <string name="device_calendars_read_only_no_write">Только чтение (нет разрешения на запись)</string>
+    <string name="device_calendars_read_only_calendar">Только чтение (календарь доступен только для чтения)</string>
+
+    <string name="settings_developer_options">Для разработчиков</string>
+    <string name="settings_sync_frequency">Частота синхронизации</string>
+    <string name="settings_preview">ПРЕДПРОСМОТР</string>
+    <string name="settings_n_events">Событий: %1$d</string>
+    <string name="settings_n_events_default">Событий: %1$d (по умолчанию)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Календари</string>
+    <string name="drawer_contacts">Контакты</string>
+    <string name="drawer_device_calendars">Календари устройства</string>
+    <string name="drawer_share_feedback">Оставить отзыв</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Для вас, а не для ваших данных.</string>
+    <string name="action_keep_it_that_way">Поддержать проект</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Уже синхронизировано</string>
+    <string name="status_warnings">Предупреждения</string>
+    <string name="sync_history_events_failed">Событий с ошибкой</string>
+    <string name="sync_history_abandoned_max_retries">Пропущено (макс. попыток)</string>
+    <string name="sync_history_events_skipped">Событий пропущено</string>
+    <string name="sync_history_duration">Длительность</string>
+    <string name="sync_history_already_synced_count">%1$d уже синхронизировано</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Нет событий</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Нет сети</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Выйти из %1$s?</string>
+    <string name="dialog_sign_out_message">Выполнен вход как %1$s. При выходе синхронизированные календари будут удалены с этого устройства.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d учётная запись</item>
+        <item quantity="few">%1$d учётные записи</item>
+        <item quantity="many">%1$d учётных записей</item>
+        <item quantity="other">%1$d учётных записей</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 календарь</item>
+        <item quantity="few">%1$s \u00B7 %2$d календаря</item>
+        <item quantity="many">%1$s \u00B7 %2$d календарей</item>
+        <item quantity="other">%1$s \u00B7 %2$d календарей</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d подписка</item>
+        <item quantity="few">%1$d подписки</item>
+        <item quantity="many">%1$d подписок</item>
+        <item quantity="other">%1$d подписок</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Ошибка синхронизации (%1$d попытка)</item>
+        <item quantity="few">Ошибка синхронизации (%1$d попытки)</item>
+        <item quantity="many">Ошибка синхронизации (%1$d попыток)</item>
+        <item quantity="other">Ошибка синхронизации (%1$d попыток)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d календарь</item>
+        <item quantity="few">%1$d календаря</item>
+        <item quantity="many">%1$d календарей</item>
+        <item quantity="other">%1$d календарей</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d календарь (%2$d новый)</item>
+        <item quantity="few">%1$d календаря (%2$d новых)</item>
+        <item quantity="many">%1$d календарей (%2$d новых)</item>
+        <item quantity="other">%1$d календарей (%2$d новых)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d событие</item>
+        <item quantity="few">%1$d события</item>
+        <item quantity="many">%1$d событий</item>
+        <item quantity="other">%1$d событий</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d день рождения</item>
+        <item quantity="few">%1$d дня рождения</item>
+        <item quantity="many">%1$d дней рождения</item>
+        <item quantity="other">%1$d дней рождения</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d годовщина</item>
+        <item quantity="few">%1$d годовщины</item>
+        <item quantity="many">%1$d годовщин</item>
+        <item quantity="other">%1$d годовщин</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ ещё %1$d</item>
+        <item quantity="few">+ ещё %1$d</item>
+        <item quantity="many">+ ещё %1$d</item>
+        <item quantity="other">+ ещё %1$d</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Добавить событие</item>
+        <item quantity="few">Импортировать %1$d события</item>
+        <item quantity="many">Импортировать %1$d событий</item>
+        <item quantity="other">Импортировать %1$d событий</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Добавить</item>
+        <item quantity="few">Импорт</item>
+        <item quantity="many">Импорт</item>
+        <item quantity="other">Импорт</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026и ещё %1$d</item>
+        <item quantity="few">\u2026и ещё %1$d</item>
+        <item quantity="many">\u2026и ещё %1$d</item>
+        <item quantity="other">\u2026и ещё %1$d</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">Импортировано %1$d событие</item>
+        <item quantity="few">Импортировано %1$d события</item>
+        <item quantity="many">Импортировано %1$d событий</item>
+        <item quantity="other">Импортировано %1$d событий</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">Экспортировано %1$d событие</item>
+        <item quantity="few">Экспортировано %1$d события</item>
+        <item quantity="many">Экспортировано %1$d событий</item>
+        <item quantity="other">Экспортировано %1$d событий</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d событие</item>
+        <item quantity="few">%1$d события</item>
+        <item quantity="many">%1$d событий</item>
+        <item quantity="other">%1$d событий</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d минута</item>
+        <item quantity="few">%1$d минуты</item>
+        <item quantity="many">%1$d минут</item>
+        <item quantity="other">%1$d минут</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d мин.</item>
+        <item quantity="few">%1$d мин.</item>
+        <item quantity="many">%1$d мин.</item>
+        <item quantity="other">%1$d мин.</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d час</item>
+        <item quantity="few">%1$d часа</item>
+        <item quantity="many">%1$d часов</item>
+        <item quantity="other">%1$d часов</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d день</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дней</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d неделя</item>
+        <item quantity="few">%1$d недели</item>
+        <item quantity="many">%1$d недель</item>
+        <item quantity="other">%1$d недель</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d месяц</item>
+        <item quantity="few">%1$d месяца</item>
+        <item quantity="many">%1$d месяцев</item>
+        <item quantity="other">%1$d месяцев</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d год</item>
+        <item quantity="few">%1$d года</item>
+        <item quantity="many">%1$d лет</item>
+        <item quantity="other">%1$d лет</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d сек.</item>
+        <item quantity="few">%1$d сек.</item>
+        <item quantity="many">%1$d сек.</item>
+        <item quantity="other">%1$d сек.</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">За %1$d минуту</item>
+        <item quantity="few">За %1$d минуты</item>
+        <item quantity="many">За %1$d минут</item>
+        <item quantity="other">За %1$d минут</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">За %1$d час</item>
+        <item quantity="few">За %1$d часа</item>
+        <item quantity="many">За %1$d часов</item>
+        <item quantity="other">За %1$d часов</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">За %1$d день</item>
+        <item quantity="few">За %1$d дня</item>
+        <item quantity="many">За %1$d дней</item>
+        <item quantity="other">За %1$d дней</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">За %1$d неделю</item>
+        <item quantity="few">За %1$d недели</item>
+        <item quantity="many">За %1$d недель</item>
+        <item quantity="other">За %1$d недель</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Изменить повторяющееся событие</string>
+    <string name="dialog_delete_recurring_title">Удалить повторяющееся событие</string>
+    <string name="dialog_edit_recurring_message">Это повторяющееся событие. Как применить изменение?</string>
+    <string name="recurring_this_event">Это событие</string>
+    <string name="recurring_all_events">Все события</string>
+    <string name="empty_pick_a_day">Выбери день. Проживи его.</string>
+    <string name="empty_no_events_day">Ничего нет — может, прогуляться?</string>
+    <string name="label_upcoming_events">Предстоящие события</string>
+    <string name="filter_date">Дата</string>
+    <string name="label_select_date">Выбрать дату</string>
+    <string name="hint_tap_date_range">Нажмите на ту же дату для одного дня или на другую для диапазона</string>
+
+    <string name="cd_clear">Очистить</string>
+    <string name="cd_offline">Нет сети</string>
+    <string name="cd_previous">Назад</string>
+    <string name="cd_next">Вперёд</string>
+    <string name="cd_open_drawer">Открыть меню</string>
+    <string name="cd_close_drawer">Закрыть меню</string>
+    <string name="cd_calendar_view">Вид календаря</string>
+    <string name="cd_active_view">Активный вид</string>
+
+    <string name="view_agenda">Повестка</string>
+    <string name="view_month_full">Месяц (полный)</string>
+    <string name="view_three_days">3 дня</string>
+    <string name="view_year">Год</string>
+
+    <string name="label_go_to_month">Перейти к месяцу</string>
+
+    <string name="action_more_options">Ещё</string>
+
+    <string name="label_duration_days">дн.</string>
+    <string name="label_duration_hrs">ч.</string>
+    <string name="label_duration_min">мин.</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">%1$d числа</string>
+    <string name="recurrence_on_last_day">В последний день месяца</string>
+    <string name="recurrence_on_nth_weekday">В %1$s %2$s</string>
+    <string name="ordinal_1st">1-й</string>
+    <string name="ordinal_2nd">2-й</string>
+    <string name="ordinal_3rd">3-й</string>
+    <string name="ordinal_4th">4-й</string>
+    <string name="ordinal_nth">%1$d-й</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d новых</string>
+    <string name="sync_summary_updated">%1$d обновлено</string>
+    <string name="sync_summary_removed">%1$d удалено</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Предыдущие 3 дня</string>
+    <string name="cd_next_3_days">Следующие 3 дня</string>
+    <string name="cd_circular_scrolling">Циклическая прокрутка включена</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <string name="reminder_none">Без напоминания</string>
+    <string name="reminder_at_time_of_event">В момент события</string>
+    <string name="reminder_time_before">За %1$s до</string>
+    <string name="reminder_time_after">Через %1$s после</string>
+    <string name="reminder_day_of_event_12h">9 AM в день события</string>
+    <string name="reminder_day_of_event_24h">09:00 в день события</string>
+    <string name="reminder_before_at_12h">За %1$s до в 9 AM</string>
+    <string name="reminder_before_at_24h">За %1$s до в 09:00</string>
+    <string name="reminder_short_off">Выкл</string>
+    <string name="reminder_short_at_event">Начало</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dмин</string>
+    <string name="reminder_short_hours">%1$dч</string>
+    <string name="reminder_short_days">%1$dд</string>
+    <string name="reminder_short_weeks">%1$dнед</string>
+    <string name="reminder_summary_none">Нет</string>
+    <string name="duration_compact">%1$dч %2$dмин</string>
+    <string name="duration_compact_short">%1$dч%2$dмин</string>
+    <string name="sync_manual_only">Только вручную</string>
+    <string name="sync_lookback_all">Все события</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <string name="action_snooze">Отложить</string>
+    <string name="notification_starting_now">Начинается сейчас</string>
+    <string name="notification_tomorrow_time">Завтра, %1$s</string>
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <string name="sync_notification_complete">Синхронизация завершена</string>
+    <string name="sync_notification_partial">Синхронизация частично завершена</string>
+    <string name="sync_notification_auth_failed">Ошибка авторизации синхронизации</string>
+    <string name="sync_notification_auth_reauth">Пожалуйста, повторите вход в аккаунт</string>
+    <string name="sync_notification_failed">Ошибка синхронизации</string>
+    <string name="sync_notification_parse_title">Некоторые события не удалось синхронизировать</string>
+    <string name="sync_notification_parse_content">%1$s в %2$s не удалось синхронизировать. Попробуйте принудительную синхронизацию в настройках.</string>
+    <string name="sync_notification_conflict_title">Конфликт синхронизации разрешён</string>
+    <string name="sync_notification_conflict_single">Локальные изменения \"%1$s\" утрачены из-за конфликта синхронизации. Будет использована версия сервера.</string>
+    <string name="sync_notification_conflict_multi">Локальные изменения %1$s утрачены из-за конфликтов синхронизации. Будут использованы версии сервера.</string>
+    <string name="sync_notification_expired_title">Изменения синхронизации устарели</string>
+    <string name="sync_notification_expired_content">%1$s не удалось синхронизировать за 30 дней. Будет использована версия сервера. Принудительная синхронизация для повтора.</string>
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Синхронизирован %1$d календарь</item>
+        <item quantity="few">Синхронизировано %1$d календаря</item>
+        <item quantity="many">Синхронизировано %1$d календарей</item>
+        <item quantity="other">Синхронизировано %1$d календарей</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d изменение</item>
+        <item quantity="few">, %1$d изменения</item>
+        <item quantity="many">, %1$d изменений</item>
+        <item quantity="other">, %1$d изменений</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d ошибка</item>
+        <item quantity="few">, %1$d ошибки</item>
+        <item quantity="many">, %1$d ошибок</item>
+        <item quantity="other">, %1$d ошибок</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <string name="contact_birthday_with_age">%2$s день рождения — %1$s</string>
+    <string name="contact_birthday">День рождения — %1$s</string>
+    <string name="contact_anniversary_with_age">%2$s годовщина — %1$s</string>
+    <string name="contact_anniversary">Годовщина — %1$s</string>
+    <string name="ordinal_suffix_st">%1$d-й</string>
+    <string name="ordinal_suffix_nd">%1$d-й</string>
+    <string name="ordinal_suffix_rd">%1$d-й</string>
+    <string name="ordinal_suffix_th">%1$d-й</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <string name="sync_banner_syncing">Синхронизация календарей…</string>
+    <string name="sync_banner_preparing">Подготовка к синхронизации…</string>
+    <string name="sync_banner_complete_errors">Синхронизация завершена с ошибками</string>
+    <string name="sync_banner_failed">Ошибка синхронизации: %1$s</string>
+    <string name="error_unknown_error">Неизвестная ошибка</string>
+    <string name="sync_snackbar_new_event">Новое событие: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d новое событие</item>
+        <item quantity="few">%1$d новых события</item>
+        <item quantity="many">%1$d новых событий</item>
+        <item quantity="other">%1$d новых событий</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d событие обновлено</item>
+        <item quantity="few">%1$d события обновлены</item>
+        <item quantity="many">%1$d событий обновлено</item>
+        <item quantity="other">%1$d событий обновлено</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d событие удалено</item>
+        <item quantity="few">%1$d события удалены</item>
+        <item quantity="many">%1$d событий удалено</item>
+        <item quantity="other">%1$d событий удалено</item>
+    </plurals>
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d обновление календаря</item>
+        <item quantity="few">%1$d обновления календаря</item>
+        <item quantity="many">%1$d обновлений календаря</item>
+        <item quantity="other">%1$d обновлений календаря</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <string name="day_x_of_y">День %1$d из %2$d</string>
+    <string name="day_starts">День 1 из %1$d · начало %2$s</string>
+    <string name="day_ends">День %1$d из %2$d · конец %3$s</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Весь день</string>
+    <string name="event_date_all_day">%1$s · Весь день</string>
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Весь день)</string>
+    <string name="event_date_all_day_parens">%1$s (Весь день)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <string name="action_save_event">Сохранить событие</string>
+    <string name="badge_beta">Бета</string>
+    <string name="badge_new">Новое</string>
+    <string name="color_red">Красный</string>
+    <string name="color_orange">Оранжевый</string>
+    <string name="color_yellow">Жёлтый</string>
+    <string name="color_green">Зелёный</string>
+    <string name="color_cyan">Голубой</string>
+    <string name="color_blue">Синий</string>
+    <string name="color_purple">Фиолетовый</string>
+    <string name="cd_meeting_link">Ссылка на встречу: %1$s</string>
+    <string name="cd_phone_number">Номер телефона</string>
+    <string name="cd_email_link">Эл. почта: %1$s</string>
+    <string name="cd_web_link">Ссылка: %1$s</string>
+    <string name="cd_text_with_links">Текст с %1$d ссылками: %2$s</string>
+    <string name="cd_text_with_link">Текст с 1 ссылкой: %1$s</string>
+    <string name="day_x_of_y_all_day">День %1$d из %2$d (Весь день)</string>
+    <string name="sync_history_stats">%1$d синхр.   ↑%2$d отпр.   ↓%3$d получ.</string>
+    <string name="sync_history_stats_issues">%1$d синхр.   ↑%2$d отпр.   ↓%3$d получ.   ⚠ %4$d проблем</string>
+    <string name="sync_history_failed">Ошибка</string>
+    <string name="ics_sync_every_hour">Каждый час</string>
+    <string name="ics_sync_every_n_hours">Каждые %1$d ч.</string>
+    <string name="ics_sync_daily">Ежедневно</string>
+    <string name="ics_sync_weekly">Еженедельно</string>
+    <string name="ics_url_required">Требуется URL</string>
+    <string name="ics_url_invalid_scheme">URL должен начинаться с http://, https:// или webcal://</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Весь день)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
+
+    <!-- Widget/channel strings -->
+    <string name="cd_widget_calendar">Календарь</string>
+    <string name="cd_widget_add_event">Добавить событие</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">нет событий</string>
+    <string name="channel_event_reminders">Напоминания о событиях</string>
+    <string name="channel_event_reminders_desc">Уведомления о предстоящих событиях в календаре</string>
+    <string name="channel_sync_progress">Ход синхронизации</string>
+    <string name="channel_sync_progress_desc">Показывает прогресс во время синхронизации календарей</string>
+    <string name="channel_sync_status">Статус синхронизации</string>
+    <string name="channel_sync_status_desc">Уведомления о завершении синхронизации и ошибках</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">Не повторяется</string>
+    <string name="rrule_freq_daily">Ежедневно</string>
+    <string name="rrule_freq_weekly">Еженедельно</string>
+    <string name="rrule_freq_biweekly">Раз в две недели</string>
+    <string name="rrule_freq_monthly">Ежемесячно</string>
+    <string name="rrule_freq_quarterly">Ежеквартально</string>
+    <string name="rrule_freq_yearly">Ежегодно</string>
+    <string name="rrule_repeats">Повторяется</string>
+    <string name="rrule_every_n_days">Каждые %1$d дн.</string>
+    <string name="rrule_every_n_weeks">Каждые %1$d нед.</string>
+    <string name="rrule_every_n_months">Каждые %1$d мес.</string>
+    <string name="rrule_every_n_years">Каждые %1$d г.</string>
+    <string name="rrule_freq_on_days">%1$s в %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s в %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s в последний день</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d-го числа</string>
+    <string name="rrule_ordinal_last">последний</string>
+    <string name="rrule_until_suffix">, до %1$s</string>
+    <string name="rrule_freq_never">Никогда</string>
+    <string name="rrule_starting">%1$s начиная с %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 с %2$s</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d раз</item>
+        <item quantity="few">, %1$d раза</item>
+        <item quantity="many">, %1$d раз</item>
+        <item quantity="other">, %1$d раз</item>
+    </plurals>
+</resources>

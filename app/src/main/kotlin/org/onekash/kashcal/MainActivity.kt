@@ -382,7 +382,6 @@ class MainActivity : ComponentActivity() {
                         quickViewOccurrenceTs = nextOccurrenceTs  // Pass occurrence context for recurring events
                         showQuickViewSheet = true
                     },
-                    onSearchIncludePastChange = { homeViewModel.toggleSearchIncludePast() },
                     // Search date filter callbacks
                     onSearchDateFilterChange = { filter -> homeViewModel.setSearchDateFilter(filter) },
                     onSearchShowDatePicker = { homeViewModel.showSearchDatePicker() },
@@ -525,14 +524,14 @@ class MainActivity : ComponentActivity() {
                                 appendLine(event.title)
 
                                 // Format date/time - use user's time format preference
-                                val dateFormat = java.text.SimpleDateFormat("EEE, MMM d, yyyy", java.util.Locale.getDefault())
+                                val dateFormat = java.text.SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEMMMd"), java.util.Locale.getDefault())
                                 val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
                                 val timePattern = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
                                 val timeFormat = java.text.SimpleDateFormat(timePattern, java.util.Locale.getDefault())
 
                                 if (event.isAllDay) {
                                     // All-day: Use UTC to get correct calendar date
-                                    val utcDateFormat = java.text.SimpleDateFormat("EEE, MMM d, yyyy", java.util.Locale.getDefault()).apply {
+                                    val utcDateFormat = java.text.SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEMMMd"), java.util.Locale.getDefault()).apply {
                                         timeZone = java.util.TimeZone.getTimeZone("UTC")
                                     }
                                     val startDate = java.util.Date(event.startTs)
@@ -927,7 +926,7 @@ class MainActivity : ComponentActivity() {
                                         eventCoordinator.importIcsEvents(events, calendarId)
                                     }
                                     homeViewModel.showSnackbar(
-                                        "Imported $count event${if (count != 1) "s" else ""}"
+                                        resources.getQuantityString(R.plurals.imported_events, count, count)
                                     )
                                     // Navigate to first event's date
                                     events.firstOrNull()?.let { firstEvent ->

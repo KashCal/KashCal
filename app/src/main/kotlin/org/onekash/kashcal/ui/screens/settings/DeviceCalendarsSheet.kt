@@ -34,6 +34,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 
 /**
@@ -94,16 +96,15 @@ fun DeviceCalendarsSheet(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        "Device Calendars",
+                        stringResource(R.string.label_device_calendars),
                         style = MaterialTheme.typography.titleLarge
                     )
-                    BetaBadge()
                 }
                 if (isEnabled && hasReadPermission) {
                     IconButton(onClick = onRefresh) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh calendars",
+                            contentDescription = stringResource(R.string.cd_refresh_calendars),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -116,7 +117,7 @@ fun DeviceCalendarsSheet(
 
             // Description
             Text(
-                "Show events from other calendar apps on your device (sync adapters, local calendars).",
+                stringResource(R.string.device_calendars_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -130,7 +131,7 @@ fun DeviceCalendarsSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Enable",
+                    stringResource(R.string.action_enable),
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Switch(
@@ -148,7 +149,7 @@ fun DeviceCalendarsSheet(
                 exit = shrinkVertically()
             ) {
                 Text(
-                    "Calendar permission required. Tap Enable to grant access.",
+                    stringResource(R.string.device_calendars_permission_required),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -174,18 +175,18 @@ fun DeviceCalendarsSheet(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Read-only access",
+                            stringResource(R.string.device_calendars_read_only_access),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            "Grant write permission to edit device calendar events",
+                            stringResource(R.string.device_calendars_grant_write),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
                     }
                     Text(
-                        "Grant",
+                        stringResource(R.string.device_calendars_grant),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -203,7 +204,7 @@ fun DeviceCalendarsSheet(
                 ) {
                     if (deviceCalendars.isEmpty()) {
                         Text(
-                            "No device calendars found.",
+                            stringResource(R.string.device_calendars_none_found),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -214,7 +215,7 @@ fun DeviceCalendarsSheet(
                         grouped.forEach { (accountName, calendars) ->
                             // Account header
                             Text(
-                                accountName.ifEmpty { "Local" },
+                                accountName.ifEmpty { stringResource(R.string.device_calendars_local) },
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
@@ -260,8 +261,8 @@ fun DeviceCalendarsSheet(
                                     val isWritable = hasWritePermission && calendar.isWritable
                                     if (!isWritable) {
                                         Text(
-                                            if (!hasWritePermission) "Read only (no write permission)"
-                                            else "Read only (calendar is read-only)",
+                                            if (!hasWritePermission) stringResource(R.string.device_calendars_read_only_no_write)
+                                            else stringResource(R.string.device_calendars_read_only_calendar),
                                             style = MaterialTheme.typography.labelSmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.padding(start = 24.dp)
@@ -276,7 +277,7 @@ fun DeviceCalendarsSheet(
                         val enabledCount = enabledCalendarIds.size
                         val totalCount = deviceCalendars.size
                         Text(
-                            "$enabledCount / $totalCount enabled",
+                            stringResource(R.string.label_enabled_count, enabledCount, totalCount),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -292,7 +293,7 @@ fun DeviceCalendarsSheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                "Show declined events",
+                                stringResource(R.string.device_calendars_show_declined),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Switch(
@@ -311,11 +312,11 @@ fun DeviceCalendarsSheet(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "Reminders",
+                                    stringResource(R.string.device_calendars_reminders),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                                 Text(
-                                    "Get notified for device calendar events",
+                                    stringResource(R.string.device_calendars_reminders_desc),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )

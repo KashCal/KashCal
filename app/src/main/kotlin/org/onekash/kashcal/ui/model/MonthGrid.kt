@@ -6,7 +6,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.WeekFields
 import java.util.Calendar
-import java.util.Locale
 
 /**
  * Pre-computed month grid for calendar display.
@@ -92,15 +91,7 @@ data class MonthGrid(
             // Weekend detection by column position
             val orderedDays = DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
 
-            // WeekFields for week number calculation
-            val resolvedFirst = DateTimeUtils.resolveFirstDayOfWeek(firstDayOfWeek)
-            val dow = when (resolvedFirst) {
-                Calendar.SUNDAY -> DayOfWeek.SUNDAY
-                Calendar.MONDAY -> DayOfWeek.MONDAY
-                Calendar.SATURDAY -> DayOfWeek.SATURDAY
-                else -> DayOfWeek.MONDAY
-            }
-            val weekFields = WeekFields.of(dow, WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek)
+            val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
 
             // Build 6 rows x 7 columns
             val weeks = mutableListOf<List<DayCell>>()

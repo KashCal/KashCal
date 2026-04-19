@@ -640,6 +640,51 @@ class EventCoordinatorTest {
         assertEquals(3, result.size)
     }
 
+    // ==================== Repair Missing Occurrences Tests ====================
+
+    @Test
+    fun `repairMissingOccurrences regenerates occurrences for events with none`() = runTest {
+        val id1 = 200L
+        val id2 = 201L
+        val event1 = recurringEvent.copy(id = id1, uid = "orphan1@test")
+        val event2 = recurringEvent.copy(id = id2, uid = "orphan2@test")
+
+        coEvery { eventReader.getRecurringEventsWithNoOccurrences() } returns listOf(id1, id2)
+        coEvery { eventReader.getEventById(id1) } returns event1
+        coEvery { eventReader.getEventById(id2) } returns event2
+        coEvery { occurrenceGenerator.regenerateOccurrences(event1) } returns 52
+        coEvery { occurrenceGenerator.regenerateOccurrences(event2) } returns 12
+
+        val count = coordinator.repairMissingOccurrences()
+
+        assertEquals(2, count)
+        coVerify { eventReader.getRecurringEventsWithNoOccurrences() }
+        coVerify { occurrenceGenerator.regenerateOccurrences(event1) }
+        coVerify { occurrenceGenerator.regenerateOccurrences(event2) }
+    }
+
+    @Test
+    fun `repairMissingOccurrences returns zero when no events need repair`() = runTest {
+        coEvery { eventReader.getRecurringEventsWithNoOccurrences() } returns emptyList()
+
+        val count = coordinator.repairMissingOccurrences()
+
+        assertEquals(0, count)
+        coVerify { eventReader.getRecurringEventsWithNoOccurrences() }
+        coVerify(exactly = 0) { occurrenceGenerator.regenerateOccurrences(any()) }
+    }
+
+    @Test
+    fun `repairMissingOccurrences skips events that no longer exist`() = runTest {
+        coEvery { eventReader.getRecurringEventsWithNoOccurrences() } returns listOf(999L)
+        coEvery { eventReader.getEventById(999L) } returns null
+
+        val count = coordinator.repairMissingOccurrences()
+
+        assertEquals(0, count)
+        coVerify(exactly = 0) { occurrenceGenerator.regenerateOccurrences(any()) }
+    }
+
     // ==================== Statistics Tests ====================
 
     @Test

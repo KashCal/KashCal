@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -174,7 +175,7 @@ class CalDavSyncWorker @AssistedInject constructor(
      */
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return notificationManager.createForegroundInfo(
-            progress = "Syncing calendars..."
+            progress = applicationContext.getString(R.string.sync_banner_syncing)
         )
     }
 
@@ -189,7 +190,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         // Set foreground for expedited work (shows progress notification)
         try {
             val foregroundInfo = notificationManager.createForegroundInfo(
-                progress = "Syncing calendars...",
+                progress = applicationContext.getString(R.string.sync_banner_syncing),
                 cancelIntent = createCancelPendingIntent()
             )
             setForeground(foregroundInfo)

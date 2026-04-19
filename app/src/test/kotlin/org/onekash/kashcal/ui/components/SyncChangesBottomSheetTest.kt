@@ -4,6 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.Year
@@ -18,6 +20,7 @@ import java.time.ZoneOffset
  * - Uses UTC for all-day events to prevent timezone shift
  * - Uses local timezone for timed events
  */
+@RunWith(RobolectricTestRunner::class)
 class SyncChangesBottomSheetTest {
 
     private val currentYear = Year.now().value
@@ -102,8 +105,8 @@ class SyncChangesBottomSheetTest {
 
         // Should NOT contain year
         assertFalse("Should not contain year for current year", result.contains(currentYear.toString()))
-        // Should contain time indicator
-        assertTrue("Should contain 'at'", result.contains("at"))
+        // Should contain time
+        assertTrue("Should contain AM or PM", result.contains("AM") || result.contains("PM"))
         // Should contain day
         assertTrue("Should contain 'Mar'", result.contains("Mar"))
     }
@@ -116,7 +119,7 @@ class SyncChangesBottomSheetTest {
 
         // Should contain year
         assertTrue("Should contain year for past year", result.contains(pastYear.toString()))
-        assertTrue("Should contain 'at'", result.contains("at"))
+        assertTrue("Should contain AM or PM", result.contains("AM") || result.contains("PM"))
     }
 
     @Test
@@ -141,16 +144,15 @@ class SyncChangesBottomSheetTest {
         assertTrue("Should start with day of week", result.matches(Regex("^[A-Z][a-z]{2},.*")))
         assertTrue("Should contain month abbreviation", result.contains("Jan"))
         // Should NOT contain time indicator for all-day
-        assertFalse("All-day should not contain 'at'", result.contains("at"))
+        assertFalse("All-day should not contain AM/PM", result.contains("AM") || result.contains("PM"))
     }
 
     @Test
-    fun `timed format includes time with at`() {
+    fun `timed format includes time`() {
         val ts = timedTimestamp(currentYear, 5, 20, 15, 45) // 3:45 PM
         val result = formatEventTime(ts, isAllDay = false)
 
-        // Should contain "at" and time
-        assertTrue("Should contain 'at' for timed events", result.contains("at"))
+        // Should contain time
         assertTrue("Should contain PM or AM", result.contains("PM") || result.contains("AM"))
     }
 

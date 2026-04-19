@@ -138,6 +138,7 @@ class HomeViewModel @Inject constructor(
 
     // Job for occurrence extension (cancel previous on rapid swipe)
     private var extensionJob: Job? = null
+    private var occurrenceRepairDone = false
 
     // Job for week view events observation (cancel previous when week changes)
     private var weekEventsJob: Job? = null
@@ -346,23 +347,23 @@ class HomeViewModel @Inject constructor(
                             it.copy(
                                 isSyncing = !suppressSyncIndicator,
                                 showSyncBanner = showBanner,
-                                syncBannerMessage = if (status is SyncStatus.Running)
-                                    "Syncing calendars..." else "Preparing to sync...",
-                                syncBannerState = SyncBannerState.Syncing
+                                syncBannerState = if (status is SyncStatus.Running)
+                                    SyncBannerState.Syncing else SyncBannerState.Preparing,
+                                syncErrorDetail = null
                             )
                         }
                     }
                     is SyncStatus.Succeeded -> {
                         suppressSyncIndicator = false  // Reset flag for next sync
+                        occurrenceRepairDone = false
                         val hasPartialError = status.errorMessage != null
                         _uiState.update {
                             it.copy(
                                 isSyncing = false,
                                 showSyncBanner = showBanner || hasPartialError,
-                                syncBannerMessage = if (hasPartialError)
-                                    "Sync complete with errors" else "Sync complete",
                                 syncBannerState = if (hasPartialError)
-                                    SyncBannerState.Error else SyncBannerState.Success
+                                    SyncBannerState.PartialError else SyncBannerState.Success,
+                                syncErrorDetail = null
                             )
                         }
                         // Reload events after successful sync
@@ -381,8 +382,8 @@ class HomeViewModel @Inject constructor(
                             it.copy(
                                 isSyncing = false,
                                 showSyncBanner = true,
-                                syncBannerMessage = "Sync failed: ${status.errorMessage ?: "Unknown error"}",
-                                syncBannerState = SyncBannerState.Error
+                                syncBannerState = SyncBannerState.Error,
+                                syncErrorDetail = status.errorMessage
                             )
                         }
                         // Auto-dismiss after 3 seconds
@@ -1041,6 +1042,10 @@ class HomeViewModel @Inject constructor(
                     )
                 }
 
+                if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
+                    loadMonthEvents(year, month)
+                }
+
                 selectDate(today.timeInMillis)
             }
             ViewMode.YEAR -> {
@@ -1155,15 +1160,18 @@ class HomeViewModel @Inject constructor(
                     set(Calendar.DAY_OF_MONTH, 1)
                 }.timeInMillis
 
-                val (forwardExtended, pastExtended) = withContext(ioDispatcher) {
+                val (forwardExtended, pastExtended, repaired) = withContext(ioDispatcher) {
                     val forward = eventCoordinator.extendOccurrencesIfNeeded(targetMs)
                     val past = eventCoordinator.extendPastOccurrencesIfNeeded(targetMs)
-                    forward to past
+                    val repair = if (!occurrenceRepairDone) {
+                        eventCoordinator.repairMissingOccurrences()
+                    } else 0
+                    Triple(forward, past, repair)
                 }
 
-                // Reload dots if we actually extended anything
-                if (forwardExtended > 0 || pastExtended > 0) {
-                    Log.d(TAG, "Extended occurrences: $forwardExtended forward, $pastExtended past (navigated to $year-${month + 1})")
+                if (repaired == 0) occurrenceRepairDone = true
+                if (forwardExtended > 0 || pastExtended > 0 || repaired > 0) {
+                    Log.d(TAG, "Extended occurrences: $forwardExtended forward, $pastExtended past, $repaired repaired (navigated to $year-${month + 1})")
                     loadDotsForMonth(year, month)
                 }
             } catch (e: CancellationException) {
@@ -1609,7 +1617,7 @@ class HomeViewModel @Inject constructor(
      * Format date for display (e.g., "December 17, 2024").
      */
     private fun formatDateLabel(dateMillis: Long): String {
-        val format = SimpleDateFormat("MMMM d, yyyy", Locale.getDefault())
+        val format = SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMMd"), Locale.getDefault())
         return format.format(dateMillis)
     }
 
@@ -1624,7 +1632,7 @@ class HomeViewModel @Inject constructor(
                 isSearchActive = true,
                 searchQuery = "",
                 searchResults = persistentListOf(),
-                searchDateFilter = DateFilter.AnyTime,
+                searchDateFilter = DateFilter.Upcoming,
                 showSearchDatePicker = false,
                 searchDateRangeStart = null
             )
@@ -1641,7 +1649,7 @@ class HomeViewModel @Inject constructor(
                 isSearchActive = false,
                 searchQuery = "",
                 searchResults = persistentListOf(),
-                searchDateFilter = DateFilter.AnyTime,
+                searchDateFilter = DateFilter.Upcoming,
                 showSearchDatePicker = false,
                 searchDateRangeStart = null
             )
@@ -1668,19 +1676,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Toggle include past events in search.
-     */
-    fun toggleSearchIncludePast() {
-        val newValue = !_uiState.value.searchIncludePast
-        _uiState.update { it.copy(searchIncludePast = newValue) }
-
-        // Re-run search with new setting
-        if (_uiState.value.searchQuery.length >= 2) {
-            performSearch(_uiState.value.searchQuery)
-        }
-    }
-
     // ==================== Search Date Filter ====================
 
     /**
@@ -1691,7 +1686,6 @@ class HomeViewModel @Inject constructor(
         _uiState.update {
             it.copy(
                 searchDateFilter = filter,
-                searchIncludePast = filter is DateFilter.AnyTime,
                 showSearchDatePicker = false,  // Auto-dismiss picker on selection
                 searchDateRangeStart = null    // Reset range selection
             )
@@ -1798,7 +1792,7 @@ class HomeViewModel @Inject constructor(
                     timeRange != null -> {
                         DayPagerUtils.msToDayCode(timeRange.first) to DayPagerUtils.msToDayCode(timeRange.second)
                     }
-                    _uiState.value.searchIncludePast -> {
+                    dateFilter is DateFilter.AnyTime -> {
                         val syncPastDays = dataStore.syncPastDays.first()
                         val pastDate = if (syncPastDays == Int.MAX_VALUE) {
                             today.minusYears(10)  // Practical upper bound for device calendar
@@ -1819,7 +1813,7 @@ class HomeViewModel @Inject constructor(
                 val roomSearcher: suspend (String) -> List<SearchResult> = { q ->
                     val ewnoResults = when {
                         timeRange != null -> eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
-                        _uiState.value.searchIncludePast -> eventReader.searchEventsWithNextOccurrence(q)
+                        dateFilter is DateFilter.AnyTime -> eventReader.searchEventsWithNextOccurrence(q)
                         else -> eventReader.searchEventsExcludingPastWithNextOccurrence(q)
                     }
                     ewnoResults.map { ewno ->

@@ -13,8 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.quickadd.QuickAddResult
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -59,12 +62,16 @@ fun QuickAddPreview(
             }
         }
 
+        val todayLabel = stringResource(R.string.label_today)
+        val tomorrowLabel = stringResource(R.string.label_tomorrow)
+        val yesterdayLabel = stringResource(R.string.label_yesterday)
+
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = formatDate(result.startDate, today),
+                text = formatDate(result.startDate, today, todayLabel, tomorrowLabel, yesterdayLabel),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -84,7 +91,7 @@ fun QuickAddPreview(
                 )
             } else {
                 Text(
-                    text = "All day",
+                    text = stringResource(R.string.label_all_day),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -100,8 +107,9 @@ fun QuickAddPreview(
         }
 
         if (result.rrule != null) {
+            val rruleStrings = rememberRruleDisplayStrings()
             Text(
-                text = RruleBuilder.formatForDisplay(result.rrule),
+                text = RruleBuilder.formatForDisplay(result.rrule, rruleStrings),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -109,11 +117,17 @@ fun QuickAddPreview(
     }
 }
 
-private fun formatDate(date: LocalDate, today: LocalDate): String {
+private fun formatDate(
+    date: LocalDate,
+    today: LocalDate,
+    todayLabel: String,
+    tomorrowLabel: String,
+    yesterdayLabel: String
+): String {
     return when (date) {
-        today -> "Today"
-        today.plusDays(1) -> "Tomorrow"
-        today.minusDays(1) -> "Yesterday"
+        today -> todayLabel
+        today.plusDays(1) -> tomorrowLabel
+        today.minusDays(1) -> yesterdayLabel
         else -> date.format(dateFormatter)
     }
 }

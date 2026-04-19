@@ -1,0 +1,933 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Dnešný program</string>
+    <string name="widget_description">Zobrazuje dnešné udalosti z kalendára</string>
+    <string name="week_widget_name">Týždenný pohľad</string>
+    <string name="week_widget_description">Zobrazuje udalosti z kalendára na najbližších 7 dní</string>
+    <string name="month_widget_name">Mesačný pohľad</string>
+    <string name="month_widget_description">Zobrazuje celú mesačnú mriežku kalendára s bodkami udalostí</string>
+    <string name="date_widget_name">Dátum</string>
+    <string name="date_widget_description">Zobrazuje dnešný dátum ako ikonu aplikácie</string>
+    <string name="widget_no_events_today">Dnes žiadne udalosti</string>
+    <string name="widget_add_event">+ Pridať udalosť</string>
+    <string name="widget_no_events">Žiadne udalosti</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Nová udalosť</string>
+    <string name="shortcut_new_event_long">Vytvoriť novú udalosť</string>
+    <string name="shortcut_today">Dnes</string>
+    <string name="shortcut_today_long">Prejsť na dnešok</string>
+    <string name="shortcut_search">Hľadať</string>
+    <string name="shortcut_search_long">Hľadať udalosti</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Skúsiť znova</string>
+    <string name="action_try_again">Skúsiť znova</string>
+    <string name="action_cancel">Zrušiť</string>
+    <string name="action_close">Zavrieť</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Teraz nie</string>
+    <string name="action_sign_in">Prihlásiť sa</string>
+    <string name="action_select">Vybrať</string>
+    <string name="action_show_password">Zobraziť heslo</string>
+    <string name="action_hide_password">Skryť heslo</string>
+    <string name="action_sign_out">Odhlásiť sa</string>
+    <string name="action_learn_more">Zistiť viac</string>
+    <string name="action_open_apple_id">Otvoriť Apple ID</string>
+    <string name="action_open_settings">Otvoriť Nastavenia</string>
+    <string name="action_force_sync">Vynútiť synchronizáciu</string>
+    <string name="action_sync_now">Synchronizovať</string>
+    <string name="action_details">Podrobnosti</string>
+    <string name="action_set_up">Nastaviť</string>
+    <string name="action_report_issue">Nahlásiť problém</string>
+    <string name="action_view">Zobraziť</string>
+    <string name="action_enable">Povoliť</string>
+    <string name="action_done">Hotovo</string>
+    <string name="action_save">Uložiť</string>
+    <string name="action_add">Pridať</string>
+    <string name="action_edit">Upraviť</string>
+    <string name="action_delete">Zmazať</string>
+    <string name="action_confirm">Potvrdiť</string>
+    <string name="action_discard">Zahodiť</string>
+    <string name="action_dismiss">Zavrieť</string>
+    <string name="action_show_all">Zobraziť všetko</string>
+    <string name="action_connect">Pripojiť</string>
+    <string name="action_duplicate">Duplikovať</string>
+    <string name="action_share">Zdieľať</string>
+    <string name="action_export_ics">Exportovať ako .ics</string>
+    <string name="action_confirm_delete">Potvrdiť zmazanie</string>
+    <string name="action_delete_event">Zmazať udalosť</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Len túto</string>
+    <string name="recurring_this_and_future">Túto a všetky budúce</string>
+    <string name="recurring_just_occurrence">Len tento výskyt</string>
+    <string name="recurring_all_occurrences">Všetky výskyty</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Názov udalosti</string>
+    <string name="label_location">Miesto</string>
+    <string name="label_location_hint">Adresa, miestnosť alebo odkaz na stretnutie</string>
+    <string name="label_notes">Poznámky</string>
+    <string name="label_starts">Začiatok</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Heslo pre aplikáciu</string>
+    <string name="label_password_hint">16 znakov, pomlčky voliteľné</string>
+    <string name="label_calendar_url">URL kalendára</string>
+    <string name="label_calendar_name">Názov kalendára</string>
+    <string name="label_name">Názov</string>
+    <string name="label_hex_color">Hex farba</string>
+    <string name="label_enter_hex">Zadajte 6 hex znakov (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Všetko</string>
+    <string name="view_week">Týždeň</string>
+    <string name="view_month">Mesiac</string>
+    <string name="label_all_day">Celý deň</string>
+    <string name="label_today">Dnes</string>
+    <string name="label_go_to_date">Prejsť na dátum</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Nastavenia</string>
+    <string name="settings_time_format">Formát času</string>
+    <string name="settings_start_week_on">Týždeň začína</string>
+    <string name="settings_event_emojis">Emoji udalostí</string>
+    <string name="settings_emoji_subtitle">Zobrazovať emoji podľa názvov udalostí</string>
+    <string name="settings_force_sync">Vynútiť úplnú synchronizáciu</string>
+    <string name="settings_force_sync_subtitle">Znova stiahnuť všetky dáta kalendára</string>
+    <string name="settings_sync_history">História synchronizácie</string>
+    <string name="settings_sync_history_subtitle">Zobraziť relácie synchronizácie (posledných 48 hodín)</string>
+    <string name="settings_import_subtitle">Importovať súbor .ics</string>
+    <string name="settings_export_subtitle">Záloha do súboru .ics</string>
+    <string name="settings_birthday_reminder">Pripomienka narodenín</string>
+    <string name="settings_use_device_timezone">Použiť časové pásmo zariadenia</string>
+    <string name="settings_section_my_calendars">Moje kalendáre</string>
+    <string name="settings_section_display">Zobrazenie</string>
+    <string name="settings_section_notifications">Oznámenia</string>
+    <string name="settings_section_sync">Synchronizácia</string>
+    <string name="settings_section_data">Dáta</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">Poradíme si.</string>
+    <string name="onboarding_connect_prompt">Pripojte iCloud a uvidíte svoje udalosti</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Pripojiť iCloud</string>
+    <string name="signin_caldav_title">Pridať účet CalDAV</string>
+    <string name="signin_connected_to">Pripojené k %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Nová udalosť</string>
+    <string name="dialog_edit_event_title">Upraviť udalosť</string>
+    <string name="dialog_force_sync_title">Vynútiť úplnú synchronizáciu?</string>
+    <string name="dialog_force_sync_message">Znova sa stiahnu všetky dáta kalendára zo servera. Miestne zmeny budú zachované.</string>
+    <string name="dialog_enable_notifications">Povoliť oznámenia?</string>
+    <string name="dialog_delete_title">Zmazať \"%1$s\"</string>
+    <string name="dialog_edit_title">Upraviť \"%1$s\"</string>
+    <string name="dialog_action_required">Táto akcia je nutná na pokračovanie.</string>
+    <string name="dialog_add_to_calendar">Pridať do kalendára</string>
+    <string name="dialog_select_calendar">Vybrať kalendár</string>
+    <string name="dialog_choose_color">Vybrať farbu</string>
+    <string name="dialog_add_subscription">Pridať odber</string>
+    <string name="dialog_edit_subscription">Upraviť odber</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Tento týždeň žiadne udalosti</string>
+    <string name="status_more_events">+%1$d ďalších</string>
+    <string name="status_no_sync_sessions">Zatiaľ žiadne relácie synchronizácie.\n\nSpustite synchronizáciu potiahnutím nadol v zobrazení kalendára.</string>
+    <string name="status_no_writable_calendars">Žiadne zapisovateľné kalendáre</string>
+    <string name="status_events_count">%1$d udalostí</string>
+    <string name="status_sync_changes">Zmeny synchronizácie</string>
+    <string name="status_sync_history">História synchronizácie</string>
+    <string name="status_parse_failures">Chyby spracovania</string>
+    <string name="status_error">Chyba</string>
+    <string name="status_failed_to_parse">⚠ %1$d sa nepodarilo spracovať</string>
+    <string name="status_built_with_love">Vytvorené s láskou</string>
+    <string name="status_in_austin">v Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Synchronizácia dokončená</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Prihlásenie zlyhalo</string>
+    <string name="error_auth_invalid_credentials">Neplatné Apple ID alebo heslo pre aplikáciu. Skontrolujte prihlasovacie údaje a skúste to znova.</string>
+    <string name="error_auth_app_specific_password_required">iCloud vyžaduje heslo pre aplikáciu. Vaše bežné heslo Apple ID tu nebude fungovať.</string>
+    <string name="error_auth_session_expired_title">Relácia vypršala</string>
+    <string name="error_auth_session_expired">Vaša relácia iCloud vypršala. Prihláste sa znova na pokračovanie synchronizácie.</string>
+    <string name="error_auth_account_locked">Vaše Apple ID je uzamknuté. Navštívte appleid.apple.com a odomknite ho.</string>
+
+    <string name="error_network_offline">Ste offline. Zmeny sa synchronizujú po opätovnom pripojení.</string>
+    <string name="error_network_timeout">Časový limit pripojenia vypršal. Skontrolujte internet a skúste to znova.</string>
+    <string name="error_network_ssl">Zabezpečené pripojenie zlyhalo. Skontrolujte nastavenia siete.</string>
+    <string name="error_network_unknown_host">Nepodarilo sa pripojiť k iCloud. Skontrolujte internetové pripojenie.</string>
+    <string name="error_network_connection_failed">Pripojenie zlyhalo. Skúste to znova.</string>
+
+    <string name="error_server_unavailable">iCloud je dočasne nedostupný. Skúste to neskôr.</string>
+    <string name="error_server_rate_limited">Príliš veľa požiadaviek. Chvíľu počkajte a skúste to znova.</string>
+    <string name="error_server_forbidden">Prístup zamietnutý. K tomuto kalendáru možno nemáte oprávnenie.</string>
+    <string name="error_server_not_found">Požadovaná položka nebola nájdená na serveri.</string>
+    <string name="error_conflict_title">Konflikt synchronizácie</string>
+    <string name="error_conflict_generic">Táto udalosť bola zmenená na inom zariadení. Vynúťte synchronizáciu pre získanie najnovšej verzie.</string>
+    <string name="error_conflict_with_event">\"%1$s\" bolo zmenené na inom zariadení. Vynúťte synchronizáciu pre získanie najnovšej verzie.</string>
+    <string name="error_sync_token_expired">Dáta synchronizácie vypršali. Prebieha úplná synchronizácia…</string>
+
+    <string name="error_event_not_found">Udalosť nenájdená.</string>
+    <string name="error_calendar_not_found">Kalendár nenájdený.</string>
+    <string name="error_calendar_read_only">Nie je možné upravovať udalosti v \"%1$s\" (kalendár len na čítanie).</string>
+    <string name="error_event_invalid_data">Neplatné údaje udalosti. Skontrolujte časy začiatku a konca.</string>
+    <string name="error_event_invalid_recurrence">Neplatný vzor opakovania.</string>
+
+    <string name="error_display_name_exists">Účet s názvom \"%1$s\" už existuje.</string>
+
+    <string name="error_import_file_not_found">Súbor nenájdený alebo sa nedá prečítať.</string>
+    <string name="error_import_invalid_format">Neplatný formát súboru kalendára.</string>
+    <string name="error_import_partial">Importovaných %1$d udalostí, %2$d zlyhalo.</string>
+    <string name="error_export_failed">Export udalostí zlyhal.</string>
+    <string name="error_export_no_events">Žiadne udalosti na export.</string>
+    <string name="error_end_before_start">Čas konca musí byť po čase začiatku</string>
+
+    <string name="error_storage_full_title">Úložisko plné</string>
+    <string name="error_storage_full">Nedostatok miesta. Uvoľnite miesto a skúste to znova.</string>
+    <string name="error_database_corruption_title">Chyba dát</string>
+    <string name="error_database_corruption">Dáta kalendára môžu byť poškodené. Kontaktujte podporu.</string>
+    <string name="error_migration_title">Chyba aktualizácie</string>
+    <string name="error_migration_failed">Aktualizácia dát aplikácie zlyhala. Preinštalujte aplikáciu.</string>
+
+    <string name="error_permission_notification_title">Povoliť oznámenia?</string>
+    <string name="error_permission_notification">KashCal potrebuje oprávnenie na oznámenia, aby vás upozornil na nadchádzajúce udalosti.</string>
+    <string name="error_permission_alarm_title">Povoliť presné budíky?</string>
+    <string name="error_permission_alarm">KashCal potrebuje oprávnenie na presné budíky pre presné pripomienky.</string>
+    <string name="error_permission_storage">Na import/export je potrebné oprávnenie na úložisko.</string>
+
+    <string name="error_device_calendar_title">Chyba kalendára</string>
+    <string name="error_device_calendar_write_failed">Uloženie do kalendára zariadenia zlyhalo. Skúste to znova.</string>
+    <string name="error_device_calendar_permission">Potrebné oprávnenie na zápis do kalendára. Udeľte oprávnenie v Nastaveniach.</string>
+    <string name="error_device_calendar_not_found">Kalendár nenájdený. Mohol byť odstránený.</string>
+    <string name="error_device_event_not_found">Udalosť nenájdená. Mohla byť zmazaná.</string>
+    <string name="error_device_calendar_read_only">Tento kalendár je len na čítanie.</string>
+
+    <string name="error_sync_no_accounts">Žiadny účet iCloud nie je nakonfigurovaný. Nastavte iCloud na synchronizáciu kalendárov.</string>
+    <string name="error_sync_partial">Synchronizovaných %1$d kalendárov, %2$d zlyhalo.</string>
+
+    <string name="error_unknown">Niečo sa pokazilo. Skúste to znova.</string>
+
+    <!-- ==================== Content Descriptions ==================== -->
+    <string name="cd_selected">Vybraté</string>
+    <string name="cd_back">Späť</string>
+    <string name="cd_close">Zavrieť</string>
+    <string name="cd_search">Hľadať</string>
+    <string name="cd_create_event">Vytvoriť udalosť</string>
+    <string name="cd_settings">Nastavenia</string>
+    <string name="cd_today">Dnes</string>
+    <string name="cd_previous_week">Predchádzajúci týždeň</string>
+    <string name="cd_next_week">Ďalší týždeň</string>
+    <string name="cd_delete">Zmazať</string>
+    <string name="cd_refresh">Obnoviť</string>
+    <string name="cd_more_options">Ďalšie možnosti</string>
+    <string name="cd_duplicate">Duplikovať</string>
+    <string name="cd_share">Zdieľať</string>
+    <string name="cd_export_ics">Exportovať ako ICS</string>
+    <string name="cd_open_link">Otvoriť odkaz</string>
+    <string name="cd_open_maps">Otvoriť v mapách</string>
+    <string name="cd_copy_clipboard">Kopírovať do schránky</string>
+    <string name="cd_clear_history">Vymazať históriu</string>
+    <string name="cd_recurring">Opakujúce sa</string>
+    <string name="cd_enabled">Povolené</string>
+    <string name="cd_sync_error">Chyba synchronizácie</string>
+    <string name="cd_select_option">Vybrať možnosť</string>
+    <string name="cd_select_label">Vybrať %1$s</string>
+    <string name="cd_wheel_picker">Koliesko výberu s %1$d možnosťami</string>
+    <string name="cd_version_info">KashCal verzia %1$s. Dlhým stlačením otvoríte ladiace možnosti.</string>
+    <string name="cd_color_slider">Posuvník farby, aktuálne %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d stupňov</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Kalendár</string>
+    <string name="label_color">Farba:</string>
+    <string name="label_repeat">Opakovanie</string>
+    <string name="label_sync_interval">Interval synchronizácie:</string>
+    <string name="label_scheduled_events">Plánované udalosti</string>
+    <string name="label_all_day_events">Celodenné udalosti</string>
+    <string name="label_server_url">URL servera</string>
+    <string name="label_username">Používateľské meno</string>
+    <string name="label_password">Heslo</string>
+    <string name="label_display_name_optional">Zobrazovaný názov (voliteľné)</string>
+
+    <string name="placeholder_search_events">Hľadať udalosti…</string>
+
+    <string name="hint_https_default">Predvolené https://, ak nie je uvedené</string>
+    <string name="hint_name_shown_in_settings">Názov zobrazený v nastaveniach</string>
+    <string name="caldav_trust_insecure_subtitle">Pre samopodpísané certifikáty alebo lokálne HTTP servery</string>
+
+    <string name="label_recurrence_after">Po</string>
+    <string name="label_recurrence_occurrences">výskytoch</string>
+    <string name="label_recurrence_on_date">K dátumu</string>
+
+    <string name="settings_visible_calendars">Viditeľné kalendáre</string>
+    <string name="settings_default_calendar">Predvolený kalendár</string>
+    <string name="settings_default_event_length">Predvolená dĺžka udalosti</string>
+    <string name="settings_default_alerts">Predvolené upozornenia</string>
+    <string name="settings_notifications">Oznámenia</string>
+    <string name="settings_new_events">Nové udalosti</string>
+
+    <string name="option_system_default">Predvolené systémové</string>
+    <string name="option_12_hour">12-hodinový</string>
+    <string name="option_24_hour">24-hodinový</string>
+    <string name="option_sunday">Nedeľa</string>
+    <string name="option_monday">Pondelok</string>
+    <string name="option_saturday">Sobota</string>
+
+    <string name="empty_no_events_found">Žiadne udalosti nenájdené</string>
+    <string name="empty_no_upcoming_events">Žiadne nadchádzajúce udalosti</string>
+    <string name="empty_no_calendars">Žiadne dostupné kalendáre</string>
+
+    <string name="status_connecting">Pripájanie…</string>
+    <string name="status_fetching">Načítanie…</string>
+
+    <string name="action_fetch_calendar">Načítať kalendár</string>
+    <string name="action_import_from_file">Importovať zo súboru</string>
+    <string name="action_export_local_calendar">Exportovať miestny kalendár</string>
+
+    <string name="provider_icloud">iCloud</string>
+
+    <string name="help_app_password_description">Heslá pre aplikácie umožňujú prihlásenie do aplikácií tretích strán bez zdieľania hlavného hesla Apple ID.</string>
+    <string name="help_app_password_steps_header">Postup vytvorenia:</string>
+    <string name="help_app_password_step_1">1. Prejdite na appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Prihláste sa svojím Apple ID</string>
+    <string name="help_app_password_step_3">3. Prejdite do Prihlásenie a bezpečnosť</string>
+    <string name="help_app_password_step_4">4. Kliknite na Heslá pre aplikácie</string>
+    <string name="help_app_password_step_5">5. Kliknite na Vygenerovať a skopírujte sem</string>
+
+    <string name="dialog_notification_permission_message">KashCal potrebuje oprávnenie na oznámenia, aby vás upozornil na nadchádzajúce udalosti.</string>
+    <string name="dialog_notification_permission_settings_hint">Toto môžete neskôr zmeniť v Nastaveniach.</string>
+
+    <string name="accounts_title">Účty</string>
+    <string name="accounts_section_connected">Pripojené</string>
+    <string name="accounts_section_add">Pridať účet</string>
+    <string name="accounts_empty_title">Žiadne pripojené účty</string>
+    <string name="accounts_empty_subtitle">Pridajte účet na synchronizáciu kalendárov medzi zariadeniami</string>
+    <string name="accounts_row_label">iCloud, Nextcloud a ďalšie</string>
+    <string name="accounts_add_icloud">Pridať iCloud</string>
+    <string name="accounts_add_caldav">Pridať CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail a ďalšie</string>
+    <string name="accounts_caldav_help_title">Čo je CalDAV?</string>
+    <string name="accounts_caldav_help_description">CalDAV je otvorený štandard na synchronizáciu kalendárov. Podporovaný:</string>
+    <string name="accounts_caldav_help_more">a ďalšie</string>
+    <string name="accounts_calendars_syncing">Synchronizácia…</string>
+    <string name="accounts_cd_icloud_icon">Účet iCloud</string>
+    <string name="accounts_cd_caldav_icon">Účet CalDAV</string>
+    <string name="accounts_cd_back">Späť</string>
+    <string name="accounts_sync_issue">Problém so synchronizáciou</string>
+    <string name="accounts_cd_sync_warning">Varovanie synchronizácie</string>
+
+    <string name="subscriptions_title">Odbery</string>
+    <string name="subscriptions_section_ics_calendars">Kalendáre ICS</string>
+    <string name="subscriptions_section_add">Pridať</string>
+    <string name="subscriptions_empty_ics">Žiadne odbery ICS</string>
+    <string name="subscriptions_empty_ics_hint">Pridajte kanál kalendára na zobrazenie udalostí</string>
+    <string name="subscriptions_add_ics">Pridať kalendár ICS</string>
+    <string name="subscriptions_row_label">Sviatky, škola a ďalšie</string>
+
+    <string name="birthdays_anniversaries_row_label">Narodeniny a výročia</string>
+    <string name="birthdays_section_title">Narodeniny</string>
+    <string name="anniversaries_section_title">Výročia</string>
+    <string name="settings_contact_birthdays">Narodeniny kontaktov</string>
+    <string name="settings_contact_birthdays_description">Zobraziť narodeniny z kontaktov telefónu ako celodenné udalosti v kalendári.</string>
+    <string name="settings_contact_anniversaries">Výročia kontaktov</string>
+    <string name="settings_contact_anniversaries_description">Zobraziť výročia z kontaktov telefónu ako celodenné udalosti v kalendári.</string>
+    <string name="settings_anniversary_reminder">Pripomienka výročia</string>
+    <string name="settings_calendar_color">Farba kalendára</string>
+    <string name="settings_default_reminder">Predvolená pripomienka</string>
+    <string name="action_change">Zmeniť</string>
+    <string name="settings_contacts_footer">Číta z kontaktov zariadenia. Vyžaduje oprávnenie na kontakty.</string>
+    <string name="settings_contacts_permission_required">Potrebné oprávnenie na kontakty</string>
+    <string name="subscriptions_cd_back">Späť</string>
+    <string name="subscriptions_cd_add">Pridať odber</string>
+
+    <string name="account_detail_section_sync">SYNCHRONIZÁCIA</string>
+    <string name="account_detail_section_calendars">KALENDÁRE</string>
+    <string name="account_detail_section_account">ÚČET</string>
+    <string name="account_detail_enabled">Povolené</string>
+    <string name="account_detail_enabled_subtitle">Automaticky synchronizovať tento účet</string>
+    <string name="account_detail_sync_now">Synchronizovať</string>
+    <string name="account_detail_syncing">Synchronizácia…</string>
+    <string name="account_detail_discovering">Zisťovanie…</string>
+    <string name="account_detail_discover_calendars">Zistiť nové kalendáre</string>
+    <string name="account_detail_change_password">Zmeniť heslo</string>
+    <string name="account_detail_sign_out">Odhlásiť sa</string>
+    <string name="account_detail_never_synced">Nikdy nesynchronizované</string>
+    <string name="account_detail_last_success">Posledný úspech: %1$s</string>
+    <string name="account_detail_cd_rename">Premenovať</string>
+    <string name="account_detail_cd_show_password">Zobraziť heslo</string>
+    <string name="account_detail_cd_hide_password">Skryť heslo</string>
+
+    <string name="sync_failure_notification_title">Problém so synchronizáciou %1$s</string>
+    <string name="sync_failure_notification_text">Synchronizácia kalendára zlyhala %1$d krát</string>
+
+    <string name="rename_account_title">Premenovať účet</string>
+    <string name="rename_account_label">Názov účtu</string>
+
+    <string name="change_password_title">Zmeniť heslo</string>
+    <string name="change_password_label_icloud">Heslo pre aplikáciu</string>
+    <string name="change_password_label_default">Heslo</string>
+
+    <string name="kashcal_account_label">KashCal</string>
+
+    <string name="settings_device_calendars">Kalendáre zariadenia</string>
+    <string name="settings_quick_event_add">Rýchle pridanie udalosti</string>
+    <string name="settings_week_numbers">Čísla týždňov</string>
+    <string name="settings_widget_event_limit">Limit udalostí widgetu</string>
+    <string name="settings_sync_lookback">Rozsah synchronizácie späť</string>
+    <string name="settings_auto_detect_emojis">Automatická detekcia emoji</string>
+    <string name="settings_events_per_day">Udalostí za deň</string>
+    <string name="settings_not_set">Nenastavené</string>
+    <string name="settings_on">Zap.</string>
+    <string name="settings_off">Vyp.</string>
+    <string name="settings_tap_to_enable">Ťuknite na povolenie</string>
+    <string name="settings_device_calendars_enabled">%1$d povolených</string>
+    <string name="settings_per_day">%1$d za deň</string>
+
+    <string name="signin_icloud_help_question">Čo je heslo pre aplikáciu?</string>
+    <string name="caldav_trust_insecure_label">Dôverovať nezabezpečenému pripojeniu</string>
+    <string name="action_add_another">Pridať ďalší</string>
+    <string name="account_connected_found_calendars">Nájdených %1$d kalendárov pre %2$s.</string>
+    <string name="account_connected_syncing_hint">Prebieha synchronizácia \u2014 udalosti sa čoskoro zobrazia.</string>
+    <string name="settings_time_format_currently_24h">Aktuálne: 24-hodinový (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Aktuálne: 12-hodinový (%1$s)</string>
+    <string name="settings_time_format_example">Príklad: %1$s</string>
+    <string name="settings_system_default_with_value">Predvolené systémové (%1$s)</string>
+    <string name="alert_none">Žiadne</string>
+    <string name="cd_collapse">Zbaliť</string>
+    <string name="cd_expand">Rozbaliť</string>
+    <string name="cd_hide_calendar">Skryť kalendár</string>
+    <string name="cd_show_calendar">Zobraziť kalendár</string>
+    <string name="cd_pick_month_year">Vybrať mesiac a rok</string>
+    <string name="cd_previous_month">Predchádzajúci mesiac</string>
+    <string name="cd_next_month">Ďalší mesiac</string>
+    <string name="cd_month_year_picker">Výber mesiaca a roku</string>
+    <string name="cd_remove_alert">Odstrániť upozornenie</string>
+    <string name="cd_warning">Varovanie</string>
+    <string name="cd_refresh_calendars">Obnoviť kalendáre</string>
+    <string name="cd_timezone_tap_to_change">Časové pásmo: %1$s, ťuknite na zmenu</string>
+    <string name="cd_day_events">Deň %1$d, %2$d udalostí</string>
+
+    <string name="label_frequency">Četnosť</string>
+    <string name="label_on_days">V dňoch</string>
+    <string name="label_pattern">Vzor</string>
+    <string name="label_ends">Končí</string>
+    <string name="label_alerts">Upozornenia</string>
+    <string name="label_add_alert">Pridať upozornenie</string>
+    <string name="label_recurrence_never">Nikdy</string>
+    <string name="label_tomorrow">Zajtra</string>
+    <string name="label_yesterday">Včera</string>
+    <string name="label_device_calendars">Kalendáre zariadenia</string>
+    <string name="label_default_calendar_hint">Nové udalosti budú vytvorené v tomto kalendári</string>
+    <string name="label_visible_count">%1$d / %2$d viditeľných</string>
+    <string name="label_enabled_count">%1$d / %2$d povolených</string>
+    <string name="label_reminders_truncated">%1$d nezobrazených (%2$d celkovo, max %3$d editovateľných)</string>
+    <string name="label_found_events">Nájdených: %1$d udalostí</string>
+    <string name="label_open_debug_menu">Otvoriť ladiacu ponuku</string>
+    <string name="placeholder_search">Hľadať\u2026</string>
+    <string name="status_sync_paused">Synchronizácia pozastavená</string>
+    <string name="status_not_synced">Nesynchronizované</string>
+    <string name="status_sync_error">Chyba synchronizácie</string>
+    <string name="status_minutes_ago">pred %1$d min</string>
+    <string name="status_hours_ago">pred %1$d hod</string>
+
+    <string name="device_calendars_description">Zobraziť udalosti z iných kalendárových aplikácií na vašom zariadení (adaptéry synchronizácie, miestne kalendáre).</string>
+    <string name="device_calendars_permission_required">Potrebné oprávnenie na kalendár. Ťuknite na Povoliť na udelenie prístupu.</string>
+    <string name="device_calendars_read_only_access">Prístup len na čítanie</string>
+    <string name="device_calendars_grant_write">Udeľte oprávnenie na zápis na úpravu udalostí kalendára zariadenia</string>
+    <string name="device_calendars_grant">Udeliť</string>
+    <string name="device_calendars_none_found">Žiadne kalendáre zariadenia nenájdené.</string>
+    <string name="device_calendars_local">Miestne</string>
+    <string name="device_calendars_show_declined">Zobraziť odmietnuté udalosti</string>
+    <string name="device_calendars_reminders">Pripomienky</string>
+    <string name="device_calendars_reminders_desc">Dostávať oznámenia o udalostiach kalendára zariadenia</string>
+    <string name="device_calendars_read_only_no_write">Len na čítanie (bez oprávnenia na zápis)</string>
+    <string name="device_calendars_read_only_calendar">Len na čítanie (kalendár je len na čítanie)</string>
+
+    <string name="settings_developer_options">Vývojárske možnosti</string>
+    <string name="settings_sync_frequency">Četnosť synchronizácie</string>
+    <string name="settings_preview">NÁHĽAD</string>
+    <string name="settings_n_events">%1$d udalostí</string>
+    <string name="settings_n_events_default">%1$d udalostí (predvolené)</string>
+
+    <string name="drawer_calendars">Kalendáre</string>
+    <string name="drawer_contacts">Kontakty</string>
+    <string name="drawer_device_calendars">Kalendáre zariadenia</string>
+    <string name="drawer_share_feedback">Zdieľať spätnú väzbu</string>
+
+    <string name="status_privacy_tagline">Pre vás, nie vaše dáta.</string>
+    <string name="action_keep_it_that_way">Nechajme to tak</string>
+
+    <string name="status_already_synced">Už synchronizované</string>
+    <string name="status_warnings">Varovania</string>
+    <string name="sync_history_events_failed">Neúspešné udalosti</string>
+    <string name="sync_history_abandoned_max_retries">Opustené (max. pokusov)</string>
+    <string name="sync_history_events_skipped">Preskočené udalosti</string>
+    <string name="sync_history_duration">Doba trvania</string>
+    <string name="sync_history_already_synced_count">%1$d už synchronizovaných</string>
+
+    <string name="day_events_no_events">Žiadne udalosti</string>
+
+    <string name="status_youre_offline">Ste offline</string>
+
+    <string name="dialog_sign_out_title">Odhlásiť sa z %1$s?</string>
+    <string name="dialog_sign_out_message">Ste prihlásení ako %1$s. Odhlásením sa odstránia synchronizované kalendáre z tohto zariadenia.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- Slovak: one, few, other -->
+
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d účet</item>
+        <item quantity="few">%1$d účty</item>
+        <item quantity="many">%1$d účtov</item>
+        <item quantity="other">%1$d účtov</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 kalendár</item>
+        <item quantity="few">%1$s \u00B7 %2$d kalendáre</item>
+        <item quantity="many">%1$s \u00B7 %2$d kalendárov</item>
+        <item quantity="other">%1$s \u00B7 %2$d kalendárov</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d odber</item>
+        <item quantity="few">%1$d odbery</item>
+        <item quantity="many">%1$d odberov</item>
+        <item quantity="other">%1$d odberov</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Synchronizácia zlyhala (%1$d pokus)</item>
+        <item quantity="few">Synchronizácia zlyhala (%1$d pokusy)</item>
+        <item quantity="many">Synchronizácia zlyhala (%1$d pokusov)</item>
+        <item quantity="other">Synchronizácia zlyhala (%1$d pokusov)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d kalendár</item>
+        <item quantity="few">%1$d kalendáre</item>
+        <item quantity="many">%1$d kalendárov</item>
+        <item quantity="other">%1$d kalendárov</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d kalendár (%2$d nový)</item>
+        <item quantity="few">%1$d kalendáre (%2$d nové)</item>
+        <item quantity="many">%1$d kalendárov (%2$d nových)</item>
+        <item quantity="other">%1$d kalendárov (%2$d nových)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d udalosť</item>
+        <item quantity="few">%1$d udalosti</item>
+        <item quantity="many">%1$d udalostí</item>
+        <item quantity="other">%1$d udalostí</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d narodeniny</item>
+        <item quantity="few">%1$d narodeniny</item>
+        <item quantity="many">%1$d narodenín</item>
+        <item quantity="other">%1$d narodenín</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d výročie</item>
+        <item quantity="few">%1$d výročia</item>
+        <item quantity="many">%1$d výročí</item>
+        <item quantity="other">%1$d výročí</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d ďalší</item>
+        <item quantity="few">+ %1$d ďalšie</item>
+        <item quantity="many">+ %1$d ďalších</item>
+        <item quantity="other">+ %1$d ďalších</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Pridať udalosť</item>
+        <item quantity="few">Importovať %1$d udalosti</item>
+        <item quantity="many">Importovať %1$d udalostí</item>
+        <item quantity="other">Importovať %1$d udalostí</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Pridať</item>
+        <item quantity="few">Importovať</item>
+        <item quantity="many">Importovať</item>
+        <item quantity="other">Importovať</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026a %1$d ďalší</item>
+        <item quantity="few">\u2026a %1$d ďalšie</item>
+        <item quantity="many">\u2026a %1$d ďalších</item>
+        <item quantity="other">\u2026a %1$d ďalších</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">Importovaná %1$d udalosť</item>
+        <item quantity="few">Importované %1$d udalosti</item>
+        <item quantity="many">Importovaných %1$d udalostí</item>
+        <item quantity="other">Importovaných %1$d udalostí</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">Exportovaná %1$d udalosť</item>
+        <item quantity="few">Exportované %1$d udalosti</item>
+        <item quantity="many">Exportovaných %1$d udalostí</item>
+        <item quantity="other">Exportovaných %1$d udalostí</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d udalosť</item>
+        <item quantity="few">%1$d udalosti</item>
+        <item quantity="many">%1$d udalostí</item>
+        <item quantity="other">%1$d udalostí</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d minúta</item>
+        <item quantity="few">%1$d minúty</item>
+        <item quantity="many">%1$d minút</item>
+        <item quantity="other">%1$d minút</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d min</item>
+        <item quantity="few">%1$d min</item>
+        <item quantity="many">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d hodina</item>
+        <item quantity="few">%1$d hodiny</item>
+        <item quantity="many">%1$d hodín</item>
+        <item quantity="other">%1$d hodín</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d deň</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="many">%1$d dní</item>
+        <item quantity="other">%1$d dní</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d týždeň</item>
+        <item quantity="few">%1$d týždne</item>
+        <item quantity="many">%1$d týždňov</item>
+        <item quantity="other">%1$d týždňov</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d mesiac</item>
+        <item quantity="few">%1$d mesiace</item>
+        <item quantity="many">%1$d mesiacov</item>
+        <item quantity="other">%1$d mesiacov</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d rok</item>
+        <item quantity="few">%1$d roky</item>
+        <item quantity="many">%1$d rokov</item>
+        <item quantity="other">%1$d rokov</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d sek</item>
+        <item quantity="few">%1$d sek</item>
+        <item quantity="many">%1$d sek</item>
+        <item quantity="other">%1$d sek</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d minúta vopred</item>
+        <item quantity="few">%1$d minúty vopred</item>
+        <item quantity="many">%1$d minút vopred</item>
+        <item quantity="other">%1$d minút vopred</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d hodina vopred</item>
+        <item quantity="few">%1$d hodiny vopred</item>
+        <item quantity="many">%1$d hodín vopred</item>
+        <item quantity="other">%1$d hodín vopred</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d deň vopred</item>
+        <item quantity="few">%1$d dni vopred</item>
+        <item quantity="many">%1$d dní vopred</item>
+        <item quantity="other">%1$d dní vopred</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d týždeň vopred</item>
+        <item quantity="few">%1$d týždne vopred</item>
+        <item quantity="many">%1$d týždňov vopred</item>
+        <item quantity="other">%1$d týždňov vopred</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Upraviť opakujúcu sa udalosť</string>
+    <string name="dialog_delete_recurring_title">Zmazať opakujúcu sa udalosť</string>
+    <string name="dialog_edit_recurring_message">Toto je opakujúca sa udalosť. Ako chcete uplatniť túto zmenu?</string>
+    <string name="recurring_this_event">Túto udalosť</string>
+    <string name="recurring_all_events">Všetky udalosti</string>
+    <string name="empty_pick_a_day">Vyberte si deň. Využite ho.</string>
+    <string name="empty_no_events_day">Nič tu nie je; čo tak ísť von?</string>
+    <string name="label_upcoming_events">Nadchádzajúce udalosti</string>
+    <string name="filter_date">Dátum</string>
+    <string name="label_select_date">Vyberte dátum</string>
+    <string name="hint_tap_date_range">Ťuknite na rovnaký dátum pre jeden deň, alebo na iný pre rozsah</string>
+
+    <string name="cd_clear">Vymazať</string>
+    <string name="cd_offline">Offline</string>
+    <string name="cd_previous">Predchádzajúci</string>
+    <string name="cd_next">Ďalší</string>
+    <string name="cd_open_drawer">Otvoriť ponuku</string>
+    <string name="cd_close_drawer">Zavrieť ponuku</string>
+    <string name="cd_calendar_view">Zobrazenie kalendára</string>
+    <string name="cd_active_view">Aktívny pohľad</string>
+
+    <string name="view_agenda">Agenda</string>
+    <string name="view_month_full">Mesiac (celý)</string>
+    <string name="view_three_days">3 dni</string>
+    <string name="view_year">Rok</string>
+
+    <string name="label_go_to_month">Prejsť na mesiac</string>
+
+    <string name="action_more_options">Ďalšie možnosti</string>
+
+    <string name="label_duration_days">dní</string>
+    <string name="label_duration_hrs">hod</string>
+    <string name="label_duration_min">min</string>
+
+    <string name="recurrence_on_day">%1$d. deň</string>
+    <string name="recurrence_on_last_day">Posledný deň mesiaca</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s</string>
+    <string name="ordinal_1st">1.</string>
+    <string name="ordinal_2nd">2.</string>
+    <string name="ordinal_3rd">3.</string>
+    <string name="ordinal_4th">4.</string>
+    <string name="ordinal_nth">%1$d.</string>
+
+    <string name="sync_summary_new">%1$d nových</string>
+    <string name="sync_summary_updated">%1$d aktualizovaných</string>
+    <string name="sync_summary_removed">%1$d odstránených</string>
+
+    <string name="cd_previous_3_days">Predchádzajúce 3 dni</string>
+    <string name="cd_next_3_days">Ďalšie 3 dni</string>
+    <string name="cd_circular_scrolling">Cyklické posúvanie povolené</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Bez pripomienky</string>
+    <string name="reminder_at_time_of_event">V čase udalosti</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s vopred</string>
+    <string name="reminder_time_after">%1$s po</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9:00 v deň udalosti</string>
+    <string name="reminder_day_of_event_24h">09:00 v deň udalosti</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s vopred o 9:00</string>
+    <string name="reminder_before_at_24h">%1$s vopred o 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Vyp.</string>
+    <string name="reminder_short_at_event">Udalosť</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$dh</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_summary_none">Žiadne</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dh %2$dm</string>
+    <string name="duration_compact_short">%1$dh%2$dm</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Iba ručne</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Všetky udalosti</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Odložiť</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Začína teraz</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Zajtra, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Synchronizácia dokončená</string>
+    <string name="sync_notification_partial">Synchronizácia čiastočne dokončená</string>
+    <string name="sync_notification_auth_failed">Overenie synchronizácie zlyhalo</string>
+    <string name="sync_notification_auth_reauth">Prosím overte svoj účet znova</string>
+    <string name="sync_notification_failed">Synchronizácia zlyhala</string>
+    <string name="sync_notification_parse_title">Niektoré udalosti sa nepodarilo synchronizovať</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s v %2$s sa nepodarilo synchronizovať. Skúste Vynútiť synchronizáciu v Nastaveniach.</string>
+    <string name="sync_notification_conflict_title">Konflikt synchronizácie vyriešený</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Lokálne zmeny v \"%1$s\" boli stratené kvôli konfliktu synchronizácie. Bude použitá verzia zo servera.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Lokálne zmeny v %1$s boli stratené kvôli konfliktom synchronizácie. Budú použité verzie zo servera.</string>
+    <string name="sync_notification_expired_title">Zmeny synchronizácie vypršali</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s sa nepodarilo synchronizovať po 30 dňoch. Bude použitá verzia zo servera. Vynúťte synchronizáciu pre opakovanie.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Synchronizovaný %1$d kalendár</item>
+        <item quantity="few">Synchronizované %1$d kalendáre</item>
+        <item quantity="many">Synchronizovaných %1$d kalendárov</item>
+        <item quantity="other">Synchronizovaných %1$d kalendárov</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d zmena</item>
+        <item quantity="few">, %1$d zmeny</item>
+        <item quantity="many">, %1$d zmien</item>
+        <item quantity="other">, %1$d zmien</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d chyba</item>
+        <item quantity="few">, %1$d chyby</item>
+        <item quantity="many">, %1$d chýb</item>
+        <item quantity="other">, %1$d chýb</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%2$s narodeniny: %1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">Narodeniny: %1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%2$s výročie: %1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">Výročie: %1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$d.</string>
+    <string name="ordinal_suffix_nd">%1$d.</string>
+    <string name="ordinal_suffix_rd">%1$d.</string>
+    <string name="ordinal_suffix_th">%1$d.</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Synchronizácia kalendárov\u2026</string>
+    <string name="sync_banner_preparing">Príprava synchronizácie\u2026</string>
+    <string name="sync_banner_complete_errors">Synchronizácia dokončená s chybami</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Synchronizácia zlyhala: %1$s</string>
+    <string name="error_unknown_error">Neznáma chyba</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Nová udalosť: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d nová udalosť</item>
+        <item quantity="few">%1$d nové udalosti</item>
+        <item quantity="many">%1$d nových udalostí</item>
+        <item quantity="other">%1$d nových udalostí</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d udalosť aktualizovaná</item>
+        <item quantity="few">%1$d udalosti aktualizované</item>
+        <item quantity="many">%1$d udalostí aktualizovaných</item>
+        <item quantity="other">%1$d udalostí aktualizovaných</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d udalosť odstránená</item>
+        <item quantity="few">%1$d udalosti odstránené</item>
+        <item quantity="many">%1$d udalostí odstránených</item>
+        <item quantity="other">%1$d udalostí odstránených</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d aktualizácia kalendára</item>
+        <item quantity="few">%1$d aktualizácie kalendára</item>
+        <item quantity="many">%1$d aktualizácií kalendára</item>
+        <item quantity="other">%1$d aktualizácií kalendára</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Deň %1$d z %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Deň 1 z %1$d \u00b7 začiatok %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Deň %1$d z %2$d \u00b7 koniec %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Celý deň</string>
+    <string name="event_date_all_day">%1$s \u00b7 Celý deň</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Celý deň)</string>
+    <string name="event_date_all_day_parens">%1$s (Celý deň)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Uložiť udalosť</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Nové</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Červená</string>
+    <string name="color_orange">Oranžová</string>
+    <string name="color_yellow">Žltá</string>
+    <string name="color_green">Zelená</string>
+    <string name="color_cyan">Azúrová</string>
+    <string name="color_blue">Modrá</string>
+    <string name="color_purple">Fialová</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Odkaz na stretnutie: %1$s</string>
+    <string name="cd_phone_number">Telefónne číslo</string>
+    <string name="cd_email_link">E-mail: %1$s</string>
+    <string name="cd_web_link">Odkaz: %1$s</string>
+    <string name="cd_text_with_links">Text s %1$d odkazmi: %2$s</string>
+    <string name="cd_text_with_link">Text s 1 odkazom: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Deň %1$d z %2$d (Celý deň)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d synch.   \u2191%2$d odoslaných   \u2193%3$d stiahnutých</string>
+    <string name="sync_history_stats_issues">%1$d synch.   \u2191%2$d odoslaných   \u2193%3$d stiahnutých   \u26a0 %4$d problémov</string>
+    <string name="sync_history_failed">Zlyhalo</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Každú hodinu</string>
+    <string name="ics_sync_every_n_hours">Každých %1$d hodín</string>
+    <string name="ics_sync_daily">Denne</string>
+    <string name="ics_sync_weekly">Týždenne</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL je povinné</string>
+    <string name="ics_url_invalid_scheme">URL musí začínať http://, https:// alebo webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Celý deň)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <!-- Widget/channel strings -->
+    <string name="cd_widget_calendar">Kalendár</string>
+    <string name="cd_widget_add_event">Pridať udalosť</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">žiadne udalosti</string>
+    <string name="channel_event_reminders">Pripomienky udalostí</string>
+    <string name="channel_event_reminders_desc">Upozornenia na nadchádzajúce udalosti v kalendári</string>
+    <string name="channel_sync_progress">Priebeh synchronizácie</string>
+    <string name="channel_sync_progress_desc">Zobrazuje priebeh počas synchronizácie kalendárov</string>
+    <string name="channel_sync_status">Stav synchronizácie</string>
+    <string name="channel_sync_status_desc">Upozornenia na dokončenie synchronizácie a chyby</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">Neopakuje sa</string>
+    <string name="rrule_freq_daily">Denne</string>
+    <string name="rrule_freq_weekly">Týždenne</string>
+    <string name="rrule_freq_biweekly">Každé dva týždne</string>
+    <string name="rrule_freq_monthly">Mesačne</string>
+    <string name="rrule_freq_quarterly">Štvrťročne</string>
+    <string name="rrule_freq_yearly">Ročne</string>
+    <string name="rrule_repeats">Opakuje sa</string>
+    <string name="rrule_every_n_days">Každých %1$d dní</string>
+    <string name="rrule_every_n_weeks">Každých %1$d týždňov</string>
+    <string name="rrule_every_n_months">Každých %1$d mesiacov</string>
+    <string name="rrule_every_n_years">Každých %1$d rokov</string>
+    <string name="rrule_freq_on_days">%1$s v %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s v %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s posledný deň</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d. deň</string>
+    <string name="rrule_ordinal_last">posledný</string>
+    <string name="rrule_until_suffix">, do %1$s</string>
+    <string name="rrule_freq_never">Nikdy</string>
+    <string name="rrule_starting">%1$s počnúc %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 od %2$s</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d krát</item>
+        <item quantity="few">, %1$d krát</item>
+        <item quantity="many">, %1$d krát</item>
+        <item quantity="other">, %1$d krát</item>
+    </plurals>
+</resources>

@@ -49,10 +49,12 @@ import java.util.Locale
 private const val YEAR_PAGER_TOTAL = 200
 private const val YEAR_PAGER_CENTER = 100
 
-private val MONTH_NAMES_SHORT = listOf(
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-)
+private fun getLocalizedMonthNames(): List<String> {
+    val locale = Locale.getDefault()
+    return (1..12).map { month ->
+        java.time.Month.of(month).getDisplayName(TextStyle.SHORT, locale)
+    }
+}
 
 /**
  * Year view: 12 mini-months in 4x3 grid with horizontal paging by year.
@@ -247,8 +249,9 @@ private fun MiniMonth(
     val todayYear = today.get(Calendar.YEAR)
     val todayMonth = today.get(Calendar.MONTH)
 
-    val monthLabel = MONTH_NAMES_SHORT[month]
-    val accessibilityLabel = "${MONTH_NAMES_SHORT[month]} $year"
+    val monthNames = remember { getLocalizedMonthNames() }
+    val monthLabel = monthNames[month]
+    val accessibilityLabel = "${monthNames[month]} $year"
 
     // Day-of-week header letters
     val dayHeaders = remember(firstDayOfWeek) {

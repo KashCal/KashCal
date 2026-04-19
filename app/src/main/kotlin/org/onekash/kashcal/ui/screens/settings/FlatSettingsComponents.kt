@@ -35,6 +35,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 
 /**
  * Reusable flat settings row component.
@@ -263,6 +265,8 @@ fun VersionFooter(
     onLongPress: () -> Unit
 ) {
     val hapticFeedback = LocalHapticFeedback.current
+    val cdVersionInfo = stringResource(R.string.cd_version_info, versionName)
+    val longClickLabel = stringResource(R.string.label_open_debug_menu)
 
     Column(
         modifier = Modifier
@@ -274,15 +278,15 @@ fun VersionFooter(
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     onLongPress()
                 },
-                onLongClickLabel = "Open debug menu"
+                onLongClickLabel = longClickLabel
             )
             .semantics {
-                contentDescription = "KashCal version $versionName. Tap for info, long press for debug options."
+                contentDescription = cdVersionInfo
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "KashCal v$versionName",
+            text = stringResource(R.string.status_version, versionName),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
@@ -398,7 +402,7 @@ fun <T> SettingsDropdownRow(
                     )
                     Icon(
                         Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Select option",
+                        contentDescription = stringResource(R.string.cd_select_option),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )

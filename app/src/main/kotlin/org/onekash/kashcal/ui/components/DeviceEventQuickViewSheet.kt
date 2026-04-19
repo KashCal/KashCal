@@ -48,6 +48,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.location.openInMaps
@@ -172,6 +175,7 @@ fun DeviceEventQuickViewSheet(
                                 displayEvent.startTs,
                                 displayEvent.endTs,
                                 displayEvent.isAllDay,
+                                context.resources,
                                 timePattern
                             ),
                             style = MaterialTheme.typography.bodyLarge,
@@ -217,7 +221,7 @@ fun DeviceEventQuickViewSheet(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
+                                    contentDescription = if (hasUrl) stringResource(R.string.cd_open_link) else stringResource(R.string.cd_open_maps),
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -226,14 +230,16 @@ fun DeviceEventQuickViewSheet(
 
                         // Repeat info
                         if (displayEvent.hasRrule) {
-                            val repeatText = remember(displayEvent.rrule) {
+                            val rruleStrings = rememberRruleDisplayStrings()
+                            val recurringFallback = stringResource(R.string.cd_recurring)
+                            val repeatText = remember(displayEvent.rrule, rruleStrings) {
                                 displayEvent.rrule?.let { rrule ->
                                     try {
-                                        RruleBuilder.formatForDisplay(rrule)
+                                        RruleBuilder.formatForDisplay(rrule, rruleStrings)
                                     } catch (_: Exception) {
-                                        "Recurring" // Fallback for malformed RRULE
+                                        recurringFallback
                                     }
-                                } ?: "Recurring"
+                                } ?: recurringFallback
                             }
                             Text(
                                 text = "\uD83D\uDD01 $repeatText",
@@ -328,13 +334,13 @@ private fun DeviceEventActionButtons(
                 onClick = onDuplicate,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Duplicate")
+                Text(stringResource(R.string.action_duplicate))
             }
             FilledTonalButton(
                 onClick = onShare,
                 modifier = Modifier.weight(1f)
             ) {
-                Text("Share")
+                Text(stringResource(R.string.action_share))
             }
         } else {
             // Writable: show Edit, Delete, More menu
@@ -351,7 +357,7 @@ private fun DeviceEventActionButtons(
                         },
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Edit")
+                        Text(stringResource(R.string.action_edit))
                     }
                 } else {
                     // Inline edit confirmation for recurring events
@@ -362,7 +368,7 @@ private fun DeviceEventActionButtons(
                         },
                         modifier = Modifier.weight(0.5f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     FilledTonalButton(
@@ -376,7 +382,7 @@ private fun DeviceEventActionButtons(
                         },
                         modifier = Modifier.weight(0.5f)
                     ) {
-                        Text("Edit")
+                        Text(stringResource(R.string.action_edit))
                     }
                 }
             }
@@ -392,7 +398,7 @@ private fun DeviceEventActionButtons(
                             contentColor = MaterialTheme.colorScheme.onErrorContainer
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.action_delete))
                     }
                 } else {
                     // Inline delete confirmation
@@ -403,7 +409,7 @@ private fun DeviceEventActionButtons(
                         },
                         modifier = Modifier.weight(0.5f)
                     ) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     FilledTonalButton(
@@ -425,7 +431,7 @@ private fun DeviceEventActionButtons(
                             contentColor = MaterialTheme.colorScheme.onErrorContainer
                         )
                     ) {
-                        Text("Delete")
+                        Text(stringResource(R.string.action_delete))
                     }
                 }
             }
@@ -438,7 +444,7 @@ private fun DeviceEventActionButtons(
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
-                            contentDescription = "More options"
+                            contentDescription = stringResource(R.string.cd_more_options)
                         )
                     }
 
@@ -447,27 +453,27 @@ private fun DeviceEventActionButtons(
                         onDismissRequest = { showMoreMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Duplicate") },
+                            text = { Text(stringResource(R.string.action_duplicate)) },
                             onClick = {
                                 showMoreMenu = false
                                 onDuplicate()
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Share") },
+                            text = { Text(stringResource(R.string.action_share)) },
                             onClick = {
                                 showMoreMenu = false
                                 onShare()
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Export as .ics") },
+                            text = { Text(stringResource(R.string.action_export_ics)) },
                             onClick = {
                                 showMoreMenu = false
                                 onExportIcs()
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
+                                Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.cd_export_ics))
                             }
                         )
                     }
@@ -486,7 +492,7 @@ private fun DeviceEventActionButtons(
         ) {
             if (showEditConfirmation) {
                 Text(
-                    "Edit recurring event",
+                    stringResource(R.string.dialog_edit_recurring_title),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -501,7 +507,7 @@ private fun DeviceEventActionButtons(
                         selected = !editAllOccurrences,
                         onClick = { editAllOccurrences = false }
                     )
-                    Text("This occurrence only")
+                    Text(stringResource(R.string.recurring_just_occurrence))
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -514,13 +520,13 @@ private fun DeviceEventActionButtons(
                         selected = editAllOccurrences,
                         onClick = { editAllOccurrences = true }
                     )
-                    Text("All occurrences")
+                    Text(stringResource(R.string.recurring_all_occurrences))
                 }
             }
 
             if (showDeleteConfirmation) {
                 Text(
-                    "Delete recurring event",
+                    stringResource(R.string.dialog_delete_recurring_title),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -535,7 +541,7 @@ private fun DeviceEventActionButtons(
                         selected = !deleteAllFuture,
                         onClick = { deleteAllFuture = false }
                     )
-                    Text("This occurrence only")
+                    Text(stringResource(R.string.recurring_just_occurrence))
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -548,7 +554,7 @@ private fun DeviceEventActionButtons(
                         selected = deleteAllFuture,
                         onClick = { deleteAllFuture = true }
                     )
-                    Text("This and all future")
+                    Text(stringResource(R.string.recurring_this_and_future))
                 }
             }
         }
@@ -589,7 +595,7 @@ private fun DeviceEventDescriptionSection(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Notes",
+                        text = stringResource(R.string.label_notes),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -603,8 +609,9 @@ private fun DeviceEventDescriptionSection(
             }
 
             // Reminders section
-            val formattedReminders = remember(reminders) {
-                formatRemindersFromMinutes(reminders)
+            val resources = LocalContext.current.resources
+            val formattedReminders = remember(reminders, resources) {
+                formatRemindersFromMinutes(reminders, resources)
             }
             if (formattedReminders != null) {
                 Row(
@@ -634,6 +641,7 @@ private fun formatDeviceEventDateTime(
     startTs: Long,
     endTs: Long,
     isAllDay: Boolean,
+    resources: android.content.res.Resources,
     timePattern: String = "h:mm a"
 ): String {
     val startDateStr = DateTimeUtils.formatEventDateShort(startTs, isAllDay)
@@ -642,9 +650,9 @@ private fun formatDeviceEventDateTime(
 
     return if (isAllDay) {
         if (isMultiDay) {
-            "$startDateStr \u2192 $endDateStr \u00b7 All day"
+            resources.getString(R.string.event_date_range_all_day, startDateStr, endDateStr)
         } else {
-            "$startDateStr \u00b7 All day"
+            resources.getString(R.string.event_date_all_day, startDateStr)
         }
     } else {
         val startTime = DateTimeUtils.formatEventTime(startTs, isAllDay, timePattern)

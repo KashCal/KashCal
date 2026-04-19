@@ -6,7 +6,63 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
 import java.util.Locale
+import org.onekash.kashcal.util.DateTimeUtils
+
+/**
+ * Localized strings for [RruleBuilder.formatForDisplay].
+ * Constructed from Android string resources by composable callers.
+ */
+data class RruleDisplayStrings(
+    val doesNotRepeat: String,
+    val freqDaily: String,
+    val freqWeekly: String,
+    val freqBiweekly: String,
+    val freqMonthly: String,
+    val freqQuarterly: String,
+    val freqYearly: String,
+    val repeats: String,
+    val everyNDays: String,
+    val everyNWeeks: String,
+    val everyNMonths: String,
+    val everyNYears: String,
+    val freqOnDays: String,
+    val freqOnOrdinalDay: String,
+    val freqOnLastDay: String,
+    val freqOnDayN: String,
+    val ordinals: List<String>,
+    val ordinalLast: String,
+    val ordinalNth: String,
+    val countSuffix: (Int) -> String,
+    val untilSuffix: String
+) {
+    companion object {
+        fun english() = RruleDisplayStrings(
+            doesNotRepeat = "Does not repeat",
+            freqDaily = "Daily",
+            freqWeekly = "Weekly",
+            freqBiweekly = "Biweekly",
+            freqMonthly = "Monthly",
+            freqQuarterly = "Quarterly",
+            freqYearly = "Yearly",
+            repeats = "Repeats",
+            everyNDays = "Every %1\$d days",
+            everyNWeeks = "Every %1\$d weeks",
+            everyNMonths = "Every %1\$d months",
+            everyNYears = "Every %1\$d years",
+            freqOnDays = "%1\$s on %2\$s",
+            freqOnOrdinalDay = "%1\$s on %2\$s %3\$s",
+            freqOnLastDay = "%1\$s on last day",
+            freqOnDayN = "%1\$s on day %2\$d",
+            ordinals = listOf("1st", "2nd", "3rd", "4th"),
+            ordinalLast = "last",
+            ordinalNth = "%1\$dth",
+            countSuffix = { count -> ", $count times" },
+            untilSuffix = ", until %1\$s"
+        )
+    }
+}
 
 /**
  * RRULE builder utility for creating and parsing RFC 5545 recurrence rules.
@@ -43,12 +99,6 @@ object RruleBuilder {
         DayOfWeek.FRIDAY,
         DayOfWeek.SATURDAY,
         DayOfWeek.SUNDAY
-    )
-
-    /** Human-readable day names for display */
-    private val DAY_DISPLAY = mapOf(
-        "SU" to "Sun", "MO" to "Mon", "TU" to "Tue", "WE" to "Wed",
-        "TH" to "Thu", "FR" to "Fri", "SA" to "Sat"
     )
 
     // ==================== Building RRULE Strings ====================
@@ -289,8 +339,22 @@ object RruleBuilder {
 
     // ==================== Display Formatting ====================
 
+    private fun localizedDayName(abbrev: String): String {
+        val day = ABBREV_TO_DAY[abbrev] ?: return abbrev
+        return day.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    }
+
     /**
-     * Format RRULE for human-readable display.
+     * Format RRULE for human-readable display using English defaults.
+     * Day names are locale-aware via java.time; all other labels are English.
+     * Use the overload with [RruleDisplayStrings] for full localization.
+     */
+    fun formatForDisplay(rrule: String?): String {
+        return formatForDisplay(rrule, RruleDisplayStrings.english())
+    }
+
+    /**
+     * Format RRULE for human-readable display with localized strings.
      *
      * Examples:
      * - "FREQ=DAILY" -> "Daily"
@@ -300,36 +364,40 @@ object RruleBuilder {
      * - "FREQ=MONTHLY;BYMONTHDAY=-1" -> "Monthly on last day"
      *
      * @param rrule RRULE string to format
+     * @param strings Localized display strings
      * @return Human-readable description
      */
-    fun formatForDisplay(rrule: String?): String {
-        if (rrule.isNullOrBlank()) return "Does not repeat"
+    fun formatForDisplay(rrule: String?, strings: RruleDisplayStrings): String {
+        if (rrule.isNullOrBlank()) return strings.doesNotRepeat
 
         val intervalMatch = Regex("INTERVAL=(\\d+)").find(rrule)
         val interval = intervalMatch?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
         val freq = when {
-            rrule.contains("FREQ=DAILY") -> if (interval > 1) "Every $interval days" else "Daily"
+            rrule.contains("FREQ=DAILY") -> {
+                if (interval > 1) String.format(Locale.getDefault(), strings.everyNDays, interval)
+                else strings.freqDaily
+            }
             rrule.contains("FREQ=WEEKLY") -> {
                 val bydayMatch = Regex("BYDAY=([A-Z,]+)").find(rrule)
                 val base = when {
-                    interval == 2 -> "Biweekly"
-                    interval > 1 -> "Every $interval weeks"
-                    else -> "Weekly"
+                    interval == 2 -> strings.freqBiweekly
+                    interval > 1 -> String.format(Locale.getDefault(), strings.everyNWeeks, interval)
+                    else -> strings.freqWeekly
                 }
                 if (bydayMatch != null) {
                     val days = bydayMatch.groupValues[1].split(",")
-                        .mapNotNull { DAY_DISPLAY[it] }
-                    "$base on ${days.joinToString(", ")}"
+                        .mapNotNull { localizedDayName(it).ifBlank { null } }
+                    String.format(Locale.getDefault(), strings.freqOnDays, base, days.joinToString(", "))
                 } else {
                     base
                 }
             }
             rrule.contains("FREQ=MONTHLY") -> {
                 val base = when {
-                    interval == 3 -> "Quarterly"
-                    interval > 1 -> "Every $interval months"
-                    else -> "Monthly"
+                    interval == 3 -> strings.freqQuarterly
+                    interval > 1 -> String.format(Locale.getDefault(), strings.everyNMonths, interval)
+                    else -> strings.freqMonthly
                 }
                 val bydayMatch = Regex("BYDAY=(-?\\d*)([A-Z]{2})").find(rrule)
                 val byMonthdayMatch = Regex("BYMONTHDAY=(-?\\d+)").find(rrule)
@@ -337,34 +405,39 @@ object RruleBuilder {
                     bydayMatch != null -> {
                         val ordinal = bydayMatch.groupValues[1]
                         val dayAbbrev = bydayMatch.groupValues[2]
-                        val dayName = DAY_DISPLAY[dayAbbrev] ?: dayAbbrev
+                        val dayName = localizedDayName(dayAbbrev)
                         val ordinalLabel = when (ordinal) {
-                            "1" -> "1st"
-                            "2" -> "2nd"
-                            "3" -> "3rd"
-                            "4" -> "4th"
-                            "-1" -> "last"
-                            else -> "${ordinal}th"
+                            "-1" -> strings.ordinalLast
+                            else -> {
+                                val idx = (ordinal.toIntOrNull() ?: 0) - 1
+                                if (idx in strings.ordinals.indices) strings.ordinals[idx]
+                                else String.format(Locale.getDefault(), strings.ordinalNth, ordinal.toIntOrNull() ?: 0)
+                            }
                         }
-                        "$base on $ordinalLabel $dayName"
+                        String.format(Locale.getDefault(), strings.freqOnOrdinalDay, base, ordinalLabel, dayName)
                     }
                     byMonthdayMatch != null -> {
                         val day = byMonthdayMatch.groupValues[1]
-                        if (day == "-1") "$base on last day"
-                        else "$base on day $day"
+                        if (day == "-1") String.format(Locale.getDefault(), strings.freqOnLastDay, base)
+                        else String.format(Locale.getDefault(), strings.freqOnDayN, base, day.toIntOrNull() ?: 0)
                     }
                     else -> base
                 }
             }
-            rrule.contains("FREQ=YEARLY") -> if (interval > 1) "Every $interval years" else "Yearly"
-            else -> "Repeats"
+            rrule.contains("FREQ=YEARLY") -> {
+                if (interval > 1) String.format(Locale.getDefault(), strings.everyNYears, interval)
+                else strings.freqYearly
+            }
+            else -> strings.repeats
         }
 
-        // Add end condition to display
         val countMatch = Regex("COUNT=(\\d+)").find(rrule)
         val untilMatch = Regex("UNTIL=(\\d{8})").find(rrule)
         val endSuffix = when {
-            countMatch != null -> ", ${countMatch.groupValues[1]} times"
+            countMatch != null -> {
+                val count = countMatch.groupValues[1].toIntOrNull() ?: 0
+                strings.countSuffix(count)
+            }
             untilMatch != null -> {
                 val dateStr = untilMatch.groupValues[1]
                 val untilDate = LocalDate.of(
@@ -373,9 +446,9 @@ object RruleBuilder {
                     dateStr.substring(6, 8).toInt()
                 )
                 val currentYear = LocalDate.now().year
-                val pattern = if (untilDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+                val pattern = if (untilDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
                 val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-                ", until $formatted"
+                String.format(Locale.getDefault(), strings.untilSuffix, formatted)
             }
             else -> ""
         }
@@ -385,29 +458,35 @@ object RruleBuilder {
 
     /**
      * Format RRULE for display, returning frequency and end condition as separate parts.
+     * Uses English defaults. Use the overload with [RruleDisplayStrings] for full localization.
+     */
+    fun formatForDisplayParts(rrule: String?): Pair<String, String?> {
+        return formatForDisplayParts(rrule, RruleDisplayStrings.english())
+    }
+
+    /**
+     * Format RRULE for display, returning frequency and end condition as separate parts.
      * Enables callers to insert content between them (e.g., series start date).
      *
      * @param rrule RRULE string to format
+     * @param strings Localized display strings
      * @return Pair of (frequency text, end suffix or null)
-     *   - First: "Weekly on Mon, Wed", "Daily", etc.
-     *   - Second: ", 10 times" or ", until Jun 15, 2026" or null if open-ended
      */
-    fun formatForDisplayParts(rrule: String?): Pair<String, String?> {
-        if (rrule.isNullOrBlank()) return "Does not repeat" to null
+    fun formatForDisplayParts(rrule: String?, strings: RruleDisplayStrings): Pair<String, String?> {
+        if (rrule.isNullOrBlank()) return strings.doesNotRepeat to null
 
-        // Reuse formatForDisplay's full output and split at the end suffix
         val countMatch = Regex("COUNT=(\\d+)").find(rrule)
         val untilMatch = Regex("UNTIL=(\\d{8})").find(rrule)
-        val full = formatForDisplay(rrule)
+        val full = formatForDisplay(rrule, strings)
 
         return when {
             countMatch != null -> {
-                val suffix = ", ${countMatch.groupValues[1]} times"
+                val count = countMatch.groupValues[1].toIntOrNull() ?: 0
+                val suffix = strings.countSuffix(count)
                 val freq = full.removeSuffix(suffix)
                 freq to suffix
             }
             untilMatch != null -> {
-                // Reconstruct same suffix as formatForDisplay for removeSuffix to work
                 val dateStr = untilMatch.groupValues[1]
                 val untilDate = LocalDate.of(
                     dateStr.substring(0, 4).toInt(),
@@ -415,9 +494,9 @@ object RruleBuilder {
                     dateStr.substring(6, 8).toInt()
                 )
                 val currentYear = LocalDate.now().year
-                val pattern = if (untilDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+                val pattern = if (untilDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
                 val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-                val suffix = ", until $formatted"
+                val suffix = String.format(Locale.getDefault(), strings.untilSuffix, formatted)
                 val freq = full.removeSuffix(suffix)
                 freq to suffix
             }

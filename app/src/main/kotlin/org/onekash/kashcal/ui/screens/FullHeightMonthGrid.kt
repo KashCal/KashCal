@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -26,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.model.MonthGrid
@@ -135,6 +138,7 @@ private fun FullHeightDayCell(
     modifier: Modifier = Modifier
 ) {
     val eventCount = events?.size ?: 0
+    val cdDayEvents = stringResource(R.string.cd_day_events, cell.dayOfMonth, eventCount)
 
     Column(
         modifier = modifier
@@ -142,7 +146,7 @@ private fun FullHeightDayCell(
             .clip(RoundedCornerShape(6.dp))
             .background(
                 when {
-                    isSelected -> MaterialTheme.colorScheme.primary
+                    isSelected -> MaterialTheme.colorScheme.inverseSurface
                     isToday -> MaterialTheme.colorScheme.primaryContainer
                     else -> Color.Transparent
                 }
@@ -162,7 +166,7 @@ private fun FullHeightDayCell(
             }
             .padding(2.dp)
             .semantics {
-                contentDescription = "Day ${cell.dayOfMonth}, $eventCount events"
+                contentDescription = cdDayEvents
             },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -171,7 +175,7 @@ private fun FullHeightDayCell(
             text = cell.dayOfMonth.toString(),
             style = MaterialTheme.typography.labelMedium,
             color = when {
-                isSelected -> MaterialTheme.colorScheme.onPrimary
+                isSelected -> MaterialTheme.colorScheme.inverseOnSurface
                 isToday -> MaterialTheme.colorScheme.onPrimaryContainer
                 isInOutDate -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
                 cell.isWeekend -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
@@ -193,14 +197,16 @@ private fun FullHeightDayCell(
                 for (i in 0 until snippetsToShow) {
                     EventSnippet(
                         displayEvent = events[i],
-                        showEventEmojis = showEventEmojis
+                        showEventEmojis = showEventEmojis,
+                        isSelected = isSelected
                     )
                 }
                 if (showOverflow) {
                     Text(
-                        text = "+${events.size - snippetsToShow} more",
+                        text = stringResource(R.string.status_more_events, events.size - snippetsToShow),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1
                     )
                 }
@@ -212,10 +218,12 @@ private fun FullHeightDayCell(
 @Composable
 private fun EventSnippet(
     displayEvent: DisplayEvent,
-    showEventEmojis: Boolean
+    showEventEmojis: Boolean,
+    isSelected: Boolean = false
 ) {
+    val resources = LocalContext.current.resources
     val title = remember(displayEvent, showEventEmojis) {
-        formatDisplayEventTitle(displayEvent, showEventEmojis)
+        formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
     Row(
@@ -232,6 +240,8 @@ private fun EventSnippet(
         Text(
             text = title,
             style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
+                else Color.Unspecified,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 3.dp)

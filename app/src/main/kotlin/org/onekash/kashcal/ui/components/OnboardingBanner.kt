@@ -20,9 +20,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 // iCloud brand color
 private val iCloudBlue = Color(0xFF5AC8FA)
@@ -68,13 +70,13 @@ fun OnboardingBanner(
 
             // Title
             Text(
-                text = "Apple Calendar?",
+                text = stringResource(R.string.onboarding_apple_calendar),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "We've got you.",
+                text = stringResource(R.string.onboarding_got_you),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = iCloudBlue,
@@ -85,7 +87,7 @@ fun OnboardingBanner(
 
             // Subtitle
             Text(
-                text = "Connect iCloud to see your events here",
+                text = stringResource(R.string.onboarding_connect_prompt),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -101,7 +103,7 @@ fun OnboardingBanner(
                     .height(50.dp)
             ) {
                 Text(
-                    text = "Connect",
+                    text = stringResource(R.string.action_connect),
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -111,7 +113,7 @@ fun OnboardingBanner(
             // Not now button
             TextButton(onClick = onDismiss) {
                 Text(
-                    text = "Not now",
+                    text = stringResource(R.string.action_not_now),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

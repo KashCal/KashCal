@@ -5,11 +5,14 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Tests for device event action helpers: toEventForDuplicate() and buildShareText().
  */
+@RunWith(RobolectricTestRunner::class)
 class DeviceEventActionsTest {
 
     private fun createTestInstance(

@@ -36,4 +36,4 @@ We welcome bug reports, feature requests, testing, and code contributions. If yo
 
 ## Links
 
-**[Website](https://kashcal.github.io)** · **[Download](https://f-droid.org/packages/org.onekash.kashcal)** · **[Issues](https://github.com/KashCal/KashCal/issues)**
+**[Website](https://kashcal.onekash.org)** · **[Download](https://f-droid.org/packages/org.onekash.kashcal)** · **[Issues](https://github.com/KashCal/KashCal/issues)**

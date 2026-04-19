@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
@@ -153,7 +154,7 @@ fun ErrorSnackbar(
         } else null,
         dismissAction = {
             TextButton(onClick = onDismiss) {
-                Text("Dismiss")
+                Text(stringResource(R.string.action_dismiss))
             }
         }
     ) {

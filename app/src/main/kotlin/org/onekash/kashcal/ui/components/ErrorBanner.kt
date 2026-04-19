@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
@@ -133,7 +134,7 @@ fun ErrorBanner(
  */
 @Composable
 fun OfflineBanner(
-    message: String = "You're offline",
+    message: String = stringResource(R.string.status_youre_offline),
     onRetry: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -170,7 +171,7 @@ fun OfflineBanner(
             if (onRetry != null) {
                 TextButton(onClick = onRetry) {
                     Text(
-                        text = "Retry",
+                        text = stringResource(R.string.action_retry),
                         color = MaterialTheme.colorScheme.onTertiaryContainer,
                         style = MaterialTheme.typography.labelLarge
                     )

@@ -62,7 +62,7 @@ fun DayColumn(
     val endHour = WeekViewUtils.END_HOUR
     val positionedEvents = remember(events, date, startHour, hourHeight) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
-        WeekViewUtils.positionEventsForDay(events, dayIndex, hourHeight, startHour, endHour)
+        WeekViewUtils.positionEventsForDay(events, date, dayIndex, hourHeight, startHour, endHour)
     }
 
     // Group by overlap to show only 2 + badge
@@ -106,6 +106,7 @@ fun DayColumn(
                 .matchParentSize()
                 .pointerInput(date, startHour, hourHeight) {
                     detectTapGestures(
+                        onDoubleTap = { },
                         onTap = { offset ->
                             val (hour, minute) = WeekViewUtils.offsetToTime(offset.y, hourHeightPx, startHour = startHour)
                             onEmptyTap(date, hour, minute)

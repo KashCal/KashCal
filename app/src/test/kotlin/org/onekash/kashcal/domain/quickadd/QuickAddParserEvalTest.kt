@@ -52,9 +52,9 @@ class QuickAddParserEvalTest {
         add(TestCase("friday", LocalDate.of(2026, 4, 17), null, "friday (next occurrence)"))
         add(TestCase("sunday", LocalDate.of(2026, 4, 19), null, "sunday (next occurrence from Monday)"))
         add(TestCase("next monday", LocalDate.of(2026, 4, 20), null, "next monday (same day → +7)"))
-        add(TestCase("next friday", LocalDate.of(2026, 4, 17), null, "next friday"))
-        add(TestCase("next sunday", LocalDate.of(2026, 4, 19), null, "next sunday"))
-        add(TestCase("this monday", LocalDate.of(2026, 4, 20), null, "this monday (same day → +7)"))
+        add(TestCase("next friday", LocalDate.of(2026, 4, 24), null, "next friday (following week)"))
+        add(TestCase("next sunday", LocalDate.of(2026, 4, 26), null, "next sunday (following week)"))
+        add(TestCase("this monday", LocalDate.of(2026, 4, 13), null, "this monday (today)"))
         add(TestCase("this friday", LocalDate.of(2026, 4, 17), null, "this friday"))
         add(TestCase("last monday", LocalDate.of(2026, 4, 6), null, "last monday (same day → -7)"))
         add(TestCase("last friday", LocalDate.of(2026, 4, 10), null, "last friday"))
@@ -62,8 +62,8 @@ class QuickAddParserEvalTest {
         add(TestCase("mon", LocalDate.of(2026, 4, 20), null, "mon abbreviated (same day → +7)"))
         add(TestCase("fri", LocalDate.of(2026, 4, 17), null, "fri abbreviated"))
         add(TestCase("sat", LocalDate.of(2026, 4, 18), null, "sat abbreviated"))
-        add(TestCase("next tue", LocalDate.of(2026, 4, 14), null, "next tue abbreviated"))
-        add(TestCase("next wed", LocalDate.of(2026, 4, 15), null, "next wed abbreviated"))
+        add(TestCase("next tue", LocalDate.of(2026, 4, 21), null, "next tue abbreviated (following week)"))
+        add(TestCase("next wed", LocalDate.of(2026, 4, 22), null, "next wed abbreviated (following week)"))
 
         // ── SECTION 3: Absolute Dates (16) ──
         add(TestCase("jan 15", LocalDate.of(2027, 1, 15), null, "jan 15"))
@@ -116,8 +116,8 @@ class QuickAddParserEvalTest {
         add(TestCase("today at 5pm", ref.toLocalDate(), LocalTime.of(17, 0), "today at 5pm"))
         add(TestCase("yesterday at 2pm", LocalDate.of(2026, 4, 12), LocalTime.of(14, 0), "yesterday at 2pm"))
         add(TestCase("monday at 9am", LocalDate.of(2026, 4, 20), LocalTime.of(9, 0), "monday at 9am (same day → +7)"))
-        add(TestCase("next friday at 2pm", LocalDate.of(2026, 4, 17), LocalTime.of(14, 0), "next friday at 2pm"))
-        add(TestCase("next friday at noon", LocalDate.of(2026, 4, 17), LocalTime.of(12, 0), "next friday at noon"))
+        add(TestCase("next friday at 2pm", LocalDate.of(2026, 4, 24), LocalTime.of(14, 0), "next friday at 2pm (following week)"))
+        add(TestCase("next friday at noon", LocalDate.of(2026, 4, 24), LocalTime.of(12, 0), "next friday at noon (following week)"))
         add(TestCase("last monday at 10:30", LocalDate.of(2026, 4, 6), LocalTime.of(10, 30), "last monday at 10:30"))
         add(TestCase("jan 15 at 3pm", LocalDate.of(2027, 1, 15), LocalTime.of(15, 0), "jan 15 at 3pm"))
         add(TestCase("march 21 at noon", LocalDate.of(2027, 3, 21), LocalTime.of(12, 0), "march 21 at noon"))
@@ -165,9 +165,9 @@ class QuickAddParserEvalTest {
         add(TestCase("oct 31", LocalDate.of(2026, 10, 31), null, "oct"))
         add(TestCase("nov 11", LocalDate.of(2026, 11, 11), null, "nov"))
         add(TestCase("dec 25", LocalDate.of(2026, 12, 25), null, "dec"))
-        add(TestCase("next thur", LocalDate.of(2026, 4, 16), null, "thur"))
-        add(TestCase("next thurs", LocalDate.of(2026, 4, 16), null, "thurs"))
-        add(TestCase("next tues", LocalDate.of(2026, 4, 14), null, "tues"))
+        add(TestCase("next thur", LocalDate.of(2026, 4, 23), null, "next thur (following week)"))
+        add(TestCase("next thurs", LocalDate.of(2026, 4, 23), null, "next thurs (following week)"))
+        add(TestCase("next tues", LocalDate.of(2026, 4, 21), null, "next tues (following week)"))
 
         // ── SECTION 9: Structured Dates (10) ──
         add(TestCase("15/01/2027", LocalDate.of(2027, 1, 15), null, "15/01/2027 (D/M/Y)"))
@@ -213,7 +213,7 @@ class QuickAddParserEvalTest {
 
         // ── SECTION 13: Edge Cases (12) ──
         add(TestCase("Tomorrow at 3PM", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Mixed case: Tomorrow at 3PM"))
-        add(TestCase("NEXT FRIDAY AT NOON", LocalDate.of(2026, 4, 17), LocalTime.of(12, 0), "ALL CAPS"))
+        add(TestCase("NEXT FRIDAY AT NOON", LocalDate.of(2026, 4, 24), LocalTime.of(12, 0), "ALL CAPS (following week)"))
         add(TestCase("  tomorrow   at   3pm  ", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Extra whitespace"))
         add(TestCase("tomorrow at midnight", LocalDate.of(2026, 4, 14), LocalTime.of(0, 0), "tomorrow at midnight"))
         add(TestCase("today at noon", ref.toLocalDate(), LocalTime.of(12, 0), "today at noon"))

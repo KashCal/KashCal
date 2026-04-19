@@ -9,7 +9,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 /**
  * Rationale dialog shown after user denies notification permission once.
@@ -44,17 +46,17 @@ fun NotificationPermissionDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Enable Notifications?")
+            Text(stringResource(R.string.dialog_enable_notifications))
         },
         text = {
             Column {
                 Text(
-                    "KashCal needs notification permission to remind you about upcoming events.",
+                    stringResource(R.string.dialog_notification_permission_message),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "You can change this later in Settings.",
+                    stringResource(R.string.dialog_notification_permission_settings_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -62,12 +64,12 @@ fun NotificationPermissionDialog(
         },
         confirmButton = {
             TextButton(onClick = onEnable) {
-                Text("Enable")
+                Text(stringResource(R.string.action_enable))
             }
         },
         dismissButton = {
             TextButton(onClick = onNotNow) {
-                Text("Not Now")
+                Text(stringResource(R.string.action_not_now))
             }
         }
     )

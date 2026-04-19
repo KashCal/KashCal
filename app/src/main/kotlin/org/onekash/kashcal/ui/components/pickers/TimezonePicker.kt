@@ -54,6 +54,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.util.TimezoneUtils
 
 /**
@@ -102,6 +104,8 @@ fun TimezonePickerChip(
         }
     }
 
+    val timezoneContentDesc = stringResource(R.string.cd_timezone_tap_to_change, abbreviation)
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally
@@ -128,7 +132,7 @@ fun TimezonePickerChip(
                         )
                         .clickable { isSearchOpen = true }
                         .semantics {
-                            contentDescription = "Timezone: $abbreviation, tap to change"
+                            contentDescription = timezoneContentDesc
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -226,7 +230,7 @@ fun TimezonePickerChip(
                             )
                             if (searchQuery.isEmpty()) {
                                 Text(
-                                    text = "Search...",
+                                    text = stringResource(R.string.placeholder_search),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -242,7 +246,7 @@ fun TimezonePickerChip(
                         ) {
                             Icon(
                                 Icons.Default.Close,
-                                contentDescription = "Close",
+                                contentDescription = stringResource(R.string.cd_close),
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -289,7 +293,7 @@ fun TimezonePickerChip(
                             color = MaterialTheme.colorScheme.surface
                         ) {
                             Text(
-                                text = "Use device timezone",
+                                text = stringResource(R.string.settings_use_device_timezone),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )

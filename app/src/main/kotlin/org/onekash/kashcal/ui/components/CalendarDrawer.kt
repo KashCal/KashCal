@@ -30,10 +30,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import org.onekash.kashcal.R
 import kotlinx.collections.immutable.PersistentSet
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -75,7 +77,7 @@ fun CalendarDrawer(
             // ===== Branding Header =====
             item(key = "header") {
                 Text(
-                    text = "KashCal",
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(horizontal = 28.dp, vertical = 16.dp)
@@ -110,7 +112,7 @@ fun CalendarDrawer(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = option.label,
+                        text = viewModeLabel(option.mode),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer
                         else MaterialTheme.colorScheme.onSurfaceVariant
@@ -126,7 +128,7 @@ fun CalendarDrawer(
 
                 item(key = "cal_header") {
                     Text(
-                        text = "Calendars",
+                        text = stringResource(R.string.drawer_calendars),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -168,7 +170,7 @@ fun CalendarDrawer(
             if (contactsGroups.isNotEmpty()) {
                 item(key = "contacts_header") {
                     Text(
-                        text = "Contacts",
+                        text = stringResource(R.string.drawer_contacts),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -202,7 +204,7 @@ fun CalendarDrawer(
 
                 item(key = "device_header") {
                     Text(
-                        text = "Device calendars",
+                        text = stringResource(R.string.drawer_device_calendars),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -262,7 +264,7 @@ fun CalendarDrawer(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = "Share feedback",
+                        text = stringResource(R.string.drawer_share_feedback),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

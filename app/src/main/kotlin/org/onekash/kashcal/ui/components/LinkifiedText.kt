@@ -14,6 +14,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.util.text.DetectedUrl
 import org.onekash.kashcal.util.text.UrlType
 import org.onekash.kashcal.util.text.cleanHtmlEntities
@@ -115,11 +117,19 @@ fun LinkifiedText(
         }
     }
 
-    // Build accessibility description
-    val accessibilityDescription = remember(detectedUrls) {
-        if (detectedUrls.isEmpty()) null
-        else "Text with ${detectedUrls.size} link${if (detectedUrls.size > 1) "s" else ""}: " +
-             detectedUrls.joinToString(", ") { getAccessibilityLabel(it) }
+    // Build accessibility description — resolve i18n strings in Composable scope
+    val accessibilityDescription = if (detectedUrls.isEmpty()) null else {
+        val labels = detectedUrls.map { url ->
+            when (url.type) {
+                UrlType.MEETING -> stringResource(R.string.cd_meeting_link, url.displayText)
+                UrlType.PHONE -> stringResource(R.string.cd_phone_number)
+                UrlType.EMAIL -> stringResource(R.string.cd_email_link, url.displayText)
+                UrlType.WEB -> stringResource(R.string.cd_web_link, url.displayText)
+            }
+        }
+        val joined = labels.joinToString(", ")
+        if (labels.size == 1) stringResource(R.string.cd_text_with_link, joined)
+        else stringResource(R.string.cd_text_with_links, labels.size, joined)
     }
 
     SelectionContainer {
@@ -155,14 +165,3 @@ fun LinkifiedText(
     }
 }
 
-/**
- * Get accessibility label for a detected URL.
- */
-private fun getAccessibilityLabel(url: DetectedUrl): String {
-    return when (url.type) {
-        UrlType.MEETING -> "Meeting link: ${url.displayText}"
-        UrlType.PHONE -> "Phone number"
-        UrlType.EMAIL -> "Email: ${url.displayText}"
-        UrlType.WEB -> "Link: ${url.displayText}"
-    }
-}

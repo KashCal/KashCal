@@ -752,7 +752,6 @@ class HomeScreenComposeTest {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     showSyncBanner = true,
-                    syncBannerMessage = "Syncing calendars...",
                     syncBannerState = SyncBannerState.Syncing
                 ),
                 isOnline = true,
@@ -773,7 +772,6 @@ class HomeScreenComposeTest {
             HomeScreen(
                 uiState = createDefaultUiState().copy(
                     showSyncBanner = false,
-                    syncBannerMessage = "",
                     syncBannerState = SyncBannerState.Syncing
                 ),
                 isOnline = true,

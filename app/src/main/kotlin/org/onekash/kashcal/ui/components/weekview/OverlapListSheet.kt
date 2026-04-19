@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 
 /**
@@ -51,7 +53,7 @@ fun OverlapListSheet(
         ) {
             // Header
             Text(
-                text = "${events.size} Events",
+                text = stringResource(R.string.status_events_count, events.size),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)

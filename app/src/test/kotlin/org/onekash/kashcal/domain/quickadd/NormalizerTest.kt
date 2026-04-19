@@ -123,6 +123,18 @@ class NormalizerTest {
         assertEquals("in 30 minutes", chain.normalize("In thirty minutes"))
     }
 
+    // ==================== MultiWordNormalizer: all day ====================
+
+    @Test
+    fun `MultiWordNormalizer joins all day to all_day`() {
+        assertEquals("all_day", MultiWordNormalizer.normalize("all day"))
+    }
+
+    @Test
+    fun `MultiWordNormalizer joins All Day case insensitive`() {
+        assertEquals("all_day meeting", MultiWordNormalizer.normalize("All Day meeting"))
+    }
+
     @Test
     fun `NormalizerChain handles empty string`() {
         val chain = NormalizerChain()

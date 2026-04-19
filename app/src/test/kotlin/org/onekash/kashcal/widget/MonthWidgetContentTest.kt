@@ -1,5 +1,7 @@
 package org.onekash.kashcal.widget
 
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -11,15 +13,17 @@ import java.util.Calendar
 import java.util.Locale
 
 @RunWith(RobolectricTestRunner::class)
-@Config(manifest = Config.NONE, sdk = [34])
+@Config(sdk = [34])
 class MonthWidgetContentTest {
 
     private lateinit var originalLocale: Locale
+    private lateinit var resources: Resources
 
     @Before
     fun setUp() {
         originalLocale = Locale.getDefault()
         Locale.setDefault(Locale.ENGLISH)
+        resources = ApplicationProvider.getApplicationContext<android.content.Context>().resources
     }
 
     @After
@@ -134,21 +138,21 @@ class MonthWidgetContentTest {
     @Test
     fun `buildAccessibilityDescription dayCode overload for InDate previous month`() {
         // Feb 28 dayCode when viewing March grid
-        val desc = buildAccessibilityDescription(20260228, 0)
+        val desc = buildAccessibilityDescription(resources, 20260228, 0)
         assertEquals("February 28, no events", desc)
     }
 
     @Test
     fun `buildAccessibilityDescription dayCode overload for OutDate next month`() {
         // April 1 dayCode when viewing March grid
-        val desc = buildAccessibilityDescription(20260401, 2)
+        val desc = buildAccessibilityDescription(resources, 20260401, 2)
         assertEquals("April 1, 2 events", desc)
     }
 
     @Test
     fun `buildAccessibilityDescription dayCode overload for year boundary`() {
         // January 2 dayCode when viewing December 2025 grid
-        val desc = buildAccessibilityDescription(20260102, 1)
+        val desc = buildAccessibilityDescription(resources, 20260102, 1)
         assertEquals("January 2, 1 event", desc)
     }
 
@@ -156,19 +160,19 @@ class MonthWidgetContentTest {
 
     @Test
     fun `buildAccessibilityDescription singular event`() {
-        val desc = buildAccessibilityDescription(2026, 2, 15, 1) // March (0-indexed)
+        val desc = buildAccessibilityDescription(resources, 2026, 2, 15, 1) // March (0-indexed)
         assertEquals("March 15, 1 event", desc)
     }
 
     @Test
     fun `buildAccessibilityDescription plural events`() {
-        val desc = buildAccessibilityDescription(2026, 2, 15, 3) // March
+        val desc = buildAccessibilityDescription(resources, 2026, 2, 15, 3) // March
         assertEquals("March 15, 3 events", desc)
     }
 
     @Test
     fun `buildAccessibilityDescription zero events`() {
-        val desc = buildAccessibilityDescription(2026, 2, 15, 0)
+        val desc = buildAccessibilityDescription(resources, 2026, 2, 15, 0)
         assertEquals("March 15, no events", desc)
     }
 
@@ -184,7 +188,8 @@ class MonthWidgetContentTest {
             isAllDay = false,
             calendarColor = calendarColor,
             isPast = false,
-            isDeviceEvent = false
+            isDeviceEvent = false,
+            startDay = 0
         )
     }
 }

@@ -90,7 +90,7 @@ class QuickAddParserStressTest {
     @Test
     fun `next wednesday + am time`() {
         val r = parse("next wednesday at 9am")
-        assertEquals(LocalDate.of(2026, 4, 15), r.startDate)
+        assertEquals(LocalDate.of(2026, 4, 22), r.startDate)
         assertEquals(LocalTime.of(9, 0), r.startTime)
     }
 
@@ -1317,8 +1317,11 @@ class QuickAddParserStressTest {
     }
 
     @Test
-    fun `this treated as next for weekdays`() {
-        assertEquals(parse("this friday").startDate, parse("next friday").startDate)
+    fun `this and next weekday resolve differently`() {
+        val thisFriday = parse("this friday").startDate
+        val nextFriday = parse("next friday").startDate
+        assertTrue("this friday ($thisFriday) should be before next friday ($nextFriday)",
+            thisFriday.isBefore(nextFriday))
     }
 
     // ════════════════════════════════════════════════════════════

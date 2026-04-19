@@ -4,17 +4,20 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.domain.rrule.EndCondition
 import org.onekash.kashcal.domain.rrule.FrequencyOption
 import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**
  * Unit tests for RecurrencePicker component.
  * Tests RRULE building logic and frequency option mapping.
  */
+@RunWith(RobolectricTestRunner::class)
 class RecurrencePickerTest {
 
     // ==================== FrequencyOption Tests ====================

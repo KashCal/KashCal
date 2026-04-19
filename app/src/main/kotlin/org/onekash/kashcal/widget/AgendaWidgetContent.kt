@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
@@ -12,6 +13,8 @@ import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
 import androidx.glance.layout.Alignment
@@ -32,9 +35,7 @@ import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
  * Main content composable for the agenda widget.
@@ -69,7 +70,8 @@ fun AgendaWidgetContent(
         if (events.isEmpty()) {
             EmptyState()
         } else {
-            EventList(events, showEventEmojis, timePattern, maxEventsPerDay)
+            val todayCode = DayPagerUtils.msToDayCode(System.currentTimeMillis())
+            EventList(events, showEventEmojis, timePattern, maxEventsPerDay, todayCode)
         }
     }
 }
@@ -102,7 +104,7 @@ private fun WidgetHeader(date: String) {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_calendar),
-                contentDescription = "Calendar",
+                contentDescription = LocalContext.current.getString(R.string.cd_widget_calendar),
                 modifier = GlanceModifier.size(20.dp)
             )
             Spacer(modifier = GlanceModifier.width(8.dp))
@@ -130,7 +132,7 @@ private fun WidgetHeader(date: String) {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = "Add event",
+                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
                 modifier = GlanceModifier.size(20.dp)
             )
         }
@@ -146,22 +148,25 @@ private fun EventList(
     events: List<WidgetDataRepository.WidgetEvent>,
     showEventEmojis: Boolean,
     timePattern: String,
-    maxEventsPerDay: Int
+    maxEventsPerDay: Int,
+    dayCode: Int
 ) {
     val visibleEvents = events.take(maxEventsPerDay)
     val overflowCount = events.size - maxEventsPerDay
 
-    Column(
+    LazyColumn(
         modifier = GlanceModifier
             .fillMaxSize()
             .padding(vertical = 4.dp)
     ) {
-        visibleEvents.forEach { event ->
-            EventRow(event, showEventEmojis, timePattern)
+        items(visibleEvents) { event ->
+            EventRow(event, showEventEmojis, timePattern, dayCode)
         }
 
         if (overflowCount > 0) {
-            OverflowIndicator(overflowCount)
+            item {
+                OverflowIndicator(overflowCount)
+            }
         }
     }
 }
@@ -174,7 +179,8 @@ private fun EventList(
 private fun EventRow(
     event: WidgetDataRepository.WidgetEvent,
     showEventEmojis: Boolean,
-    timePattern: String
+    timePattern: String,
+    dayCode: Int
 ) {
     // Format title with optional emoji prefix
     val displayTitle = EmojiMatcher.formatWithEmoji(event.title, showEventEmojis)
@@ -195,9 +201,10 @@ private fun EventRow(
             ),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val context = LocalContext.current
         // Time column
         Text(
-            text = formatEventTime(event, timePattern),
+            text = formatWidgetEventTime(event, dayCode, timePattern, context.getString(R.string.label_all_day)),
             style = TextStyle(
                 color = if (event.isPast) WidgetTheme.pastEventText else WidgetTheme.secondaryText,
                 fontSize = 12.sp,
@@ -257,7 +264,7 @@ private fun EmptyState() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "No events today",
+            text = LocalContext.current.getString(R.string.widget_no_events_today),
             style = TextStyle(
                 color = WidgetTheme.secondaryText,
                 fontSize = 14.sp
@@ -265,7 +272,7 @@ private fun EmptyState() {
         )
         Spacer(modifier = GlanceModifier.height(8.dp))
         Text(
-            text = "+ Add event",
+            text = LocalContext.current.getString(R.string.widget_add_event),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
                 fontSize = 14.sp
@@ -294,26 +301,12 @@ private fun OverflowIndicator(count: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "+ $count more",
+            text = LocalContext.current.resources.getQuantityString(R.plurals.more_items, count, count),
             style = TextStyle(
                 color = WidgetTheme.accentColor,
                 fontSize = 12.sp
             )
         )
-    }
-}
-
-/**
- * Format event time for display.
- */
-private fun formatEventTime(event: WidgetDataRepository.WidgetEvent, timePattern: String): String {
-    return if (event.isAllDay) {
-        "All day"
-    } else {
-        val formatter = DateTimeFormatter.ofPattern(timePattern, java.util.Locale.getDefault())
-        Instant.ofEpochMilli(event.startTs)
-            .atZone(ZoneId.systemDefault())
-            .format(formatter)
     }
 }
 

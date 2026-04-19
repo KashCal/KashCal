@@ -30,11 +30,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 
 enum class SyncBannerState {
     Syncing,
+    Preparing,
     Success,
+    PartialError,
     Error
 }
 
@@ -52,21 +56,26 @@ enum class SyncBannerState {
  */
 @Composable
 fun SyncBanner(
-    message: String,
     state: SyncBannerState = SyncBannerState.Syncing,
+    errorDetail: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val isError = state == SyncBannerState.Error || state == SyncBannerState.PartialError
     val containerColor by animateColorAsState(
-        targetValue = when (state) {
-            SyncBannerState.Error -> MaterialTheme.colorScheme.errorContainer
-            else -> MaterialTheme.colorScheme.primaryContainer
-        },
+        targetValue = if (isError) MaterialTheme.colorScheme.errorContainer
+            else MaterialTheme.colorScheme.primaryContainer,
         animationSpec = tween(300),
         label = "bannerColor"
     )
-    val contentColor = when (state) {
-        SyncBannerState.Error -> MaterialTheme.colorScheme.onErrorContainer
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    val contentColor = if (isError) MaterialTheme.colorScheme.onErrorContainer
+        else MaterialTheme.colorScheme.onPrimaryContainer
+
+    val message = when (state) {
+        SyncBannerState.Syncing -> stringResource(R.string.sync_banner_syncing)
+        SyncBannerState.Preparing -> stringResource(R.string.sync_banner_preparing)
+        SyncBannerState.Success -> stringResource(R.string.success_sync_complete)
+        SyncBannerState.PartialError -> stringResource(R.string.sync_banner_complete_errors)
+        SyncBannerState.Error -> stringResource(R.string.sync_banner_failed, errorDetail ?: stringResource(R.string.error_unknown_error))
     }
 
     Surface(
@@ -82,7 +91,7 @@ fun SyncBanner(
             verticalAlignment = Alignment.CenterVertically
         ) {
             when (state) {
-                SyncBannerState.Syncing -> {
+                SyncBannerState.Syncing, SyncBannerState.Preparing -> {
                     SyncDots(color = contentColor)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
@@ -95,7 +104,7 @@ fun SyncBanner(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                SyncBannerState.Error -> {
+                SyncBannerState.PartialError, SyncBannerState.Error -> {
                     Icon(
                         imageVector = Icons.Rounded.Warning,
                         contentDescription = null,

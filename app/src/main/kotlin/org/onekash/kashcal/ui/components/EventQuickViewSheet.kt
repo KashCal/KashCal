@@ -51,6 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
@@ -62,6 +64,7 @@ import org.onekash.kashcal.data.contacts.ContactEventType
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.ZoneId
@@ -138,7 +141,7 @@ fun EventQuickViewSheet(
 
     // Format title with age for birthday events and optional emoji
     val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
-        formatEventTitle(event, occurrenceTs, showEventEmojis)
+        formatEventTitle(event, occurrenceTs, showEventEmojis, context.resources)
     }
 
     // Cache URL validation
@@ -146,7 +149,7 @@ fun EventQuickViewSheet(
         event.url?.takeIf { isValidUrl(it) }
     }
     val formattedReminders = remember(event.reminders) {
-        formatRemindersForDisplay(event.reminders)
+        formatRemindersForDisplay(event.reminders, context.resources)
     }
 
     ModalBottomSheet(
@@ -201,7 +204,7 @@ fun EventQuickViewSheet(
                         val duration = event.endTs - event.startTs
                         val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
                         Text(
-                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, timePattern),
+                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, context.resources, timePattern),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -244,7 +247,7 @@ fun EventQuickViewSheet(
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
                                     Icons.AutoMirrored.Filled.Launch,
-                                    contentDescription = if (hasUrl) "Open link" else "Open in maps",
+                                    contentDescription = if (hasUrl) stringResource(R.string.cd_open_link) else stringResource(R.string.cd_open_maps),
                                     modifier = Modifier.size(14.dp),
                                     tint = MaterialTheme.colorScheme.primary
                                 )
@@ -253,25 +256,23 @@ fun EventQuickViewSheet(
 
                         // Repeat info
                         if (isRecurring) {
-                            // For exception events (no rrule), show generic "Recurring"
-                            // For master events, append series start date (issue #124)
+                            val rruleStrings = rememberRruleDisplayStrings()
                             val repeatText = if (event.rrule != null) {
-                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule)
-                                // No-year contact birthdays/anniversaries have synthetic startTs — skip date
+                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule, rruleStrings)
                                 val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
                                 val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
                                 val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
                                 if (endSuffix != null && startDate != null) {
-                                    "$freq starting $startDate$endSuffix"
+                                    stringResource(R.string.rrule_starting, freq, startDate, endSuffix)
                                 } else if (endSuffix != null) {
                                     "$freq$endSuffix"
                                 } else if (startDate != null) {
-                                    "$freq \u00b7 since $startDate"
+                                    stringResource(R.string.rrule_since, freq, startDate)
                                 } else {
                                     freq
                                 }
                             } else {
-                                "Recurring"
+                                stringResource(R.string.cd_recurring)
                             }
                             Text(
                                 text = "\uD83D\uDD01 $repeatText",
@@ -328,13 +329,13 @@ fun EventQuickViewSheet(
                         onClick = onDuplicate,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Duplicate")
+                        Text(stringResource(R.string.action_duplicate))
                     }
                     FilledTonalButton(
                         onClick = onShare,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Share")
+                        Text(stringResource(R.string.action_share))
                     }
                 } else {
                     // Editable calendar: Edit, Delete, More menu
@@ -352,7 +353,7 @@ fun EventQuickViewSheet(
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text("Edit")
+                                Text(stringResource(R.string.action_edit))
                             }
                         } else {
                             // Inline edit confirmation for recurring events
@@ -363,7 +364,7 @@ fun EventQuickViewSheet(
                                 },
                                 modifier = Modifier.weight(0.5f)
                             ) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.action_cancel))
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
@@ -377,7 +378,7 @@ fun EventQuickViewSheet(
                                 },
                                 modifier = Modifier.weight(0.5f)
                             ) {
-                                Text("Confirm")
+                                Text(stringResource(R.string.action_confirm))
                             }
                         }
                     }
@@ -393,7 +394,7 @@ fun EventQuickViewSheet(
                                     contentColor = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             ) {
-                                Text("Delete")
+                                Text(stringResource(R.string.action_delete))
                             }
                         } else {
                             // Inline delete confirmation
@@ -404,7 +405,7 @@ fun EventQuickViewSheet(
                                 },
                                 modifier = Modifier.weight(0.5f)
                             ) {
-                                Text("Cancel")
+                                Text(stringResource(R.string.action_cancel))
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             FilledTonalButton(
@@ -426,7 +427,7 @@ fun EventQuickViewSheet(
                                     contentColor = MaterialTheme.colorScheme.onError
                                 )
                             ) {
-                                Text("Confirm")
+                                Text(stringResource(R.string.action_confirm))
                             }
                         }
                     }
@@ -439,7 +440,7 @@ fun EventQuickViewSheet(
                             ) {
                                 Icon(
                                     Icons.Default.MoreVert,
-                                    contentDescription = "More options"
+                                    contentDescription = stringResource(R.string.cd_more_options)
                                 )
                             }
 
@@ -448,33 +449,33 @@ fun EventQuickViewSheet(
                                 onDismissRequest = { showMoreMenu = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Duplicate") },
+                                    text = { Text(stringResource(R.string.action_duplicate)) },
                                     onClick = {
                                         showMoreMenu = false
                                         onDuplicate()
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.ContentCopy, contentDescription = "Duplicate")
+                                        Icon(Icons.Default.ContentCopy, contentDescription = stringResource(R.string.cd_duplicate))
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Share") },
+                                    text = { Text(stringResource(R.string.action_share)) },
                                     onClick = {
                                         showMoreMenu = false
                                         onShare()
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.Share, contentDescription = "Share")
+                                        Icon(Icons.Default.Share, contentDescription = stringResource(R.string.cd_share))
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Export as .ics") },
+                                    text = { Text(stringResource(R.string.action_export_ics)) },
                                     onClick = {
                                         showMoreMenu = false
                                         onExportIcs()
                                     },
                                     leadingIcon = {
-                                        Icon(Icons.Default.FileDownload, contentDescription = "Export as ICS")
+                                        Icon(Icons.Default.FileDownload, contentDescription = stringResource(R.string.cd_export_ics))
                                     }
                                 )
                             }
@@ -493,7 +494,7 @@ fun EventQuickViewSheet(
                         .selectableGroup()
                 ) {
                     Text(
-                        text = "Delete \"${event.title}\"",
+                        text = stringResource(R.string.dialog_delete_title, event.title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -516,7 +517,7 @@ fun EventQuickViewSheet(
                             onClick = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Just this one")
+                        Text(stringResource(R.string.recurring_just_this))
                     }
 
                     // This and all future
@@ -536,7 +537,7 @@ fun EventQuickViewSheet(
                             onClick = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("This and all future")
+                        Text(stringResource(R.string.recurring_this_and_future))
                     }
                 }
             }
@@ -551,7 +552,7 @@ fun EventQuickViewSheet(
                         .selectableGroup()
                 ) {
                     Text(
-                        text = "Edit \"${event.title}\"",
+                        text = stringResource(R.string.dialog_edit_title, event.title),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -574,7 +575,7 @@ fun EventQuickViewSheet(
                             onClick = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Just this occurrence")
+                        Text(stringResource(R.string.recurring_just_occurrence))
                     }
 
                     // All occurrences
@@ -594,7 +595,7 @@ fun EventQuickViewSheet(
                             onClick = null
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("All occurrences")
+                        Text(stringResource(R.string.recurring_all_occurrences))
                     }
                 }
             }
@@ -616,6 +617,7 @@ private fun formatEventDateTime(
     startTs: Long,
     endTs: Long,
     isAllDay: Boolean,
+    resources: android.content.res.Resources,
     timePattern: String = "h:mm a"
 ): String {
     // Use DateTimeUtils for correct timezone handling (UTC for all-day, local for timed)
@@ -625,9 +627,9 @@ private fun formatEventDateTime(
 
     return if (isAllDay) {
         if (isMultiDay) {
-            "$startDateStr \u2192 $endDateStr \u00b7 All day"
+            resources.getString(R.string.event_date_range_all_day, startDateStr, endDateStr)
         } else {
-            "$startDateStr \u00b7 All day"
+            resources.getString(R.string.event_date_all_day, startDateStr)
         }
     } else {
         val startTime = DateTimeUtils.formatEventTime(startTs, isAllDay, timePattern)
@@ -654,7 +656,7 @@ internal fun formatSeriesStartDateStr(
 ): String {
     val startDate = DateTimeUtils.eventTsToLocalDate(seriesStartTs, isAllDay, localZone)
     val currentYear = LocalDate.now(localZone).year
-    val pattern = if (startDate.year == currentYear) "MMM d" else "MMM d, yyyy"
+    val pattern = if (startDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
     return DateTimeUtils.formatEventDate(seriesStartTs, isAllDay, pattern, localZone)
 }
 
@@ -715,7 +717,7 @@ private fun ExpandedContentSection(
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         Icons.AutoMirrored.Filled.Launch,
-                        contentDescription = "Open link",
+                        contentDescription = stringResource(R.string.cd_open_link),
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
@@ -728,7 +730,7 @@ private fun ExpandedContentSection(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Notes",
+                        text = stringResource(R.string.label_notes),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

@@ -14,6 +14,8 @@ data class QuickAddResult(
     val startDate: LocalDate,
     val startTime: LocalTime? = null,
     val endTime: LocalTime? = null,
+    val endDate: LocalDate? = null,
+    val timezone: String? = null,
     val location: String? = null,
     val rrule: String? = null,
     val emoji: String? = null,

@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">오늘의 일정</string>
+    <string name="widget_description">오늘의 캘린더 일정을 표시해요</string>
+    <string name="week_widget_name">주간 보기</string>
+    <string name="week_widget_description">7일간의 캘린더 일정을 표시해요</string>
+    <string name="month_widget_name">월간 보기</string>
+    <string name="month_widget_description">일정 표시 점이 있는 월간 캘린더 그리드를 표시해요</string>
+    <string name="date_widget_name">날짜</string>
+    <string name="date_widget_description">앱 아이콘처럼 오늘 날짜를 표시해요</string>
+    <string name="widget_no_events_today">오늘 일정이 없어요</string>
+    <string name="widget_add_event">+ 일정 추가</string>
+    <string name="widget_no_events">일정 없음</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">새 일정</string>
+    <string name="shortcut_new_event_long">새 일정 만들기</string>
+    <string name="shortcut_today">오늘</string>
+    <string name="shortcut_today_long">오늘로 이동</string>
+    <string name="shortcut_search">검색</string>
+    <string name="shortcut_search_long">일정 검색</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">재시도</string>
+    <string name="action_try_again">다시 시도</string>
+    <string name="action_cancel">취소</string>
+    <string name="action_close">닫기</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">나중에</string>
+    <string name="action_sign_in">로그인</string>
+    <string name="action_select">선택</string>
+    <string name="action_show_password">비밀번호 표시</string>
+    <string name="action_hide_password">비밀번호 숨기기</string>
+    <string name="action_sign_out">로그아웃</string>
+    <string name="action_learn_more">자세히 알아보기</string>
+    <string name="action_open_apple_id">Apple ID 열기</string>
+    <string name="action_open_settings">설정 열기</string>
+    <string name="action_force_sync">강제 동기화</string>
+    <string name="action_sync_now">지금 동기화</string>
+    <string name="action_details">상세정보</string>
+    <string name="action_set_up">설정하기</string>
+    <string name="action_report_issue">문제 신고</string>
+    <string name="action_view">보기</string>
+    <string name="action_enable">활성화</string>
+    <string name="action_done">완료</string>
+    <string name="action_save">저장</string>
+    <string name="action_add">추가</string>
+    <string name="action_edit">편집</string>
+    <string name="action_delete">삭제</string>
+    <string name="action_confirm">확인</string>
+    <string name="action_discard">버리기</string>
+    <string name="action_dismiss">닫기</string>
+    <string name="action_show_all">모두 보기</string>
+    <string name="action_connect">연결</string>
+    <string name="action_duplicate">복제</string>
+    <string name="action_share">공유</string>
+    <string name="action_export_ics">.ics로 내보내기</string>
+    <string name="action_confirm_delete">삭제 확인</string>
+    <string name="action_delete_event">일정 삭제</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">이것만</string>
+    <string name="recurring_this_and_future">이후 모두</string>
+    <string name="recurring_just_occurrence">이 항목만</string>
+    <string name="recurring_all_occurrences">모든 항목</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">일정 제목</string>
+    <string name="label_location">장소</string>
+    <string name="label_location_hint">주소, 회의실 또는 링크</string>
+    <string name="label_notes">메모</string>
+    <string name="label_starts">시작</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">앱 전용 비밀번호</string>
+    <string name="label_password_hint">16자, 대시 선택 사항</string>
+    <string name="label_calendar_url">캘린더 URL</string>
+    <string name="label_calendar_name">캘린더 이름</string>
+    <string name="label_name">이름</string>
+    <string name="label_hex_color">16진수 색상</string>
+    <string name="label_enter_hex">16진수 6자리 입력 (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">전체</string>
+    <string name="view_week">주</string>
+    <string name="view_month">월</string>
+    <string name="label_all_day">종일</string>
+    <string name="label_today">오늘</string>
+    <string name="label_go_to_date">날짜로 이동</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">설정</string>
+    <string name="settings_time_format">시간 형식</string>
+    <string name="settings_start_week_on">주 시작 요일</string>
+    <string name="settings_event_emojis">일정 이모지</string>
+    <string name="settings_emoji_subtitle">일정 제목에 따라 이모지를 표시해요</string>
+    <string name="settings_force_sync">전체 동기화</string>
+    <string name="settings_force_sync_subtitle">모든 캘린더 데이터를 다시 다운로드</string>
+    <string name="settings_sync_history">동기화 기록</string>
+    <string name="settings_sync_history_subtitle">동기화 세션 보기 (최근 48시간)</string>
+    <string name="settings_import_subtitle">.ics 파일 가져오기</string>
+    <string name="settings_export_subtitle">.ics 파일로 백업</string>
+    <string name="settings_birthday_reminder">생일 알림</string>
+    <string name="settings_use_device_timezone">기기 시간대 사용</string>
+    <string name="settings_section_my_calendars">내 캘린더</string>
+    <string name="settings_section_display">디스플레이</string>
+    <string name="settings_section_notifications">알림</string>
+    <string name="settings_section_sync">동기화</string>
+    <string name="settings_section_data">데이터</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple 캘린더 사용하세요?</string>
+    <string name="onboarding_got_you">저희가 도와드릴게요.</string>
+    <string name="onboarding_connect_prompt">iCloud를 연결하여 일정을 확인하세요</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">iCloud 연결</string>
+    <string name="signin_caldav_title">CalDAV 계정 추가</string>
+    <string name="signin_connected_to">%1$s에 연결됨</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">새 일정</string>
+    <string name="dialog_edit_event_title">일정 편집</string>
+    <string name="dialog_force_sync_title">전체 동기화를 할까요?</string>
+    <string name="dialog_force_sync_message">서버에서 모든 캘린더 데이터를 다시 다운로드해요. 로컬 변경 사항은 유지돼요.</string>
+    <string name="dialog_enable_notifications">알림을 활성화할까요?</string>
+    <string name="dialog_delete_title">\"%1$s\" 삭제</string>
+    <string name="dialog_edit_title">\"%1$s\" 편집</string>
+    <string name="dialog_action_required">계속하려면 이 작업이 필요해요.</string>
+    <string name="dialog_add_to_calendar">캘린더에 추가</string>
+    <string name="dialog_select_calendar">캘린더 선택</string>
+    <string name="dialog_choose_color">색상 선택</string>
+    <string name="dialog_add_subscription">구독 추가</string>
+    <string name="dialog_edit_subscription">구독 편집</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">이번 주 일정이 없어요</string>
+    <string name="status_more_events">+%1$d개 더</string>
+    <string name="status_no_sync_sessions">아직 동기화 기록이 없어요.\n\n캘린더 화면에서 아래로 당겨서 동기화를 시작하세요.</string>
+    <string name="status_no_writable_calendars">쓰기 가능한 캘린더가 없어요</string>
+    <string name="status_events_count">일정 %1$d개</string>
+    <string name="status_sync_changes">동기화 변경 사항</string>
+    <string name="status_sync_history">동기화 기록</string>
+    <string name="status_parse_failures">파싱 오류</string>
+    <string name="status_error">오류</string>
+    <string name="status_failed_to_parse">⚠ %1$d개 파싱 실패</string>
+    <string name="status_built_with_love">사랑을 담아 만들었어요</string>
+    <string name="status_in_austin">Austin에서</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">동기화 완료</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">로그인 실패</string>
+    <string name="error_auth_invalid_credentials">Apple ID 또는 앱 전용 비밀번호가 잘못되었어요. 인증 정보를 확인하고 다시 시도해 주세요.</string>
+    <string name="error_auth_app_specific_password_required">iCloud에는 앱 전용 비밀번호가 필요해요. 일반 Apple ID 비밀번호는 사용할 수 없어요.</string>
+    <string name="error_auth_session_expired_title">세션 만료</string>
+    <string name="error_auth_session_expired">iCloud 세션이 만료되었어요. 동기화를 계속하려면 다시 로그인해 주세요.</string>
+    <string name="error_auth_account_locked">Apple ID가 잠겼어요. appleid.apple.com에서 잠금을 해제해 주세요.</string>
+
+    <string name="error_network_offline">오프라인이에요. 온라인이 되면 변경 사항이 동기화돼요.</string>
+    <string name="error_network_timeout">연결 시간이 초과되었어요. 인터넷 연결을 확인하고 다시 시도해 주세요.</string>
+    <string name="error_network_ssl">보안 연결에 실패했어요. 네트워크 설정을 확인해 주세요.</string>
+    <string name="error_network_unknown_host">iCloud에 연결할 수 없어요. 인터넷 연결을 확인해 주세요.</string>
+    <string name="error_network_connection_failed">연결에 실패했어요. 다시 시도해 주세요.</string>
+
+    <string name="error_server_unavailable">iCloud를 일시적으로 사용할 수 없어요. 나중에 다시 시도해 주세요.</string>
+    <string name="error_server_rate_limited">요청이 너무 많아요. 잠시 후 다시 시도해 주세요.</string>
+    <string name="error_server_forbidden">접근이 거부되었어요. 이 캘린더에 대한 권한이 없을 수 있어요.</string>
+    <string name="error_server_not_found">요청한 항목을 서버에서 찾을 수 없어요.</string>
+    <string name="error_conflict_title">동기화 충돌</string>
+    <string name="error_conflict_generic">이 일정이 다른 기기에서 수정되었어요. 강제 동기화로 최신 버전을 가져오세요.</string>
+    <string name="error_conflict_with_event">\"%1$s\"이(가) 다른 기기에서 수정되었어요. 강제 동기화로 최신 버전을 가져오세요.</string>
+    <string name="error_sync_token_expired">동기화 데이터가 만료되었어요. 전체 동기화 수행 중…</string>
+
+    <string name="error_event_not_found">일정을 찾을 수 없어요.</string>
+    <string name="error_calendar_not_found">캘린더를 찾을 수 없어요.</string>
+    <string name="error_calendar_read_only">\"%1$s\"의 일정은 수정할 수 없어요 (읽기 전용 캘린더).</string>
+    <string name="error_event_invalid_data">일정 데이터가 올바르지 않아요. 시작 시간과 종료 시간을 확인해 주세요.</string>
+    <string name="error_event_invalid_recurrence">반복 패턴이 올바르지 않아요.</string>
+
+    <string name="error_display_name_exists">\"%1$s\"이라는 이름의 계정이 이미 있어요.</string>
+
+    <string name="error_import_file_not_found">파일을 찾을 수 없거나 읽을 수 없어요.</string>
+    <string name="error_import_invalid_format">잘못된 캘린더 파일 형식이에요.</string>
+    <string name="error_import_partial">일정 %1$d개 가져옴, %2$d개 실패.</string>
+    <string name="error_export_failed">일정 내보내기에 실패했어요.</string>
+    <string name="error_export_no_events">내보낼 일정이 없어요.</string>
+    <string name="error_end_before_start">종료 시간은 시작 시간보다 뒤여야 해요</string>
+
+    <string name="error_storage_full_title">저장 공간 부족</string>
+    <string name="error_storage_full">저장 공간이 부족해요. 공간을 확보한 후 다시 시도해 주세요.</string>
+    <string name="error_database_corruption_title">데이터 오류</string>
+    <string name="error_database_corruption">캘린더 데이터가 손상되었을 수 있어요. 지원팀에 문의해 주세요.</string>
+    <string name="error_migration_title">업데이트 오류</string>
+    <string name="error_migration_failed">앱 데이터 업데이트에 실패했어요. 앱을 다시 설치해 주세요.</string>
+
+    <string name="error_permission_notification_title">알림을 활성화할까요?</string>
+    <string name="error_permission_notification">KashCal이 다가오는 일정을 알려드리려면 알림 권한이 필요해요.</string>
+    <string name="error_permission_alarm_title">정확한 알람을 활성화할까요?</string>
+    <string name="error_permission_alarm">KashCal이 정확한 알림을 위해 정확한 알람 권한이 필요해요.</string>
+    <string name="error_permission_storage">가져오기/내보내기에 저장소 권한이 필요해요.</string>
+
+    <string name="error_device_calendar_title">캘린더 오류</string>
+    <string name="error_device_calendar_write_failed">기기 캘린더에 저장하지 못했어요. 다시 시도해 주세요.</string>
+    <string name="error_device_calendar_permission">캘린더 쓰기 권한이 필요해요. 설정에서 권한을 허용해 주세요.</string>
+    <string name="error_device_calendar_not_found">캘린더를 찾을 수 없어요. 삭제되었을 수 있어요.</string>
+    <string name="error_device_event_not_found">일정을 찾을 수 없어요. 삭제되었을 수 있어요.</string>
+    <string name="error_device_calendar_read_only">이 캘린더는 읽기 전용이에요.</string>
+
+    <string name="error_sync_no_accounts">iCloud 계정이 설정되지 않았어요. 캘린더를 동기화하려면 iCloud를 설정하세요.</string>
+    <string name="error_sync_partial">캘린더 %1$d개 동기화, %2$d개 실패.</string>
+
+    <string name="error_unknown">문제가 발생했어요. 다시 시도해 주세요.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">선택됨</string>
+    <string name="cd_back">뒤로</string>
+    <string name="cd_close">닫기</string>
+    <string name="cd_search">검색</string>
+    <string name="cd_create_event">일정 만들기</string>
+    <string name="cd_settings">설정</string>
+    <string name="cd_today">오늘</string>
+    <string name="cd_previous_week">이전 주</string>
+    <string name="cd_next_week">다음 주</string>
+    <string name="cd_delete">삭제</string>
+    <string name="cd_refresh">새로고침</string>
+    <string name="cd_more_options">더 보기</string>
+    <string name="cd_duplicate">복제</string>
+    <string name="cd_share">공유</string>
+    <string name="cd_export_ics">ICS로 내보내기</string>
+    <string name="cd_open_link">링크 열기</string>
+    <string name="cd_open_maps">지도에서 열기</string>
+    <string name="cd_copy_clipboard">클립보드에 복사</string>
+    <string name="cd_clear_history">기록 지우기</string>
+    <string name="cd_recurring">반복</string>
+    <string name="cd_enabled">활성화됨</string>
+    <string name="cd_sync_error">동기화 오류</string>
+    <string name="cd_select_option">옵션 선택</string>
+    <string name="cd_select_label">%1$s 선택</string>
+    <string name="cd_wheel_picker">%1$d개 옵션의 휠 피커</string>
+    <string name="cd_version_info">KashCal 버전 %1$s. 길게 눌러 디버그 옵션 표시.</string>
+    <string name="cd_color_slider">색상 슬라이더, 현재 %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d도</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">캘린더</string>
+    <string name="label_color">색상:</string>
+    <string name="label_repeat">반복</string>
+    <string name="label_sync_interval">동기화 간격:</string>
+    <string name="label_scheduled_events">예약된 일정</string>
+    <string name="label_all_day_events">종일 일정</string>
+    <string name="label_server_url">서버 URL</string>
+    <string name="label_username">사용자 이름</string>
+    <string name="label_password">비밀번호</string>
+    <string name="label_display_name_optional">표시 이름 (선택 사항)</string>
+
+    <string name="placeholder_search_events">일정 검색…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">지정하지 않으면 https://가 기본값이에요</string>
+    <string name="hint_name_shown_in_settings">설정에 표시되는 이름</string>
+    <string name="caldav_trust_insecure_subtitle">자체 서명 인증서 또는 로컬 HTTP 서버용</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">횟수</string>
+    <string name="label_recurrence_occurrences">회</string>
+    <string name="label_recurrence_on_date">날짜 지정</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">표시할 캘린더</string>
+    <string name="settings_default_calendar">기본 캘린더</string>
+    <string name="settings_default_event_length">기본 일정 길이</string>
+    <string name="settings_default_alerts">기본 알림</string>
+    <string name="settings_notifications">알림</string>
+    <string name="settings_new_events">새 일정</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">시스템 기본값</string>
+    <string name="option_12_hour">12시간</string>
+    <string name="option_24_hour">24시간</string>
+    <string name="option_sunday">일요일</string>
+    <string name="option_monday">월요일</string>
+    <string name="option_saturday">토요일</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">일정을 찾을 수 없어요</string>
+    <string name="empty_no_upcoming_events">다가오는 일정이 없어요</string>
+    <string name="empty_no_calendars">사용 가능한 캘린더가 없어요</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">연결 중…</string>
+    <string name="status_fetching">가져오는 중…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">캘린더 가져오기</string>
+    <string name="action_import_from_file">파일에서 가져오기</string>
+    <string name="action_export_local_calendar">로컬 캘린더 내보내기</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">앱 전용 비밀번호를 사용하면 메인 Apple ID 비밀번호를 공유하지 않고 타사 앱에 로그인할 수 있어요.</string>
+    <string name="help_app_password_steps_header">생성 방법:</string>
+    <string name="help_app_password_step_1">1. appleid.apple.com에 접속</string>
+    <string name="help_app_password_step_2">2. Apple ID로 로그인</string>
+    <string name="help_app_password_step_3">3. 로그인 및 보안으로 이동</string>
+    <string name="help_app_password_step_4">4. 앱 전용 비밀번호 클릭</string>
+    <string name="help_app_password_step_5">5. 생성을 클릭하고 여기에 복사</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal이 다가오는 일정을 알려드리려면 알림 권한이 필요해요.</string>
+    <string name="dialog_notification_permission_settings_hint">나중에 설정에서 변경할 수 있어요.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">계정</string>
+    <string name="accounts_section_connected">연결됨</string>
+    <string name="accounts_section_add">계정 추가</string>
+    <string name="accounts_empty_title">연결된 계정이 없어요</string>
+    <string name="accounts_empty_subtitle">계정을 추가하여 기기 간 캘린더를 동기화하세요</string>
+    <string name="accounts_row_label">iCloud, Nextcloud 등</string>
+    <string name="accounts_add_icloud">iCloud 추가</string>
+    <string name="accounts_add_caldav">CalDAV 추가</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail 등</string>
+    <string name="accounts_caldav_help_title">CalDAV란?</string>
+    <string name="accounts_caldav_help_description">CalDAV는 캘린더를 동기화하기 위한 개방형 표준이에요. 지원 서비스:</string>
+    <string name="accounts_caldav_help_more">외 다수</string>
+    <string name="accounts_calendars_syncing">동기화 중…</string>
+    <string name="accounts_cd_icloud_icon">iCloud 계정</string>
+    <string name="accounts_cd_caldav_icon">CalDAV 계정</string>
+    <string name="accounts_cd_back">뒤로 가기</string>
+    <string name="accounts_sync_issue">동기화 문제</string>
+    <string name="accounts_cd_sync_warning">동기화 경고</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">구독</string>
+    <string name="subscriptions_section_ics_calendars">ICS 캘린더</string>
+    <string name="subscriptions_section_add">추가</string>
+    <string name="subscriptions_empty_ics">ICS 구독이 없어요</string>
+    <string name="subscriptions_empty_ics_hint">캘린더 피드를 추가하여 일정을 확인하세요</string>
+    <string name="subscriptions_add_ics">ICS 캘린더 추가</string>
+    <string name="subscriptions_row_label">공휴일, 학사 일정 등</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">생일 및 기념일</string>
+    <string name="birthdays_section_title">생일</string>
+    <string name="anniversaries_section_title">기념일</string>
+    <string name="settings_contact_birthdays">연락처 생일</string>
+    <string name="settings_contact_birthdays_description">연락처의 생일을 종일 캘린더 일정으로 표시해요.</string>
+    <string name="settings_contact_anniversaries">연락처 기념일</string>
+    <string name="settings_contact_anniversaries_description">연락처의 기념일을 종일 캘린더 일정으로 표시해요.</string>
+    <string name="settings_anniversary_reminder">기념일 알림</string>
+    <string name="settings_calendar_color">캘린더 색상</string>
+    <string name="settings_default_reminder">기본 알림</string>
+    <string name="action_change">변경</string>
+    <string name="settings_contacts_footer">기기 연락처에서 읽어요. 연락처 권한이 필요해요.</string>
+    <string name="settings_contacts_permission_required">연락처 권한이 필요해요</string>
+    <string name="subscriptions_cd_back">뒤로 가기</string>
+    <string name="subscriptions_cd_add">구독 추가</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">동기화</string>
+    <string name="account_detail_section_calendars">캘린더</string>
+    <string name="account_detail_section_account">계정</string>
+    <string name="account_detail_enabled">활성화</string>
+    <string name="account_detail_enabled_subtitle">이 계정을 자동 동기화</string>
+    <string name="account_detail_sync_now">지금 동기화</string>
+    <string name="account_detail_syncing">동기화 중…</string>
+    <string name="account_detail_discovering">검색 중…</string>
+    <string name="account_detail_discover_calendars">새 캘린더 검색</string>
+    <string name="account_detail_change_password">비밀번호 변경</string>
+    <string name="account_detail_sign_out">로그아웃</string>
+    <string name="account_detail_never_synced">동기화한 적 없음</string>
+    <string name="account_detail_last_success">마지막 성공: %1$s</string>
+    <string name="account_detail_cd_rename">이름 바꾸기</string>
+    <string name="account_detail_cd_show_password">비밀번호 표시</string>
+    <string name="account_detail_cd_hide_password">비밀번호 숨기기</string>
+
+    <string name="sync_failure_notification_title">%1$s 동기화 문제</string>
+    <string name="sync_failure_notification_text">캘린더 동기화가 %1$d회 실패했어요</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">계정 이름 변경</string>
+    <string name="rename_account_label">계정 이름</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">비밀번호 변경</string>
+    <string name="change_password_label_icloud">앱 전용 비밀번호</string>
+    <string name="change_password_label_default">비밀번호</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">기기 캘린더</string>
+    <string name="settings_quick_event_add">빠른 일정 추가</string>
+    <string name="settings_week_numbers">주 번호</string>
+    <string name="settings_widget_event_limit">위젯 일정 제한</string>
+    <string name="settings_sync_lookback">동기화 조회 기간</string>
+    <string name="settings_auto_detect_emojis">이모지 자동 감지</string>
+    <string name="settings_events_per_day">일별 일정 수</string>
+    <string name="settings_not_set">설정 안 됨</string>
+    <string name="settings_on">켜짐</string>
+    <string name="settings_off">꺼짐</string>
+    <string name="settings_tap_to_enable">탭하여 활성화</string>
+    <string name="settings_device_calendars_enabled">%1$d개 활성화</string>
+    <string name="settings_per_day">하루 %1$d개</string>
+
+    <string name="signin_icloud_help_question">앱 전용 비밀번호가 뭔가요?</string>
+    <string name="caldav_trust_insecure_label">안전하지 않은 연결 허용</string>
+    <string name="action_add_another">다른 계정 추가</string>
+    <string name="account_connected_found_calendars">%2$s의 캘린더 %1$d개를 찾았어요.</string>
+    <string name="account_connected_syncing_hint">동기화 진행 중 \u2014 곧 일정이 표시돼요.</string>
+    <string name="settings_time_format_currently_24h">현재: 24시간 (%1$s)</string>
+    <string name="settings_time_format_currently_12h">현재: 12시간 (%1$s)</string>
+    <string name="settings_time_format_example">예: %1$s</string>
+    <string name="settings_system_default_with_value">시스템 기본값 (%1$s)</string>
+    <string name="alert_none">없음</string>
+    <string name="cd_collapse">접기</string>
+    <string name="cd_expand">펼치기</string>
+    <string name="cd_hide_calendar">캘린더 숨기기</string>
+    <string name="cd_show_calendar">캘린더 표시</string>
+    <string name="cd_pick_month_year">월과 연도 선택</string>
+    <string name="cd_previous_month">이전 달</string>
+    <string name="cd_next_month">다음 달</string>
+    <string name="cd_month_year_picker">월 및 연도 선택기</string>
+    <string name="cd_remove_alert">알림 제거</string>
+    <string name="cd_warning">경고</string>
+    <string name="cd_refresh_calendars">캘린더 새로고침</string>
+    <string name="cd_timezone_tap_to_change">시간대: %1$s, 탭하여 변경</string>
+    <string name="cd_day_events">%1$d일, 일정 %2$d개</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">빈도</string>
+    <string name="label_on_days">요일</string>
+    <string name="label_pattern">패턴</string>
+    <string name="label_ends">종료</string>
+    <string name="label_alerts">알림</string>
+    <string name="label_add_alert">알림 추가</string>
+    <string name="label_recurrence_never">없음</string>
+    <string name="label_tomorrow">내일</string>
+    <string name="label_yesterday">어제</string>
+    <string name="label_device_calendars">기기 캘린더</string>
+    <string name="label_default_calendar_hint">새 일정이 이 캘린더에 만들어져요</string>
+    <string name="label_visible_count">%1$d / %2$d 표시</string>
+    <string name="label_enabled_count">%1$d / %2$d 활성화</string>
+    <string name="label_reminders_truncated">%1$d개 미표시 (전체 %2$d개, 최대 %3$d개 편집 가능)</string>
+    <string name="label_found_events">발견: 일정 %1$d개</string>
+    <string name="label_open_debug_menu">디버그 메뉴 열기</string>
+    <string name="placeholder_search">검색\u2026</string>
+    <string name="status_sync_paused">동기화 일시 중지</string>
+    <string name="status_not_synced">동기화 안 됨</string>
+    <string name="status_sync_error">동기화 오류</string>
+    <string name="status_minutes_ago">%1$d분 전</string>
+    <string name="status_hours_ago">%1$d시간 전</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">기기의 다른 캘린더 앱에서 일정을 표시해요 (동기화 어댑터, 로컬 캘린더).</string>
+    <string name="device_calendars_permission_required">캘린더 권한이 필요해요. 활성화를 탭하여 접근을 허용하세요.</string>
+    <string name="device_calendars_read_only_access">읽기 전용 접근</string>
+    <string name="device_calendars_grant_write">기기 캘린더 일정을 편집하려면 쓰기 권한을 허용하세요</string>
+    <string name="device_calendars_grant">허용</string>
+    <string name="device_calendars_none_found">기기 캘린더를 찾을 수 없어요.</string>
+    <string name="device_calendars_local">로컬</string>
+    <string name="device_calendars_show_declined">거절한 일정 표시</string>
+    <string name="device_calendars_reminders">알림</string>
+    <string name="device_calendars_reminders_desc">기기 캘린더 일정에 대한 알림 받기</string>
+    <string name="device_calendars_read_only_no_write">읽기 전용 (쓰기 권한 없음)</string>
+    <string name="device_calendars_read_only_calendar">읽기 전용 (읽기 전용 캘린더)</string>
+
+    <string name="settings_developer_options">개발자 옵션</string>
+    <string name="settings_sync_frequency">동기화 주기</string>
+    <string name="settings_preview">미리보기</string>
+    <string name="settings_n_events">일정 %1$d개</string>
+    <string name="settings_n_events_default">일정 %1$d개 (기본값)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">캘린더</string>
+    <string name="drawer_contacts">연락처</string>
+    <string name="drawer_device_calendars">기기 캘린더</string>
+    <string name="drawer_share_feedback">피드백 보내기</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">당신을 위한 앱, 데이터를 위한 것이 아니에요.</string>
+    <string name="action_keep_it_that_way">함께해 주세요</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">이미 동기화됨</string>
+    <string name="status_warnings">경고</string>
+    <string name="sync_history_events_failed">실패한 일정</string>
+    <string name="sync_history_abandoned_max_retries">중단됨 (최대 재시도 횟수 초과)</string>
+    <string name="sync_history_events_skipped">건너뛴 일정</string>
+    <string name="sync_history_duration">소요 시간</string>
+    <string name="sync_history_already_synced_count">%1$d개 이미 동기화됨</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">일정 없음</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">오프라인이에요</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">%1$s에서 로그아웃할까요?</string>
+    <string name="dialog_sign_out_message">%1$s(으)로 로그인되어 있어요. 로그아웃하면 동기화된 캘린더가 이 기기에서 삭제돼요.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="other">계정 %1$d개</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="other">%1$s \u00B7 캘린더 %2$d개</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="other">구독 %1$d개</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="other">동기화 실패 (%1$d회 시도)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="other">캘린더 %1$d개</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="other">캘린더 %1$d개 (%2$d개 신규)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="other">일정 %1$d개</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="other">생일 %1$d개</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="other">기념일 %1$d개</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="other">+ %1$d개 더</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="other">일정 %1$d개 가져오기</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="other">가져오기</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="other">\u2026%1$d개 더</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="other">일정 %1$d개를 가져왔어요</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="other">일정 %1$d개를 내보냈어요</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="other">일정 %1$d개</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="other">%1$d분</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="other">%1$d분</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="other">%1$d시간</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="other">%1$d주</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="other">%1$d개월</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="other">%1$d년</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="other">%1$d초</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="other">%1$d분 전</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="other">%1$d시간 전</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="other">%1$d일 전</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="other">%1$d주 전</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">반복 일정 편집</string>
+    <string name="dialog_delete_recurring_title">반복 일정 삭제</string>
+    <string name="dialog_edit_recurring_message">반복 일정이에요. 변경 사항을 어떻게 적용할까요?</string>
+    <string name="recurring_this_event">이 일정만</string>
+    <string name="recurring_all_events">모든 일정</string>
+    <string name="empty_pick_a_day">날짜를 골라보세요. 그 하루를 잡으세요.</string>
+    <string name="empty_no_events_day">일정이 없어요. 밖에 나가볼까요?</string>
+    <string name="label_upcoming_events">다가오는 일정</string>
+    <string name="filter_date">날짜</string>
+    <string name="label_select_date">날짜 선택</string>
+    <string name="hint_tap_date_range">같은 날짜를 탭하면 하루, 다른 날짜를 탭하면 범위 선택</string>
+
+    <string name="cd_clear">지우기</string>
+    <string name="cd_offline">오프라인</string>
+    <string name="cd_previous">이전</string>
+    <string name="cd_next">다음</string>
+    <string name="cd_open_drawer">서랍 열기</string>
+    <string name="cd_close_drawer">서랍 닫기</string>
+    <string name="cd_calendar_view">캘린더 보기</string>
+    <string name="cd_active_view">활성 보기</string>
+
+    <string name="view_agenda">일정 목록</string>
+    <string name="view_month_full">월 (전체)</string>
+    <string name="view_three_days">3일</string>
+    <string name="view_year">연</string>
+
+    <string name="label_go_to_month">월로 이동</string>
+
+    <string name="action_more_options">더 많은 옵션</string>
+
+    <string name="label_duration_days">일</string>
+    <string name="label_duration_hrs">시간</string>
+    <string name="label_duration_min">분</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">매월 %1$d일</string>
+    <string name="recurrence_on_last_day">매월 마지막 날</string>
+    <string name="recurrence_on_nth_weekday">%1$s번째 %2$s</string>
+    <string name="ordinal_1st">첫째</string>
+    <string name="ordinal_2nd">둘째</string>
+    <string name="ordinal_3rd">셋째</string>
+    <string name="ordinal_4th">넷째</string>
+    <string name="ordinal_nth">%1$d번째</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d개 새로 추가</string>
+    <string name="sync_summary_updated">%1$d개 업데이트</string>
+    <string name="sync_summary_removed">%1$d개 삭제</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">이전 3일</string>
+    <string name="cd_next_3_days">다음 3일</string>
+    <string name="cd_circular_scrolling">순환 스크롤 활성화됨</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">알림 없음</string>
+    <string name="reminder_at_time_of_event">일정 시작 시</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s 전</string>
+    <string name="reminder_time_after">%1$s 후</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">당일 오전 9시</string>
+    <string name="reminder_day_of_event_24h">당일 09:00</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s 전 오전 9시</string>
+    <string name="reminder_before_at_24h">%1$s 전 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">끔</string>
+    <string name="reminder_short_at_event">시작 시</string>
+    <string name="reminder_short_9am_12h">오전 9시</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d분</string>
+    <string name="reminder_short_hours">%1$d시간</string>
+    <string name="reminder_short_days">%1$d일</string>
+    <string name="reminder_short_weeks">%1$d주</string>
+    <string name="reminder_summary_none">없음</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$d시간 %2$d분</string>
+    <string name="duration_compact_short">%1$d시%2$d분</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">수동만</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">모든 일정</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">다시 알림</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">지금 시작</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">내일 %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">동기화 완료</string>
+    <string name="sync_notification_partial">동기화 부분 완료</string>
+    <string name="sync_notification_auth_failed">동기화 인증 실패</string>
+    <string name="sync_notification_auth_reauth">계정을 다시 인증해 주세요</string>
+    <string name="sync_notification_failed">동기화 실패</string>
+    <string name="sync_notification_parse_title">일부 일정을 동기화할 수 없어요</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%2$s의 %1$s을(를) 동기화할 수 없어요. 설정에서 강제 동기화를 시도해 주세요.</string>
+    <string name="sync_notification_conflict_title">동기화 충돌이 해결되었어요</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">\"%1$s\"의 로컬 변경사항이 동기화 충돌로 인해 손실되었어요. 서버 버전이 사용돼요.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">%1$s의 로컬 변경사항이 동기화 충돌로 인해 손실되었어요. 서버 버전이 사용돼요.</string>
+    <string name="sync_notification_expired_title">동기화 변경사항이 만료되었어요</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s을(를) 30일 동안 동기화할 수 없었어요. 서버 버전이 사용돼요. 강제 동기화로 다시 시도해 주세요.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">%1$d개 캘린더 동기화됨</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d건 변경</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d건 오류</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s의 %2$s번째 생일</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s의 생일</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s의 %2$s번째 기념일</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s의 기념일</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$d번째</string>
+    <string name="ordinal_suffix_nd">%1$d번째</string>
+    <string name="ordinal_suffix_rd">%1$d번째</string>
+    <string name="ordinal_suffix_th">%1$d번째</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">캘린더 동기화 중\u2026</string>
+    <string name="sync_banner_preparing">동기화 준비 중\u2026</string>
+    <string name="sync_banner_complete_errors">동기화 완료 (오류 있음)</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">동기화 실패: %1$s</string>
+    <string name="error_unknown_error">알 수 없는 오류</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">새 일정: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">새 일정 %1$d건</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d건 일정 업데이트됨</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d건 일정 삭제됨</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d건 캘린더 업데이트</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">%2$d일 중 %1$d일째</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">%1$d일 중 1일째 \u00b7 %2$s 시작</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">%2$d일 중 %1$d일째 \u00b7 %3$s 종료</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 종일</string>
+    <string name="event_date_all_day">%1$s \u00b7 종일</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (종일)</string>
+    <string name="event_date_all_day_parens">%1$s (종일)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">일정 저장</string>
+    <!-- Badges -->
+    <string name="badge_beta">베타</string>
+    <string name="badge_new">신규</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">빨강</string>
+    <string name="color_orange">주황</string>
+    <string name="color_yellow">노랑</string>
+    <string name="color_green">초록</string>
+    <string name="color_cyan">청록</string>
+    <string name="color_blue">파랑</string>
+    <string name="color_purple">보라</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">회의 링크: %1$s</string>
+    <string name="cd_phone_number">전화번호</string>
+    <string name="cd_email_link">이메일: %1$s</string>
+    <string name="cd_web_link">링크: %1$s</string>
+    <string name="cd_text_with_links">%1$d개 링크가 있는 텍스트: %2$s</string>
+    <string name="cd_text_with_link">1개 링크가 있는 텍스트: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">%2$d일 중 %1$d일째 (종일)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d회 동기화   \u2191%2$d 푸시   \u2193%3$d 풀</string>
+    <string name="sync_history_stats_issues">%1$d회 동기화   \u2191%2$d 푸시   \u2193%3$d 풀   \u26a0 %4$d건 문제</string>
+    <string name="sync_history_failed">실패</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">매시간</string>
+    <string name="ics_sync_every_n_hours">%1$d시간마다</string>
+    <string name="ics_sync_daily">매일</string>
+    <string name="ics_sync_weekly">매주</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL이 필요해요</string>
+    <string name="ics_url_invalid_scheme">URL은 http://, https://, 또는 webcal://로 시작해야 해요</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (종일)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d회</item>
+    </plurals>
+
+    <!-- Missing translations -->
+    <string name="cd_widget_calendar">캘린더</string>
+    <string name="cd_widget_add_event">일정 추가</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">일정 없음</string>
+    <string name="channel_event_reminders">일정 알림</string>
+    <string name="channel_event_reminders_desc">다가오는 캘린더 일정 알림</string>
+    <string name="channel_sync_progress">동기화 진행률</string>
+    <string name="channel_sync_progress_desc">캘린더 동기화 중 진행률 표시</string>
+    <string name="channel_sync_status">동기화 상태</string>
+    <string name="channel_sync_status_desc">동기화 완료 및 오류 알림</string>
+    <string name="rrule_does_not_repeat">반복 안 함</string>
+    <string name="rrule_freq_daily">매일</string>
+    <string name="rrule_freq_weekly">매주</string>
+    <string name="rrule_freq_biweekly">격주</string>
+    <string name="rrule_freq_monthly">매월</string>
+    <string name="rrule_freq_quarterly">분기별</string>
+    <string name="rrule_freq_yearly">매년</string>
+    <string name="rrule_repeats">반복</string>
+    <string name="rrule_every_n_days">%1$d일마다</string>
+    <string name="rrule_every_n_weeks">%1$d주마다</string>
+    <string name="rrule_every_n_months">%1$d개월마다</string>
+    <string name="rrule_every_n_years">%1$d년마다</string>
+    <string name="rrule_freq_on_days">%1$s %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s 마지막 날</string>
+    <string name="rrule_freq_on_day_n">%1$s %2$d일</string>
+    <string name="rrule_ordinal_last">마지막</string>
+    <string name="rrule_until_suffix">, %1$s까지</string>
+    <string name="rrule_freq_never">안 함</string>
+    <string name="rrule_starting">%1$s %2$s부터 시작%3$s</string>
+    <string name="rrule_since">%1$s · %2$s부터</string>
+</resources>

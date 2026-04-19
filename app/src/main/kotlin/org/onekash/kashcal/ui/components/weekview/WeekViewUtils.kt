@@ -308,19 +308,37 @@ object WeekViewUtils {
     }
 
     /**
-     * Format the month and year for the 3-day view header (e.g., "February 2026").
-     * Always includes year for clarity.
+     * Format a date as "Apr 2026 (W16)" with locale-aware week numbering.
+     * Used for week view where all 7 days share the same week number.
      *
-     * Uses pageToDate() to convert the absolute infinite pager page to a date,
-     * which correctly handles the CENTER_DAY_PAGE offset.
-     *
-     * @param pagerPosition Current pager page (absolute index in infinite pager)
-     * @return Formatted month/year string
+     * @param date The date to format
+     * @param firstDayOfWeek User's first-day-of-week preference (Calendar.SUNDAY/MONDAY/SATURDAY, or 0 for system default)
+     * @return Formatted month/year + week number string
      */
-    fun formatMonthYear(pagerPosition: Int): String {
-        val centerDate = pageToDate(pagerPosition + 1) // center of 3-day window
-        val formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault())
-        return centerDate.format(formatter)
+    fun formatMonthYearWithWeek(date: LocalDate, firstDayOfWeek: Int = 0): String {
+        val monthYear = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
+            .format(date)
+        val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
+        val weekNumber = date.get(weekFields.weekOfWeekBasedYear())
+        return "$monthYear (W$weekNumber)"
+    }
+
+    /**
+     * Format a date as "Apr 2026" without week number.
+     * Used for 3-day view where the window can straddle week boundaries.
+     */
+    fun formatMonthYear(date: LocalDate): String {
+        return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
+            .format(date)
+    }
+
+    /**
+     * Format the 3-day view header from a pager position.
+     * Uses the center date of the 3-day window, without week number.
+     */
+    fun formatThreeDayHeader(pagerPosition: Int): String {
+        val centerDate = pageToDate(pagerPosition + 1)
+        return formatMonthYear(centerDate)
     }
 
     // ==================== Time Snapping ====================
@@ -452,6 +470,7 @@ object WeekViewUtils {
      */
     fun positionEventsForDay(
         events: List<DisplayEvent>,
+        date: LocalDate,
         dayIndex: Int,
         hourHeight: Dp = HOUR_HEIGHT,
         startHour: Int = START_HOUR,
@@ -465,14 +484,20 @@ object WeekViewUtils {
             { -(it.endTs - it.startTs) }
         ))
 
-        // Step 2: Convert to time spans
+        // Step 2: Convert to time spans (clamp cross-midnight events to day boundaries)
         val timeSpans = sorted.map { displayEvent ->
             val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
             val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(ZoneId.systemDefault())
-            EventTimeSpan(
-                startMinutes = start.hour * MINUTES_PER_HOUR + start.minute,
-                endMinutes = end.hour * MINUTES_PER_HOUR + end.minute
-            )
+            val eventStartDate = start.toLocalDate()
+            val eventEndDate = end.toLocalDate()
+
+            val startMinutes = if (eventStartDate < date) 0
+                else start.hour * MINUTES_PER_HOUR + start.minute
+
+            val endMinutes = if (eventEndDate > date) END_HOUR * MINUTES_PER_HOUR
+                else end.hour * MINUTES_PER_HOUR + end.minute
+
+            EventTimeSpan(startMinutes = startMinutes, endMinutes = endMinutes)
         }
 
         // Step 3: Assign each event to a layout slot
@@ -655,7 +680,7 @@ object WeekViewUtils {
      * @return Formatted string with day name and day of month
      */
     fun formatDayHeader(date: LocalDate): String {
-        val dayFormatter = DateTimeFormatter.ofPattern("EEE d", Locale.getDefault())
+        val dayFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("EEEd"), Locale.getDefault())
         return date.format(dayFormatter)
     }
 
@@ -672,9 +697,9 @@ object WeekViewUtils {
         val now = LocalDate.now()
         val showYear = date.year != now.year
         val formatter = if (showYear) {
-            DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+            DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
         } else {
-            DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
+            DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("MMMd"), Locale.getDefault())
         }
         return date.format(formatter)
     }

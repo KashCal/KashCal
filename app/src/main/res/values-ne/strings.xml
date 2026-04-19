@@ -1,0 +1,863 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">आजको एजेन्डा</string>
+    <string name="widget_description">आजका क्यालेन्डर कार्यक्रमहरू देखाउँछ</string>
+    <string name="week_widget_name">हप्ता दृश्य</string>
+    <string name="week_widget_description">आगामी ७ दिनका क्यालेन्डर कार्यक्रमहरू देखाउँछ</string>
+    <string name="month_widget_name">महिना दृश्य</string>
+    <string name="month_widget_description">कार्यक्रम सूचक बिन्दुहरूसहित पूर्ण महिना क्यालेन्डर ग्रिड देखाउँछ</string>
+    <string name="date_widget_name">मिति</string>
+    <string name="date_widget_description">आजको मिति एप आइकन जस्तो देखाउँछ</string>
+    <string name="widget_no_events_today">आज कुनै कार्यक्रम छैन</string>
+    <string name="widget_add_event">+ कार्यक्रम थप्नुहोस्</string>
+    <string name="widget_no_events">कुनै कार्यक्रम छैन</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">नयाँ कार्यक्रम</string>
+    <string name="shortcut_new_event_long">नयाँ कार्यक्रम बनाउनुहोस्</string>
+    <string name="shortcut_today">आज</string>
+    <string name="shortcut_today_long">आजमा जानुहोस्</string>
+    <string name="shortcut_search">खोज्नुहोस्</string>
+    <string name="shortcut_search_long">कार्यक्रमहरू खोज्नुहोस्</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">पुन: प्रयास</string>
+    <string name="action_try_again">फेरि प्रयास गर्नुहोस्</string>
+    <string name="action_cancel">रद्द गर्नुहोस्</string>
+    <string name="action_close">बन्द गर्नुहोस्</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">अहिले होइन</string>
+    <string name="action_sign_in">साइन इन</string>
+    <string name="action_select">चयन गर्नुहोस्</string>
+    <string name="action_show_password">पासवर्ड देखाउनुहोस्</string>
+    <string name="action_hide_password">पासवर्ड लुकाउनुहोस्</string>
+    <string name="action_sign_out">साइन आउट</string>
+    <string name="action_learn_more">थप जान्नुहोस्</string>
+    <string name="action_open_apple_id">Apple ID खोल्नुहोस्</string>
+    <string name="action_open_settings">सेटिङ खोल्नुहोस्</string>
+    <string name="action_force_sync">बलपूर्वक सिंक</string>
+    <string name="action_sync_now">अहिले सिंक गर्नुहोस्</string>
+    <string name="action_details">विवरण</string>
+    <string name="action_set_up">सेटअप गर्नुहोस्</string>
+    <string name="action_report_issue">समस्या रिपोर्ट गर्नुहोस्</string>
+    <string name="action_view">हेर्नुहोस्</string>
+    <string name="action_enable">सक्षम गर्नुहोस्</string>
+    <string name="action_done">सकियो</string>
+    <string name="action_save">बचत गर्नुहोस्</string>
+    <string name="action_add">थप्नुहोस्</string>
+    <string name="action_edit">सम्पादन</string>
+    <string name="action_delete">मेट्नुहोस्</string>
+    <string name="action_confirm">पुष्टि गर्नुहोस्</string>
+    <string name="action_discard">खारेज गर्नुहोस्</string>
+    <string name="action_dismiss">हटाउनुहोस्</string>
+    <string name="action_show_all">सबै देखाउनुहोस्</string>
+    <string name="action_connect">जोड्नुहोस्</string>
+    <string name="action_duplicate">नक्कल</string>
+    <string name="action_share">साझा गर्नुहोस्</string>
+    <string name="action_export_ics">.ics को रूपमा निर्यात</string>
+    <string name="action_confirm_delete">मेट्ने पुष्टि</string>
+    <string name="action_delete_event">कार्यक्रम मेट्नुहोस्</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">यो मात्र</string>
+    <string name="recurring_this_and_future">यो र सबै भविष्यका</string>
+    <string name="recurring_just_occurrence">यो घटना मात्र</string>
+    <string name="recurring_all_occurrences">सबै घटनाहरू</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">कार्यक्रम शीर्षक</string>
+    <string name="label_location">स्थान</string>
+    <string name="label_location_hint">ठेगाना, कोठा, वा बैठक लिंक</string>
+    <string name="label_notes">टिप्पणीहरू</string>
+    <string name="label_starts">सुरु हुन्छ</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">एप-विशिष्ट पासवर्ड</string>
+    <string name="label_password_hint">१६ अक्षर, ड्यास ऐच्छिक</string>
+    <string name="label_calendar_url">क्यालेन्डर URL</string>
+    <string name="label_calendar_name">क्यालेन्डरको नाम</string>
+    <string name="label_name">नाम</string>
+    <string name="label_hex_color">Hex रंग</string>
+    <string name="label_enter_hex">६ hex अक्षर हाल्नुहोस् (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">सबै</string>
+    <string name="view_week">हप्ता</string>
+    <string name="view_month">महिना</string>
+    <string name="label_all_day">दिनभर</string>
+    <string name="label_today">आज</string>
+    <string name="label_go_to_date">मितिमा जानुहोस्</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">सेटिङ</string>
+    <string name="settings_time_format">समय ढाँचा</string>
+    <string name="settings_start_week_on">हप्ता सुरु हुने दिन</string>
+    <string name="settings_event_emojis">कार्यक्रम इमोजी</string>
+    <string name="settings_emoji_subtitle">कार्यक्रम शीर्षकमा आधारित इमोजी देखाउनुहोस्</string>
+    <string name="settings_force_sync">पूर्ण बलपूर्वक सिंक</string>
+    <string name="settings_force_sync_subtitle">सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नुहोस्</string>
+    <string name="settings_sync_history">सिंक इतिहास</string>
+    <string name="settings_sync_history_subtitle">सिंक सत्रहरू हेर्नुहोस् (पछिल्लो ४८ घण्टा)</string>
+    <string name="settings_import_subtitle">.ics फाइल आयात गर्नुहोस्</string>
+    <string name="settings_export_subtitle">.ics फाइलमा ब्याकअप</string>
+    <string name="settings_birthday_reminder">जन्मदिन सम्झना</string>
+    <string name="settings_use_device_timezone">उपकरणको समय क्षेत्र प्रयोग गर्नुहोस्</string>
+    <string name="settings_section_my_calendars">मेरा क्यालेन्डरहरू</string>
+    <string name="settings_section_display">प्रदर्शन</string>
+    <string name="settings_section_notifications">सूचनाहरू</string>
+    <string name="settings_section_sync">सिंक</string>
+    <string name="settings_section_data">डेटा</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">हामी तपाईंको लागि छौं।</string>
+    <string name="onboarding_connect_prompt">तपाईंका कार्यक्रमहरू यहाँ हेर्न iCloud जोड्नुहोस्</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">iCloud जोड्नुहोस्</string>
+    <string name="signin_caldav_title">CalDAV खाता थप्नुहोस्</string>
+    <string name="signin_connected_to">%1$s मा जोडिएको</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">नयाँ कार्यक्रम</string>
+    <string name="dialog_edit_event_title">कार्यक्रम सम्पादन</string>
+    <string name="dialog_force_sync_title">पूर्ण बलपूर्वक सिंक?</string>
+    <string name="dialog_force_sync_message">यसले सर्भरबाट सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नेछ। स्थानीय परिवर्तनहरू सुरक्षित रहनेछन्।</string>
+    <string name="dialog_enable_notifications">सूचनाहरू सक्षम गर्ने?</string>
+    <string name="dialog_delete_title">\"%1$s\" मेट्नुहोस्</string>
+    <string name="dialog_edit_title">\"%1$s\" सम्पादन गर्नुहोस्</string>
+    <string name="dialog_action_required">जारी राख्न यो कार्य आवश्यक छ।</string>
+    <string name="dialog_add_to_calendar">क्यालेन्डरमा थप्नुहोस्</string>
+    <string name="dialog_select_calendar">क्यालेन्डर चयन गर्नुहोस्</string>
+    <string name="dialog_choose_color">रंग छान्नुहोस्</string>
+    <string name="dialog_add_subscription">सदस्यता थप्नुहोस्</string>
+    <string name="dialog_edit_subscription">सदस्यता सम्पादन</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">यो हप्ता कुनै कार्यक्रम छैन</string>
+    <string name="status_more_events">+%1$d थप</string>
+    <string name="status_no_sync_sessions">अहिलेसम्म कुनै सिंक सत्र छैन।\n\nक्यालेन्डर दृश्यमा तल तानेर रिफ्रेस गर्नुहोस्।</string>
+    <string name="status_no_writable_calendars">लेख्न मिल्ने क्यालेन्डर उपलब्ध छैन</string>
+    <string name="status_events_count">%1$d कार्यक्रम</string>
+    <string name="status_sync_changes">सिंक परिवर्तनहरू</string>
+    <string name="status_sync_history">सिंक इतिहास</string>
+    <string name="status_parse_failures">पार्स विफलताहरू</string>
+    <string name="status_error">त्रुटि</string>
+    <string name="status_failed_to_parse">⚠ %1$d पार्स गर्न असफल</string>
+    <string name="status_built_with_love">मायाले बनाइएको</string>
+    <string name="status_in_austin">Austin मा</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">सिंक सम्पन्न</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">साइन इन असफल</string>
+    <string name="error_auth_invalid_credentials">अमान्य Apple ID वा एप-विशिष्ट पासवर्ड। कृपया आफ्ना प्रमाणहरू जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_auth_app_specific_password_required">iCloud लाई एप-विशिष्ट पासवर्ड चाहिन्छ। तपाईंको सामान्य Apple ID पासवर्ड यहाँ काम गर्दैन।</string>
+    <string name="error_auth_session_expired_title">सत्र समाप्त</string>
+    <string name="error_auth_session_expired">तपाईंको iCloud सत्र समाप्त भयो। सिंक जारी राख्न कृपया पुन: साइन इन गर्नुहोस्।</string>
+    <string name="error_auth_account_locked">तपाईंको Apple ID लक भयो। अनलक गर्न appleid.apple.com मा जानुहोस्।</string>
+
+    <string name="error_network_offline">तपाईं अफलाइन हुनुहुन्छ। अनलाइन हुँदा परिवर्तनहरू सिंक हुनेछन्।</string>
+    <string name="error_network_timeout">जडान समय समाप्त। कृपया आफ्नो इन्टरनेट जाँच गर्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_network_ssl">सुरक्षित जडान असफल। कृपया आफ्नो नेटवर्क सेटिङ जाँच गर्नुहोस्।</string>
+    <string name="error_network_unknown_host">iCloud मा पहुँच हुन सकेन। कृपया आफ्नो इन्टरनेट जडान जाँच गर्नुहोस्।</string>
+    <string name="error_network_connection_failed">जडान असफल। कृपया फेरि प्रयास गर्नुहोस्।</string>
+
+    <string name="error_server_unavailable">iCloud अस्थायी रूपमा अनुपलब्ध छ। कृपया पछि फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_server_rate_limited">धेरै अनुरोधहरू। कृपया केही बेर पर्खनुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_server_forbidden">पहुँच अस्वीकृत। तपाईंसँग यो क्यालेन्डरको अनुमति नहुन सक्छ।</string>
+    <string name="error_server_not_found">अनुरोध गरिएको वस्तु सर्भरमा भेटिएन।</string>
+    <string name="error_conflict_title">सिंक विवाद</string>
+    <string name="error_conflict_generic">यो कार्यक्रम अर्को उपकरणमा परिमार्जन गरिएको थियो। नवीनतम संस्करण प्राप्त गर्न बलपूर्वक सिंक गर्नुहोस्।</string>
+    <string name="error_conflict_with_event">\"%1$s\" अर्को उपकरणमा परिमार्जन गरिएको थियो। नवीनतम संस्करण प्राप्त गर्न बलपूर्वक सिंक गर्नुहोस्।</string>
+    <string name="error_sync_token_expired">सिंक डेटा समाप्त। पूर्ण सिंक गर्दै…</string>
+
+    <string name="error_event_not_found">कार्यक्रम भेटिएन।</string>
+    <string name="error_calendar_not_found">क्यालेन्डर भेटिएन।</string>
+    <string name="error_calendar_read_only">\"%1$s\" मा कार्यक्रम परिमार्जन गर्न सकिँदैन (पढ्ने-मात्र क्यालेन्डर)।</string>
+    <string name="error_event_invalid_data">अमान्य कार्यक्रम डेटा। कृपया सुरु र अन्त्य समय जाँच गर्नुहोस्।</string>
+    <string name="error_event_invalid_recurrence">अमान्य दोहोरिने ढाँचा।</string>
+
+    <string name="error_display_name_exists">\"%1$s\" नामको खाता पहिले नै छ।</string>
+
+    <string name="error_import_file_not_found">फाइल भेटिएन वा पढ्न सकिएन।</string>
+    <string name="error_import_invalid_format">अमान्य क्यालेन्डर फाइल ढाँचा।</string>
+    <string name="error_import_partial">%1$d कार्यक्रम आयात भयो, %2$d असफल।</string>
+    <string name="error_export_failed">कार्यक्रमहरू निर्यात गर्न असफल।</string>
+    <string name="error_export_no_events">निर्यात गर्न कार्यक्रम छैन।</string>
+    <string name="error_end_before_start">अन्त्य समय सुरु समय पछि हुनुपर्छ</string>
+
+    <string name="error_storage_full_title">भण्डारण भरिएको</string>
+    <string name="error_storage_full">पर्याप्त भण्डारण ठाउँ छैन। कृपया ठाउँ खाली गर्नुहोस् र फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_database_corruption_title">डेटा त्रुटि</string>
+    <string name="error_database_corruption">तपाईंको क्यालेन्डर डेटा बिग्रिएको हुन सक्छ। कृपया सहयोगमा सम्पर्क गर्नुहोस्।</string>
+    <string name="error_migration_title">अपडेट त्रुटि</string>
+    <string name="error_migration_failed">एप डेटा अपडेट गर्न असफल। कृपया एप पुन: स्थापना गर्नुहोस्।</string>
+
+    <string name="error_permission_notification_title">सूचनाहरू सक्षम गर्ने?</string>
+    <string name="error_permission_notification">KashCal लाई आगामी कार्यक्रमहरूको बारेमा सम्झाउन सूचना अनुमति चाहिन्छ।</string>
+    <string name="error_permission_alarm_title">सटीक अलार्म सक्षम गर्ने?</string>
+    <string name="error_permission_alarm">KashCal लाई सटीक सम्झनाका लागि सटीक अलार्म अनुमति चाहिन्छ।</string>
+    <string name="error_permission_storage">आयात/निर्यातका लागि भण्डारण अनुमति आवश्यक।</string>
+
+    <string name="error_device_calendar_title">क्यालेन्डर त्रुटि</string>
+    <string name="error_device_calendar_write_failed">उपकरण क्यालेन्डरमा बचत गर्न असफल। कृपया फेरि प्रयास गर्नुहोस्।</string>
+    <string name="error_device_calendar_permission">क्यालेन्डर लेख्ने अनुमति आवश्यक। कृपया सेटिङमा अनुमति दिनुहोस्।</string>
+    <string name="error_device_calendar_not_found">क्यालेन्डर भेटिएन। हटाइएको हुन सक्छ।</string>
+    <string name="error_device_event_not_found">कार्यक्रम भेटिएन। मेटिएको हुन सक्छ।</string>
+    <string name="error_device_calendar_read_only">यो क्यालेन्डर पढ्ने-मात्र हो।</string>
+
+    <string name="error_sync_no_accounts">कुनै iCloud खाता कन्फिगर गरिएको छैन। आफ्ना क्यालेन्डरहरू सिंक गर्न iCloud सेटअप गर्नुहोस्।</string>
+    <string name="error_sync_partial">%1$d क्यालेन्डर सिंक भयो, %2$d असफल।</string>
+
+    <string name="error_unknown">केही गलत भयो। कृपया फेरि प्रयास गर्नुहोस्।</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">चयन गरिएको</string>
+    <string name="cd_back">पछाडि</string>
+    <string name="cd_close">बन्द</string>
+    <string name="cd_search">खोज</string>
+    <string name="cd_create_event">कार्यक्रम बनाउनुहोस्</string>
+    <string name="cd_settings">सेटिङ</string>
+    <string name="cd_today">आज</string>
+    <string name="cd_previous_week">गत हप्ता</string>
+    <string name="cd_next_week">आउने हप्ता</string>
+    <string name="cd_delete">मेट्नुहोस्</string>
+    <string name="cd_refresh">रिफ्रेस</string>
+    <string name="cd_more_options">थप विकल्पहरू</string>
+    <string name="cd_duplicate">नक्कल</string>
+    <string name="cd_share">साझा</string>
+    <string name="cd_export_ics">ICS को रूपमा निर्यात</string>
+    <string name="cd_open_link">लिंक खोल्नुहोस्</string>
+    <string name="cd_open_maps">नक्सामा खोल्नुहोस्</string>
+    <string name="cd_copy_clipboard">क्लिपबोर्डमा प्रतिलिपि</string>
+    <string name="cd_clear_history">इतिहास खाली गर्नुहोस्</string>
+    <string name="cd_recurring">दोहोरिने</string>
+    <string name="cd_enabled">सक्षम</string>
+    <string name="cd_sync_error">सिंक त्रुटि</string>
+    <string name="cd_select_option">विकल्प चयन गर्नुहोस्</string>
+    <string name="cd_select_label">%1$s चयन गर्नुहोस्</string>
+    <string name="cd_wheel_picker">%1$d विकल्प भएको ह्वील पिकर</string>
+    <string name="cd_version_info">KashCal संस्करण %1$s। डिबग विकल्पका लागि लामो समय थिच्नुहोस्।</string>
+    <string name="cd_color_slider">रंग स्लाइडर, हाल %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d डिग्री</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">क्यालेन्डर</string>
+    <string name="label_color">रंग:</string>
+    <string name="label_repeat">दोहोर्याउनुहोस्</string>
+    <string name="label_sync_interval">सिंक अन्तराल:</string>
+    <string name="label_scheduled_events">तालिकाबद्ध कार्यक्रमहरू</string>
+    <string name="label_all_day_events">दिनभरका कार्यक्रमहरू</string>
+    <string name="label_server_url">सर्भर URL</string>
+    <string name="label_username">प्रयोगकर्ता नाम</string>
+    <string name="label_password">पासवर्ड</string>
+    <string name="label_display_name_optional">प्रदर्शन नाम (ऐच्छिक)</string>
+
+    <string name="placeholder_search_events">कार्यक्रम खोज्नुहोस्…</string>
+
+    <string name="hint_https_default">निर्दिष्ट नगरिएमा https:// मा पूर्वनिर्धारित</string>
+    <string name="hint_name_shown_in_settings">सेटिङमा देखिने नाम</string>
+    <string name="caldav_trust_insecure_subtitle">Self-signed प्रमाणपत्र वा स्थानीय HTTP सर्भरका लागि</string>
+
+    <string name="label_recurrence_after">पछि</string>
+    <string name="label_recurrence_occurrences">घटना</string>
+    <string name="label_recurrence_on_date">मितिमा</string>
+
+    <string name="settings_visible_calendars">दृश्य क्यालेन्डरहरू</string>
+    <string name="settings_default_calendar">पूर्वनिर्धारित क्यालेन्डर</string>
+    <string name="settings_default_event_length">पूर्वनिर्धारित कार्यक्रम अवधि</string>
+    <string name="settings_default_alerts">पूर्वनिर्धारित सतर्कताहरू</string>
+    <string name="settings_notifications">सूचनाहरू</string>
+    <string name="settings_new_events">नयाँ कार्यक्रमहरू</string>
+
+    <string name="option_system_default">प्रणाली पूर्वनिर्धारित</string>
+    <string name="option_12_hour">१२ घण्टा</string>
+    <string name="option_24_hour">२४ घण्टा</string>
+    <string name="option_sunday">आइतबार</string>
+    <string name="option_monday">सोमबार</string>
+    <string name="option_saturday">शनिबार</string>
+
+    <string name="empty_no_events_found">कुनै कार्यक्रम भेटिएन</string>
+    <string name="empty_no_upcoming_events">आगामी कार्यक्रम छैन</string>
+    <string name="empty_no_calendars">क्यालेन्डर उपलब्ध छैन</string>
+
+    <string name="status_connecting">जोड्दै…</string>
+    <string name="status_fetching">ल्याउँदै…</string>
+
+    <string name="action_fetch_calendar">क्यालेन्डर ल्याउनुहोस्</string>
+    <string name="action_import_from_file">फाइलबाट आयात</string>
+    <string name="action_export_local_calendar">स्थानीय क्यालेन्डर निर्यात</string>
+
+    <string name="provider_icloud">iCloud</string>
+
+    <string name="help_app_password_description">एप-विशिष्ट पासवर्डले तपाईंको मुख्य Apple ID पासवर्ड साझा नगरी तेस्रो-पक्षीय एपमा साइन इन गर्न दिन्छ।</string>
+    <string name="help_app_password_steps_header">बनाउन:</string>
+    <string name="help_app_password_step_1">1. appleid.apple.com मा जानुहोस्</string>
+    <string name="help_app_password_step_2">2. आफ्नो Apple ID ले साइन इन गर्नुहोस्</string>
+    <string name="help_app_password_step_3">3. Sign-In and Security मा जानुहोस्</string>
+    <string name="help_app_password_step_4">4. App-Specific Passwords क्लिक गर्नुहोस्</string>
+    <string name="help_app_password_step_5">5. Generate क्लिक गर्नुहोस् र यहाँ प्रतिलिपि गर्नुहोस्</string>
+
+    <string name="dialog_notification_permission_message">KashCal लाई आगामी कार्यक्रमहरूको बारेमा सम्झाउन सूचना अनुमति चाहिन्छ।</string>
+    <string name="dialog_notification_permission_settings_hint">तपाईं पछि सेटिङमा यो बदल्न सक्नुहुन्छ।</string>
+
+    <string name="accounts_title">खाताहरू</string>
+    <string name="accounts_section_connected">जोडिएको</string>
+    <string name="accounts_section_add">खाता थप्नुहोस्</string>
+    <string name="accounts_empty_title">कुनै खाता जोडिएको छैन</string>
+    <string name="accounts_empty_subtitle">उपकरणहरूमा आफ्ना क्यालेन्डरहरू सिंक गर्न खाता थप्नुहोस्</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; थप</string>
+    <string name="accounts_add_icloud">iCloud थप्नुहोस्</string>
+    <string name="accounts_add_caldav">CalDAV थप्नुहोस्</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; थप</string>
+    <string name="accounts_caldav_help_title">CalDAV के हो?</string>
+    <string name="accounts_caldav_help_description">CalDAV क्यालेन्डर सिंक गर्नको लागि खुला मानक हो। समर्थन गर्नेहरू:</string>
+    <string name="accounts_caldav_help_more">&amp; थप</string>
+    <string name="accounts_calendars_syncing">सिंक गर्दै…</string>
+    <string name="accounts_cd_icloud_icon">iCloud खाता</string>
+    <string name="accounts_cd_caldav_icon">CalDAV खाता</string>
+    <string name="accounts_cd_back">पछाडि</string>
+    <string name="accounts_sync_issue">सिंक समस्या</string>
+    <string name="accounts_cd_sync_warning">सिंक चेतावनी</string>
+
+    <string name="subscriptions_title">सदस्यताहरू</string>
+    <string name="subscriptions_section_ics_calendars">ICS क्यालेन्डरहरू</string>
+    <string name="subscriptions_section_add">थप्नुहोस्</string>
+    <string name="subscriptions_empty_ics">ICS सदस्यता छैन</string>
+    <string name="subscriptions_empty_ics_hint">कार्यक्रमहरू हेर्न क्यालेन्डर फिड थप्नुहोस्</string>
+    <string name="subscriptions_add_ics">ICS क्यालेन्डर थप्नुहोस्</string>
+    <string name="subscriptions_row_label">बिदा, विद्यालय &amp; थप</string>
+
+    <string name="birthdays_anniversaries_row_label">जन्मदिन &amp; वार्षिकोत्सवहरू</string>
+    <string name="birthdays_section_title">जन्मदिनहरू</string>
+    <string name="anniversaries_section_title">वार्षिकोत्सवहरू</string>
+    <string name="settings_contact_birthdays">सम्पर्क जन्मदिनहरू</string>
+    <string name="settings_contact_birthdays_description">फोन सम्पर्कबाट जन्मदिनहरू दिनभरको कार्यक्रमको रूपमा देखाउनुहोस्।</string>
+    <string name="settings_contact_anniversaries">सम्पर्क वार्षिकोत्सवहरू</string>
+    <string name="settings_contact_anniversaries_description">फोन सम्पर्कबाट वार्षिकोत्सवहरू दिनभरको कार्यक्रमको रूपमा देखाउनुहोस्।</string>
+    <string name="settings_anniversary_reminder">वार्षिकोत्सव सम्झना</string>
+    <string name="settings_calendar_color">क्यालेन्डर रंग</string>
+    <string name="settings_default_reminder">पूर्वनिर्धारित सम्झना</string>
+    <string name="action_change">बदल्नुहोस्</string>
+    <string name="settings_contacts_footer">तपाईंको उपकरण सम्पर्कबाट पढ्छ। सम्पर्क अनुमति आवश्यक।</string>
+    <string name="settings_contacts_permission_required">सम्पर्क अनुमति आवश्यक</string>
+    <string name="subscriptions_cd_back">पछाडि</string>
+    <string name="subscriptions_cd_add">सदस्यता थप्नुहोस्</string>
+
+    <string name="account_detail_section_sync">सिंक</string>
+    <string name="account_detail_section_calendars">क्यालेन्डरहरू</string>
+    <string name="account_detail_section_account">खाता</string>
+    <string name="account_detail_enabled">सक्षम</string>
+    <string name="account_detail_enabled_subtitle">यो खाता स्वचालित रूपमा सिंक गर्नुहोस्</string>
+    <string name="account_detail_sync_now">अहिले सिंक</string>
+    <string name="account_detail_syncing">सिंक गर्दै…</string>
+    <string name="account_detail_discovering">खोज्दै…</string>
+    <string name="account_detail_discover_calendars">नयाँ क्यालेन्डर खोज्नुहोस्</string>
+    <string name="account_detail_change_password">पासवर्ड बदल्नुहोस्</string>
+    <string name="account_detail_sign_out">साइन आउट</string>
+    <string name="account_detail_never_synced">कहिल्यै सिंक गरिएको छैन</string>
+    <string name="account_detail_last_success">अन्तिम सफलता: %1$s</string>
+    <string name="account_detail_cd_rename">नाम बदल्नुहोस्</string>
+    <string name="account_detail_cd_show_password">पासवर्ड देखाउनुहोस्</string>
+    <string name="account_detail_cd_hide_password">पासवर्ड लुकाउनुहोस्</string>
+
+    <string name="sync_failure_notification_title">%1$s सँग सिंक समस्या</string>
+    <string name="sync_failure_notification_text">क्यालेन्डर सिंक %1$d पटक असफल भयो</string>
+
+    <string name="rename_account_title">खाता नाम बदल्नुहोस्</string>
+    <string name="rename_account_label">खाता नाम</string>
+
+    <string name="change_password_title">पासवर्ड बदल्नुहोस्</string>
+    <string name="change_password_label_icloud">एप-विशिष्ट पासवर्ड</string>
+    <string name="change_password_label_default">पासवर्ड</string>
+
+    <string name="kashcal_account_label">KashCal</string>
+
+    <string name="settings_device_calendars">उपकरण क्यालेन्डरहरू</string>
+    <string name="settings_quick_event_add">द्रुत कार्यक्रम थप</string>
+    <string name="settings_week_numbers">हप्ता नम्बरहरू</string>
+    <string name="settings_widget_event_limit">विजेट कार्यक्रम सीमा</string>
+    <string name="settings_sync_lookback">सिंक लुकब्याक</string>
+    <string name="settings_auto_detect_emojis">इमोजी स्वचालित पत्ता</string>
+    <string name="settings_events_per_day">प्रतिदिन कार्यक्रम</string>
+    <string name="settings_not_set">सेट गरिएको छैन</string>
+    <string name="settings_on">खुला</string>
+    <string name="settings_off">बन्द</string>
+    <string name="settings_tap_to_enable">सक्षम गर्न ट्याप गर्नुहोस्</string>
+    <string name="settings_device_calendars_enabled">%1$d सक्षम</string>
+    <string name="settings_per_day">प्रतिदिन %1$d</string>
+    <string name="signin_icloud_help_question">एप-विशिष्ट पासवर्ड के हो?</string>
+    <string name="caldav_trust_insecure_label">असुरक्षित जडान विश्वास गर्नुहोस्</string>
+    <string name="action_add_another">अर्को थप्नुहोस्</string>
+    <string name="account_connected_found_calendars">%2$s का लागि %1$d क्यालेन्डर भेटियो।</string>
+    <string name="account_connected_syncing_hint">सिंक हुँदैछ \u2014 कार्यक्रमहरू छिट्टै देखिनेछन्।</string>
+    <string name="settings_time_format_currently_24h">हाल: २४ घण्टा (%1$s)</string>
+    <string name="settings_time_format_currently_12h">हाल: १२ घण्टा (%1$s)</string>
+    <string name="settings_time_format_example">उदाहरण: %1$s</string>
+    <string name="settings_system_default_with_value">प्रणाली पूर्वनिर्धारित (%1$s)</string>
+    <string name="alert_none">कुनै पनि छैन</string>
+    <string name="cd_collapse">संकुचित</string>
+    <string name="cd_expand">विस्तार</string>
+    <string name="cd_hide_calendar">क्यालेन्डर लुकाउनुहोस्</string>
+    <string name="cd_show_calendar">क्यालेन्डर देखाउनुहोस्</string>
+    <string name="cd_pick_month_year">महिना र वर्ष छान्नुहोस्</string>
+    <string name="cd_previous_month">गत महिना</string>
+    <string name="cd_next_month">आउने महिना</string>
+    <string name="cd_month_year_picker">महिना र वर्ष चयनकर्ता</string>
+    <string name="cd_remove_alert">सतर्कता हटाउनुहोस्</string>
+    <string name="cd_warning">चेतावनी</string>
+    <string name="cd_refresh_calendars">क्यालेन्डर रिफ्रेस</string>
+    <string name="cd_timezone_tap_to_change">समय क्षेत्र: %1$s, बदल्न ट्याप गर्नुहोस्</string>
+    <string name="cd_day_events">दिन %1$d, %2$d कार्यक्रम</string>
+
+    <string name="label_frequency">आवृत्ति</string>
+    <string name="label_on_days">दिनहरूमा</string>
+    <string name="label_pattern">ढाँचा</string>
+    <string name="label_ends">अन्त्य हुन्छ</string>
+    <string name="label_alerts">सतर्कताहरू</string>
+    <string name="label_add_alert">सतर्कता थप्नुहोस्</string>
+    <string name="label_recurrence_never">कहिल्यै होइन</string>
+    <string name="label_tomorrow">भोलि</string>
+    <string name="label_yesterday">हिजो</string>
+    <string name="label_device_calendars">उपकरण क्यालेन्डरहरू</string>
+    <string name="label_default_calendar_hint">नयाँ कार्यक्रमहरू यो क्यालेन्डरमा बनाइनेछ</string>
+    <string name="label_visible_count">%1$d / %2$d दृश्य</string>
+    <string name="label_enabled_count">%1$d / %2$d सक्षम</string>
+    <string name="label_reminders_truncated">%1$d देखाइएको छैन (%2$d जम्मा, अधिकतम %3$d सम्पादनयोग्य)</string>
+    <string name="label_found_events">भेटियो: %1$d कार्यक्रम</string>
+    <string name="label_open_debug_menu">डिबग मेनु खोल्नुहोस्</string>
+    <string name="placeholder_search">खोज्नुहोस्\u2026</string>
+    <string name="status_sync_paused">सिंक रोकिएको</string>
+    <string name="status_not_synced">सिंक गरिएको छैन</string>
+    <string name="status_sync_error">सिंक त्रुटि</string>
+    <string name="status_minutes_ago">%1$d मिनेट अघि</string>
+    <string name="status_hours_ago">%1$d घण्टा अघि</string>
+
+    <string name="device_calendars_description">तपाईंको उपकरणमा अन्य क्यालेन्डर एपबाट कार्यक्रमहरू देखाउनुहोस् (सिंक एडाप्टर, स्थानीय क्यालेन्डर)।</string>
+    <string name="device_calendars_permission_required">क्यालेन्डर अनुमति आवश्यक। पहुँच दिन सक्षम ट्याप गर्नुहोस्।</string>
+    <string name="device_calendars_read_only_access">पढ्ने-मात्र पहुँच</string>
+    <string name="device_calendars_grant_write">उपकरण क्यालेन्डर कार्यक्रम सम्पादन गर्न लेख्ने अनुमति दिनुहोस्</string>
+    <string name="device_calendars_grant">दिनुहोस्</string>
+    <string name="device_calendars_none_found">उपकरण क्यालेन्डर भेटिएन।</string>
+    <string name="device_calendars_local">स्थानीय</string>
+    <string name="device_calendars_show_declined">अस्वीकृत कार्यक्रमहरू देखाउनुहोस्</string>
+    <string name="device_calendars_reminders">सम्झनाहरू</string>
+    <string name="device_calendars_reminders_desc">उपकरण क्यालेन्डर कार्यक्रमका लागि सूचना प्राप्त गर्नुहोस्</string>
+    <string name="device_calendars_read_only_no_write">पढ्ने मात्र (लेख्ने अनुमति छैन)</string>
+    <string name="device_calendars_read_only_calendar">पढ्ने मात्र (पढ्ने-मात्र क्यालेन्डर)</string>
+
+    <string name="settings_developer_options">विकासकर्ता विकल्पहरू</string>
+    <string name="settings_sync_frequency">सिंक आवृत्ति</string>
+    <string name="settings_preview">पूर्वावलोकन</string>
+    <string name="settings_n_events">%1$d कार्यक्रम</string>
+    <string name="settings_n_events_default">%1$d कार्यक्रम (पूर्वनिर्धारित)</string>
+
+    <string name="drawer_calendars">क्यालेन्डरहरू</string>
+    <string name="drawer_contacts">सम्पर्कहरू</string>
+    <string name="drawer_device_calendars">उपकरण क्यालेन्डरहरू</string>
+    <string name="drawer_share_feedback">प्रतिक्रिया साझा गर्नुहोस्</string>
+
+    <string name="status_privacy_tagline">तपाईंका लागि, तपाईंको डेटाका लागि होइन।</string>
+    <string name="action_keep_it_that_way">यसरी नै राख्नुहोस्</string>
+
+    <string name="status_already_synced">पहिले नै सिंक भएको</string>
+    <string name="status_warnings">चेतावनीहरू</string>
+    <string name="sync_history_events_failed">कार्यक्रम असफल</string>
+    <string name="sync_history_abandoned_max_retries">त्यागिएको (अधिकतम प्रयास)</string>
+    <string name="sync_history_events_skipped">कार्यक्रम छोडिएको</string>
+    <string name="sync_history_duration">अवधि</string>
+    <string name="sync_history_already_synced_count">%1$d पहिले नै सिंक भएको</string>
+
+    <string name="day_events_no_events">कुनै कार्यक्रम छैन</string>
+
+    <string name="status_youre_offline">तपाईं अफलाइन हुनुहुन्छ</string>
+
+    <string name="dialog_sign_out_title">%1$s बाट साइन आउट?</string>
+    <string name="dialog_sign_out_message">तपाईं %1$s को रूपमा साइन इन हुनुहुन्छ। साइन आउट गर्दा सिंक गरिएका क्यालेन्डरहरू यो उपकरणबाट हटाइनेछ।</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- Nepali: one, other -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d खाता</item>
+        <item quantity="other">%1$d खाताहरू</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 क्यालेन्डर</item>
+        <item quantity="other">%1$s \u00B7 %2$d क्यालेन्डर</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d सदस्यता</item>
+        <item quantity="other">%1$d सदस्यताहरू</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">सिंक असफल (%1$d प्रयास)</item>
+        <item quantity="other">सिंक असफल (%1$d प्रयासहरू)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d क्यालेन्डर</item>
+        <item quantity="other">%1$d क्यालेन्डर</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d क्यालेन्डर (%2$d नयाँ)</item>
+        <item quantity="other">%1$d क्यालेन्डर (%2$d नयाँ)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d कार्यक्रम</item>
+        <item quantity="other">%1$d कार्यक्रम</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d जन्मदिन</item>
+        <item quantity="other">%1$d जन्मदिनहरू</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d वार्षिकोत्सव</item>
+        <item quantity="other">%1$d वार्षिकोत्सवहरू</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d थप</item>
+        <item quantity="other">+ %1$d थप</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">कार्यक्रम थप्नुहोस्</item>
+        <item quantity="other">%1$d कार्यक्रम आयात गर्नुहोस्</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">थप्नुहोस्</item>
+        <item quantity="other">आयात</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026र %1$d थप</item>
+        <item quantity="other">\u2026र %1$d थप</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d कार्यक्रम आयात भयो</item>
+        <item quantity="other">%1$d कार्यक्रम आयात भयो</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">%1$d कार्यक्रम निर्यात भयो</item>
+        <item quantity="other">%1$d कार्यक्रम निर्यात भयो</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d कार्यक्रम</item>
+        <item quantity="other">%1$d कार्यक्रम</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d मिनेट</item>
+        <item quantity="other">%1$d मिनेट</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d मि</item>
+        <item quantity="other">%1$d मि</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d घण्टा</item>
+        <item quantity="other">%1$d घण्टा</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d दिन</item>
+        <item quantity="other">%1$d दिन</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d हप्ता</item>
+        <item quantity="other">%1$d हप्ता</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d महिना</item>
+        <item quantity="other">%1$d महिना</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d वर्ष</item>
+        <item quantity="other">%1$d वर्ष</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d से</item>
+        <item quantity="other">%1$d से</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d मिनेट अगाडि</item>
+        <item quantity="other">%1$d मिनेट अगाडि</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d घण्टा अगाडि</item>
+        <item quantity="other">%1$d घण्टा अगाडि</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d दिन अगाडि</item>
+        <item quantity="other">%1$d दिन अगाडि</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d हप्ता अगाडि</item>
+        <item quantity="other">%1$d हप्ता अगाडि</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">दोहोरिने कार्यक्रम सम्पादन</string>
+    <string name="dialog_delete_recurring_title">दोहोरिने कार्यक्रम मेट्नुहोस्</string>
+    <string name="dialog_edit_recurring_message">यो दोहोरिने कार्यक्रम हो। तपाईं यो परिवर्तन कसरी लागू गर्न चाहनुहुन्छ?</string>
+    <string name="recurring_this_event">यो कार्यक्रम</string>
+    <string name="recurring_all_events">सबै कार्यक्रम</string>
+    <string name="empty_pick_a_day">एउटा दिन छान्नुहोस्। सदुपयोग गर्नुहोस्।</string>
+    <string name="empty_no_events_day">यहाँ केही छैन; बाहिर घुम्न जाने?</string>
+    <string name="label_upcoming_events">आगामी कार्यक्रमहरू</string>
+    <string name="filter_date">मिति</string>
+    <string name="label_select_date">मिति चयन गर्नुहोस्</string>
+    <string name="hint_tap_date_range">एक दिनको लागि उही मिति ट्याप गर्नुहोस्, वा दायराको लागि अर्को मिति</string>
+
+    <string name="cd_clear">खाली गर्नुहोस्</string>
+    <string name="cd_offline">अफलाइन</string>
+    <string name="cd_previous">अघिल्लो</string>
+    <string name="cd_next">अर्को</string>
+    <string name="cd_open_drawer">ड्रअर खोल्नुहोस्</string>
+    <string name="cd_close_drawer">ड्रअर बन्द गर्नुहोस्</string>
+    <string name="cd_calendar_view">क्यालेन्डर दृश्य</string>
+    <string name="cd_active_view">सक्रिय दृश्य</string>
+
+    <string name="view_agenda">एजेन्डा</string>
+    <string name="view_month_full">महिना (पूर्ण)</string>
+    <string name="view_three_days">३ दिन</string>
+    <string name="view_year">वर्ष</string>
+
+    <string name="label_go_to_month">महिनामा जानुहोस्</string>
+
+    <string name="action_more_options">थप विकल्पहरू</string>
+
+    <string name="label_duration_days">दिन</string>
+    <string name="label_duration_hrs">घण्</string>
+    <string name="label_duration_min">मि</string>
+
+    <string name="recurrence_on_day">दिन %1$d मा</string>
+    <string name="recurrence_on_last_day">महिनाको अन्तिम दिनमा</string>
+    <string name="recurrence_on_nth_weekday">%1$s %2$s मा</string>
+    <string name="ordinal_1st">पहिलो</string>
+    <string name="ordinal_2nd">दोस्रो</string>
+    <string name="ordinal_3rd">तेस्रो</string>
+    <string name="ordinal_4th">चौथो</string>
+    <string name="ordinal_nth">%1$d औं</string>
+
+    <string name="sync_summary_new">%1$d नयाँ</string>
+    <string name="sync_summary_updated">%1$d अद्यावधिक</string>
+    <string name="sync_summary_removed">%1$d हटाइयो</string>
+
+    <string name="cd_previous_3_days">अघिल्लो ३ दिन</string>
+    <string name="cd_next_3_days">अर्को ३ दिन</string>
+    <string name="cd_circular_scrolling">वृत्ताकार स्क्रोलिङ सक्षम</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">स्मरण छैन</string>
+    <string name="reminder_at_time_of_event">कार्यक्रमको समयमा</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s अघि</string>
+    <string name="reminder_time_after">%1$s पछि</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">कार्यक्रमको दिन बिहान 9 बजे</string>
+    <string name="reminder_day_of_event_24h">कार्यक्रमको दिन 09:00</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s अघि बिहान 9 बजे</string>
+    <string name="reminder_before_at_24h">%1$s अघि 09:00 मा</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">बन्द</string>
+    <string name="reminder_short_at_event">कार्यक्रममा</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dमि</string>
+    <string name="reminder_short_hours">%1$dघ</string>
+    <string name="reminder_short_days">%1$dदि</string>
+    <string name="reminder_short_weeks">%1$dह</string>
+    <string name="reminder_summary_none">कुनै छैन</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dघ %2$dमि</string>
+    <string name="duration_compact_short">%1$dघ%2$dमि</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">म्यानुअल मात्र</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">सबै कार्यक्रमहरू</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">स्नुज</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">अहिले सुरु हुँदैछ</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">भोलि, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">सिंक पूरा भयो</string>
+    <string name="sync_notification_partial">सिंक आंशिक रूपमा पूरा भयो</string>
+    <string name="sync_notification_auth_failed">सिंक प्रमाणीकरण असफल</string>
+    <string name="sync_notification_auth_reauth">कृपया आफ्नो खाता पुन: प्रमाणित गर्नुहोस्</string>
+    <string name="sync_notification_failed">सिंक असफल</string>
+    <string name="sync_notification_parse_title">केही कार्यक्रमहरू सिंक हुन सकेनन्</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%2$s मा %1$s सिंक हुन सकेन। सेटिङमा Force Sync प्रयास गर्नुहोस्।</string>
+    <string name="sync_notification_conflict_title">सिंक विवाद समाधान भयो</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">सिंक विवादको कारण \"%1$s\" का स्थानीय परिवर्तनहरू हराए। सर्भर संस्करण प्रयोग हुनेछ।</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">सिंक विवादहरूको कारण %1$s का स्थानीय परिवर्तनहरू हराए। सर्भर संस्करणहरू प्रयोग हुनेछन्।</string>
+    <string name="sync_notification_expired_title">सिंक परिवर्तनहरू म्याद सकियो</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s ३० दिनपछि सिंक हुन सकेन। सर्भर संस्करण प्रयोग हुनेछ। पुन: प्रयास गर्न Force Sync गर्नुहोस्।</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d क्यालेन्डर सिंक गरियो</item>
+        <item quantity="other">%1$d क्यालेन्डरहरू सिंक गरियो</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d परिवर्तन</item>
+        <item quantity="other">, %1$d परिवर्तनहरू</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d त्रुटि</item>
+        <item quantity="other">, %1$d त्रुटिहरू</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s को %2$s औं जन्मदिन</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s को जन्मदिन</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s को %2$s औं वार्षिकोत्सव</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s को वार्षिकोत्सव</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$d औं</string>
+    <string name="ordinal_suffix_nd">%1$d औं</string>
+    <string name="ordinal_suffix_rd">%1$d औं</string>
+    <string name="ordinal_suffix_th">%1$d औं</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">क्यालेन्डरहरू सिंक गर्दै\u2026</string>
+    <string name="sync_banner_preparing">सिंक तयार गर्दै\u2026</string>
+    <string name="sync_banner_complete_errors">सिंक पूरा भयो त्रुटिहरूसहित</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">सिंक असफल: %1$s</string>
+    <string name="error_unknown_error">अज्ञात त्रुटि</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">नयाँ कार्यक्रम: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d नयाँ कार्यक्रम</item>
+        <item quantity="other">%1$d नयाँ कार्यक्रमहरू</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d कार्यक्रम अद्यावधिक गरियो</item>
+        <item quantity="other">%1$d कार्यक्रमहरू अद्यावधिक गरियो</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d कार्यक्रम हटाइयो</item>
+        <item quantity="other">%1$d कार्यक्रमहरू हटाइयो</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d क्यालेन्डर अद्यावधिक</item>
+        <item quantity="other">%1$d क्यालेन्डर अद्यावधिकहरू</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">दिन %1$d / %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">दिन 1 / %1$d \u00b7 सुरु %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">दिन %1$d / %2$d \u00b7 अन्त्य %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 दिनभर</string>
+    <string name="event_date_all_day">%1$s \u00b7 दिनभर</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (दिनभर)</string>
+    <string name="event_date_all_day_parens">%1$s (दिनभर)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">कार्यक्रम सुरक्षित गर्नुहोस्</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">नयाँ</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">रातो</string>
+    <string name="color_orange">सुन्तला</string>
+    <string name="color_yellow">पहेंलो</string>
+    <string name="color_green">हरियो</string>
+    <string name="color_cyan">सियान</string>
+    <string name="color_blue">नीलो</string>
+    <string name="color_purple">बैजनी</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">बैठक लिंक: %1$s</string>
+    <string name="cd_phone_number">फोन नम्बर</string>
+    <string name="cd_email_link">इमेल: %1$s</string>
+    <string name="cd_web_link">लिंक: %1$s</string>
+    <string name="cd_text_with_links">%1$d लिंक भएको पाठ: %2$s</string>
+    <string name="cd_text_with_link">1 लिंक भएको पाठ: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">दिन %1$d / %2$d (दिनभर)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d सिंक   \u2191%2$d पुश   \u2193%3$d पुल</string>
+    <string name="sync_history_stats_issues">%1$d सिंक   \u2191%2$d पुश   \u2193%3$d पुल   \u26a0 %4$d समस्या</string>
+    <string name="sync_history_failed">असफल</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">प्रत्येक घण्टा</string>
+    <string name="ics_sync_every_n_hours">प्रत्येक %1$d घण्टा</string>
+    <string name="ics_sync_daily">दैनिक</string>
+    <string name="ics_sync_weekly">साप्ताहिक</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL आवश्यक छ</string>
+    <string name="ics_url_invalid_scheme">URL http://, https://, वा webcal:// बाट सुरु हुनुपर्छ</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (दिनभर)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d पटक</item>
+        <item quantity="other">, %1$d पटक</item>
+    </plurals>
+
+    <!-- Widget content descriptions -->
+    <string name="cd_widget_calendar">क्यालेन्डर</string>
+    <string name="cd_widget_add_event">कार्यक्रम थप्नुहोस्</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">कुनै कार्यक्रम छैन</string>
+
+    <!-- Notification channels -->
+    <string name="channel_event_reminders">कार्यक्रम सम्झाउने</string>
+    <string name="channel_event_reminders_desc">आगामी क्यालेन्डर कार्यक्रमहरूका लागि सूचनाहरू</string>
+    <string name="channel_sync_progress">सिंक प्रगति</string>
+    <string name="channel_sync_progress_desc">क्यालेन्डर सिंक गर्दा प्रगति देखाउँछ</string>
+    <string name="channel_sync_status">सिंक स्थिति</string>
+    <string name="channel_sync_status_desc">सिंक पूरा र त्रुटिहरूबारे सूचनाहरू</string>
+
+    <!-- Recurrence rules -->
+    <string name="rrule_does_not_repeat">दोहोरिँदैन</string>
+    <string name="rrule_freq_daily">दैनिक</string>
+    <string name="rrule_freq_weekly">साप्ताहिक</string>
+    <string name="rrule_freq_biweekly">पाक्षिक</string>
+    <string name="rrule_freq_monthly">मासिक</string>
+    <string name="rrule_freq_quarterly">त्रैमासिक</string>
+    <string name="rrule_freq_yearly">वार्षिक</string>
+    <string name="rrule_repeats">दोहोरिन्छ</string>
+    <string name="rrule_every_n_days">प्रत्येक %1$d दिन</string>
+    <string name="rrule_every_n_weeks">प्रत्येक %1$d हप्ता</string>
+    <string name="rrule_every_n_months">प्रत्येक %1$d महिना</string>
+    <string name="rrule_every_n_years">प्रत्येक %1$d वर्ष</string>
+    <string name="rrule_freq_on_days">%2$s मा %1$s</string>
+    <string name="rrule_freq_on_ordinal_day">%2$s %3$s मा %1$s</string>
+    <string name="rrule_freq_on_last_day">अन्तिम दिन %1$s</string>
+    <string name="rrule_freq_on_day_n">दिन %2$d मा %1$s</string>
+    <string name="rrule_ordinal_last">अन्तिम</string>
+    <string name="rrule_until_suffix">, %1$s सम्म</string>
+    <string name="rrule_freq_never">कहिल्यै होइन</string>
+    <string name="rrule_starting">%1$s %2$s देखि सुरु%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 %2$s देखि</string>
+
+</resources>

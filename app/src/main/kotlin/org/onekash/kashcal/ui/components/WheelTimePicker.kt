@@ -39,9 +39,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.onekash.kashcal.R
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -203,14 +205,16 @@ fun <T> VerticalWheelPicker(
         }
     }
 
+    val wheelPickerDescription = stringResource(R.string.cd_wheel_picker, items.size)
+    val circularScrollingDescription = stringResource(R.string.cd_circular_scrolling)
     Box(
         modifier = modifier
             .height(itemHeight * visibleItems)
             .fillMaxWidth()
             .semantics {
-                contentDescription = "Wheel picker with ${items.size} options"
+                contentDescription = wheelPickerDescription
                 if (effectiveCircular) {
-                    stateDescription = "Circular scrolling enabled"
+                    stateDescription = circularScrollingDescription
                 }
             }
     ) {

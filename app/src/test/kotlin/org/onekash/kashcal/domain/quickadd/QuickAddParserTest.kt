@@ -226,6 +226,39 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(14, 0), result.startTime)
     }
 
+    // ==================== Dot-separated time ====================
+
+    @Test
+    fun `Coffee 3 dot 15pm extracts title Coffee and time 15 colon 15`() {
+        val result = parse("Coffee 3.15pm")
+        assertEquals("Coffee", result.title)
+        assertEquals(LocalTime.of(15, 15), result.startTime)
+        assertEquals(false, result.isAllDay)
+    }
+
+    @Test
+    fun `Meeting tomorrow at 3 dot 30 pm extracts date and time`() {
+        val result = parse("Meeting tomorrow at 3.30 pm")
+        assertEquals("Meeting", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(15, 30), result.startTime)
+        assertEquals(false, result.isAllDay)
+    }
+
+    @Test
+    fun `Dentist 15 dot 01 treats as date not time`() {
+        val result = parse("Dentist 15.01")
+        assertEquals("Dentist", result.title)
+        assertTrue(result.isAllDay)
+    }
+
+    @Test
+    fun `Meeting for 2 dot 5 hours still works with duration`() {
+        val result = parse("Meeting for 2.5 hours")
+        assertEquals("Meeting", result.title)
+        assertEquals(LocalTime.of(12, 30), result.endTime) // 10:00 + 2.5h
+    }
+
     // ==================== P2: Duration (US10) ====================
 
     @Test
@@ -432,5 +465,192 @@ class QuickAddParserTest {
         assertTrue(result.rrule!!.contains("FREQ=WEEKLY"))
         assertTrue(result.rrule!!.contains("BYDAY=MO"))
         assertEquals("\u2615", result.emoji) // ☕
+    }
+
+    // ==================== P4: Quarter/half time ====================
+
+    @Test
+    fun `meeting quarter past 3 pm`() {
+        val result = parse("meeting quarter past 3 pm")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(15, 15), result.startTime)
+    }
+
+    @Test
+    fun `meeting half past 10`() {
+        val result = parse("meeting half past 10")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(10, 30), result.startTime)
+    }
+
+    @Test
+    fun `meeting quarter to 4`() {
+        val result = parse("meeting quarter to 4")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(3, 45), result.startTime)
+    }
+
+    // ==================== P4: All day keyword ====================
+
+    @Test
+    fun `Team outing all day`() {
+        val result = parse("Team outing all day")
+        assertEquals("Team outing", result.title)
+        assertTrue(result.isAllDay)
+        assertEquals(reference.toLocalDate(), result.startDate)
+    }
+
+    @Test
+    fun `all day meeting tomorrow`() {
+        val result = parse("all day meeting tomorrow")
+        assertEquals("meeting", result.title)
+        assertTrue(result.isAllDay)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `all day alone`() {
+        val result = parse("all day")
+        assertEquals("", result.title)
+        assertTrue(result.isAllDay)
+    }
+
+    // ==================== P4: Fuzzy time keywords ====================
+
+    @Test
+    fun `meeting morning`() {
+        val result = parse("meeting morning")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(8, 0), result.startTime)
+    }
+
+    @Test
+    fun `meeting this afternoon`() {
+        val result = parse("meeting this afternoon")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(14, 0), result.startTime)
+    }
+
+    @Test
+    fun `dinner this evening`() {
+        val result = parse("dinner this evening")
+        assertEquals("dinner", result.title)
+        assertEquals(LocalTime.of(18, 0), result.startTime)
+    }
+
+    @Test
+    fun `party tonight`() {
+        val result = parse("party tonight")
+        assertEquals("party", result.title)
+        assertEquals(LocalTime.of(20, 0), result.startTime)
+        assertEquals(reference.toLocalDate(), result.startDate)
+    }
+
+    @Test
+    fun `meeting at night`() {
+        val result = parse("meeting at night")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(20, 0), result.startTime)
+    }
+
+    // ==================== P4: Every weekday ====================
+
+    @Test
+    fun `standup every weekday`() {
+        val result = parse("standup every weekday")
+        assertEquals("standup", result.title)
+        assertNotNull(result.rrule)
+        assertTrue(result.rrule!!.contains("FREQ=WEEKLY"))
+        assertTrue(result.rrule!!.contains("BYDAY=MO,TU,WE,TH,FR"))
+    }
+
+    @Test
+    fun `every weekday at 9am`() {
+        val result = parse("every weekday at 9am")
+        assertEquals("", result.title)
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+        assertNotNull(result.rrule)
+        assertTrue(result.rrule!!.contains("BYDAY=MO,TU,WE,TH,FR"))
+    }
+
+    @Test
+    fun `weekdays standup`() {
+        val result = parse("weekdays standup")
+        assertEquals("standup", result.title)
+        assertNotNull(result.rrule)
+        assertTrue(result.rrule!!.contains("BYDAY=MO,TU,WE,TH,FR"))
+    }
+
+    // ==================== Multi-day events ====================
+
+    @Test
+    fun `Conference Friday to Sunday`() {
+        val result = parse("Conference Friday to Sunday")
+        assertEquals("Conference", result.title)
+        // Monday Apr 13 → Friday Apr 17
+        assertEquals(LocalDate.of(2026, 4, 17), result.startDate)
+        // endDate: Sunday Apr 19
+        assertEquals(LocalDate.of(2026, 4, 19), result.endDate)
+    }
+
+    @Test
+    fun `Trip Monday to Wednesday`() {
+        val result = parse("Trip Monday to Wednesday")
+        assertEquals("Trip", result.title)
+        // Monday Apr 13 → next Monday Apr 20 (bare weekday same-day advances 7)
+        assertEquals(LocalDate.of(2026, 4, 20), result.startDate)
+        assertEquals(LocalDate.of(2026, 4, 22), result.endDate)
+    }
+
+    @Test
+    fun `Party Saturday to Sunday`() {
+        val result = parse("Party Saturday to Sunday")
+        assertEquals("Party", result.title)
+        assertEquals(LocalDate.of(2026, 4, 18), result.startDate)
+        assertEquals(LocalDate.of(2026, 4, 19), result.endDate)
+    }
+
+    @Test
+    fun `bare weekday has no endDate`() {
+        val result = parse("meeting Friday")
+        assertNull(result.endDate)
+    }
+
+    // ==================== Timezone recognition ====================
+
+    @Test
+    fun `meeting at 3pm EST`() {
+        val result = parse("meeting at 3pm EST")
+        assertEquals("meeting", result.title)
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+        assertEquals("America/New_York", result.timezone)
+    }
+
+    @Test
+    fun `call 10am PST`() {
+        val result = parse("call 10am PST")
+        assertEquals("call", result.title)
+        assertEquals(LocalTime.of(10, 0), result.startTime)
+        assertEquals("America/Los_Angeles", result.timezone)
+    }
+
+    @Test
+    fun `standup 9am UTC`() {
+        val result = parse("standup 9am UTC")
+        assertEquals("standup", result.title)
+        assertEquals(LocalTime.of(9, 0), result.startTime)
+        assertEquals("UTC", result.timezone)
+    }
+
+    @Test
+    fun `meeting at 3pm has null timezone`() {
+        val result = parse("meeting at 3pm")
+        assertNull(result.timezone)
+    }
+
+    @Test
+    fun `timezone not in title`() {
+        val result = parse("meeting 3pm EST")
+        assertEquals("meeting", result.title)
     }
 }

@@ -1,10 +1,16 @@
 package org.onekash.kashcal.util
 
+import android.content.Context
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.shared.formatReminderShort
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -14,7 +20,10 @@ import java.time.ZoneId
  * These tests verify the core bug fix: all-day events stored as UTC midnight
  * must use UTC for date calculations to preserve the calendar date.
  */
+@RunWith(RobolectricTestRunner::class)
 class DateTimeUtilsTest {
+
+    private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     // ==================== Core Bug Fix Tests ====================
 
@@ -698,7 +707,7 @@ class DateTimeUtilsTest {
     fun `formatRelativeTime just now for recent timestamp`() {
         val now = 1704067200000L  // Jan 1, 2024 00:00 UTC
         val result = DateTimeUtils.formatRelativeTime(now, now = now)
-        assertEquals("Just now", result)
+        assertEquals("0 min. ago", result)
     }
 
     @Test
@@ -706,7 +715,7 @@ class DateTimeUtilsTest {
         val now = 1704067200000L
         val fiveMinutesAgo = now - (5 * 60 * 1000)
         val result = DateTimeUtils.formatRelativeTime(fiveMinutesAgo, now = now)
-        assertEquals("5 minutes ago", result)
+        assertEquals("5 min. ago", result)
     }
 
     @Test
@@ -714,7 +723,7 @@ class DateTimeUtilsTest {
         val now = 1704067200000L
         val oneMinuteAgo = now - (1 * 60 * 1000)
         val result = DateTimeUtils.formatRelativeTime(oneMinuteAgo, now = now)
-        assertEquals("1 minute ago", result)
+        assertEquals("1 min. ago", result)
     }
 
     @Test
@@ -722,7 +731,7 @@ class DateTimeUtilsTest {
         val now = 1704067200000L
         val threeHoursAgo = now - (3 * 60 * 60 * 1000)
         val result = DateTimeUtils.formatRelativeTime(threeHoursAgo, now = now)
-        assertEquals("3 hours ago", result)
+        assertEquals("3 hr. ago", result)
     }
 
     @Test
@@ -738,107 +747,106 @@ class DateTimeUtilsTest {
         val now = 1704067200000L
         val twoWeeksAgo = now - (14L * 24 * 60 * 60 * 1000)
         val result = DateTimeUtils.formatRelativeTime(twoWeeksAgo, now = now)
-        // Should show date like "Dec 18" instead of "14 days ago"
-        assertTrue("Should show month format, got: $result",
-            result.matches(Regex("[A-Z][a-z]{2} \\d{1,2}")))
+        assertTrue("Should contain month and year, got: $result",
+            result.contains("December") && result.contains("2023"))
     }
 
     // ==================== Format Reminder Label Tests ====================
 
     @Test
     fun `formatReminderLabel timed event shows correct labels`() {
-        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = false))
-        assertEquals("At time of event", DateTimeUtils.formatReminderLabel(0, isAllDay = false))
-        assertEquals("5 minutes before", DateTimeUtils.formatReminderLabel(5, isAllDay = false))
-        assertEquals("15 minutes before", DateTimeUtils.formatReminderLabel(15, isAllDay = false))
-        assertEquals("1 hour before", DateTimeUtils.formatReminderLabel(60, isAllDay = false))
-        assertEquals("2 hours before", DateTimeUtils.formatReminderLabel(120, isAllDay = false))
+        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = false, resources = resources))
+        assertEquals("At time of event", DateTimeUtils.formatReminderLabel(0, isAllDay = false, resources = resources))
+        assertEquals("5 minutes before", DateTimeUtils.formatReminderLabel(5, isAllDay = false, resources = resources))
+        assertEquals("15 minutes before", DateTimeUtils.formatReminderLabel(15, isAllDay = false, resources = resources))
+        assertEquals("1 hour before", DateTimeUtils.formatReminderLabel(60, isAllDay = false, resources = resources))
+        assertEquals("2 hours before", DateTimeUtils.formatReminderLabel(120, isAllDay = false, resources = resources))
     }
 
     @Test
     fun `formatReminderLabel all-day event shows correct labels`() {
-        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = true))
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true))
-        assertEquals("1 day before", DateTimeUtils.formatReminderLabel(1440, isAllDay = true))
-        assertEquals("2 days before", DateTimeUtils.formatReminderLabel(2880, isAllDay = true))
-        assertEquals("1 week before", DateTimeUtils.formatReminderLabel(10080, isAllDay = true))
+        assertEquals("No reminder", DateTimeUtils.formatReminderLabel(-1, isAllDay = true, resources = resources))
+        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, resources = resources))
+        assertEquals("1 day before", DateTimeUtils.formatReminderLabel(1440, isAllDay = true, resources = resources))
+        assertEquals("2 days before", DateTimeUtils.formatReminderLabel(2880, isAllDay = true, resources = resources))
+        assertEquals("1 week before", DateTimeUtils.formatReminderLabel(10080, isAllDay = true, resources = resources))
     }
 
     @Test
     fun `formatReminderLabel unknown value shows minutes`() {
-        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = false))
-        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = true))
+        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = false, resources = resources))
+        assertEquals("999 minutes", DateTimeUtils.formatReminderLabel(999, isAllDay = true, resources = resources))
     }
 
     // ==================== Format Reminder Short Tests ====================
 
     @Test
     fun `formatReminderShort returns correct abbreviations`() {
-        assertEquals("Off", DateTimeUtils.formatReminderShort(-1))
-        assertEquals("At event", DateTimeUtils.formatReminderShort(0))
-        assertEquals("5m", DateTimeUtils.formatReminderShort(5))
-        assertEquals("15m", DateTimeUtils.formatReminderShort(15))
-        assertEquals("1h", DateTimeUtils.formatReminderShort(60))
-        assertEquals("9AM", DateTimeUtils.formatReminderShort(540))
-        assertEquals("1d", DateTimeUtils.formatReminderShort(1440))
-        assertEquals("1w", DateTimeUtils.formatReminderShort(10080))
+        assertEquals("Off", formatReminderShort(-1, resources = resources))
+        assertEquals("At event", formatReminderShort(0, resources = resources))
+        assertEquals("5m", formatReminderShort(5, resources = resources))
+        assertEquals("15m", formatReminderShort(15, resources = resources))
+        assertEquals("1h", formatReminderShort(60, resources = resources))
+        assertEquals("9AM", formatReminderShort(540, resources = resources))
+        assertEquals("1d", formatReminderShort(1440, resources = resources))
+        assertEquals("1w", formatReminderShort(10080, resources = resources))
     }
 
     @Test
     fun `formatReminderShort unknown value shows minutes`() {
-        assertEquals("999m", DateTimeUtils.formatReminderShort(999))
+        assertEquals("999m", formatReminderShort(999, resources = resources))
     }
 
     @Test
     fun `formatReminderShort handles arbitrary hour values from external calendars`() {
         // iCloud can set reminders like -PT15H (15 hours = 900 minutes)
-        assertEquals("4h", DateTimeUtils.formatReminderShort(240))   // 4 hours (new UI option)
-        assertEquals("15h", DateTimeUtils.formatReminderShort(900))
-        assertEquals("2h", DateTimeUtils.formatReminderShort(120))
-        assertEquals("12h", DateTimeUtils.formatReminderShort(720))
-        assertEquals("3d", DateTimeUtils.formatReminderShort(4320))  // 3 days
-        assertEquals("2w", DateTimeUtils.formatReminderShort(20160)) // 2 weeks
+        assertEquals("4h", formatReminderShort(240, resources = resources))   // 4 hours (new UI option)
+        assertEquals("15h", formatReminderShort(900, resources = resources))
+        assertEquals("2h", formatReminderShort(120, resources = resources))
+        assertEquals("12h", formatReminderShort(720, resources = resources))
+        assertEquals("3d", formatReminderShort(4320, resources = resources))  // 3 days
+        assertEquals("2w", formatReminderShort(20160, resources = resources)) // 2 weeks
     }
 
     @Test
     fun `formatReminderShort 540 use24Hour true returns 09 colon 00`() {
-        assertEquals("09:00", DateTimeUtils.formatReminderShort(540, use24Hour = true))
+        assertEquals("09:00", formatReminderShort(540, use24Hour = true, resources = resources))
     }
 
     @Test
     fun `formatReminderShort 540 use24Hour false returns 9AM`() {
-        assertEquals("9AM", DateTimeUtils.formatReminderShort(540, use24Hour = false))
+        assertEquals("9AM", formatReminderShort(540, use24Hour = false, resources = resources))
     }
 
     @Test
     fun `formatReminderLabel 540 allDay use24Hour true returns 09 colon 00 day of event`() {
-        assertEquals("09:00 day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = true))
+        assertEquals("09:00 day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = true, resources = resources))
     }
 
     @Test
     fun `formatReminderLabel 540 allDay use24Hour false returns 9 AM day of event`() {
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = false))
+        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, use24Hour = false, resources = resources))
     }
 
     @Test
-    fun `formatReminderLabel 540 allDay default returns 9 AM day of event for backward compat`() {
-        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true))
+    fun `formatReminderLabel 540 allDay default returns 9 AM day of event`() {
+        assertEquals("9 AM day of event", DateTimeUtils.formatReminderLabel(540, isAllDay = true, resources = resources))
     }
 
     // ==================== Format Sync Interval Tests ====================
 
     @Test
     fun `formatSyncInterval returns correct labels`() {
-        assertEquals("1 hour", DateTimeUtils.formatSyncInterval(1 * 60 * 60 * 1000L))
-        assertEquals("6 hours", DateTimeUtils.formatSyncInterval(6 * 60 * 60 * 1000L))
-        assertEquals("12 hours", DateTimeUtils.formatSyncInterval(12 * 60 * 60 * 1000L))
-        assertEquals("24 hours", DateTimeUtils.formatSyncInterval(24 * 60 * 60 * 1000L))
-        assertEquals("Manual only", DateTimeUtils.formatSyncInterval(Long.MAX_VALUE))
+        assertEquals("1 hour", DateTimeUtils.formatSyncInterval(1 * 60 * 60 * 1000L, resources))
+        assertEquals("6 hours", DateTimeUtils.formatSyncInterval(6 * 60 * 60 * 1000L, resources))
+        assertEquals("12 hours", DateTimeUtils.formatSyncInterval(12 * 60 * 60 * 1000L, resources))
+        assertEquals("24 hours", DateTimeUtils.formatSyncInterval(24 * 60 * 60 * 1000L, resources))
+        assertEquals("Manual only", DateTimeUtils.formatSyncInterval(Long.MAX_VALUE, resources))
     }
 
     @Test
     fun `formatSyncInterval unknown value shows hours`() {
-        assertEquals("48 hours", DateTimeUtils.formatSyncInterval(48 * 60 * 60 * 1000L))
+        assertEquals("48 hours", DateTimeUtils.formatSyncInterval(48 * 60 * 60 * 1000L, resources))
     }
 
     // ==================== Format Event Date Time Tests ====================
@@ -848,7 +856,7 @@ class DateTimeUtilsTest {
         val jan6MidnightUtc = 1767657600000L
         val jan6EndOfDay = jan6MidnightUtc + (24 * 60 * 60 * 1000) - 1
 
-        val result = DateTimeUtils.formatEventDateTime(jan6MidnightUtc, jan6EndOfDay, isAllDay = true)
+        val result = DateTimeUtils.formatEventDateTime(jan6MidnightUtc, jan6EndOfDay, isAllDay = true, resources = resources)
 
         assertTrue("Should contain 'All day': $result", result.contains("All day"))
         assertTrue("Should contain date: $result", result.contains("Jan"))
@@ -860,7 +868,7 @@ class DateTimeUtilsTest {
         val jan6MidnightUtc = 1767657600000L
         val jan8MidnightUtc = jan6MidnightUtc + (2 * 24 * 60 * 60 * 1000)
 
-        val result = DateTimeUtils.formatEventDateTime(jan6MidnightUtc, jan8MidnightUtc, isAllDay = true)
+        val result = DateTimeUtils.formatEventDateTime(jan6MidnightUtc, jan8MidnightUtc, isAllDay = true, resources = resources)
 
         assertTrue("Should contain 'All day': $result", result.contains("All day"))
         assertTrue("Should contain arrow: $result", result.contains("\u2192"))
@@ -872,7 +880,7 @@ class DateTimeUtilsTest {
         val startTs = 1767708000000L
         val endTs = startTs + (60 * 60 * 1000)
 
-        val result = DateTimeUtils.formatEventDateTime(startTs, endTs, isAllDay = false)
+        val result = DateTimeUtils.formatEventDateTime(startTs, endTs, isAllDay = false, resources = resources)
 
         assertTrue("Should contain time range: $result", result.contains("-"))
         assertFalse("Should not contain 'All day': $result", result.contains("All day"))
@@ -965,6 +973,44 @@ class DateTimeUtilsTest {
         // Result should be a valid DayOfWeek (not null)
         assertNotNull(result)
         assertTrue(result in java.time.DayOfWeek.values())
+    }
+
+    // ==================== getLocaleWeekFields Tests ====================
+
+    @Test
+    fun `getLocaleWeekFields_sunday returns Sunday first day`() {
+        val wf = DateTimeUtils.getLocaleWeekFields(java.util.Calendar.SUNDAY)
+        assertEquals(java.time.DayOfWeek.SUNDAY, wf.firstDayOfWeek)
+        assertTrue(wf.minimalDaysInFirstWeek in 1..7)
+    }
+
+    @Test
+    fun `getLocaleWeekFields_monday returns Monday first day`() {
+        val wf = DateTimeUtils.getLocaleWeekFields(java.util.Calendar.MONDAY)
+        assertEquals(java.time.DayOfWeek.MONDAY, wf.firstDayOfWeek)
+        assertTrue(wf.minimalDaysInFirstWeek in 1..7)
+    }
+
+    @Test
+    fun `getLocaleWeekFields_saturday returns Saturday first day`() {
+        val wf = DateTimeUtils.getLocaleWeekFields(java.util.Calendar.SATURDAY)
+        assertEquals(java.time.DayOfWeek.SATURDAY, wf.firstDayOfWeek)
+        assertTrue(wf.minimalDaysInFirstWeek in 1..7)
+    }
+
+    @Test
+    fun `getLocaleWeekFields_system default returns valid WeekFields`() {
+        val wf = DateTimeUtils.getLocaleWeekFields(0)
+        assertNotNull(wf)
+        assertTrue(wf.minimalDaysInFirstWeek in 1..7)
+        assertTrue(wf.firstDayOfWeek in java.time.DayOfWeek.values())
+    }
+
+    @Test
+    fun `getLocaleWeekFields_minimalDays matches locale`() {
+        val wf = DateTimeUtils.getLocaleWeekFields(java.util.Calendar.MONDAY)
+        val localeMinDays = java.time.temporal.WeekFields.of(java.util.Locale.getDefault()).minimalDaysInFirstWeek
+        assertEquals(localeMinDays, wf.minimalDaysInFirstWeek)
     }
 
     @Test

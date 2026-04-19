@@ -21,9 +21,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.ui.shared.SYNC_LOOKBACK_OPTIONS
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.SyncLookbackOption
+import org.onekash.kashcal.ui.shared.getSyncLookbackOptions
 
 /**
  * Bottom sheet for selecting how far back to sync calendar events.
@@ -50,7 +53,7 @@ fun SyncLookbackSheet(
         ) {
             // Header
             Text(
-                text = "Sync Lookback",
+                text = stringResource(R.string.settings_sync_lookback),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -60,7 +63,7 @@ fun SyncLookbackSheet(
             )
 
             // Options
-            SYNC_LOOKBACK_OPTIONS.forEach { option ->
+            getSyncLookbackOptions(LocalContext.current.resources).forEach { option ->
                 SyncLookbackOptionRow(
                     option = option,
                     isSelected = currentDays == option.days,
@@ -99,7 +102,7 @@ private fun SyncLookbackOptionRow(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )

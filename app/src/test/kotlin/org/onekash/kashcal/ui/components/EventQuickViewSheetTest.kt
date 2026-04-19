@@ -1,11 +1,15 @@
 package org.onekash.kashcal.ui.components
 
+import android.content.Context
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.text.cleanHtmlEntities
@@ -13,6 +17,7 @@ import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
 import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -24,7 +29,10 @@ import java.time.ZoneOffset
  * 1. Master recurring events (have rrule)
  * 2. Exception events (have originalEventId but no rrule)
  */
+@RunWith(RobolectricTestRunner::class)
 class EventQuickViewSheetTest {
+
+    private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     // Helper to create test events
     private fun createEvent(
@@ -630,27 +638,27 @@ class EventQuickViewSheetTest {
     @Test
     fun `reminder list is formatted for display`() {
         val reminders = listOf("-PT15M", "-P1D")
-        val formatted = formatRemindersForDisplay(reminders)
+        val formatted = formatRemindersForDisplay(reminders, resources)
 
         assertEquals("15 min before, 1 day before", formatted)
     }
 
     @Test
     fun `null reminders return null`() {
-        val formatted = formatRemindersForDisplay(null)
+        val formatted = formatRemindersForDisplay(null, resources)
         assertNull(formatted)
     }
 
     @Test
     fun `empty reminders return null`() {
-        val formatted = formatRemindersForDisplay(emptyList())
+        val formatted = formatRemindersForDisplay(emptyList(), resources)
         assertNull(formatted)
     }
 
     @Test
     fun `single reminder is formatted`() {
         val reminders = listOf("-PT30M")
-        val formatted = formatRemindersForDisplay(reminders)
+        val formatted = formatRemindersForDisplay(reminders, resources)
 
         assertEquals("30 min before", formatted)
     }

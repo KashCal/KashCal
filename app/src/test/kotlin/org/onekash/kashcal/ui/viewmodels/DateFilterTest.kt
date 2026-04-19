@@ -5,6 +5,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -13,9 +15,27 @@ import java.time.ZoneId
  * Unit tests for DateFilter sealed class.
  * Tests time range computation for all filter types.
  */
+@RunWith(RobolectricTestRunner::class)
 class DateFilterTest {
 
     private val testZone = ZoneId.of("America/New_York")
+
+    // ==================== Upcoming Tests ====================
+
+    @Test
+    fun `Upcoming returns null time range`() {
+        assertNull(DateFilter.Upcoming.getTimeRange(testZone))
+    }
+
+    @Test
+    fun `Upcoming has correct display name`() {
+        assertEquals("Upcoming", DateFilter.Upcoming.displayName)
+    }
+
+    @Test
+    fun `Upcoming is not in presets`() {
+        assertTrue("Upcoming should not be a selectable preset chip", !DateFilter.presets.contains(DateFilter.Upcoming))
+    }
 
     // ==================== AnyTime Tests ====================
 

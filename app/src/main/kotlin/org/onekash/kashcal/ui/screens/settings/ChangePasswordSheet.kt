@@ -122,7 +122,7 @@ fun ChangePasswordSheet(
                     modifier = Modifier.weight(1f),
                     enabled = !isValidating
                 ) {
-                    Text(stringResource(R.string.change_password_cancel))
+                    Text(stringResource(R.string.action_cancel))
                 }
 
                 Button(
@@ -137,7 +137,7 @@ fun ChangePasswordSheet(
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text(stringResource(R.string.change_password_save))
+                        Text(stringResource(R.string.action_save))
                     }
                 }
             }

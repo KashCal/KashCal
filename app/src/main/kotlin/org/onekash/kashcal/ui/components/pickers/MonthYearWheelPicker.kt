@@ -22,6 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.VerticalWheelPicker
 import java.text.DateFormatSymbols
 
@@ -56,11 +58,13 @@ fun MonthYearWheelPicker(
     var currentMonth by remember(selectedMonth) { mutableIntStateOf(selectedMonth) }
     var currentYear by remember(selectedYear) { mutableIntStateOf(selectedYear) }
 
+    val cdMonthYearPicker = stringResource(R.string.cd_month_year_picker)
+
     Row(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
-            .semantics { contentDescription = "Month and year picker" },
+            .semantics { contentDescription = cdMonthYearPicker },
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

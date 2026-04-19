@@ -2,9 +2,9 @@ package org.onekash.kashcal.data.preferences
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
-import org.onekash.kashcal.ui.shared.SYNC_OPTIONS
-import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_MINUTES
+import org.onekash.kashcal.ui.shared.SYNC_INTERVALS_MS
+import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -222,8 +222,8 @@ class UserPreferencesRepository @Inject constructor(
      * @return True if valid for the event type
      */
     fun isValidReminder(minutes: Int, isAllDay: Boolean): Boolean {
-        val options = if (isAllDay) ALL_DAY_REMINDER_OPTIONS else TIMED_REMINDER_OPTIONS
-        return options.any { it.minutes == minutes }
+        val validMinutes = if (isAllDay) ALL_DAY_REMINDER_MINUTES else TIMED_REMINDER_MINUTES
+        return validMinutes.contains(minutes)
     }
 
     /**
@@ -271,7 +271,7 @@ class UserPreferencesRepository @Inject constructor(
      */
     fun isValidSyncInterval(intervalMs: Long): Boolean {
         return intervalMs >= KashCalDataStore.MIN_SYNC_INTERVAL_MS &&
-            SYNC_OPTIONS.any { it.intervalMs == intervalMs }
+            SYNC_INTERVALS_MS.contains(intervalMs)
     }
 
     /**
@@ -285,9 +285,8 @@ class UserPreferencesRepository @Inject constructor(
             return KashCalDataStore.MIN_SYNC_INTERVAL_MS
         }
 
-        return SYNC_OPTIONS
-            .minByOrNull { abs(it.intervalMs - intervalMs) }
-            ?.intervalMs
+        return SYNC_INTERVALS_MS
+            .minByOrNull { abs(it - intervalMs) }
             ?: KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS
     }
 }

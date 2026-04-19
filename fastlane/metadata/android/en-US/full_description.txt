@@ -4,6 +4,10 @@ Your calendars are everywhere. Family stuff on iCloud. Holidays from some websit
 
 Your schedule, together
 
+• Quick Add: type "Coffee with Kash tomorrow at 3pm at The Roastery" and the event is created. Handles dates, times, recurrence, and locations.
+
+• 67 languages supported.
+
 • iCloud: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
 
 • CalDAV: Nextcloud, Radicale, FastMail, and more. Native sync, no middleware.
@@ -25,6 +29,6 @@ No analytics. No telemetry. No KashCal account. Your data stays on your device u
 • HTTPS only, no WebViews, minimal permissions
 • Open source: fully auditable
 
-Website: https://kashcal.github.io
+Website: https://kashcal.onekash.org
 
 Source code: https://github.com/KashCal/KashCal

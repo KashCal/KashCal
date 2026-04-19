@@ -23,9 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.util.DateTimeUtils
@@ -63,7 +65,7 @@ internal fun DayEventsSheet(
                 .padding(bottom = 16.dp)
         ) {
             // Date header
-            val dateLabel = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.getDefault())
+            val dateLabel = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEEMMMMd"), Locale.getDefault())
                 .format(Date(dateMs))
             Text(
                 text = dateLabel,
@@ -81,7 +83,7 @@ internal fun DayEventsSheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No events",
+                        text = stringResource(R.string.day_events_no_events),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -139,7 +141,7 @@ internal fun DayEventsSheet(
                         contentDescription = null,
                         modifier = Modifier.padding(end = 4.dp)
                     )
-                    Text("New Event")
+                    Text(stringResource(R.string.shortcut_new_event))
                 }
             }
         }

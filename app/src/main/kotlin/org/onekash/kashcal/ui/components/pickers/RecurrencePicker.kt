@@ -48,11 +48,14 @@ import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.text.input.selectAll
 import androidx.compose.foundation.border
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.rrule.EndCondition
 import org.onekash.kashcal.domain.rrule.FrequencyOption
 import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
@@ -60,6 +63,74 @@ import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Calendar as JavaCalendar
 import java.util.Locale
+
+@Composable
+fun rememberRruleDisplayStrings(): RruleDisplayStrings {
+    val doesNotRepeat = stringResource(R.string.rrule_does_not_repeat)
+    val freqDaily = stringResource(R.string.rrule_freq_daily)
+    val freqWeekly = stringResource(R.string.rrule_freq_weekly)
+    val freqBiweekly = stringResource(R.string.rrule_freq_biweekly)
+    val freqMonthly = stringResource(R.string.rrule_freq_monthly)
+    val freqQuarterly = stringResource(R.string.rrule_freq_quarterly)
+    val freqYearly = stringResource(R.string.rrule_freq_yearly)
+    val repeats = stringResource(R.string.rrule_repeats)
+    val everyNDays = stringResource(R.string.rrule_every_n_days)
+    val everyNWeeks = stringResource(R.string.rrule_every_n_weeks)
+    val everyNMonths = stringResource(R.string.rrule_every_n_months)
+    val everyNYears = stringResource(R.string.rrule_every_n_years)
+    val freqOnDays = stringResource(R.string.rrule_freq_on_days)
+    val freqOnOrdinalDay = stringResource(R.string.rrule_freq_on_ordinal_day)
+    val freqOnLastDay = stringResource(R.string.rrule_freq_on_last_day)
+    val freqOnDayN = stringResource(R.string.rrule_freq_on_day_n)
+    val ordinal1 = stringResource(R.string.ordinal_1st)
+    val ordinal2 = stringResource(R.string.ordinal_2nd)
+    val ordinal3 = stringResource(R.string.ordinal_3rd)
+    val ordinal4 = stringResource(R.string.ordinal_4th)
+    val ordinalLast = stringResource(R.string.rrule_ordinal_last)
+    val ordinalNth = stringResource(R.string.ordinal_nth)
+    val untilSuffix = stringResource(R.string.rrule_until_suffix)
+    val resources = androidx.compose.ui.platform.LocalContext.current.resources
+    return remember {
+        RruleDisplayStrings(
+            doesNotRepeat = doesNotRepeat,
+            freqDaily = freqDaily,
+            freqWeekly = freqWeekly,
+            freqBiweekly = freqBiweekly,
+            freqMonthly = freqMonthly,
+            freqQuarterly = freqQuarterly,
+            freqYearly = freqYearly,
+            repeats = repeats,
+            everyNDays = everyNDays,
+            everyNWeeks = everyNWeeks,
+            everyNMonths = everyNMonths,
+            everyNYears = everyNYears,
+            freqOnDays = freqOnDays,
+            freqOnOrdinalDay = freqOnOrdinalDay,
+            freqOnLastDay = freqOnLastDay,
+            freqOnDayN = freqOnDayN,
+            ordinals = listOf(ordinal1, ordinal2, ordinal3, ordinal4),
+            ordinalLast = ordinalLast,
+            ordinalNth = ordinalNth,
+            countSuffix = { count ->
+                resources.getQuantityString(R.plurals.rrule_count_suffix, count, count)
+            },
+            untilSuffix = untilSuffix
+        )
+    }
+}
+
+@Composable
+private fun frequencyLabel(option: FrequencyOption): String {
+    return when (option) {
+        FrequencyOption.NEVER -> stringResource(R.string.rrule_freq_never)
+        FrequencyOption.DAILY -> stringResource(R.string.rrule_freq_daily)
+        FrequencyOption.WEEKLY -> stringResource(R.string.rrule_freq_weekly)
+        FrequencyOption.BIWEEKLY -> stringResource(R.string.rrule_freq_biweekly)
+        FrequencyOption.MONTHLY -> stringResource(R.string.rrule_freq_monthly)
+        FrequencyOption.QUARTERLY -> stringResource(R.string.rrule_freq_quarterly)
+        FrequencyOption.YEARLY -> stringResource(R.string.rrule_freq_yearly)
+    }
+}
 
 /**
  * Recurrence picker card with frequency chips, weekday selector,
@@ -82,7 +153,8 @@ fun RecurrencePickerCard(
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
     val focusManager = LocalFocusManager.current
-    val displayText = RruleBuilder.formatForDisplay(selectedRrule)
+    val rruleStrings = rememberRruleDisplayStrings()
+    val displayText = RruleBuilder.formatForDisplay(selectedRrule, rruleStrings)
 
     // Parse start date info
     val startZoned = remember(startDateMillis) {
@@ -179,7 +251,7 @@ fun RecurrencePickerCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Repeat", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.label_repeat), style = MaterialTheme.typography.bodyMedium)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -191,7 +263,7 @@ fun RecurrencePickerCard(
                     )
                     Icon(
                         if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -214,7 +286,7 @@ fun RecurrencePickerCard(
 
                     // Frequency chips - 2 rows
                     Text(
-                        "Frequency",
+                        stringResource(R.string.label_frequency),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -241,7 +313,7 @@ fun RecurrencePickerCard(
                     if (selectedFreqOption == FrequencyOption.WEEKLY || selectedFreqOption == FrequencyOption.BIWEEKLY) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "On days",
+                            stringResource(R.string.label_on_days),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -260,7 +332,7 @@ fun RecurrencePickerCard(
                     if (selectedFreqOption == FrequencyOption.MONTHLY || selectedFreqOption == FrequencyOption.QUARTERLY) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Pattern",
+                            stringResource(R.string.label_pattern),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -281,7 +353,7 @@ fun RecurrencePickerCard(
                     if (selectedFreqOption != FrequencyOption.NEVER) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Ends",
+                            stringResource(R.string.label_ends),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(bottom = 8.dp)
@@ -318,12 +390,13 @@ fun FrequencyChipRow(
     ) {
         options.forEach { option ->
             val isSelected = option == selected
+            val label = frequencyLabel(option)
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(8.dp))
                     .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
+                        if (isSelected) MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
                     .clickable { onSelect(option) }
@@ -331,9 +404,9 @@ fun FrequencyChipRow(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = option.label,
+                    text = label,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                    color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -368,7 +441,7 @@ fun WeekdaySelector(
                     .size(40.dp)
                     .clip(CircleShape)
                     .background(
-                        if (isSelected) MaterialTheme.colorScheme.primary
+                        if (isSelected) MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
                     .clickable {
@@ -386,7 +459,7 @@ fun WeekdaySelector(
                     text = label,
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                    color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -407,32 +480,32 @@ fun MonthlyPatternSelector(
     modifier: Modifier = Modifier
 ) {
     val ordinalLabel = when (ordinalInMonth) {
-        1 -> "1st"
-        2 -> "2nd"
-        3 -> "3rd"
-        4 -> "4th"
-        else -> "${ordinalInMonth}th"
+        1 -> stringResource(R.string.ordinal_1st)
+        2 -> stringResource(R.string.ordinal_2nd)
+        3 -> stringResource(R.string.ordinal_3rd)
+        4 -> stringResource(R.string.ordinal_4th)
+        else -> stringResource(R.string.ordinal_nth, ordinalInMonth)
     }
     val weekdayLabel = weekday.getDisplayName(TextStyle.FULL, Locale.getDefault())
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Option 1: Same day of month
         RadioOption(
-            label = "On day $dayOfMonth",
+            label = stringResource(R.string.recurrence_on_day, dayOfMonth),
             selected = pattern is MonthlyPattern.SameDay,
             onClick = { onPatternChange(MonthlyPattern.SameDay(dayOfMonth)) }
         )
 
         // Option 2: Last day of month
         RadioOption(
-            label = "On last day of month",
+            label = stringResource(R.string.recurrence_on_last_day),
             selected = pattern is MonthlyPattern.LastDay,
             onClick = { onPatternChange(MonthlyPattern.LastDay) }
         )
 
         // Option 3: Nth weekday
         RadioOption(
-            label = "On the $ordinalLabel $weekdayLabel",
+            label = stringResource(R.string.recurrence_on_nth_weekday, ordinalLabel, weekdayLabel),
             selected = pattern is MonthlyPattern.NthWeekday,
             onClick = { onPatternChange(MonthlyPattern.NthWeekday(ordinalInMonth, weekday)) }
         )
@@ -505,7 +578,7 @@ fun EndConditionSelector(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Option 1: Never
         RadioOption(
-            label = "Never",
+            label = stringResource(R.string.label_recurrence_never),
             selected = endCondition is EndCondition.Never,
             onClick = {
                 onEndConditionChange(EndCondition.Never)
@@ -524,7 +597,7 @@ fun EndConditionSelector(
                     .clip(CircleShape)
                     .background(
                         if (endCondition is EndCondition.Count)
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
                     .clickable {
@@ -539,11 +612,11 @@ fun EndConditionSelector(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary)
+                            .background(MaterialTheme.colorScheme.inverseOnSurface)
                     )
                 }
             }
-            Text("After", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.label_recurrence_after), style = MaterialTheme.typography.bodyMedium)
             BasicTextField(
                 state = countTextFieldState,
                 modifier = Modifier
@@ -578,7 +651,7 @@ fun EndConditionSelector(
                     }
                 }
             )
-            Text("occurrences", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.label_recurrence_occurrences), style = MaterialTheme.typography.bodyMedium)
         }
 
         // Option 3: Until date (clickable to show date picker)
@@ -600,7 +673,7 @@ fun EndConditionSelector(
                     .clip(CircleShape)
                     .background(
                         if (endCondition is EndCondition.Until)
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     ),
                 contentAlignment = Alignment.Center
@@ -610,13 +683,13 @@ fun EndConditionSelector(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary)
+                            .background(MaterialTheme.colorScheme.inverseOnSurface)
                     )
                 }
             }
-            Text("On date", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.label_recurrence_on_date), style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = DateTimeUtils.formatEventDate(untilMillis, isAllDay = false, "MMM d, yyyy"),
+                text = DateTimeUtils.formatEventDate(untilMillis, isAllDay = false, DateTimeUtils.localizedPattern("yMMMd")),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = if (endCondition is EndCondition.Until)
@@ -627,7 +700,7 @@ fun EndConditionSelector(
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
                     if (showDatePicker) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (showDatePicker) "Hide calendar" else "Show calendar",
+                    contentDescription = if (showDatePicker) stringResource(R.string.cd_hide_calendar) else stringResource(R.string.cd_show_calendar),
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -680,7 +753,7 @@ fun RadioOption(
                 .size(20.dp)
                 .clip(CircleShape)
                 .background(
-                    if (selected) MaterialTheme.colorScheme.primary
+                    if (selected) MaterialTheme.colorScheme.inverseSurface
                     else MaterialTheme.colorScheme.surfaceVariant
                 ),
             contentAlignment = Alignment.Center
@@ -690,7 +763,7 @@ fun RadioOption(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onPrimary)
+                        .background(MaterialTheme.colorScheme.inverseOnSurface)
                 )
             }
         }

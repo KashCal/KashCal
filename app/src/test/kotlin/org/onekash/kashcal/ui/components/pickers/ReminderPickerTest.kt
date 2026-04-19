@@ -4,10 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_MINUTES
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
-import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
-import org.onekash.kashcal.ui.shared.getReminderOptionsForEventType
+import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
 
 /**
  * Unit tests for ReminderPicker component.
@@ -19,217 +18,156 @@ import org.onekash.kashcal.ui.shared.getReminderOptionsForEventType
 class ReminderPickerTest {
 
     // ==================== BUG REGRESSION TESTS ====================
-    // These tests ensure the bug doesn't come back
 
     @Test
     fun `BUG REGRESSION - timed event should NOT show 9 AM day of event option`() {
-        // THE BUG: EventFormSheet showed "9 AM day of event" for timed meetings
-        // This makes no sense for a 2pm meeting
-        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
-        val has9AmOption = timedOptions.any { it.minutes == 540 }
         assertFalse(
             "Timed events should NOT have '9 AM day of event' option (540 minutes)",
-            has9AmOption
+            TIMED_REMINDER_MINUTES.contains(540)
         )
     }
 
     @Test
     fun `timed event now includes 1 day before option`() {
-        // 1 day before (1440 minutes) is now included in timed options for advance notice
-        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
-        val has1DayOption = timedOptions.any { it.minutes == 1440 }
         assertTrue(
             "Timed events should now have '1 day before' option (1440 minutes)",
-            has1DayOption
+            TIMED_REMINDER_MINUTES.contains(1440)
         )
     }
 
     @Test
     fun `BUG REGRESSION - all-day event should NOT show 5 minutes before option`() {
-        // 5 minutes before makes no sense for an all-day event
-        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
-        val has5MinOption = allDayOptions.any { it.minutes == 5 }
         assertFalse(
             "All-day events should NOT have '5 minutes before' option",
-            has5MinOption
+            ALL_DAY_REMINDER_MINUTES.contains(5)
         )
     }
 
     @Test
     fun `BUG REGRESSION - all-day event should NOT show 15 minutes before option`() {
-        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
-        val has15MinOption = allDayOptions.any { it.minutes == 15 }
         assertFalse(
             "All-day events should NOT have '15 minutes before' option",
-            has15MinOption
+            ALL_DAY_REMINDER_MINUTES.contains(15)
         )
     }
 
     // ==================== TIMED EVENT OPTIONS ====================
-    // Options: None, 0m, 5m, 15m, 30m, 1h, 4h, 1d, 1w
 
     @Test
     fun `timed event has No reminder option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == REMINDER_OFF })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(REMINDER_OFF))
     }
 
     @Test
     fun `timed event has at time of event option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 0 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(0))
     }
 
     @Test
     fun `timed event has 5 minutes before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 5 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(5))
     }
 
     @Test
     fun `timed event has 15 minutes before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 15 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(15))
     }
 
     @Test
     fun `timed event has 1 hour before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 60 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(60))
     }
 
     @Test
     fun `timed event has 4 hours before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 240 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(240))
     }
 
     @Test
     fun `timed event has 1 day before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 1440 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(1440))
     }
 
     @Test
     fun `timed event has 1 week before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertTrue(options.any { it.minutes == 10080 })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(10080))
     }
 
     @Test
     fun `timed event no longer has legacy options in picker`() {
-        // Legacy options removed from picker but still work via grandfather clause
-        // Note: 30 minutes was restored as a valid option in v14.2.13
-        // Note: 0 (at event) and 5 minutes restored in v22.5.16
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertFalse("10 minutes removed from picker", options.any { it.minutes == 10 })
-        assertFalse("120 (2 hours) removed from picker", options.any { it.minutes == 120 })
+        assertFalse("10 minutes removed from picker", TIMED_REMINDER_MINUTES.contains(10))
+        assertFalse("120 (2 hours) removed from picker", TIMED_REMINDER_MINUTES.contains(120))
     }
 
     // ==================== ALL-DAY EVENT OPTIONS ====================
 
     @Test
     fun `all-day event has No reminder option`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertTrue(options.any { it.minutes == REMINDER_OFF })
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(REMINDER_OFF))
     }
 
     @Test
     fun `all-day event has 9 AM day of event option`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertTrue(options.any { it.minutes == 540 })
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(540))
     }
 
     @Test
     fun `all-day event has 1 day before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertTrue(options.any { it.minutes == 1440 })
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(1440))
     }
 
     @Test
     fun `all-day event has 12 hours before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertTrue(options.any { it.minutes == 720 })
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(720))
     }
 
     @Test
     fun `all-day event no longer has 2 days before option in picker`() {
-        // 2 days before (2880) removed from picker but still works via grandfather clause
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertFalse("2 days before removed from picker", options.any { it.minutes == 2880 })
+        assertFalse("2 days before removed from picker", ALL_DAY_REMINDER_MINUTES.contains(2880))
     }
 
     @Test
     fun `all-day event has 1 week before option`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertTrue(options.any { it.minutes == 10080 })
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(10080))
     }
 
     // ==================== OPTIONS LISTS VERIFICATION ====================
 
     @Test
-    fun `timed options list equals TIMED_REMINDER_OPTIONS`() {
-        val options = getReminderOptionsForEventType(isAllDay = false)
-        assertEquals(TIMED_REMINDER_OPTIONS, options)
-    }
-
-    @Test
-    fun `all-day options list equals ALL_DAY_REMINDER_OPTIONS`() {
-        val options = getReminderOptionsForEventType(isAllDay = true)
-        assertEquals(ALL_DAY_REMINDER_OPTIONS, options)
-    }
-
-    @Test
     fun `timed and all-day options are different`() {
-        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
-        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
+        assertFalse(TIMED_REMINDER_MINUTES == ALL_DAY_REMINDER_MINUTES)
 
-        // They should not be equal
-        assertFalse(timedOptions == allDayOptions)
-
-        // Both should have No reminder as first option
-        assertEquals(REMINDER_OFF, timedOptions.first().minutes)
-        assertEquals(REMINDER_OFF, allDayOptions.first().minutes)
+        assertEquals(REMINDER_OFF, TIMED_REMINDER_MINUTES.first())
+        assertEquals(REMINDER_OFF, ALL_DAY_REMINDER_MINUTES.first())
     }
 
     @Test
     fun `timed reminder options are in ascending order by minutes`() {
-        val options = TIMED_REMINDER_OPTIONS.filter { it.minutes != REMINDER_OFF }
-        assertEquals(options, options.sortedBy { it.minutes })
+        val withoutOff = TIMED_REMINDER_MINUTES.filter { it != REMINDER_OFF }
+        assertEquals(withoutOff, withoutOff.sorted())
     }
 
     // ==================== EDGE CASES ====================
 
     @Test
     fun `switching from all-day to timed should invalidate 9 AM option`() {
-        // If user sets "9 AM day of event" then toggles all-day off,
-        // the 540 minute value is not valid for timed events
-        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
-        val isValidTimedOption = timedOptions.any { it.minutes == 540 }
         assertFalse(
             "540 minutes (9 AM day of event) should not be valid for timed events",
-            isValidTimedOption
+            TIMED_REMINDER_MINUTES.contains(540)
         )
     }
 
     @Test
     fun `switching from timed to all-day should invalidate 5 minute option`() {
-        // If user sets "5 minutes before" then toggles all-day on,
-        // the 5 minute value is not valid for all-day events
-        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
-        val isValidAllDayOption = allDayOptions.any { it.minutes == 5 }
         assertFalse(
             "5 minutes should not be valid for all-day events",
-            isValidAllDayOption
+            ALL_DAY_REMINDER_MINUTES.contains(5)
         )
     }
 
     @Test
     fun `REMINDER_OFF is valid for both event types`() {
-        val timedOptions = getReminderOptionsForEventType(isAllDay = false)
-        val allDayOptions = getReminderOptionsForEventType(isAllDay = true)
-
-        assertTrue(timedOptions.any { it.minutes == REMINDER_OFF })
-        assertTrue(allDayOptions.any { it.minutes == REMINDER_OFF })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(REMINDER_OFF))
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(REMINDER_OFF))
     }
 }

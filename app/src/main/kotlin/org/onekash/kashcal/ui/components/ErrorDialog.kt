@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
@@ -75,7 +76,7 @@ fun ErrorDialog(
                 if (!presentation.dismissible) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "This action is required to continue.",
+                        text = stringResource(R.string.dialog_action_required),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

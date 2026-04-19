@@ -21,8 +21,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.maskEmail
 
 /**
@@ -72,15 +74,15 @@ fun AccountConnectedSheet(
 
             // Title
             Text(
-                text = "Connected to $providerName",
+                text = stringResource(R.string.signin_connected_to, providerName),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
 
             // Description
-            val calendarText = if (calendarCount == 1) "calendar" else "calendars"
             Text(
-                text = "Found $calendarCount $calendarText for ${maskEmail(email)}.\nSyncing in progress \u2014 events will appear shortly.",
+                text = stringResource(R.string.account_connected_found_calendars, calendarCount, maskEmail(email)) +
+                    "\n" + stringResource(R.string.account_connected_syncing_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
@@ -100,7 +102,7 @@ fun AccountConnectedSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Add Another")
+                    Text(stringResource(R.string.action_add_another))
                 }
 
                 // Done button (primary)
@@ -110,7 +112,7 @@ fun AccountConnectedSheet(
                     },
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Done")
+                    Text(stringResource(R.string.action_done))
                 }
             }
         }

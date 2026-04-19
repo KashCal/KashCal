@@ -1,6 +1,8 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import android.content.res.Resources
 import androidx.compose.ui.graphics.Color
+import org.onekash.kashcal.R
 
 /**
  * Accent colors for UI feedback indicators (success, info, etc.).
@@ -64,6 +66,15 @@ fun getSyncIntervalLabel(hours: Int): String {
         ?: "Every $hours hours"
 }
 
+fun getSyncIntervalLabel(hours: Int, resources: Resources): String {
+    return when (hours) {
+        1 -> resources.getString(R.string.ics_sync_every_hour)
+        24 -> resources.getString(R.string.ics_sync_daily)
+        168 -> resources.getString(R.string.ics_sync_weekly)
+        else -> resources.getString(R.string.ics_sync_every_n_hours, hours)
+    }
+}
+
 /**
  * Validate an ICS subscription URL.
  *
@@ -79,6 +90,18 @@ fun validateSubscriptionUrl(url: String): String? {
         !trimmed.endsWith(".ics") && !trimmed.contains("calendar") && !trimmed.contains("ical") ->
             null // Could be valid, just unusual
         else -> null // Valid
+    }
+}
+
+fun validateSubscriptionUrl(url: String, resources: Resources): String? {
+    val trimmed = url.trim()
+    return when {
+        trimmed.isBlank() -> resources.getString(R.string.ics_url_required)
+        !trimmed.startsWith("http://") && !trimmed.startsWith("https://") &&
+            !trimmed.startsWith("webcal://") -> resources.getString(R.string.ics_url_invalid_scheme)
+        !trimmed.endsWith(".ics") && !trimmed.contains("calendar") && !trimmed.contains("ical") ->
+            null
+        else -> null
     }
 }
 

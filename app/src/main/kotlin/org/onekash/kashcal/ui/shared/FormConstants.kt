@@ -1,5 +1,7 @@
 package org.onekash.kashcal.ui.shared
 
+import android.content.res.Resources
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
@@ -31,17 +33,12 @@ data class ReminderOption(
  * Note: Legacy values (0, 5, 10, 120) are still valid for existing events
  * from external calendars or older app versions - they just aren't shown in the picker.
  */
-val TIMED_REMINDER_OPTIONS = listOf(
-    ReminderOption("No reminder", REMINDER_OFF),
-    ReminderOption("At time of event", 0),
-    ReminderOption("5 minutes before", 5),
-    ReminderOption("15 minutes before", 15),
-    ReminderOption("30 minutes before", 30),
-    ReminderOption("1 hour before", 60),
-    ReminderOption("4 hours before", 240),
-    ReminderOption("1 day before", 1440),
-    ReminderOption("1 week before", 10080)
-)
+val TIMED_REMINDER_MINUTES = listOf(REMINDER_OFF, 0, 5, 15, 30, 60, 240, 1440, 10080)
+
+fun getTimedReminderOptions(resources: Resources): List<ReminderOption> =
+    TIMED_REMINDER_MINUTES.map { minutes ->
+        ReminderOption(formatReminderOption(minutes, isAllDay = false, resources = resources), minutes)
+    }
 
 /**
  * Reminder options for all-day events (birthdays, holidays, deadlines).
@@ -52,13 +49,12 @@ val TIMED_REMINDER_OPTIONS = listOf(
  *
  * For time-format-aware labels, use [getAllDayReminderOptions] instead.
  */
-val ALL_DAY_REMINDER_OPTIONS = listOf(
-    ReminderOption("No reminder", REMINDER_OFF),
-    ReminderOption("9 AM day of event", 540),
-    ReminderOption("12 hours before", 720),
-    ReminderOption("1 day before", 1440),
-    ReminderOption("1 week before", 10080)
-)
+val ALL_DAY_REMINDER_MINUTES = listOf(REMINDER_OFF, 540, 720, 1440, 10080)
+
+fun getAllDayReminderOptionsI18n(use24Hour: Boolean, resources: Resources): List<ReminderOption> =
+    ALL_DAY_REMINDER_MINUTES.map { minutes ->
+        ReminderOption(formatReminderOption(minutes, isAllDay = true, use24Hour = use24Hour, resources = resources), minutes)
+    }
 
 /**
  * Returns all-day reminder options with time-format-aware labels.
@@ -70,23 +66,8 @@ val ALL_DAY_REMINDER_OPTIONS = listOf(
  * @param use24Hour Whether to use 24-hour time format
  * @return List of [ReminderOption] with appropriate labels
  */
-fun getAllDayReminderOptions(use24Hour: Boolean): List<ReminderOption> =
-    ALL_DAY_REMINDER_OPTIONS.map { option ->
-        if (option.minutes == 540) {
-            option.copy(label = if (use24Hour) "09:00 day of event" else "9 AM day of event")
-        } else {
-            option
-        }
-    }
-
-/**
- * Returns the appropriate reminder options based on event type.
- *
- * @param isAllDay True for all-day events, false for timed events
- * @return List of [ReminderOption] appropriate for the event type
- */
-fun getReminderOptionsForEventType(isAllDay: Boolean): List<ReminderOption> =
-    if (isAllDay) ALL_DAY_REMINDER_OPTIONS else TIMED_REMINDER_OPTIONS
+fun getAllDayReminderOptions(use24Hour: Boolean, resources: Resources): List<ReminderOption> =
+    getAllDayReminderOptionsI18n(use24Hour, resources)
 
 /**
  * Format reminder option for display.
@@ -98,35 +79,30 @@ fun getReminderOptionsForEventType(isAllDay: Boolean): List<ReminderOption> =
  * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
  * @return Human-readable label for the reminder
  */
-fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false): String {
-    // For all-day events, use time-format-aware options
-    val options = if (isAllDay) getAllDayReminderOptions(use24Hour) else TIMED_REMINDER_OPTIONS
-    // Try to find in current options first
-    options.find { it.minutes == minutes }?.let { return it.label }
-    // Handle legacy and arbitrary values
+fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false, resources: Resources): String {
     return when (minutes) {
-        0 -> "At time of event"
-        5 -> "5 minutes before"
-        10 -> "10 minutes before"
-        30 -> "30 minutes before"
-        120 -> "2 hours before"
-        2880 -> "2 days before"
-        // Handle arbitrary values in most readable unit
+        REMINDER_OFF -> resources.getString(R.string.reminder_none)
+        0 -> resources.getString(R.string.reminder_at_time_of_event)
+        540 -> if (isAllDay) {
+            resources.getString(if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h)
+        } else {
+            resources.getQuantityString(R.plurals.reminder_hours_before, 9, 9)
+        }
         else -> when {
             minutes >= 10080 && minutes % 10080 == 0 -> {
                 val weeks = minutes / 10080
-                if (weeks == 1) "1 week before" else "$weeks weeks before"
+                resources.getQuantityString(R.plurals.reminder_weeks_before, weeks, weeks)
             }
             minutes >= 1440 && minutes % 1440 == 0 -> {
                 val days = minutes / 1440
-                if (days == 1) "1 day before" else "$days days before"
+                resources.getQuantityString(R.plurals.reminder_days_before, days, days)
             }
             minutes >= 60 && minutes % 60 == 0 -> {
                 val hours = minutes / 60
-                if (hours == 1) "1 hour before" else "$hours hours before"
+                resources.getQuantityString(R.plurals.reminder_hours_before, hours, hours)
             }
             else -> {
-                if (minutes == 1) "1 minute before" else "$minutes minutes before"
+                resources.getQuantityString(R.plurals.reminder_minutes_before, minutes, minutes)
             }
         }
     }
@@ -140,18 +116,16 @@ fun formatReminderOption(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = f
  * @param use24Hour Whether to use 24-hour format for the 540-minute option (default: false)
  * @return Short label (e.g., "15m", "1h", "1d", "09:00" or "9AM")
  */
-fun formatReminderShort(minutes: Int, use24Hour: Boolean = false): String {
+fun formatReminderShort(minutes: Int, use24Hour: Boolean = false, resources: Resources): String {
     return when (minutes) {
-        // Known preset values
-        REMINDER_OFF -> "Off"
-        0 -> "At event"
-        540 -> if (use24Hour) "09:00" else "9AM"  // All-day events "9 AM day of"
-        // For arbitrary values, show in most readable unit
+        REMINDER_OFF -> resources.getString(R.string.reminder_short_off)
+        0 -> resources.getString(R.string.reminder_short_at_event)
+        540 -> resources.getString(if (use24Hour) R.string.reminder_short_9am_24h else R.string.reminder_short_9am_12h)
         else -> when {
-            minutes >= 10080 && minutes % 10080 == 0 -> "${minutes / 10080}w"
-            minutes >= 1440 && minutes % 1440 == 0 -> "${minutes / 1440}d"
-            minutes >= 60 && minutes % 60 == 0 -> "${minutes / 60}h"
-            else -> "${minutes}m"
+            minutes >= 10080 && minutes % 10080 == 0 -> resources.getString(R.string.reminder_short_weeks, minutes / 10080)
+            minutes >= 1440 && minutes % 1440 == 0 -> resources.getString(R.string.reminder_short_days, minutes / 1440)
+            minutes >= 60 && minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
+            else -> resources.getString(R.string.reminder_short_minutes, minutes)
         }
     }
 }
@@ -232,45 +206,42 @@ fun roundToWheelStep(minutes: Int, step: Int = 5): Int =
  * @param use24Hour Whether to use 24-hour format for time labels
  * @return Human-readable duration string
  */
-fun formatReminderDuration(minutes: Int, isAllDay: Boolean, use24Hour: Boolean): String {
-    if (minutes == 0 && !isAllDay) return "At time of event"
+fun formatReminderDuration(minutes: Int, isAllDay: Boolean, use24Hour: Boolean, resources: Resources): String {
+    if (minutes == 0 && !isAllDay) return resources.getString(R.string.reminder_at_time_of_event)
 
-    // All-day contextual labels
     if (isAllDay) {
-        val timeLabel = if (use24Hour) "09:00" else "9 AM"
         when {
-            // Exactly 9 hours = "9 AM day of event"
-            minutes == 540 -> return "$timeLabel day of event"
-            // Exact days (multiples of 1440) = "N day(s) before at 9 AM"
+            minutes == 540 -> return resources.getString(
+                if (use24Hour) R.string.reminder_day_of_event_24h else R.string.reminder_day_of_event_12h
+            )
             minutes >= 1440 && minutes % 1440 == 0 -> {
                 val days = minutes / 1440
-                val dayStr = if (days == 1) "1 day" else "$days days"
-                return "$dayStr before at $timeLabel"
+                val dayStr = resources.getQuantityString(R.plurals.time_days, days, days)
+                return resources.getString(
+                    if (use24Hour) R.string.reminder_before_at_24h else R.string.reminder_before_at_12h, dayStr
+                )
             }
         }
-        // Fall through to generic formatting for non-standard all-day values
     }
 
-    // Generic duration formatting
-    return buildGenericDuration(minutes)
+    return buildGenericDuration(minutes, resources)
 }
 
-private fun buildGenericDuration(minutes: Int): String {
+private fun buildGenericDuration(minutes: Int, resources: Resources): String {
     val (days, hours, mins) = minutesToComponents(minutes)
     val parts = mutableListOf<String>()
-    if (days > 0) parts.add(if (days == 1) "1 day" else "$days days")
-    if (hours > 0) parts.add(if (hours == 1) "1 hour" else "$hours hours")
+    if (days > 0) parts.add(resources.getQuantityString(R.plurals.time_days, days, days))
+    if (hours > 0) parts.add(resources.getQuantityString(R.plurals.time_hours, hours, hours))
     if (mins > 0) {
-        // Use full "minutes" when it's the only component, "min" when combined
         val minLabel = if (days == 0 && hours == 0) {
-            if (mins == 1) "1 minute" else "$mins minutes"
+            resources.getQuantityString(R.plurals.time_minutes, mins, mins)
         } else {
-            "$mins min"
+            resources.getQuantityString(R.plurals.time_minutes_short, mins, mins)
         }
         parts.add(minLabel)
     }
-    if (parts.isEmpty()) return "At time of event"
-    return "${parts.joinToString(" ")} before"
+    if (parts.isEmpty()) return resources.getString(R.string.reminder_at_time_of_event)
+    return resources.getString(R.string.reminder_time_before, parts.joinToString(" "))
 }
 
 /**
@@ -290,9 +261,9 @@ fun deduplicateAndSortReminders(reminders: List<Int>): List<Int> =
  * @param use24Hour Whether to use 24-hour format
  * @return Summary string like "15m, 1h, 1d" or "None"
  */
-fun formatReminderSummary(reminderMinutes: List<Int>, use24Hour: Boolean): String {
-    if (reminderMinutes.isEmpty()) return "None"
-    return reminderMinutes.joinToString(", ") { formatReminderShort(it, use24Hour) }
+fun formatReminderSummary(reminderMinutes: List<Int>, use24Hour: Boolean, resources: Resources): String {
+    if (reminderMinutes.isEmpty()) return resources.getString(R.string.reminder_summary_none)
+    return reminderMinutes.joinToString(", ") { formatReminderShort(it, use24Hour, resources) }
 }
 
 /**
@@ -310,12 +281,10 @@ data class DurationOption(
  * Default event duration options for new events.
  * Used in Settings to configure how long new events should be by default.
  */
-val EVENT_DURATION_OPTIONS = listOf(
-    DurationOption("15 minutes", 15),
-    DurationOption("30 minutes", 30),
-    DurationOption("1 hour", 60),
-    DurationOption("2 hours", 120)
-)
+val EVENT_DURATION_MINUTES = listOf(15, 30, 60, 120)
+
+fun getEventDurationOptions(resources: Resources): List<DurationOption> =
+    EVENT_DURATION_MINUTES.map { DurationOption(formatDuration(it, resources), it) }
 
 /**
  * Format duration for display.
@@ -323,34 +292,26 @@ val EVENT_DURATION_OPTIONS = listOf(
  * @param minutes Duration in minutes
  * @return Human-readable label (e.g., "30 minutes", "1 hour")
  */
-fun formatDuration(minutes: Int): String {
+fun formatDuration(minutes: Int, resources: Resources): String {
     return when {
-        minutes < 60 -> "$minutes minutes"
-        minutes == 60 -> "1 hour"
-        minutes % 60 == 0 -> "${minutes / 60} hours"
+        minutes < 60 -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
+        minutes % 60 == 0 -> {
+            val hours = minutes / 60
+            resources.getQuantityString(R.plurals.time_hours, hours, hours)
+        }
         else -> {
             val hours = minutes / 60
             val mins = minutes % 60
-            "${hours}h ${mins}m"
+            resources.getString(R.string.duration_compact, hours, mins)
         }
     }
 }
 
-/**
- * Format duration as short label for summary display.
- *
- * @param minutes Duration in minutes
- * @return Short label (e.g., "30m", "1h", "2h")
- */
-fun formatDurationShort(minutes: Int): String {
+fun formatDurationShort(minutes: Int, resources: Resources): String {
     return when {
-        minutes < 60 -> "${minutes}m"
-        minutes % 60 == 0 -> "${minutes / 60}h"
-        else -> {
-            val hours = minutes / 60
-            val mins = minutes % 60
-            "${hours}h${mins}m"
-        }
+        minutes < 60 -> resources.getString(R.string.reminder_short_minutes, minutes)
+        minutes % 60 == 0 -> resources.getString(R.string.reminder_short_hours, minutes / 60)
+        else -> resources.getString(R.string.duration_compact_short, minutes / 60, minutes % 60)
     }
 }
 
@@ -368,13 +329,24 @@ data class SyncOption(
 /**
  * Available sync frequency options for background calendar sync.
  */
-val SYNC_OPTIONS = listOf(
-    SyncOption("1 hour", 1 * 60 * 60 * 1000L),
-    SyncOption("6 hours", 6 * 60 * 60 * 1000L),
-    SyncOption("12 hours", 12 * 60 * 60 * 1000L),
-    SyncOption("24 hours", 24 * 60 * 60 * 1000L),
-    SyncOption("Manual only", Long.MAX_VALUE)
+val SYNC_INTERVALS_MS = listOf(
+    1 * 60 * 60 * 1000L,
+    6 * 60 * 60 * 1000L,
+    12 * 60 * 60 * 1000L,
+    24 * 60 * 60 * 1000L,
+    Long.MAX_VALUE
 )
+
+fun getSyncOptions(resources: Resources): List<SyncOption> =
+    SYNC_INTERVALS_MS.map { intervalMs ->
+        val label = if (intervalMs == Long.MAX_VALUE) {
+            resources.getString(R.string.sync_manual_only)
+        } else {
+            val hours = (intervalMs / (60 * 60 * 1000L)).toInt()
+            resources.getQuantityString(R.plurals.time_hours, hours, hours)
+        }
+        SyncOption(label, intervalMs)
+    }
 
 /**
  * Represents a sync lookback option with display label and days.
@@ -390,14 +362,10 @@ data class SyncLookbackOption(
 /**
  * Available sync lookback options for how far back to sync calendar events.
  */
-val SYNC_LOOKBACK_OPTIONS = listOf(
-    SyncLookbackOption("3 months", 90),
-    SyncLookbackOption("6 months", 180),
-    SyncLookbackOption("1 year", 365),
-    SyncLookbackOption("2 years", 730),
-    SyncLookbackOption("5 years", 1825),
-    SyncLookbackOption("All events", Int.MAX_VALUE)
-)
+val SYNC_LOOKBACK_DAYS = listOf(90, 180, 365, 730, 1825, Int.MAX_VALUE)
+
+fun getSyncLookbackOptions(resources: Resources): List<SyncLookbackOption> =
+    SYNC_LOOKBACK_DAYS.map { SyncLookbackOption(formatSyncLookback(it, resources), it) }
 
 /**
  * Format sync lookback days for display.
@@ -406,23 +374,22 @@ val SYNC_LOOKBACK_OPTIONS = listOf(
  * @param days Sync lookback in days
  * @return Human-readable label
  */
-fun formatSyncLookback(days: Int): String {
-    if (days == Int.MAX_VALUE) return "All events"
-    SYNC_LOOKBACK_OPTIONS.find { it.days == days }?.let { return it.label }
+fun formatSyncLookback(days: Int, resources: Resources): String {
+    if (days == Int.MAX_VALUE) return resources.getString(R.string.sync_lookback_all)
     return when {
         days >= 365 && days % 365 == 0 -> {
             val years = days / 365
-            if (years == 1) "1 year" else "$years years"
+            resources.getQuantityString(R.plurals.time_years, years, years)
         }
         days >= 30 && days % 30 == 0 -> {
             val months = days / 30
-            if (months == 1) "1 month" else "$months months"
+            resources.getQuantityString(R.plurals.time_months, months, months)
         }
         days >= 7 && days % 7 == 0 -> {
             val weeks = days / 7
-            if (weeks == 1) "1 week" else "$weeks weeks"
+            resources.getQuantityString(R.plurals.time_weeks, weeks, weeks)
         }
-        else -> "$days days"
+        else -> resources.getQuantityString(R.plurals.time_days, days, days)
     }
 }
 

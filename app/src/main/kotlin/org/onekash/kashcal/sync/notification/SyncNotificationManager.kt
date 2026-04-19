@@ -91,7 +91,7 @@ class SyncNotificationManager @Inject constructor(
         cancelIntent?.let {
             builder.addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Cancel",
+                context.getString(R.string.action_cancel),
                 it
             )
         }
@@ -126,7 +126,7 @@ class SyncNotificationManager @Inject constructor(
         cancelIntent?.let {
             builder.addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Cancel",
+                context.getString(R.string.action_cancel),
                 it
             )
         }
@@ -163,7 +163,7 @@ class SyncNotificationManager @Inject constructor(
         cancelIntent?.let {
             builder.addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Cancel",
+                context.getString(R.string.action_cancel),
                 it
             )
         }
@@ -202,16 +202,17 @@ class SyncNotificationManager @Inject constructor(
      * Show success notification.
      */
     private fun showSuccessNotification(result: SyncResult.Success) {
+        val res = context.resources
         val content = buildString {
-            append("Synced ${result.calendarsSynced} calendars")
+            append(res.getQuantityString(R.plurals.sync_notification_calendars, result.calendarsSynced, result.calendarsSynced))
             if (result.totalChanges > 0) {
-                append(", ${result.totalChanges} changes")
+                append(res.getQuantityString(R.plurals.sync_notification_changes, result.totalChanges, result.totalChanges))
             }
         }
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync Complete")
+            .setContentTitle(context.getString(R.string.sync_notification_complete))
             .setContentText(content)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -226,14 +227,15 @@ class SyncNotificationManager @Inject constructor(
      * Show partial success notification with error count.
      */
     private fun showPartialSuccessNotification(result: SyncResult.PartialSuccess) {
+        val res = context.resources
         val content = buildString {
-            append("Synced ${result.calendarsSynced} calendars")
-            append(", ${result.errors.size} errors")
+            append(res.getQuantityString(R.plurals.sync_notification_calendars, result.calendarsSynced, result.calendarsSynced))
+            append(res.getQuantityString(R.plurals.sync_notification_errors, result.errors.size, result.errors.size))
         }
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync Partially Complete")
+            .setContentTitle(context.getString(R.string.sync_notification_partial))
             .setContentText(content)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -251,8 +253,8 @@ class SyncNotificationManager @Inject constructor(
     private fun showAuthErrorNotification(result: SyncResult.AuthError) {
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync Authentication Failed")
-            .setContentText("Please re-authenticate your account")
+            .setContentTitle(context.getString(R.string.sync_notification_auth_failed))
+            .setContentText(context.getString(R.string.sync_notification_auth_reauth))
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_ERROR)
@@ -268,7 +270,7 @@ class SyncNotificationManager @Inject constructor(
     private fun showErrorNotification(result: SyncResult.Error) {
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync Failed")
+            .setContentTitle(context.getString(R.string.sync_notification_failed))
             .setContentText(result.message)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -309,12 +311,12 @@ class SyncNotificationManager @Inject constructor(
     fun showParseFailureNotification(calendarName: String, abandonedCount: Int) {
         if (abandonedCount <= 0) return
 
-        val eventText = if (abandonedCount == 1) "1 event" else "$abandonedCount events"
-        val content = "$eventText in $calendarName couldn't be synced. Try Force Sync in Settings."
+        val eventText = context.resources.getQuantityString(R.plurals.event_count, abandonedCount, abandonedCount)
+        val content = context.getString(R.string.sync_notification_parse_content, eventText, calendarName)
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Some events couldn't be synced")
+            .setContentTitle(context.getString(R.string.sync_notification_parse_title))
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setAutoCancel(true)
@@ -337,15 +339,15 @@ class SyncNotificationManager @Inject constructor(
         if (abandonedCount <= 0) return
 
         val content = if (eventTitle != null && abandonedCount == 1) {
-            "Local changes to \"$eventTitle\" were lost due to sync conflict. Server version will be used."
+            context.getString(R.string.sync_notification_conflict_single, eventTitle)
         } else {
-            val eventText = if (abandonedCount == 1) "1 event" else "$abandonedCount events"
-            "Local changes to $eventText were lost due to sync conflicts. Server versions will be used."
+            val eventText = context.resources.getQuantityString(R.plurals.event_count, abandonedCount, abandonedCount)
+            context.getString(R.string.sync_notification_conflict_multi, eventText)
         }
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync conflict resolved")
+            .setContentTitle(context.getString(R.string.sync_notification_conflict_title))
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setAutoCancel(true)
@@ -366,13 +368,12 @@ class SyncNotificationManager @Inject constructor(
     fun showOperationExpiredNotification(expiredCount: Int) {
         if (expiredCount <= 0) return
 
-        val eventText = if (expiredCount == 1) "1 event" else "$expiredCount events"
-        val content = "$eventText couldn't be synced after 30 days. " +
-            "The server version will be used. Force Sync to retry."
+        val eventText = context.resources.getQuantityString(R.plurals.event_count, expiredCount, expiredCount)
+        val content = context.getString(R.string.sync_notification_expired_content, eventText)
 
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("Sync changes expired")
+            .setContentTitle(context.getString(R.string.sync_notification_expired_title))
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setAutoCancel(true)

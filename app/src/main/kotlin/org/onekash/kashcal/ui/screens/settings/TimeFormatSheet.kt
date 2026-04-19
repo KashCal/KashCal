@@ -24,7 +24,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -67,24 +69,32 @@ fun TimeFormatSheet(
         now.format(DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()))
     }
 
+    // Resolve string resources outside remember block
+    val labelSystem = stringResource(R.string.option_system_default)
+    val label12h = stringResource(R.string.option_12_hour)
+    val label24h = stringResource(R.string.option_24_hour)
+    val descSystem = if (is24HourDevice) stringResource(R.string.settings_time_format_currently_24h, example24h)
+        else stringResource(R.string.settings_time_format_currently_12h, example12h)
+    val desc12h = stringResource(R.string.settings_time_format_example, example12h)
+    val desc24h = stringResource(R.string.settings_time_format_example, example24h)
+
     // Build options with dynamic descriptions
-    val options = remember(is24HourDevice, example12h, example24h) {
+    val options = remember(is24HourDevice, example12h, example24h, labelSystem, label12h, label24h, descSystem, desc12h, desc24h) {
         listOf(
             TimeFormatOption(
                 value = KashCalDataStore.TIME_FORMAT_SYSTEM,
-                label = "System default",
-                description = if (is24HourDevice) "Currently: 24-hour ($example24h)"
-                else "Currently: 12-hour ($example12h)"
+                label = labelSystem,
+                description = descSystem
             ),
             TimeFormatOption(
                 value = KashCalDataStore.TIME_FORMAT_12H,
-                label = "12-hour",
-                description = "Example: $example12h"
+                label = label12h,
+                description = desc12h
             ),
             TimeFormatOption(
                 value = KashCalDataStore.TIME_FORMAT_24H,
-                label = "24-hour",
-                description = "Example: $example24h"
+                label = label24h,
+                description = desc24h
             )
         )
     }
@@ -100,7 +110,7 @@ fun TimeFormatSheet(
         ) {
             // Header
             Text(
-                text = "Time Format",
+                text = stringResource(R.string.settings_time_format),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -156,7 +166,7 @@ private fun TimeFormatOptionRow(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )

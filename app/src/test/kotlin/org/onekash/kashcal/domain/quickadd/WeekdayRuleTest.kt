@@ -1,6 +1,8 @@
 package org.onekash.kashcal.domain.quickadd
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
 import org.onekash.kashcal.domain.quickadd.rule.ParseContext
@@ -67,23 +69,62 @@ class WeekdayRuleTest {
     // ==================== "next" modifier ====================
 
     @Test
-    fun `next Monday from Sunday resolves to tomorrow`() {
+    fun `next Monday from Sunday resolves to following week`() {
         val ctx = parse("next monday", sunday)
-        // "next Monday" = coming Monday = Apr 13
+        // "next Monday" from Sunday Apr 12: next occurrence is Apr 13 (1 day), but <7 days → skip to Apr 20
+        assertEquals(LocalDate.of(2026, 4, 20), ctx.resolveDate())
+    }
+
+    @Test
+    fun `next Friday from Sunday resolves to following week`() {
+        val ctx = parse("next friday", sunday)
+        // "next Friday" from Sunday Apr 12: next occurrence is Apr 17 (5 days), but <7 days → skip to Apr 24
+        assertEquals(LocalDate.of(2026, 4, 24), ctx.resolveDate())
+    }
+
+    @Test
+    fun `next Sunday from Sunday resolves to following week`() {
+        val ctx = parse("next sunday", sunday)
+        // "next Sunday" from Sunday Apr 12: bare = Apr 19 (7 days), >=7 → Apr 19
+        assertEquals(LocalDate.of(2026, 4, 19), ctx.resolveDate())
+    }
+
+    // ==================== "this" modifier ====================
+
+    @Test
+    fun `this Monday from Monday resolves to today`() {
+        val ctx = parse("this monday", monday)
+        // "this Monday" from Monday Apr 13: bare weekday for same day = +7 (Apr 20)
+        // BUT "this" should mean today if it IS the day → Apr 13
         assertEquals(LocalDate.of(2026, 4, 13), ctx.resolveDate())
     }
 
     @Test
-    fun `next Friday from Sunday resolves to this Friday`() {
-        val ctx = parse("next friday", sunday)
+    fun `this Wednesday from Monday resolves to same week`() {
+        val ctx = parse("this wednesday", monday)
+        // "this Wednesday" from Monday Apr 13 = next occurrence = Apr 15
+        assertEquals(LocalDate.of(2026, 4, 15), ctx.resolveDate())
+    }
+
+    @Test
+    fun `this Friday from Sunday resolves to next occurrence`() {
+        val ctx = parse("this friday", sunday)
+        // "this Friday" from Sunday Apr 12 = next occurrence = Apr 17
         assertEquals(LocalDate.of(2026, 4, 17), ctx.resolveDate())
     }
 
     @Test
-    fun `next Sunday from Sunday resolves to next week`() {
-        val ctx = parse("next sunday", sunday)
-        // "next Sunday" from Sunday = next occurrence = Apr 19
-        assertEquals(LocalDate.of(2026, 4, 19), ctx.resolveDate())
+    fun `next Monday from Monday resolves to following week`() {
+        val ctx = parse("next monday", monday)
+        // "next Monday" from Monday Apr 13: bare = Apr 20 (7 days), >=7 → Apr 20
+        assertEquals(LocalDate.of(2026, 4, 20), ctx.resolveDate())
+    }
+
+    @Test
+    fun `next Wednesday from Monday resolves to following week`() {
+        val ctx = parse("next wednesday", monday)
+        // "next Wednesday" from Monday Apr 13: bare = Apr 15 (2 days), <7 → Apr 22
+        assertEquals(LocalDate.of(2026, 4, 22), ctx.resolveDate())
     }
 
     // ==================== "last" modifier ====================
@@ -152,5 +193,60 @@ class WeekdayRuleTest {
         val ctx = parse("sun", sunday)
         // Sunday from Sunday → next Sunday
         assertEquals(LocalDate.of(2026, 4, 19), ctx.resolveDate())
+    }
+
+    // ==================== Multi-day range (TO + WEEKDAY) ====================
+
+    @Test
+    fun `Friday to Sunday sets endDate`() {
+        val ctx = parse("friday to sunday", sunday)
+        // Sunday Apr 12 → Friday Apr 17, endDate Sunday Apr 19
+        assertEquals(LocalDate.of(2026, 4, 17), ctx.weekdayDate)
+        assertEquals(LocalDate.of(2026, 4, 19), ctx.endDate)
+    }
+
+    @Test
+    fun `Monday to Wednesday sets endDate`() {
+        val ctx = parse("monday to wednesday", sunday)
+        // Sunday Apr 12 → Monday Apr 13, endDate Wednesday Apr 15
+        assertEquals(LocalDate.of(2026, 4, 13), ctx.weekdayDate)
+        assertEquals(LocalDate.of(2026, 4, 15), ctx.endDate)
+    }
+
+    @Test
+    fun `Saturday to Sunday sets endDate`() {
+        val ctx = parse("saturday to sunday", sunday)
+        // Sunday Apr 12 → Saturday Apr 18, endDate Sunday Apr 19
+        assertEquals(LocalDate.of(2026, 4, 18), ctx.weekdayDate)
+        assertEquals(LocalDate.of(2026, 4, 19), ctx.endDate)
+    }
+
+    @Test
+    fun `bare weekday without to has null endDate`() {
+        val ctx = parse("friday", sunday)
+        assertNull(ctx.endDate)
+    }
+
+    @Test
+    fun `Friday to Sunday consumes all three tokens`() {
+        val normalized = NormalizerChain().normalize("conference friday to sunday")
+        val tokens = WordTokenizer.tokenize(normalized)
+        val context = ParseContext(sunday)
+        WeekdayRule.apply(tokens, context)
+        // "conference" (0) should NOT be consumed
+        assertTrue(!context.isConsumed(0))
+        // "friday" (1), "to" (2), "sunday" (3) should be consumed
+        assertTrue(context.isConsumed(1))
+        assertTrue(context.isConsumed(2))
+        assertTrue(context.isConsumed(3))
+    }
+
+    @Test
+    fun `next Friday to Sunday sets both dates with modifier`() {
+        val ctx = parse("next friday to sunday", sunday)
+        // "next friday" from Sunday Apr 12: bare = Apr 17, <7 → Apr 24
+        // endDate: Sunday after Apr 24 = Apr 26
+        assertEquals(LocalDate.of(2026, 4, 24), ctx.weekdayDate)
+        assertEquals(LocalDate.of(2026, 4, 26), ctx.endDate)
     }
 }

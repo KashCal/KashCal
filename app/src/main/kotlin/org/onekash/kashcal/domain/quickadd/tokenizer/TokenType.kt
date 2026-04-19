@@ -14,5 +14,6 @@ enum class TokenType {
     DATE_KEYWORD,
     TIME_KEYWORD,
     RECURRENCE_KEYWORD,
+    TIMEZONE,
     UNKNOWN
 }

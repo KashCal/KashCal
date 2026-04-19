@@ -1,0 +1,970 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Cl\u00e0r-gnothaich an-diugh</string>
+    <string name="widget_description">A\' sealltainn tachartasan mìosachain an-diugh</string>
+    <string name="week_widget_name">Sealladh Seachdaine</string>
+    <string name="week_widget_description">A\' sealltainn tachartasan mìosachain airson nan ath 7 l\u00e0ithean</string>
+    <string name="month_widget_name">Sealladh Mìosa</string>
+    <string name="month_widget_description">A\' sealltainn griod mìosachain sl\u00e0n le dotagan tachartasan</string>
+    <string name="date_widget_name">Ceann-l\u00e0</string>
+    <string name="date_widget_description">A\' sealltainn ceann-l\u00e0 an-diugh mar ìomhaigheag aip</string>
+    <string name="widget_no_events_today">Gun tachartasan an-diugh</string>
+    <string name="widget_add_event">+ Cuir tachartas ris</string>
+    <string name="widget_no_events">Gun tachartasan</string>
+
+    <!-- App Shortcuts -->
+    <string name="shortcut_new_event">Tachartas \u00d9r</string>
+    <string name="shortcut_new_event_long">Cruthaich tachartas \u00f9r</string>
+    <string name="shortcut_today">An-diugh</string>
+    <string name="shortcut_today_long">Rach gu an-diugh</string>
+    <string name="shortcut_search">Lorg</string>
+    <string name="shortcut_search_long">Lorg tachartasan</string>
+
+    <!-- Common Actions -->
+    <string name="action_retry">Feuch a-rithist</string>
+    <string name="action_try_again">Feuch a-Rithist</string>
+    <string name="action_cancel">Sguir dheth</string>
+    <string name="action_close">D\u00f9in</string>
+    <string name="action_ok">Ceart</string>
+    <string name="action_not_now">Chan Ann an-dràsta</string>
+    <string name="action_sign_in">Clàraich a-steach</string>
+    <string name="action_select">Tagh</string>
+    <string name="action_show_password">Seall facal-faire</string>
+    <string name="action_hide_password">Falaich facal-faire</string>
+    <string name="action_sign_out">Clàraich a-mach</string>
+    <string name="action_learn_more">Barrachd Fiosrachaidh</string>
+    <string name="action_open_apple_id">Fosgail Apple ID</string>
+    <string name="action_open_settings">Fosgail Roghainnean</string>
+    <string name="action_force_sync">Sioncronaich le \u00c8iginn</string>
+    <string name="action_sync_now">Sioncronaich an-dràsta</string>
+    <string name="action_details">Mion-fhiosrachadh</string>
+    <string name="action_set_up">Suidhich</string>
+    <string name="action_report_issue">Aithris Duilgheadas</string>
+    <string name="action_view">Seall</string>
+    <string name="action_enable">Cuir an comas</string>
+    <string name="action_done">Dèanta</string>
+    <string name="action_save">S\u00e0bhaill</string>
+    <string name="action_add">Cuir Ris</string>
+    <string name="action_edit">Deasaich</string>
+    <string name="action_delete">Sguab \u00e0s</string>
+    <string name="action_confirm">Dearbhaich</string>
+    <string name="action_discard">Tilg air falbh</string>
+    <string name="action_dismiss">Leig seachad</string>
+    <string name="action_show_all">Seall na h-Uile</string>
+    <string name="action_connect">Ceangail</string>
+    <string name="action_duplicate">D\u00f9blaich</string>
+    <string name="action_share">Co-roinn</string>
+    <string name="action_export_ics">\u00c0s-phortaich mar .ics</string>
+    <string name="action_confirm_delete">Dearbhaich Sguabadh \u00c0s</string>
+    <string name="action_delete_event">Sguab Tachartas \u00c0s</string>
+
+    <!-- Recurring Event Actions -->
+    <string name="recurring_just_this">Dìreach am fear seo</string>
+    <string name="recurring_this_and_future">Am fear seo agus gach fear san \u00e0m ri teachd</string>
+    <string name="recurring_just_occurrence">Dìreach an tachartas seo</string>
+    <string name="recurring_all_occurrences">Gach tachartas</string>
+
+    <!-- Form Labels -->
+    <string name="label_event_title">Tiotal an tachartais</string>
+    <string name="label_location">\u00c0ite</string>
+    <string name="label_location_hint">Seòladh, seòmar, no ceangal coinneimh</string>
+    <string name="label_notes">Notaichean</string>
+    <string name="label_starts">A\' tòiseachadh</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Facal-faire Sònraichte do Aip</string>
+    <string name="label_password_hint">16 caractaran, tàthan roghainneil</string>
+    <string name="label_calendar_url">URL Mìosachain</string>
+    <string name="label_calendar_name">Ainm Mìosachain</string>
+    <string name="label_name">Ainm</string>
+    <string name="label_hex_color">Dath Hex</string>
+    <string name="label_enter_hex">Cuir a-steach 6 caractaran hex (0\u20139, A\u2013F)</string>
+
+    <!-- View Labels -->
+    <string name="view_all">Na h-Uile</string>
+    <string name="view_week">Seachdain</string>
+    <string name="view_month">Mìos</string>
+    <string name="label_all_day">Fad an latha</string>
+    <string name="label_today">An-diugh</string>
+    <string name="label_go_to_date">Rach gu ceann-l\u00e0</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Roghainnean</string>
+    <string name="settings_time_format">Cruth \u00d9ine</string>
+    <string name="settings_start_week_on">T\u00f2isich an t-Seachdain Air</string>
+    <string name="settings_event_emojis">Emojis Thachartasan</string>
+    <string name="settings_emoji_subtitle">Seall emojis stèidhichte air tiotalan thachartasan</string>
+    <string name="settings_force_sync">Sioncronaich Sl\u00e0n le \u00c8iginn</string>
+    <string name="settings_force_sync_subtitle">Ath-luchdaich an d\u00e0ta mìosachain uile</string>
+    <string name="settings_sync_history">Eachdraidh Sioncronachaidh</string>
+    <string name="settings_sync_history_subtitle">Seall seiseanan sioncronachaidh (48 uairean mu dheireadh)</string>
+    <string name="settings_import_subtitle">Ion-phortaich faidhle .ics</string>
+    <string name="settings_export_subtitle">Lethbhreac-gl\u00e8idhidh gu faidhle .ics</string>
+    <string name="settings_birthday_reminder">Cuimhneachan Co-l\u00e0 Breith</string>
+    <string name="settings_use_device_timezone">Cleachd roinn-tìde an uidheim</string>
+    <string name="settings_section_my_calendars">Mo Mhìosachain</string>
+    <string name="settings_section_display">Taisbeanadh</string>
+    <string name="settings_section_notifications">Brathan</string>
+    <string name="settings_section_sync">Sioncronachadh</string>
+    <string name="settings_section_data">D\u00e0ta</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_apple_calendar">Mìosachan Apple?</string>
+    <string name="onboarding_got_you">Tha sinn an seo dhut.</string>
+    <string name="onboarding_connect_prompt">Ceangail iCloud gus na tachartasan agad fhaicinn an seo</string>
+
+    <!-- Sign-In Sheets -->
+    <string name="signin_icloud_title">Ceangail iCloud</string>
+    <string name="signin_caldav_title">Cuir Cunntas CalDAV Ris</string>
+    <string name="signin_connected_to">Ceangailte ri %1$s</string>
+
+    <!-- Dialogs -->
+    <string name="dialog_new_event_title">Tachartas \u00d9r</string>
+    <string name="dialog_edit_event_title">Deasaich Tachartas</string>
+    <string name="dialog_force_sync_title">Sioncronaich Sl\u00e0n le \u00c8iginn?</string>
+    <string name="dialog_force_sync_message">Ath-luchdaichidh seo an d\u00e0ta mìosachain uile bhon fhrithealaiche. Thèid atharrachaidhean ionadail a ghl\u00e8idheadh.</string>
+    <string name="dialog_enable_notifications">Cuir Brathan an Comas?</string>
+    <string name="dialog_delete_title">Sguab \u00e0s \"%1$s\"</string>
+    <string name="dialog_edit_title">Deasaich \"%1$s\"</string>
+    <string name="dialog_action_required">Tha an gnìomh seo riatanach gus leantainn air adhart.</string>
+    <string name="dialog_add_to_calendar">Cuir ri mìosachan</string>
+    <string name="dialog_select_calendar">Tagh mìosachan</string>
+    <string name="dialog_choose_color">Tagh Dath</string>
+    <string name="dialog_add_subscription">Cuir Fo-sgrìobhadh Ris</string>
+    <string name="dialog_edit_subscription">Deasaich Fo-sgrìobhadh</string>
+
+    <!-- Status Messages -->
+    <string name="status_no_events_week">Gun tachartasan an t-seachdain seo</string>
+    <string name="status_more_events">+%1$d a bharrachd</string>
+    <string name="status_no_sync_sessions">Gun seiseanan sioncronachaidh fhathast.\n\nTarraing sìos gus ath-nuadhachadh air an t-sealladh mìosachain.</string>
+    <string name="status_no_writable_calendars">Chan eil mìosachain sgrìobhaidh ri fhaighinn</string>
+    <string name="status_events_count">%1$d Tachartas</string>
+    <string name="status_sync_changes">Atharrachaidhean Sioncronachaidh</string>
+    <string name="status_sync_history">Eachdraidh Sioncronachaidh</string>
+    <string name="status_parse_failures">Fàilligidhean Parsaidh</string>
+    <string name="status_error">Mearachd</string>
+    <string name="status_failed_to_parse">\u26a0 Dh\'fhàillig %1$d parsadh</string>
+    <string name="status_built_with_love">Air a Thogail le Gaol</string>
+    <string name="status_in_austin">ann an Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- Success Messages -->
+    <string name="success_sync_complete">Sioncronachadh crìochnaichte</string>
+
+    <!-- Error Messages -->
+    <!-- Auth Errors -->
+    <string name="error_auth_title">Dh\'fhàillig Clàradh A-steach</string>
+    <string name="error_auth_invalid_credentials">Apple ID no facal-faire sònraichte do aip mì-dhligheach. Thoir sùil air d\' fhiosrachadh agus feuch a-rithist.</string>
+    <string name="error_auth_app_specific_password_required">Feumaidh iCloud facal-faire sònraichte do aip. Cha dèan do phrìomh fhacal-faire Apple ID feum an seo.</string>
+    <string name="error_auth_session_expired_title">Seisean Air A Dhol \u00c0 Feum</string>
+    <string name="error_auth_session_expired">Tha do sheisean iCloud air a dhol \u00e0 feum. Clàraich a-steach a-rithist gus leantainn le sioncronachadh.</string>
+    <string name="error_auth_account_locked">Tha do Apple ID air a ghlasadh. Rach gu appleid.apple.com gus a fhosgladh.</string>
+
+    <!-- Network Errors -->
+    <string name="error_network_offline">Tha thu far loidhne. Thèid atharrachaidhean a shioncronachadh nuair a bhios tu air loidhne a-rithist.</string>
+    <string name="error_network_timeout">Ceangal air a dhol \u00e0 feum. Thoir sùil air an eadar-lìon agad agus feuch a-rithist.</string>
+    <string name="error_network_ssl">Dh\'fhàillig ceangal t\u00e8arainte. Thoir sùil air na roghainnean lìonra agad.</string>
+    <string name="error_network_unknown_host">Cha b\' urrainn ruighinn air iCloud. Thoir sùil air a\' cheangal eadar-lìn agad.</string>
+    <string name="error_network_connection_failed">Dh\'fhàillig an ceangal. Feuch a-rithist.</string>
+
+    <!-- Server Errors -->
+    <string name="error_server_unavailable">Chan eil iCloud ri fhaighinn an-dràsta. Feuch a-rithist nas anmoiche.</string>
+    <string name="error_server_rate_limited">Cus iarrtasan. Fuirich mionaid agus feuch a-rithist.</string>
+    <string name="error_server_forbidden">Ruigse air a dhiùltadh. \'S dòcha nach eil cead agad airson a\' mhìosachain seo.</string>
+    <string name="error_server_not_found">Cha deach an rud a chaidh iarraidh a lorg air an fhrithealaiche.</string>
+    <string name="error_conflict_title">Co-str\u00ec Sioncronachaidh</string>
+    <string name="error_conflict_generic">Chaidh an tachartas seo atharrachadh air uidheam eile. D\u00e8an sioncronachadh èiginneach gus an tionndadh as ùire fhaighinn.</string>
+    <string name="error_conflict_with_event">Chaidh \"%1$s\" atharrachadh air uidheam eile. D\u00e8an sioncronachadh èiginneach gus an tionndadh as ùire fhaighinn.</string>
+    <string name="error_sync_token_expired">D\u00e0ta sioncronachaidh air a dhol \u00e0 feum. A\' d\u00e8anamh sioncronachadh sl\u00e0n\u2026</string>
+
+    <!-- Event Errors -->
+    <string name="error_event_not_found">Cha deach an tachartas a lorg.</string>
+    <string name="error_calendar_not_found">Cha deach am mìosachan a lorg.</string>
+    <string name="error_calendar_read_only">Chan urrainn tachartasan atharrachadh ann an \"%1$s\" (mìosachan leughaidh a-mh\u00e0in).</string>
+    <string name="error_event_invalid_data">D\u00e0ta tachartais mì-dhligheach. Thoir sùil air na h-amannan tòiseachaidh is crìochnachaidh.</string>
+    <string name="error_event_invalid_recurrence">Pàtran ath-thachartais mì-dhligheach.</string>
+
+    <!-- Account Errors -->
+    <string name="error_display_name_exists">Tha cunntas leis an ainm \"%1$s\" ann mu thràth.</string>
+
+    <!-- Import/Export Errors -->
+    <string name="error_import_file_not_found">Faidhle nach deach a lorg no nach urrainnear a leughadh.</string>
+    <string name="error_import_invalid_format">Cruth faidhle mìosachain mì-dhligheach.</string>
+    <string name="error_import_partial">%1$d tachartas air an ion-phortachadh, dh\'fhàillig %2$d.</string>
+    <string name="error_export_failed">Dh\'fhàillig \u00e0s-phortachadh thachartasan.</string>
+    <string name="error_export_no_events">Gun tachartasan ri \u00e0s-phortachadh.</string>
+    <string name="error_end_before_start">Feumaidh an t-\u00e0m crìochnachaidh a bhith às dèidh an ama tòiseachaidh</string>
+
+    <!-- Storage Errors -->
+    <string name="error_storage_full_title">St\u00f2ras L\u00e0n</string>
+    <string name="error_storage_full">Chan eil rum st\u00f2rais gu leòr. Saor beagan rùim agus feuch a-rithist.</string>
+    <string name="error_database_corruption_title">Mearachd D\u00e0ta</string>
+    <string name="error_database_corruption">\'S dòcha gu bheil an d\u00e0ta mìosachain agad air a thruailleadh. Cuir fios gu taic.</string>
+    <string name="error_migration_title">Mearachd \u00d9rachaidh</string>
+    <string name="error_migration_failed">Dh\'fhàillig ùrachadh d\u00e0ta an aip. Ath-stàlaich an aip.</string>
+
+    <!-- Permission Errors -->
+    <string name="error_permission_notification_title">Cuir Brathan an Comas?</string>
+    <string name="error_permission_notification">Feumaidh KashCal cead bhrathan gus do chuimhneachadh mu thachartasan a tha a\' tighinn.</string>
+    <string name="error_permission_alarm_title">Cuir Cluig Mhionaideach an Comas?</string>
+    <string name="error_permission_alarm">Feumaidh KashCal cead chluig mhionaideach airson cuimhneachanan pongail.</string>
+    <string name="error_permission_storage">Tha cead st\u00f2rais a dhìth airson ion-phortachadh/\u00e0s-phortachadh.</string>
+
+    <!-- Device Calendar Errors -->
+    <string name="error_device_calendar_title">Mearachd Mìosachain</string>
+    <string name="error_device_calendar_write_failed">Dh\'fhàillig s\u00e0bhladh gu mìosachan an uidheim. Feuch a-rithist.</string>
+    <string name="error_device_calendar_permission">Tha cead sgrìobhaidh mìosachain a dhìth. Thoir cead sna Roghainnean.</string>
+    <string name="error_device_calendar_not_found">Mìosachan nach deach a lorg. \'S dòcha gun deach a thoirt air falbh.</string>
+    <string name="error_device_event_not_found">Tachartas nach deach a lorg. \'S dòcha gun deach a sguabadh \u00e0s.</string>
+    <string name="error_device_calendar_read_only">Tha am mìosachan seo airson leughaidh a-mh\u00e0in.</string>
+
+    <!-- Sync Errors -->
+    <string name="error_sync_no_accounts">Chan eil cunntas iCloud air a rèiteachadh. Suidhich iCloud gus na mìosachain agad a shioncronachadh.</string>
+    <string name="error_sync_partial">%1$d mìosachan air an sioncronachadh, dh\'fhàillig %2$d.</string>
+
+    <!-- Generic -->
+    <string name="error_unknown">Chaidh rudeigin ceàrr. Feuch a-rithist.</string>
+
+    <!-- Content Descriptions (Accessibility) -->
+    <string name="cd_selected">Air a thaghadh</string>
+    <string name="cd_back">Air ais</string>
+    <string name="cd_close">D\u00f9in</string>
+    <string name="cd_search">Lorg</string>
+    <string name="cd_create_event">Cruthaich tachartas</string>
+    <string name="cd_settings">Roghainnean</string>
+    <string name="cd_today">An-diugh</string>
+    <string name="cd_previous_week">An t-seachdain roimhe</string>
+    <string name="cd_next_week">An ath sheachdain</string>
+    <string name="cd_delete">Sguab \u00e0s</string>
+    <string name="cd_refresh">Ath-nuadhaich</string>
+    <string name="cd_more_options">Barrachd roghainnean</string>
+    <string name="cd_duplicate">D\u00f9blaich</string>
+    <string name="cd_share">Co-roinn</string>
+    <string name="cd_export_ics">\u00c0s-phortaich mar ICS</string>
+    <string name="cd_open_link">Fosgail ceangal</string>
+    <string name="cd_open_maps">Fosgail ann am mapaichean</string>
+    <string name="cd_copy_clipboard">Lethbhreacan dhan st\u00f2r-bhòrd</string>
+    <string name="cd_clear_history">Glan eachdraidh</string>
+    <string name="cd_recurring">Ath-thachairteil</string>
+    <string name="cd_enabled">Air a chur an comas</string>
+    <string name="cd_sync_error">Mearachd sioncronachaidh</string>
+    <string name="cd_select_option">Tagh roghainn</string>
+    <string name="cd_select_label">Tagh %1$s</string>
+    <string name="cd_wheel_picker">Roghadair cuibhle le %1$d roghainn</string>
+    <string name="cd_version_info">KashCal tionndadh %1$s. Brùth fada airson roghainnean dì-bhugachaidh.</string>
+    <string name="cd_color_slider">Sleamhnaiche dath, %1$s an-dràsta</string>
+    <string name="cd_color_slider_state">%1$s, %2$d ceum</string>
+
+    <!-- Form Labels (Additional) -->
+    <string name="label_calendar">Mìosachan</string>
+    <string name="label_color">Dath:</string>
+    <string name="label_repeat">Ath-dhèan</string>
+    <string name="label_sync_interval">Eadar-\u00e0m Sioncronachaidh:</string>
+    <string name="label_scheduled_events">Tachartasan Air an Cl\u00e0radh</string>
+    <string name="label_all_day_events">Tachartasan Fad an Latha</string>
+    <string name="label_server_url">URL Frithealaiche</string>
+    <string name="label_username">Ainm-cleachdaiche</string>
+    <string name="label_password">Facal-faire</string>
+    <string name="label_display_name_optional">Ainm Taisbeanaidh (roghainneil)</string>
+
+    <!-- Placeholders (Additional) -->
+    <string name="placeholder_search_events">Lorg tachartasan\u2026</string>
+
+    <!-- Hints -->
+    <string name="hint_https_default">https:// mar bhun-roghainn mura h-ainmichear</string>
+    <string name="hint_name_shown_in_settings">Ainm a thèid a shealltainn sna roghainnean</string>
+    <string name="caldav_trust_insecure_subtitle">Airson teisteanasan fèin-shoidhnichte no frithealaichean HTTP ionadail</string>
+
+    <!-- Recurrence -->
+    <string name="label_recurrence_after">Às dèidh</string>
+    <string name="label_recurrence_occurrences">tachartas</string>
+    <string name="label_recurrence_on_date">Air ceann-l\u00e0</string>
+
+    <!-- Settings (Additional) -->
+    <string name="settings_visible_calendars">Mìosachain Faicsinneach</string>
+    <string name="settings_default_calendar">Mìosachan Bunaiteach</string>
+    <string name="settings_default_event_length">Fad Tachartais Bunaiteach</string>
+    <string name="settings_default_alerts">Rabhaidhean Bunaiteach</string>
+    <string name="settings_notifications">Brathan</string>
+    <string name="settings_new_events">Tachartasan ùra</string>
+
+    <!-- Settings Options -->
+    <string name="option_system_default">Bun-roghainn an t-siostaim</string>
+    <string name="option_12_hour">12 uairean</string>
+    <string name="option_24_hour">24 uairean</string>
+    <string name="option_sunday">Didòmhnaich</string>
+    <string name="option_monday">Diluain</string>
+    <string name="option_saturday">Disathairne</string>
+
+    <!-- Empty States -->
+    <string name="empty_no_events_found">Cha deach tachartasan a lorg</string>
+    <string name="empty_no_upcoming_events">Gun tachartasan a\' tighinn</string>
+    <string name="empty_no_calendars">Chan eil mìosachain ri fhaighinn</string>
+
+    <!-- Status (Additional) -->
+    <string name="status_connecting">A\' ceangal\u2026</string>
+    <string name="status_fetching">A\' faighinn\u2026</string>
+
+    <!-- Actions (Additional) -->
+    <string name="action_fetch_calendar">Faigh Mìosachan</string>
+    <string name="action_import_from_file">Ion-phortaich bho Fhaidhle</string>
+    <string name="action_export_local_calendar">\u00c0s-phortaich Mìosachan Ionadail</string>
+
+    <!-- Providers -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- Help Text -->
+    <string name="help_app_password_description">Leigidh faclan-faire sònraichte do aipeanna leat clàradh a-steach gu aipeanna treas-ph\u00e0rtaidh gun do phrìomh fhacal-faire Apple ID a cho-roinn.</string>
+    <string name="help_app_password_steps_header">Gus fear a chruthachadh:</string>
+    <string name="help_app_password_step_1">1. Rach gu appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Clàraich a-steach le d\' Apple ID</string>
+    <string name="help_app_password_step_3">3. Rach gu Clàradh A-steach is Tèarainteachd</string>
+    <string name="help_app_password_step_4">4. Cliog air Faclan-faire Sònraichte do Aipeanna</string>
+    <string name="help_app_password_step_5">5. Cliog Gin agus dèan lethbhreac an seo</string>
+
+    <!-- Notification Permission Dialog -->
+    <string name="dialog_notification_permission_message">Feumaidh KashCal cead bhrathan gus do chuimhneachadh mu thachartasan a tha a\' tighinn.</string>
+    <string name="dialog_notification_permission_settings_hint">\'S urrainn dhut seo atharrachadh nas anmoiche sna Roghainnean.</string>
+
+    <!-- Accounts Screen -->
+    <string name="accounts_title">Cunntasan</string>
+    <string name="accounts_section_connected">Ceangailte</string>
+    <string name="accounts_section_add">Cuir Cunntas Ris</string>
+    <string name="accounts_empty_title">Chan eil cunntas sam bith ceangailte</string>
+    <string name="accounts_empty_subtitle">Cuir cunntas ris gus na mìosachain agad a shioncronachadh thar uidheaman</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; Barrachd</string>
+    <string name="accounts_add_icloud">Cuir iCloud Ris</string>
+    <string name="accounts_add_caldav">Cuir CalDAV Ris</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Barrachd</string>
+    <string name="accounts_caldav_help_title">D\u00e8 th\' ann an CalDAV?</string>
+    <string name="accounts_caldav_help_description">\'S e inbhe fhosgailte a th\' ann an CalDAV airson mìosachain a shioncronachadh. Air a thaic le:</string>
+    <string name="accounts_caldav_help_more">&amp; barrachd</string>
+    <string name="accounts_calendars_syncing">A\' sioncronachadh\u2026</string>
+    <string name="accounts_cd_icloud_icon">Cunntas iCloud</string>
+    <string name="accounts_cd_caldav_icon">Cunntas CalDAV</string>
+    <string name="accounts_cd_back">Stiùir air ais</string>
+    <string name="accounts_sync_issue">Duilgheadas sioncronachaidh</string>
+    <string name="accounts_cd_sync_warning">Rabhadh sioncronachaidh</string>
+
+    <!-- Subscriptions Screen -->
+    <string name="subscriptions_title">Fo-sgrìobhaidhean</string>
+    <string name="subscriptions_section_ics_calendars">Mìosachain ICS</string>
+    <string name="subscriptions_section_add">Cuir Ris</string>
+    <string name="subscriptions_empty_ics">Gun fho-sgrìobhaidhean ICS</string>
+    <string name="subscriptions_empty_ics_hint">Cuir fotha mìosachain ris gus tachartasan fhaicinn</string>
+    <string name="subscriptions_add_ics">Cuir Mìosachan ICS Ris</string>
+    <string name="subscriptions_row_label">L\u00e0ithean-f\u00e8ille, Sgoil &amp; Barrachd</string>
+
+    <!-- Birthdays & Anniversaries -->
+    <string name="birthdays_anniversaries_row_label">Co-làithean Breith &amp; Cuimhneachanan</string>
+    <string name="birthdays_section_title">Co-làithean Breith</string>
+    <string name="anniversaries_section_title">Cuimhneachanan</string>
+    <string name="settings_contact_birthdays">Co-làithean Breith Luchd-aithne</string>
+    <string name="settings_contact_birthdays_description">Seall co-làithean breith bho d\' luchd-aithne fòn mar thachartasan mìosachain fad an latha.</string>
+    <string name="settings_contact_anniversaries">Cuimhneachanan Luchd-aithne</string>
+    <string name="settings_contact_anniversaries_description">Seall cuimhneachanan bho d\' luchd-aithne fòn mar thachartasan mìosachain fad an latha.</string>
+    <string name="settings_anniversary_reminder">Cuimhneachan Cuimhneachaidh</string>
+    <string name="settings_calendar_color">Dath Mìosachain</string>
+    <string name="settings_default_reminder">Cuimhneachan Bunaiteach</string>
+    <string name="action_change">Atharraich</string>
+    <string name="settings_contacts_footer">A\' leughadh bho luchd-aithne an uidheim agad. Feumaidh cead Luchd-aithne.</string>
+    <string name="settings_contacts_permission_required">Tha cead Luchd-aithne a dhìth</string>
+    <string name="subscriptions_cd_back">Stiùir air ais</string>
+    <string name="subscriptions_cd_add">Cuir fo-sgrìobhadh ris</string>
+
+    <!-- Account Detail Sheet -->
+    <string name="account_detail_section_sync">SIONCRONACHADH</string>
+    <string name="account_detail_section_calendars">M\u00ccOSACHAIN</string>
+    <string name="account_detail_section_account">CUNNTAS</string>
+    <string name="account_detail_enabled">Air a chur an comas</string>
+    <string name="account_detail_enabled_subtitle">Sioncronaich an cunntas seo gu fèin-obrachail</string>
+    <string name="account_detail_sync_now">Sioncronaich an-dràsta</string>
+    <string name="account_detail_syncing">A\' sioncronachadh\u2026</string>
+    <string name="account_detail_discovering">A\' lorg\u2026</string>
+    <string name="account_detail_discover_calendars">Lorg Mìosachain \u00d9ra</string>
+    <string name="account_detail_change_password">Atharraich Facal-faire</string>
+    <string name="account_detail_sign_out">Clàraich a-mach</string>
+    <string name="account_detail_never_synced">Nach deach a shioncronachadh riamh</string>
+    <string name="account_detail_last_success">Soirbheachadh mu dheireadh: %1$s</string>
+    <string name="account_detail_cd_rename">Ath-ainmich</string>
+    <string name="account_detail_cd_show_password">Seall facal-faire</string>
+    <string name="account_detail_cd_hide_password">Falaich facal-faire</string>
+
+    <!-- Sync failure notification -->
+    <string name="sync_failure_notification_title">Duilgheadas sioncronachaidh le %1$s</string>
+    <string name="sync_failure_notification_text">Dh\'fhàillig sioncronachadh mìosachain %1$d tursan</string>
+
+    <!-- Rename Account Sheet -->
+    <string name="rename_account_title">Ath-ainmich Cunntas</string>
+    <string name="rename_account_label">Ainm Cunntais</string>
+
+    <!-- Change Password Sheet -->
+    <string name="change_password_title">Atharraich Facal-faire</string>
+    <string name="change_password_label_icloud">Facal-faire Sònraichte do Aip</string>
+    <string name="change_password_label_default">Facal-faire</string>
+
+    <!-- System Account -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_device_calendars">Mìosachain an Uidheim</string>
+    <string name="settings_quick_event_add">Cuir Tachartas Luath Ris</string>
+    <string name="settings_week_numbers">\u00c0ireamhan Seachdaine</string>
+    <string name="settings_widget_event_limit">Crìoch Thachartasan Widget</string>
+    <string name="settings_sync_lookback">Coimhead Air Ais Sioncronachaidh</string>
+    <string name="settings_auto_detect_emojis">Lorg Emojis gu Fèin-obrachail</string>
+    <string name="settings_events_per_day">Tachartasan gach latha</string>
+    <string name="settings_not_set">Gun suidheachadh</string>
+    <string name="settings_on">Air</string>
+    <string name="settings_off">Dheth</string>
+    <string name="settings_tap_to_enable">Thoir gnogag gus cur an comas</string>
+    <string name="settings_device_calendars_enabled">%1$d air an cur an comas</string>
+    <string name="settings_per_day">%1$d gach latha</string>
+    <string name="signin_icloud_help_question">D\u00e8 th\' ann am facal-faire sònraichte do aip?</string>
+    <string name="caldav_trust_insecure_label">Earbs ann an ceangal neo-thèarainte</string>
+    <string name="action_add_another">Cuir Fear Eile Ris</string>
+    <string name="account_connected_found_calendars">Lorg %1$d mìosachan airson %2$s.</string>
+    <string name="account_connected_syncing_hint">Sioncronachadh an gnìomh \u2014 nochdaidh tachartasan a dh\'aithghearr.</string>
+    <string name="settings_time_format_currently_24h">An-dràsta: 24 uairean (%1$s)</string>
+    <string name="settings_time_format_currently_12h">An-dràsta: 12 uairean (%1$s)</string>
+    <string name="settings_time_format_example">Eisimpleir: %1$s</string>
+    <string name="settings_system_default_with_value">Bun-roghainn an t-siostaim (%1$s)</string>
+    <string name="alert_none">Chan eil gin</string>
+    <string name="cd_collapse">Co-theannaich</string>
+    <string name="cd_expand">Leudaich</string>
+    <string name="cd_hide_calendar">Falaich mìosachan</string>
+    <string name="cd_show_calendar">Seall mìosachan</string>
+    <string name="cd_pick_month_year">Tagh mìos is bliadhna</string>
+    <string name="cd_previous_month">Am mìos roimhe</string>
+    <string name="cd_next_month">An ath mhìos</string>
+    <string name="cd_month_year_picker">Roghadair mìosa is bliadhna</string>
+    <string name="cd_remove_alert">Thoir rabhadh air falbh</string>
+    <string name="cd_warning">Rabhadh</string>
+    <string name="cd_refresh_calendars">Ath-nuadhaich mìosachain</string>
+    <string name="cd_timezone_tap_to_change">Roinn-tìde: %1$s, thoir gnogag gus atharrachadh</string>
+    <string name="cd_day_events">L\u00e0 %1$d, %2$d tachartas</string>
+
+    <!-- i18n: Pickers / Forms -->
+    <string name="label_frequency">Tricead</string>
+    <string name="label_on_days">Air làithean</string>
+    <string name="label_pattern">Pàtran</string>
+    <string name="label_ends">A\' Crìochnachadh</string>
+    <string name="label_alerts">Rabhaidhean</string>
+    <string name="label_add_alert">Cuir Rabhadh Ris</string>
+    <string name="label_recurrence_never">Gu bràth</string>
+    <string name="label_tomorrow">A-màireach</string>
+    <string name="label_yesterday">An-dè</string>
+    <string name="label_device_calendars">Mìosachain an Uidheim</string>
+    <string name="label_default_calendar_hint">Thèid tachartasan ùra a chruthachadh sa mhìosachan seo</string>
+    <string name="label_visible_count">%1$d / %2$d faicsinneach</string>
+    <string name="label_enabled_count">%1$d / %2$d air an cur an comas</string>
+    <string name="label_reminders_truncated">%1$d gun sealltainn (%2$d san iomlan, as motha %3$d ri dheasachadh)</string>
+    <string name="label_found_events">Air lorg: %1$d tachartas</string>
+    <string name="label_open_debug_menu">Fosgail clàr-taice dì-bhugachaidh</string>
+    <string name="placeholder_search">Lorg\u2026</string>
+    <string name="status_sync_paused">Sioncronachadh air stad</string>
+    <string name="status_not_synced">Gun sioncronachadh</string>
+    <string name="status_sync_error">Mearachd sioncronachaidh</string>
+    <string name="status_minutes_ago">%1$d mion air ais</string>
+    <string name="status_hours_ago">%1$d uair air ais</string>
+
+    <!-- i18n: Device Calendars Sheet -->
+    <string name="device_calendars_description">Seall tachartasan bho aipeanna mìosachain eile air an uidheam agad (adapairean sioncronachaidh, mìosachain ionadail).</string>
+    <string name="device_calendars_permission_required">Tha cead mìosachain a dhìth. Thoir gnogag air Cuir an Comas gus ruigse a thoirt.</string>
+    <string name="device_calendars_read_only_access">Ruigse leughaidh a-mh\u00e0in</string>
+    <string name="device_calendars_grant_write">Thoir cead sgrìobhaidh gus tachartasan mìosachain an uidheim a dheasachadh</string>
+    <string name="device_calendars_grant">Thoir</string>
+    <string name="device_calendars_none_found">Cha deach mìosachain uidheim a lorg.</string>
+    <string name="device_calendars_local">Ionadail</string>
+    <string name="device_calendars_show_declined">Seall tachartasan a chaidh a dhiùltadh</string>
+    <string name="device_calendars_reminders">Cuimhneachanan</string>
+    <string name="device_calendars_reminders_desc">Faigh brath mu thachartasan mìosachain an uidheim</string>
+    <string name="device_calendars_read_only_no_write">Leughadh a-mh\u00e0in (gun chead sgrìobhaidh)</string>
+    <string name="device_calendars_read_only_calendar">Leughadh a-mh\u00e0in (mìosachan leughaidh a-mh\u00e0in)</string>
+
+    <string name="settings_developer_options">Roghainnean Luchd-leasachaidh</string>
+    <string name="settings_sync_frequency">Tricead Sioncronachaidh</string>
+    <string name="settings_preview">RO-SHEALLADH</string>
+    <string name="settings_n_events">%1$d tachartas</string>
+    <string name="settings_n_events_default">%1$d tachartas (bunaiteach)</string>
+
+    <!-- i18n: Drawer -->
+    <string name="drawer_calendars">Mìosachain</string>
+    <string name="drawer_contacts">Luchd-aithne</string>
+    <string name="drawer_device_calendars">Mìosachain an uidheim</string>
+    <string name="drawer_share_feedback">Co-roinn beachd</string>
+
+    <!-- i18n: App Info / About -->
+    <string name="status_privacy_tagline">Air do shon-sa, chan ann airson do d\u00e0ta.</string>
+    <string name="action_keep_it_that_way">C\u00f9m e mar sin</string>
+
+    <!-- i18n: Sync History -->
+    <string name="status_already_synced">Air Sioncronachadh Mu Thràth</string>
+    <string name="status_warnings">Rabhaidhean</string>
+    <string name="sync_history_events_failed">Tachartasan a dh\'fhàillig</string>
+    <string name="sync_history_abandoned_max_retries">Air a thrèigsinn (as motha ath-oidhirpean)</string>
+    <string name="sync_history_events_skipped">Tachartasan a chaidh a leum</string>
+    <string name="sync_history_duration">Fad</string>
+    <string name="sync_history_already_synced_count">%1$d air sioncronachadh mu thràth</string>
+
+    <!-- i18n: Day Events Sheet -->
+    <string name="day_events_no_events">Gun tachartasan</string>
+
+    <!-- Offline -->
+    <string name="status_youre_offline">Tha thu far loidhne</string>
+
+    <!-- Sign Out -->
+    <string name="dialog_sign_out_title">Clàraich a-mach à %1$s?</string>
+    <string name="dialog_sign_out_message">Tha thu air clàradh a-steach mar %1$s. Bheir clàradh a-mach air falbh mìosachain sioncronaichte bhon uidheam seo.</string>
+
+    <!-- Plural Resources — Scottish Gaelic (gd): one(1,11), two(2,12), few(3-10,13-19), other(0,20+) -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d chunntas</item>
+        <item quantity="two">%1$d chunntas</item>
+        <item quantity="few">%1$d cunntasan</item>
+        <item quantity="other">%1$d cunntas</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 mhìosachan</item>
+        <item quantity="two">%1$s \u00B7 %2$d mhìosachan</item>
+        <item quantity="few">%1$s \u00B7 %2$d mìosachain</item>
+        <item quantity="other">%1$s \u00B7 %2$d mìosachan</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d fho-sgrìobhadh</item>
+        <item quantity="two">%1$d fho-sgrìobhadh</item>
+        <item quantity="few">%1$d fo-sgrìobhaidhean</item>
+        <item quantity="other">%1$d fo-sgrìobhadh</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Dh\'fhàillig sioncronachadh (%1$d oidhirp)</item>
+        <item quantity="two">Dh\'fhàillig sioncronachadh (%1$d oidhirp)</item>
+        <item quantity="few">Dh\'fhàillig sioncronachadh (%1$d oidhirpean)</item>
+        <item quantity="other">Dh\'fhàillig sioncronachadh (%1$d oidhirp)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d mhìosachan</item>
+        <item quantity="two">%1$d mhìosachan</item>
+        <item quantity="few">%1$d mìosachain</item>
+        <item quantity="other">%1$d mìosachan</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d mhìosachan (%2$d ùr)</item>
+        <item quantity="two">%1$d mhìosachan (%2$d ùr)</item>
+        <item quantity="few">%1$d mìosachain (%2$d ùr)</item>
+        <item quantity="other">%1$d mìosachan (%2$d ùr)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d thachartas</item>
+        <item quantity="two">%1$d thachartas</item>
+        <item quantity="few">%1$d tachartasan</item>
+        <item quantity="other">%1$d tachartas</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d cho-l\u00e0 breith</item>
+        <item quantity="two">%1$d cho-l\u00e0 breith</item>
+        <item quantity="few">%1$d co-làithean breith</item>
+        <item quantity="other">%1$d co-l\u00e0 breith</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d chuimhneachan</item>
+        <item quantity="two">%1$d chuimhneachan</item>
+        <item quantity="few">%1$d cuimhneachanan</item>
+        <item quantity="other">%1$d cuimhneachan</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d a bharrachd</item>
+        <item quantity="two">+ %1$d a bharrachd</item>
+        <item quantity="few">+ %1$d a bharrachd</item>
+        <item quantity="other">+ %1$d a bharrachd</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Cuir Tachartas Ris</item>
+        <item quantity="two">Ion-phortaich %1$d Thachartas</item>
+        <item quantity="few">Ion-phortaich %1$d Tachartasan</item>
+        <item quantity="other">Ion-phortaich %1$d Tachartas</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Cuir Ris</item>
+        <item quantity="two">Ion-phortaich</item>
+        <item quantity="few">Ion-phortaich</item>
+        <item quantity="other">Ion-phortaich</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026agus %1$d a bharrachd</item>
+        <item quantity="two">\u2026agus %1$d a bharrachd</item>
+        <item quantity="few">\u2026agus %1$d a bharrachd</item>
+        <item quantity="other">\u2026agus %1$d a bharrachd</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d thachartas air ion-phortachadh</item>
+        <item quantity="two">%1$d thachartas air an ion-phortachadh</item>
+        <item quantity="few">%1$d tachartasan air an ion-phortachadh</item>
+        <item quantity="other">%1$d tachartas air an ion-phortachadh</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">%1$d thachartas air \u00e0s-phortachadh</item>
+        <item quantity="two">%1$d thachartas air an \u00e0s-phortachadh</item>
+        <item quantity="few">%1$d tachartasan air an \u00e0s-phortachadh</item>
+        <item quantity="other">%1$d tachartas air an \u00e0s-phortachadh</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d thachartas</item>
+        <item quantity="two">%1$d thachartas</item>
+        <item quantity="few">%1$d tachartasan</item>
+        <item quantity="other">%1$d tachartas</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d mhionaid</item>
+        <item quantity="two">%1$d mhionaid</item>
+        <item quantity="few">%1$d mionaidean</item>
+        <item quantity="other">%1$d mionaid</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d mion</item>
+        <item quantity="two">%1$d mhion</item>
+        <item quantity="few">%1$d mion</item>
+        <item quantity="other">%1$d mion</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d uair</item>
+        <item quantity="two">%1$d uair</item>
+        <item quantity="few">%1$d uairean</item>
+        <item quantity="other">%1$d uair</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d l\u00e0</item>
+        <item quantity="two">%1$d l\u00e0</item>
+        <item quantity="few">%1$d l\u00e0ithean</item>
+        <item quantity="other">%1$d l\u00e0</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d seachdain</item>
+        <item quantity="two">%1$d sheachdain</item>
+        <item quantity="few">%1$d seachdainean</item>
+        <item quantity="other">%1$d seachdain</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d mhìos</item>
+        <item quantity="two">%1$d mhìos</item>
+        <item quantity="few">%1$d mìosan</item>
+        <item quantity="other">%1$d mìos</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d bhliadhna</item>
+        <item quantity="two">%1$d bhliadhna</item>
+        <item quantity="few">%1$d bliadhnaichean</item>
+        <item quantity="other">%1$d bliadhna</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d diog</item>
+        <item quantity="two">%1$d dhiog</item>
+        <item quantity="few">%1$d diogan</item>
+        <item quantity="other">%1$d diog</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d mhionaid roimhe</item>
+        <item quantity="two">%1$d mhionaid roimhe</item>
+        <item quantity="few">%1$d mionaidean roimhe</item>
+        <item quantity="other">%1$d mionaid roimhe</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d uair roimhe</item>
+        <item quantity="two">%1$d uair roimhe</item>
+        <item quantity="few">%1$d uairean roimhe</item>
+        <item quantity="other">%1$d uair roimhe</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d l\u00e0 roimhe</item>
+        <item quantity="two">%1$d l\u00e0 roimhe</item>
+        <item quantity="few">%1$d l\u00e0ithean roimhe</item>
+        <item quantity="other">%1$d l\u00e0 roimhe</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d seachdain roimhe</item>
+        <item quantity="two">%1$d sheachdain roimhe</item>
+        <item quantity="few">%1$d seachdainean roimhe</item>
+        <item quantity="other">%1$d seachdain roimhe</item>
+    </plurals>
+
+    <!-- HomeScreen -->
+    <string name="dialog_edit_recurring_title">Deasaich tachartas ath-thachairteil</string>
+    <string name="dialog_delete_recurring_title">Sguab tachartas ath-thachairteil \u00e0s</string>
+    <string name="dialog_edit_recurring_message">\'S e tachartas ath-thachairteil a tha seo. Ciamar a bu mhath leat an t-atharrachadh seo a chur an sàs?</string>
+    <string name="recurring_this_event">An tachartas seo</string>
+    <string name="recurring_all_events">Gach tachartas</string>
+    <string name="empty_pick_a_day">Tagh l\u00e0. D\u00e8an feum dheth.</string>
+    <string name="empty_no_events_day">Chan eil dad ri fhaicinn an seo; rach a-mach?</string>
+    <string name="label_upcoming_events">Tachartasan a tha a\' Tighinn</string>
+    <string name="filter_date">Ceann-l\u00e0</string>
+    <string name="label_select_date">Tagh ceann-l\u00e0</string>
+    <string name="hint_tap_date_range">Thoir gnogag air an aon cheann-l\u00e0 airson aon l\u00e0, no ceann-l\u00e0 eile airson raon</string>
+
+    <string name="cd_clear">Glan</string>
+    <string name="cd_offline">Far loidhne</string>
+    <string name="cd_previous">Roimhe</string>
+    <string name="cd_next">Air adhart</string>
+    <string name="cd_open_drawer">Fosgail drathair</string>
+    <string name="cd_close_drawer">D\u00f9in drathair</string>
+    <string name="cd_calendar_view">Sealladh mìosachain</string>
+    <string name="cd_active_view">Sealladh gnìomhach</string>
+
+    <string name="view_agenda">Cl\u00e0r-gnothaich</string>
+    <string name="view_month_full">Mìos (Sl\u00e0n)</string>
+    <string name="view_three_days">3 Làithean</string>
+    <string name="view_year">Bliadhna</string>
+
+    <string name="label_go_to_month">Rach gu mìos</string>
+
+    <string name="action_more_options">Barrachd roghainnean</string>
+
+    <string name="label_duration_days">l\u00e0</string>
+    <string name="label_duration_hrs">uair</string>
+    <string name="label_duration_min">mion</string>
+
+    <!-- RecurrencePicker -->
+    <string name="recurrence_on_day">Air l\u00e0 %1$d</string>
+    <string name="recurrence_on_last_day">Air l\u00e0 mu dheireadh na mìosa</string>
+    <string name="recurrence_on_nth_weekday">Air an %1$s %2$s</string>
+    <string name="ordinal_1st">1d</string>
+    <string name="ordinal_2nd">2na</string>
+    <string name="ordinal_3rd">3s</string>
+    <string name="ordinal_4th">4mh</string>
+    <string name="ordinal_nth">%1$dmh</string>
+
+    <!-- RRULE Display -->
+    <string name="rrule_does_not_repeat">Chan eil ag ath-thachairt</string>
+    <string name="rrule_freq_daily">Gach là</string>
+    <string name="rrule_freq_weekly">Gach seachdain</string>
+    <string name="rrule_freq_biweekly">Gach dà sheachdain</string>
+    <string name="rrule_freq_monthly">Gach mìos</string>
+    <string name="rrule_freq_quarterly">Gach ràith</string>
+    <string name="rrule_freq_yearly">Gach bliadhna</string>
+    <string name="rrule_repeats">Ag ath-thachairt</string>
+    <string name="rrule_every_n_days">Gach %1$d là</string>
+    <string name="rrule_every_n_weeks">Gach %1$d seachdain</string>
+    <string name="rrule_every_n_months">Gach %1$d mìosan</string>
+    <string name="rrule_every_n_years">Gach %1$d bliadhna</string>
+    <string name="rrule_freq_on_days">%1$s air %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s air an %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s air an là mu dheireadh</string>
+    <string name="rrule_freq_on_day_n">%1$s air là %2$d</string>
+    <string name="rrule_ordinal_last">mu dheireadh</string>
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d turas</item>
+        <item quantity="two">, %1$d thuras</item>
+        <item quantity="few">, %1$d tursan</item>
+        <item quantity="other">, %1$d turas</item>
+    </plurals>
+    <string name="rrule_until_suffix">, gu %1$s</string>
+    <string name="rrule_freq_never">Gu bràth</string>
+    <string name="rrule_starting">%1$s a\' tòiseachadh %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 bho %2$s</string>
+    <!-- Sync Summary -->
+    <string name="sync_summary_new">%1$d ùr</string>
+    <string name="sync_summary_updated">%1$d air ùrachadh</string>
+    <string name="sync_summary_removed">%1$d air an toirt air falbh</string>
+
+    <!-- Additional Content Descriptions -->
+    <string name="cd_previous_3_days">3 làithean roimhe</string>
+    <string name="cd_next_3_days">An ath 3 làithean</string>
+    <string name="cd_circular_scrolling">Sgrolladh cearcallach air a chur an comas</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Gun chuimhneachan</string>
+    <string name="reminder_at_time_of_event">Aig àm an tachartais</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s ro làimh</string>
+    <string name="reminder_time_after">%1$s an dèidh</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM là an tachartais</string>
+    <string name="reminder_day_of_event_24h">09:00 là an tachartais</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s ro làimh aig 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s ro làimh aig 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Dheth</string>
+    <string name="reminder_short_at_event">Aig tachartas</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$du</string>
+    <string name="reminder_short_days">%1$dl</string>
+    <string name="reminder_short_weeks">%1$ds</string>
+    <string name="reminder_summary_none">Chan eil gin</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$du %2$dm</string>
+    <string name="duration_compact_short">%1$du%2$dm</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Le làimh a-mhàin</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Gach tachartas</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Cuir dàil</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">A\' tòiseachadh a-nis</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">A-màireach, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Sioncronachadh deiseil</string>
+    <string name="sync_notification_partial">Sioncronachadh pàirt deiseil</string>
+    <string name="sync_notification_auth_failed">Dh\'fhàillig dearbhadh sioncronachaidh</string>
+    <string name="sync_notification_auth_reauth">Dèan dearbhadh a-rithist air do chunntas</string>
+    <string name="sync_notification_failed">Dh\'fhàillig sioncronachadh</string>
+    <string name="sync_notification_parse_title">Cha b\' urrainn cuid de thachartasan a shioncronachadh</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">Cha b\' urrainn %1$s ann an %2$s a shioncronachadh. Feuch Sparr Sioncronachadh anns na Roghainnean.</string>
+    <string name="sync_notification_conflict_title">Connspaid sioncronachaidh air a fuasgladh</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Chaidh atharrachaidhean ionadail air \"%1$s\" a chall air sgàth connspaid sioncronachaidh. Thèid tionndadh an fhrithealaiche a chleachdadh.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Chaidh atharrachaidhean ionadail air %1$s a chall air sgàth connspaidean sioncronachaidh. Thèid tionndaidhean an fhrithealaiche a chleachdadh.</string>
+    <string name="sync_notification_expired_title">Tha atharrachaidhean sioncronachaidh air a dhol à bith</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">Cha b\' urrainn %1$s a shioncronachadh an dèidh 30 là. Thèid tionndadh an fhrithealaiche a chleachdadh. Sparr Sioncronachadh gus feuchainn a-rithist.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Chaidh %1$d mhìosachan a shioncronachadh</item>
+        <item quantity="two">Chaidh %1$d mhìosachan a shioncronachadh</item>
+        <item quantity="few">Chaidh %1$d mìosachain a shioncronachadh</item>
+        <item quantity="other">Chaidh %1$d mìosachan a shioncronachadh</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d atharrachadh</item>
+        <item quantity="two">, %1$d atharrachadh</item>
+        <item quantity="few">, %1$d atharrachaidhean</item>
+        <item quantity="other">, %1$d atharrachadh</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d mhearachd</item>
+        <item quantity="two">, %1$d mhearachd</item>
+        <item quantity="few">, %1$d mearachdan</item>
+        <item quantity="other">, %1$d mearachd</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%2$s Co-là-breith %1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">Co-là-breith %1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%2$s Cuimhneachan-bliadhnail %1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">Cuimhneachan-bliadhnail %1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$dd</string>
+    <string name="ordinal_suffix_nd">%1$dna</string>
+    <string name="ordinal_suffix_rd">%1$ds</string>
+    <string name="ordinal_suffix_th">%1$dmh</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">A\' sioncronachadh mhìosachain\u2026</string>
+    <string name="sync_banner_preparing">Ag ullachadh airson sioncronachadh\u2026</string>
+    <string name="sync_banner_complete_errors">Sioncronachadh deiseil le mearachdan</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Dh\'fhàillig sioncronachadh: %1$s</string>
+    <string name="error_unknown_error">Mearachd neo-aithnichte</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Tachartas ùr: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d thachartas ùr</item>
+        <item quantity="two">%1$d thachartas ùr</item>
+        <item quantity="few">%1$d tachartasan ùra</item>
+        <item quantity="other">%1$d tachartas ùr</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d thachartas air ùrachadh</item>
+        <item quantity="two">%1$d thachartas air ùrachadh</item>
+        <item quantity="few">%1$d tachartasan air ùrachadh</item>
+        <item quantity="other">%1$d tachartas air ùrachadh</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d thachartas air a thoirt air falbh</item>
+        <item quantity="two">%1$d thachartas air an toirt air falbh</item>
+        <item quantity="few">%1$d tachartasan air an toirt air falbh</item>
+        <item quantity="other">%1$d tachartas air an toirt air falbh</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d ùrachadh mìosachain</item>
+        <item quantity="two">%1$d ùrachadh mìosachain</item>
+        <item quantity="few">%1$d ùrachaidhean mìosachain</item>
+        <item quantity="other">%1$d ùrachadh mìosachain</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Là %1$d à %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Là 1 à %1$d \u00b7 a\' tòiseachadh %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Là %1$d à %2$d \u00b7 a\' crìochnachadh %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Fad an là</string>
+    <string name="event_date_all_day">%1$s \u00b7 Fad an là</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Fad an là)</string>
+    <string name="event_date_all_day_parens">%1$s (Fad an là)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Sàbhail tachartas</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Ùr</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Dearg</string>
+    <string name="color_orange">Orains</string>
+    <string name="color_yellow">Buidhe</string>
+    <string name="color_green">Uaine</string>
+    <string name="color_cyan">Saidhean</string>
+    <string name="color_blue">Gorm</string>
+    <string name="color_purple">Purpaidh</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Ceangal coinneimh: %1$s</string>
+    <string name="cd_phone_number">Àireamh fòn</string>
+    <string name="cd_email_link">Post-d: %1$s</string>
+    <string name="cd_web_link">Ceangal: %1$s</string>
+    <string name="cd_text_with_links">Teacsa le %1$d ceangal: %2$s</string>
+    <string name="cd_text_with_link">Teacsa le 1 ceangal: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Là %1$d à %2$d (Fad an là)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d sionc.   \u2191%2$d pùtaichte   \u2193%3$d tarraingichte</string>
+    <string name="sync_history_stats_issues">%1$d sionc.   \u2191%2$d pùtaichte   \u2193%3$d tarraingichte   \u26a0 %4$d duilgheadas</string>
+    <string name="sync_history_failed">Dh\'fhàillig</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Gach uair</string>
+    <string name="ics_sync_every_n_hours">Gach %1$d uairean</string>
+    <string name="ics_sync_daily">Gach là</string>
+    <string name="ics_sync_weekly">Gach seachdain</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">Tha feum air URL</string>
+    <string name="ics_url_invalid_scheme">Feumaidh an URL tòiseachadh le http://, https://, no webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Fad an là)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="cd_widget_calendar">Mìosachan</string>
+    <string name="cd_widget_add_event">Cuir tachartas ris</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">gun tachartasan</string>
+    <string name="channel_event_reminders">Cuimhneachain thachartasan</string>
+    <string name="channel_event_reminders_desc">Brathan airson tachartasan mìosachain ri thighinn</string>
+    <string name="channel_sync_progress">Adhartas sioncronachaidh</string>
+    <string name="channel_sync_progress_desc">A\' sealltainn adhartas fhad \'s a tha mìosachain gan sioncronachadh</string>
+    <string name="channel_sync_status">Inbhe sioncronachaidh</string>
+    <string name="channel_sync_status_desc">Brathan mu chrìochnachadh agus mearachdan sioncronachaidh</string>
+
+</resources>

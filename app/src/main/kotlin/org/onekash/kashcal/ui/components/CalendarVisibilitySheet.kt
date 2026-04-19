@@ -18,8 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.model.CalendarGroup
 
 /**
@@ -68,12 +70,12 @@ fun CalendarVisibilitySheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Calendars",
+                    stringResource(R.string.drawer_calendars),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = onDismiss) {
-                    Text("Done")
+                    Text(stringResource(R.string.action_done))
                 }
             }
 
@@ -88,7 +90,7 @@ fun CalendarVisibilitySheet(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        "No calendars available",
+                        stringResource(R.string.empty_no_calendars),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
@@ -113,7 +115,7 @@ fun CalendarVisibilitySheet(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     TextButton(onClick = onShowAll) {
-                        Text("Show All")
+                        Text(stringResource(R.string.action_show_all))
                     }
                 }
             }

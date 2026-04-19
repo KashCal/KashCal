@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.quickadd
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -241,5 +242,118 @@ class RecurrenceRuleTest {
         assertEquals("FREQ=WEEKLY;INTERVAL=2", ctx.rrule)
         // No BYDAY component
         assertTrue(!ctx.rrule!!.contains("BYDAY"))
+    }
+
+    // ==================== EVERY WEEKDAY ====================
+
+    @Test
+    fun `every weekday sets BYDAY MO through FR`() {
+        val ctx = parse("every weekday")
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", ctx.rrule)
+    }
+
+    @Test
+    fun `every weekdays sets BYDAY MO through FR`() {
+        val ctx = parse("every weekdays")
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", ctx.rrule)
+    }
+
+    @Test
+    fun `every weekday at 9am - recurrence with time`() {
+        val ctx = parse("every weekday at 9am", applyTime = true)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", ctx.rrule)
+        assertEquals(LocalTime.of(9, 0), ctx.resolveTime())
+    }
+
+    @Test
+    fun `every weekday consumes both tokens`() {
+        val normalized = normalizer.normalize("standup every weekday")
+        val tokens = WordTokenizer.tokenize(normalized)
+        val context = ParseContext(reference)
+        RecurrenceRule.apply(tokens, context)
+        // "every" (index 1) and "weekday" (index 2) should be consumed
+        assertTrue(context.isConsumed(1))
+        assertTrue(context.isConsumed(2))
+        // "standup" (index 0) should NOT be consumed
+        assertTrue(!context.isConsumed(0))
+    }
+
+    @Test
+    fun `weekdays standalone sets BYDAY MO through FR`() {
+        val ctx = parse("weekdays")
+        assertEquals("FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", ctx.rrule)
+    }
+
+    @Test
+    fun `weekdays standup - keyword consumed, standup remains`() {
+        val normalized = normalizer.normalize("weekdays standup")
+        val tokens = WordTokenizer.tokenize(normalized)
+        val context = ParseContext(reference)
+        RecurrenceRule.apply(tokens, context)
+        assertTrue(context.isConsumed(0))
+        assertTrue(!context.isConsumed(1))
+    }
+
+    @Test
+    fun `every day still works - not confused with weekday`() {
+        val ctx = parse("every day")
+        assertEquals("FREQ=DAILY", ctx.rrule)
+    }
+
+    @Test
+    fun `every Monday still works after weekday addition`() {
+        val ctx = parse("every Monday")
+        assertEquals("FREQ=WEEKLY;BYDAY=MO", ctx.rrule)
+    }
+
+    // ==================== UNTIL ====================
+
+    @Test
+    fun `every Monday until December sets UNTIL to Dec 31`() {
+        val ctx = parse("every Monday until December")
+        assertNotNull(ctx.rrule)
+        assertTrue(ctx.rrule!!.contains("FREQ=WEEKLY"))
+        assertTrue(ctx.rrule!!.contains("BYDAY=MO"))
+        assertTrue(ctx.rrule!!.contains("UNTIL="))
+    }
+
+    @Test
+    fun `every Monday until Jan 15 sets UNTIL`() {
+        val ctx = parse("every Monday until Jan 15")
+        assertNotNull(ctx.rrule)
+        assertTrue(ctx.rrule!!.contains("UNTIL="))
+    }
+
+    @Test
+    fun `every Monday until December 15 sets UNTIL`() {
+        val ctx = parse("every Monday until December 15")
+        assertNotNull(ctx.rrule)
+        assertTrue(ctx.rrule!!.contains("UNTIL="))
+    }
+
+    // ==================== COUNT ====================
+
+    @Test
+    fun `every day for 10 times sets COUNT=10`() {
+        val ctx = parse("every day for 10 times")
+        assertNotNull(ctx.rrule)
+        assertTrue(ctx.rrule!!.contains("FREQ=DAILY"))
+        assertTrue(ctx.rrule!!.contains("COUNT=10"))
+    }
+
+    @Test
+    fun `daily 10 times sets COUNT=10`() {
+        val ctx = parse("daily 10 times")
+        assertNotNull(ctx.rrule)
+        assertTrue(ctx.rrule!!.contains("FREQ=DAILY"))
+        assertTrue(ctx.rrule!!.contains("COUNT=10"))
+    }
+
+    @Test
+    fun `every Monday without until or count has no UNTIL or COUNT`() {
+        val ctx = parse("every Monday")
+        assertNotNull(ctx.rrule)
+        assertTrue(!ctx.rrule!!.contains("UNTIL"))
+        assertTrue(!ctx.rrule!!.contains("COUNT"))
     }
 }

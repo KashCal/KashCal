@@ -19,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.EmojiMatcher
@@ -43,8 +45,9 @@ internal fun EventCard(
     timePattern: String = "h:mm a",
     onClick: () -> Unit
 ) {
+    val resources = LocalContext.current.resources
     val displayTitle = remember(displayEvent, showEventEmojis) {
-        formatDisplayEventTitle(displayEvent, showEventEmojis)
+        formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
     Card(
@@ -68,7 +71,7 @@ internal fun EventCard(
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, timePattern = timePattern)
+                val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, resources, timePattern = timePattern)
                 Text(
                     timeText,
                     style = MaterialTheme.typography.bodySmall,
@@ -86,21 +89,22 @@ internal fun EventCard(
     }
 }
 
-internal fun formatDisplayEventTitle(displayEvent: DisplayEvent, showEmojis: Boolean): String {
+internal fun formatDisplayEventTitle(displayEvent: DisplayEvent, showEmojis: Boolean, resources: android.content.res.Resources): String {
     return when (displayEvent) {
-        is DisplayEvent.Room -> formatEventTitle(displayEvent.event, displayEvent.occurrence.startTs, showEmojis)
+        is DisplayEvent.Room -> formatEventTitle(displayEvent.event, displayEvent.occurrence.startTs, showEmojis, resources)
         is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEmojis)
     }
 }
 
-internal fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true): String {
-    val baseTitle = ContactEventTitleFormatter.format(event, occurrenceTs)
+internal fun formatEventTitle(event: Event, occurrenceTs: Long?, showEmojis: Boolean = true, resources: android.content.res.Resources): String {
+    val baseTitle = ContactEventTitleFormatter.format(event, occurrenceTs, resources)
     return EmojiMatcher.formatWithEmoji(baseTitle, showEmojis)
 }
 
 internal fun formatDisplayEventTimeDisplay(
     displayEvent: DisplayEvent,
     selectedDateMillis: Long,
+    resources: android.content.res.Resources,
     zoneId: ZoneId = ZoneId.systemDefault(),
     timePattern: String = "h:mm a"
 ): String {
@@ -112,7 +116,7 @@ internal fun formatDisplayEventTimeDisplay(
     val isMultiDay = endDate.isAfter(startDate)
 
     if (!isMultiDay) {
-        return if (displayEvent.isAllDay) "All day$recurringIndicator"
+        return if (displayEvent.isAllDay) resources.getString(R.string.label_all_day) + recurringIndicator
         else {
             val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
             val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
@@ -127,13 +131,13 @@ internal fun formatDisplayEventTimeDisplay(
     return when {
         currentDay == 1 && !displayEvent.isAllDay -> {
             val startTime = Instant.ofEpochMilli(displayEvent.startTs).atZone(zoneId).format(timeFormatter)
-            "Day 1 of $totalDays · starts $startTime$recurringIndicator"
+            resources.getString(R.string.day_starts, totalDays, startTime) + recurringIndicator
         }
         currentDay == totalDays && !displayEvent.isAllDay -> {
             val endTime = Instant.ofEpochMilli(displayEvent.endTs).atZone(zoneId).format(timeFormatter)
-            "Day $totalDays of $totalDays · ends $endTime$recurringIndicator"
+            resources.getString(R.string.day_ends, currentDay, totalDays, endTime) + recurringIndicator
         }
-        else -> "Day $currentDay of $totalDays$recurringIndicator"
+        else -> resources.getString(R.string.day_x_of_y, currentDay, totalDays) + recurringIndicator
     }
 }
 

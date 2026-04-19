@@ -41,26 +41,28 @@ class EventPositioningTest {
         dtstamp = now
     )
 
-    // Helper to create test occurrence
+    // Helper to create test occurrence (supports cross-midnight via endDate)
     private fun createTestOccurrence(
         eventId: Long = 1L,
         startHour: Int,
         startMinute: Int = 0,
         endHour: Int,
         endMinute: Int = 0,
-        date: LocalDate = LocalDate.now()
+        date: LocalDate = LocalDate.now(),
+        endDate: LocalDate = date
     ): Occurrence {
         val zone = ZoneId.systemDefault()
         val startTs = date.atTime(LocalTime.of(startHour, startMinute))
             .atZone(zone)
             .toInstant()
             .toEpochMilli()
-        val endTs = date.atTime(LocalTime.of(endHour, endMinute))
+        val endTs = endDate.atTime(LocalTime.of(endHour, endMinute))
             .atZone(zone)
             .toInstant()
             .toEpochMilli()
 
         val startDay = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+        val endDayCode = endDate.year * 10000 + endDate.monthValue * 100 + endDate.dayOfMonth
 
         return Occurrence(
             eventId = eventId,
@@ -68,7 +70,7 @@ class EventPositioningTest {
             startTs = startTs,
             endTs = endTs,
             startDay = startDay,
-            endDay = startDay,
+            endDay = endDayCode,
             isCancelled = false,
             exceptionEventId = null
         )
@@ -91,7 +93,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -114,7 +116,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -136,7 +138,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -157,7 +159,7 @@ class EventPositioningTest {
         val occ2 = createTestOccurrence(eventId = 2, startHour = 9, endHour = 10)
 
         val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(2, positioned.size)
 
@@ -182,7 +184,7 @@ class EventPositioningTest {
             )
         }
 
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         // All 3 events should be in the result
         assertEquals(3, positioned.size)
@@ -203,7 +205,7 @@ class EventPositioningTest {
         val occ2 = createTestOccurrence(eventId = 2, startHour = 11, endHour = 12)
 
         val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(2, positioned.size)
 
@@ -225,7 +227,7 @@ class EventPositioningTest {
         val occ2 = createTestOccurrence(eventId = 2, startHour = 10, endHour = 12)
 
         val events = listOf(toDisplayEvent(event1, occ1), toDisplayEvent(event2, occ2))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(2, positioned.size)
 
@@ -247,7 +249,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -269,7 +271,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -288,7 +290,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -303,7 +305,7 @@ class EventPositioningTest {
 
     @Test
     fun `empty event list returns empty`() {
-        val positioned = WeekViewUtils.positionEventsForDay(emptyList(), dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(emptyList(), date = LocalDate.now(), dayIndex = 0)
         assertTrue(positioned.isEmpty())
     }
 
@@ -317,7 +319,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -336,7 +338,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
     }
@@ -351,7 +353,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -373,7 +375,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
     }
@@ -388,7 +390,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -407,7 +409,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         // 3am-5am is within 0-24h range → positioned (not filtered out)
         assertEquals(1, positioned.size)
@@ -425,7 +427,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0, hourHeight = 90.dp)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0, hourHeight = 90.dp)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -446,7 +448,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(event, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0, hourHeight = 30.dp)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0, hourHeight = 30.dp)
 
         assertEquals(1, positioned.size)
         val pos = positioned[0]
@@ -455,6 +457,98 @@ class EventPositioningTest {
         assertEquals(270f, pos.topOffset.value, 1f)
         // height: 1 hour * 30dp = 30dp (above MIN_EVENT_HEIGHT)
         assertEquals(30f, pos.height.value, 1f)
+    }
+
+    // ==================== Cross-Midnight Event Tests ====================
+
+    @Test
+    fun `cross-midnight event visible on start day from 22h to midnight`() {
+        val startDate = LocalDate.of(2026, 4, 15)
+        val endDate = LocalDate.of(2026, 4, 16)
+        val event = createTestEvent(id = 1, title = "Late Night")
+        val occ = createTestOccurrence(
+            eventId = 1, startHour = 22, date = startDate,
+            endHour = 4, endDate = endDate
+        )
+        val events = listOf(toDisplayEvent(event, occ))
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = startDate, dayIndex = 0)
+
+        assertEquals(1, positioned.size)
+        assertEquals(1320, positioned[0].startMinutes)
+        assertEquals(1440, positioned[0].endMinutes)
+        assertEquals(120f, positioned[0].height.value, 1f)
+    }
+
+    @Test
+    fun `cross-midnight event visible on end day from midnight to 4am`() {
+        val startDate = LocalDate.of(2026, 4, 15)
+        val endDate = LocalDate.of(2026, 4, 16)
+        val event = createTestEvent(id = 1, title = "Late Night")
+        val occ = createTestOccurrence(
+            eventId = 1, startHour = 22, date = startDate,
+            endHour = 4, endDate = endDate
+        )
+        val events = listOf(toDisplayEvent(event, occ))
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = endDate, dayIndex = 0)
+
+        assertEquals(1, positioned.size)
+        assertEquals(0, positioned[0].startMinutes)
+        assertEquals(240, positioned[0].endMinutes)
+        assertEquals(0f, positioned[0].topOffset.value, 0.1f)
+    }
+
+    @Test
+    fun `same-day event unchanged by date-aware clamping`() {
+        val date = LocalDate.of(2026, 4, 15)
+        val event = createTestEvent(id = 1)
+        val occ = createTestOccurrence(eventId = 1, startHour = 9, endHour = 10, date = date)
+        val events = listOf(toDisplayEvent(event, occ))
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = date, dayIndex = 0)
+
+        assertEquals(1, positioned.size)
+        assertEquals(540, positioned[0].startMinutes)
+        assertEquals(600, positioned[0].endMinutes)
+    }
+
+    @Test
+    fun `multi-day event renders full bar on middle day`() {
+        val startDate = LocalDate.of(2026, 4, 14)
+        val middleDate = LocalDate.of(2026, 4, 15)
+        val endDate = LocalDate.of(2026, 4, 16)
+        val event = createTestEvent(id = 1, title = "Conference")
+        val occ = createTestOccurrence(
+            eventId = 1, startHour = 20, date = startDate,
+            endHour = 10, endDate = endDate
+        )
+        val events = listOf(toDisplayEvent(event, occ))
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = middleDate, dayIndex = 0)
+
+        assertEquals(1, positioned.size)
+        assertEquals(0, positioned[0].startMinutes)
+        assertEquals(1440, positioned[0].endMinutes)
+    }
+
+    @Test
+    fun `event ending exactly at midnight shows only on start day`() {
+        val startDate = LocalDate.of(2026, 4, 15)
+        val endDate = LocalDate.of(2026, 4, 16)
+        val event = createTestEvent(id = 1, title = "Until Midnight")
+        val occ = createTestOccurrence(
+            eventId = 1, startHour = 22, date = startDate,
+            endHour = 0, endMinute = 0, endDate = endDate
+        )
+
+        val startDayPositioned = WeekViewUtils.positionEventsForDay(
+            listOf(toDisplayEvent(event, occ)), date = startDate, dayIndex = 0
+        )
+        assertEquals(1, startDayPositioned.size)
+        assertEquals(1320, startDayPositioned[0].startMinutes)
+        assertEquals(1440, startDayPositioned[0].endMinutes)
+
+        val endDayPositioned = WeekViewUtils.positionEventsForDay(
+            listOf(toDisplayEvent(event, occ)), date = endDate, dayIndex = 0
+        )
+        assertEquals(0, endDayPositioned.size)
     }
 
     // ==================== Exception Event Tests ====================
@@ -481,7 +575,7 @@ class EventPositioningTest {
         )
 
         val events = listOf(toDisplayEvent(exceptionEvent, occurrence))
-        val positioned = WeekViewUtils.positionEventsForDay(events, dayIndex = 0)
+        val positioned = WeekViewUtils.positionEventsForDay(events, date = LocalDate.now(), dayIndex = 0)
 
         assertEquals(1, positioned.size)
         assertEquals("Exception Event", positioned[0].displayEvent.title)

@@ -18,10 +18,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.MonthYearWheelPicker
 
 /**
@@ -52,6 +54,8 @@ fun YearOverlay(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    val monthYearPickerLabel = stringResource(R.string.cd_month_year_picker)
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState
@@ -61,12 +65,12 @@ fun YearOverlay(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
                 .padding(bottom = 32.dp)
-                .semantics { contentDescription = "Month and year picker" },
+                .semantics { contentDescription = monthYearPickerLabel },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Title
             Text(
-                text = "Go to month",
+                text = stringResource(R.string.label_go_to_month),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -90,7 +94,7 @@ fun YearOverlay(
             Button(
                 onClick = { onMonthSelected(pickedYear, pickedMonth) }
             ) {
-                Text("Done")
+                Text(stringResource(R.string.action_done))
             }
         }
     }

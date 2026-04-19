@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 
@@ -80,7 +83,12 @@ fun EventBlock(
             }
         }
     } else {
-        Modifier.clickable(onClick = onClick)
+        Modifier.pointerInput(Unit) {
+            detectTapGestures(
+                onDoubleTap = { },
+                onTap = { onClick() }
+            )
+        }
     }
 
     Box(
@@ -186,7 +194,7 @@ fun OverflowBadge(
             .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "+$count more",
+            text = stringResource(R.string.status_more_events, count),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

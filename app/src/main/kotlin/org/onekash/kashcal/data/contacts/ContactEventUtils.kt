@@ -1,5 +1,7 @@
 package org.onekash.kashcal.data.contacts
 
+import android.content.res.Resources
+import org.onekash.kashcal.R
 import java.util.Calendar
 import java.util.TimeZone
 
@@ -126,6 +128,17 @@ object ContactEventUtils {
         }
     }
 
+    fun formatOrdinal(n: Int, resources: Resources): String {
+        val suffixRes = when {
+            n % 100 in 11..13 -> R.string.ordinal_suffix_th
+            n % 10 == 1 -> R.string.ordinal_suffix_st
+            n % 10 == 2 -> R.string.ordinal_suffix_nd
+            n % 10 == 3 -> R.string.ordinal_suffix_rd
+            else -> R.string.ordinal_suffix_th
+        }
+        return resources.getString(suffixRes, n)
+    }
+
     /**
      * Format birthday event title with optional age.
      *
@@ -147,6 +160,19 @@ object ContactEventUtils {
         }
     }
 
+    fun formatBirthdayTitle(displayName: String, birthYear: Int?, occurrenceTs: Long, resources: Resources): String {
+        return if (birthYear != null) {
+            val age = calculateYearsSince(birthYear, occurrenceTs)
+            if (age > 0 && age < 150) {
+                resources.getString(R.string.contact_birthday_with_age, displayName, formatOrdinal(age, resources))
+            } else {
+                resources.getString(R.string.contact_birthday, displayName)
+            }
+        } else {
+            resources.getString(R.string.contact_birthday, displayName)
+        }
+    }
+
     /**
      * Format anniversary event title with optional year count.
      *
@@ -165,6 +191,19 @@ object ContactEventUtils {
             }
         } else {
             "$displayName's Anniversary"
+        }
+    }
+
+    fun formatAnniversaryTitle(displayName: String, anniversaryYear: Int?, occurrenceTs: Long, resources: Resources): String {
+        return if (anniversaryYear != null) {
+            val years = calculateYearsSince(anniversaryYear, occurrenceTs)
+            if (years > 0 && years < 150) {
+                resources.getString(R.string.contact_anniversary_with_age, displayName, formatOrdinal(years, resources))
+            } else {
+                resources.getString(R.string.contact_anniversary, displayName)
+            }
+        } else {
+            resources.getString(R.string.contact_anniversary, displayName)
         }
     }
 

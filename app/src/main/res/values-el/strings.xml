@@ -1,0 +1,889 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Σημερινή ατζέντα</string>
+    <string name="widget_description">Εμφανίζει τα σημερινά συμβάντα ημερολογίου</string>
+    <string name="week_widget_name">Εβδομαδιαία προβολή</string>
+    <string name="week_widget_description">Εμφανίζει τα συμβάντα ημερολογίου για τις επόμενες 7 ημέρες</string>
+    <string name="month_widget_name">Μηνιαία προβολή</string>
+    <string name="month_widget_description">Εμφανίζει ένα πλήρες μηνιαίο πλέγμα ημερολογίου με κουκκίδες συμβάντων</string>
+    <string name="date_widget_name">Ημερομηνία</string>
+    <string name="date_widget_description">Εμφανίζει τη σημερινή ημερομηνία σαν εικονίδιο εφαρμογής</string>
+    <string name="widget_no_events_today">Δεν υπάρχουν συμβάντα σήμερα</string>
+    <string name="widget_add_event">+ Προσθήκη συμβάντος</string>
+    <string name="widget_no_events">Δεν υπάρχουν συμβάντα</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Νέο συμβάν</string>
+    <string name="shortcut_new_event_long">Δημιουργία νέου συμβάντος</string>
+    <string name="shortcut_today">Σήμερα</string>
+    <string name="shortcut_today_long">Μετάβαση στη σημερινή ημέρα</string>
+    <string name="shortcut_search">Αναζήτηση</string>
+    <string name="shortcut_search_long">Αναζήτηση συμβάντων</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Επανάληψη</string>
+    <string name="action_try_again">Δοκιμάστε ξανά</string>
+    <string name="action_cancel">Ακύρωση</string>
+    <string name="action_close">Κλείσιμο</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Όχι τώρα</string>
+    <string name="action_sign_in">Σύνδεση</string>
+    <string name="action_select">Επιλογή</string>
+    <string name="action_show_password">Εμφάνιση κωδικού</string>
+    <string name="action_hide_password">Απόκρυψη κωδικού</string>
+    <string name="action_sign_out">Αποσύνδεση</string>
+    <string name="action_learn_more">Μάθετε περισσότερα</string>
+    <string name="action_open_apple_id">Άνοιγμα Apple ID</string>
+    <string name="action_open_settings">Άνοιγμα Ρυθμίσεων</string>
+    <string name="action_force_sync">Αναγκαστικός συγχρονισμός</string>
+    <string name="action_sync_now">Συγχρονισμός τώρα</string>
+    <string name="action_details">Λεπτομέρειες</string>
+    <string name="action_set_up">Ρύθμιση</string>
+    <string name="action_report_issue">Αναφορά προβλήματος</string>
+    <string name="action_view">Προβολή</string>
+    <string name="action_enable">Ενεργοποίηση</string>
+    <string name="action_done">Τέλος</string>
+    <string name="action_save">Αποθήκευση</string>
+    <string name="action_add">Προσθήκη</string>
+    <string name="action_edit">Επεξεργασία</string>
+    <string name="action_delete">Διαγραφή</string>
+    <string name="action_confirm">Επιβεβαίωση</string>
+    <string name="action_discard">Απόρριψη</string>
+    <string name="action_dismiss">Παράβλεψη</string>
+    <string name="action_show_all">Εμφάνιση όλων</string>
+    <string name="action_connect">Σύνδεση</string>
+    <string name="action_duplicate">Αντιγραφή</string>
+    <string name="action_share">Κοινοποίηση</string>
+    <string name="action_export_ics">Εξαγωγή ως .ics</string>
+    <string name="action_confirm_delete">Επιβεβαίωση διαγραφής</string>
+    <string name="action_delete_event">Διαγραφή συμβάντος</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Μόνο αυτό</string>
+    <string name="recurring_this_and_future">Αυτό και όλα τα μελλοντικά</string>
+    <string name="recurring_just_occurrence">Μόνο αυτή την εμφάνιση</string>
+    <string name="recurring_all_occurrences">Όλες τις εμφανίσεις</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Τίτλος συμβάντος</string>
+    <string name="label_location">Τοποθεσία</string>
+    <string name="label_location_hint">Διεύθυνση, αίθουσα ή σύνδεσμος σύσκεψης</string>
+    <string name="label_notes">Σημειώσεις</string>
+    <string name="label_starts">Αρχή</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Κωδικός εφαρμογής</string>
+    <string name="label_password_hint">16 χαρακτήρες, οι παύλες είναι προαιρετικές</string>
+    <string name="label_calendar_url">URL ημερολογίου</string>
+    <string name="label_calendar_name">Όνομα ημερολογίου</string>
+    <string name="label_name">Όνομα</string>
+    <string name="label_hex_color">Hex χρώμα</string>
+    <string name="label_enter_hex">Εισάγετε 6 hex χαρακτήρες (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Όλα</string>
+    <string name="view_week">Εβδομάδα</string>
+    <string name="view_month">Μήνας</string>
+    <string name="label_all_day">Ολοήμερο</string>
+    <string name="label_today">Σήμερα</string>
+    <string name="label_go_to_date">Μετάβαση σε ημερομηνία</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Ρυθμίσεις</string>
+    <string name="settings_time_format">Μορφή ώρας</string>
+    <string name="settings_start_week_on">Η εβδομάδα αρχίζει</string>
+    <string name="settings_event_emojis">Emoji συμβάντων</string>
+    <string name="settings_emoji_subtitle">Εμφάνιση emoji βάσει τίτλων συμβάντων</string>
+    <string name="settings_force_sync">Αναγκαστικός πλήρης συγχρονισμός</string>
+    <string name="settings_force_sync_subtitle">Εκ νέου λήψη όλων των δεδομένων ημερολογίου</string>
+    <string name="settings_sync_history">Ιστορικό συγχρονισμού</string>
+    <string name="settings_sync_history_subtitle">Προβολή συνεδριών συγχρονισμού (τελευταίες 48 ώρες)</string>
+    <string name="settings_import_subtitle">Εισαγωγή αρχείου .ics</string>
+    <string name="settings_export_subtitle">Αντίγραφο ασφαλείας σε αρχείο .ics</string>
+    <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
+    <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
+    <string name="settings_section_my_calendars">Τα ημερολόγιά μου</string>
+    <string name="settings_section_display">Εμφάνιση</string>
+    <string name="settings_section_notifications">Ειδοποιήσεις</string>
+    <string name="settings_section_sync">Συγχρονισμός</string>
+    <string name="settings_section_data">Δεδομένα</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar;</string>
+    <string name="onboarding_got_you">Σας καλύπτουμε.</string>
+    <string name="onboarding_connect_prompt">Συνδέστε το iCloud για να δείτε τα συμβάντα σας εδώ</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Σύνδεση iCloud</string>
+    <string name="signin_caldav_title">Προσθήκη λογαριασμού CalDAV</string>
+    <string name="signin_connected_to">Συνδεδεμένο με %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Νέο συμβάν</string>
+    <string name="dialog_edit_event_title">Επεξεργασία συμβάντος</string>
+    <string name="dialog_force_sync_title">Αναγκαστικός πλήρης συγχρονισμός;</string>
+    <string name="dialog_force_sync_message">Αυτό θα κατεβάσει εκ νέου όλα τα δεδομένα ημερολογίου από τον διακομιστή. Οι τοπικές αλλαγές θα διατηρηθούν.</string>
+    <string name="dialog_enable_notifications">Ενεργοποίηση ειδοποιήσεων;</string>
+    <string name="dialog_delete_title">Διαγραφή \"%1$s\"</string>
+    <string name="dialog_edit_title">Επεξεργασία \"%1$s\"</string>
+    <string name="dialog_action_required">Αυτή η ενέργεια είναι απαραίτητη για να συνεχίσετε.</string>
+    <string name="dialog_add_to_calendar">Προσθήκη στο ημερολόγιο</string>
+    <string name="dialog_select_calendar">Επιλογή ημερολογίου</string>
+    <string name="dialog_choose_color">Επιλογή χρώματος</string>
+    <string name="dialog_add_subscription">Προσθήκη συνδρομής</string>
+    <string name="dialog_edit_subscription">Επεξεργασία συνδρομής</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Δεν υπάρχουν συμβάντα αυτή την εβδομάδα</string>
+    <string name="status_more_events">+%1$d ακόμα</string>
+    <string name="status_no_sync_sessions">Δεν υπάρχουν ακόμα συνεδρίες συγχρονισμού.\n\nΣύρετε προς τα κάτω στην προβολή ημερολογίου για να ξεκινήσετε συγχρονισμό.</string>
+    <string name="status_no_writable_calendars">Δεν υπάρχουν διαθέσιμα εγγράψιμα ημερολόγια</string>
+    <string name="status_events_count">%1$d Συμβάντα</string>
+    <string name="status_sync_changes">Αλλαγές συγχρονισμού</string>
+    <string name="status_sync_history">Ιστορικό συγχρονισμού</string>
+    <string name="status_parse_failures">Αποτυχίες ανάλυσης</string>
+    <string name="status_error">Σφάλμα</string>
+    <string name="status_failed_to_parse">⚠ %1$d απέτυχαν στην ανάλυση</string>
+    <string name="status_built_with_love">Φτιαγμένο με αγάπη</string>
+    <string name="status_in_austin">στο Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Ο συγχρονισμός ολοκληρώθηκε</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Η σύνδεση απέτυχε</string>
+    <string name="error_auth_invalid_credentials">Μη έγκυρο Apple ID ή κωδικός εφαρμογής. Ελέγξτε τα στοιχεία σας και δοκιμάστε ξανά.</string>
+    <string name="error_auth_app_specific_password_required">Το iCloud απαιτεί κωδικό εφαρμογής. Ο κανονικός κωδικός Apple ID δεν θα λειτουργήσει εδώ.</string>
+    <string name="error_auth_session_expired_title">Η συνεδρία έληξε</string>
+    <string name="error_auth_session_expired">Η συνεδρία σας στο iCloud έληξε. Συνδεθείτε ξανά για να συνεχίσετε τον συγχρονισμό.</string>
+    <string name="error_auth_account_locked">Το Apple ID σας είναι κλειδωμένο. Επισκεφθείτε το appleid.apple.com για να το ξεκλειδώσετε.</string>
+
+    <string name="error_network_offline">Είστε εκτός σύνδεσης. Οι αλλαγές θα συγχρονιστούν όταν συνδεθείτε ξανά.</string>
+    <string name="error_network_timeout">Η σύνδεση έληξε. Ελέγξτε το internet σας και δοκιμάστε ξανά.</string>
+    <string name="error_network_ssl">Η ασφαλής σύνδεση απέτυχε. Ελέγξτε τις ρυθμίσεις δικτύου.</string>
+    <string name="error_network_unknown_host">Δεν ήταν δυνατή η σύνδεση με το iCloud. Ελέγξτε τη σύνδεση internet.</string>
+    <string name="error_network_connection_failed">Η σύνδεση απέτυχε. Δοκιμάστε ξανά.</string>
+
+    <string name="error_server_unavailable">Το iCloud είναι προσωρινά μη διαθέσιμο. Δοκιμάστε αργότερα.</string>
+    <string name="error_server_rate_limited">Πάρα πολλά αιτήματα. Περιμένετε λίγο και δοκιμάστε ξανά.</string>
+    <string name="error_server_forbidden">Η πρόσβαση απορρίφθηκε. Ίσως δεν έχετε δικαίωμα σε αυτό το ημερολόγιο.</string>
+    <string name="error_server_not_found">Το ζητούμενο στοιχείο δεν βρέθηκε στον διακομιστή.</string>
+    <string name="error_conflict_title">Σύγκρουση συγχρονισμού</string>
+    <string name="error_conflict_generic">Αυτό το συμβάν τροποποιήθηκε σε άλλη συσκευή. Κάντε αναγκαστικό συγχρονισμό για την τελευταία έκδοση.</string>
+    <string name="error_conflict_with_event">Το \"%1$s\" τροποποιήθηκε σε άλλη συσκευή. Κάντε αναγκαστικό συγχρονισμό για την τελευταία έκδοση.</string>
+    <string name="error_sync_token_expired">Τα δεδομένα συγχρονισμού έληξαν. Εκτέλεση πλήρους συγχρονισμού…</string>
+
+    <string name="error_event_not_found">Το συμβάν δεν βρέθηκε.</string>
+    <string name="error_calendar_not_found">Το ημερολόγιο δεν βρέθηκε.</string>
+    <string name="error_calendar_read_only">Δεν είναι δυνατή η τροποποίηση συμβάντων στο \"%1$s\" (ημερολόγιο μόνο για ανάγνωση).</string>
+    <string name="error_event_invalid_data">Μη έγκυρα δεδομένα συμβάντος. Ελέγξτε τις ώρες έναρξης και λήξης.</string>
+    <string name="error_event_invalid_recurrence">Μη έγκυρο μοτίβο επανάληψης.</string>
+
+    <string name="error_display_name_exists">Υπάρχει ήδη λογαριασμός με το όνομα \"%1$s\".</string>
+
+    <string name="error_import_file_not_found">Το αρχείο δεν βρέθηκε ή δεν μπορεί να διαβαστεί.</string>
+    <string name="error_import_invalid_format">Μη έγκυρη μορφή αρχείου ημερολογίου.</string>
+    <string name="error_import_partial">Εισαγωγή %1$d συμβάντων, %2$d απέτυχαν.</string>
+    <string name="error_export_failed">Αποτυχία εξαγωγής συμβάντων.</string>
+    <string name="error_export_no_events">Δεν υπάρχουν συμβάντα για εξαγωγή.</string>
+    <string name="error_end_before_start">Η ώρα λήξης πρέπει να είναι μετά την ώρα έναρξης</string>
+
+    <string name="error_storage_full_title">Πλήρης αποθηκευτικός χώρος</string>
+    <string name="error_storage_full">Δεν υπάρχει αρκετός χώρος. Ελευθερώστε χώρο και δοκιμάστε ξανά.</string>
+    <string name="error_database_corruption_title">Σφάλμα δεδομένων</string>
+    <string name="error_database_corruption">Τα δεδομένα ημερολογίου ίσως είναι κατεστραμμένα. Επικοινωνήστε με την υποστήριξη.</string>
+    <string name="error_migration_title">Σφάλμα ενημέρωσης</string>
+    <string name="error_migration_failed">Αποτυχία ενημέρωσης δεδομένων. Εγκαταστήστε ξανά την εφαρμογή.</string>
+
+    <string name="error_permission_notification_title">Ενεργοποίηση ειδοποιήσεων;</string>
+    <string name="error_permission_notification">Το KashCal χρειάζεται άδεια ειδοποιήσεων για να σας υπενθυμίζει τα επερχόμενα συμβάντα.</string>
+    <string name="error_permission_alarm_title">Ενεργοποίηση ακριβών ξυπνητηριών;</string>
+    <string name="error_permission_alarm">Το KashCal χρειάζεται άδεια ακριβών ξυπνητηριών για ακριβείς υπενθυμίσεις.</string>
+    <string name="error_permission_storage">Απαιτείται άδεια αποθηκευτικού χώρου για εισαγωγή/εξαγωγή.</string>
+
+    <string name="error_device_calendar_title">Σφάλμα ημερολογίου</string>
+    <string name="error_device_calendar_write_failed">Αποτυχία αποθήκευσης στο ημερολόγιο συσκευής. Δοκιμάστε ξανά.</string>
+    <string name="error_device_calendar_permission">Απαιτείται άδεια εγγραφής ημερολογίου. Δώστε άδεια από τις Ρυθμίσεις.</string>
+    <string name="error_device_calendar_not_found">Το ημερολόγιο δεν βρέθηκε. Ίσως αφαιρέθηκε.</string>
+    <string name="error_device_event_not_found">Το συμβάν δεν βρέθηκε. Ίσως διαγράφηκε.</string>
+    <string name="error_device_calendar_read_only">Αυτό το ημερολόγιο είναι μόνο για ανάγνωση.</string>
+
+    <string name="error_sync_no_accounts">Δεν έχει ρυθμιστεί λογαριασμός iCloud. Ρυθμίστε το iCloud για να συγχρονίσετε τα ημερολόγιά σας.</string>
+    <string name="error_sync_partial">Συγχρονίστηκαν %1$d ημερολόγια, %2$d απέτυχαν.</string>
+
+    <string name="error_unknown">Κάτι πήγε στραβά. Δοκιμάστε ξανά.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Επιλεγμένο</string>
+    <string name="cd_back">Πίσω</string>
+    <string name="cd_close">Κλείσιμο</string>
+    <string name="cd_search">Αναζήτηση</string>
+    <string name="cd_create_event">Δημιουργία συμβάντος</string>
+    <string name="cd_settings">Ρυθμίσεις</string>
+    <string name="cd_today">Σήμερα</string>
+    <string name="cd_previous_week">Προηγούμενη εβδομάδα</string>
+    <string name="cd_next_week">Επόμενη εβδομάδα</string>
+    <string name="cd_delete">Διαγραφή</string>
+    <string name="cd_refresh">Ανανέωση</string>
+    <string name="cd_more_options">Περισσότερες επιλογές</string>
+    <string name="cd_duplicate">Αντιγραφή</string>
+    <string name="cd_share">Κοινοποίηση</string>
+    <string name="cd_export_ics">Εξαγωγή ως ICS</string>
+    <string name="cd_open_link">Άνοιγμα συνδέσμου</string>
+    <string name="cd_open_maps">Άνοιγμα στους χάρτες</string>
+    <string name="cd_copy_clipboard">Αντιγραφή στο πρόχειρο</string>
+    <string name="cd_clear_history">Εκκαθάριση ιστορικού</string>
+    <string name="cd_recurring">Επαναλαμβανόμενο</string>
+    <string name="cd_enabled">Ενεργοποιημένο</string>
+    <string name="cd_sync_error">Σφάλμα συγχρονισμού</string>
+    <string name="cd_select_option">Επιλογή</string>
+    <string name="cd_select_label">Επιλογή %1$s</string>
+    <string name="cd_wheel_picker">Τροχός επιλογής με %1$d επιλογές</string>
+    <string name="cd_version_info">KashCal έκδοση %1$s. Πατήστε παρατεταμένα για επιλογές εντοπισμού σφαλμάτων.</string>
+    <string name="cd_color_slider">Ρυθμιστικό χρώματος, τρέχον %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d μοίρες</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Ημερολόγιο</string>
+    <string name="label_color">Χρώμα:</string>
+    <string name="label_repeat">Επανάληψη</string>
+    <string name="label_sync_interval">Διάστημα συγχρονισμού:</string>
+    <string name="label_scheduled_events">Προγραμματισμένα συμβάντα</string>
+    <string name="label_all_day_events">Ολοήμερα συμβάντα</string>
+    <string name="label_server_url">URL διακομιστή</string>
+    <string name="label_username">Όνομα χρήστη</string>
+    <string name="label_password">Κωδικός</string>
+    <string name="label_display_name_optional">Εμφανιζόμενο όνομα (προαιρετικό)</string>
+
+    <string name="placeholder_search_events">Αναζήτηση συμβάντων…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Προεπιλογή https:// αν δεν καθοριστεί</string>
+    <string name="hint_name_shown_in_settings">Το όνομα που εμφανίζεται στις ρυθμίσεις</string>
+    <string name="caldav_trust_insecure_subtitle">Για αυτο-υπογεγραμμένα πιστοποιητικά ή τοπικούς HTTP διακομιστές</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Μετά από</string>
+    <string name="label_recurrence_occurrences">εμφανίσεις</string>
+    <string name="label_recurrence_on_date">Σε ημερομηνία</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Ορατά ημερολόγια</string>
+    <string name="settings_default_calendar">Προεπιλεγμένο ημερολόγιο</string>
+    <string name="settings_default_event_length">Προεπιλεγμένη διάρκεια συμβάντος</string>
+    <string name="settings_default_alerts">Προεπιλεγμένες ειδοποιήσεις</string>
+    <string name="settings_notifications">Ειδοποιήσεις</string>
+    <string name="settings_new_events">Νέα συμβάντα</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Προεπιλογή συστήματος</string>
+    <string name="option_12_hour">12ωρο</string>
+    <string name="option_24_hour">24ωρο</string>
+    <string name="option_sunday">Κυριακή</string>
+    <string name="option_monday">Δευτέρα</string>
+    <string name="option_saturday">Σάββατο</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Δεν βρέθηκαν συμβάντα</string>
+    <string name="empty_no_upcoming_events">Δεν υπάρχουν επερχόμενα συμβάντα</string>
+    <string name="empty_no_calendars">Δεν υπάρχουν διαθέσιμα ημερολόγια</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Σύνδεση…</string>
+    <string name="status_fetching">Λήψη…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Λήψη ημερολογίου</string>
+    <string name="action_import_from_file">Εισαγωγή από αρχείο</string>
+    <string name="action_export_local_calendar">Εξαγωγή τοπικού ημερολογίου</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Οι κωδικοί εφαρμογών σάς επιτρέπουν να συνδέεστε σε εφαρμογές τρίτων χωρίς να κοινοποιείτε τον κύριο κωδικό Apple ID.</string>
+    <string name="help_app_password_steps_header">Για να δημιουργήσετε έναν:</string>
+    <string name="help_app_password_step_1">1. Μεταβείτε στο appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Συνδεθείτε με το Apple ID σας</string>
+    <string name="help_app_password_step_3">3. Μεταβείτε στη Σύνδεση και ασφάλεια</string>
+    <string name="help_app_password_step_4">4. Πατήστε Κωδικοί εφαρμογών</string>
+    <string name="help_app_password_step_5">5. Πατήστε Δημιουργία και αντιγράψτε εδώ</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">Το KashCal χρειάζεται άδεια ειδοποιήσεων για να σας υπενθυμίζει τα επερχόμενα συμβάντα.</string>
+    <string name="dialog_notification_permission_settings_hint">Μπορείτε να το αλλάξετε αργότερα στις Ρυθμίσεις.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Λογαριασμοί</string>
+    <string name="accounts_section_connected">Συνδεδεμένοι</string>
+    <string name="accounts_section_add">Προσθήκη λογαριασμού</string>
+    <string name="accounts_empty_title">Δεν υπάρχουν συνδεδεμένοι λογαριασμοί</string>
+    <string name="accounts_empty_subtitle">Προσθέστε έναν λογαριασμό για να συγχρονίσετε τα ημερολόγιά σας μεταξύ συσκευών</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; Άλλα</string>
+    <string name="accounts_add_icloud">Προσθήκη iCloud</string>
+    <string name="accounts_add_caldav">Προσθήκη CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Άλλα</string>
+    <string name="accounts_caldav_help_title">Τι είναι το CalDAV;</string>
+    <string name="accounts_caldav_help_description">Το CalDAV είναι ένα ανοιχτό πρότυπο για συγχρονισμό ημερολογίων. Υποστηρίζεται από:</string>
+    <string name="accounts_caldav_help_more">&amp; άλλα</string>
+    <string name="accounts_calendars_syncing">Συγχρονισμός…</string>
+    <string name="accounts_cd_icloud_icon">Λογαριασμός iCloud</string>
+    <string name="accounts_cd_caldav_icon">Λογαριασμός CalDAV</string>
+    <string name="accounts_cd_back">Πίσω</string>
+    <string name="accounts_sync_issue">Πρόβλημα συγχρονισμού</string>
+    <string name="accounts_cd_sync_warning">Προειδοποίηση συγχρονισμού</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Συνδρομές</string>
+    <string name="subscriptions_section_ics_calendars">Ημερολόγια ICS</string>
+    <string name="subscriptions_section_add">Προσθήκη</string>
+    <string name="subscriptions_empty_ics">Δεν υπάρχουν συνδρομές ICS</string>
+    <string name="subscriptions_empty_ics_hint">Προσθέστε μια ροή ημερολογίου για να δείτε συμβάντα</string>
+    <string name="subscriptions_add_ics">Προσθήκη ημερολογίου ICS</string>
+    <string name="subscriptions_row_label">Αργίες, Σχολείο &amp; Άλλα</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Γενέθλια &amp; Επέτειοι</string>
+    <string name="birthdays_section_title">Γενέθλια</string>
+    <string name="anniversaries_section_title">Επέτειοι</string>
+    <string name="settings_contact_birthdays">Γενέθλια επαφών</string>
+    <string name="settings_contact_birthdays_description">Εμφάνιση γενεθλίων από τις επαφές τηλεφώνου ως ολοήμερα συμβάντα.</string>
+    <string name="settings_contact_anniversaries">Επέτειοι επαφών</string>
+    <string name="settings_contact_anniversaries_description">Εμφάνιση επετείων από τις επαφές τηλεφώνου ως ολοήμερα συμβάντα.</string>
+    <string name="settings_anniversary_reminder">Υπενθύμιση επετείου</string>
+    <string name="settings_calendar_color">Χρώμα ημερολογίου</string>
+    <string name="settings_default_reminder">Προεπιλεγμένη υπενθύμιση</string>
+    <string name="action_change">Αλλαγή</string>
+    <string name="settings_contacts_footer">Ανάγνωση από τις επαφές συσκευής. Απαιτείται άδεια Επαφών.</string>
+    <string name="settings_contacts_permission_required">Απαιτείται άδεια Επαφών</string>
+    <string name="subscriptions_cd_back">Πίσω</string>
+    <string name="subscriptions_cd_add">Προσθήκη συνδρομής</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">ΣΥΓΧΡΟΝΙΣΜΟΣ</string>
+    <string name="account_detail_section_calendars">ΗΜΕΡΟΛΟΓΙΑ</string>
+    <string name="account_detail_section_account">ΛΟΓΑΡΙΑΣΜΟΣ</string>
+    <string name="account_detail_enabled">Ενεργοποιημένο</string>
+    <string name="account_detail_enabled_subtitle">Αυτόματος συγχρονισμός αυτού του λογαριασμού</string>
+    <string name="account_detail_sync_now">Συγχρονισμός τώρα</string>
+    <string name="account_detail_syncing">Συγχρονισμός…</string>
+    <string name="account_detail_discovering">Ανακάλυψη…</string>
+    <string name="account_detail_discover_calendars">Ανακάλυψη νέων ημερολογίων</string>
+    <string name="account_detail_change_password">Αλλαγή κωδικού</string>
+    <string name="account_detail_sign_out">Αποσύνδεση</string>
+    <string name="account_detail_never_synced">Ποτέ δεν συγχρονίστηκε</string>
+    <string name="account_detail_last_success">Τελευταία επιτυχία: %1$s</string>
+    <string name="account_detail_cd_rename">Μετονομασία</string>
+    <string name="account_detail_cd_show_password">Εμφάνιση κωδικού</string>
+    <string name="account_detail_cd_hide_password">Απόκρυψη κωδικού</string>
+
+    <string name="sync_failure_notification_title">Πρόβλημα συγχρονισμού με %1$s</string>
+    <string name="sync_failure_notification_text">Ο συγχρονισμός ημερολογίου απέτυχε %1$d φορές</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Μετονομασία λογαριασμού</string>
+    <string name="rename_account_label">Όνομα λογαριασμού</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Αλλαγή κωδικού</string>
+    <string name="change_password_label_icloud">Κωδικός εφαρμογής</string>
+    <string name="change_password_label_default">Κωδικός</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
+    <string name="settings_quick_event_add">Γρήγορη προσθήκη συμβάντος</string>
+    <string name="settings_week_numbers">Αριθμοί εβδομάδων</string>
+    <string name="settings_widget_event_limit">Όριο συμβάντων widget</string>
+    <string name="settings_sync_lookback">Αναδρομικός συγχρονισμός</string>
+    <string name="settings_auto_detect_emojis">Αυτόματη ανίχνευση emoji</string>
+    <string name="settings_events_per_day">Συμβάντα ανά ημέρα</string>
+    <string name="settings_not_set">Δεν έχει οριστεί</string>
+    <string name="settings_on">Ενεργό</string>
+    <string name="settings_off">Ανενεργό</string>
+    <string name="settings_tap_to_enable">Πατήστε για ενεργοποίηση</string>
+    <string name="settings_device_calendars_enabled">%1$d ενεργοποιημένα</string>
+    <string name="settings_per_day">%1$d ανά ημέρα</string>
+    <string name="signin_icloud_help_question">Τι είναι ο κωδικός εφαρμογής;</string>
+    <string name="caldav_trust_insecure_label">Εμπιστοσύνη μη ασφαλούς σύνδεσης</string>
+    <string name="action_add_another">Προσθήκη άλλου</string>
+    <string name="account_connected_found_calendars">Βρέθηκαν %1$d ημερολόγια για %2$s.</string>
+    <string name="account_connected_syncing_hint">Ο συγχρονισμός βρίσκεται σε εξέλιξη \u2014 τα συμβάντα θα εμφανιστούν σύντομα.</string>
+    <string name="settings_time_format_currently_24h">Τρέχουσα: 24ωρο (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Τρέχουσα: 12ωρο (%1$s)</string>
+    <string name="settings_time_format_example">Παράδειγμα: %1$s</string>
+    <string name="settings_system_default_with_value">Προεπιλογή συστήματος (%1$s)</string>
+    <string name="alert_none">Καμία</string>
+    <string name="cd_collapse">Σύμπτυξη</string>
+    <string name="cd_expand">Ανάπτυξη</string>
+    <string name="cd_hide_calendar">Απόκρυψη ημερολογίου</string>
+    <string name="cd_show_calendar">Εμφάνιση ημερολογίου</string>
+    <string name="cd_pick_month_year">Επιλογή μήνα και έτους</string>
+    <string name="cd_previous_month">Προηγούμενος μήνας</string>
+    <string name="cd_next_month">Επόμενος μήνας</string>
+    <string name="cd_month_year_picker">Επιλογέας μήνα και έτους</string>
+    <string name="cd_remove_alert">Αφαίρεση ειδοποίησης</string>
+    <string name="cd_warning">Προειδοποίηση</string>
+    <string name="cd_refresh_calendars">Ανανέωση ημερολογίων</string>
+    <string name="cd_timezone_tap_to_change">Ζώνη ώρας: %1$s, πατήστε για αλλαγή</string>
+    <string name="cd_day_events">Ημέρα %1$d, %2$d συμβάντα</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Συχνότητα</string>
+    <string name="label_on_days">Τις ημέρες</string>
+    <string name="label_pattern">Μοτίβο</string>
+    <string name="label_ends">Τέλος</string>
+    <string name="label_alerts">Ειδοποιήσεις</string>
+    <string name="label_add_alert">Προσθήκη ειδοποίησης</string>
+    <string name="label_recurrence_never">Ποτέ</string>
+    <string name="label_tomorrow">Αύριο</string>
+    <string name="label_yesterday">Χθες</string>
+    <string name="label_device_calendars">Ημερολόγια συσκευής</string>
+    <string name="label_default_calendar_hint">Τα νέα συμβάντα θα δημιουργούνται σε αυτό το ημερολόγιο</string>
+    <string name="label_visible_count">%1$d / %2$d ορατά</string>
+    <string name="label_enabled_count">%1$d / %2$d ενεργοποιημένα</string>
+    <string name="label_reminders_truncated">%1$d δεν εμφανίζονται (%2$d σύνολο, μέγ. %3$d επεξεργάσιμα)</string>
+    <string name="label_found_events">Βρέθηκαν: %1$d συμβάντα</string>
+    <string name="label_open_debug_menu">Άνοιγμα μενού εντοπισμού σφαλμάτων</string>
+    <string name="placeholder_search">Αναζήτηση\u2026</string>
+    <string name="status_sync_paused">Ο συγχρονισμός σε παύση</string>
+    <string name="status_not_synced">Δεν έχει συγχρονιστεί</string>
+    <string name="status_sync_error">Σφάλμα συγχρονισμού</string>
+    <string name="status_minutes_ago">πριν %1$d λεπ</string>
+    <string name="status_hours_ago">πριν %1$d ώρ</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Εμφάνιση συμβάντων από άλλες εφαρμογές ημερολογίου στη συσκευή σας (προσαρμογείς συγχρονισμού, τοπικά ημερολόγια).</string>
+    <string name="device_calendars_permission_required">Απαιτείται άδεια ημερολογίου. Πατήστε Ενεργοποίηση για παραχώρηση πρόσβασης.</string>
+    <string name="device_calendars_read_only_access">Πρόσβαση μόνο για ανάγνωση</string>
+    <string name="device_calendars_grant_write">Δώστε άδεια εγγραφής για επεξεργασία συμβάντων ημερολογίου συσκευής</string>
+    <string name="device_calendars_grant">Παραχώρηση</string>
+    <string name="device_calendars_none_found">Δεν βρέθηκαν ημερολόγια συσκευής.</string>
+    <string name="device_calendars_local">Τοπικό</string>
+    <string name="device_calendars_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
+    <string name="device_calendars_reminders">Υπενθυμίσεις</string>
+    <string name="device_calendars_reminders_desc">Λήψη ειδοποιήσεων για συμβάντα ημερολογίου συσκευής</string>
+    <string name="device_calendars_read_only_no_write">Μόνο ανάγνωση (χωρίς άδεια εγγραφής)</string>
+    <string name="device_calendars_read_only_calendar">Μόνο ανάγνωση (ημερολόγιο μόνο για ανάγνωση)</string>
+
+    <string name="settings_developer_options">Επιλογές προγραμματιστή</string>
+    <string name="settings_sync_frequency">Συχνότητα συγχρονισμού</string>
+    <string name="settings_preview">ΠΡΟΕΠΙΣΚΟΠΗΣΗ</string>
+    <string name="settings_n_events">%1$d συμβάντα</string>
+    <string name="settings_n_events_default">%1$d συμβάντα (προεπιλογή)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Ημερολόγια</string>
+    <string name="drawer_contacts">Επαφές</string>
+    <string name="drawer_device_calendars">Ημερολόγια συσκευής</string>
+    <string name="drawer_share_feedback">Στείλτε σχόλια</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Για εσάς, όχι τα δεδομένα σας.</string>
+    <string name="action_keep_it_that_way">Κρατήστε το έτσι</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Ήδη συγχρονισμένο</string>
+    <string name="status_warnings">Προειδοποιήσεις</string>
+    <string name="sync_history_events_failed">Αποτυχημένα συμβάντα</string>
+    <string name="sync_history_abandoned_max_retries">Εγκαταλείφθηκε (μέγ. επαναλήψεις)</string>
+    <string name="sync_history_events_skipped">Παρακαμφθέντα συμβάντα</string>
+    <string name="sync_history_duration">Διάρκεια</string>
+    <string name="sync_history_already_synced_count">%1$d ήδη συγχρονισμένα</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Δεν υπάρχουν συμβάντα</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Είστε εκτός σύνδεσης</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Αποσύνδεση από %1$s;</string>
+    <string name="dialog_sign_out_message">Έχετε συνδεθεί ως %1$s. Η αποσύνδεση θα αφαιρέσει τα συγχρονισμένα ημερολόγια από αυτή τη συσκευή.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d λογαριασμός</item>
+        <item quantity="other">%1$d λογαριασμοί</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 ημερολόγιο</item>
+        <item quantity="other">%1$s \u00B7 %2$d ημερολόγια</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d συνδρομή</item>
+        <item quantity="other">%1$d συνδρομές</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Ο συγχρονισμός απέτυχε (%1$d προσπάθεια)</item>
+        <item quantity="other">Ο συγχρονισμός απέτυχε (%1$d προσπάθειες)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d ημερολόγιο</item>
+        <item quantity="other">%1$d ημερολόγια</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d ημερολόγιο (%2$d νέο)</item>
+        <item quantity="other">%1$d ημερολόγια (%2$d νέα)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d συμβάν</item>
+        <item quantity="other">%1$d συμβάντα</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d γενέθλια</item>
+        <item quantity="other">%1$d γενέθλια</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d επέτειος</item>
+        <item quantity="other">%1$d επέτειοι</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d ακόμα</item>
+        <item quantity="other">+ %1$d ακόμα</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Προσθήκη συμβάντος</item>
+        <item quantity="other">Εισαγωγή %1$d συμβάντων</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Προσθήκη</item>
+        <item quantity="other">Εισαγωγή</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026και %1$d ακόμα</item>
+        <item quantity="other">\u2026και %1$d ακόμα</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">Εισήχθη %1$d συμβάν</item>
+        <item quantity="other">Εισήχθησαν %1$d συμβάντα</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">Εξήχθη %1$d συμβάν</item>
+        <item quantity="other">Εξήχθησαν %1$d συμβάντα</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d συμβάν</item>
+        <item quantity="other">%1$d συμβάντα</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d λεπτό</item>
+        <item quantity="other">%1$d λεπτά</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d λεπ</item>
+        <item quantity="other">%1$d λεπ</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d ώρα</item>
+        <item quantity="other">%1$d ώρες</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d ημέρα</item>
+        <item quantity="other">%1$d ημέρες</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d εβδομάδα</item>
+        <item quantity="other">%1$d εβδομάδες</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d μήνας</item>
+        <item quantity="other">%1$d μήνες</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d έτος</item>
+        <item quantity="other">%1$d έτη</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d δευτ</item>
+        <item quantity="other">%1$d δευτ</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d λεπτό πριν</item>
+        <item quantity="other">%1$d λεπτά πριν</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d ώρα πριν</item>
+        <item quantity="other">%1$d ώρες πριν</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d ημέρα πριν</item>
+        <item quantity="other">%1$d ημέρες πριν</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d εβδομάδα πριν</item>
+        <item quantity="other">%1$d εβδομάδες πριν</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Επεξεργασία επαναλαμβανόμενου συμβάντος</string>
+    <string name="dialog_delete_recurring_title">Διαγραφή επαναλαμβανόμενου συμβάντος</string>
+    <string name="dialog_edit_recurring_message">Αυτό είναι ένα επαναλαμβανόμενο συμβάν. Πώς θέλετε να εφαρμοστεί η αλλαγή;</string>
+    <string name="recurring_this_event">Αυτό το συμβάν</string>
+    <string name="recurring_all_events">Όλα τα συμβάντα</string>
+    <string name="empty_pick_a_day">Διάλεξε μια μέρα. Εκμεταλλεύσου τη.</string>
+    <string name="empty_no_events_day">Τίποτα εδώ. Βγες έξω για λίγο;</string>
+    <string name="label_upcoming_events">Επερχόμενα συμβάντα</string>
+    <string name="filter_date">Ημερομηνία</string>
+    <string name="label_select_date">Επιλέξτε ημερομηνία</string>
+    <string name="hint_tap_date_range">Πατήστε την ίδια ημερομηνία για μία ημέρα ή άλλη για εύρος</string>
+
+    <string name="cd_clear">Εκκαθάριση</string>
+    <string name="cd_offline">Εκτός σύνδεσης</string>
+    <string name="cd_previous">Προηγούμενο</string>
+    <string name="cd_next">Επόμενο</string>
+    <string name="cd_open_drawer">Άνοιγμα συρταριού</string>
+    <string name="cd_close_drawer">Κλείσιμο συρταριού</string>
+    <string name="cd_calendar_view">Προβολή ημερολογίου</string>
+    <string name="cd_active_view">Ενεργή προβολή</string>
+
+    <string name="view_agenda">Ατζέντα</string>
+    <string name="view_month_full">Μήνας (Πλήρης)</string>
+    <string name="view_three_days">3 Ημέρες</string>
+    <string name="view_year">Έτος</string>
+
+    <string name="label_go_to_month">Μετάβαση σε μήνα</string>
+
+    <string name="action_more_options">Περισσότερες επιλογές</string>
+
+    <string name="label_duration_days">ημ</string>
+    <string name="label_duration_hrs">ώρ</string>
+    <string name="label_duration_min">λεπ</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">Την ημέρα %1$d</string>
+    <string name="recurrence_on_last_day">Την τελευταία ημέρα του μήνα</string>
+    <string name="recurrence_on_nth_weekday">Τη %1$s %2$s</string>
+    <string name="ordinal_1st">1η</string>
+    <string name="ordinal_2nd">2η</string>
+    <string name="ordinal_3rd">3η</string>
+    <string name="ordinal_4th">4η</string>
+    <string name="ordinal_nth">%1$dη</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d νέα</string>
+    <string name="sync_summary_updated">%1$d ενημερωμένα</string>
+    <string name="sync_summary_removed">%1$d αφαιρέθηκαν</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Προηγούμενες 3 ημέρες</string>
+    <string name="cd_next_3_days">Επόμενες 3 ημέρες</string>
+    <string name="cd_circular_scrolling">Κυκλική κύλιση ενεργοποιημένη</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Χωρίς υπενθύμιση</string>
+    <string name="reminder_at_time_of_event">Την ώρα του συμβάντος</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s πριν</string>
+    <string name="reminder_time_after">%1$s μετά</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM την ημέρα του συμβάντος</string>
+    <string name="reminder_day_of_event_24h">09:00 την ημέρα του συμβάντος</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s πριν στις 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s πριν στις 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Ανενεργό</string>
+    <string name="reminder_short_at_event">Στο συμβάν</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dλ</string>
+    <string name="reminder_short_hours">%1$dω</string>
+    <string name="reminder_short_days">%1$dη</string>
+    <string name="reminder_short_weeks">%1$dε</string>
+    <string name="reminder_summary_none">Κανένα</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dω %2$dλ</string>
+    <string name="duration_compact_short">%1$dω%2$dλ</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Μόνο χειροκίνητα</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Όλα τα συμβάντα</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Αναβολή</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Ξεκινά τώρα</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Αύριο, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Ο συγχρονισμός ολοκληρώθηκε</string>
+    <string name="sync_notification_partial">Ο συγχρονισμός ολοκληρώθηκε μερικώς</string>
+    <string name="sync_notification_auth_failed">Αποτυχία ελέγχου ταυτότητας συγχρονισμού</string>
+    <string name="sync_notification_auth_reauth">Παρακαλώ επαληθεύστε ξανά τον λογαριασμό σας</string>
+    <string name="sync_notification_failed">Ο συγχρονισμός απέτυχε</string>
+    <string name="sync_notification_parse_title">Κάποια συμβάντα δεν συγχρονίστηκαν</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s στο %2$s δεν συγχρονίστηκαν. Δοκιμάστε Αναγκαστικό συγχρονισμό από τις Ρυθμίσεις.</string>
+    <string name="sync_notification_conflict_title">Η διένεξη συγχρονισμού επιλύθηκε</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Οι τοπικές αλλαγές στο \"%1$s\" χάθηκαν λόγω διένεξης συγχρονισμού. Θα χρησιμοποιηθεί η έκδοση του διακομιστή.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Οι τοπικές αλλαγές στα %1$s χάθηκαν λόγω διενέξεων συγχρονισμού. Θα χρησιμοποιηθούν οι εκδόσεις του διακομιστή.</string>
+    <string name="sync_notification_expired_title">Οι αλλαγές συγχρονισμού έληξαν</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s δεν συγχρονίστηκαν μετά από 30 ημέρες. Θα χρησιμοποιηθεί η έκδοση του διακομιστή. Δοκιμάστε Αναγκαστικό συγχρονισμό.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d ημερολόγιο συγχρονίστηκε</item>
+        <item quantity="other">%1$d ημερολόγια συγχρονίστηκαν</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d αλλαγή</item>
+        <item quantity="other">, %1$d αλλαγές</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d σφάλμα</item>
+        <item quantity="other">, %1$d σφάλματα</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%2$sα γενέθλια του/της %1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">Γενέθλια του/της %1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%2$sη επέτειος του/της %1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">Επέτειος του/της %1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$dη</string>
+    <string name="ordinal_suffix_nd">%1$dη</string>
+    <string name="ordinal_suffix_rd">%1$dη</string>
+    <string name="ordinal_suffix_th">%1$dη</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Συγχρονισμός ημερολογίων\u2026</string>
+    <string name="sync_banner_preparing">Προετοιμασία συγχρονισμού\u2026</string>
+    <string name="sync_banner_complete_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Ο συγχρονισμός απέτυχε: %1$s</string>
+    <string name="error_unknown_error">Άγνωστο σφάλμα</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Νέο συμβάν: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d νέο συμβάν</item>
+        <item quantity="other">%1$d νέα συμβάντα</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d συμβάν ενημερώθηκε</item>
+        <item quantity="other">%1$d συμβάντα ενημερώθηκαν</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d συμβάν αφαιρέθηκε</item>
+        <item quantity="other">%1$d συμβάντα αφαιρέθηκαν</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d ενημέρωση ημερολογίου</item>
+        <item quantity="other">%1$d ενημερώσεις ημερολογίου</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Ημέρα %1$d από %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Ημέρα 1 από %1$d \u00b7 αρχή %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Ημέρα %1$d από %2$d \u00b7 τέλος %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Ολοήμερο</string>
+    <string name="event_date_all_day">%1$s \u00b7 Ολοήμερο</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Ολοήμερο)</string>
+    <string name="event_date_all_day_parens">%1$s (Ολοήμερο)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Αποθήκευση συμβάντος</string>
+    <!-- Badges -->
+    <string name="badge_beta">Βήτα</string>
+    <string name="badge_new">Νέο</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Κόκκινο</string>
+    <string name="color_orange">Πορτοκαλί</string>
+    <string name="color_yellow">Κίτρινο</string>
+    <string name="color_green">Πράσινο</string>
+    <string name="color_cyan">Κυανό</string>
+    <string name="color_blue">Μπλε</string>
+    <string name="color_purple">Μοβ</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Σύνδεσμος συνάντησης: %1$s</string>
+    <string name="cd_phone_number">Αριθμός τηλεφώνου</string>
+    <string name="cd_email_link">Email: %1$s</string>
+    <string name="cd_web_link">Σύνδεσμος: %1$s</string>
+    <string name="cd_text_with_links">Κείμενο με %1$d συνδέσμους: %2$s</string>
+    <string name="cd_text_with_link">Κείμενο με 1 σύνδεσμο: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Ημέρα %1$d από %2$d (Ολοήμερο)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d συγχρονισμοί   \u2191%2$d απεσταλμένα   \u2193%3$d ληφθέντα</string>
+    <string name="sync_history_stats_issues">%1$d συγχρονισμοί   \u2191%2$d απεσταλμένα   \u2193%3$d ληφθέντα   \u26a0 %4$d προβλήματα</string>
+    <string name="sync_history_failed">Απέτυχε</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Κάθε ώρα</string>
+    <string name="ics_sync_every_n_hours">Κάθε %1$d ώρες</string>
+    <string name="ics_sync_daily">Καθημερινά</string>
+    <string name="ics_sync_weekly">Εβδομαδιαία</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">Το URL είναι υποχρεωτικό</string>
+    <string name="ics_url_invalid_scheme">Το URL πρέπει να ξεκινά με http://, https:// ή webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Ολοήμερο)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <!-- Widget strings -->
+    <string name="cd_widget_calendar">Ημερολόγιο</string>
+    <string name="cd_widget_add_event">Προσθήκη συμβάντος</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">χωρίς συμβάντα</string>
+    <string name="channel_event_reminders">Υπενθυμίσεις Συμβάντων</string>
+    <string name="channel_event_reminders_desc">Ειδοποιήσεις για προσεχή συμβάντα ημερολογίου</string>
+    <string name="channel_sync_progress">Πρόοδος Συγχρονισμού</string>
+    <string name="channel_sync_progress_desc">Εμφανίζει την πρόοδο κατά τον συγχρονισμό ημερολογίων</string>
+    <string name="channel_sync_status">Κατάσταση Συγχρονισμού</string>
+    <string name="channel_sync_status_desc">Ειδοποιήσεις για την ολοκλήρωση και τα σφάλματα συγχρονισμού</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">Δεν επαναλαμβάνεται</string>
+    <string name="rrule_freq_daily">Καθημερινά</string>
+    <string name="rrule_freq_weekly">Εβδομαδιαία</string>
+    <string name="rrule_freq_biweekly">Κάθε δύο εβδομάδες</string>
+    <string name="rrule_freq_monthly">Μηνιαία</string>
+    <string name="rrule_freq_quarterly">Τριμηνιαία</string>
+    <string name="rrule_freq_yearly">Ετησίως</string>
+    <string name="rrule_repeats">Επαναλαμβάνεται</string>
+    <string name="rrule_every_n_days">Κάθε %1$d ημέρες</string>
+    <string name="rrule_every_n_weeks">Κάθε %1$d εβδομάδες</string>
+    <string name="rrule_every_n_months">Κάθε %1$d μήνες</string>
+    <string name="rrule_every_n_years">Κάθε %1$d χρόνια</string>
+    <string name="rrule_freq_on_days">%1$s την %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s την %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s την τελευταία μέρα</string>
+    <string name="rrule_freq_on_day_n">%1$s την μέρα %2$d</string>
+    <string name="rrule_ordinal_last">τελευταία</string>
+    <string name="rrule_until_suffix">, μέχρι %1$s</string>
+    <string name="rrule_freq_never">Ποτέ</string>
+    <string name="rrule_starting">%1$s ξεκινώντας από %2$s%3$s</string>
+    <string name="rrule_since">%1$s \u00b7 από %2$s</string>
+
+    <!-- Recurrence plural -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d φορά</item>
+        <item quantity="other">, %1$d φορές</item>
+    </plurals>
+</resources>

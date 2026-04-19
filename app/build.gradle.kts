@@ -34,7 +34,7 @@ val localProps = Properties().apply {
 
 android {
     namespace = "org.onekash.kashcal"
-    compileSdk = 35
+    compileSdk = 36
 
     // Disable encrypted dependency metadata (only Google can read it)
     // Required for F-Droid/IzzyOnDroid transparency
@@ -46,7 +46,7 @@ android {
     defaultConfig {
         applicationId = "org.onekash.kashcal"
         minSdk = 31
-        targetSdk = 35
+        targetSdk = 36
         versionCode = versionProps.getProperty("VERSION_CODE").toInt()
         versionName = versionProps.getProperty("VERSION_NAME")
 
@@ -130,6 +130,11 @@ android {
         // Workaround: NonNullableMutableLiveDataDetector crashes with NoClassDefFoundError
         // in lifecycle-runtime-ktx 2.8.7 lint. This project doesn't use LiveData at all.
         disable += "NullSafeMutableLiveData"
+        // Bare-label plurals (e.g., "Calendar"/"Calendars") intentionally omit %d
+        disable += "ImpliedQuantity"
+        // Strings with %d that could be plurals — most are always >1 or use
+        // adjectives that don't inflect ("new", "updated", "more")
+        disable += "PluralsCandidate"
     }
 
     testOptions {
@@ -140,6 +145,7 @@ android {
                 // Disable C2 JIT compiler - crashes on Robolectric's SQLite shadow bytecode
                 // See: https://github.com/corretto/corretto-17/issues
                 it.jvmArgs("-XX:TieredStopAtLevel=1", "-XX:ReservedCodeCacheSize=512m")
+                it.maxHeapSize = "1g"
                 it.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
 
                 // Exclude integration tests (real servers) by default.

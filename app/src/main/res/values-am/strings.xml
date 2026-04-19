@@ -1,0 +1,889 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">የዛሬ አጀንዳ</string>
+    <string name="widget_description">የዛሬ የቀን መቁጠሪያ ክስተቶችን ያሳያል</string>
+    <string name="week_widget_name">የሳምንት እይታ</string>
+    <string name="week_widget_description">ለቀጣዮቹ 7 ቀናት የቀን መቁጠሪያ ክስተቶችን ያሳያል</string>
+    <string name="month_widget_name">የወር እይታ</string>
+    <string name="month_widget_description">ሙሉ የወር የቀን መቁጠሪያ ፍርግርግ ከክስተት ምልክት ነጥቦች ጋር ያሳያል</string>
+    <string name="date_widget_name">ቀን</string>
+    <string name="date_widget_description">የዛሬ ቀንን እንደ መተግበሪያ አዶ ያሳያል</string>
+    <string name="widget_no_events_today">ዛሬ ምንም ክስተቶች የሉም</string>
+    <string name="widget_add_event">+ ክስተት አክል</string>
+    <string name="widget_no_events">ምንም ክስተቶች የሉም</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">አዲስ ክስተት</string>
+    <string name="shortcut_new_event_long">አዲስ ክስተት ፍጠር</string>
+    <string name="shortcut_today">ዛሬ</string>
+    <string name="shortcut_today_long">ወደ ዛሬ ሂድ</string>
+    <string name="shortcut_search">ፈልግ</string>
+    <string name="shortcut_search_long">ክስተቶችን ፈልግ</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">ደግም</string>
+    <string name="action_try_again">እንደገና ሞክር</string>
+    <string name="action_cancel">ሰርዝ</string>
+    <string name="action_close">ዝጋ</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">አሁን አይደለም</string>
+    <string name="action_sign_in">ግባ</string>
+    <string name="action_select">ምረጥ</string>
+    <string name="action_show_password">የይለፍ ቃል አሳይ</string>
+    <string name="action_hide_password">የይለፍ ቃል ደብቅ</string>
+    <string name="action_sign_out">ውጣ</string>
+    <string name="action_learn_more">ተጨማሪ ማወቅ</string>
+    <string name="action_open_apple_id">Apple ID ክፈት</string>
+    <string name="action_open_settings">ቅንብሮችን ክፈት</string>
+    <string name="action_force_sync">ማመሳሰል አስገድድ</string>
+    <string name="action_sync_now">አሁን አመሳስል</string>
+    <string name="action_details">ዝርዝሮች</string>
+    <string name="action_set_up">አዘጋጅ</string>
+    <string name="action_report_issue">ችግር አሳውቅ</string>
+    <string name="action_view">ተመልከት</string>
+    <string name="action_enable">አንቃ</string>
+    <string name="action_done">ተከናውኗል</string>
+    <string name="action_save">አስቀምጥ</string>
+    <string name="action_add">አክል</string>
+    <string name="action_edit">አርትዕ</string>
+    <string name="action_delete">ሰርዝ</string>
+    <string name="action_confirm">አረጋግጥ</string>
+    <string name="action_discard">አጥፋ</string>
+    <string name="action_dismiss">አሰናብት</string>
+    <string name="action_show_all">ሁሉንም አሳይ</string>
+    <string name="action_connect">አገናኝ</string>
+    <string name="action_duplicate">ቅዳ</string>
+    <string name="action_share">አጋራ</string>
+    <string name="action_export_ics">እንደ .ics ላክ</string>
+    <string name="action_confirm_delete">ሰርዝ አረጋግጥ</string>
+    <string name="action_delete_event">ክስተት ሰርዝ</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">ይህን ብቻ</string>
+    <string name="recurring_this_and_future">ይህን እና ሁሉም ወደፊት</string>
+    <string name="recurring_just_occurrence">ይህን ክስተት ብቻ</string>
+    <string name="recurring_all_occurrences">ሁሉም ክስተቶች</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">የክስተት ርዕስ</string>
+    <string name="label_location">ስፍራ</string>
+    <string name="label_location_hint">አድራሻ፣ ክፍል ወይም የስብሰባ ማገናኛ</string>
+    <string name="label_notes">ማስታወሻዎች</string>
+    <string name="label_starts">ይጀምራል</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">ለመተግበሪያ የተለየ የይለፍ ቃል</string>
+    <string name="label_password_hint">16 ቁምፊዎች፣ ሰረዞች አማራጭ</string>
+    <string name="label_calendar_url">የቀን መቁጠሪያ URL</string>
+    <string name="label_calendar_name">የቀን መቁጠሪያ ስም</string>
+    <string name="label_name">ስም</string>
+    <string name="label_hex_color">Hex ቀለም</string>
+    <string name="label_enter_hex">6 hex ቁምፊዎች ያስገቡ (0\u20139, A\u2013F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">ሁሉም</string>
+    <string name="view_week">ሳምንት</string>
+    <string name="view_month">ወር</string>
+    <string name="label_all_day">ሙሉ ቀን</string>
+    <string name="label_today">ዛሬ</string>
+    <string name="label_go_to_date">ወደ ቀን ሂድ</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">ቅንብሮች</string>
+    <string name="settings_time_format">የሰዓት ቅርጸት</string>
+    <string name="settings_start_week_on">ሳምንት ይጀምር</string>
+    <string name="settings_event_emojis">የክስተት ኢሞጂዎች</string>
+    <string name="settings_emoji_subtitle">በክስተት ርዕሶች ላይ ተመስርተው ኢሞጂዎችን አሳይ</string>
+    <string name="settings_force_sync">ሙሉ ማመሳሰል አስገድድ</string>
+    <string name="settings_force_sync_subtitle">ሁሉንም የቀን መቁጠሪያ ውሂብ እንደገና አውርድ</string>
+    <string name="settings_sync_history">የማመሳሰል ታሪክ</string>
+    <string name="settings_sync_history_subtitle">የማመሳሰል ክፍለ ጊዜዎችን ተመልከት (ባለፉት 48 ሰዓታት)</string>
+    <string name="settings_import_subtitle">.ics ፋይል አስገባ</string>
+    <string name="settings_export_subtitle">ወደ .ics ፋይል ምትኬ</string>
+    <string name="settings_birthday_reminder">የልደት ቀን ማስታወሻ</string>
+    <string name="settings_use_device_timezone">የመሳሪያ ሰዓት ክልል ተጠቀም</string>
+    <string name="settings_section_my_calendars">የኔ ቀን መቁጠሪያዎች</string>
+    <string name="settings_section_display">ማሳያ</string>
+    <string name="settings_section_notifications">ማሳወቂያዎች</string>
+    <string name="settings_section_sync">ማመሳሰል</string>
+    <string name="settings_section_data">ውሂብ</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">አገኘንህ።</string>
+    <string name="onboarding_connect_prompt">ክስተቶችህን እዚህ ለማየት iCloud አገናኝ</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">iCloud አገናኝ</string>
+    <string name="signin_caldav_title">CalDAV መለያ አክል</string>
+    <string name="signin_connected_to">ከ%1$s ጋር ተገናኝቷል</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">አዲስ ክስተት</string>
+    <string name="dialog_edit_event_title">ክስተት አርትዕ</string>
+    <string name="dialog_force_sync_title">ሙሉ ማመሳሰል ያስገድዱ?</string>
+    <string name="dialog_force_sync_message">ይህ ሁሉንም የቀን መቁጠሪያ ውሂብ ከአገልጋዩ እንደገና ያወርዳል። የአካባቢ ለውጦች ይጠበቃሉ።</string>
+    <string name="dialog_enable_notifications">ማሳወቂያዎችን ያንቁ?</string>
+    <string name="dialog_delete_title">\"%1$s\" ሰርዝ</string>
+    <string name="dialog_edit_title">\"%1$s\" አርትዕ</string>
+    <string name="dialog_action_required">ለመቀጠል ይህ እርምጃ ያስፈልጋል።</string>
+    <string name="dialog_add_to_calendar">ወደ ቀን መቁጠሪያ አክል</string>
+    <string name="dialog_select_calendar">ቀን መቁጠሪያ ምረጥ</string>
+    <string name="dialog_choose_color">ቀለም ምረጥ</string>
+    <string name="dialog_add_subscription">ምዝገባ አክል</string>
+    <string name="dialog_edit_subscription">ምዝገባ አርትዕ</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">በዚህ ሳምንት ምንም ክስተቶች የሉም</string>
+    <string name="status_more_events">+%1$d ተጨማሪ</string>
+    <string name="status_no_sync_sessions">ምንም የማመሳሰል ክፍለ ጊዜዎች እስካሁን የሉም።\n\nበቀን መቁጠሪያ እይታ ላይ ወደ ታች በመሳብ ማመሳሰልን ያስጀምሩ።</string>
+    <string name="status_no_writable_calendars">ሊፃፍባቸው የሚችሉ ቀን መቁጠሪያዎች የሉም</string>
+    <string name="status_events_count">%1$d ክስተቶች</string>
+    <string name="status_sync_changes">የማመሳሰል ለውጦች</string>
+    <string name="status_sync_history">የማመሳሰል ታሪክ</string>
+    <string name="status_parse_failures">የመተንተን ስህተቶች</string>
+    <string name="status_error">ስህተት</string>
+    <string name="status_failed_to_parse">\u26A0 %1$d መተንተን አልተቻለም</string>
+    <string name="status_built_with_love">በፍቅር የተሰራ</string>
+    <string name="status_in_austin">በ Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">ማመሳሰል ተጠናቀቀ</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">መግባት አልተሳካም</string>
+    <string name="error_auth_invalid_credentials">ልክ ያልሆነ Apple ID ወይም ለመተግበሪያ የተለየ የይለፍ ቃል። እባክዎ የእርስዎን መረጃ ያረጋግጡ እና እንደገና ይሞክሩ።</string>
+    <string name="error_auth_app_specific_password_required">iCloud ለመተግበሪያ የተለየ የይለፍ ቃል ይፈልጋል። የተለመደው Apple ID የይለፍ ቃልዎ እዚህ አይሰራም።</string>
+    <string name="error_auth_session_expired_title">ክፍለ ጊዜ ጊዜው አልፏል</string>
+    <string name="error_auth_session_expired">የ iCloud ክፍለ ጊዜዎ ጊዜው አልፏል። ማመሳሰልን ለመቀጠል እባክዎ እንደገና ይግቡ።</string>
+    <string name="error_auth_account_locked">Apple ID ዎ ተቆልፏል። ለመክፈት እባክዎ appleid.apple.com ን ይጎብኙ።</string>
+
+    <string name="error_network_offline">ከመስመር ውጭ ነዎት። ለውጦች ወደ መስመር ሲመለሱ ይመሳሰላሉ።</string>
+    <string name="error_network_timeout">ግንኙነት ጊዜው አልፏል። እባክዎ ኢንተርኔትዎን ያረጋግጡ እና እንደገና ይሞክሩ።</string>
+    <string name="error_network_ssl">ደህንነቱ የተጠበቀ ግንኙነት አልተሳካም። እባክዎ የአውታረ መረብ ቅንብሮችዎን ያረጋግጡ።</string>
+    <string name="error_network_unknown_host">iCloudን ማግኘት አልተቻለም። እባክዎ የኢንተርኔት ግንኙነትዎን ያረጋግጡ።</string>
+    <string name="error_network_connection_failed">ግንኙነት አልተሳካም። እባክዎ እንደገና ይሞክሩ።</string>
+
+    <string name="error_server_unavailable">iCloud ለጊዜው አይገኝም። እባክዎ ቆይተው እንደገና ይሞክሩ።</string>
+    <string name="error_server_rate_limited">በጣም ብዙ ጥያቄዎች። እባክዎ ትንሽ ይጠብቁ እና እንደገና ይሞክሩ።</string>
+    <string name="error_server_forbidden">ተከልክሏል። ለዚህ ቀን መቁጠሪያ ፈቃድ ላይኖርዎት ይችላል።</string>
+    <string name="error_server_not_found">የተጠየቀው ንጥል በአገልጋዩ ላይ አልተገኘም።</string>
+    <string name="error_conflict_title">የማመሳሰል ግጭት</string>
+    <string name="error_conflict_generic">ይህ ክስተት በሌላ መሳሪያ ላይ ተቀይሯል። ለቅርብ ጊዜ ስሪት ማመሳሰልን ያስገድዱ።</string>
+    <string name="error_conflict_with_event">\"%1$s\" በሌላ መሳሪያ ላይ ተቀይሯል። ለቅርብ ጊዜ ስሪት ማመሳሰልን ያስገድዱ።</string>
+    <string name="error_sync_token_expired">የማመሳሰል ውሂብ ጊዜው አልፏል። ሙሉ ማመሳሰል በማካሄድ ላይ…</string>
+
+    <string name="error_event_not_found">ክስተት አልተገኘም።</string>
+    <string name="error_calendar_not_found">ቀን መቁጠሪያ አልተገኘም።</string>
+    <string name="error_calendar_read_only">በ\"%1$s\" ውስጥ ክስተቶችን ማስተካከል አይቻልም (የንባብ ብቻ ቀን መቁጠሪያ)።</string>
+    <string name="error_event_invalid_data">ልክ ያልሆነ የክስተት ውሂብ። እባክዎ የመጀመሪያ እና የመጨረሻ ሰዓቶችን ያረጋግጡ።</string>
+    <string name="error_event_invalid_recurrence">ልክ ያልሆነ የመደጋገም ጥለት።</string>
+
+    <string name="error_display_name_exists">\"%1$s\" የሚባል መለያ አስቀድሞ አለ።</string>
+
+    <string name="error_import_file_not_found">ፋይል አልተገኘም ወይም ሊነበብ አይችልም።</string>
+    <string name="error_import_invalid_format">ልክ ያልሆነ የቀን መቁጠሪያ ፋይል ቅርጸት።</string>
+    <string name="error_import_partial">%1$d ክስተቶች ገብተዋል፣ %2$d አልተሳኩም።</string>
+    <string name="error_export_failed">ክስተቶችን መላክ አልተሳካም።</string>
+    <string name="error_export_no_events">የሚላኩ ክስተቶች የሉም።</string>
+    <string name="error_end_before_start">የማብቂያ ሰዓት ከመጀመሪያ ሰዓት በኋላ መሆን አለበት</string>
+
+    <string name="error_storage_full_title">ማከማቻ ሞልቷል</string>
+    <string name="error_storage_full">በቂ ማከማቻ ቦታ የለም። እባክዎ ቦታ ያስለቅቁ እና እንደገና ይሞክሩ።</string>
+    <string name="error_database_corruption_title">የውሂብ ስህተት</string>
+    <string name="error_database_corruption">የቀን መቁጠሪያ ውሂብዎ ተበላሽቶ ሊሆን ይችላል። እባክዎ ድጋፍን ያግኙ።</string>
+    <string name="error_migration_title">የማዘመን ስህተት</string>
+    <string name="error_migration_failed">የመተግበሪያ ውሂብ ማዘመን አልተሳካም። እባክዎ መተግበሪያውን እንደገና ይጫኑ።</string>
+
+    <string name="error_permission_notification_title">ማሳወቂያዎችን ያንቁ?</string>
+    <string name="error_permission_notification">KashCal ስለ መጪ ክስተቶች ለማስታወስ የማሳወቂያ ፈቃድ ያስፈልገዋል።</string>
+    <string name="error_permission_alarm_title">ትክክለኛ ማንቂያዎችን ያንቁ?</string>
+    <string name="error_permission_alarm">KashCal ለትክክለኛ ማስታወሻዎች ትክክለኛ ማንቂያ ፈቃድ ያስፈልገዋል።</string>
+    <string name="error_permission_storage">ለማስገባት/ለመላክ የማከማቻ ፈቃድ ያስፈልጋል።</string>
+
+    <string name="error_device_calendar_title">የቀን መቁጠሪያ ስህተት</string>
+    <string name="error_device_calendar_write_failed">ወደ የመሳሪያ ቀን መቁጠሪያ ማስቀመጥ አልተሳካም። እባክዎ እንደገና ይሞክሩ።</string>
+    <string name="error_device_calendar_permission">የቀን መቁጠሪያ የፅሁፍ ፈቃድ ያስፈልጋል። እባክዎ በቅንብሮች ውስጥ ፈቃድ ይስጡ።</string>
+    <string name="error_device_calendar_not_found">ቀን መቁጠሪያ አልተገኘም። ተወግዶ ሊሆን ይችላል።</string>
+    <string name="error_device_event_not_found">ክስተት አልተገኘም። ተሰርዞ ሊሆን ይችላል።</string>
+    <string name="error_device_calendar_read_only">ይህ ቀን መቁጠሪያ የንባብ ብቻ ነው።</string>
+
+    <string name="error_sync_no_accounts">ምንም iCloud መለያ አልተዋቀረም። ቀን መቁጠሪያዎችዎን ለማመሳሰል iCloudን ያዋቅሩ።</string>
+    <string name="error_sync_partial">%1$d ቀን መቁጠሪያዎች ተመሳስለዋል፣ %2$d አልተሳኩም።</string>
+
+    <string name="error_unknown">የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።</string>
+
+    <!-- ==================== Content Descriptions ==================== -->
+    <string name="cd_selected">ተመርጧል</string>
+    <string name="cd_back">ተመለስ</string>
+    <string name="cd_close">ዝጋ</string>
+    <string name="cd_search">ፈልግ</string>
+    <string name="cd_create_event">ክስተት ፍጠር</string>
+    <string name="cd_settings">ቅንብሮች</string>
+    <string name="cd_today">ዛሬ</string>
+    <string name="cd_previous_week">ያለፈው ሳምንት</string>
+    <string name="cd_next_week">ቀጣዩ ሳምንት</string>
+    <string name="cd_delete">ሰርዝ</string>
+    <string name="cd_refresh">አድስ</string>
+    <string name="cd_more_options">ተጨማሪ አማራጮች</string>
+    <string name="cd_duplicate">ቅዳ</string>
+    <string name="cd_share">አጋራ</string>
+    <string name="cd_export_ics">እንደ ICS ላክ</string>
+    <string name="cd_open_link">ማገናኛ ክፈት</string>
+    <string name="cd_open_maps">በካርታ ክፈት</string>
+    <string name="cd_copy_clipboard">ወደ ቅንጥብ ሰሌዳ ቅዳ</string>
+    <string name="cd_clear_history">ታሪክ አጽዳ</string>
+    <string name="cd_recurring">ተደጋጋሚ</string>
+    <string name="cd_enabled">ነቅቷል</string>
+    <string name="cd_sync_error">የማመሳሰል ስህተት</string>
+    <string name="cd_select_option">አማራጭ ምረጥ</string>
+    <string name="cd_select_label">%1$s ምረጥ</string>
+    <string name="cd_wheel_picker">%1$d አማራጮች ያሉት ጎማ መምረጫ</string>
+    <string name="cd_version_info">KashCal ስሪት %1$s። ለማረም አማራጮች ረዘም አድርገው ይጫኑ።</string>
+    <string name="cd_color_slider">የቀለም ተንሸራታች፣ አሁን %1$s</string>
+    <string name="cd_color_slider_state">%1$s፣ %2$d ዲግሪ</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">ቀን መቁጠሪያ</string>
+    <string name="label_color">ቀለም:</string>
+    <string name="label_repeat">ድገም</string>
+    <string name="label_sync_interval">የማመሳሰል ክፍተት:</string>
+    <string name="label_scheduled_events">የታቀዱ ክስተቶች</string>
+    <string name="label_all_day_events">ሙሉ ቀን ክስተቶች</string>
+    <string name="label_server_url">የአገልጋይ URL</string>
+    <string name="label_username">የተጠቃሚ ስም</string>
+    <string name="label_password">የይለፍ ቃል</string>
+    <string name="label_display_name_optional">የማሳያ ስም (አማራጭ)</string>
+
+    <string name="placeholder_search_events">ክስተቶችን ፈልግ…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">ካልተገለጸ ወደ https:// ነባሪ ይሆናል</string>
+    <string name="hint_name_shown_in_settings">በቅንብሮች ውስጥ የሚታይ ስም</string>
+    <string name="caldav_trust_insecure_subtitle">ለራስ-የተፈረሙ ሰርተፊኬቶች ወይም አካባቢያዊ HTTP አገልጋዮች</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">በኋላ</string>
+    <string name="label_recurrence_occurrences">ክስተቶች</string>
+    <string name="label_recurrence_on_date">በቀን</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">የሚታዩ ቀን መቁጠሪያዎች</string>
+    <string name="settings_default_calendar">ነባሪ ቀን መቁጠሪያ</string>
+    <string name="settings_default_event_length">ነባሪ የክስተት ርዝመት</string>
+    <string name="settings_default_alerts">ነባሪ ማንቂያዎች</string>
+    <string name="settings_notifications">ማሳወቂያዎች</string>
+    <string name="settings_new_events">አዲስ ክስተቶች</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">የስርዓት ነባሪ</string>
+    <string name="option_12_hour">12-ሰዓት</string>
+    <string name="option_24_hour">24-ሰዓት</string>
+    <string name="option_sunday">እሁድ</string>
+    <string name="option_monday">ሰኞ</string>
+    <string name="option_saturday">ቅዳሜ</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">ምንም ክስተቶች አልተገኙም</string>
+    <string name="empty_no_upcoming_events">ምንም መጪ ክስተቶች የሉም</string>
+    <string name="empty_no_calendars">ምንም ቀን መቁጠሪያዎች አይገኙም</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">በማገናኘት ላይ…</string>
+    <string name="status_fetching">በማምጣት ላይ…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">ቀን መቁጠሪያ አምጣ</string>
+    <string name="action_import_from_file">ከፋይል አስገባ</string>
+    <string name="action_export_local_calendar">አካባቢያዊ ቀን መቁጠሪያ ላክ</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">ለመተግበሪያ የተለዩ የይለፍ ቃሎች ዋናውን Apple ID የይለፍ ቃልዎን ሳያጋሩ ወደ ሶስተኛ ወገን መተግበሪያዎች እንዲገቡ ያስችልዎታል።</string>
+    <string name="help_app_password_steps_header">አንድ ለመፍጠር:</string>
+    <string name="help_app_password_step_1">1. ወደ appleid.apple.com ይሂዱ</string>
+    <string name="help_app_password_step_2">2. በ Apple ID ዎ ይግቡ</string>
+    <string name="help_app_password_step_3">3. ወደ መግቢያ እና ደህንነት ይሂዱ</string>
+    <string name="help_app_password_step_4">4. ለመተግበሪያ የተለዩ የይለፍ ቃሎችን ጠቅ ያድርጉ</string>
+    <string name="help_app_password_step_5">5. ፍጠር የሚለውን ጠቅ ያድርጉ እና እዚህ ቅዱ</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal ስለ መጪ ክስተቶች ለማስታወስ የማሳወቂያ ፈቃድ ያስፈልገዋል።</string>
+    <string name="dialog_notification_permission_settings_hint">ይህንን በኋላ በቅንብሮች ውስጥ ማቀያየር ይችላሉ።</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">መለያዎች</string>
+    <string name="accounts_section_connected">ተገናኝቷል</string>
+    <string name="accounts_section_add">መለያ አክል</string>
+    <string name="accounts_empty_title">ምንም መለያዎች አልተገናኙም</string>
+    <string name="accounts_empty_subtitle">ቀን መቁጠሪያዎችዎን በመሳሪያዎች መካከል ለማመሳሰል መለያ ያክሉ</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; ሌሎችም</string>
+    <string name="accounts_add_icloud">iCloud አክል</string>
+    <string name="accounts_add_caldav">CalDAV አክል</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; ሌሎችም</string>
+    <string name="accounts_caldav_help_title">CalDAV ምንድን ነው?</string>
+    <string name="accounts_caldav_help_description">CalDAV ቀን መቁጠሪያዎችን ለማመሳሰል ክፍት ደረጃ ነው። የሚደገፈው በ:</string>
+    <string name="accounts_caldav_help_more">&amp; ሌሎችም</string>
+    <string name="accounts_calendars_syncing">በማመሳሰል ላይ…</string>
+    <string name="accounts_cd_icloud_icon">iCloud መለያ</string>
+    <string name="accounts_cd_caldav_icon">CalDAV መለያ</string>
+    <string name="accounts_cd_back">ተመለስ</string>
+    <string name="accounts_sync_issue">የማመሳሰል ችግር</string>
+    <string name="accounts_cd_sync_warning">የማመሳሰል ማስጠንቀቂያ</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">ምዝገባዎች</string>
+    <string name="subscriptions_section_ics_calendars">ICS ቀን መቁጠሪያዎች</string>
+    <string name="subscriptions_section_add">አክል</string>
+    <string name="subscriptions_empty_ics">ምንም ICS ምዝገባዎች የሉም</string>
+    <string name="subscriptions_empty_ics_hint">ክስተቶችን ለማየት የቀን መቁጠሪያ ምግብ ያክሉ</string>
+    <string name="subscriptions_add_ics">ICS ቀን መቁጠሪያ አክል</string>
+    <string name="subscriptions_row_label">በዓላት፣ ትምህርት ቤት &amp; ሌሎችም</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">ልደቶች &amp; ዓመታዊ በዓሎች</string>
+    <string name="birthdays_section_title">ልደቶች</string>
+    <string name="anniversaries_section_title">ዓመታዊ በዓሎች</string>
+    <string name="settings_contact_birthdays">የእውቂያ ልደቶች</string>
+    <string name="settings_contact_birthdays_description">የስልክ እውቂያዎችዎን ልደቶች እንደ ሙሉ ቀን የቀን መቁጠሪያ ክስተቶች ያሳዩ።</string>
+    <string name="settings_contact_anniversaries">የእውቂያ ዓመታዊ በዓሎች</string>
+    <string name="settings_contact_anniversaries_description">የስልክ እውቂያዎችዎን ዓመታዊ በዓሎች እንደ ሙሉ ቀን የቀን መቁጠሪያ ክስተቶች ያሳዩ።</string>
+    <string name="settings_anniversary_reminder">የዓመታዊ በዓል ማስታወሻ</string>
+    <string name="settings_calendar_color">የቀን መቁጠሪያ ቀለም</string>
+    <string name="settings_default_reminder">ነባሪ ማስታወሻ</string>
+    <string name="action_change">ቀይር</string>
+    <string name="settings_contacts_footer">ከመሳሪያ እውቂያዎችዎ ያነባል። የእውቂያዎች ፈቃድ ያስፈልጋል።</string>
+    <string name="settings_contacts_permission_required">የእውቂያዎች ፈቃድ ያስፈልጋል</string>
+    <string name="subscriptions_cd_back">ተመለስ</string>
+    <string name="subscriptions_cd_add">ምዝገባ አክል</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">ማመሳሰል</string>
+    <string name="account_detail_section_calendars">ቀን መቁጠሪያዎች</string>
+    <string name="account_detail_section_account">መለያ</string>
+    <string name="account_detail_enabled">ነቅቷል</string>
+    <string name="account_detail_enabled_subtitle">ይህን መለያ በራስ-ሰር አመሳስል</string>
+    <string name="account_detail_sync_now">አሁን አመሳስል</string>
+    <string name="account_detail_syncing">በማመሳሰል ላይ…</string>
+    <string name="account_detail_discovering">በማግኘት ላይ…</string>
+    <string name="account_detail_discover_calendars">አዲስ ቀን መቁጠሪያዎችን ፈልግ</string>
+    <string name="account_detail_change_password">የይለፍ ቃል ቀይር</string>
+    <string name="account_detail_sign_out">ውጣ</string>
+    <string name="account_detail_never_synced">ፈጽሞ አልተመሳሰለም</string>
+    <string name="account_detail_last_success">የመጨረሻ ስኬት: %1$s</string>
+    <string name="account_detail_cd_rename">ሰይም</string>
+    <string name="account_detail_cd_show_password">የይለፍ ቃል አሳይ</string>
+    <string name="account_detail_cd_hide_password">የይለፍ ቃል ደብቅ</string>
+
+    <string name="sync_failure_notification_title">ከ%1$s ጋር የማመሳሰል ችግር</string>
+    <string name="sync_failure_notification_text">የቀን መቁጠሪያ ማመሳሰል %1$d ጊዜ አልተሳካም</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">መለያ ሰይም</string>
+    <string name="rename_account_label">የመለያ ስም</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">የይለፍ ቃል ቀይር</string>
+    <string name="change_password_label_icloud">ለመተግበሪያ የተለየ የይለፍ ቃል</string>
+    <string name="change_password_label_default">የይለፍ ቃል</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
+    <string name="settings_quick_event_add">ፈጣን ክስተት ማከል</string>
+    <string name="settings_week_numbers">የሳምንት ቁጥሮች</string>
+    <string name="settings_widget_event_limit">የዊጀት ክስተት ገደብ</string>
+    <string name="settings_sync_lookback">የማመሳሰል ወደ ኋላ መመልከት</string>
+    <string name="settings_auto_detect_emojis">ኢሞጂዎችን በራስ-ሰር ፈልግ</string>
+    <string name="settings_events_per_day">በቀን ክስተቶች</string>
+    <string name="settings_not_set">አልተዋቀረም</string>
+    <string name="settings_on">በርቷል</string>
+    <string name="settings_off">ጠፍቷል</string>
+    <string name="settings_tap_to_enable">ለማንቃት ይንኩ</string>
+    <string name="settings_device_calendars_enabled">%1$d ነቅቷል</string>
+    <string name="settings_per_day">%1$d በቀን</string>
+    <string name="signin_icloud_help_question">ለመተግበሪያ የተለየ የይለፍ ቃል ምንድን ነው?</string>
+    <string name="caldav_trust_insecure_label">ደህንነቱ ያልተጠበቀ ግንኙነት ይመኑ</string>
+    <string name="action_add_another">ሌላ አክል</string>
+    <string name="account_connected_found_calendars">ለ%2$s %1$d ቀን መቁጠሪያ(ዎች) ተገኝተዋል።</string>
+    <string name="account_connected_syncing_hint">ማመሳሰል በሂደት ላይ ነው \u2014 ክስተቶች በቅርቡ ይታያሉ።</string>
+    <string name="settings_time_format_currently_24h">አሁን: 24-ሰዓት (%1$s)</string>
+    <string name="settings_time_format_currently_12h">አሁን: 12-ሰዓት (%1$s)</string>
+    <string name="settings_time_format_example">ምሳሌ: %1$s</string>
+    <string name="settings_system_default_with_value">የስርዓት ነባሪ (%1$s)</string>
+    <string name="alert_none">ምንም</string>
+    <string name="cd_collapse">አሳንስ</string>
+    <string name="cd_expand">አስፋ</string>
+    <string name="cd_hide_calendar">ቀን መቁጠሪያ ደብቅ</string>
+    <string name="cd_show_calendar">ቀን መቁጠሪያ አሳይ</string>
+    <string name="cd_pick_month_year">ወር እና ዓመት ምረጥ</string>
+    <string name="cd_previous_month">ያለፈው ወር</string>
+    <string name="cd_next_month">ቀጣዩ ወር</string>
+    <string name="cd_month_year_picker">የወር እና ዓመት መምረጫ</string>
+    <string name="cd_remove_alert">ማንቂያ አስወግድ</string>
+    <string name="cd_warning">ማስጠንቀቂያ</string>
+    <string name="cd_refresh_calendars">ቀን መቁጠሪያዎችን አድስ</string>
+    <string name="cd_timezone_tap_to_change">ሰዓት ክልል: %1$s፣ ለመቀየር ይንኩ</string>
+    <string name="cd_day_events">ቀን %1$d፣ %2$d ክስተቶች</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">ድግግሞሽ</string>
+    <string name="label_on_days">በቀናት</string>
+    <string name="label_pattern">ጥለት</string>
+    <string name="label_ends">ያበቃል</string>
+    <string name="label_alerts">ማንቂያዎች</string>
+    <string name="label_add_alert">ማንቂያ አክል</string>
+    <string name="label_recurrence_never">ፈጽሞ</string>
+    <string name="label_tomorrow">ነገ</string>
+    <string name="label_yesterday">ትናንት</string>
+    <string name="label_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
+    <string name="label_default_calendar_hint">አዲስ ክስተቶች በዚህ ቀን መቁጠሪያ ውስጥ ይፈጠራሉ</string>
+    <string name="label_visible_count">%1$d / %2$d የሚታይ</string>
+    <string name="label_enabled_count">%1$d / %2$d ነቅቷል</string>
+    <string name="label_reminders_truncated">%1$d አልታየም (%2$d ጠቅላላ፣ ከፍተኛ %3$d ሊስተካከል የሚችል)</string>
+    <string name="label_found_events">ተገኝቷል: %1$d ክስተቶች</string>
+    <string name="label_open_debug_menu">የማረም ምናሌ ክፈት</string>
+    <string name="placeholder_search">ፈልግ\u2026</string>
+    <string name="status_sync_paused">ማመሳሰል ቆሟል</string>
+    <string name="status_not_synced">አልተመሳሰለም</string>
+    <string name="status_sync_error">የማመሳሰል ስህተት</string>
+    <string name="status_minutes_ago">ከ%1$dደ በፊት</string>
+    <string name="status_hours_ago">ከ%1$dሰ በፊት</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">ከመሳሪያዎ ላይ ከሌሎች የቀን መቁጠሪያ መተግበሪያዎች ክስተቶችን አሳይ (የማመሳሰል አስማሚዎች፣ አካባቢያዊ ቀን መቁጠሪያዎች)።</string>
+    <string name="device_calendars_permission_required">የቀን መቁጠሪያ ፈቃድ ያስፈልጋል። መዳረሻ ለመስጠት አንቃ የሚለውን ይንኩ።</string>
+    <string name="device_calendars_read_only_access">የንባብ ብቻ መዳረሻ</string>
+    <string name="device_calendars_grant_write">የመሳሪያ ቀን መቁጠሪያ ክስተቶችን ለማርትዕ የፅሁፍ ፈቃድ ይስጡ</string>
+    <string name="device_calendars_grant">ስጥ</string>
+    <string name="device_calendars_none_found">ምንም የመሳሪያ ቀን መቁጠሪያዎች አልተገኙም።</string>
+    <string name="device_calendars_local">አካባቢያዊ</string>
+    <string name="device_calendars_show_declined">የተቃወሙ ክስተቶችን አሳይ</string>
+    <string name="device_calendars_reminders">ማስታወሻዎች</string>
+    <string name="device_calendars_reminders_desc">ለመሳሪያ ቀን መቁጠሪያ ክስተቶች ማሳወቂያ ያግኙ</string>
+    <string name="device_calendars_read_only_no_write">የንባብ ብቻ (የፅሁፍ ፈቃድ የለም)</string>
+    <string name="device_calendars_read_only_calendar">የንባብ ብቻ (ቀን መቁጠሪያ የንባብ ብቻ ነው)</string>
+
+    <string name="settings_developer_options">የገንቢ አማራጮች</string>
+    <string name="settings_sync_frequency">የማመሳሰል ድግግሞሽ</string>
+    <string name="settings_preview">ቅድመ እይታ</string>
+    <string name="settings_n_events">%1$d ክስተቶች</string>
+    <string name="settings_n_events_default">%1$d ክስተቶች (ነባሪ)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">ቀን መቁጠሪያዎች</string>
+    <string name="drawer_contacts">እውቂያዎች</string>
+    <string name="drawer_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
+    <string name="drawer_share_feedback">አስተያየት አጋራ</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">ለአንተ፣ ለመረጃህ አይደለም።</string>
+    <string name="action_keep_it_that_way">እንዲቀጥል አድርግ</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">ቀድሞ ተመሳስሏል</string>
+    <string name="status_warnings">ማስጠንቀቂያዎች</string>
+    <string name="sync_history_events_failed">ክስተቶች አልተሳኩም</string>
+    <string name="sync_history_abandoned_max_retries">ቆሟል (ከፍተኛ ሙከራዎች)</string>
+    <string name="sync_history_events_skipped">ክስተቶች ተዘለዋል</string>
+    <string name="sync_history_duration">ቆይታ</string>
+    <string name="sync_history_already_synced_count">%1$d ቀድሞ ተመሳስሏል</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">ምንም ክስተቶች የሉም</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">ከመስመር ውጭ ነህ</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">ከ%1$s ውጣ?</string>
+    <string name="dialog_sign_out_message">እንደ %1$s ገብተዋል። መውጣት የተመሳሰሉ ቀን መቁጠሪያዎችን ከዚህ መሳሪያ ያስወግዳል።</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d መለያ</item>
+        <item quantity="other">%1$d መለያዎች</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$s \u00B7 %2$d ቀን መቁጠሪያዎች</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d ምዝገባ</item>
+        <item quantity="other">%1$d ምዝገባዎች</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">ማመሳሰል አልተሳካም (%1$d ሙከራ)</item>
+        <item quantity="other">ማመሳሰል አልተሳካም (%1$d ሙከራዎች)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$d ቀን መቁጠሪያዎች</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d ቀን መቁጠሪያ (%2$d አዲስ)</item>
+        <item quantity="other">%1$d ቀን መቁጠሪያዎች (%2$d አዲስ)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d ክስተት</item>
+        <item quantity="other">%1$d ክስተቶች</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d ልደት</item>
+        <item quantity="other">%1$d ልደቶች</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d ዓመታዊ በዓል</item>
+        <item quantity="other">%1$d ዓመታዊ በዓሎች</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d ተጨማሪ</item>
+        <item quantity="other">+ %1$d ተጨማሪ</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">ክስተት አክል</item>
+        <item quantity="other">%1$d ክስተቶችን አስገባ</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">አክል</item>
+        <item quantity="other">አስገባ</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026እና %1$d ተጨማሪ</item>
+        <item quantity="other">\u2026እና %1$d ተጨማሪ</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d ክስተት ገብቷል</item>
+        <item quantity="other">%1$d ክስተቶች ገብተዋል</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">%1$d ክስተት ተልኳል</item>
+        <item quantity="other">%1$d ክስተቶች ተልከዋል</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d ክስተት</item>
+        <item quantity="other">%1$d ክስተቶች</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d ደቂቃ</item>
+        <item quantity="other">%1$d ደቂቃዎች</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d ደቂ</item>
+        <item quantity="other">%1$d ደቂ</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d ሰዓት</item>
+        <item quantity="other">%1$d ሰዓቶች</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d ቀን</item>
+        <item quantity="other">%1$d ቀናት</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d ሳምንት</item>
+        <item quantity="other">%1$d ሳምንቶች</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d ወር</item>
+        <item quantity="other">%1$d ወራት</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d ዓመት</item>
+        <item quantity="other">%1$d ዓመታት</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d ሰከ</item>
+        <item quantity="other">%1$d ሰከ</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d ደቂቃ በፊት</item>
+        <item quantity="other">%1$d ደቂቃዎች በፊት</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d ሰዓት በፊት</item>
+        <item quantity="other">%1$d ሰዓታት በፊት</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d ቀን በፊት</item>
+        <item quantity="other">%1$d ቀናት በፊት</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d ሳምንት በፊት</item>
+        <item quantity="other">%1$d ሳምንታት በፊት</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">ተደጋጋሚ ክስተት አርትዕ</string>
+    <string name="dialog_delete_recurring_title">ተደጋጋሚ ክስተት ሰርዝ</string>
+    <string name="dialog_edit_recurring_message">ይህ ተደጋጋሚ ክስተት ነው። ይህን ለውጥ እንዴት ሊተገበር ይፈልጋሉ?</string>
+    <string name="recurring_this_event">ይህ ክስተት</string>
+    <string name="recurring_all_events">ሁሉም ክስተቶች</string>
+    <string name="empty_pick_a_day">ቀን ምረጥ። ያዘው።</string>
+    <string name="empty_no_events_day">ምንም የሚታይ ነገር የለም፤ ውጣ ተዝናና?</string>
+    <string name="label_upcoming_events">መጪ ክስተቶች</string>
+    <string name="filter_date">ቀን</string>
+    <string name="label_select_date">ቀን ምረጥ</string>
+    <string name="hint_tap_date_range">ለአንድ ቀን ተመሳሳይ ቀን ይንኩ፣ ወይም ለክልል ሌላ ቀን</string>
+
+    <string name="cd_clear">አጽዳ</string>
+    <string name="cd_offline">ከመስመር ውጭ</string>
+    <string name="cd_previous">ያለፈው</string>
+    <string name="cd_next">ቀጣዩ</string>
+    <string name="cd_open_drawer">መሳቢያ ክፈት</string>
+    <string name="cd_close_drawer">መሳቢያ ዝጋ</string>
+    <string name="cd_calendar_view">የቀን መቁጠሪያ እይታ</string>
+    <string name="cd_active_view">ንቁ እይታ</string>
+
+    <string name="view_agenda">አጀንዳ</string>
+    <string name="view_month_full">ወር (ሙሉ)</string>
+    <string name="view_three_days">3 ቀናት</string>
+    <string name="view_year">ዓመት</string>
+
+    <string name="label_go_to_month">ወደ ወር ሂድ</string>
+
+    <string name="action_more_options">ተጨማሪ አማራጮች</string>
+
+    <string name="label_duration_days">ቀናት</string>
+    <string name="label_duration_hrs">ሰዓ</string>
+    <string name="label_duration_min">ደቂ</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">በቀን %1$d</string>
+    <string name="recurrence_on_last_day">በወሩ የመጨረሻ ቀን</string>
+    <string name="recurrence_on_nth_weekday">በ%1$s %2$s</string>
+    <string name="ordinal_1st">1ኛ</string>
+    <string name="ordinal_2nd">2ኛ</string>
+    <string name="ordinal_3rd">3ኛ</string>
+    <string name="ordinal_4th">4ኛ</string>
+    <string name="ordinal_nth">%1$dኛ</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d አዲስ</string>
+    <string name="sync_summary_updated">%1$d ተዘምኗል</string>
+    <string name="sync_summary_removed">%1$d ተወግዷል</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">ያለፉት 3 ቀናት</string>
+    <string name="cd_next_3_days">ቀጣዮቹ 3 ቀናት</string>
+    <string name="cd_circular_scrolling">ክብ ማሸብለል ነቅቷል</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">ምንም ማስታወሻ የለም</string>
+    <string name="reminder_at_time_of_event">በክስተቱ ሰዓት</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s በፊት</string>
+    <string name="reminder_time_after">%1$s በኋላ</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM የክስተቱ ቀን</string>
+    <string name="reminder_day_of_event_24h">09:00 የክስተቱ ቀን</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s በፊት 9 AM ላይ</string>
+    <string name="reminder_before_at_24h">%1$s በፊት 09:00 ላይ</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">ጠፍቷል</string>
+    <string name="reminder_short_at_event">በክስተቱ</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dደ</string>
+    <string name="reminder_short_hours">%1$dሰ</string>
+    <string name="reminder_short_days">%1$dቀ</string>
+    <string name="reminder_short_weeks">%1$dሳ</string>
+    <string name="reminder_summary_none">ምንም</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dሰ %2$dደ</string>
+    <string name="duration_compact_short">%1$dሰ%2$dደ</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">በእጅ ብቻ</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">ሁሉም ክስተቶች</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">አሸልብ</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">አሁን እየጀመረ ነው</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">ነገ፣ %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">ማመሳሰል ተጠናቋል</string>
+    <string name="sync_notification_partial">ማመሳሰል በከፊል ተጠናቋል</string>
+    <string name="sync_notification_auth_failed">የማመሳሰል ማረጋገጫ አልተሳካም</string>
+    <string name="sync_notification_auth_reauth">እባክዎ መለያዎን ዳግም ያረጋግጡ</string>
+    <string name="sync_notification_failed">ማመሳሰል አልተሳካም</string>
+    <string name="sync_notification_parse_title">አንዳንድ ክስተቶች ሊመሳሰሉ አልቻሉም</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s በ%2$s ውስጥ ሊመሳሰሉ አልቻሉም። በቅንብሮች ውስጥ ግዳጅ ማመሳሰልን ይሞክሩ።</string>
+    <string name="sync_notification_conflict_title">የማመሳሰል ግጭት ተፈቷል</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">በማመሳሰል ግጭት ምክንያት \"%1$s\" ላይ የአካባቢ ለውጦች ጠፍተዋል። የአገልጋይ ስሪት ጥቅም ላይ ይውላል።</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">በማመሳሰል ግጭቶች ምክንያት %1$s ላይ የአካባቢ ለውጦች ጠፍተዋል። የአገልጋይ ስሪቶች ጥቅም ላይ ይውላሉ።</string>
+    <string name="sync_notification_expired_title">የማመሳሰል ለውጦች ጊዜያቸው አልፏል</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s በ30 ቀናት ውስጥ ሊመሳሰሉ አልቻሉም። የአገልጋይ ስሪት ጥቅም ላይ ይውላል። ዳግም ለመሞከር ግዳጅ ማመሳሰል።</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d ቀን መቁጠሪያ ተመሳሰለ</item>
+        <item quantity="other">%1$d ቀን መቁጠሪያዎች ተመሳሰሉ</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">፣ %1$d ለውጥ</item>
+        <item quantity="other">፣ %1$d ለውጦች</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">፣ %1$d ስህተት</item>
+        <item quantity="other">፣ %1$d ስህተቶች</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">የ%1$s %2$s ልደት</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">የ%1$s ልደት</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">የ%1$s %2$s ዓመታዊ በዓል</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">የ%1$s ዓመታዊ በዓል</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$dኛ</string>
+    <string name="ordinal_suffix_nd">%1$dኛ</string>
+    <string name="ordinal_suffix_rd">%1$dኛ</string>
+    <string name="ordinal_suffix_th">%1$dኛ</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">ቀን መቁጠሪያዎች በማመሳሰል ላይ\u2026</string>
+    <string name="sync_banner_preparing">ለማመሳሰል በማዘጋጀት ላይ\u2026</string>
+    <string name="sync_banner_complete_errors">ማመሳሰል ከስህተቶች ጋር ተጠናቋል</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">ማመሳሰል አልተሳካም: %1$s</string>
+    <string name="error_unknown_error">ያልታወቀ ስህተት</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">አዲስ ክስተት: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d አዲስ ክስተት</item>
+        <item quantity="other">%1$d አዲስ ክስተቶች</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d ክስተት ተዘምኗል</item>
+        <item quantity="other">%1$d ክስተቶች ተዘምነዋል</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d ክስተት ተወግዷል</item>
+        <item quantity="other">%1$d ክስተቶች ተወግደዋል</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d የቀን መቁጠሪያ ዝማኔ</item>
+        <item quantity="other">%1$d የቀን መቁጠሪያ ዝማኔዎች</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">ቀን %1$d ከ%2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">ቀን 1 ከ%1$d \u00b7 ይጀምራል %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">ቀን %1$d ከ%2$d \u00b7 ያበቃል %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 ሙሉ ቀን</string>
+    <string name="event_date_all_day">%1$s \u00b7 ሙሉ ቀን</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (ሙሉ ቀን)</string>
+    <string name="event_date_all_day_parens">%1$s (ሙሉ ቀን)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">ክስተት አስቀምጥ</string>
+    <!-- Badges -->
+    <string name="badge_beta">ቅድመ-ልቀት</string>
+    <string name="badge_new">አዲስ</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">ቀይ</string>
+    <string name="color_orange">ብርቱካናማ</string>
+    <string name="color_yellow">ቢጫ</string>
+    <string name="color_green">አረንጓዴ</string>
+    <string name="color_cyan">ሰማያዊ-አረንጓዴ</string>
+    <string name="color_blue">ሰማያዊ</string>
+    <string name="color_purple">ሐምራዊ</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">የስብሰባ አገናኝ: %1$s</string>
+    <string name="cd_phone_number">ስልክ ቁጥር</string>
+    <string name="cd_email_link">ኢሜይል: %1$s</string>
+    <string name="cd_web_link">አገናኝ: %1$s</string>
+    <string name="cd_text_with_links">ጽሑፍ ከ%1$d አገናኞች ጋር: %2$s</string>
+    <string name="cd_text_with_link">ጽሑፍ ከ1 አገናኝ ጋር: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">ቀን %1$d ከ%2$d (ሙሉ ቀን)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d ማመሳሰሎች   \u2191%2$d ተገፍተዋል   \u2193%3$d ተሳቡ</string>
+    <string name="sync_history_stats_issues">%1$d ማመሳሰሎች   \u2191%2$d ተገፍተዋል   \u2193%3$d ተሳቡ   \u26a0 %4$d ችግሮች</string>
+    <string name="sync_history_failed">አልተሳካም</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">በየሰዓቱ</string>
+    <string name="ics_sync_every_n_hours">በየ%1$d ሰዓቱ</string>
+    <string name="ics_sync_daily">በየቀኑ</string>
+    <string name="ics_sync_weekly">በየሳምንቱ</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL ያስፈልጋል</string>
+    <string name="ics_url_invalid_scheme">URL በhttp://፣ https://፣ ወይም webcal:// መጀመር አለበት</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (ሙሉ ቀን)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <!-- Widget strings -->
+    <string name="cd_widget_calendar">ቀን መቁጠሪያ</string>
+    <string name="cd_widget_add_event">ክስተት ጨምር</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ምንም ክስተቶች የሉም</string>
+    <string name="channel_event_reminders">የክስተት አስታዋሾች</string>
+    <string name="channel_event_reminders_desc">ለመጪ የቀን መቁጠሪያ ክስተቶች ማሳወቂያዎች</string>
+    <string name="channel_sync_progress">የማመሳሰል እድገት</string>
+    <string name="channel_sync_progress_desc">ቀን መቁጠሪያዎችን በማመሳሰል ላይ እያሉ እድገትን ያሳያል</string>
+    <string name="channel_sync_status">የማመሳሰል ሁኔታ</string>
+    <string name="channel_sync_status_desc">ስለ ማመሳሰል ማጠናቀቅ እና ስህተቶች ማሳወቂያዎች</string>
+
+    <!-- Recurrence strings -->
+    <string name="rrule_does_not_repeat">አይደገምም</string>
+    <string name="rrule_freq_daily">በየቀኑ</string>
+    <string name="rrule_freq_weekly">በየሳምንቱ</string>
+    <string name="rrule_freq_biweekly">በየሁለት ሳምንት</string>
+    <string name="rrule_freq_monthly">በየወሩ</string>
+    <string name="rrule_freq_quarterly">በየሩብ ዓመቱ</string>
+    <string name="rrule_freq_yearly">በየዓመቱ</string>
+    <string name="rrule_repeats">ይደገማል</string>
+    <string name="rrule_every_n_days">በየ %1$d ቀናት</string>
+    <string name="rrule_every_n_weeks">በየ %1$d ሳምንታት</string>
+    <string name="rrule_every_n_months">በየ %1$d ወራት</string>
+    <string name="rrule_every_n_years">በየ %1$d ዓመታት</string>
+    <string name="rrule_freq_on_days">%1$s በ%2$s ላይ</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s በ%2$s %3$s ላይ</string>
+    <string name="rrule_freq_on_last_day">%1$s በመጨረሻው ቀን</string>
+    <string name="rrule_freq_on_day_n">%1$s በቀን %2$d</string>
+    <string name="rrule_ordinal_last">መጨረሻ</string>
+    <string name="rrule_until_suffix">, እስከ %1$s ድረስ</string>
+    <string name="rrule_freq_never">በፍጹም</string>
+    <string name="rrule_starting">%1$s %2$s%3$s ጀምሮ</string>
+    <string name="rrule_since">%1$s \u00b7 ከ%2$s ጀምሮ</string>
+
+    <!-- Recurrence plural -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d ጊዜ</item>
+        <item quantity="other">, %1$d ጊዜዎች</item>
+    </plurals>
+</resources>

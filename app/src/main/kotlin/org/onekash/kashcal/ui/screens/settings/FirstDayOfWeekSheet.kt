@@ -22,7 +22,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.format.TextStyle
@@ -59,24 +61,30 @@ fun FirstDayOfWeekSheet(
     val localeFirstDay = DateTimeUtils.getLocaleFirstDayOfWeek()
     val localeFirstDayName = localeFirstDay.getDisplayName(TextStyle.FULL, Locale.getDefault())
 
+    // Resolve string resources outside remember block
+    val labelSystemDefault = stringResource(R.string.settings_system_default_with_value, localeFirstDayName ?: "")
+    val labelSunday = stringResource(R.string.option_sunday)
+    val labelMonday = stringResource(R.string.option_monday)
+    val labelSaturday = stringResource(R.string.option_saturday)
+
     // Build options with dynamic locale label
-    val options = remember(localeFirstDayName) {
+    val options = remember(localeFirstDayName, labelSystemDefault, labelSunday, labelMonday, labelSaturday) {
         listOf(
             FirstDayOption(
                 value = KashCalDataStore.FIRST_DAY_SYSTEM,
-                label = "System default ($localeFirstDayName)"
+                label = labelSystemDefault
             ),
             FirstDayOption(
                 value = Calendar.SUNDAY,
-                label = "Sunday"
+                label = labelSunday
             ),
             FirstDayOption(
                 value = Calendar.MONDAY,
-                label = "Monday"
+                label = labelMonday
             ),
             FirstDayOption(
                 value = Calendar.SATURDAY,
-                label = "Saturday"
+                label = labelSaturday
             )
         )
     }
@@ -92,7 +100,7 @@ fun FirstDayOfWeekSheet(
         ) {
             // Header
             Text(
-                text = "Start Week On",
+                text = stringResource(R.string.settings_start_week_on),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -142,7 +150,7 @@ private fun FirstDayOptionRow(
         if (isSelected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(24.dp)
             )

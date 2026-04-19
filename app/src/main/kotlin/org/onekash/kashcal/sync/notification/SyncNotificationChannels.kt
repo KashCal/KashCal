@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Build
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.onekash.kashcal.R
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -64,10 +65,10 @@ class SyncNotificationChannels @Inject constructor(
     private fun createSyncProgressChannel() {
         val channel = NotificationChannel(
             CHANNEL_SYNC_PROGRESS,
-            "Sync Progress",
+            context.getString(R.string.channel_sync_progress),
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Shows progress while syncing calendars"
+            description = context.getString(R.string.channel_sync_progress_desc)
             setShowBadge(false)
             setSound(null, null)
             enableVibration(false)
@@ -85,10 +86,10 @@ class SyncNotificationChannels @Inject constructor(
     private fun createSyncStatusChannel() {
         val channel = NotificationChannel(
             CHANNEL_SYNC_STATUS,
-            "Sync Status",
+            context.getString(R.string.channel_sync_status),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Notifications about sync completion and errors"
+            description = context.getString(R.string.channel_sync_status_desc)
             setShowBadge(true)
         }
 

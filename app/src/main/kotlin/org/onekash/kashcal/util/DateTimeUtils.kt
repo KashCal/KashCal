@@ -1,5 +1,9 @@
 package org.onekash.kashcal.util
 
+import android.content.res.Resources
+import android.text.format.DateFormat
+import android.text.format.DateUtils
+import org.onekash.kashcal.R
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -25,6 +29,11 @@ import java.util.Locale
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc5545#section-3.3.4">RFC 5545 DATE</a>
  */
 object DateTimeUtils {
+
+    // ==================== Locale-Aware Pattern Helper ====================
+
+    fun localizedPattern(skeleton: String): String =
+        DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
 
     // ==================== Time Format Preference ====================
 
@@ -128,6 +137,24 @@ object DateTimeUtils {
         } else {
             preference // User explicitly chose
         }
+    }
+
+    /**
+     * Get locale-aware WeekFields for week number calculation.
+     * Combines the user's first-day-of-week preference with the locale's minimalDaysInFirstWeek.
+     *
+     * @param firstDayOfWeek User preference: 0 = system default, or Calendar.SUNDAY/MONDAY/SATURDAY
+     * @return WeekFields configured for locale-aware week numbering
+     */
+    fun getLocaleWeekFields(firstDayOfWeek: Int): WeekFields {
+        val resolved = resolveFirstDayOfWeek(firstDayOfWeek)
+        val dow = when (resolved) {
+            Calendar.SUNDAY -> DayOfWeek.SUNDAY
+            Calendar.MONDAY -> DayOfWeek.MONDAY
+            Calendar.SATURDAY -> DayOfWeek.SATURDAY
+            else -> DayOfWeek.MONDAY
+        }
+        return WeekFields.of(dow, WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek)
     }
 
     /**
@@ -319,7 +346,7 @@ object DateTimeUtils {
     fun formatEventDate(
         timestampMs: Long,
         isAllDay: Boolean,
-        pattern: String = "EEE, MMM d, yyyy",
+        pattern: String = localizedPattern("yEEEMMMd"),
         localZone: ZoneId = ZoneId.systemDefault()
     ): String {
         val date = eventTsToLocalDate(timestampMs, isAllDay, localZone)
@@ -341,7 +368,7 @@ object DateTimeUtils {
         isAllDay: Boolean,
         localZone: ZoneId = ZoneId.systemDefault()
     ): String {
-        return formatEventDate(timestampMs, isAllDay, "EEE, MMM d", localZone)
+        return formatEventDate(timestampMs, isAllDay, localizedPattern("EEEMMMd"), localZone)
     }
 
     /**
@@ -394,6 +421,24 @@ object DateTimeUtils {
         } else {
             val timeStr = formatEventTime(startTs, isAllDay, timePattern, localZone)
             "$displayTitle · $dateStr, $timeStr"
+        }
+    }
+
+    fun formatEventConfirmation(
+        title: String,
+        startTs: Long,
+        isAllDay: Boolean,
+        resources: Resources,
+        timePattern: String = "h:mm a",
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): String {
+        val displayTitle = if (title.length > 30) title.take(30) + "…" else title
+        val dateStr = formatEventDateShort(startTs, isAllDay, localZone)
+        return if (isAllDay) {
+            resources.getString(R.string.event_confirmation_all_day, displayTitle, dateStr)
+        } else {
+            val timeStr = formatEventTime(startTs, isAllDay, timePattern, localZone)
+            resources.getString(R.string.event_confirmation_timed, displayTitle, dateStr, timeStr)
         }
     }
 
@@ -558,22 +603,12 @@ object DateTimeUtils {
      * @return Human-readable relative time string
      */
     fun formatRelativeTime(timestampMs: Long, now: Long = System.currentTimeMillis()): String {
-        val diff = now - timestampMs
-        val minutes = diff / (1000 * 60)
-        val hours = minutes / 60
-        val days = hours / 24
-
-        return when {
-            minutes < 1 -> "Just now"
-            minutes < 60 -> "$minutes minute${if (minutes > 1) "s" else ""} ago"
-            hours < 24 -> "$hours hour${if (hours > 1) "s" else ""} ago"
-            days < 7 -> "$days day${if (days > 1) "s" else ""} ago"
-            else -> {
-                val date = eventTsToLocalDate(timestampMs, isAllDay = false)
-                val formatter = DateTimeFormatter.ofPattern("MMM d", Locale.getDefault())
-                date.format(formatter)
-            }
-        }
+        return DateUtils.getRelativeTimeSpanString(
+            timestampMs,
+            now,
+            DateUtils.MINUTE_IN_MILLIS,
+            DateUtils.FORMAT_ABBREV_RELATIVE
+        ).toString()
     }
 
     /**
@@ -584,42 +619,32 @@ object DateTimeUtils {
      * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
      * @return Full display label (e.g., "15 minutes before", "1 day before")
      */
-    fun formatReminderLabel(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false): String {
+    fun formatReminderLabel(minutes: Int, isAllDay: Boolean, use24Hour: Boolean = false, resources: Resources): String {
         return if (isAllDay) {
             when (minutes) {
-                org.onekash.kashcal.ui.shared.REMINDER_OFF -> "No reminder"
-                540 -> if (use24Hour) "09:00 day of event" else "9 AM day of event"
-                720 -> "12 hours before"
-                1440 -> "1 day before"
-                2880 -> "2 days before"
-                10080 -> "1 week before"
-                else -> "$minutes minutes"
+                org.onekash.kashcal.ui.shared.REMINDER_OFF -> resources.getString(R.string.reminder_none)
+                540 -> if (use24Hour) resources.getString(R.string.reminder_day_of_event_24h)
+                       else resources.getString(R.string.reminder_day_of_event_12h)
+                720 -> resources.getQuantityString(R.plurals.reminder_hours_before, 12, 12)
+                1440 -> resources.getQuantityString(R.plurals.reminder_days_before, 1, 1)
+                2880 -> resources.getQuantityString(R.plurals.reminder_days_before, 2, 2)
+                10080 -> resources.getQuantityString(R.plurals.reminder_weeks_before, 1, 1)
+                else -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
             }
         } else {
             when (minutes) {
-                org.onekash.kashcal.ui.shared.REMINDER_OFF -> "No reminder"
-                0 -> "At time of event"
-                5 -> "5 minutes before"
-                10 -> "10 minutes before"
-                15 -> "15 minutes before"
-                30 -> "30 minutes before"
-                60 -> "1 hour before"
-                120 -> "2 hours before"
-                else -> "$minutes minutes"
+                org.onekash.kashcal.ui.shared.REMINDER_OFF -> resources.getString(R.string.reminder_none)
+                0 -> resources.getString(R.string.reminder_at_time_of_event)
+                5 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 5, 5)
+                10 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 10, 10)
+                15 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 15, 15)
+                30 -> resources.getQuantityString(R.plurals.reminder_minutes_before, 30, 30)
+                60 -> resources.getQuantityString(R.plurals.reminder_hours_before, 1, 1)
+                120 -> resources.getQuantityString(R.plurals.reminder_hours_before, 2, 2)
+                else -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
             }
         }
     }
-
-    /**
-     * Format reminder minutes for compact display.
-     * Delegates to FormConstants.formatReminderShort for single source of truth.
-     *
-     * @param minutes Minutes before event (-1 for off)
-     * @param use24Hour Whether to use 24-hour format for time-based labels (default: false)
-     * @return Short display label (e.g., "15m", "1d", "Off", "09:00" or "9AM")
-     */
-    fun formatReminderShort(minutes: Int, use24Hour: Boolean = false): String =
-        org.onekash.kashcal.ui.shared.formatReminderShort(minutes, use24Hour)
 
     /**
      * Format sync interval for display.
@@ -627,15 +652,10 @@ object DateTimeUtils {
      * @param intervalMs Sync interval in milliseconds
      * @return Human-readable interval (e.g., "1 hour", "Manual only")
      */
-    fun formatSyncInterval(intervalMs: Long): String {
-        return when (intervalMs) {
-            Long.MAX_VALUE -> "Manual only"
-            1 * 60 * 60 * 1000L -> "1 hour"
-            6 * 60 * 60 * 1000L -> "6 hours"
-            12 * 60 * 60 * 1000L -> "12 hours"
-            24 * 60 * 60 * 1000L -> "24 hours"
-            else -> "${intervalMs / (60 * 60 * 1000)} hours"
-        }
+    fun formatSyncInterval(intervalMs: Long, resources: Resources): String {
+        if (intervalMs == Long.MAX_VALUE) return resources.getString(R.string.sync_manual_only)
+        val hours = (intervalMs / (60 * 60 * 1000)).toInt()
+        return resources.getQuantityString(R.plurals.time_hours, hours, hours)
     }
 
     /**
@@ -655,16 +675,17 @@ object DateTimeUtils {
      * @param isAllDay Whether this is an all-day event
      * @return Formatted date/time string
      */
-    fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean): String {
+    fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean, resources: Resources): String {
         val startDateStr = formatEventDateShort(startTs, isAllDay)
         val endDateStr = formatEventDateShort(endTs, isAllDay)
+        val allDayLabel = resources.getString(R.string.label_all_day)
 
         return if (isAllDay) {
             val isMultiDay = spansMultipleDays(startTs, endTs, isAllDay = true)
             if (isMultiDay) {
-                "$startDateStr \u2192 $endDateStr \u00b7 All day"
+                "$startDateStr \u2192 $endDateStr \u00b7 $allDayLabel"
             } else {
-                "$startDateStr \u00b7 All day"
+                "$startDateStr \u00b7 $allDayLabel"
             }
         } else {
             val startTime = formatEventTime(startTs, isAllDay)

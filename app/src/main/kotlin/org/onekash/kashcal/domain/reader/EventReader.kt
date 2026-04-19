@@ -236,6 +236,13 @@ class EventReader @Inject constructor(
     }
 
     /**
+     * Find recurring master events with zero materialized occurrences.
+     */
+    suspend fun getRecurringEventsWithNoOccurrences(): List<Long> {
+        return occurrencesDao.getRecurringEventsWithNoOccurrences()
+    }
+
+    /**
      * Get occurrences for specific calendar in range.
      */
     fun getOccurrencesForCalendar(

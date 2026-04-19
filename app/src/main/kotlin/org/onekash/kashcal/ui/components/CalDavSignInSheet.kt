@@ -111,7 +111,7 @@ fun CalDavSignInSheet(
 
             // Title
             Text(
-                text = "Add CalDAV Account",
+                text = stringResource(R.string.signin_caldav_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -164,8 +164,8 @@ private fun NotConnectedContent(
         OutlinedTextField(
             value = state.serverUrl,
             onValueChange = onServerUrlChange,
-            label = { Text("Server URL") },
-            placeholder = { Text("nextcloud.example.com") },
+            label = { Text(stringResource(R.string.label_server_url)) },
+            placeholder = { Text(stringResource(R.string.placeholder_server_url)) },
             supportingText = { Text(stringResource(R.string.hint_https_default)) },
             singleLine = true,
             isError = state.errorField == CalDavConnectionState.ErrorField.SERVER,
@@ -185,8 +185,8 @@ private fun NotConnectedContent(
         OutlinedTextField(
             value = state.username,
             onValueChange = onUsernameChange,
-            label = { Text("Username") },
-            placeholder = { Text("user@example.com") },
+            label = { Text(stringResource(R.string.label_username)) },
+            placeholder = { Text(stringResource(R.string.placeholder_username)) },
             singleLine = true,
             isError = state.errorField == CalDavConnectionState.ErrorField.CREDENTIALS,
             keyboardOptions = KeyboardOptions(
@@ -205,7 +205,7 @@ private fun NotConnectedContent(
         OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChange,
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.label_password)) },
             singleLine = true,
             isError = state.errorField == CalDavConnectionState.ErrorField.PASSWORD ||
                     state.errorField == CalDavConnectionState.ErrorField.CREDENTIALS,
@@ -222,7 +222,7 @@ private fun NotConnectedContent(
                         } else {
                             Icons.Filled.Visibility
                         },
-                        contentDescription = if (passwordVisible) "Hide password" else "Show password"
+                        contentDescription = if (passwordVisible) stringResource(R.string.action_hide_password) else stringResource(R.string.action_show_password)
                     )
                 }
             },
@@ -251,11 +251,11 @@ private fun NotConnectedContent(
         OutlinedTextField(
             value = state.displayName,
             onValueChange = onDisplayNameChange,
-            label = { Text("Display Name") },
+            label = { Text(stringResource(R.string.label_display_name_optional)) },
             supportingText = if (displayNameHasError && state.error != null) {
                 { Text(state.error, color = MaterialTheme.colorScheme.error) }
             } else {
-                { Text("Name shown in settings") }
+                { Text(stringResource(R.string.hint_name_shown_in_settings)) }
             },
             singleLine = true,
             isError = displayNameHasError,
@@ -303,7 +303,7 @@ private fun NotConnectedContent(
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 Text(
-                    "Trust insecure connection",
+                    stringResource(R.string.caldav_trust_insecure_label),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -344,14 +344,14 @@ private fun NotConnectedContent(
                     state.username.isNotBlank() &&
                     state.password.isNotBlank()
         ) {
-            Text("Connect", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.action_connect), style = MaterialTheme.typography.titleMedium)
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Cancel button
         TextButton(onClick = onDismiss) {
-            Text("Cancel")
+            Text(stringResource(R.string.action_cancel))
         }
     }
 }
@@ -362,7 +362,7 @@ private fun ConnectingContent(state: CalDavConnectionState.Discovering) {
     OutlinedTextField(
         value = state.serverUrl,
         onValueChange = {},
-        label = { Text("Server URL") },
+        label = { Text(stringResource(R.string.label_server_url)) },
         enabled = false,
         modifier = Modifier.fillMaxWidth()
     )
@@ -372,7 +372,7 @@ private fun ConnectingContent(state: CalDavConnectionState.Discovering) {
     OutlinedTextField(
         value = state.username,
         onValueChange = {},
-        label = { Text("Username") },
+        label = { Text(stringResource(R.string.label_username)) },
         enabled = false,
         modifier = Modifier.fillMaxWidth()
     )
@@ -382,7 +382,7 @@ private fun ConnectingContent(state: CalDavConnectionState.Discovering) {
     OutlinedTextField(
         value = "********",
         onValueChange = {},
-        label = { Text("Password") },
+        label = { Text(stringResource(R.string.label_password)) },
         enabled = false,
         modifier = Modifier.fillMaxWidth()
     )
@@ -402,6 +402,6 @@ private fun ConnectingContent(state: CalDavConnectionState.Discovering) {
             color = MaterialTheme.colorScheme.onPrimary
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text("Connecting...", style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.status_connecting), style = MaterialTheme.typography.titleMedium)
     }
 }

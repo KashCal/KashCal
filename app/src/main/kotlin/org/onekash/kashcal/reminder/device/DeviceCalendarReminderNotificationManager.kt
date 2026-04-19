@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateFormat
+import androidx.annotation.VisibleForTesting
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.MainActivity
@@ -129,7 +130,8 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     /**
      * Build a notification for a device calendar reminder.
      */
-    private suspend fun buildNotification(
+    @VisibleForTesting
+    internal suspend fun buildNotification(
         eventId: Long,
         occurrenceTs: Long,
         title: String,
@@ -152,7 +154,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setColor(calendarColor)
             .setContentIntent(createOpenAppIntent(eventId, occurrenceTs, calendarId))
-            .setWhen(occurrenceTs)
+            .setWhen(occurrenceTs + 30_000L)
             .setShowWhen(true)
 
         // Add location if available
@@ -163,7 +165,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         // Add Snooze action
         builder.addAction(
             android.R.drawable.ic_popup_reminder,
-            "Snooze",
+            context.getString(R.string.action_snooze),
             createSnoozeIntent(
                 eventId = eventId,
                 occurrenceTs = occurrenceTs,
@@ -179,7 +181,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         // Add Dismiss action
         builder.addAction(
             android.R.drawable.ic_menu_close_clear_cancel,
-            "Dismiss",
+            context.getString(R.string.action_dismiss),
             createDismissIntent(notificationId)
         )
 
@@ -201,9 +203,9 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
 
         return when {
             isAllDay -> {
-                if (diffMs < 0) "Today" else formatTimeUntil(diffMs)
+                if (diffMs < 0) context.getString(R.string.label_today) else formatTimeUntil(diffMs)
             }
-            diffMs <= 0 -> "Starting now"
+            diffMs <= 0 -> context.getString(R.string.notification_starting_now)
             else -> {
                 val timeFormatPref = dataStore.getTimeFormat()
                 val is24Hour = DateFormat.is24HourFormat(context)
@@ -217,10 +219,10 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
                 val eventDate = eventZdt.toLocalDate()
                 when {
                     eventDate == today -> timeStr
-                    eventDate == today.plusDays(1) -> "Tomorrow, $timeStr"
+                    eventDate == today.plusDays(1) -> context.getString(R.string.notification_tomorrow_time, timeStr)
                     else -> {
-                        val dateFormatter = DateTimeFormatter.ofPattern("EEE MMM d", Locale.getDefault())
-                        "${eventDate.format(dateFormatter)}, $timeStr"
+                        val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("EEEMMMd"), Locale.getDefault())
+                        context.getString(R.string.notification_date_time, eventDate.format(dateFormatter), timeStr)
                     }
                 }
             }
@@ -236,21 +238,11 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         val minutes = totalMinutes % 60
 
         return when {
-            hours == 0 -> {
-                when (minutes) {
-                    1 -> "1 minute"
-                    else -> "$minutes minutes"
-                }
-            }
-            minutes == 0 -> {
-                when (hours) {
-                    1 -> "1 hour"
-                    else -> "$hours hours"
-                }
-            }
+            hours == 0 -> context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
+            minutes == 0 -> context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
             else -> {
-                val hourPart = if (hours == 1) "1 hour" else "$hours hours"
-                val minutePart = if (minutes == 1) "1 minute" else "$minutes minutes"
+                val hourPart = context.resources.getQuantityString(R.plurals.time_hours, hours, hours)
+                val minutePart = context.resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
                 "$hourPart $minutePart"
             }
         }

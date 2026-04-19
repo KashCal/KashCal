@@ -43,6 +43,7 @@ import android.text.format.DateFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -56,7 +57,7 @@ import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.AccentColors
-import org.onekash.kashcal.ui.screens.settings.BetaBadge
+import org.onekash.kashcal.ui.screens.settings.NewBadge
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
@@ -233,10 +234,10 @@ fun AccountSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 }
             )
@@ -529,18 +530,15 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Default.Person,
                 label = stringResource(R.string.accounts_row_label),
-                subtitle = when (accountCount) {
-                    0 -> null
-                    1 -> stringResource(R.string.accounts_count_one)
-                    else -> stringResource(R.string.accounts_count_other, accountCount)
-                },
+                subtitle = if (accountCount == 0) null
+                    else pluralStringResource(R.plurals.accounts_count, accountCount, accountCount),
                 onClick = onNavigateToAccounts
             )
 
             // Birthdays & Anniversaries row
             val baSubtitle = buildList {
-                if (birthdayCount > 0) add("$birthdayCount birthday${if (birthdayCount != 1) "s" else ""}")
-                if (anniversaryCount > 0) add("$anniversaryCount anniversar${if (anniversaryCount != 1) "ies" else "y"}")
+                if (birthdayCount > 0) add(pluralStringResource(R.plurals.birthday_count, birthdayCount, birthdayCount))
+                if (anniversaryCount > 0) add(pluralStringResource(R.plurals.anniversary_count, anniversaryCount, anniversaryCount))
             }.joinToString(", ").ifEmpty { null }
 
             SettingsRow(
@@ -556,20 +554,16 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Default.Link,
                 label = stringResource(R.string.subscriptions_row_label),
-                subtitle = when (subscriptionCount) {
-                    0 -> null
-                    1 -> stringResource(R.string.subscriptions_count_one)
-                    else -> stringResource(R.string.subscriptions_count_other, subscriptionCount)
-                },
+                subtitle = if (subscriptionCount == 0) null
+                    else pluralStringResource(R.plurals.subscriptions_count, subscriptionCount, subscriptionCount),
                 onClick = onNavigateToSubscriptions
             )
 
             // Device Calendars row
             SettingsRow(
                 icon = Icons.Default.CalendarMonth,
-                label = "Device Calendars",
-                subtitle = if (deviceCalendarsEnabled) "${enabledDeviceCalendarIds.size} enabled" else null,
-                badge = { BetaBadge() },
+                label = stringResource(R.string.settings_device_calendars),
+                subtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else null,
                 onClick = { showDeviceCalendarsSheet = true },
                 showDivider = false
             )
@@ -582,61 +576,61 @@ private fun FlatSettingsContent(
                 // Default Calendar Row
                 SettingsRow(
                     icon = Icons.Default.Star,
-                    label = "Default Calendar",
-                    subtitle = defaultCalendarName ?: "Not set",
+                    label = stringResource(R.string.settings_default_calendar),
+                    subtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set),
                     onClick = { showDefaultCalendarSheet = true }
                 )
             }
             SettingsRow(
                 icon = Icons.Default.Edit,
-                label = "Quick Event Add",
-                subtitle = if (quickAddEnabled) "On" else "Off",
-                badge = { BetaBadge() },
+                label = stringResource(R.string.settings_quick_event_add),
+                subtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                badge = { NewBadge() },
                 onClick = { onQuickAddEnabledChange(!quickAddEnabled) }
             )
             SettingsRow(
                 icon = Icons.Default.SentimentSatisfied,
-                label = "Event Emojis",
-                subtitle = if (showEventEmojis) "On" else "Off",
+                label = stringResource(R.string.settings_event_emojis),
+                subtitle = if (showEventEmojis) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
                 onClick = { showEventEmojisSheet = true }
             )
             SettingsRow(
                 icon = Icons.Filled.Tune,
-                label = "Time Format",
+                label = stringResource(R.string.settings_time_format),
                 subtitle = when (timeFormat) {
-                    KashCalDataStore.TIME_FORMAT_12H -> "12-hour"
-                    KashCalDataStore.TIME_FORMAT_24H -> "24-hour"
-                    else -> "System default"
+                    KashCalDataStore.TIME_FORMAT_12H -> stringResource(R.string.option_12_hour)
+                    KashCalDataStore.TIME_FORMAT_24H -> stringResource(R.string.option_24_hour)
+                    else -> stringResource(R.string.option_system_default)
                 },
                 onClick = { showTimeFormatSheet = true }
             )
             SettingsRow(
                 icon = Icons.Default.ViewWeek,
-                label = "Start Week On",
+                label = stringResource(R.string.settings_start_week_on),
                 subtitle = when (firstDayOfWeek) {
-                    java.util.Calendar.SUNDAY -> "Sunday"
-                    java.util.Calendar.MONDAY -> "Monday"
-                    java.util.Calendar.SATURDAY -> "Saturday"
-                    else -> "System default"
+                    java.util.Calendar.SUNDAY -> stringResource(R.string.option_sunday)
+                    java.util.Calendar.MONDAY -> stringResource(R.string.option_monday)
+                    java.util.Calendar.SATURDAY -> stringResource(R.string.option_saturday)
+                    else -> stringResource(R.string.option_system_default)
                 },
                 onClick = { showFirstDayOfWeekSheet = true }
             )
             SettingsRow(
                 icon = Icons.Default.DateRange,
-                label = "Week Numbers",
-                subtitle = if (showWeekNumbers) "On" else "Off",
+                label = stringResource(R.string.settings_week_numbers),
+                subtitle = if (showWeekNumbers) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
                 onClick = { onShowWeekNumbersChange(!showWeekNumbers) }
             )
             SettingsRow(
                 icon = Icons.Default.Schedule,
-                label = "Default Event Length",
-                subtitle = formatDuration(defaultEventDuration),
+                label = stringResource(R.string.settings_default_event_length),
+                subtitle = formatDuration(defaultEventDuration, context.resources),
                 onClick = { showEventDurationSheet = true }
             )
             SettingsRow(
                 icon = Icons.Default.CalendarMonth,
-                label = "Widget Event Limit",
-                subtitle = "$widgetMaxEventsPerDay per day",
+                label = stringResource(R.string.settings_widget_event_limit),
+                subtitle = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay),
                 onClick = { showWidgetEventLimitSheet = true },
                 showDivider = false  // Last item in card
             )
@@ -649,8 +643,8 @@ private fun FlatSettingsContent(
             if (calendars.isNotEmpty()) {
                 SettingsRow(
                     icon = Icons.Default.Notifications,
-                    label = "Default Alerts",
-                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour)} · ${formatReminderShort(defaultReminderAllDay, use24Hour)}",
+                    label = stringResource(R.string.settings_default_alerts),
+                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, LocalContext.current.resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, LocalContext.current.resources)}",
                     onClick = { showAlertsSheet = true }
                 )
             }
@@ -658,8 +652,8 @@ private fun FlatSettingsContent(
             // Notifications Row
             SettingsRow(
                 icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                label = "Notifications",
-                subtitle = if (notificationsEnabled) "Enabled" else "Tap to enable",
+                label = stringResource(R.string.settings_notifications),
+                subtitle = if (notificationsEnabled) stringResource(R.string.cd_enabled) else stringResource(R.string.settings_tap_to_enable),
                 onClick = {
                     if (!notificationsEnabled) {
                         onRequestNotificationPermission()
@@ -670,7 +664,7 @@ private fun FlatSettingsContent(
                     {
                         Icon(
                             Icons.Default.Check,
-                            contentDescription = "Enabled",
+                            contentDescription = stringResource(R.string.cd_enabled),
                             tint = AccentColors.Green,
                             modifier = Modifier.size(24.dp)
                         )
@@ -685,8 +679,8 @@ private fun FlatSettingsContent(
         SettingsCard {
             SettingsRow(
                 icon = Icons.Default.Refresh,
-                label = "Sync Lookback",
-                subtitle = formatSyncLookback(syncLookbackDays),
+                label = stringResource(R.string.settings_sync_lookback),
+                subtitle = formatSyncLookback(syncLookbackDays, context.resources),
                 onClick = { showSyncLookbackSheet = true },
                 showDivider = false  // Only item in card
             )
@@ -698,8 +692,8 @@ private fun FlatSettingsContent(
             // Import from File Row
             SettingsRow(
                 icon = Icons.Default.FileDownload,
-                label = "Import from File",
-                subtitle = "Import .ics file",
+                label = stringResource(R.string.action_import_from_file),
+                subtitle = stringResource(R.string.settings_import_subtitle),
                 onClick = onImportCalendarFile,
                 showDivider = localCalendar != null  // Show divider if Export follows
             )
@@ -708,8 +702,8 @@ private fun FlatSettingsContent(
             localCalendar?.let { local ->
                 SettingsRow(
                     icon = Icons.Default.FileUpload,
-                    label = "Export Local Calendar",
-                    subtitle = "Backup to .ics file",
+                    label = stringResource(R.string.action_export_local_calendar),
+                    subtitle = stringResource(R.string.settings_export_subtitle),
                     onClick = { onExportCalendar(local.id) },
                     showDivider = false  // Last item in card
                 )

@@ -43,12 +43,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -147,7 +151,7 @@ fun IcsImportSheet(
         ) {
             // Header
             Text(
-                text = if (events.size == 1) "Add Event" else "Import ${events.size} Events",
+                text = pluralStringResource(R.plurals.import_events_title, events.size, events.size),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold
             )
@@ -165,7 +169,7 @@ fun IcsImportSheet(
                 if (events.size > 10) {
                     item {
                         Text(
-                            text = "...and ${events.size - 10} more",
+                            text = pluralStringResource(R.plurals.ics_remaining_events, events.size - 10, events.size - 10),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(vertical = 8.dp)
@@ -196,7 +200,7 @@ fun IcsImportSheet(
             } else {
                 // No writable calendars warning
                 Text(
-                    text = "No writable calendars available",
+                    text = stringResource(R.string.status_no_writable_calendars),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -210,7 +214,7 @@ fun IcsImportSheet(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = onDismiss) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
@@ -221,7 +225,7 @@ fun IcsImportSheet(
                     },
                     enabled = selectedCalendarId > 0 && hasAnyWritableCalendar
                 ) {
-                    Text(if (events.size == 1) "Add" else "Import")
+                    Text(pluralStringResource(R.plurals.import_events_button, events.size))
                 }
             }
         }
@@ -246,7 +250,7 @@ private fun IcsEventPreviewItem(event: Event) {
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = formatEventDateTime(event),
+            text = formatEventDateTime(event, LocalContext.current.resources),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -266,16 +270,16 @@ private fun IcsEventPreviewItem(event: Event) {
 /**
  * Format event date/time for preview display.
  */
-private fun formatEventDateTime(event: Event): String {
+private fun formatEventDateTime(event: Event, resources: android.content.res.Resources): String {
     val startDateStr = DateTimeUtils.formatEventDateShort(event.startTs, event.isAllDay)
 
     return if (event.isAllDay) {
         val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, isAllDay = true)
         if (isMultiDay) {
             val endDateStr = DateTimeUtils.formatEventDateShort(event.endTs, event.isAllDay)
-            "$startDateStr - $endDateStr (All day)"
+            resources.getString(R.string.event_date_range_all_day_parens, startDateStr, endDateStr)
         } else {
-            "$startDateStr (All day)"
+            resources.getString(R.string.event_date_all_day_parens, startDateStr)
         }
     } else {
         val startTime = DateTimeUtils.formatEventTime(event.startTs, event.isAllDay)
@@ -314,7 +318,7 @@ private fun ImportCalendarPicker(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Add to calendar",
+                    text = stringResource(R.string.dialog_add_to_calendar),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Row(
@@ -330,12 +334,13 @@ private fun ImportCalendarPicker(
                         )
                     }
                     Text(
-                        text = selectedCalendarName ?: "Select calendar",
+                        text = selectedCalendarName ?: stringResource(R.string.dialog_select_calendar),
                         style = MaterialTheme.typography.bodyLarge
                     )
+                    val expandCollapseDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand)
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        contentDescription = expandCollapseDescription,
                         modifier = Modifier.size(20.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -377,7 +382,7 @@ private fun ImportCalendarPicker(
                             )
                         }
                         Text(
-                            text = "Device Calendars",
+                            text = stringResource(R.string.label_device_calendars),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier

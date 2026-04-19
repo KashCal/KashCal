@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Do NOT translate — brand name -->
     <string name="app_name">KashCal</string>
 
     <!-- ==================== Widget ==================== -->
+    <!-- Widget names/descriptions shown in Android's widget picker -->
     <string name="widget_name">Today\'s Agenda</string>
     <string name="widget_description">Shows today\'s calendar events</string>
     <string name="week_widget_name">Week View</string>
@@ -14,13 +16,21 @@
     <!-- Widget content -->
     <string name="widget_no_events_today">No events today</string>
     <string name="widget_add_event">+ Add event</string>
-    <!-- %1$d = number of additional events -->
-    <string name="widget_more_count">+ %1$d more</string>
     <string name="widget_no_events">No events</string>
-    <!-- %1$d = number of events -->
-    <string name="widget_event_count">%1$d event</string>
-    <string name="widget_events_count">%1$d events</string>
-    <string name="widget_this_week">This Week</string>
+    <!-- Widget content descriptions (accessibility) -->
+    <string name="cd_widget_calendar">Calendar</string>
+    <string name="cd_widget_add_event">Add event</string>
+    <!-- %1$s = "month day", %2$s = event count text (from plurals or cd_widget_no_events) -->
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">no events</string>
+
+    <!-- Notification channel names/descriptions (shown in Android Settings) -->
+    <string name="channel_event_reminders">Event Reminders</string>
+    <string name="channel_event_reminders_desc">Notifications for upcoming calendar events</string>
+    <string name="channel_sync_progress">Sync Progress</string>
+    <string name="channel_sync_progress_desc">Shows progress while syncing calendars</string>
+    <string name="channel_sync_status">Sync Status</string>
+    <string name="channel_sync_status_desc">Notifications about sync completion and errors</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">New Event</string>
@@ -31,135 +41,174 @@
     <string name="shortcut_search_long">Search events</string>
 
     <!-- ==================== Common Actions ==================== -->
+    <!-- All action_ strings are button labels. Use imperative/infinitive form. -->
+    <!-- Button: retry a failed operation -->
     <string name="action_retry">Retry</string>
     <string name="action_try_again">Try Again</string>
+    <!-- Button: abort and discard changes -->
     <string name="action_cancel">Cancel</string>
+    <!-- Button: close a sheet/dialog (no discard implied) -->
     <string name="action_close">Close</string>
     <string name="action_ok">OK</string>
+    <!-- Button: decline a prompt, do it later -->
     <string name="action_not_now">Not Now</string>
     <string name="action_sign_in">Sign In</string>
+    <!-- Button: confirm a picker selection -->
     <string name="action_select">Select</string>
-    <string name="action_import">Import</string>
     <string name="action_show_password">Show password</string>
     <string name="action_hide_password">Hide password</string>
     <string name="action_sign_out">Sign Out</string>
     <string name="action_learn_more">Learn More</string>
+    <!-- Button: opens appleid.apple.com in browser. Keep "Apple ID" untranslated. -->
     <string name="action_open_apple_id">Open Apple ID</string>
+    <!-- Button: opens Android system settings -->
     <string name="action_open_settings">Open Settings</string>
+    <!-- Button: re-download all calendar data -->
     <string name="action_force_sync">Force Sync</string>
+    <!-- Button: trigger immediate sync -->
     <string name="action_sync_now">Sync Now</string>
+    <!-- Button: show more details about an item -->
     <string name="action_details">Details</string>
+    <!-- Button: begin account setup flow -->
     <string name="action_set_up">Set Up</string>
-    <string name="action_contact_support">Contact Support</string>
     <string name="action_report_issue">Report Issue</string>
+    <!-- Button: view item details (verb, not noun) -->
     <string name="action_view">View</string>
+    <!-- Button: turn on a feature -->
     <string name="action_enable">Enable</string>
+    <!-- Button: dismiss/finish current screen (not "completed") -->
     <string name="action_done">Done</string>
+    <!-- Button: save event to calendar -->
     <string name="action_save">Save</string>
+    <!-- Button: add a new item -->
     <string name="action_add">Add</string>
     <string name="action_edit">Edit</string>
     <string name="action_delete">Delete</string>
+    <!-- Button: confirm a destructive action -->
     <string name="action_confirm">Confirm</string>
+    <!-- Button: throw away unsaved changes -->
     <string name="action_discard">Discard</string>
+    <!-- Button: dismiss a notification or alert -->
     <string name="action_dismiss">Dismiss</string>
     <string name="action_show_all">Show All</string>
+    <!-- Button: connect to a server account -->
     <string name="action_connect">Connect</string>
     <string name="action_duplicate">Duplicate</string>
     <string name="action_share">Share</string>
     <string name="action_export_ics">Export as .ics</string>
-    <string name="action_go_to_today">Go to Today</string>
     <string name="action_confirm_delete">Confirm Delete</string>
     <string name="action_delete_event">Delete Event</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
+    <!-- Dialog options when editing/deleting a recurring (repeating) event -->
     <string name="recurring_just_this">Just this one</string>
     <string name="recurring_this_and_future">This and all future</string>
     <string name="recurring_just_occurrence">Just this occurrence</string>
     <string name="recurring_all_occurrences">All occurrences</string>
 
     <!-- ==================== Form Labels ==================== -->
+    <!-- Form field labels for event creation/editing -->
     <string name="label_event_title">Event title</string>
     <string name="label_location">Location</string>
+    <!-- Hint text inside empty location field -->
     <string name="label_location_hint">Address, room, or meeting link</string>
+    <!-- Form field: event description/notes (noun, not verb) -->
     <string name="label_notes">Notes</string>
+    <!-- Form field: event start time -->
+    <string name="label_starts">Starts</string>
+    <!-- Keep "Apple ID" untranslated -->
     <string name="label_apple_id">Apple ID</string>
+    <!-- Keep "App-Specific Password" concept — Apple's term for third-party app passwords -->
     <string name="label_app_password">App-Specific Password</string>
     <!-- Placeholder showing expected format -->
     <string name="placeholder_email" translatable="false">email@icloud.com</string>
     <!-- Placeholder showing expected format -->
     <string name="placeholder_password" translatable="false">xxxx-xxxx-xxxx-xxxx</string>
+    <!-- Hint for app-specific password format -->
     <string name="label_password_hint">16 characters, dashes optional</string>
+    <!-- Keep "URL" untranslated -->
     <string name="label_calendar_url">Calendar URL</string>
     <!-- Placeholder for URL input -->
     <string name="placeholder_url" translatable="false">https://...</string>
     <string name="label_calendar_name">Calendar Name</string>
+    <!-- Generic name input field -->
     <string name="label_name">Name</string>
-    <string name="label_search">Search…</string>
+    <!-- Keep "Hex" untranslated if no standard local equivalent -->
     <string name="label_hex_color">Hex Color</string>
+    <!-- Keep hex format references (0–9, A–F) untranslated -->
     <string name="label_enter_hex">Enter 6 hex characters (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
+    <!-- Tab/filter: show all calendars (not "everything") -->
     <string name="view_all">All</string>
     <string name="view_week">Week</string>
     <string name="view_month">Month</string>
+    <!-- Event property: spans entire day, no specific start/end time -->
     <string name="label_all_day">All day</string>
+    <!-- Navigation label: today's date -->
     <string name="label_today">Today</string>
     <string name="label_go_to_date">Go to date</string>
 
     <!-- ==================== Settings ==================== -->
+    <!-- Settings screen labels. Match Android system Settings terminology where possible. -->
     <string name="settings_title">Settings</string>
     <string name="settings_time_format">Time Format</string>
     <string name="settings_start_week_on">Start Week On</string>
     <string name="settings_event_emojis">Event Emojis</string>
     <string name="settings_emoji_subtitle">Show emojis based on event titles</string>
+    <!-- "Force Full Sync" = re-download everything from server -->
     <string name="settings_force_sync">Force Full Sync</string>
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
     <string name="settings_sync_history">Sync History</string>
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
-    <string name="settings_subscriptions">Subscriptions</string>
-    <string name="settings_import">Import</string>
+    <!-- Keep ".ics" untranslated (file extension) -->
     <string name="settings_import_subtitle">Import .ics file</string>
-    <string name="settings_export">Export</string>
+    <!-- Keep ".ics" untranslated -->
     <string name="settings_export_subtitle">Backup to .ics file</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
-    <!-- Settings Screen Section Headers -->
+    <!-- Section headers in Settings screen -->
     <string name="settings_section_my_calendars">My Calendars</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_section_notifications">Notifications</string>
+    <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Data</string>
 
     <!-- ==================== Onboarding ==================== -->
+    <!-- First-run screen. Casual/friendly tone. Keep "iCloud" untranslated. -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <!-- Casual reassurance — informal tone -->
     <string name="onboarding_got_you">We\'ve got you.</string>
+    <!-- Keep "iCloud" untranslated -->
     <string name="onboarding_connect_prompt">Connect iCloud to see your events here</string>
-    <string name="onboarding_connect_icloud">Connect iCloud</string>
 
     <!-- ==================== Sign-In Sheets ==================== -->
+    <!-- Keep "iCloud" and "CalDAV" untranslated -->
     <string name="signin_icloud_title">Connect iCloud</string>
     <string name="signin_caldav_title">Add CalDAV Account</string>
-    <string name="signin_auto_generated">Auto-generated from server</string>
     <!-- %1$s = provider name (e.g., "iCloud", "Nextcloud") -->
     <string name="signin_connected_to">Connected to %1$s</string>
-    <!-- %1$d = calendar count, %2$s = email -->
-    <string name="signin_found_calendars">Found %1$d calendar(s) for %2$s. Syncing…</string>
 
     <!-- ==================== Dialogs ==================== -->
+    <!-- Dialog titles and messages -->
+    <string name="dialog_new_event_title">New Event</string>
+    <string name="dialog_edit_event_title">Edit Event</string>
     <string name="dialog_force_sync_title">Force Full Sync?</string>
+    <!-- Confirmation dialog body for force sync -->
     <string name="dialog_force_sync_message">This will re-download all calendar data from the server. Local changes will be preserved.</string>
+    <!-- Match Android system "Notifications" terminology -->
     <string name="dialog_enable_notifications">Enable Notifications?</string>
     <!-- %1$s = event title -->
     <string name="dialog_delete_title">Delete \"%1$s\"</string>
     <!-- %1$s = event title -->
     <string name="dialog_edit_title">Edit \"%1$s\"</string>
     <string name="dialog_action_required">This action is required to continue.</string>
+    <!-- "calendar" = the container, not the grid view -->
     <string name="dialog_add_to_calendar">Add to calendar</string>
     <string name="dialog_select_calendar">Select calendar</string>
     <string name="dialog_choose_color">Choose Color</string>
-    <string name="dialog_add_event">Add Event</string>
-    <!-- %1$d = number of events -->
-    <string name="dialog_import_events">Import %1$d Events</string>
+    <!-- "Subscription" = ICS calendar feed (read-only), not a paid subscription -->
     <string name="dialog_add_subscription">Add Subscription</string>
     <string name="dialog_edit_subscription">Edit Subscription</string>
 
@@ -169,49 +218,47 @@
     <string name="status_more_events">+%1$d more</string>
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
-    <!-- %1$d = number of additional items -->
-    <string name="status_and_more">…and %1$d more</string>
     <!-- %1$d = number of events -->
     <string name="status_events_count">%1$d Events</string>
     <string name="status_sync_changes">Sync Changes</string>
     <string name="status_sync_history">Sync History</string>
     <string name="status_parse_failures">Parse Failures</string>
-    <string name="status_fallback_mode">Fallback Mode</string>
     <string name="status_error">Error</string>
     <!-- %1$d = number of failed parses -->
     <string name="status_failed_to_parse">⚠ %1$d failed to parse</string>
+    <!-- About/credits footer — casual, warm tone -->
     <string name="status_built_with_love">Built with Love</string>
+    <!-- City name: Austin, Texas. Keep "Austin" untranslated. Translate "in" only. -->
     <string name="status_in_austin">in Austin</string>
-    <!-- %1$s = version number -->
-    <string name="status_version">v%1$s</string>
+    <!-- %1$s = version number. Keep "KashCal" and "v" untranslated. -->
+    <string name="status_version">KashCal v%1$s</string>
 
     <!-- ==================== Success Messages ==================== -->
     <string name="success_sync_complete">Sync complete</string>
-    <string name="success_event_saved">Event saved</string>
-    <string name="success_event_deleted">Event deleted</string>
-    <!-- %1$d = number of imported events -->
-    <string name="success_import_complete">Imported %1$d events</string>
-    <string name="success_export_complete">Calendar exported</string>
-    <string name="success_changes_saved_offline">Changes saved. Will sync when online.</string>
 
     <!-- ==================== Error Messages ==================== -->
+    <!-- Keep "iCloud", "Apple ID", "CalDAV" untranslated in all error messages. -->
 
     <!-- Auth Errors -->
     <string name="error_auth_title">Sign In Failed</string>
+    <!-- Keep "Apple ID" and "app-specific password" as-is or use Apple's official localized term -->
     <string name="error_auth_invalid_credentials">Invalid Apple ID or app-specific password. Please check your credentials and try again.</string>
+    <!-- Keep "iCloud", "Apple ID" untranslated -->
     <string name="error_auth_app_specific_password_required">iCloud requires an app-specific password. Your regular Apple ID password won\'t work here.</string>
     <string name="error_auth_session_expired_title">Session Expired</string>
     <string name="error_auth_session_expired">Your iCloud session has expired. Please sign in again to continue syncing.</string>
+    <!-- Keep "Apple ID" and "appleid.apple.com" untranslated -->
     <string name="error_auth_account_locked">Your Apple ID is locked. Please visit appleid.apple.com to unlock it.</string>
 
-    <!-- Network Errors -->
+    <!-- Network Errors — keep friendly, non-technical tone -->
     <string name="error_network_offline">You\'re offline. Changes will sync when you\'re back online.</string>
     <string name="error_network_timeout">Connection timed out. Please check your internet and try again.</string>
     <string name="error_network_ssl">Secure connection failed. Please check your network settings.</string>
+    <!-- Keep "iCloud" untranslated -->
     <string name="error_network_unknown_host">Couldn\'t reach iCloud. Please check your internet connection.</string>
     <string name="error_network_connection_failed">Connection failed. Please try again.</string>
 
-    <!-- Server Errors -->
+    <!-- Server Errors — keep "iCloud" untranslated -->
     <string name="error_server_unavailable">iCloud is temporarily unavailable. Please try again later.</string>
     <string name="error_server_rate_limited">Too many requests. Please wait a moment and try again.</string>
     <string name="error_server_forbidden">Access denied. You may not have permission for this calendar.</string>
@@ -229,20 +276,19 @@
     <string name="error_calendar_read_only">Cannot modify events in \"%1$s\" (read-only calendar).</string>
     <string name="error_event_invalid_data">Invalid event data. Please check start and end times.</string>
     <string name="error_event_invalid_recurrence">Invalid repeat pattern.</string>
-    <!-- %1$s = error message -->
-    <string name="error_delete_failed">Failed to delete: %1$s</string>
 
     <!-- Account Errors -->
     <!-- %1$s = display name -->
     <string name="error_display_name_exists">An account named \"%1$s\" already exists.</string>
 
-    <!-- Import/Export Errors -->
+    <!-- Import/Export Errors — "import" = load events from .ics file -->
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
     <string name="error_import_invalid_format">Invalid calendar file format.</string>
     <!-- %1$d = successful imports, %2$d = failed imports -->
     <string name="error_import_partial">Imported %1$d events, %2$d failed.</string>
     <string name="error_export_failed">Failed to export events.</string>
     <string name="error_export_no_events">No events to export.</string>
+    <string name="error_end_before_start">End time must be after start time</string>
 
     <!-- Storage Errors -->
     <string name="error_storage_full_title">Storage Full</string>
@@ -252,7 +298,7 @@
     <string name="error_migration_title">Update Error</string>
     <string name="error_migration_failed">Failed to update app data. Please reinstall the app.</string>
 
-    <!-- Permission Errors -->
+    <!-- Permission Errors — keep "KashCal" untranslated -->
     <string name="error_permission_notification_title">Enable Notifications?</string>
     <string name="error_permission_notification">KashCal needs notification permission to remind you about upcoming events.</string>
     <string name="error_permission_alarm_title">Enable Exact Alarms?</string>
@@ -267,7 +313,7 @@
     <string name="error_device_event_not_found">Event not found. It may have been deleted.</string>
     <string name="error_device_calendar_read_only">This calendar is read-only.</string>
 
-    <!-- Sync Errors -->
+    <!-- Sync Errors — keep "iCloud" untranslated -->
     <string name="error_sync_no_accounts">No iCloud account configured. Set up iCloud to sync your calendars.</string>
     <!-- %1$d = successful syncs, %2$d = failed syncs -->
     <string name="error_sync_partial">Synced %1$d calendars, %2$d failed.</string>
@@ -276,36 +322,33 @@
     <string name="error_unknown">Something went wrong. Please try again.</string>
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <!-- All cd_ strings are screen reader accessibility labels -->
+    <!-- State: item is currently selected (past participle/adjective) -->
     <string name="cd_selected">Selected</string>
     <string name="cd_back">Back</string>
     <string name="cd_close">Close</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
-    <string name="cd_agenda">Agenda</string>
     <string name="cd_settings">Settings</string>
     <string name="cd_today">Today</string>
     <string name="cd_previous_week">Previous week</string>
     <string name="cd_next_week">Next week</string>
-    <string name="cd_previous_year">Previous year</string>
-    <string name="cd_next_year">Next year</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_refresh">Refresh</string>
-    <string name="cd_add_subscription">Add subscription</string>
     <string name="cd_more_options">More options</string>
     <string name="cd_duplicate">Duplicate</string>
     <string name="cd_share">Share</string>
     <string name="cd_export_ics">Export as ICS</string>
+    <string name="cd_open_link">Open link</string>
     <string name="cd_open_maps">Open in maps</string>
     <string name="cd_copy_clipboard">Copy to clipboard</string>
     <string name="cd_clear_history">Clear history</string>
+    <!-- Adjective: event repeats on a schedule -->
     <string name="cd_recurring">Recurring</string>
+    <!-- State: feature is turned on (past participle/adjective) -->
     <string name="cd_enabled">Enabled</string>
     <string name="cd_sync_error">Sync error</string>
-    <string name="cd_change_timezone">Change timezone</string>
     <string name="cd_select_option">Select option</string>
-    <string name="cd_year_picker">Year picker overlay</string>
-    <!-- %1$s = month name -->
-    <string name="cd_month_selector">%1$s month selector</string>
     <!-- %1$s = label name (e.g., "date", "time") -->
     <string name="cd_select_label">Select %1$s</string>
     <!-- %1$d = number of options -->
@@ -318,15 +361,17 @@
     <string name="cd_color_slider_state">%1$s, %2$d degrees</string>
 
     <!-- ==================== Form Labels (Additional) ==================== -->
+    <!-- "Calendar" = the container for events (Work, Personal), not the grid view -->
     <string name="label_calendar">Calendar</string>
     <string name="label_color">Color:</string>
+    <!-- Event form: recurrence setting -->
     <string name="label_repeat">Repeat</string>
     <string name="label_sync_interval">Sync Interval:</string>
-    <string name="label_first_alert">First Alert</string>
-    <string name="label_second_alert">Second Alert</string>
+    <!-- Section header: events with specific times (as opposed to all-day) -->
     <string name="label_scheduled_events">Scheduled Events</string>
+    <!-- Section header: events spanning entire day -->
     <string name="label_all_day_events">All-Day Events</string>
-    <!-- CalDAV -->
+    <!-- CalDAV account form — keep "URL" and "CalDAV" untranslated -->
     <string name="label_server_url">Server URL</string>
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
@@ -337,29 +382,36 @@
     <string name="placeholder_server_url" translatable="false">nextcloud.example.com</string>
     <!-- Placeholder showing expected format -->
     <string name="placeholder_username" translatable="false">user@example.com</string>
-    <!-- Placeholder showing expected format -->
-    <string name="placeholder_display_name" translatable="false">My CalDAV Account</string>
     <string name="placeholder_search_events">Search events…</string>
 
     <!-- ==================== Hints ==================== -->
+    <!-- Keep "https://" untranslated -->
     <string name="hint_https_default">Defaults to https:// if not specified</string>
     <string name="hint_name_shown_in_settings">Name shown in settings</string>
+    <!-- Technical setting for advanced users — keep "HTTP" untranslated -->
     <string name="caldav_trust_insecure_subtitle">For self-signed certificates or local HTTP servers</string>
 
     <!-- ==================== Recurrence ==================== -->
+    <!-- Recurrence end condition: "After N occurrences" -->
     <string name="label_recurrence_after">After</string>
+    <!-- Unit label: "N occurrences" (noun, lowercase) -->
     <string name="label_recurrence_occurrences">occurrences</string>
+    <!-- Recurrence end condition: "On date" (end on specific date) -->
     <string name="label_recurrence_on_date">On date</string>
 
     <!-- ==================== Settings (Additional) ==================== -->
     <string name="settings_visible_calendars">Visible Calendars</string>
+    <!-- "Default Calendar" = where new events are created by default -->
     <string name="settings_default_calendar">Default Calendar</string>
     <string name="settings_default_event_length">Default Event Length</string>
+    <!-- "Alerts" = reminder notifications -->
     <string name="settings_default_alerts">Default Alerts</string>
+    <!-- Match Android system "Notifications" terminology -->
     <string name="settings_notifications">Notifications</string>
     <string name="settings_new_events">New events</string>
 
     <!-- ==================== Settings Options ==================== -->
+    <!-- Setting value: use the device's default setting -->
     <string name="option_system_default">System default</string>
     <string name="option_12_hour">12-hour</string>
     <string name="option_24_hour">24-hour</string>
@@ -375,11 +427,9 @@
     <!-- ==================== Status (Additional) ==================== -->
     <string name="status_connecting">Connecting…</string>
     <string name="status_fetching">Fetching…</string>
-    <string name="status_discovering">Discovering…</string>
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Fetch Calendar</string>
-    <string name="action_discover_calendars">Discover Calendars</string>
     <string name="action_import_from_file">Import from File</string>
     <string name="action_export_local_calendar">Export Local Calendar</string>
 
@@ -387,42 +437,40 @@
     <string name="provider_icloud">iCloud</string>
 
     <!-- ==================== Help Text ==================== -->
-    <!-- iCloud App-Specific Password -->
+    <!-- iCloud App-Specific Password instructions. Keep "Apple ID", "appleid.apple.com" untranslated. -->
     <string name="help_app_password_description">App-specific passwords let you sign in to third-party apps without sharing your main Apple ID password.</string>
     <string name="help_app_password_steps_header">To create one:</string>
+    <!-- Keep "appleid.apple.com" untranslated (URL) -->
     <string name="help_app_password_step_1">1. Go to appleid.apple.com</string>
+    <!-- Keep "Apple ID" untranslated -->
     <string name="help_app_password_step_2">2. Sign in with your Apple ID</string>
     <string name="help_app_password_step_3">3. Go to Sign-In and Security</string>
     <string name="help_app_password_step_4">4. Click App-Specific Passwords</string>
     <string name="help_app_password_step_5">5. Click Generate and copy here</string>
-    <!-- CalDAV -->
-    <string name="help_caldav_description">CalDAV is an open standard for syncing calendars. Many services support it:</string>
-    <string name="help_caldav_instructions">Enter your server URL and credentials to discover your calendars.</string>
 
     <!-- ==================== Notification Permission Dialog ==================== -->
     <string name="dialog_notification_permission_message">KashCal needs notification permission to remind you about upcoming events.</string>
     <string name="dialog_notification_permission_settings_hint">You can change this later in Settings.</string>
 
     <!-- ==================== Accounts Screen ==================== -->
+    <!-- "Account" = server login (iCloud, CalDAV). Keep brand names untranslated. -->
     <string name="accounts_title">Accounts</string>
     <string name="accounts_section_connected">Connected</string>
     <string name="accounts_section_add">Add Account</string>
-    <string name="accounts_count_zero">Accounts</string>
-    <string name="accounts_count_one">1 account</string>
-    <string name="accounts_count_other">%1$d accounts</string>
+    <!-- accounts_count_one/other removed — use R.plurals.accounts_count -->
     <string name="accounts_empty_title">No accounts connected</string>
     <string name="accounts_empty_subtitle">Add an account to sync your calendars across devices</string>
-    <string name="accounts_tap_to_add">Tap to add iCloud or CalDAV</string>
+    <!-- Keep "iCloud", "Nextcloud", "FastMail", "CalDAV" untranslated -->
     <string name="accounts_row_label">iCloud, Nextcloud &amp; More</string>
     <string name="accounts_add_icloud">Add iCloud</string>
     <string name="accounts_add_caldav">Add CalDAV</string>
     <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; More</string>
+    <!-- Keep "CalDAV" untranslated -->
     <string name="accounts_caldav_help_title">What is CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV is an open standard for syncing calendars. Supported by:</string>
     <string name="accounts_caldav_help_more">&amp; more</string>
     <string name="accounts_calendars_syncing">Syncing…</string>
-    <string name="accounts_calendar_count_one">%1$s · 1 calendar</string>
-    <string name="accounts_calendar_count_other">%1$s · %2$d calendars</string>
+    <!-- accounts_calendar_count_one/other removed — use R.plurals.accounts_calendar_count -->
     <!-- Content descriptions -->
     <string name="accounts_cd_icloud_icon">iCloud account</string>
     <string name="accounts_cd_caldav_icon">CalDAV account</string>
@@ -431,36 +479,43 @@
     <string name="accounts_cd_sync_warning">Sync warning</string>
 
     <!-- ==================== Subscriptions Screen ==================== -->
+    <!-- "Subscription" = read-only ICS calendar feed (like holidays), NOT a paid subscription -->
     <string name="subscriptions_title">Subscriptions</string>
-    <string name="subscriptions_section_contact_birthdays">Contact Birthdays</string>
+    <!-- Keep "ICS" untranslated (file format) -->
     <string name="subscriptions_section_ics_calendars">ICS Calendars</string>
     <string name="subscriptions_section_add">Add</string>
+    <!-- Keep "ICS" untranslated -->
     <string name="subscriptions_empty_ics">No ICS subscriptions</string>
     <string name="subscriptions_empty_ics_hint">Add a calendar feed to see events</string>
     <string name="subscriptions_add_ics">Add ICS Calendar</string>
-    <string name="subscriptions_add_birthdays">Contact Birthdays</string>
-    <string name="subscriptions_birthdays_enabled">Enabled</string>
-    <string name="subscriptions_birthdays_disabled">Disabled</string>
-    <string name="subscriptions_count_zero">Subscriptions</string>
-    <string name="subscriptions_count_one">1 subscription</string>
-    <string name="subscriptions_count_other">%1$d subscriptions</string>
+    <!-- subscriptions_count_one/other removed — use R.plurals.subscriptions_count -->
     <!-- Summary row for Settings screen -->
     <string name="subscriptions_row_label">Holidays, School &amp; More</string>
-    <string name="subscriptions_summary_birthdays_only">Contact Birthdays</string>
 
     <!-- ==================== Birthdays & Anniversaries ==================== -->
     <string name="birthdays_anniversaries_row_label">Birthdays &amp; Anniversaries</string>
+    <string name="birthdays_section_title">Birthdays</string>
+    <string name="anniversaries_section_title">Anniversaries</string>
+    <string name="settings_contact_birthdays">Contact Birthdays</string>
+    <string name="settings_contact_birthdays_description">Show birthdays from your phone contacts as all-day calendar events.</string>
+    <string name="settings_contact_anniversaries">Contact Anniversaries</string>
+    <string name="settings_contact_anniversaries_description">Show anniversaries from your phone contacts as all-day calendar events.</string>
+    <string name="settings_anniversary_reminder">Anniversary Reminder</string>
+    <string name="settings_calendar_color">Calendar Color</string>
+    <string name="settings_default_reminder">Default Reminder</string>
+    <string name="action_change">Change</string>
+    <string name="settings_contacts_footer">Reads from your device contacts. Requires Contacts permission.</string>
+    <string name="settings_contacts_permission_required">Contacts permission required</string>
     <!-- Content descriptions -->
     <string name="subscriptions_cd_back">Navigate back</string>
     <string name="subscriptions_cd_add">Add subscription</string>
-    <string name="subscriptions_cd_birthdays_icon">Contact Birthdays</string>
-    <string name="subscriptions_cd_refresh">Refresh subscription</string>
-    <string name="subscriptions_cd_delete">Delete subscription</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
+    <!-- Section headers (uppercase convention — translate word, keep uppercase if locale uses it) -->
     <string name="account_detail_section_sync">SYNC</string>
     <string name="account_detail_section_calendars">CALENDARS</string>
     <string name="account_detail_section_account">ACCOUNT</string>
+    <!-- Toggle label: enable/disable automatic sync -->
     <string name="account_detail_enabled">Enabled</string>
     <string name="account_detail_enabled_subtitle">Sync this account automatically</string>
     <string name="account_detail_sync_now">Sync Now</string>
@@ -471,11 +526,7 @@
     <string name="account_detail_sign_out">Sign Out</string>
     <string name="account_detail_never_synced">Never synced</string>
     <string name="account_detail_last_success">Last success: %1$s</string>
-    <string name="account_detail_failure_one">Sync failed (%1$d attempt)</string>
-    <string name="account_detail_failure_other">Sync failed (%1$d attempts)</string>
-    <string name="account_detail_calendar_count_one">1 calendar</string>
-    <string name="account_detail_calendar_count_other">%1$d calendars</string>
-    <string name="account_detail_calendar_count_new">%1$d calendars (%2$d new)</string>
+    <!-- account_detail_failure/calendar_count one/other/new removed — use R.plurals equivalents -->
     <!-- Content descriptions -->
     <string name="account_detail_cd_rename">Rename</string>
     <string name="account_detail_cd_show_password">Show password</string>
@@ -488,16 +539,573 @@
     <!-- ==================== Rename Account Sheet ==================== -->
     <string name="rename_account_title">Rename Account</string>
     <string name="rename_account_label">Account Name</string>
-    <string name="rename_account_cancel">Cancel</string>
-    <string name="rename_account_save">Save</string>
 
     <!-- ==================== Change Password Sheet ==================== -->
     <string name="change_password_title">Change Password</string>
     <string name="change_password_label_icloud">App-Specific Password</string>
     <string name="change_password_label_default">Password</string>
-    <string name="change_password_cancel">Cancel</string>
-    <string name="change_password_save">Save</string>
 
     <!-- ==================== System Account ==================== -->
+    <!-- Do NOT translate — brand name used as system account label -->
     <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <!-- "Device Calendars" = calendars from other apps on this phone -->
+    <string name="settings_device_calendars">Device Calendars</string>
+    <string name="settings_quick_event_add">Quick Event Add</string>
+    <string name="settings_week_numbers">Week Numbers</string>
+    <!-- "Widget" = Android home screen widget. Use platform's standard widget term. -->
+    <string name="settings_widget_event_limit">Widget Event Limit</string>
+    <!-- "Lookback" = how far back in time to sync -->
+    <string name="settings_sync_lookback">Sync Lookback</string>
+    <string name="settings_auto_detect_emojis">Auto-detect Emojis</string>
+    <string name="settings_events_per_day">Events per day</string>
+    <string name="settings_not_set">Not set</string>
+    <!-- Toggle state: feature is turned on -->
+    <string name="settings_on">On</string>
+    <!-- Toggle state: feature is turned off -->
+    <string name="settings_off">Off</string>
+    <string name="settings_tap_to_enable">Tap to enable</string>
+    <!-- %1$d = number of enabled device calendars -->
+    <string name="settings_device_calendars_enabled">%1$d enabled</string>
+    <!-- %1$d = event limit per day -->
+    <string name="settings_per_day">%1$d per day</string>
+    <!-- ==================== Sign-In / Account ==================== -->
+    <!-- Keep "app-specific password" as-is or use Apple's official localized term -->
+    <string name="signin_icloud_help_question">What\'s an app-specific password?</string>
+    <!-- Advanced setting — "insecure" = not HTTPS -->
+    <string name="caldav_trust_insecure_label">Trust insecure connection</string>
+    <string name="action_add_another">Add Another</string>
+    <!-- %1$d = calendar count, %2$s = masked email -->
+    <string name="account_connected_found_calendars">Found %1$d calendar(s) for %2$s.</string>
+    <string name="account_connected_syncing_hint">Syncing in progress \u2014 events will appear shortly.</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_currently_24h">Currently: 24-hour (%1$s)</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_currently_12h">Currently: 12-hour (%1$s)</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_example">Example: %1$s</string>
+    <!-- %1$s = resolved day name -->
+    <string name="settings_system_default_with_value">System default (%1$s)</string>
+    <!-- Reminder option: no reminder set -->
+    <string name="alert_none">None</string>
+    <string name="cd_collapse">Collapse</string>
+    <string name="cd_expand">Expand</string>
+    <string name="cd_hide_calendar">Hide calendar</string>
+    <string name="cd_show_calendar">Show calendar</string>
+    <string name="cd_pick_month_year">Pick month and year</string>
+    <string name="cd_previous_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="cd_month_year_picker">Month and year picker</string>
+    <string name="cd_remove_alert">Remove alert</string>
+    <string name="cd_warning">Warning</string>
+    <string name="cd_refresh_calendars">Refresh calendars</string>
+    <!-- %1$s = timezone abbreviation -->
+    <string name="cd_timezone_tap_to_change">Timezone: %1$s, tap to change</string>
+    <!-- %1$d = day of month, %2$d = event count -->
+    <string name="cd_day_events">Day %1$d, %2$d events</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <!-- Recurrence picker: how often event repeats (Daily, Weekly, etc.) -->
+    <string name="label_frequency">Frequency</string>
+    <!-- Recurrence picker: which days of the week -->
+    <string name="label_on_days">On days</string>
+    <!-- Recurrence picker: monthly pattern (e.g., "On day 15" or "On 2nd Tuesday") -->
+    <string name="label_pattern">Pattern</string>
+    <!-- Event form: when the event/recurrence ends -->
+    <string name="label_ends">Ends</string>
+    <!-- Event form section: reminder alerts -->
+    <string name="label_alerts">Alerts</string>
+    <!-- Button: add another reminder alert to the event -->
+    <string name="label_add_alert">Add Alert</string>
+    <!-- Recurrence end condition: repeats forever -->
+    <string name="label_recurrence_never">Never</string>
+    <string name="label_tomorrow">Tomorrow</string>
+    <string name="label_yesterday">Yesterday</string>
+    <string name="label_device_calendars">Device Calendars</string>
+    <string name="label_default_calendar_hint">New events will be created in this calendar</string>
+    <!-- %1$d = visible count, %2$d = total count -->
+    <string name="label_visible_count">%1$d / %2$d visible</string>
+    <!-- %1$d = enabled count, %2$d = total count -->
+    <string name="label_enabled_count">%1$d / %2$d enabled</string>
+    <!-- %1$d = truncated count, %2$d = total count, %3$d = max editable -->
+    <string name="label_reminders_truncated">%1$d not shown (%2$d total, max %3$d editable)</string>
+    <!-- %1$d = event count found from ICS fetch -->
+    <string name="label_found_events">Found: %1$d events</string>
+    <string name="label_open_debug_menu">Open debug menu</string>
+    <string name="placeholder_search">Search\u2026</string>
+    <string name="status_sync_paused">Sync paused</string>
+    <string name="status_not_synced">Not synced</string>
+    <string name="status_sync_error">Sync error</string>
+    <!-- %1$d = minutes ago -->
+    <string name="status_minutes_ago">%1$dm ago</string>
+    <!-- %1$d = hours ago -->
+    <string name="status_hours_ago">%1$dh ago</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <!-- "Device calendars" = calendars from other apps on this phone, not KashCal's own calendars -->
+    <string name="device_calendars_description">Show events from other calendar apps on your device (sync adapters, local calendars).</string>
+    <string name="device_calendars_permission_required">Calendar permission required. Tap Enable to grant access.</string>
+    <string name="device_calendars_read_only_access">Read-only access</string>
+    <string name="device_calendars_grant_write">Grant write permission to edit device calendar events</string>
+    <string name="device_calendars_grant">Grant</string>
+    <string name="device_calendars_none_found">No device calendars found.</string>
+    <string name="device_calendars_local">Local</string>
+    <string name="device_calendars_show_declined">Show declined events</string>
+    <string name="device_calendars_reminders">Reminders</string>
+    <string name="device_calendars_reminders_desc">Get notified for device calendar events</string>
+    <string name="device_calendars_read_only_no_write">Read only (no write permission)</string>
+    <string name="device_calendars_read_only_calendar">Read only (calendar is read-only)</string>
+
+    <string name="settings_developer_options">Developer Options</string>
+    <string name="settings_sync_frequency">Sync Frequency</string>
+    <!-- Section header: feature is in preview/beta (uppercase label) -->
+    <string name="settings_preview">PREVIEW</string>
+    <!-- %1$d = event count, used when not default -->
+    <string name="settings_n_events">%1$d events</string>
+    <!-- %1$d = event count, used when default -->
+    <string name="settings_n_events_default">%1$d events (default)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <!-- Navigation drawer items -->
+    <string name="drawer_calendars">Calendars</string>
+    <string name="drawer_contacts">Contacts</string>
+    <string name="drawer_device_calendars">Device calendars</string>
+    <string name="drawer_share_feedback">Share feedback</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <!-- Privacy tagline in about screen — short, punchy -->
+    <string name="status_privacy_tagline">For you, not your data.</string>
+    <!-- Button below privacy tagline — links to support/donate -->
+    <string name="action_keep_it_that_way">Keep it that way</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <!-- Sync history details — technical but user-facing. "Sync" = synchronize data. -->
+    <string name="status_already_synced">Already Synced</string>
+    <string name="status_warnings">Warnings</string>
+    <string name="sync_history_events_failed">Events failed</string>
+    <string name="sync_history_abandoned_max_retries">Abandoned (max retries)</string>
+    <string name="sync_history_events_skipped">Events skipped</string>
+    <!-- "Duration" = how long the sync took -->
+    <string name="sync_history_duration">Duration</string>
+    <!-- %1$d = skipped-already-synced count -->
+    <string name="sync_history_already_synced_count">%1$d already synced</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">No events</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">You\'re offline</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <!-- %1$s = provider name (e.g., "iCloud") -->
+    <string name="dialog_sign_out_title">Sign Out of %1$s?</string>
+    <!-- %1$s = email address -->
+    <string name="dialog_sign_out_message">You are signed in as %1$s. Signing out will remove synced calendars from this device.</string>
+
+    <!-- ==================== Plural Resources (Phase 1 i18n) ==================== -->
+    <!-- IMPORTANT: Each language needs the correct plural quantity forms per CLDR.
+         See docs/TRANSLATION_GUIDE.md for required forms per language. -->
+
+    <!-- Existing string pair conversions -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 calendar</item>
+        <item quantity="other">%1$s \u00B7 %2$d calendars</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d subscription</item>
+        <item quantity="other">%1$d subscriptions</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Sync failed (%1$d attempt)</item>
+        <item quantity="other">Sync failed (%1$d attempts)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="other">%1$d calendars</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d calendar (%2$d new)</item>
+        <item quantity="other">%1$d calendars (%2$d new)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
+
+    <!-- Birthday/Anniversary Plurals -->
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d birthday</item>
+        <item quantity="other">%1$d birthdays</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d anniversary</item>
+        <item quantity="other">%1$d anniversaries</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d more</item>
+        <item quantity="other">+ %1$d more</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Add Event</item>
+        <item quantity="other">Import %1$d Events</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Add</item>
+        <item quantity="other">Import</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026and %1$d more</item>
+        <item quantity="other">\u2026and %1$d more</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">Imported %1$d event</item>
+        <item quantity="other">Imported %1$d events</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">Exported %1$d event</item>
+        <item quantity="other">Exported %1$d events</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d events</item>
+    </plurals>
+
+    <!-- Time unit plurals -->
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d hour</item>
+        <item quantity="other">%1$d hours</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d week</item>
+        <item quantity="other">%1$d weeks</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d year</item>
+        <item quantity="other">%1$d years</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d sec</item>
+        <item quantity="other">%1$d sec</item>
+    </plurals>
+
+    <!-- Duration-with-context plurals -->
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d minute before</item>
+        <item quantity="other">%1$d minutes before</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d hour before</item>
+        <item quantity="other">%1$d hours before</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d day before</item>
+        <item quantity="other">%1$d days before</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d week before</item>
+        <item quantity="other">%1$d weeks before</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Edit recurring event</string>
+    <string name="dialog_delete_recurring_title">Delete recurring event</string>
+    <string name="dialog_edit_recurring_message">This is a recurring event. How would you like to apply this change?</string>
+    <string name="recurring_this_event">This event</string>
+    <string name="recurring_all_events">All events</string>
+    <!-- Empty state: playful/casual — shown when no day is selected. Keep the playful tone. -->
+    <string name="empty_pick_a_day">Pick a day. Seize it.</string>
+    <!-- Empty state: playful/casual — shown when selected day has no events. Keep informal. -->
+    <string name="empty_no_events_day">Nothing to see here; go touch grass?</string>
+    <string name="label_upcoming_events">Upcoming Events</string>
+    <!-- Search filter chip: filter by date (noun, not verb) -->
+    <string name="filter_date">Date</string>
+    <string name="label_select_date">Select a date</string>
+    <string name="hint_tap_date_range">Tap same date for single day, or another date for range</string>
+
+    <!-- Content Descriptions (HomeScreen / ViewPicker / YearOverlay) -->
+    <string name="cd_clear">Clear</string>
+    <string name="cd_offline">Offline</string>
+    <string name="cd_previous">Previous</string>
+    <string name="cd_next">Next</string>
+    <string name="cd_open_drawer">Open drawer</string>
+    <string name="cd_close_drawer">Close drawer</string>
+    <string name="cd_calendar_view">Calendar view</string>
+    <string name="cd_active_view">Active view</string>
+
+    <!-- View Picker Labels -->
+    <string name="view_agenda">Agenda</string>
+    <string name="view_month_full">Month (Full)</string>
+    <string name="view_three_days">3 Days</string>
+    <string name="view_year">Year</string>
+
+    <!-- YearOverlay -->
+    <string name="label_go_to_month">Go to month</string>
+
+    <!-- QuickAddDialog -->
+    <string name="action_more_options">More options</string>
+
+    <!-- Duration wheel picker labels — abbreviated, lowercase -->
+    <string name="label_duration_days">days</string>
+    <string name="label_duration_hrs">hrs</string>
+    <string name="label_duration_min">min</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <!-- Monthly recurrence patterns — format specifier order can be changed for grammar -->
+    <!-- %1$d = day of month -->
+    <string name="recurrence_on_day">On day %1$d</string>
+    <string name="recurrence_on_last_day">On last day of month</string>
+    <!-- %1$s = ordinal (1st, 2nd, etc.), %2$s = weekday name -->
+    <string name="recurrence_on_nth_weekday">On the %1$s %2$s</string>
+    <!-- Ordinal numbers — localize to your language's ordinal system -->
+    <string name="ordinal_1st">1st</string>
+    <string name="ordinal_2nd">2nd</string>
+    <string name="ordinal_3rd">3rd</string>
+    <string name="ordinal_4th">4th</string>
+    <!-- %1$d = ordinal number, fallback for 5th+ -->
+    <string name="ordinal_nth">%1$dth</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <!-- Frequency labels — standalone words shown in recurrence summary -->
+    <string name="rrule_does_not_repeat">Does not repeat</string>
+    <string name="rrule_freq_daily">Daily</string>
+    <string name="rrule_freq_weekly">Weekly</string>
+    <string name="rrule_freq_biweekly">Biweekly</string>
+    <string name="rrule_freq_monthly">Monthly</string>
+    <string name="rrule_freq_quarterly">Quarterly</string>
+    <string name="rrule_freq_yearly">Yearly</string>
+    <string name="rrule_repeats">Repeats</string>
+    <!-- Interval patterns — %1$d = interval number -->
+    <string name="rrule_every_n_days">Every %1$d days</string>
+    <string name="rrule_every_n_weeks">Every %1$d weeks</string>
+    <string name="rrule_every_n_months">Every %1$d months</string>
+    <string name="rrule_every_n_years">Every %1$d years</string>
+    <!-- Composite: frequency + day list — %1$s = frequency base, %2$s = comma-separated day names -->
+    <string name="rrule_freq_on_days">%1$s on %2$s</string>
+    <!-- Composite: frequency + ordinal weekday — %1$s = frequency base, %2$s = ordinal, %3$s = day name -->
+    <string name="rrule_freq_on_ordinal_day">%1$s on %2$s %3$s</string>
+    <!-- Composite: frequency + "on last day" — %1$s = frequency base -->
+    <string name="rrule_freq_on_last_day">%1$s on last day</string>
+    <!-- Composite: frequency + "on day N" — %1$s = frequency base, %2$d = day number -->
+    <string name="rrule_freq_on_day_n">%1$s on day %2$d</string>
+    <!-- "last" ordinal for "last Friday" etc. -->
+    <string name="rrule_ordinal_last">last</string>
+    <!-- End condition: count — uses Android plurals for "N time(s)" -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d time</item>
+        <item quantity="other">, %1$d times</item>
+    </plurals>
+    <!-- End condition: until date — %1$s = formatted date -->
+    <string name="rrule_until_suffix">, until %1$s</string>
+    <!-- FrequencyOption chip label for "Never" (no recurrence) -->
+    <string name="rrule_freq_never">Never</string>
+    <!-- Series start date composites for quick view — %1$s = freq, %2$s = date, %3$s = end suffix -->
+    <string name="rrule_starting">%1$s starting %2$s%3$s</string>
+    <!-- "since" variant (no end suffix) — %1$s = freq, %2$s = date -->
+    <string name="rrule_since">%1$s \u00b7 since %2$s</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <!-- Sync result counts — adjective form (e.g., "3 new", "2 updated") -->
+    <!-- %1$d = count -->
+    <string name="sync_summary_new">%1$d new</string>
+    <string name="sync_summary_updated">%1$d updated</string>
+    <string name="sync_summary_removed">%1$d removed</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Previous 3 days</string>
+    <string name="cd_next_3_days">Next 3 days</string>
+    <string name="cd_circular_scrolling">Circular scrolling enabled</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">No reminder</string>
+    <string name="reminder_at_time_of_event">At time of event</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s before</string>
+    <string name="reminder_time_after">%1$s after</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM day of event</string>
+    <string name="reminder_day_of_event_24h">09:00 day of event</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s before at 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s before at 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Off</string>
+    <string name="reminder_short_at_event">At event</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$dh</string>
+    <string name="reminder_short_days">%1$dd</string>
+    <string name="reminder_short_weeks">%1$dw</string>
+    <string name="reminder_summary_none">None</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$dh %2$dm</string>
+    <string name="duration_compact_short">%1$dh%2$dm</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Manual only</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">All events</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Snooze</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Starting now</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Tomorrow, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Sync Complete</string>
+    <string name="sync_notification_partial">Sync Partially Complete</string>
+    <string name="sync_notification_auth_failed">Sync Authentication Failed</string>
+    <string name="sync_notification_auth_reauth">Please re-authenticate your account</string>
+    <string name="sync_notification_failed">Sync Failed</string>
+    <string name="sync_notification_parse_title">Some events couldn\'t be synced</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s in %2$s couldn\'t be synced. Try Force Sync in Settings.</string>
+    <string name="sync_notification_conflict_title">Sync conflict resolved</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Local changes to \"%1$s\" were lost due to sync conflict. Server version will be used.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Local changes to %1$s were lost due to sync conflicts. Server versions will be used.</string>
+    <string name="sync_notification_expired_title">Sync changes expired</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s couldn\'t be synced after 30 days. The server version will be used. Force Sync to retry.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Synced %1$d calendar</item>
+        <item quantity="other">Synced %1$d calendars</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d change</item>
+        <item quantity="other">, %1$d changes</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d error</item>
+        <item quantity="other">, %1$d errors</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s\'s %2$s Birthday</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s\'s Birthday</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s\'s %2$s Anniversary</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s\'s Anniversary</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$dst</string>
+    <string name="ordinal_suffix_nd">%1$dnd</string>
+    <string name="ordinal_suffix_rd">%1$drd</string>
+    <string name="ordinal_suffix_th">%1$dth</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Syncing calendars\u2026</string>
+    <string name="sync_banner_preparing">Preparing to sync\u2026</string>
+    <string name="sync_banner_complete_errors">Sync complete with errors</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Sync failed: %1$s</string>
+    <string name="error_unknown_error">Unknown error</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">New event: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d new event</item>
+        <item quantity="other">%1$d new events</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d event updated</item>
+        <item quantity="other">%1$d events updated</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d event removed</item>
+        <item quantity="other">%1$d events removed</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d calendar update</item>
+        <item quantity="other">%1$d calendar updates</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Day %1$d of %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Day 1 of %1$d \u00b7 starts %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Day %1$d of %2$d \u00b7 ends %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 All day</string>
+    <string name="event_date_all_day">%1$s \u00b7 All day</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (All day)</string>
+    <string name="event_date_all_day_parens">%1$s (All day)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Save Event</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">New</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Red</string>
+    <string name="color_orange">Orange</string>
+    <string name="color_yellow">Yellow</string>
+    <string name="color_green">Green</string>
+    <string name="color_cyan">Cyan</string>
+    <string name="color_blue">Blue</string>
+    <string name="color_purple">Purple</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Meeting link: %1$s</string>
+    <string name="cd_phone_number">Phone number</string>
+    <string name="cd_email_link">Email: %1$s</string>
+    <string name="cd_web_link">Link: %1$s</string>
+    <string name="cd_text_with_links">Text with %1$d links: %2$s</string>
+    <string name="cd_text_with_link">Text with 1 link: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Day %1$d of %2$d (All day)</string>
+    <!-- Sync history stats header — %1$d = total syncs, %2$d = pushed, %3$d = pulled -->
+    <string name="sync_history_stats">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled</string>
+    <string name="sync_history_stats_issues">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled   \u26a0 %4$d issues</string>
+    <string name="sync_history_failed">Failed</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Every hour</string>
+    <string name="ics_sync_every_n_hours">Every %1$d hours</string>
+    <string name="ics_sync_daily">Daily</string>
+    <string name="ics_sync_weekly">Weekly</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL is required</string>
+    <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>
+    <!-- Event confirmation snackbar: all-day event — %1$s = title, %2$s = date -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (All day)</string>
+    <!-- Event confirmation snackbar: timed event — %1$s = title, %2$s = date, %3$s = time -->
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
 </resources>

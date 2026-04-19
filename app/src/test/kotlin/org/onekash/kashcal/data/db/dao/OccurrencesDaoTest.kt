@@ -796,6 +796,118 @@ class OccurrencesDaoTest {
         assertEquals(1, occurrencesDao.getTotalCount())
     }
 
+    // ==================== Missing Occurrences Detection ====================
+
+    @Test
+    fun `getRecurringEventsWithNoOccurrences returns recurring event with zero occurrences`() = runTest {
+        // Insert a recurring event (no occurrences inserted)
+        val recurringEventId = eventsDao.insert(
+            Event(
+                uid = "recurring-orphan@test.com",
+                calendarId = calendarId,
+                title = "Orphaned Recurring",
+                startTs = parseDate("2025-03-01 09:00"),
+                endTs = parseDate("2025-03-01 10:00"),
+                dtstamp = System.currentTimeMillis(),
+                rrule = "FREQ=WEEKLY;BYDAY=MO",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+
+        val result = occurrencesDao.getRecurringEventsWithNoOccurrences()
+
+        assertTrue("Should find recurring event with no occurrences", result.contains(recurringEventId))
+    }
+
+    @Test
+    fun `getRecurringEventsWithNoOccurrences excludes non-recurring events`() = runTest {
+        // eventId from setup is non-recurring and has no occurrences
+        val result = occurrencesDao.getRecurringEventsWithNoOccurrences()
+
+        assertFalse("Non-recurring event should be excluded", result.contains(eventId))
+    }
+
+    @Test
+    fun `getRecurringEventsWithNoOccurrences excludes exception events`() = runTest {
+        val masterEventId = eventsDao.insert(
+            Event(
+                uid = "master@test.com",
+                calendarId = calendarId,
+                title = "Master Event",
+                startTs = parseDate("2025-03-01 09:00"),
+                endTs = parseDate("2025-03-01 10:00"),
+                dtstamp = System.currentTimeMillis(),
+                rrule = "FREQ=WEEKLY",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+        // Exception event has originalEventId set
+        eventsDao.insert(
+            Event(
+                uid = "master@test.com",
+                calendarId = calendarId,
+                title = "Exception Occurrence",
+                startTs = parseDate("2025-03-08 09:00"),
+                endTs = parseDate("2025-03-08 10:00"),
+                dtstamp = System.currentTimeMillis(),
+                originalEventId = masterEventId,
+                originalInstanceTime = parseDate("2025-03-08 09:00"),
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+
+        val result = occurrencesDao.getRecurringEventsWithNoOccurrences()
+
+        // Master should be found (no occurrences), but exception should not
+        assertTrue("Master event should be found", result.contains(masterEventId))
+        assertEquals("Only master should be in results", 1, result.size)
+    }
+
+    @Test
+    fun `getRecurringEventsWithNoOccurrences excludes PENDING_DELETE events`() = runTest {
+        eventsDao.insert(
+            Event(
+                uid = "deleted-recurring@test.com",
+                calendarId = calendarId,
+                title = "Deleted Recurring",
+                startTs = parseDate("2025-03-01 09:00"),
+                endTs = parseDate("2025-03-01 10:00"),
+                dtstamp = System.currentTimeMillis(),
+                rrule = "FREQ=DAILY",
+                syncStatus = SyncStatus.PENDING_DELETE
+            )
+        )
+
+        val result = occurrencesDao.getRecurringEventsWithNoOccurrences()
+
+        assertTrue("PENDING_DELETE event should be excluded", result.isEmpty())
+    }
+
+    @Test
+    fun `getRecurringEventsWithNoOccurrences excludes events that have occurrences`() = runTest {
+        val recurringEventId = eventsDao.insert(
+            Event(
+                uid = "has-occurrences@test.com",
+                calendarId = calendarId,
+                title = "Has Occurrences",
+                startTs = parseDate("2025-03-01 09:00"),
+                endTs = parseDate("2025-03-01 10:00"),
+                dtstamp = System.currentTimeMillis(),
+                rrule = "FREQ=WEEKLY",
+                syncStatus = SyncStatus.SYNCED
+            )
+        )
+        occurrencesDao.insert(createOccurrence(
+            eventId = recurringEventId,
+            startTs = parseDate("2025-03-01 09:00"),
+            startDay = 20250301
+        ))
+
+        val result = occurrencesDao.getRecurringEventsWithNoOccurrences()
+
+        assertFalse("Event with occurrences should be excluded", result.contains(recurringEventId))
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createOccurrence(

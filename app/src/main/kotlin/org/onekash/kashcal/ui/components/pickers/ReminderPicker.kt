@@ -36,8 +36,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.ALL_DAY_PRESET_CHIPS
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.ui.shared.TIMED_PRESET_CHIPS
@@ -73,7 +76,7 @@ fun ReminderPickerCard(
     val presets = if (isAllDay) ALL_DAY_PRESET_CHIPS else TIMED_PRESET_CHIPS
 
     // Build summary text
-    val summaryText = formatReminderSummary(reminders, use24Hour)
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalContext.current.resources)
 
     OutlinedCard(
         modifier = modifier.fillMaxWidth(),
@@ -99,7 +102,7 @@ fun ReminderPickerCard(
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        "Alerts",
+                        stringResource(R.string.label_alerts),
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }
@@ -193,7 +196,7 @@ fun ReminderPickerCard(
                                 modifier = Modifier.size(18.dp)
                             )
                             Text(
-                                "Add Alert",
+                                stringResource(R.string.label_add_alert),
                                 modifier = Modifier.padding(start = 4.dp)
                             )
                         }
@@ -211,12 +214,12 @@ fun ReminderPickerCard(
                         ) {
                             Icon(
                                 Icons.Default.Warning,
-                                contentDescription = "Warning",
+                                contentDescription = stringResource(R.string.cd_warning),
                                 modifier = Modifier.size(16.dp),
                                 tint = MaterialTheme.colorScheme.error
                             )
                             Text(
-                                "$truncatedReminderCount not shown ($totalReminders total, max $MAX_REMINDERS editable)",
+                                stringResource(R.string.label_reminders_truncated, truncatedReminderCount, totalReminders, MAX_REMINDERS),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.error
                             )
@@ -256,7 +259,7 @@ private fun ReminderItemRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                formatReminderDuration(minutes, isAllDay, use24Hour),
+                formatReminderDuration(minutes, isAllDay, use24Hour, LocalContext.current.resources),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),
@@ -268,7 +271,7 @@ private fun ReminderItemRow(
             ) {
                 Icon(
                     if (isPickerOpen) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = if (isPickerOpen) "Collapse" else "Expand",
+                    contentDescription = if (isPickerOpen) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
                     modifier = Modifier.size(18.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -278,7 +281,7 @@ private fun ReminderItemRow(
                 ) {
                     Icon(
                         Icons.Default.Close,
-                        contentDescription = "Remove alert",
+                        contentDescription = stringResource(R.string.cd_remove_alert),
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.error
                     )

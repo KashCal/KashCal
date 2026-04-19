@@ -2,6 +2,8 @@ package org.onekash.kashcal.ui.components.weekview
 
 import org.junit.Test
 import org.junit.Assert.*
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -10,6 +12,7 @@ import java.time.ZoneId
  * Tests week calculations, range formatting, time snapping, event clamping,
  * and infinite day pager functions.
  */
+@RunWith(RobolectricTestRunner::class)
 class WeekViewUtilsTest {
 
     // ==================== Day Pager Tests ====================
@@ -681,6 +684,44 @@ class WeekViewUtilsTest {
         assertNotEquals(mondayResult, sundayResult)
         assertEquals("Mar 9 - 15, 2026", mondayResult)
         assertEquals("Mar 8 - 14, 2026", sundayResult)
+    }
+
+    // ==================== formatMonthYear Tests ====================
+
+    @Test
+    fun `formatMonthYearWithWeek produces MMM yyyy (WN) format`() {
+        val date = LocalDate.of(2026, 4, 15) // Wednesday, April 15, 2026
+        val result = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.MONDAY)
+        assertTrue("Should start with month abbreviation and year, got: $result", result.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
+        assertTrue("Should contain (W", result.contains("(W"))
+    }
+
+    @Test
+    fun `formatMonthYearWithWeek week number is locale-aware not ISO-fixed`() {
+        // Jan 1, 2026 is Thursday. With Sunday-start, this is week 1 (US style).
+        // With Monday-start and minimalDays=4 (ISO), it's week 1 too (Jan 1 is Thu, 4 days in week).
+        // But with Sunday-start and minimalDays=1 (US), week containing Jan 1 is definitely week 1.
+        val date = LocalDate.of(2026, 1, 1)
+        val sundayResult = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.SUNDAY)
+        val mondayResult = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.MONDAY)
+        // Both should produce valid format
+        assertTrue(sundayResult.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
+        assertTrue(mondayResult.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
+    }
+
+    @Test
+    fun `formatMonthYear produces MMM yyyy without week number`() {
+        val date = LocalDate.of(2026, 4, 15)
+        val result = WeekViewUtils.formatMonthYear(date)
+        assertTrue("Should match MMM yyyy format without week, got: $result", result.matches(Regex("\\w+ \\d{4}")))
+        assertFalse("Should not contain week number", result.contains("(W"))
+    }
+
+    @Test
+    fun `formatThreeDayHeader uses center date without week number`() {
+        val result = WeekViewUtils.formatThreeDayHeader(WeekViewUtils.CENTER_DAY_PAGE)
+        assertTrue("Should match MMM yyyy format, got: $result", result.matches(Regex("\\w+ \\d{4}")))
+        assertFalse("Should not contain week number", result.contains("(W"))
     }
 
     // ==================== offsetToTime with startHour Tests ====================

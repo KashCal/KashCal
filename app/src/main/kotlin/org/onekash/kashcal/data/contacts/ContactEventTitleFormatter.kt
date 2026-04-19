@@ -1,5 +1,6 @@
 package org.onekash.kashcal.data.contacts
 
+import android.content.res.Resources
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
@@ -23,5 +24,12 @@ object ContactEventTitleFormatter {
         if (occurrenceTs == null) return event.title
         val year = ContactEventUtils.decodeEventYear(event.description)
         return eventType.formatTitle(event.title, year, occurrenceTs)
+    }
+
+    fun format(event: Event, occurrenceTs: Long?, resources: Resources): String {
+        val eventType = ContactEventType.fromCaldavUrl(event.caldavUrl) ?: return event.title
+        if (occurrenceTs == null) return event.title
+        val year = ContactEventUtils.decodeEventYear(event.description)
+        return eventType.formatTitleI18n(event.title, year, occurrenceTs, resources)
     }
 }

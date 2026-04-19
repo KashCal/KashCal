@@ -29,6 +29,11 @@ sealed class DateFilter {
         firstDayOfWeek: Int = Calendar.SUNDAY
     ): Pair<Long, Long>?
 
+    data object Upcoming : DateFilter() {
+        override val displayName = "Upcoming"
+        override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long>? = null
+    }
+
     data object AnyTime : DateFilter() {
         override val displayName = "Any time"
         override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long>? = null
@@ -114,7 +119,7 @@ sealed class DateFilter {
                 val date = Instant.ofEpochMilli(dateMs)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate()
-                return date.format(DateTimeFormatter.ofPattern("MMM d"))
+                return date.format(DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("MMMd"), java.util.Locale.getDefault()))
             }
 
         override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
@@ -137,7 +142,7 @@ sealed class DateFilter {
                 val endDate = Instant.ofEpochMilli(endMs)
                     .atZone(ZoneId.systemDefault())
                     .toLocalDate()
-                val formatter = DateTimeFormatter.ofPattern("MMM d")
+                val formatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("MMMd"), java.util.Locale.getDefault())
                 return "${startDate.format(formatter)} - ${endDate.format(formatter)}"
             }
 

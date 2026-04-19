@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Lịch trình hôm nay</string>
+    <string name="widget_description">Hiển thị sự kiện lịch trong ngày</string>
+    <string name="week_widget_name">Xem tuần</string>
+    <string name="week_widget_description">Hiển thị sự kiện lịch trong 7 ngày tới</string>
+    <string name="month_widget_name">Xem tháng</string>
+    <string name="month_widget_description">Hiển thị lưới lịch cả tháng với chấm chỉ báo sự kiện</string>
+    <string name="date_widget_name">Ngày</string>
+    <string name="date_widget_description">Hiển thị ngày hôm nay như biểu tượng ứng dụng</string>
+    <string name="widget_no_events_today">Hôm nay không có sự kiện</string>
+    <string name="widget_add_event">+ Thêm sự kiện</string>
+    <string name="widget_no_events">Không có sự kiện</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Sự kiện mới</string>
+    <string name="shortcut_new_event_long">Tạo sự kiện mới</string>
+    <string name="shortcut_today">Hôm nay</string>
+    <string name="shortcut_today_long">Đi tới hôm nay</string>
+    <string name="shortcut_search">Tìm kiếm</string>
+    <string name="shortcut_search_long">Tìm kiếm sự kiện</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Thử lại</string>
+    <string name="action_try_again">Thử lại</string>
+    <string name="action_cancel">Hủy</string>
+    <string name="action_close">Đóng</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Không phải bây giờ</string>
+    <string name="action_sign_in">Đăng nhập</string>
+    <string name="action_select">Chọn</string>
+    <string name="action_show_password">Hiển thị mật khẩu</string>
+    <string name="action_hide_password">Ẩn mật khẩu</string>
+    <string name="action_sign_out">Đăng xuất</string>
+    <string name="action_learn_more">Tìm hiểu thêm</string>
+    <string name="action_open_apple_id">Mở Apple ID</string>
+    <string name="action_open_settings">Mở Cài đặt</string>
+    <string name="action_force_sync">Đồng bộ toàn bộ</string>
+    <string name="action_sync_now">Đồng bộ ngay</string>
+    <string name="action_details">Chi tiết</string>
+    <string name="action_set_up">Thiết lập</string>
+    <string name="action_report_issue">Báo lỗi</string>
+    <string name="action_view">Xem</string>
+    <string name="action_enable">Bật</string>
+    <string name="action_done">Xong</string>
+    <string name="action_save">Lưu</string>
+    <string name="action_add">Thêm</string>
+    <string name="action_edit">Sửa</string>
+    <string name="action_delete">Xóa</string>
+    <string name="action_confirm">Xác nhận</string>
+    <string name="action_discard">Bỏ</string>
+    <string name="action_dismiss">Bỏ qua</string>
+    <string name="action_show_all">Hiện tất cả</string>
+    <string name="action_connect">Kết nối</string>
+    <string name="action_duplicate">Nhân đôi</string>
+    <string name="action_share">Chia sẻ</string>
+    <string name="action_export_ics">Xuất dạng .ics</string>
+    <string name="action_confirm_delete">Xác nhận xóa</string>
+    <string name="action_delete_event">Xóa sự kiện</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Chỉ lần này</string>
+    <string name="recurring_this_and_future">Lần này và tất cả sau đó</string>
+    <string name="recurring_just_occurrence">Chỉ lần xuất hiện này</string>
+    <string name="recurring_all_occurrences">Tất cả lần xuất hiện</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Tên sự kiện</string>
+    <string name="label_location">Địa điểm</string>
+    <string name="label_location_hint">Địa chỉ, phòng, hoặc liên kết họp</string>
+    <string name="label_notes">Ghi chú</string>
+    <string name="label_starts">Bắt đầu</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">Mật khẩu dành riêng cho ứng dụng</string>
+    <string name="label_password_hint">16 ký tự, dấu gạch ngang không bắt buộc</string>
+    <string name="label_calendar_url">URL lịch</string>
+    <string name="label_calendar_name">Tên lịch</string>
+    <string name="label_name">Tên</string>
+    <string name="label_hex_color">Mã màu Hex</string>
+    <string name="label_enter_hex">Nhập 6 ký tự hex (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Tất cả</string>
+    <string name="view_week">Tuần</string>
+    <string name="view_month">Tháng</string>
+    <string name="label_all_day">Cả ngày</string>
+    <string name="label_today">Hôm nay</string>
+    <string name="label_go_to_date">Đi tới ngày</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Cài đặt</string>
+    <string name="settings_time_format">Định dạng thời gian</string>
+    <string name="settings_start_week_on">Bắt đầu tuần vào</string>
+    <string name="settings_event_emojis">Biểu tượng sự kiện</string>
+    <string name="settings_emoji_subtitle">Hiển thị biểu tượng dựa trên tên sự kiện</string>
+    <string name="settings_force_sync">Đồng bộ toàn bộ</string>
+    <string name="settings_force_sync_subtitle">Tải lại toàn bộ dữ liệu lịch</string>
+    <string name="settings_sync_history">Lịch sử đồng bộ</string>
+    <string name="settings_sync_history_subtitle">Xem phiên đồng bộ (48 giờ gần nhất)</string>
+    <string name="settings_import_subtitle">Nhập tệp .ics</string>
+    <string name="settings_export_subtitle">Sao lưu ra tệp .ics</string>
+    <string name="settings_birthday_reminder">Nhắc nhở sinh nhật</string>
+    <string name="settings_use_device_timezone">Dùng múi giờ thiết bị</string>
+    <string name="settings_section_my_calendars">Lịch của tôi</string>
+    <string name="settings_section_display">Hiển thị</string>
+    <string name="settings_section_notifications">Thông báo</string>
+    <string name="settings_section_sync">Đồng bộ</string>
+    <string name="settings_section_data">Dữ liệu</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Dùng Apple Calendar?</string>
+    <string name="onboarding_got_you">Để đây lo.</string>
+    <string name="onboarding_connect_prompt">Kết nối iCloud để xem sự kiện tại đây</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Kết nối iCloud</string>
+    <string name="signin_caldav_title">Thêm tài khoản CalDAV</string>
+    <string name="signin_connected_to">Đã kết nối với %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Sự kiện mới</string>
+    <string name="dialog_edit_event_title">Sửa sự kiện</string>
+    <string name="dialog_force_sync_title">Đồng bộ toàn bộ?</string>
+    <string name="dialog_force_sync_message">Thao tác này sẽ tải lại toàn bộ dữ liệu lịch từ máy chủ. Thay đổi cục bộ sẽ được giữ nguyên.</string>
+    <string name="dialog_enable_notifications">Bật thông báo?</string>
+    <string name="dialog_delete_title">Xóa \"%1$s\"</string>
+    <string name="dialog_edit_title">Sửa \"%1$s\"</string>
+    <string name="dialog_action_required">Cần thực hiện thao tác này để tiếp tục.</string>
+    <string name="dialog_add_to_calendar">Thêm vào lịch</string>
+    <string name="dialog_select_calendar">Chọn lịch</string>
+    <string name="dialog_choose_color">Chọn màu</string>
+    <string name="dialog_add_subscription">Thêm đăng ký</string>
+    <string name="dialog_edit_subscription">Sửa đăng ký</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Tuần này không có sự kiện</string>
+    <string name="status_more_events">+%1$d nữa</string>
+    <string name="status_no_sync_sessions">Chưa có phiên đồng bộ nào.\n\nKéo xuống để làm mới trên màn hình lịch để bắt đầu đồng bộ.</string>
+    <string name="status_no_writable_calendars">Không có lịch nào cho phép ghi</string>
+    <string name="status_events_count">%1$d sự kiện</string>
+    <string name="status_sync_changes">Thay đổi từ đồng bộ</string>
+    <string name="status_sync_history">Lịch sử đồng bộ</string>
+    <string name="status_parse_failures">Lỗi phân tích</string>
+    <string name="status_error">Lỗi</string>
+    <string name="status_failed_to_parse">⚠ %1$d không phân tích được</string>
+    <string name="status_built_with_love">Được xây dựng với tình yêu</string>
+    <string name="status_in_austin">tại Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Đồng bộ hoàn tất</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Đăng nhập thất bại</string>
+    <string name="error_auth_invalid_credentials">Apple ID hoặc mật khẩu dành riêng cho ứng dụng không đúng. Vui lòng kiểm tra và thử lại.</string>
+    <string name="error_auth_app_specific_password_required">iCloud yêu cầu mật khẩu dành riêng cho ứng dụng. Mật khẩu Apple ID thông thường không dùng được ở đây.</string>
+    <string name="error_auth_session_expired_title">Phiên đã hết hạn</string>
+    <string name="error_auth_session_expired">Phiên iCloud đã hết hạn. Vui lòng đăng nhập lại để tiếp tục đồng bộ.</string>
+    <string name="error_auth_account_locked">Apple ID đã bị khóa. Vui lòng truy cập appleid.apple.com để mở khóa.</string>
+
+    <string name="error_network_offline">Hiện đang ngoại tuyến. Thay đổi sẽ được đồng bộ khi có mạng trở lại.</string>
+    <string name="error_network_timeout">Kết nối đã hết thời gian. Vui lòng kiểm tra internet và thử lại.</string>
+    <string name="error_network_ssl">Kết nối bảo mật thất bại. Vui lòng kiểm tra cài đặt mạng.</string>
+    <string name="error_network_unknown_host">Không thể kết nối tới iCloud. Vui lòng kiểm tra kết nối internet.</string>
+    <string name="error_network_connection_failed">Kết nối thất bại. Vui lòng thử lại.</string>
+
+    <string name="error_server_unavailable">iCloud tạm thời không khả dụng. Vui lòng thử lại sau.</string>
+    <string name="error_server_rate_limited">Quá nhiều yêu cầu. Vui lòng chờ một lát rồi thử lại.</string>
+    <string name="error_server_forbidden">Truy cập bị từ chối. Có thể không có quyền truy cập lịch này.</string>
+    <string name="error_server_not_found">Không tìm thấy mục yêu cầu trên máy chủ.</string>
+    <string name="error_conflict_title">Xung đột đồng bộ</string>
+    <string name="error_conflict_generic">Sự kiện này đã được sửa trên thiết bị khác. Đồng bộ toàn bộ để lấy phiên bản mới nhất.</string>
+    <string name="error_conflict_with_event">\"%1$s\" đã được sửa trên thiết bị khác. Đồng bộ toàn bộ để lấy phiên bản mới nhất.</string>
+    <string name="error_sync_token_expired">Dữ liệu đồng bộ đã hết hạn. Đang thực hiện đồng bộ toàn bộ…</string>
+
+    <string name="error_event_not_found">Không tìm thấy sự kiện.</string>
+    <string name="error_calendar_not_found">Không tìm thấy lịch.</string>
+    <string name="error_calendar_read_only">Không thể chỉnh sửa sự kiện trong \"%1$s\" (lịch chỉ đọc).</string>
+    <string name="error_event_invalid_data">Dữ liệu sự kiện không hợp lệ. Vui lòng kiểm tra thời gian bắt đầu và kết thúc.</string>
+    <string name="error_event_invalid_recurrence">Mẫu lặp lại không hợp lệ.</string>
+
+    <string name="error_display_name_exists">Tài khoản có tên \"%1$s\" đã tồn tại.</string>
+
+    <string name="error_import_file_not_found">Không tìm thấy tệp hoặc không thể đọc.</string>
+    <string name="error_import_invalid_format">Định dạng tệp lịch không hợp lệ.</string>
+    <string name="error_import_partial">Đã nhập %1$d sự kiện, %2$d thất bại.</string>
+    <string name="error_export_failed">Xuất sự kiện thất bại.</string>
+    <string name="error_export_no_events">Không có sự kiện để xuất.</string>
+    <string name="error_end_before_start">Thời gian kết thúc phải sau thời gian bắt đầu</string>
+
+    <string name="error_storage_full_title">Bộ nhớ đầy</string>
+    <string name="error_storage_full">Không đủ dung lượng lưu trữ. Vui lòng giải phóng dung lượng và thử lại.</string>
+    <string name="error_database_corruption_title">Lỗi dữ liệu</string>
+    <string name="error_database_corruption">Dữ liệu lịch có thể bị hỏng. Vui lòng liên hệ hỗ trợ.</string>
+    <string name="error_migration_title">Lỗi cập nhật</string>
+    <string name="error_migration_failed">Cập nhật dữ liệu ứng dụng thất bại. Vui lòng cài đặt lại ứng dụng.</string>
+
+    <string name="error_permission_notification_title">Bật thông báo?</string>
+    <string name="error_permission_notification">KashCal cần quyền thông báo để nhắc nhở về sự kiện sắp tới.</string>
+    <string name="error_permission_alarm_title">Bật báo thức chính xác?</string>
+    <string name="error_permission_alarm">KashCal cần quyền báo thức chính xác để nhắc nhở đúng giờ.</string>
+    <string name="error_permission_storage">Cần quyền truy cập bộ nhớ để nhập/xuất.</string>
+
+    <string name="error_device_calendar_title">Lỗi lịch</string>
+    <string name="error_device_calendar_write_failed">Lưu vào lịch thiết bị thất bại. Vui lòng thử lại.</string>
+    <string name="error_device_calendar_permission">Cần quyền ghi lịch. Vui lòng cấp quyền trong Cài đặt.</string>
+    <string name="error_device_calendar_not_found">Không tìm thấy lịch. Có thể đã bị xóa.</string>
+    <string name="error_device_event_not_found">Không tìm thấy sự kiện. Có thể đã bị xóa.</string>
+    <string name="error_device_calendar_read_only">Lịch này chỉ cho phép đọc.</string>
+
+    <string name="error_sync_no_accounts">Chưa cấu hình tài khoản iCloud. Thiết lập iCloud để đồng bộ lịch.</string>
+    <string name="error_sync_partial">Đã đồng bộ %1$d lịch, %2$d thất bại.</string>
+
+    <string name="error_unknown">Đã xảy ra lỗi. Vui lòng thử lại.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Đã chọn</string>
+    <string name="cd_back">Quay lại</string>
+    <string name="cd_close">Đóng</string>
+    <string name="cd_search">Tìm kiếm</string>
+    <string name="cd_create_event">Tạo sự kiện</string>
+    <string name="cd_settings">Cài đặt</string>
+    <string name="cd_today">Hôm nay</string>
+    <string name="cd_previous_week">Tuần trước</string>
+    <string name="cd_next_week">Tuần sau</string>
+    <string name="cd_delete">Xóa</string>
+    <string name="cd_refresh">Làm mới</string>
+    <string name="cd_more_options">Tùy chọn khác</string>
+    <string name="cd_duplicate">Nhân đôi</string>
+    <string name="cd_share">Chia sẻ</string>
+    <string name="cd_export_ics">Xuất dạng ICS</string>
+    <string name="cd_open_link">Mở liên kết</string>
+    <string name="cd_open_maps">Mở trong bản đồ</string>
+    <string name="cd_copy_clipboard">Sao chép vào bộ nhớ tạm</string>
+    <string name="cd_clear_history">Xóa lịch sử</string>
+    <string name="cd_recurring">Lặp lại</string>
+    <string name="cd_enabled">Đã bật</string>
+    <string name="cd_sync_error">Lỗi đồng bộ</string>
+    <string name="cd_select_option">Chọn tùy chọn</string>
+    <string name="cd_select_label">Chọn %1$s</string>
+    <string name="cd_wheel_picker">Bộ chọn cuộn với %1$d tùy chọn</string>
+    <string name="cd_version_info">KashCal phiên bản %1$s. Nhấn giữ để mở tùy chọn gỡ lỗi.</string>
+    <string name="cd_color_slider">Thanh trượt màu, hiện tại %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d độ</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Lịch</string>
+    <string name="label_color">Màu:</string>
+    <string name="label_repeat">Lặp lại</string>
+    <string name="label_sync_interval">Chu kỳ đồng bộ:</string>
+    <string name="label_scheduled_events">Sự kiện có giờ cụ thể</string>
+    <string name="label_all_day_events">Sự kiện cả ngày</string>
+    <string name="label_server_url">URL máy chủ</string>
+    <string name="label_username">Tên đăng nhập</string>
+    <string name="label_password">Mật khẩu</string>
+    <string name="label_display_name_optional">Tên hiển thị (tùy chọn)</string>
+
+    <string name="placeholder_search_events">Tìm kiếm sự kiện…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Mặc định là https:// nếu không chỉ định</string>
+    <string name="hint_name_shown_in_settings">Tên hiển thị trong cài đặt</string>
+    <string name="caldav_trust_insecure_subtitle">Dành cho chứng chỉ tự ký hoặc máy chủ HTTP nội bộ</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Sau</string>
+    <string name="label_recurrence_occurrences">lần</string>
+    <string name="label_recurrence_on_date">Vào ngày</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Lịch hiển thị</string>
+    <string name="settings_default_calendar">Lịch mặc định</string>
+    <string name="settings_default_event_length">Thời lượng sự kiện mặc định</string>
+    <string name="settings_default_alerts">Nhắc nhở mặc định</string>
+    <string name="settings_notifications">Thông báo</string>
+    <string name="settings_new_events">Sự kiện mới</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Mặc định hệ thống</string>
+    <string name="option_12_hour">12 giờ</string>
+    <string name="option_24_hour">24 giờ</string>
+    <string name="option_sunday">Chủ nhật</string>
+    <string name="option_monday">Thứ hai</string>
+    <string name="option_saturday">Thứ bảy</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Không tìm thấy sự kiện</string>
+    <string name="empty_no_upcoming_events">Không có sự kiện sắp tới</string>
+    <string name="empty_no_calendars">Không có lịch nào</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Đang kết nối…</string>
+    <string name="status_fetching">Đang tải…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Tải lịch</string>
+    <string name="action_import_from_file">Nhập từ tệp</string>
+    <string name="action_export_local_calendar">Xuất lịch nội bộ</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Mật khẩu dành riêng cho ứng dụng cho phép đăng nhập vào ứng dụng bên thứ ba mà không cần chia sẻ mật khẩu Apple ID chính.</string>
+    <string name="help_app_password_steps_header">Cách tạo:</string>
+    <string name="help_app_password_step_1">1. Truy cập appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Đăng nhập bằng Apple ID</string>
+    <string name="help_app_password_step_3">3. Vào phần Đăng nhập và Bảo mật</string>
+    <string name="help_app_password_step_4">4. Nhấn Mật khẩu dành riêng cho ứng dụng</string>
+    <string name="help_app_password_step_5">5. Nhấn Tạo rồi sao chép vào đây</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal cần quyền thông báo để nhắc nhở về sự kiện sắp tới.</string>
+    <string name="dialog_notification_permission_settings_hint">Có thể thay đổi sau trong Cài đặt.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Tài khoản</string>
+    <string name="accounts_section_connected">Đã kết nối</string>
+    <string name="accounts_section_add">Thêm tài khoản</string>
+    <string name="accounts_empty_title">Chưa kết nối tài khoản nào</string>
+    <string name="accounts_empty_subtitle">Thêm tài khoản để đồng bộ lịch giữa các thiết bị</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; thêm nữa</string>
+    <string name="accounts_add_icloud">Thêm iCloud</string>
+    <string name="accounts_add_caldav">Thêm CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; thêm nữa</string>
+    <string name="accounts_caldav_help_title">CalDAV là gì?</string>
+    <string name="accounts_caldav_help_description">CalDAV là tiêu chuẩn mở để đồng bộ lịch. Được hỗ trợ bởi:</string>
+    <string name="accounts_caldav_help_more">&amp; thêm nữa</string>
+    <string name="accounts_calendars_syncing">Đang đồng bộ…</string>
+    <string name="accounts_cd_icloud_icon">Tài khoản iCloud</string>
+    <string name="accounts_cd_caldav_icon">Tài khoản CalDAV</string>
+    <string name="accounts_cd_back">Quay lại</string>
+    <string name="accounts_sync_issue">Sự cố đồng bộ</string>
+    <string name="accounts_cd_sync_warning">Cảnh báo đồng bộ</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Đăng ký</string>
+    <string name="subscriptions_section_ics_calendars">Lịch ICS</string>
+    <string name="subscriptions_section_add">Thêm</string>
+    <string name="subscriptions_empty_ics">Chưa có đăng ký ICS nào</string>
+    <string name="subscriptions_empty_ics_hint">Thêm nguồn cấp lịch để xem sự kiện</string>
+    <string name="subscriptions_add_ics">Thêm lịch ICS</string>
+    <string name="subscriptions_row_label">Ngày lễ, trường học &amp; thêm nữa</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Sinh nhật &amp; Kỷ niệm</string>
+    <string name="birthdays_section_title">Sinh nhật</string>
+    <string name="anniversaries_section_title">Kỷ niệm</string>
+    <string name="settings_contact_birthdays">Sinh nhật danh bạ</string>
+    <string name="settings_contact_birthdays_description">Hiển thị sinh nhật từ danh bạ dưới dạng sự kiện cả ngày.</string>
+    <string name="settings_contact_anniversaries">Kỷ niệm danh bạ</string>
+    <string name="settings_contact_anniversaries_description">Hiển thị kỷ niệm từ danh bạ dưới dạng sự kiện cả ngày.</string>
+    <string name="settings_anniversary_reminder">Nhắc nhở kỷ niệm</string>
+    <string name="settings_calendar_color">Màu lịch</string>
+    <string name="settings_default_reminder">Nhắc nhở mặc định</string>
+    <string name="action_change">Đổi</string>
+    <string name="settings_contacts_footer">Đọc từ danh bạ thiết bị. Cần quyền truy cập Danh bạ.</string>
+    <string name="settings_contacts_permission_required">Cần quyền truy cập danh bạ</string>
+    <string name="subscriptions_cd_back">Quay lại</string>
+    <string name="subscriptions_cd_add">Thêm đăng ký</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">ĐỒNG BỘ</string>
+    <string name="account_detail_section_calendars">LỊCH</string>
+    <string name="account_detail_section_account">TÀI KHOẢN</string>
+    <string name="account_detail_enabled">Đã bật</string>
+    <string name="account_detail_enabled_subtitle">Tự động đồng bộ tài khoản này</string>
+    <string name="account_detail_sync_now">Đồng bộ ngay</string>
+    <string name="account_detail_syncing">Đang đồng bộ…</string>
+    <string name="account_detail_discovering">Đang tìm kiếm…</string>
+    <string name="account_detail_discover_calendars">Tìm lịch mới</string>
+    <string name="account_detail_change_password">Đổi mật khẩu</string>
+    <string name="account_detail_sign_out">Đăng xuất</string>
+    <string name="account_detail_never_synced">Chưa đồng bộ lần nào</string>
+    <string name="account_detail_last_success">Thành công lần cuối: %1$s</string>
+    <string name="account_detail_cd_rename">Đổi tên</string>
+    <string name="account_detail_cd_show_password">Hiển thị mật khẩu</string>
+    <string name="account_detail_cd_hide_password">Ẩn mật khẩu</string>
+
+    <string name="sync_failure_notification_title">Sự cố đồng bộ với %1$s</string>
+    <string name="sync_failure_notification_text">Đồng bộ lịch đã thất bại %1$d lần</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Đổi tên tài khoản</string>
+    <string name="rename_account_label">Tên tài khoản</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Đổi mật khẩu</string>
+    <string name="change_password_label_icloud">Mật khẩu dành riêng cho ứng dụng</string>
+    <string name="change_password_label_default">Mật khẩu</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Lịch thiết bị</string>
+    <string name="settings_quick_event_add">Thêm nhanh sự kiện</string>
+    <string name="settings_week_numbers">Số tuần</string>
+    <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
+    <string name="settings_sync_lookback">Khoảng đồng bộ ngược</string>
+    <string name="settings_auto_detect_emojis">Tự động phát hiện biểu tượng</string>
+    <string name="settings_events_per_day">Sự kiện mỗi ngày</string>
+    <string name="settings_not_set">Chưa đặt</string>
+    <string name="settings_on">Bật</string>
+    <string name="settings_off">Tắt</string>
+    <string name="settings_tap_to_enable">Nhấn để bật</string>
+    <string name="settings_device_calendars_enabled">%1$d đã bật</string>
+    <string name="settings_per_day">%1$d mỗi ngày</string>
+
+    <string name="signin_icloud_help_question">Mật khẩu dành riêng cho ứng dụng là gì?</string>
+    <string name="caldav_trust_insecure_label">Tin cậy kết nối không an toàn</string>
+    <string name="action_add_another">Thêm tài khoản khác</string>
+    <string name="account_connected_found_calendars">Tìm thấy %1$d lịch cho %2$s.</string>
+    <string name="account_connected_syncing_hint">Đang đồng bộ \u2014 sự kiện sẽ xuất hiện ngay.</string>
+    <string name="settings_time_format_currently_24h">Hiện tại: 24 giờ (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Hiện tại: 12 giờ (%1$s)</string>
+    <string name="settings_time_format_example">Ví dụ: %1$s</string>
+    <string name="settings_system_default_with_value">Mặc định hệ thống (%1$s)</string>
+    <string name="alert_none">Không có</string>
+    <string name="cd_collapse">Thu gọn</string>
+    <string name="cd_expand">Mở rộng</string>
+    <string name="cd_hide_calendar">Ẩn lịch</string>
+    <string name="cd_show_calendar">Hiện lịch</string>
+    <string name="cd_pick_month_year">Chọn tháng và năm</string>
+    <string name="cd_previous_month">Tháng trước</string>
+    <string name="cd_next_month">Tháng sau</string>
+    <string name="cd_month_year_picker">Bộ chọn tháng và năm</string>
+    <string name="cd_remove_alert">Xóa nhắc nhở</string>
+    <string name="cd_warning">Cảnh báo</string>
+    <string name="cd_refresh_calendars">Làm mới lịch</string>
+    <string name="cd_timezone_tap_to_change">Múi giờ: %1$s, nhấn để đổi</string>
+    <string name="cd_day_events">Ngày %1$d, %2$d sự kiện</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Tần suất</string>
+    <string name="label_on_days">Vào ngày</string>
+    <string name="label_pattern">Mẫu</string>
+    <string name="label_ends">Kết thúc</string>
+    <string name="label_alerts">Nhắc nhở</string>
+    <string name="label_add_alert">Thêm nhắc nhở</string>
+    <string name="label_recurrence_never">Không bao giờ</string>
+    <string name="label_tomorrow">Ngày mai</string>
+    <string name="label_yesterday">Hôm qua</string>
+    <string name="label_device_calendars">Lịch thiết bị</string>
+    <string name="label_default_calendar_hint">Sự kiện mới sẽ được tạo trong lịch này</string>
+    <string name="label_visible_count">%1$d / %2$d hiển thị</string>
+    <string name="label_enabled_count">%1$d / %2$d đã bật</string>
+    <string name="label_reminders_truncated">%1$d bị ẩn (tổng %2$d, tối đa chỉnh sửa %3$d)</string>
+    <string name="label_found_events">Tìm thấy: %1$d sự kiện</string>
+    <string name="label_open_debug_menu">Mở menu gỡ lỗi</string>
+    <string name="placeholder_search">Tìm kiếm\u2026</string>
+    <string name="status_sync_paused">Đã tạm dừng đồng bộ</string>
+    <string name="status_not_synced">Chưa đồng bộ</string>
+    <string name="status_sync_error">Lỗi đồng bộ</string>
+    <string name="status_minutes_ago">%1$d phút trước</string>
+    <string name="status_hours_ago">%1$d giờ trước</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Hiển thị sự kiện từ ứng dụng lịch khác trên thiết bị (bộ đồng bộ, lịch nội bộ).</string>
+    <string name="device_calendars_permission_required">Cần quyền truy cập lịch. Nhấn Bật để cấp quyền.</string>
+    <string name="device_calendars_read_only_access">Chỉ đọc</string>
+    <string name="device_calendars_grant_write">Cấp quyền ghi để chỉnh sửa sự kiện lịch thiết bị</string>
+    <string name="device_calendars_grant">Cấp quyền</string>
+    <string name="device_calendars_none_found">Không tìm thấy lịch thiết bị.</string>
+    <string name="device_calendars_local">Nội bộ</string>
+    <string name="device_calendars_show_declined">Hiện sự kiện đã từ chối</string>
+    <string name="device_calendars_reminders">Nhắc nhở</string>
+    <string name="device_calendars_reminders_desc">Nhận thông báo cho sự kiện lịch thiết bị</string>
+    <string name="device_calendars_read_only_no_write">Chỉ đọc (không có quyền ghi)</string>
+    <string name="device_calendars_read_only_calendar">Chỉ đọc (lịch chỉ đọc)</string>
+
+    <string name="settings_developer_options">Tùy chọn nhà phát triển</string>
+    <string name="settings_sync_frequency">Tần suất đồng bộ</string>
+    <string name="settings_preview">XEM TRƯỚC</string>
+    <string name="settings_n_events">%1$d sự kiện</string>
+    <string name="settings_n_events_default">%1$d sự kiện (mặc định)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Lịch</string>
+    <string name="drawer_contacts">Danh bạ</string>
+    <string name="drawer_device_calendars">Lịch thiết bị</string>
+    <string name="drawer_share_feedback">Gửi phản hồi</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Dành cho bạn, không phải dữ liệu.</string>
+    <string name="action_keep_it_that_way">Giữ vậy nhé</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Đã đồng bộ</string>
+    <string name="status_warnings">Cảnh báo</string>
+    <string name="sync_history_events_failed">Sự kiện thất bại</string>
+    <string name="sync_history_abandoned_max_retries">Đã bỏ qua (hết lượt thử)</string>
+    <string name="sync_history_events_skipped">Sự kiện đã bỏ qua</string>
+    <string name="sync_history_duration">Thời lượng</string>
+    <string name="sync_history_already_synced_count">%1$d đã đồng bộ</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Không có sự kiện</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Hiện đang ngoại tuyến</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Đăng xuất khỏi %1$s?</string>
+    <string name="dialog_sign_out_message">Hiện đang đăng nhập với %1$s. Đăng xuất sẽ xóa các lịch đã đồng bộ khỏi thiết bị này.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="other">%1$d tài khoản</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="other">%1$s \u00B7 %2$d lịch</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="other">%1$d đăng ký</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="other">Đồng bộ thất bại (%1$d lần)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="other">%1$d lịch</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="other">%1$d lịch (%2$d mới)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="other">%1$d sự kiện</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="other">%1$d sinh nhật</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="other">%1$d kỷ niệm</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="other">+ %1$d nữa</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="other">Nhập %1$d sự kiện</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="other">Nhập</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="other">\u2026và %1$d nữa</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="other">Đã nhập %1$d sự kiện</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="other">Đã xuất %1$d sự kiện</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="other">%1$d sự kiện</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="other">%1$d phút</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="other">%1$d phút</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="other">%1$d giờ</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="other">%1$d ngày</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="other">%1$d tuần</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="other">%1$d tháng</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="other">%1$d năm</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="other">%1$d giây</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="other">%1$d phút trước</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="other">%1$d giờ trước</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="other">%1$d ngày trước</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="other">%1$d tuần trước</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">Sửa sự kiện lặp lại</string>
+    <string name="dialog_delete_recurring_title">Xóa sự kiện lặp lại</string>
+    <string name="dialog_edit_recurring_message">Đây là sự kiện lặp lại. Muốn áp dụng thay đổi như thế nào?</string>
+    <string name="recurring_this_event">Chỉ sự kiện này</string>
+    <string name="recurring_all_events">Tất cả sự kiện</string>
+    <string name="empty_pick_a_day">Chọn một ngày. Tận hưởng nào.</string>
+    <string name="empty_no_events_day">Không có gì ở đây; ra ngoài đi dạo đi?</string>
+    <string name="label_upcoming_events">Sự kiện sắp tới</string>
+    <string name="filter_date">Ngày</string>
+    <string name="label_select_date">Chọn ngày</string>
+    <string name="hint_tap_date_range">Nhấn cùng ngày cho một ngày, hoặc nhấn ngày khác cho khoảng thời gian</string>
+
+    <string name="cd_clear">Xóa</string>
+    <string name="cd_offline">Ngoại tuyến</string>
+    <string name="cd_previous">Trước</string>
+    <string name="cd_next">Sau</string>
+    <string name="cd_open_drawer">Mở ngăn kéo</string>
+    <string name="cd_close_drawer">Đóng ngăn kéo</string>
+    <string name="cd_calendar_view">Chế độ xem lịch</string>
+    <string name="cd_active_view">Chế độ xem đang dùng</string>
+
+    <string name="view_agenda">Lịch trình</string>
+    <string name="view_month_full">Tháng (đầy đủ)</string>
+    <string name="view_three_days">3 ngày</string>
+    <string name="view_year">Năm</string>
+
+    <string name="label_go_to_month">Đi tới tháng</string>
+
+    <string name="action_more_options">Tùy chọn khác</string>
+
+    <string name="label_duration_days">ngày</string>
+    <string name="label_duration_hrs">giờ</string>
+    <string name="label_duration_min">phút</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">Ngày %1$d hàng tháng</string>
+    <string name="recurrence_on_last_day">Ngày cuối cùng của tháng</string>
+    <string name="recurrence_on_nth_weekday">%2$s thứ %1$s của tháng</string>
+    <string name="ordinal_1st">1</string>
+    <string name="ordinal_2nd">2</string>
+    <string name="ordinal_3rd">3</string>
+    <string name="ordinal_4th">4</string>
+    <string name="ordinal_nth">%1$d</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d mới</string>
+    <string name="sync_summary_updated">%1$d đã cập nhật</string>
+    <string name="sync_summary_removed">%1$d đã xóa</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">3 ngày trước</string>
+    <string name="cd_next_3_days">3 ngày tiếp</string>
+    <string name="cd_circular_scrolling">Đã bật cuộn vòng</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Không nhắc nhở</string>
+    <string name="reminder_at_time_of_event">Khi sự kiện bắt đầu</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">Trước %1$s</string>
+    <string name="reminder_time_after">Sau %1$s</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM ngày diễn ra</string>
+    <string name="reminder_day_of_event_24h">09:00 ngày diễn ra</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">Trước %1$s lúc 9 AM</string>
+    <string name="reminder_before_at_24h">Trước %1$s lúc 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Tắt</string>
+    <string name="reminder_short_at_event">Khi bắt đầu</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d phút</string>
+    <string name="reminder_short_hours">%1$d giờ</string>
+    <string name="reminder_short_days">%1$d ngày</string>
+    <string name="reminder_short_weeks">%1$d tuần</string>
+    <string name="reminder_summary_none">Không</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$d giờ %2$d phút</string>
+    <string name="duration_compact_short">%1$dg%2$dp</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Chỉ thủ công</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Tất cả sự kiện</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">Nhắc sau</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Sắp bắt đầu</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Ngày mai, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Đồng bộ hoàn tất</string>
+    <string name="sync_notification_partial">Đồng bộ hoàn tất một phần</string>
+    <string name="sync_notification_auth_failed">Xác thực đồng bộ thất bại</string>
+    <string name="sync_notification_auth_reauth">Vui lòng xác thực lại tài khoản</string>
+    <string name="sync_notification_failed">Đồng bộ thất bại</string>
+    <string name="sync_notification_parse_title">Một số sự kiện không thể đồng bộ</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s trong %2$s không thể đồng bộ. Hãy thử Buộc đồng bộ trong Cài đặt.</string>
+    <string name="sync_notification_conflict_title">Xung đột đồng bộ đã được giải quyết</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Các thay đổi cục bộ của \"%1$s\" đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Các thay đổi cục bộ của %1$s đã bị mất do xung đột đồng bộ. Phiên bản máy chủ sẽ được sử dụng.</string>
+    <string name="sync_notification_expired_title">Các thay đổi đồng bộ đã hết hạn</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s không thể đồng bộ sau 30 ngày. Phiên bản máy chủ sẽ được sử dụng. Buộc đồng bộ để thử lại.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">Đã đồng bộ %1$d lịch</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d thay đổi</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d lỗi</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">Sinh nhật thứ %2$s của %1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">Sinh nhật của %1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">Kỷ niệm thứ %2$s của %1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">Ngày kỷ niệm của %1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">thứ %1$d</string>
+    <string name="ordinal_suffix_nd">thứ %1$d</string>
+    <string name="ordinal_suffix_rd">thứ %1$d</string>
+    <string name="ordinal_suffix_th">thứ %1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Đang đồng bộ lịch\u2026</string>
+    <string name="sync_banner_preparing">Đang chuẩn bị đồng bộ\u2026</string>
+    <string name="sync_banner_complete_errors">Đồng bộ hoàn tất với lỗi</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Đồng bộ thất bại: %1$s</string>
+    <string name="error_unknown_error">Lỗi không xác định</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Sự kiện mới: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d sự kiện mới</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d sự kiện đã cập nhật</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d sự kiện đã xóa</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d cập nhật lịch</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Ngày %1$d/%2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Ngày 1/%1$d \u00b7 bắt đầu %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Ngày %1$d/%2$d \u00b7 kết thúc %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Cả ngày</string>
+    <string name="event_date_all_day">%1$s \u00b7 Cả ngày</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Cả ngày)</string>
+    <string name="event_date_all_day_parens">%1$s (Cả ngày)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">Lưu sự kiện</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Mới</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Đỏ</string>
+    <string name="color_orange">Cam</string>
+    <string name="color_yellow">Vàng</string>
+    <string name="color_green">Xanh lá</string>
+    <string name="color_cyan">Lục lam</string>
+    <string name="color_blue">Xanh dương</string>
+    <string name="color_purple">Tím</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Liên kết cuộc họp: %1$s</string>
+    <string name="cd_phone_number">Số điện thoại</string>
+    <string name="cd_email_link">Email: %1$s</string>
+    <string name="cd_web_link">Liên kết: %1$s</string>
+    <string name="cd_text_with_links">Văn bản có %1$d liên kết: %2$s</string>
+    <string name="cd_text_with_link">Văn bản có 1 liên kết: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Ngày %1$d/%2$d (Cả ngày)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d lần đồng bộ   \u2191%2$d đẩy   \u2193%3$d kéo</string>
+    <string name="sync_history_stats_issues">%1$d lần đồng bộ   \u2191%2$d đẩy   \u2193%3$d kéo   \u26a0 %4$d vấn đề</string>
+    <string name="sync_history_failed">Thất bại</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Mỗi giờ</string>
+    <string name="ics_sync_every_n_hours">Mỗi %1$d giờ</string>
+    <string name="ics_sync_daily">Hàng ngày</string>
+    <string name="ics_sync_weekly">Hàng tuần</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">Cần có URL</string>
+    <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Cả ngày)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d lần</item>
+    </plurals>
+
+    <!-- Missing translations -->
+    <string name="cd_widget_calendar">Lịch</string>
+    <string name="cd_widget_add_event">Thêm sự kiện</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">không có sự kiện</string>
+    <string name="channel_event_reminders">Nhắc nhở sự kiện</string>
+    <string name="channel_event_reminders_desc">Thông báo cho các sự kiện lịch sắp tới</string>
+    <string name="channel_sync_progress">Tiến trình đồng bộ</string>
+    <string name="channel_sync_progress_desc">Hiển thị tiến trình khi đồng bộ lịch</string>
+    <string name="channel_sync_status">Trạng thái đồng bộ</string>
+    <string name="channel_sync_status_desc">Thông báo về hoàn thành đồng bộ và lỗi</string>
+    <string name="rrule_does_not_repeat">Không lặp lại</string>
+    <string name="rrule_freq_daily">Hàng ngày</string>
+    <string name="rrule_freq_weekly">Hàng tuần</string>
+    <string name="rrule_freq_biweekly">Hai tuần một lần</string>
+    <string name="rrule_freq_monthly">Hàng tháng</string>
+    <string name="rrule_freq_quarterly">Hàng quý</string>
+    <string name="rrule_freq_yearly">Hàng năm</string>
+    <string name="rrule_repeats">Lặp lại</string>
+    <string name="rrule_every_n_days">Mỗi %1$d ngày</string>
+    <string name="rrule_every_n_weeks">Mỗi %1$d tuần</string>
+    <string name="rrule_every_n_months">Mỗi %1$d tháng</string>
+    <string name="rrule_every_n_years">Mỗi %1$d năm</string>
+    <string name="rrule_freq_on_days">%1$s vào %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s vào %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s vào ngày cuối</string>
+    <string name="rrule_freq_on_day_n">%1$s vào ngày %2$d</string>
+    <string name="rrule_ordinal_last">cuối</string>
+    <string name="rrule_until_suffix">, cho đến %1$s</string>
+    <string name="rrule_freq_never">Không bao giờ</string>
+    <string name="rrule_starting">%1$s bắt đầu %2$s%3$s</string>
+    <string name="rrule_since">%1$s · kể từ %2$s</string>
+</resources>

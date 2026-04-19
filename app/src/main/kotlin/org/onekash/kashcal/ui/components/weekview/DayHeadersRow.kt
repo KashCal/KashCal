@@ -122,7 +122,7 @@ private fun DayHeader(
                     if (isToday) {
                         Modifier
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
+                            .background(MaterialTheme.colorScheme.inverseSurface)
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     } else {
                         Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -134,7 +134,7 @@ private fun DayHeader(
                 text = dayNumber,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                color = if (isToday) MaterialTheme.colorScheme.onPrimary else textColor,
+                color = if (isToday) MaterialTheme.colorScheme.inverseOnSurface else textColor,
                 textAlign = TextAlign.Center
             )
         }

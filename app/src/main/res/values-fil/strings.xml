@@ -1,0 +1,888 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">Agenda Ngayon</string>
+    <string name="widget_description">Ipinapakita ang mga event sa kalendaryo ngayong araw</string>
+    <string name="week_widget_name">Lingguhang View</string>
+    <string name="week_widget_description">Ipinapakita ang mga event sa kalendaryo para sa susunod na 7 araw</string>
+    <string name="month_widget_name">Buwanang View</string>
+    <string name="month_widget_description">Ipinapakita ang buong buwanang kalendaryo na may mga indicator dot ng event</string>
+    <string name="date_widget_name">Petsa</string>
+    <string name="date_widget_description">Ipinapakita ang petsa ngayon tulad ng app icon</string>
+    <string name="widget_no_events_today">Walang event ngayon</string>
+    <string name="widget_add_event">+ Magdagdag ng event</string>
+    <string name="widget_no_events">Walang event</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">Bagong Event</string>
+    <string name="shortcut_new_event_long">Gumawa ng bagong event</string>
+    <string name="shortcut_today">Ngayon</string>
+    <string name="shortcut_today_long">Pumunta sa ngayon</string>
+    <string name="shortcut_search">Maghanap</string>
+    <string name="shortcut_search_long">Maghanap ng mga event</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">Subukan Muli</string>
+    <string name="action_try_again">Subukan Muli</string>
+    <string name="action_cancel">Kanselahin</string>
+    <string name="action_close">Isara</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">Hindi Ngayon</string>
+    <string name="action_sign_in">Mag-sign In</string>
+    <string name="action_select">Pumili</string>
+    <string name="action_show_password">Ipakita ang password</string>
+    <string name="action_hide_password">Itago ang password</string>
+    <string name="action_sign_out">Mag-sign Out</string>
+    <string name="action_learn_more">Matuto Pa</string>
+    <string name="action_open_apple_id">Buksan ang Apple ID</string>
+    <string name="action_open_settings">Buksan ang Settings</string>
+    <string name="action_force_sync">Force Sync</string>
+    <string name="action_sync_now">I-sync Ngayon</string>
+    <string name="action_details">Mga Detalye</string>
+    <string name="action_set_up">I-set Up</string>
+    <string name="action_report_issue">Mag-report ng Issue</string>
+    <string name="action_view">Tingnan</string>
+    <string name="action_enable">I-enable</string>
+    <string name="action_done">Tapos Na</string>
+    <string name="action_save">I-save</string>
+    <string name="action_add">Idagdag</string>
+    <string name="action_edit">I-edit</string>
+    <string name="action_delete">Burahin</string>
+    <string name="action_confirm">Kumpirmahin</string>
+    <string name="action_discard">I-discard</string>
+    <string name="action_dismiss">I-dismiss</string>
+    <string name="action_show_all">Ipakita Lahat</string>
+    <string name="action_connect">Ikonekta</string>
+    <string name="action_duplicate">I-duplicate</string>
+    <string name="action_share">I-share</string>
+    <string name="action_export_ics">I-export bilang .ics</string>
+    <string name="action_confirm_delete">Kumpirmahin ang Pagbura</string>
+    <string name="action_delete_event">Burahin ang Event</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">Ito lang</string>
+    <string name="recurring_this_and_future">Ito at lahat ng susunod</string>
+    <string name="recurring_just_occurrence">Ang occurrence na ito lang</string>
+    <string name="recurring_all_occurrences">Lahat ng occurrence</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">Pamagat ng event</string>
+    <string name="label_location">Lokasyon</string>
+    <string name="label_location_hint">Address, silid, o meeting link</string>
+    <string name="label_notes">Mga Tala</string>
+    <string name="label_starts">Nagsisimula</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">App-Specific Password</string>
+    <string name="label_password_hint">16 na character, opsyonal ang mga gitling</string>
+    <string name="label_calendar_url">URL ng Kalendaryo</string>
+    <string name="label_calendar_name">Pangalan ng Kalendaryo</string>
+    <string name="label_name">Pangalan</string>
+    <string name="label_hex_color">Hex Color</string>
+    <string name="label_enter_hex">Maglagay ng 6 hex character (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">Lahat</string>
+    <string name="view_week">Linggo</string>
+    <string name="view_month">Buwan</string>
+    <string name="label_all_day">Buong araw</string>
+    <string name="label_today">Ngayon</string>
+    <string name="label_go_to_date">Pumunta sa petsa</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_time_format">Format ng Oras</string>
+    <string name="settings_start_week_on">Simula ng Linggo</string>
+    <string name="settings_event_emojis">Mga Emoji ng Event</string>
+    <string name="settings_emoji_subtitle">Magpakita ng mga emoji base sa mga pamagat ng event</string>
+    <string name="settings_force_sync">Force Full Sync</string>
+    <string name="settings_force_sync_subtitle">I-download muli ang lahat ng data ng kalendaryo</string>
+    <string name="settings_sync_history">Kasaysayan ng Sync</string>
+    <string name="settings_sync_history_subtitle">Tingnan ang mga sync session (huling 48 oras)</string>
+    <string name="settings_import_subtitle">Mag-import ng .ics file</string>
+    <string name="settings_export_subtitle">I-backup sa .ics file</string>
+    <string name="settings_birthday_reminder">Paalala ng Kaarawan</string>
+    <string name="settings_use_device_timezone">Gamitin ang timezone ng device</string>
+    <string name="settings_section_my_calendars">Mga Kalendaryo Ko</string>
+    <string name="settings_section_display">Display</string>
+    <string name="settings_section_notifications">Mga Notification</string>
+    <string name="settings_section_sync">Sync</string>
+    <string name="settings_section_data">Data</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">Apple Calendar?</string>
+    <string name="onboarding_got_you">Nandito kami para sa\'yo.</string>
+    <string name="onboarding_connect_prompt">Ikonekta ang iCloud para makita ang mga event mo dito</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">Ikonekta ang iCloud</string>
+    <string name="signin_caldav_title">Magdagdag ng CalDAV Account</string>
+    <string name="signin_connected_to">Nakakonekta sa %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">Bagong Event</string>
+    <string name="dialog_edit_event_title">I-edit ang Event</string>
+    <string name="dialog_force_sync_title">Force Full Sync?</string>
+    <string name="dialog_force_sync_message">Ido-download muli nito ang lahat ng data ng kalendaryo mula sa server. Ang mga lokal na pagbabago ay mananatili.</string>
+    <string name="dialog_enable_notifications">I-enable ang Mga Notification?</string>
+    <string name="dialog_delete_title">Burahin ang \"%1$s\"</string>
+    <string name="dialog_edit_title">I-edit ang \"%1$s\"</string>
+    <string name="dialog_action_required">Kailangan ang aksyon na ito para magpatuloy.</string>
+    <string name="dialog_add_to_calendar">Idagdag sa kalendaryo</string>
+    <string name="dialog_select_calendar">Pumili ng kalendaryo</string>
+    <string name="dialog_choose_color">Pumili ng Kulay</string>
+    <string name="dialog_add_subscription">Magdagdag ng Subscription</string>
+    <string name="dialog_edit_subscription">I-edit ang Subscription</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">Walang event ngayong linggo</string>
+    <string name="status_more_events">+%1$d pa</string>
+    <string name="status_no_sync_sessions">Wala pang sync session.\n\nMag-trigger ng sync sa pamamagitan ng pag-pull down para mag-refresh sa kalendaryo view.</string>
+    <string name="status_no_writable_calendars">Walang writable na kalendaryo</string>
+    <string name="status_events_count">%1$d Event</string>
+    <string name="status_sync_changes">Mga Pagbabago sa Sync</string>
+    <string name="status_sync_history">Kasaysayan ng Sync</string>
+    <string name="status_parse_failures">Mga Parse Failure</string>
+    <string name="status_error">Error</string>
+    <string name="status_failed_to_parse">⚠ %1$d ang nabigong i-parse</string>
+    <string name="status_built_with_love">Ginawa nang may Pagmamahal</string>
+    <string name="status_in_austin">sa Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">Tapos na ang sync</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">Nabigo ang Pag-sign In</string>
+    <string name="error_auth_invalid_credentials">Hindi wasto ang Apple ID o app-specific password. Pakisuri ang iyong mga credential at subukang muli.</string>
+    <string name="error_auth_app_specific_password_required">Ang iCloud ay nangangailangan ng app-specific password. Hindi gagana ang regular na Apple ID password mo dito.</string>
+    <string name="error_auth_session_expired_title">Nag-expire na ang Session</string>
+    <string name="error_auth_session_expired">Nag-expire na ang iyong iCloud session. Paki-sign in muli para magpatuloy ang pag-sync.</string>
+    <string name="error_auth_account_locked">Naka-lock ang iyong Apple ID. Pumunta sa appleid.apple.com para i-unlock.</string>
+
+    <string name="error_network_offline">Ikaw ay offline. Masi-sync ang mga pagbabago kapag online ka na.</string>
+    <string name="error_network_timeout">Nag-timeout ang koneksyon. Pakisuri ang iyong internet at subukang muli.</string>
+    <string name="error_network_ssl">Nabigo ang secure na koneksyon. Pakisuri ang iyong network settings.</string>
+    <string name="error_network_unknown_host">Hindi maabot ang iCloud. Pakisuri ang iyong internet connection.</string>
+    <string name="error_network_connection_failed">Nabigo ang koneksyon. Pakisubukang muli.</string>
+
+    <string name="error_server_unavailable">Pansamantalang hindi available ang iCloud. Subukang muli mamaya.</string>
+    <string name="error_server_rate_limited">Masyadong maraming request. Maghintay sandali at subukang muli.</string>
+    <string name="error_server_forbidden">Tinanggihan ang access. Maaaring wala kang permiso para sa kalendaryong ito.</string>
+    <string name="error_server_not_found">Hindi natagpuan sa server ang hiniling na item.</string>
+    <string name="error_conflict_title">Sync Conflict</string>
+    <string name="error_conflict_generic">Binago ang event na ito sa ibang device. Mag-force sync para makuha ang pinakabagong bersyon.</string>
+    <string name="error_conflict_with_event">Ang \"%1$s\" ay binago sa ibang device. Mag-force sync para makuha ang pinakabagong bersyon.</string>
+    <string name="error_sync_token_expired">Nag-expire ang sync data. Ginagawa ang full sync…</string>
+
+    <string name="error_event_not_found">Hindi natagpuan ang event.</string>
+    <string name="error_calendar_not_found">Hindi natagpuan ang kalendaryo.</string>
+    <string name="error_calendar_read_only">Hindi mababago ang mga event sa \"%1$s\" (read-only na kalendaryo).</string>
+    <string name="error_event_invalid_data">Hindi wasto ang data ng event. Pakisuri ang oras ng simula at pagtatapos.</string>
+    <string name="error_event_invalid_recurrence">Hindi wasto ang repeat pattern.</string>
+
+    <string name="error_display_name_exists">May account nang may pangalang \"%1$s\".</string>
+
+    <string name="error_import_file_not_found">Hindi natagpuan o hindi mabasa ang file.</string>
+    <string name="error_import_invalid_format">Hindi wasto ang format ng calendar file.</string>
+    <string name="error_import_partial">Na-import ang %1$d event, %2$d ang nabigo.</string>
+    <string name="error_export_failed">Nabigong i-export ang mga event.</string>
+    <string name="error_export_no_events">Walang event na i-e-export.</string>
+    <string name="error_end_before_start">Ang oras ng pagtatapos ay dapat pagkatapos ng oras ng pagsisimula</string>
+
+    <string name="error_storage_full_title">Puno na ang Storage</string>
+    <string name="error_storage_full">Hindi sapat ang storage space. Paki-free up ng space at subukang muli.</string>
+    <string name="error_database_corruption_title">Data Error</string>
+    <string name="error_database_corruption">Maaaring sira ang data ng iyong kalendaryo. Pakikontak ang support.</string>
+    <string name="error_migration_title">Update Error</string>
+    <string name="error_migration_failed">Nabigong i-update ang data ng app. Paki-reinstall ang app.</string>
+
+    <string name="error_permission_notification_title">I-enable ang Mga Notification?</string>
+    <string name="error_permission_notification">Kailangan ng KashCal ang notification permission para paalalahanan ka tungkol sa mga paparating na event.</string>
+    <string name="error_permission_alarm_title">I-enable ang Exact Alarm?</string>
+    <string name="error_permission_alarm">Kailangan ng KashCal ang exact alarm permission para sa tiyak na mga paalala.</string>
+    <string name="error_permission_storage">Kailangan ng storage permission para sa import/export.</string>
+
+    <string name="error_device_calendar_title">Calendar Error</string>
+    <string name="error_device_calendar_write_failed">Nabigong i-save sa device calendar. Pakisubukang muli.</string>
+    <string name="error_device_calendar_permission">Kailangan ng calendar write permission. Pakibigay ang permission sa Settings.</string>
+    <string name="error_device_calendar_not_found">Hindi natagpuan ang kalendaryo. Maaaring naalis na ito.</string>
+    <string name="error_device_event_not_found">Hindi natagpuan ang event. Maaaring nabura na ito.</string>
+    <string name="error_device_calendar_read_only">Read-only ang kalendaryong ito.</string>
+
+    <string name="error_sync_no_accounts">Walang nakakonektang iCloud account. I-set up ang iCloud para i-sync ang iyong mga kalendaryo.</string>
+    <string name="error_sync_partial">Na-sync ang %1$d kalendaryo, %2$d ang nabigo.</string>
+
+    <string name="error_unknown">May nangyaring mali. Pakisubukang muli.</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">Napili</string>
+    <string name="cd_back">Bumalik</string>
+    <string name="cd_close">Isara</string>
+    <string name="cd_search">Maghanap</string>
+    <string name="cd_create_event">Gumawa ng event</string>
+    <string name="cd_settings">Settings</string>
+    <string name="cd_today">Ngayon</string>
+    <string name="cd_previous_week">Nakaraang linggo</string>
+    <string name="cd_next_week">Susunod na linggo</string>
+    <string name="cd_delete">Burahin</string>
+    <string name="cd_refresh">I-refresh</string>
+    <string name="cd_more_options">Higit pang mga opsyon</string>
+    <string name="cd_duplicate">I-duplicate</string>
+    <string name="cd_share">I-share</string>
+    <string name="cd_export_ics">I-export bilang ICS</string>
+    <string name="cd_open_link">Buksan ang link</string>
+    <string name="cd_open_maps">Buksan sa mapa</string>
+    <string name="cd_copy_clipboard">Kopyahin sa clipboard</string>
+    <string name="cd_clear_history">I-clear ang kasaysayan</string>
+    <string name="cd_recurring">Paulit-ulit</string>
+    <string name="cd_enabled">Naka-enable</string>
+    <string name="cd_sync_error">Sync error</string>
+    <string name="cd_select_option">Pumili ng opsyon</string>
+    <string name="cd_select_label">Piliin ang %1$s</string>
+    <string name="cd_wheel_picker">Wheel picker na may %1$d opsyon</string>
+    <string name="cd_version_info">KashCal bersyon %1$s. Pindutin nang matagal para sa mga debug option.</string>
+    <string name="cd_color_slider">Color slider, kasalukuyang %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d degrees</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">Kalendaryo</string>
+    <string name="label_color">Kulay:</string>
+    <string name="label_repeat">Ulitin</string>
+    <string name="label_sync_interval">Interval ng Sync:</string>
+    <string name="label_scheduled_events">Naka-schedule na Event</string>
+    <string name="label_all_day_events">Buong Araw na Event</string>
+    <string name="label_server_url">Server URL</string>
+    <string name="label_username">Username</string>
+    <string name="label_password">Password</string>
+    <string name="label_display_name_optional">Display Name (opsyonal)</string>
+
+    <string name="placeholder_search_events">Maghanap ng mga event…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">Default sa https:// kung hindi tinukoy</string>
+    <string name="hint_name_shown_in_settings">Pangalang ipinapakita sa settings</string>
+    <string name="caldav_trust_insecure_subtitle">Para sa self-signed na certificate o lokal na HTTP server</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">Pagkatapos ng</string>
+    <string name="label_recurrence_occurrences">occurrence</string>
+    <string name="label_recurrence_on_date">Sa petsa</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">Mga Nakikitang Kalendaryo</string>
+    <string name="settings_default_calendar">Default na Kalendaryo</string>
+    <string name="settings_default_event_length">Default na Haba ng Event</string>
+    <string name="settings_default_alerts">Default na Mga Alerto</string>
+    <string name="settings_notifications">Mga Notification</string>
+    <string name="settings_new_events">Mga bagong event</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">Default ng system</string>
+    <string name="option_12_hour">12 oras</string>
+    <string name="option_24_hour">24 oras</string>
+    <string name="option_sunday">Linggo</string>
+    <string name="option_monday">Lunes</string>
+    <string name="option_saturday">Sabado</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">Walang nahanap na event</string>
+    <string name="empty_no_upcoming_events">Walang paparating na event</string>
+    <string name="empty_no_calendars">Walang available na kalendaryo</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">Kumokonekta…</string>
+    <string name="status_fetching">Kumukuha…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">Kunin ang Kalendaryo</string>
+    <string name="action_import_from_file">Mag-import mula sa File</string>
+    <string name="action_export_local_calendar">I-export ang Lokal na Kalendaryo</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">Ang mga app-specific password ay nagbibigay-daan sa iyo na mag-sign in sa mga third-party app nang hindi ibinibigay ang iyong pangunahing Apple ID password.</string>
+    <string name="help_app_password_steps_header">Para gumawa:</string>
+    <string name="help_app_password_step_1">1. Pumunta sa appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. Mag-sign in gamit ang iyong Apple ID</string>
+    <string name="help_app_password_step_3">3. Pumunta sa Sign-In and Security</string>
+    <string name="help_app_password_step_4">4. I-click ang App-Specific Passwords</string>
+    <string name="help_app_password_step_5">5. I-click ang Generate at kopyahin dito</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">Kailangan ng KashCal ang notification permission para paalalahanan ka tungkol sa mga paparating na event.</string>
+    <string name="dialog_notification_permission_settings_hint">Maaari mong baguhin ito mamaya sa Settings.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">Mga Account</string>
+    <string name="accounts_section_connected">Nakakonekta</string>
+    <string name="accounts_section_add">Magdagdag ng Account</string>
+    <string name="accounts_empty_title">Walang nakakonektang account</string>
+    <string name="accounts_empty_subtitle">Magdagdag ng account para i-sync ang iyong mga kalendaryo sa iba\'t ibang device</string>
+    <string name="accounts_row_label">iCloud, Nextcloud &amp; Higit Pa</string>
+    <string name="accounts_add_icloud">Magdagdag ng iCloud</string>
+    <string name="accounts_add_caldav">Magdagdag ng CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail &amp; Higit Pa</string>
+    <string name="accounts_caldav_help_title">Ano ang CalDAV?</string>
+    <string name="accounts_caldav_help_description">Ang CalDAV ay isang open standard para sa pag-sync ng mga kalendaryo. Sinusuportahan ng:</string>
+    <string name="accounts_caldav_help_more">&amp; higit pa</string>
+    <string name="accounts_calendars_syncing">Sini-sync…</string>
+    <string name="accounts_cd_icloud_icon">iCloud account</string>
+    <string name="accounts_cd_caldav_icon">CalDAV account</string>
+    <string name="accounts_cd_back">Bumalik</string>
+    <string name="accounts_sync_issue">Sync issue</string>
+    <string name="accounts_cd_sync_warning">Babala sa sync</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">Mga Subscription</string>
+    <string name="subscriptions_section_ics_calendars">Mga ICS Kalendaryo</string>
+    <string name="subscriptions_section_add">Idagdag</string>
+    <string name="subscriptions_empty_ics">Walang ICS subscription</string>
+    <string name="subscriptions_empty_ics_hint">Magdagdag ng calendar feed para makita ang mga event</string>
+    <string name="subscriptions_add_ics">Magdagdag ng ICS Kalendaryo</string>
+    <string name="subscriptions_row_label">Mga Holiday, Eskwela &amp; Higit Pa</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">Mga Kaarawan &amp; Anibersaryo</string>
+    <string name="birthdays_section_title">Mga Kaarawan</string>
+    <string name="anniversaries_section_title">Mga Anibersaryo</string>
+    <string name="settings_contact_birthdays">Mga Kaarawan ng Contact</string>
+    <string name="settings_contact_birthdays_description">Ipakita ang mga kaarawan mula sa mga contact sa telepono bilang buong araw na event.</string>
+    <string name="settings_contact_anniversaries">Mga Anibersaryo ng Contact</string>
+    <string name="settings_contact_anniversaries_description">Ipakita ang mga anibersaryo mula sa mga contact sa telepono bilang buong araw na event.</string>
+    <string name="settings_anniversary_reminder">Paalala ng Anibersaryo</string>
+    <string name="settings_calendar_color">Kulay ng Kalendaryo</string>
+    <string name="settings_default_reminder">Default na Paalala</string>
+    <string name="action_change">Palitan</string>
+    <string name="settings_contacts_footer">Binabasa mula sa mga contact ng iyong device. Nangangailangan ng Contacts permission.</string>
+    <string name="settings_contacts_permission_required">Kailangan ang Contacts permission</string>
+    <string name="subscriptions_cd_back">Bumalik</string>
+    <string name="subscriptions_cd_add">Magdagdag ng subscription</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">SYNC</string>
+    <string name="account_detail_section_calendars">MGA KALENDARYO</string>
+    <string name="account_detail_section_account">ACCOUNT</string>
+    <string name="account_detail_enabled">Naka-enable</string>
+    <string name="account_detail_enabled_subtitle">Awtomatikong i-sync ang account na ito</string>
+    <string name="account_detail_sync_now">I-sync Ngayon</string>
+    <string name="account_detail_syncing">Sini-sync…</string>
+    <string name="account_detail_discovering">Nagdi-discover…</string>
+    <string name="account_detail_discover_calendars">Mag-discover ng Bagong Kalendaryo</string>
+    <string name="account_detail_change_password">Palitan ang Password</string>
+    <string name="account_detail_sign_out">Mag-sign Out</string>
+    <string name="account_detail_never_synced">Hindi pa na-sync kailanman</string>
+    <string name="account_detail_last_success">Huling tagumpay: %1$s</string>
+    <string name="account_detail_cd_rename">Palitan ang pangalan</string>
+    <string name="account_detail_cd_show_password">Ipakita ang password</string>
+    <string name="account_detail_cd_hide_password">Itago ang password</string>
+
+    <string name="sync_failure_notification_title">Sync issue sa %1$s</string>
+    <string name="sync_failure_notification_text">Nabigo ang calendar sync nang %1$d beses</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">Palitan ang Pangalan ng Account</string>
+    <string name="rename_account_label">Pangalan ng Account</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">Palitan ang Password</string>
+    <string name="change_password_label_icloud">App-Specific Password</string>
+    <string name="change_password_label_default">Password</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">Mga Device Calendar</string>
+    <string name="settings_quick_event_add">Mabilis na Pagdagdag ng Event</string>
+    <string name="settings_week_numbers">Mga Numero ng Linggo</string>
+    <string name="settings_widget_event_limit">Limitasyon ng Widget Event</string>
+    <string name="settings_sync_lookback">Saklaw ng Sync Lookback</string>
+    <string name="settings_auto_detect_emojis">Auto-detect ng Emoji</string>
+    <string name="settings_events_per_day">Mga event bawat araw</string>
+    <string name="settings_not_set">Hindi pa naka-set</string>
+    <string name="settings_on">Bukas</string>
+    <string name="settings_off">Sarado</string>
+    <string name="settings_tap_to_enable">I-tap para i-enable</string>
+    <string name="settings_device_calendars_enabled">%1$d naka-enable</string>
+    <string name="settings_per_day">%1$d bawat araw</string>
+    <string name="signin_icloud_help_question">Ano ang app-specific password?</string>
+    <string name="caldav_trust_insecure_label">Pagkatiwalaan ang hindi secure na koneksyon</string>
+    <string name="action_add_another">Magdagdag Pa</string>
+    <string name="account_connected_found_calendars">Nakakita ng %1$d kalendaryo para sa %2$s.</string>
+    <string name="account_connected_syncing_hint">Sini-sync na \u2014 lalabas na ang mga event.</string>
+    <string name="settings_time_format_currently_24h">Kasalukuyan: 24 oras (%1$s)</string>
+    <string name="settings_time_format_currently_12h">Kasalukuyan: 12 oras (%1$s)</string>
+    <string name="settings_time_format_example">Halimbawa: %1$s</string>
+    <string name="settings_system_default_with_value">Default ng system (%1$s)</string>
+    <string name="alert_none">Wala</string>
+    <string name="cd_collapse">I-collapse</string>
+    <string name="cd_expand">I-expand</string>
+    <string name="cd_hide_calendar">Itago ang kalendaryo</string>
+    <string name="cd_show_calendar">Ipakita ang kalendaryo</string>
+    <string name="cd_pick_month_year">Pumili ng buwan at taon</string>
+    <string name="cd_previous_month">Nakaraang buwan</string>
+    <string name="cd_next_month">Susunod na buwan</string>
+    <string name="cd_month_year_picker">Tagapili ng buwan at taon</string>
+    <string name="cd_remove_alert">Alisin ang alerto</string>
+    <string name="cd_warning">Babala</string>
+    <string name="cd_refresh_calendars">I-refresh ang mga kalendaryo</string>
+    <string name="cd_timezone_tap_to_change">Timezone: %1$s, i-tap para palitan</string>
+    <string name="cd_day_events">Araw %1$d, %2$d event</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">Dalas</string>
+    <string name="label_on_days">Sa mga araw na</string>
+    <string name="label_pattern">Pattern</string>
+    <string name="label_ends">Natatapos</string>
+    <string name="label_alerts">Mga Alerto</string>
+    <string name="label_add_alert">Magdagdag ng Alerto</string>
+    <string name="label_recurrence_never">Hindi kailanman</string>
+    <string name="label_tomorrow">Bukas</string>
+    <string name="label_yesterday">Kahapon</string>
+    <string name="label_device_calendars">Mga Device Calendar</string>
+    <string name="label_default_calendar_hint">Ang mga bagong event ay gagawin sa kalendaryong ito</string>
+    <string name="label_visible_count">%1$d / %2$d nakikita</string>
+    <string name="label_enabled_count">%1$d / %2$d naka-enable</string>
+    <string name="label_reminders_truncated">%1$d hindi ipinakita (%2$d kabuuan, max %3$d na mae-edit)</string>
+    <string name="label_found_events">Natagpuan: %1$d event</string>
+    <string name="label_open_debug_menu">Buksan ang debug menu</string>
+    <string name="placeholder_search">Maghanap\u2026</string>
+    <string name="status_sync_paused">Naka-pause ang sync</string>
+    <string name="status_not_synced">Hindi pa na-sync</string>
+    <string name="status_sync_error">Sync error</string>
+    <string name="status_minutes_ago">%1$dm ang nakakaraan</string>
+    <string name="status_hours_ago">%1$do ang nakakaraan</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">Ipakita ang mga event mula sa ibang calendar app sa iyong device (mga sync adapter, lokal na kalendaryo).</string>
+    <string name="device_calendars_permission_required">Kailangan ng calendar permission. I-tap ang Enable para mag-grant ng access.</string>
+    <string name="device_calendars_read_only_access">Read-only access</string>
+    <string name="device_calendars_grant_write">Mag-grant ng write permission para i-edit ang mga device calendar event</string>
+    <string name="device_calendars_grant">I-grant</string>
+    <string name="device_calendars_none_found">Walang natagpuang device calendar.</string>
+    <string name="device_calendars_local">Lokal</string>
+    <string name="device_calendars_show_declined">Ipakita ang mga tinanggihang event</string>
+    <string name="device_calendars_reminders">Mga Paalala</string>
+    <string name="device_calendars_reminders_desc">Makatanggap ng notification para sa mga device calendar event</string>
+    <string name="device_calendars_read_only_no_write">Read only (walang write permission)</string>
+    <string name="device_calendars_read_only_calendar">Read only (read-only ang kalendaryo)</string>
+
+    <string name="settings_developer_options">Mga Developer Option</string>
+    <string name="settings_sync_frequency">Dalas ng Sync</string>
+    <string name="settings_preview">PREVIEW</string>
+    <string name="settings_n_events">%1$d event</string>
+    <string name="settings_n_events_default">%1$d event (default)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">Mga Kalendaryo</string>
+    <string name="drawer_contacts">Mga Contact</string>
+    <string name="drawer_device_calendars">Mga device calendar</string>
+    <string name="drawer_share_feedback">Mag-share ng feedback</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">Para sa\'yo, hindi sa iyong data.</string>
+    <string name="action_keep_it_that_way">Panatilihin ito</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">Na-sync na</string>
+    <string name="status_warnings">Mga Babala</string>
+    <string name="sync_history_events_failed">Mga nabigong event</string>
+    <string name="sync_history_abandoned_max_retries">Na-abandon (max retries)</string>
+    <string name="sync_history_events_skipped">Mga nilaktawang event</string>
+    <string name="sync_history_duration">Tagal</string>
+    <string name="sync_history_already_synced_count">%1$d na-sync na</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">Walang event</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">Ikaw ay offline</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">Mag-sign Out sa %1$s?</string>
+    <string name="dialog_sign_out_message">Naka-sign in ka bilang %1$s. Ang pag-sign out ay mag-aalis ng mga naka-sync na kalendaryo sa device na ito.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- Filipino: one, other -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d account</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s \u00B7 1 kalendaryo</item>
+        <item quantity="other">%1$s \u00B7 %2$d kalendaryo</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d subscription</item>
+        <item quantity="other">%1$d subscription</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">Nabigo ang sync (%1$d pagsubok)</item>
+        <item quantity="other">Nabigo ang sync (%1$d pagsubok)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d kalendaryo</item>
+        <item quantity="other">%1$d kalendaryo</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d kalendaryo (%2$d bago)</item>
+        <item quantity="other">%1$d kalendaryo (%2$d bago)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d event</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d kaarawan</item>
+        <item quantity="other">%1$d kaarawan</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d anibersaryo</item>
+        <item quantity="other">%1$d anibersaryo</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d pa</item>
+        <item quantity="other">+ %1$d pa</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">Magdagdag ng Event</item>
+        <item quantity="other">I-import ang %1$d Event</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">Idagdag</item>
+        <item quantity="other">I-import</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">\u2026at %1$d pa</item>
+        <item quantity="other">\u2026at %1$d pa</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">Na-import ang %1$d event</item>
+        <item quantity="other">Na-import ang %1$d event</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="one">Na-export ang %1$d event</item>
+        <item quantity="other">Na-export ang %1$d event</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d event</item>
+        <item quantity="other">%1$d event</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d minuto</item>
+        <item quantity="other">%1$d minuto</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d min</item>
+        <item quantity="other">%1$d min</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d oras</item>
+        <item quantity="other">%1$d oras</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d araw</item>
+        <item quantity="other">%1$d araw</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d linggo</item>
+        <item quantity="other">%1$d linggo</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d buwan</item>
+        <item quantity="other">%1$d buwan</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d taon</item>
+        <item quantity="other">%1$d taon</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d seg</item>
+        <item quantity="other">%1$d seg</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d minuto bago</item>
+        <item quantity="other">%1$d minuto bago</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d oras bago</item>
+        <item quantity="other">%1$d oras bago</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d araw bago</item>
+        <item quantity="other">%1$d araw bago</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d linggo bago</item>
+        <item quantity="other">%1$d linggo bago</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">I-edit ang paulit-ulit na event</string>
+    <string name="dialog_delete_recurring_title">Burahin ang paulit-ulit na event</string>
+    <string name="dialog_edit_recurring_message">Isa itong paulit-ulit na event. Paano mo gustong ilapat ang pagbabagong ito?</string>
+    <string name="recurring_this_event">Event na ito</string>
+    <string name="recurring_all_events">Lahat ng event</string>
+    <string name="empty_pick_a_day">Pumili ng araw. Samantalahin.</string>
+    <string name="empty_no_events_day">Walang makikita dito; lumabas muna?</string>
+    <string name="label_upcoming_events">Mga Paparating na Event</string>
+    <string name="filter_date">Petsa</string>
+    <string name="label_select_date">Pumili ng petsa</string>
+    <string name="hint_tap_date_range">I-tap ang parehong petsa para sa isang araw, o ibang petsa para sa saklaw</string>
+
+    <string name="cd_clear">I-clear</string>
+    <string name="cd_offline">Offline</string>
+    <string name="cd_previous">Nakaraan</string>
+    <string name="cd_next">Susunod</string>
+    <string name="cd_open_drawer">Buksan ang drawer</string>
+    <string name="cd_close_drawer">Isara ang drawer</string>
+    <string name="cd_calendar_view">Calendar view</string>
+    <string name="cd_active_view">Aktibong view</string>
+
+    <string name="view_agenda">Agenda</string>
+    <string name="view_month_full">Buwan (Buong)</string>
+    <string name="view_three_days">3 Araw</string>
+    <string name="view_year">Taon</string>
+
+    <string name="label_go_to_month">Pumunta sa buwan</string>
+
+    <string name="action_more_options">Higit pang mga opsyon</string>
+
+    <string name="label_duration_days">araw</string>
+    <string name="label_duration_hrs">oras</string>
+    <string name="label_duration_min">min</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">Sa araw %1$d</string>
+    <string name="recurrence_on_last_day">Sa huling araw ng buwan</string>
+    <string name="recurrence_on_nth_weekday">Sa ika-%1$s %2$s</string>
+    <string name="ordinal_1st">ika-1</string>
+    <string name="ordinal_2nd">ika-2</string>
+    <string name="ordinal_3rd">ika-3</string>
+    <string name="ordinal_4th">ika-4</string>
+    <string name="ordinal_nth">ika-%1$d</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d bago</string>
+    <string name="sync_summary_updated">%1$d na-update</string>
+    <string name="sync_summary_removed">%1$d inalis</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">Nakaraang 3 araw</string>
+    <string name="cd_next_3_days">Susunod na 3 araw</string>
+    <string name="cd_circular_scrolling">Naka-enable ang circular scrolling</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">Walang paalala</string>
+    <string name="reminder_at_time_of_event">Sa oras ng kaganapan</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s bago</string>
+    <string name="reminder_time_after">%1$s pagkatapos</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM araw ng kaganapan</string>
+    <string name="reminder_day_of_event_24h">09:00 araw ng kaganapan</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s bago ng 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s bago ng 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">Naka-off</string>
+    <string name="reminder_short_at_event">Sa kaganapan</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$dm</string>
+    <string name="reminder_short_hours">%1$do</string>
+    <string name="reminder_short_days">%1$da</string>
+    <string name="reminder_short_weeks">%1$dl</string>
+    <string name="reminder_summary_none">Wala</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$do %2$dm</string>
+    <string name="duration_compact_short">%1$do%2$dm</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">Manual lang</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">Lahat ng kaganapan</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">I-snooze</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">Nagsisimula na</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">Bukas, %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s, %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">Kumpleto ang Sync</string>
+    <string name="sync_notification_partial">Hindi Ganap na Kumpleto ang Sync</string>
+    <string name="sync_notification_auth_failed">Nabigo ang Authentication ng Sync</string>
+    <string name="sync_notification_auth_reauth">Mangyaring mag-authenticate muli ng iyong account</string>
+    <string name="sync_notification_failed">Nabigo ang Sync</string>
+    <string name="sync_notification_parse_title">Hindi ma-sync ang ilang kaganapan</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s sa %2$s ay hindi ma-sync. Subukan ang Force Sync sa Settings.</string>
+    <string name="sync_notification_conflict_title">Nalutas ang conflict sa sync</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">Nawala ang mga lokal na pagbabago sa \"%1$s\" dahil sa conflict sa sync. Gagamitin ang bersyon ng server.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">Nawala ang mga lokal na pagbabago sa %1$s dahil sa mga conflict sa sync. Gagamitin ang mga bersyon ng server.</string>
+    <string name="sync_notification_expired_title">Nag-expire na ang mga pagbabago sa sync</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">Hindi ma-sync ang %1$s pagkatapos ng 30 araw. Gagamitin ang bersyon ng server. Gamitin ang Force Sync para subukan muli.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">Na-sync ang %1$d kalendaryo</item>
+        <item quantity="other">Na-sync ang %1$d kalendaryo</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">, %1$d pagbabago</item>
+        <item quantity="other">, %1$d pagbabago</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">, %1$d error</item>
+        <item quantity="other">, %1$d error</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">Ika-%2$s Kaarawan ni %1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">Kaarawan ni %1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">Ika-%2$s Anibersaryo ni %1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">Anibersaryo ni %1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">ika-%1$d</string>
+    <string name="ordinal_suffix_nd">ika-%1$d</string>
+    <string name="ordinal_suffix_rd">ika-%1$d</string>
+    <string name="ordinal_suffix_th">ika-%1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">Sini-sync ang mga kalendaryo\u2026</string>
+    <string name="sync_banner_preparing">Naghahanda para sa sync\u2026</string>
+    <string name="sync_banner_complete_errors">Kumpleto ang sync na may mga error</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">Nabigo ang sync: %1$s</string>
+    <string name="error_unknown_error">Hindi kilalang error</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">Bagong kaganapan: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d bagong kaganapan</item>
+        <item quantity="other">%1$d bagong kaganapan</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d kaganapan na-update</item>
+        <item quantity="other">%1$d kaganapan na-update</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d kaganapang inalis</item>
+        <item quantity="other">%1$d kaganapang inalis</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d update sa kalendaryo</item>
+        <item quantity="other">%1$d update sa kalendaryo</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">Araw %1$d ng %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">Araw 1 ng %1$d \u00b7 nagsisimula %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">Araw %1$d ng %2$d \u00b7 nagtatapos %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Buong araw</string>
+    <string name="event_date_all_day">%1$s \u00b7 Buong araw</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (Buong araw)</string>
+    <string name="event_date_all_day_parens">%1$s (Buong araw)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">I-save ang Kaganapan</string>
+    <!-- Badges -->
+    <string name="badge_beta">Beta</string>
+    <string name="badge_new">Bago</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">Pula</string>
+    <string name="color_orange">Kahel</string>
+    <string name="color_yellow">Dilaw</string>
+    <string name="color_green">Berde</string>
+    <string name="color_cyan">Syan</string>
+    <string name="color_blue">Asul</string>
+    <string name="color_purple">Lila</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">Link ng meeting: %1$s</string>
+    <string name="cd_phone_number">Numero ng telepono</string>
+    <string name="cd_email_link">Email: %1$s</string>
+    <string name="cd_web_link">Link: %1$s</string>
+    <string name="cd_text_with_links">Teksto na may %1$d link: %2$s</string>
+    <string name="cd_text_with_link">Teksto na may 1 link: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">Araw %1$d ng %2$d (Buong araw)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d sync   \u2191%2$d nai-push   \u2193%3$d nai-pull</string>
+    <string name="sync_history_stats_issues">%1$d sync   \u2191%2$d nai-push   \u2193%3$d nai-pull   \u26a0 %4$d isyu</string>
+    <string name="sync_history_failed">Nabigo</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">Bawat oras</string>
+    <string name="ics_sync_every_n_hours">Bawat %1$d oras</string>
+    <string name="ics_sync_daily">Araw-araw</string>
+    <string name="ics_sync_weekly">Lingguhan</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">Kinakailangan ang URL</string>
+    <string name="ics_url_invalid_scheme">Ang URL ay dapat magsimula sa http://, https://, o webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Buong araw)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">, %1$d beses</item>
+        <item quantity="other">, %1$d beses</item>
+    </plurals>
+
+    <!-- Missing translations -->
+    <string name="cd_widget_calendar">Kalendaryo</string>
+    <string name="cd_widget_add_event">Magdagdag ng event</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">walang event</string>
+    <string name="channel_event_reminders">Mga Paalala ng Event</string>
+    <string name="channel_event_reminders_desc">Mga notipikasyon para sa paparating na event sa kalendaryo</string>
+    <string name="channel_sync_progress">Pag-sync Progress</string>
+    <string name="channel_sync_progress_desc">Ipinapakita ang progress habang nag-sync ng kalendaryo</string>
+    <string name="channel_sync_status">Status ng Pag-sync</string>
+    <string name="channel_sync_status_desc">Mga notipikasyon tungkol sa pagkompleto ng pag-sync at mga error</string>
+    <string name="rrule_does_not_repeat">Hindi umuulit</string>
+    <string name="rrule_freq_daily">Araw-araw</string>
+    <string name="rrule_freq_weekly">Lingguhan</string>
+    <string name="rrule_freq_biweekly">Tuwing dalawang linggo</string>
+    <string name="rrule_freq_monthly">Buwanan</string>
+    <string name="rrule_freq_quarterly">Quarterly</string>
+    <string name="rrule_freq_yearly">Taun-taon</string>
+    <string name="rrule_repeats">Umuulit</string>
+    <string name="rrule_every_n_days">Bawat %1$d araw</string>
+    <string name="rrule_every_n_weeks">Bawat %1$d linggo</string>
+    <string name="rrule_every_n_months">Bawat %1$d buwan</string>
+    <string name="rrule_every_n_years">Bawat %1$d taon</string>
+    <string name="rrule_freq_on_days">%1$s sa %2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s sa %2$s %3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s sa huling araw</string>
+    <string name="rrule_freq_on_day_n">%1$s sa araw %2$d</string>
+    <string name="rrule_ordinal_last">huling</string>
+    <string name="rrule_until_suffix">, hanggang %1$s</string>
+    <string name="rrule_freq_never">Hindi kailanman</string>
+    <string name="rrule_starting">%1$s nagsisimula %2$s%3$s</string>
+    <string name="rrule_since">%1$s · mula %2$s</string>
+</resources>

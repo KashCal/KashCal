@@ -1,6 +1,7 @@
 package org.onekash.kashcal.domain.quickadd
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.tokenizer.Token
@@ -143,6 +144,89 @@ class WordTokenizerTest {
         assertEquals(1, tokens.size)
         assertEquals(TokenType.TIME, tokens[0].type)
         assertEquals(LocalTime.of(15, 30), tokens[0].value)
+    }
+
+    // ==================== Dot-separated time ====================
+
+    @Test
+    fun `tokenizes 3 dot 15pm as TIME`() {
+        val tokens = WordTokenizer.tokenize("3.15pm")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME, tokens[0].type)
+        assertEquals(LocalTime.of(15, 15), tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes 10 dot 30am as TIME`() {
+        val tokens = WordTokenizer.tokenize("10.30am")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME, tokens[0].type)
+        assertEquals(LocalTime.of(10, 30), tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes 12 dot 30pm as TIME with noon hour`() {
+        val tokens = WordTokenizer.tokenize("12.30pm")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME, tokens[0].type)
+        assertEquals(LocalTime.of(12, 30), tokens[0].value)
+    }
+
+    @Test
+    fun `0 dot 15pm does not tokenize as TIME`() {
+        val tokens = WordTokenizer.tokenize("0.15pm")
+        assertEquals(1, tokens.size)
+        assertNotEquals(TokenType.TIME, tokens[0].type)
+    }
+
+    @Test
+    fun `3 dot 60pm does not tokenize as TIME`() {
+        val tokens = WordTokenizer.tokenize("3.60pm")
+        assertEquals(1, tokens.size)
+        assertNotEquals(TokenType.TIME, tokens[0].type)
+    }
+
+    @Test
+    fun `3 dot 15 without meridiem stays STRUCTURED_DATE`() {
+        val tokens = WordTokenizer.tokenize("3.15")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+    }
+
+    @Test
+    fun `15 dot 01 without meridiem stays STRUCTURED_DATE`() {
+        val tokens = WordTokenizer.tokenize("15.01")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+    }
+
+    @Test
+    fun `15 dot 01 dot 2027 stays STRUCTURED_DATE`() {
+        val tokens = WordTokenizer.tokenize("15.01.2027")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+    }
+
+    // ==================== Dot-separated time ranges ====================
+
+    @Test
+    fun `tokenizes 3 dot 15-4 dot 30pm as TIME_RANGE`() {
+        val tokens = WordTokenizer.tokenize("3.15-4.30pm")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(15, 15), range.start)
+        assertEquals(LocalTime.of(16, 30), range.end)
+    }
+
+    @Test
+    fun `tokenizes 10 dot 30-11 dot 30am as TIME_RANGE`() {
+        val tokens = WordTokenizer.tokenize("10.30-11.30am")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(10, 30), range.start)
+        assertEquals(LocalTime.of(11, 30), range.end)
     }
 
     // ==================== Time Keywords ====================
@@ -403,9 +487,53 @@ class WordTokenizerTest {
         assertEquals(TokenType.TIME, tokens[5].type) // 3pm
     }
 
+    // ==================== All Day Keyword ====================
+
+    @Test
+    fun `tokenizes all_day as DATE_KEYWORD`() {
+        val tokens = WordTokenizer.tokenize("all_day")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.DATE_KEYWORD, tokens[0].type)
+        assertEquals("ALL_DAY", tokens[0].value)
+    }
+
     @Test
     fun `tokenizes empty string as empty list`() {
         val tokens = WordTokenizer.tokenize("")
         assertEquals(0, tokens.size)
+    }
+
+    // ==================== Timezone ====================
+
+    @Test
+    fun `tokenizes EST as TIMEZONE`() {
+        val tokens = WordTokenizer.tokenize("est")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIMEZONE, tokens[0].type)
+        assertEquals("America/New_York", tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes PST as TIMEZONE`() {
+        val tokens = WordTokenizer.tokenize("pst")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIMEZONE, tokens[0].type)
+        assertEquals("America/Los_Angeles", tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes UTC as TIMEZONE`() {
+        val tokens = WordTokenizer.tokenize("utc")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIMEZONE, tokens[0].type)
+        assertEquals("UTC", tokens[0].value)
+    }
+
+    @Test
+    fun `tokenizes GMT as TIMEZONE`() {
+        val tokens = WordTokenizer.tokenize("gmt")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIMEZONE, tokens[0].type)
+        assertEquals("GMT", tokens[0].value)
     }
 }

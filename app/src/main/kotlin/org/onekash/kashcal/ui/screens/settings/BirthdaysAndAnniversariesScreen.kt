@@ -43,7 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
 import org.onekash.kashcal.ui.components.pickers.argbToHex
 import org.onekash.kashcal.ui.shared.formatReminderOption
@@ -102,12 +105,12 @@ fun BirthdaysAndAnniversariesScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Birthdays & Anniversaries") },
+                title = { Text(stringResource(R.string.birthdays_anniversaries_row_label)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.cd_back)
                         )
                     }
                 }
@@ -121,16 +124,16 @@ fun BirthdaysAndAnniversariesScreen(
                 .padding(padding)
         ) {
             // ==================== Birthdays Section ====================
-            SectionHeader("Birthdays")
+            SectionHeader(stringResource(R.string.birthdays_section_title))
             SettingsCard {
                 ContactEventSection(
-                    label = "Contact Birthdays",
-                    description = "Show birthdays from your phone contacts as all-day calendar events.",
+                    label = stringResource(R.string.settings_contact_birthdays),
+                    description = stringResource(R.string.settings_contact_birthdays_description),
                     isEnabled = birthdaysEnabled,
                     calendarColor = birthdaysColor,
                     reminderMinutes = birthdaysReminder,
                     eventCount = birthdayCount,
-                    reminderTitle = "Birthday Reminder",
+                    reminderTitle = stringResource(R.string.settings_birthday_reminder),
                     use24Hour = use24Hour,
                     onToggle = onToggleBirthdays,
                     onColorChange = onBirthdaysColorChange,
@@ -141,16 +144,16 @@ fun BirthdaysAndAnniversariesScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // ==================== Anniversaries Section ====================
-            SectionHeader("Anniversaries")
+            SectionHeader(stringResource(R.string.anniversaries_section_title))
             SettingsCard {
                 ContactEventSection(
-                    label = "Contact Anniversaries",
-                    description = "Show anniversaries from your phone contacts as all-day calendar events.",
+                    label = stringResource(R.string.settings_contact_anniversaries),
+                    description = stringResource(R.string.settings_contact_anniversaries_description),
                     isEnabled = anniversariesEnabled,
                     calendarColor = anniversariesColor,
                     reminderMinutes = anniversariesReminder,
                     eventCount = anniversaryCount,
-                    reminderTitle = "Anniversary Reminder",
+                    reminderTitle = stringResource(R.string.settings_anniversary_reminder),
                     use24Hour = use24Hour,
                     onToggle = onToggleAnniversaries,
                     onColorChange = onAnniversariesColorChange,
@@ -161,7 +164,7 @@ fun BirthdaysAndAnniversariesScreen(
             // ==================== Footer ====================
             Spacer(modifier = Modifier.height(16.dp))
             Text(
-                "Reads from your device contacts. Requires Contacts permission.",
+                stringResource(R.string.settings_contacts_footer),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 32.dp)
@@ -170,7 +173,7 @@ fun BirthdaysAndAnniversariesScreen(
             if ((birthdaysEnabled || anniversariesEnabled) && !hasPermission) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Contacts permission required",
+                    stringResource(R.string.settings_contacts_permission_required),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.padding(horizontal = 32.dp)
@@ -225,10 +228,7 @@ private fun ContactEventSection(
                 )
                 if (isEnabled && eventCount > 0) {
                     Text(
-                        when (eventCount) {
-                            1 -> "1 event"
-                            else -> "$eventCount events"
-                        },
+                        pluralStringResource(R.plurals.event_count, eventCount, eventCount),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -263,7 +263,7 @@ private fun ContactEventSection(
 
                 // Color picker row
                 Text(
-                    "Calendar Color",
+                    stringResource(R.string.settings_calendar_color),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -288,7 +288,7 @@ private fun ContactEventSection(
                     )
                     Spacer(modifier = Modifier.weight(1f))
                     Text(
-                        "Change",
+                        stringResource(R.string.action_change),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -298,7 +298,7 @@ private fun ContactEventSection(
 
                 // Reminder row
                 Text(
-                    "Default Reminder",
+                    stringResource(R.string.settings_default_reminder),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -311,11 +311,11 @@ private fun ContactEventSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour),
+                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour, resources = LocalContext.current.resources),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        "Change",
+                        stringResource(R.string.action_change),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -330,7 +330,7 @@ private fun ContactEventSection(
         SingleAlertPickerSheet(
             sheetState = reminderSheetState,
             title = reminderTitle,
-            options = getAllDayReminderOptions(use24Hour),
+            options = getAllDayReminderOptions(use24Hour, LocalContext.current.resources),
             currentValue = reminderMinutes,
             onSelect = { minutes ->
                 onReminderChange(minutes)

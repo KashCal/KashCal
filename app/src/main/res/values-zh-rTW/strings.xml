@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">今日行程</string>
+    <string name="widget_description">顯示今天的行事曆事件</string>
+    <string name="week_widget_name">週檢視</string>
+    <string name="week_widget_description">顯示未來7天的行事曆事件</string>
+    <string name="month_widget_name">月檢視</string>
+    <string name="month_widget_description">顯示帶有事件標記的月曆格線</string>
+    <string name="date_widget_name">日期</string>
+    <string name="date_widget_description">像應用程式圖示一樣顯示今天的日期</string>
+    <string name="widget_no_events_today">今天沒有事件</string>
+    <string name="widget_add_event">+ 新增事件</string>
+    <string name="widget_no_events">沒有事件</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">新事件</string>
+    <string name="shortcut_new_event_long">建立新事件</string>
+    <string name="shortcut_today">今天</string>
+    <string name="shortcut_today_long">前往今天</string>
+    <string name="shortcut_search">搜尋</string>
+    <string name="shortcut_search_long">搜尋事件</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">重試</string>
+    <string name="action_try_again">再試一次</string>
+    <string name="action_cancel">取消</string>
+    <string name="action_close">關閉</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">稍後再說</string>
+    <string name="action_sign_in">登入</string>
+    <string name="action_select">選取</string>
+    <string name="action_show_password">顯示密碼</string>
+    <string name="action_hide_password">隱藏密碼</string>
+    <string name="action_sign_out">登出</string>
+    <string name="action_learn_more">瞭解更多</string>
+    <string name="action_open_apple_id">開啟 Apple ID</string>
+    <string name="action_open_settings">開啟設定</string>
+    <string name="action_force_sync">強制同步</string>
+    <string name="action_sync_now">立即同步</string>
+    <string name="action_details">詳細資訊</string>
+    <string name="action_set_up">設定</string>
+    <string name="action_report_issue">回報問題</string>
+    <string name="action_view">檢視</string>
+    <string name="action_enable">啟用</string>
+    <string name="action_done">完成</string>
+    <string name="action_save">儲存</string>
+    <string name="action_add">新增</string>
+    <string name="action_edit">編輯</string>
+    <string name="action_delete">刪除</string>
+    <string name="action_confirm">確認</string>
+    <string name="action_discard">捨棄</string>
+    <string name="action_dismiss">關閉</string>
+    <string name="action_show_all">顯示全部</string>
+    <string name="action_connect">連線</string>
+    <string name="action_duplicate">複製</string>
+    <string name="action_share">分享</string>
+    <string name="action_export_ics">匯出為 .ics</string>
+    <string name="action_confirm_delete">確認刪除</string>
+    <string name="action_delete_event">刪除事件</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">僅此一次</string>
+    <string name="recurring_this_and_future">此次及所有未來</string>
+    <string name="recurring_just_occurrence">僅此次</string>
+    <string name="recurring_all_occurrences">所有次</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">事件標題</string>
+    <string name="label_location">地點</string>
+    <string name="label_location_hint">地址、會議室或連結</string>
+    <string name="label_notes">備註</string>
+    <string name="label_starts">開始</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">App 專用密碼</string>
+    <string name="label_password_hint">16個字元，連字號可選</string>
+    <string name="label_calendar_url">行事曆 URL</string>
+    <string name="label_calendar_name">行事曆名稱</string>
+    <string name="label_name">名稱</string>
+    <string name="label_hex_color">十六進位色碼</string>
+    <string name="label_enter_hex">輸入6位十六進位字元 (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">全部</string>
+    <string name="view_week">週</string>
+    <string name="view_month">月</string>
+    <string name="label_all_day">整天</string>
+    <string name="label_today">今天</string>
+    <string name="label_go_to_date">前往日期</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">設定</string>
+    <string name="settings_time_format">時間格式</string>
+    <string name="settings_start_week_on">每週開始於</string>
+    <string name="settings_event_emojis">事件表情符號</string>
+    <string name="settings_emoji_subtitle">根據事件標題顯示表情符號</string>
+    <string name="settings_force_sync">完整同步</string>
+    <string name="settings_force_sync_subtitle">重新下載所有行事曆資料</string>
+    <string name="settings_sync_history">同步紀錄</string>
+    <string name="settings_sync_history_subtitle">查看同步工作階段（過去48小時）</string>
+    <string name="settings_import_subtitle">匯入 .ics 檔案</string>
+    <string name="settings_export_subtitle">備份為 .ics 檔案</string>
+    <string name="settings_birthday_reminder">生日提醒</string>
+    <string name="settings_use_device_timezone">使用裝置時區</string>
+    <string name="settings_section_my_calendars">我的行事曆</string>
+    <string name="settings_section_display">顯示</string>
+    <string name="settings_section_notifications">通知</string>
+    <string name="settings_section_sync">同步</string>
+    <string name="settings_section_data">資料</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">使用 Apple 行事曆？</string>
+    <string name="onboarding_got_you">交給我們。</string>
+    <string name="onboarding_connect_prompt">連接 iCloud 查看你的事件</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">連接 iCloud</string>
+    <string name="signin_caldav_title">新增 CalDAV 帳號</string>
+    <string name="signin_connected_to">已連接到 %1$s</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">新事件</string>
+    <string name="dialog_edit_event_title">編輯事件</string>
+    <string name="dialog_force_sync_title">執行完整同步？</string>
+    <string name="dialog_force_sync_message">將從伺服器重新下載所有行事曆資料。本機變更將被保留。</string>
+    <string name="dialog_enable_notifications">啟用通知？</string>
+    <string name="dialog_delete_title">刪除「%1$s」</string>
+    <string name="dialog_edit_title">編輯「%1$s」</string>
+    <string name="dialog_action_required">需要執行此操作才能繼續。</string>
+    <string name="dialog_add_to_calendar">加入行事曆</string>
+    <string name="dialog_select_calendar">選擇行事曆</string>
+    <string name="dialog_choose_color">選擇顏色</string>
+    <string name="dialog_add_subscription">新增訂閱</string>
+    <string name="dialog_edit_subscription">編輯訂閱</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">本週沒有事件</string>
+    <string name="status_more_events">+%1$d 個</string>
+    <string name="status_no_sync_sessions">尚無同步紀錄。\n\n在行事曆畫面下拉重新整理以觸發同步。</string>
+    <string name="status_no_writable_calendars">沒有可寫入的行事曆</string>
+    <string name="status_events_count">%1$d 個事件</string>
+    <string name="status_sync_changes">同步變更</string>
+    <string name="status_sync_history">同步紀錄</string>
+    <string name="status_parse_failures">解析失敗</string>
+    <string name="status_error">錯誤</string>
+    <string name="status_failed_to_parse">⚠ %1$d 個解析失敗</string>
+    <string name="status_built_with_love">用心打造</string>
+    <string name="status_in_austin">在 Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">同步完成</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">登入失敗</string>
+    <string name="error_auth_invalid_credentials">Apple ID 或 App 專用密碼無效。請檢查認證資訊後重試。</string>
+    <string name="error_auth_app_specific_password_required">iCloud 需要 App 專用密碼。你的一般 Apple ID 密碼無法在此使用。</string>
+    <string name="error_auth_session_expired_title">工作階段已過期</string>
+    <string name="error_auth_session_expired">iCloud 工作階段已過期。請重新登入以繼續同步。</string>
+    <string name="error_auth_account_locked">你的 Apple ID 已鎖定。請前往 appleid.apple.com 解鎖。</string>
+
+    <string name="error_network_offline">目前離線。恢復連線後將自動同步變更。</string>
+    <string name="error_network_timeout">連線逾時。請檢查網路後重試。</string>
+    <string name="error_network_ssl">安全連線失敗。請檢查網路設定。</string>
+    <string name="error_network_unknown_host">無法連接 iCloud。請檢查網路連線。</string>
+    <string name="error_network_connection_failed">連線失敗。請重試。</string>
+
+    <string name="error_server_unavailable">iCloud 暫時無法使用。請稍後重試。</string>
+    <string name="error_server_rate_limited">要求過於頻繁。請稍等片刻後重試。</string>
+    <string name="error_server_forbidden">存取遭拒。你可能沒有此行事曆的權限。</string>
+    <string name="error_server_not_found">在伺服器上找不到要求的項目。</string>
+    <string name="error_conflict_title">同步衝突</string>
+    <string name="error_conflict_generic">此事件已在其他裝置上被修改。使用強制同步取得最新版本。</string>
+    <string name="error_conflict_with_event">「%1$s」已在其他裝置上被修改。使用強制同步取得最新版本。</string>
+    <string name="error_sync_token_expired">同步資料已過期。正在執行完整同步…</string>
+
+    <string name="error_event_not_found">找不到事件。</string>
+    <string name="error_calendar_not_found">找不到行事曆。</string>
+    <string name="error_calendar_read_only">無法修改「%1$s」中的事件（唯讀行事曆）。</string>
+    <string name="error_event_invalid_data">事件資料無效。請檢查開始和結束時間。</string>
+    <string name="error_event_invalid_recurrence">重複模式無效。</string>
+
+    <string name="error_display_name_exists">名為「%1$s」的帳號已存在。</string>
+
+    <string name="error_import_file_not_found">找不到檔案或無法讀取。</string>
+    <string name="error_import_invalid_format">行事曆檔案格式無效。</string>
+    <string name="error_import_partial">已匯入 %1$d 個事件，%2$d 個失敗。</string>
+    <string name="error_export_failed">事件匯出失敗。</string>
+    <string name="error_export_no_events">沒有可匯出的事件。</string>
+    <string name="error_end_before_start">結束時間必須在開始時間之後</string>
+
+    <string name="error_storage_full_title">儲存空間不足</string>
+    <string name="error_storage_full">儲存空間不足。請釋放一些空間後重試。</string>
+    <string name="error_database_corruption_title">資料錯誤</string>
+    <string name="error_database_corruption">你的行事曆資料可能已損毀。請聯絡支援。</string>
+    <string name="error_migration_title">更新錯誤</string>
+    <string name="error_migration_failed">應用程式資料更新失敗。請重新安裝應用程式。</string>
+
+    <string name="error_permission_notification_title">啟用通知？</string>
+    <string name="error_permission_notification">KashCal 需要通知權限以提醒你即將到來的事件。</string>
+    <string name="error_permission_alarm_title">啟用精確鬧鐘？</string>
+    <string name="error_permission_alarm">KashCal 需要精確鬧鐘權限以提供準確的提醒。</string>
+    <string name="error_permission_storage">匯入/匯出需要儲存權限。</string>
+
+    <string name="error_device_calendar_title">行事曆錯誤</string>
+    <string name="error_device_calendar_write_failed">無法儲存至裝置行事曆。請重試。</string>
+    <string name="error_device_calendar_permission">需要行事曆寫入權限。請在設定中授權。</string>
+    <string name="error_device_calendar_not_found">找不到行事曆。可能已被移除。</string>
+    <string name="error_device_event_not_found">找不到事件。可能已被刪除。</string>
+    <string name="error_device_calendar_read_only">此行事曆為唯讀。</string>
+
+    <string name="error_sync_no_accounts">未設定 iCloud 帳號。設定 iCloud 以同步行事曆。</string>
+    <string name="error_sync_partial">已同步 %1$d 個行事曆，%2$d 個失敗。</string>
+
+    <string name="error_unknown">發生問題。請重試。</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">已選取</string>
+    <string name="cd_back">返回</string>
+    <string name="cd_close">關閉</string>
+    <string name="cd_search">搜尋</string>
+    <string name="cd_create_event">建立事件</string>
+    <string name="cd_settings">設定</string>
+    <string name="cd_today">今天</string>
+    <string name="cd_previous_week">上一週</string>
+    <string name="cd_next_week">下一週</string>
+    <string name="cd_delete">刪除</string>
+    <string name="cd_refresh">重新整理</string>
+    <string name="cd_more_options">更多選項</string>
+    <string name="cd_duplicate">複製</string>
+    <string name="cd_share">分享</string>
+    <string name="cd_export_ics">匯出為 ICS</string>
+    <string name="cd_open_link">開啟連結</string>
+    <string name="cd_open_maps">在地圖中開啟</string>
+    <string name="cd_copy_clipboard">複製到剪貼簿</string>
+    <string name="cd_clear_history">清除紀錄</string>
+    <string name="cd_recurring">重複</string>
+    <string name="cd_enabled">已啟用</string>
+    <string name="cd_sync_error">同步錯誤</string>
+    <string name="cd_select_option">選擇選項</string>
+    <string name="cd_select_label">選擇%1$s</string>
+    <string name="cd_wheel_picker">有 %1$d 個選項的滾輪選取器</string>
+    <string name="cd_version_info">KashCal 版本 %1$s。長按開啟偵錯選項。</string>
+    <string name="cd_color_slider">顏色滑桿，目前為 %1$s</string>
+    <string name="cd_color_slider_state">%1$s，%2$d 度</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">行事曆</string>
+    <string name="label_color">顏色：</string>
+    <string name="label_repeat">重複</string>
+    <string name="label_sync_interval">同步間隔：</string>
+    <string name="label_scheduled_events">排程事件</string>
+    <string name="label_all_day_events">整天事件</string>
+    <string name="label_server_url">伺服器 URL</string>
+    <string name="label_username">使用者名稱</string>
+    <string name="label_password">密碼</string>
+    <string name="label_display_name_optional">顯示名稱（選填）</string>
+
+    <string name="placeholder_search_events">搜尋事件…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">未指定時預設使用 https://</string>
+    <string name="hint_name_shown_in_settings">在設定中顯示的名稱</string>
+    <string name="caldav_trust_insecure_subtitle">用於自簽憑證或本機 HTTP 伺服器</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">次數</string>
+    <string name="label_recurrence_occurrences">次</string>
+    <string name="label_recurrence_on_date">指定日期</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">可見行事曆</string>
+    <string name="settings_default_calendar">預設行事曆</string>
+    <string name="settings_default_event_length">預設事件時長</string>
+    <string name="settings_default_alerts">預設提醒</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_new_events">新事件</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">系統預設</string>
+    <string name="option_12_hour">12小時制</string>
+    <string name="option_24_hour">24小時制</string>
+    <string name="option_sunday">星期日</string>
+    <string name="option_monday">星期一</string>
+    <string name="option_saturday">星期六</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">找不到事件</string>
+    <string name="empty_no_upcoming_events">沒有即將到來的事件</string>
+    <string name="empty_no_calendars">沒有可用的行事曆</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">連線中…</string>
+    <string name="status_fetching">取得中…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">取得行事曆</string>
+    <string name="action_import_from_file">從檔案匯入</string>
+    <string name="action_export_local_calendar">匯出本機行事曆</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">App 專用密碼可讓你在不分享主要 Apple ID 密碼的情況下登入第三方應用程式。</string>
+    <string name="help_app_password_steps_header">建立步驟：</string>
+    <string name="help_app_password_step_1">1. 前往 appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. 使用 Apple ID 登入</string>
+    <string name="help_app_password_step_3">3. 前往登入與安全性</string>
+    <string name="help_app_password_step_4">4. 點選 App 專用密碼</string>
+    <string name="help_app_password_step_5">5. 點選產生並複製到此處</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal 需要通知權限以提醒你即將到來的事件。</string>
+    <string name="dialog_notification_permission_settings_hint">你可以稍後在設定中變更。</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">帳號</string>
+    <string name="accounts_section_connected">已連線</string>
+    <string name="accounts_section_add">新增帳號</string>
+    <string name="accounts_empty_title">沒有已連線的帳號</string>
+    <string name="accounts_empty_subtitle">新增帳號以跨裝置同步行事曆</string>
+    <string name="accounts_row_label">iCloud、Nextcloud 等</string>
+    <string name="accounts_add_icloud">新增 iCloud</string>
+    <string name="accounts_add_caldav">新增 CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud、FastMail 等</string>
+    <string name="accounts_caldav_help_title">什麼是 CalDAV？</string>
+    <string name="accounts_caldav_help_description">CalDAV 是用於同步行事曆的開放標準。支援的服務：</string>
+    <string name="accounts_caldav_help_more">等等</string>
+    <string name="accounts_calendars_syncing">同步中…</string>
+    <string name="accounts_cd_icloud_icon">iCloud 帳號</string>
+    <string name="accounts_cd_caldav_icon">CalDAV 帳號</string>
+    <string name="accounts_cd_back">返回</string>
+    <string name="accounts_sync_issue">同步問題</string>
+    <string name="accounts_cd_sync_warning">同步警告</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">訂閱</string>
+    <string name="subscriptions_section_ics_calendars">ICS 行事曆</string>
+    <string name="subscriptions_section_add">新增</string>
+    <string name="subscriptions_empty_ics">沒有 ICS 訂閱</string>
+    <string name="subscriptions_empty_ics_hint">新增行事曆訂閱源以查看事件</string>
+    <string name="subscriptions_add_ics">新增 ICS 行事曆</string>
+    <string name="subscriptions_row_label">節日、學校等</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">生日與紀念日</string>
+    <string name="birthdays_section_title">生日</string>
+    <string name="anniversaries_section_title">紀念日</string>
+    <string name="settings_contact_birthdays">聯絡人生日</string>
+    <string name="settings_contact_birthdays_description">將聯絡人的生日顯示為整天行事曆事件。</string>
+    <string name="settings_contact_anniversaries">聯絡人紀念日</string>
+    <string name="settings_contact_anniversaries_description">將聯絡人的紀念日顯示為整天行事曆事件。</string>
+    <string name="settings_anniversary_reminder">紀念日提醒</string>
+    <string name="settings_calendar_color">行事曆顏色</string>
+    <string name="settings_default_reminder">預設提醒</string>
+    <string name="action_change">變更</string>
+    <string name="settings_contacts_footer">從裝置聯絡人中讀取。需要聯絡人權限。</string>
+    <string name="settings_contacts_permission_required">需要聯絡人權限</string>
+    <string name="subscriptions_cd_back">返回</string>
+    <string name="subscriptions_cd_add">新增訂閱</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">同步</string>
+    <string name="account_detail_section_calendars">行事曆</string>
+    <string name="account_detail_section_account">帳號</string>
+    <string name="account_detail_enabled">已啟用</string>
+    <string name="account_detail_enabled_subtitle">自動同步此帳號</string>
+    <string name="account_detail_sync_now">立即同步</string>
+    <string name="account_detail_syncing">同步中…</string>
+    <string name="account_detail_discovering">探索中…</string>
+    <string name="account_detail_discover_calendars">探索新行事曆</string>
+    <string name="account_detail_change_password">變更密碼</string>
+    <string name="account_detail_sign_out">登出</string>
+    <string name="account_detail_never_synced">從未同步</string>
+    <string name="account_detail_last_success">上次成功：%1$s</string>
+    <string name="account_detail_cd_rename">重新命名</string>
+    <string name="account_detail_cd_show_password">顯示密碼</string>
+    <string name="account_detail_cd_hide_password">隱藏密碼</string>
+
+    <string name="sync_failure_notification_title">%1$s 同步問題</string>
+    <string name="sync_failure_notification_text">行事曆同步已失敗 %1$d 次</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">重新命名帳號</string>
+    <string name="rename_account_label">帳號名稱</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">變更密碼</string>
+    <string name="change_password_label_icloud">App 專用密碼</string>
+    <string name="change_password_label_default">密碼</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">裝置行事曆</string>
+    <string name="settings_quick_event_add">快速新增事件</string>
+    <string name="settings_week_numbers">週數</string>
+    <string name="settings_widget_event_limit">小工具事件上限</string>
+    <string name="settings_sync_lookback">同步回溯範圍</string>
+    <string name="settings_auto_detect_emojis">自動偵測表情符號</string>
+    <string name="settings_events_per_day">每天事件數</string>
+    <string name="settings_not_set">未設定</string>
+    <string name="settings_on">開</string>
+    <string name="settings_off">關</string>
+    <string name="settings_tap_to_enable">點選啟用</string>
+    <string name="settings_device_calendars_enabled">%1$d 個已啟用</string>
+    <string name="settings_per_day">每天 %1$d 個</string>
+
+    <string name="signin_icloud_help_question">什麼是 App 專用密碼？</string>
+    <string name="caldav_trust_insecure_label">信任不安全的連線</string>
+    <string name="action_add_another">新增其他帳號</string>
+    <string name="account_connected_found_calendars">為 %2$s 找到 %1$d 個行事曆。</string>
+    <string name="account_connected_syncing_hint">同步進行中 \u2014 事件將很快顯示。</string>
+    <string name="settings_time_format_currently_24h">目前：24小時制 (%1$s)</string>
+    <string name="settings_time_format_currently_12h">目前：12小時制 (%1$s)</string>
+    <string name="settings_time_format_example">範例：%1$s</string>
+    <string name="settings_system_default_with_value">系統預設 (%1$s)</string>
+    <string name="alert_none">無</string>
+    <string name="cd_collapse">收合</string>
+    <string name="cd_expand">展開</string>
+    <string name="cd_hide_calendar">隱藏行事曆</string>
+    <string name="cd_show_calendar">顯示行事曆</string>
+    <string name="cd_pick_month_year">選擇月和年</string>
+    <string name="cd_previous_month">上個月</string>
+    <string name="cd_next_month">下個月</string>
+    <string name="cd_month_year_picker">月和年選取器</string>
+    <string name="cd_remove_alert">移除提醒</string>
+    <string name="cd_warning">警告</string>
+    <string name="cd_refresh_calendars">重新整理行事曆</string>
+    <string name="cd_timezone_tap_to_change">時區：%1$s，點選變更</string>
+    <string name="cd_day_events">%1$d 日，%2$d 個事件</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">頻率</string>
+    <string name="label_on_days">選擇日期</string>
+    <string name="label_pattern">模式</string>
+    <string name="label_ends">結束</string>
+    <string name="label_alerts">提醒</string>
+    <string name="label_add_alert">新增提醒</string>
+    <string name="label_recurrence_never">永不</string>
+    <string name="label_tomorrow">明天</string>
+    <string name="label_yesterday">昨天</string>
+    <string name="label_device_calendars">裝置行事曆</string>
+    <string name="label_default_calendar_hint">新事件將在此行事曆中建立</string>
+    <string name="label_visible_count">%1$d / %2$d 可見</string>
+    <string name="label_enabled_count">%1$d / %2$d 已啟用</string>
+    <string name="label_reminders_truncated">%1$d 個未顯示（共 %2$d 個，最多可編輯 %3$d 個）</string>
+    <string name="label_found_events">找到：%1$d 個事件</string>
+    <string name="label_open_debug_menu">開啟偵錯選單</string>
+    <string name="placeholder_search">搜尋\u2026</string>
+    <string name="status_sync_paused">同步已暫停</string>
+    <string name="status_not_synced">未同步</string>
+    <string name="status_sync_error">同步錯誤</string>
+    <string name="status_minutes_ago">%1$d 分鐘前</string>
+    <string name="status_hours_ago">%1$d 小時前</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">顯示裝置上其他行事曆應用程式的事件（同步轉接器、本機行事曆）。</string>
+    <string name="device_calendars_permission_required">需要行事曆權限。點選啟用以授權。</string>
+    <string name="device_calendars_read_only_access">唯讀存取</string>
+    <string name="device_calendars_grant_write">授予寫入權限以編輯裝置行事曆事件</string>
+    <string name="device_calendars_grant">授權</string>
+    <string name="device_calendars_none_found">找不到裝置行事曆。</string>
+    <string name="device_calendars_local">本機</string>
+    <string name="device_calendars_show_declined">顯示已拒絕的事件</string>
+    <string name="device_calendars_reminders">提醒</string>
+    <string name="device_calendars_reminders_desc">接收裝置行事曆事件通知</string>
+    <string name="device_calendars_read_only_no_write">唯讀（無寫入權限）</string>
+    <string name="device_calendars_read_only_calendar">唯讀（行事曆為唯讀）</string>
+
+    <string name="settings_developer_options">開發人員選項</string>
+    <string name="settings_sync_frequency">同步頻率</string>
+    <string name="settings_preview">預覽</string>
+    <string name="settings_n_events">%1$d 個事件</string>
+    <string name="settings_n_events_default">%1$d 個事件（預設）</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">行事曆</string>
+    <string name="drawer_contacts">聯絡人</string>
+    <string name="drawer_device_calendars">裝置行事曆</string>
+    <string name="drawer_share_feedback">分享意見</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">為你，而非為你的資料。</string>
+    <string name="action_keep_it_that_way">支持我們</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">已同步</string>
+    <string name="status_warnings">警告</string>
+    <string name="sync_history_events_failed">失敗的事件</string>
+    <string name="sync_history_abandoned_max_retries">已放棄（達到最大重試次數）</string>
+    <string name="sync_history_events_skipped">略過的事件</string>
+    <string name="sync_history_duration">耗時</string>
+    <string name="sync_history_already_synced_count">%1$d 個已同步</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">沒有事件</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">目前離線</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">登出 %1$s？</string>
+    <string name="dialog_sign_out_message">目前以 %1$s 登入。登出後將從此裝置移除已同步的行事曆。</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="other">%1$d 個帳號</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="other">%1$s \u00B7 %2$d 個行事曆</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="other">%1$d 個訂閱</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="other">同步失敗（%1$d 次嘗試）</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="other">%1$d 個行事曆</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="other">%1$d 個行事曆（%2$d 個新增）</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="other">%1$d 個事件</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="other">%1$d 個生日</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="other">%1$d 個紀念日</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="other">+ 還有 %1$d 個</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="other">匯入 %1$d 個事件</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="other">匯入</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="other">\u2026還有 %1$d 個</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="other">已匯入 %1$d 個事件</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="other">已匯出 %1$d 個事件</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="other">%1$d 個事件</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="other">%1$d 分鐘</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="other">%1$d 分鐘</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="other">%1$d 小時</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="other">%1$d 天</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="other">%1$d 週</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="other">%1$d 個月</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="other">%1$d 年</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="other">%1$d 秒</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="other">%1$d 分鐘前</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="other">%1$d 小時前</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="other">%1$d 天前</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="other">%1$d 週前</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">編輯重複事件</string>
+    <string name="dialog_delete_recurring_title">刪除重複事件</string>
+    <string name="dialog_edit_recurring_message">這是一個重複事件。你想如何套用此變更？</string>
+    <string name="recurring_this_event">僅此事件</string>
+    <string name="recurring_all_events">所有事件</string>
+    <string name="empty_pick_a_day">選一天，好好把握。</string>
+    <string name="empty_no_events_day">今天沒有行程，出去走走？</string>
+    <string name="label_upcoming_events">即將到來</string>
+    <string name="filter_date">日期</string>
+    <string name="label_select_date">選擇日期</string>
+    <string name="hint_tap_date_range">點選同一日期選擇單天，或點選另一日期選擇範圍</string>
+
+    <string name="cd_clear">清除</string>
+    <string name="cd_offline">離線</string>
+    <string name="cd_previous">上一個</string>
+    <string name="cd_next">下一個</string>
+    <string name="cd_open_drawer">開啟抽屜</string>
+    <string name="cd_close_drawer">關閉抽屜</string>
+    <string name="cd_calendar_view">行事曆檢視</string>
+    <string name="cd_active_view">目前檢視</string>
+
+    <string name="view_agenda">行程</string>
+    <string name="view_month_full">月（完整）</string>
+    <string name="view_three_days">3天</string>
+    <string name="view_year">年</string>
+
+    <string name="label_go_to_month">前往月份</string>
+
+    <string name="action_more_options">更多選項</string>
+
+    <string name="label_duration_days">天</string>
+    <string name="label_duration_hrs">時</string>
+    <string name="label_duration_min">分</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">每月第 %1$d 天</string>
+    <string name="recurrence_on_last_day">每月最後一天</string>
+    <string name="recurrence_on_nth_weekday">第 %1$s 個%2$s</string>
+    <string name="ordinal_1st">1</string>
+    <string name="ordinal_2nd">2</string>
+    <string name="ordinal_3rd">3</string>
+    <string name="ordinal_4th">4</string>
+    <string name="ordinal_nth">%1$d</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d 個新增</string>
+    <string name="sync_summary_updated">%1$d 個更新</string>
+    <string name="sync_summary_removed">%1$d 個刪除</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">前3天</string>
+    <string name="cd_next_3_days">後3天</string>
+    <string name="cd_circular_scrolling">循環捲動已啟用</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">無提醒</string>
+    <string name="reminder_at_time_of_event">事件開始時</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">提前%1$s</string>
+    <string name="reminder_time_after">%1$s後</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">當天上午9點</string>
+    <string name="reminder_day_of_event_24h">當天09:00</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">提前%1$s 上午9點</string>
+    <string name="reminder_before_at_24h">提前%1$s 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">關</string>
+    <string name="reminder_short_at_event">開始時</string>
+    <string name="reminder_short_9am_12h">上午9點</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d分</string>
+    <string name="reminder_short_hours">%1$d時</string>
+    <string name="reminder_short_days">%1$d天</string>
+    <string name="reminder_short_weeks">%1$d週</string>
+    <string name="reminder_summary_none">無</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$d小時%2$d分</string>
+    <string name="duration_compact_short">%1$d時%2$d分</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">僅手動</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">所有事件</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">稍後提醒</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">即將開始</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">明天 %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">同步完成</string>
+    <string name="sync_notification_partial">同步部分完成</string>
+    <string name="sync_notification_auth_failed">同步驗證失敗</string>
+    <string name="sync_notification_auth_reauth">請重新驗證你的帳戶</string>
+    <string name="sync_notification_failed">同步失敗</string>
+    <string name="sync_notification_parse_title">部分事件無法同步</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%2$s中的%1$s無法同步。請在設定中嘗試強制同步。</string>
+    <string name="sync_notification_conflict_title">同步衝突已解決</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">\"%1$s\"的本機變更因同步衝突而遺失。將使用伺服器版本。</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">%1$s的本機變更因同步衝突而遺失。將使用伺服器版本。</string>
+    <string name="sync_notification_expired_title">同步變更已過期</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s在30天後仍無法同步。將使用伺服器版本。請嘗試強制同步。</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">已同步%1$d個行事曆</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">，%1$d項變更</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">，%1$d個錯誤</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s的第%2$s個生日</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s的生日</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s的第%2$s週年紀念日</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s的紀念日</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">第%1$d</string>
+    <string name="ordinal_suffix_nd">第%1$d</string>
+    <string name="ordinal_suffix_rd">第%1$d</string>
+    <string name="ordinal_suffix_th">第%1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">正在同步行事曆\u2026</string>
+    <string name="sync_banner_preparing">準備同步\u2026</string>
+    <string name="sync_banner_complete_errors">同步完成，有錯誤</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">同步失敗: %1$s</string>
+    <string name="error_unknown_error">未知錯誤</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">新事件: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d個新事件</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d個事件已更新</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d個事件已移除</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d項行事曆更新</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">第%1$d天（共%2$d天）</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">第1天（共%1$d天）\u00b7 %2$s開始</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">第%1$d天（共%2$d天）\u00b7 %3$s結束</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 全天</string>
+    <string name="event_date_all_day">%1$s \u00b7 全天</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s（全天）</string>
+    <string name="event_date_all_day_parens">%1$s（全天）</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">儲存事件</string>
+    <!-- Badges -->
+    <string name="badge_beta">測試版</string>
+    <string name="badge_new">新</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">紅色</string>
+    <string name="color_orange">橙色</string>
+    <string name="color_yellow">黃色</string>
+    <string name="color_green">綠色</string>
+    <string name="color_cyan">青色</string>
+    <string name="color_blue">藍色</string>
+    <string name="color_purple">紫色</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">會議連結: %1$s</string>
+    <string name="cd_phone_number">電話號碼</string>
+    <string name="cd_email_link">郵件: %1$s</string>
+    <string name="cd_web_link">連結: %1$s</string>
+    <string name="cd_text_with_links">包含%1$d個連結的文字: %2$s</string>
+    <string name="cd_text_with_link">包含1個連結的文字: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">第%1$d天（共%2$d天）（全天）</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取</string>
+    <string name="sync_history_stats_issues">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取   \u26a0 %4$d個問題</string>
+    <string name="sync_history_failed">失敗</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">每小時</string>
+    <string name="ics_sync_every_n_hours">每%1$d小時</string>
+    <string name="ics_sync_daily">每天</string>
+    <string name="ics_sync_weekly">每週</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">需要URL</string>
+    <string name="ics_url_invalid_scheme">URL必須以http://、https://或webcal://開頭</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s（全天）</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s，%3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">，%1$d次</item>
+    </plurals>
+
+    <!-- Missing translations -->
+    <string name="cd_widget_calendar">行事曆</string>
+    <string name="cd_widget_add_event">新增事件</string>
+    <string name="cd_widget_day_cell">%1$s，%2$s</string>
+    <string name="cd_widget_no_events">無事件</string>
+    <string name="channel_event_reminders">事件提醒</string>
+    <string name="channel_event_reminders_desc">即將到來的行事曆事件通知</string>
+    <string name="channel_sync_progress">同步進度</string>
+    <string name="channel_sync_progress_desc">顯示行事曆同步時的進度</string>
+    <string name="channel_sync_status">同步狀態</string>
+    <string name="channel_sync_status_desc">有關同步完成和錯誤的通知</string>
+    <string name="rrule_does_not_repeat">不重複</string>
+    <string name="rrule_freq_daily">每天</string>
+    <string name="rrule_freq_weekly">每週</string>
+    <string name="rrule_freq_biweekly">每兩週</string>
+    <string name="rrule_freq_monthly">每月</string>
+    <string name="rrule_freq_quarterly">每季</string>
+    <string name="rrule_freq_yearly">每年</string>
+    <string name="rrule_repeats">重複</string>
+    <string name="rrule_every_n_days">每%1$d天</string>
+    <string name="rrule_every_n_weeks">每%1$d週</string>
+    <string name="rrule_every_n_months">每%1$d個月</string>
+    <string name="rrule_every_n_years">每%1$d年</string>
+    <string name="rrule_freq_on_days">%1$s在%2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s在%2$s%3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s在最後一天</string>
+    <string name="rrule_freq_on_day_n">%1$s在第%2$d天</string>
+    <string name="rrule_ordinal_last">最後</string>
+    <string name="rrule_until_suffix">，直到%1$s</string>
+    <string name="rrule_freq_never">從不</string>
+    <string name="rrule_starting">%1$s從%2$s開始%3$s</string>
+    <string name="rrule_since">%1$s · 自%2$s起</string>
+</resources>

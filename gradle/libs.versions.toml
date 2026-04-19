@@ -1,6 +1,6 @@
 [versions]
 # Core - LATEST STABLE (Dec 2024)
-agp = "8.7.2"
+agp = "8.9.3"
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
 

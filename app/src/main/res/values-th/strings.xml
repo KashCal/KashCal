@@ -1,0 +1,852 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Do NOT translate — brand name -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <string name="widget_name">กำหนดการวันนี้</string>
+    <string name="widget_description">แสดงกิจกรรมในปฏิทินวันนี้</string>
+    <string name="week_widget_name">มุมมองสัปดาห์</string>
+    <string name="week_widget_description">แสดงกิจกรรมในปฏิทิน 7 วันข้างหน้า</string>
+    <string name="month_widget_name">มุมมองเดือน</string>
+    <string name="month_widget_description">แสดงตารางปฏิทินเดือนพร้อมจุดแสดงกิจกรรม</string>
+    <string name="date_widget_name">วันที่</string>
+    <string name="date_widget_description">แสดงวันที่ของวันนี้เหมือนไอคอนแอป</string>
+    <string name="widget_no_events_today">วันนี้ไม่มีกิจกรรม</string>
+    <string name="widget_add_event">+ เพิ่มกิจกรรม</string>
+    <string name="widget_no_events">ไม่มีกิจกรรม</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">กิจกรรมใหม่</string>
+    <string name="shortcut_new_event_long">สร้างกิจกรรมใหม่</string>
+    <string name="shortcut_today">วันนี้</string>
+    <string name="shortcut_today_long">ไปที่วันนี้</string>
+    <string name="shortcut_search">ค้นหา</string>
+    <string name="shortcut_search_long">ค้นหากิจกรรม</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <string name="action_retry">ลองใหม่</string>
+    <string name="action_try_again">ลองอีกครั้ง</string>
+    <string name="action_cancel">ยกเลิก</string>
+    <string name="action_close">ปิด</string>
+    <string name="action_ok">OK</string>
+    <string name="action_not_now">ไว้ทีหลัง</string>
+    <string name="action_sign_in">ลงชื่อเข้าใช้</string>
+    <string name="action_select">เลือก</string>
+    <string name="action_show_password">แสดงรหัสผ่าน</string>
+    <string name="action_hide_password">ซ่อนรหัสผ่าน</string>
+    <string name="action_sign_out">ลงชื่อออก</string>
+    <string name="action_learn_more">เรียนรู้เพิ่มเติม</string>
+    <string name="action_open_apple_id">เปิด Apple ID</string>
+    <string name="action_open_settings">เปิดการตั้งค่า</string>
+    <string name="action_force_sync">บังคับซิงค์</string>
+    <string name="action_sync_now">ซิงค์เดี๋ยวนี้</string>
+    <string name="action_details">รายละเอียด</string>
+    <string name="action_set_up">ตั้งค่า</string>
+    <string name="action_report_issue">รายงานปัญหา</string>
+    <string name="action_view">ดู</string>
+    <string name="action_enable">เปิดใช้</string>
+    <string name="action_done">เสร็จ</string>
+    <string name="action_save">บันทึก</string>
+    <string name="action_add">เพิ่ม</string>
+    <string name="action_edit">แก้ไข</string>
+    <string name="action_delete">ลบ</string>
+    <string name="action_confirm">ยืนยัน</string>
+    <string name="action_discard">ละทิ้ง</string>
+    <string name="action_dismiss">ปิด</string>
+    <string name="action_show_all">แสดงทั้งหมด</string>
+    <string name="action_connect">เชื่อมต่อ</string>
+    <string name="action_duplicate">ทำซ้ำ</string>
+    <string name="action_share">แชร์</string>
+    <string name="action_export_ics">ส่งออกเป็น .ics</string>
+    <string name="action_confirm_delete">ยืนยันการลบ</string>
+    <string name="action_delete_event">ลบกิจกรรม</string>
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <string name="recurring_just_this">เฉพาะครั้งนี้</string>
+    <string name="recurring_this_and_future">ครั้งนี้และทั้งหมดในอนาคต</string>
+    <string name="recurring_just_occurrence">เฉพาะครั้งนี้</string>
+    <string name="recurring_all_occurrences">ทุกครั้ง</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <string name="label_event_title">ชื่อกิจกรรม</string>
+    <string name="label_location">สถานที่</string>
+    <string name="label_location_hint">ที่อยู่ ห้องประชุม หรือลิงก์</string>
+    <string name="label_notes">บันทึก</string>
+    <string name="label_starts">เริ่ม</string>
+    <string name="label_apple_id">Apple ID</string>
+    <string name="label_app_password">รหัสผ่านเฉพาะแอป</string>
+    <string name="label_password_hint">16 ตัวอักษร ขีดกลางไม่จำเป็น</string>
+    <string name="label_calendar_url">URL ปฏิทิน</string>
+    <string name="label_calendar_name">ชื่อปฏิทิน</string>
+    <string name="label_name">ชื่อ</string>
+    <string name="label_hex_color">รหัสสีฐาน 16</string>
+    <string name="label_enter_hex">กรอก 6 ตัวอักษรฐาน 16 (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <string name="view_all">ทั้งหมด</string>
+    <string name="view_week">สัปดาห์</string>
+    <string name="view_month">เดือน</string>
+    <string name="label_all_day">ทั้งวัน</string>
+    <string name="label_today">วันนี้</string>
+    <string name="label_go_to_date">ไปที่วันที่</string>
+
+    <!-- ==================== Settings ==================== -->
+    <string name="settings_title">การตั้งค่า</string>
+    <string name="settings_time_format">รูปแบบเวลา</string>
+    <string name="settings_start_week_on">เริ่มสัปดาห์วัน</string>
+    <string name="settings_event_emojis">อิโมจิกิจกรรม</string>
+    <string name="settings_emoji_subtitle">แสดงอิโมจิตามชื่อกิจกรรม</string>
+    <string name="settings_force_sync">ซิงค์ทั้งหมด</string>
+    <string name="settings_force_sync_subtitle">ดาวน์โหลดข้อมูลปฏิทินทั้งหมดใหม่</string>
+    <string name="settings_sync_history">ประวัติการซิงค์</string>
+    <string name="settings_sync_history_subtitle">ดูเซสชันการซิงค์ (48 ชั่วโมงล่าสุด)</string>
+    <string name="settings_import_subtitle">นำเข้าไฟล์ .ics</string>
+    <string name="settings_export_subtitle">สำรองข้อมูลเป็นไฟล์ .ics</string>
+    <string name="settings_birthday_reminder">แจ้งเตือนวันเกิด</string>
+    <string name="settings_use_device_timezone">ใช้เขตเวลาของอุปกรณ์</string>
+    <string name="settings_section_my_calendars">ปฏิทินของฉัน</string>
+    <string name="settings_section_display">การแสดงผล</string>
+    <string name="settings_section_notifications">การแจ้งเตือน</string>
+    <string name="settings_section_sync">ซิงค์</string>
+    <string name="settings_section_data">ข้อมูล</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <string name="onboarding_apple_calendar">ใช้ Apple Calendar อยู่?</string>
+    <string name="onboarding_got_you">เราช่วยได้</string>
+    <string name="onboarding_connect_prompt">เชื่อมต่อ iCloud เพื่อดูกิจกรรมของคุณ</string>
+
+    <!-- ==================== Sign-In Sheets ==================== -->
+    <string name="signin_icloud_title">เชื่อมต่อ iCloud</string>
+    <string name="signin_caldav_title">เพิ่มบัญชี CalDAV</string>
+    <string name="signin_connected_to">เชื่อมต่อกับ %1$s แล้ว</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <string name="dialog_new_event_title">กิจกรรมใหม่</string>
+    <string name="dialog_edit_event_title">แก้ไขกิจกรรม</string>
+    <string name="dialog_force_sync_title">ซิงค์ทั้งหมด?</string>
+    <string name="dialog_force_sync_message">จะดาวน์โหลดข้อมูลปฏิทินทั้งหมดจากเซิร์ฟเวอร์ใหม่ การเปลี่ยนแปลงในเครื่องจะถูกเก็บไว้</string>
+    <string name="dialog_enable_notifications">เปิดการแจ้งเตือน?</string>
+    <string name="dialog_delete_title">ลบ \"%1$s\"</string>
+    <string name="dialog_edit_title">แก้ไข \"%1$s\"</string>
+    <string name="dialog_action_required">จำเป็นต้องทำสิ่งนี้เพื่อดำเนินการต่อ</string>
+    <string name="dialog_add_to_calendar">เพิ่มลงปฏิทิน</string>
+    <string name="dialog_select_calendar">เลือกปฏิทิน</string>
+    <string name="dialog_choose_color">เลือกสี</string>
+    <string name="dialog_add_subscription">เพิ่มการสมัครรับ</string>
+    <string name="dialog_edit_subscription">แก้ไขการสมัครรับ</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">สัปดาห์นี้ไม่มีกิจกรรม</string>
+    <string name="status_more_events">+%1$d เพิ่มเติม</string>
+    <string name="status_no_sync_sessions">ยังไม่มีเซสชันการซิงค์\n\nเลื่อนลงเพื่อรีเฟรชบนหน้าปฏิทินเพื่อเริ่มซิงค์</string>
+    <string name="status_no_writable_calendars">ไม่มีปฏิทินที่เขียนได้</string>
+    <string name="status_events_count">%1$d กิจกรรม</string>
+    <string name="status_sync_changes">การเปลี่ยนแปลงจากซิงค์</string>
+    <string name="status_sync_history">ประวัติการซิงค์</string>
+    <string name="status_parse_failures">การแยกวิเคราะห์ล้มเหลว</string>
+    <string name="status_error">ข้อผิดพลาด</string>
+    <string name="status_failed_to_parse">⚠ %1$d แยกวิเคราะห์ไม่สำเร็จ</string>
+    <string name="status_built_with_love">สร้างด้วยความรัก</string>
+    <string name="status_in_austin">ใน Austin</string>
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">ซิงค์เรียบร้อย</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <string name="error_auth_title">ลงชื่อเข้าใช้ไม่สำเร็จ</string>
+    <string name="error_auth_invalid_credentials">Apple ID หรือรหัสผ่านเฉพาะแอปไม่ถูกต้อง กรุณาตรวจสอบข้อมูลแล้วลองอีกครั้ง</string>
+    <string name="error_auth_app_specific_password_required">iCloud ต้องใช้รหัสผ่านเฉพาะแอป รหัสผ่าน Apple ID ปกติใช้ไม่ได้ที่นี่</string>
+    <string name="error_auth_session_expired_title">เซสชันหมดอายุ</string>
+    <string name="error_auth_session_expired">เซสชัน iCloud หมดอายุแล้ว กรุณาลงชื่อเข้าใช้อีกครั้งเพื่อซิงค์ต่อ</string>
+    <string name="error_auth_account_locked">Apple ID ของคุณถูกล็อก กรุณาไปที่ appleid.apple.com เพื่อปลดล็อก</string>
+
+    <string name="error_network_offline">คุณออฟไลน์อยู่ การเปลี่ยนแปลงจะซิงค์เมื่อกลับมาออนไลน์</string>
+    <string name="error_network_timeout">การเชื่อมต่อหมดเวลา กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง</string>
+    <string name="error_network_ssl">การเชื่อมต่อปลอดภัยล้มเหลว กรุณาตรวจสอบการตั้งค่าเครือข่าย</string>
+    <string name="error_network_unknown_host">ไม่สามารถเชื่อมต่อ iCloud ได้ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต</string>
+    <string name="error_network_connection_failed">การเชื่อมต่อล้มเหลว กรุณาลองอีกครั้ง</string>
+
+    <string name="error_server_unavailable">iCloud ไม่พร้อมใช้งานชั่วคราว กรุณาลองอีกครั้งในภายหลัง</string>
+    <string name="error_server_rate_limited">คำขอมากเกินไป กรุณารอสักครู่แล้วลองอีกครั้ง</string>
+    <string name="error_server_forbidden">การเข้าถึงถูกปฏิเสธ คุณอาจไม่มีสิทธิ์เข้าถึงปฏิทินนี้</string>
+    <string name="error_server_not_found">ไม่พบรายการที่ร้องขอบนเซิร์ฟเวอร์</string>
+    <string name="error_conflict_title">ซิงค์ขัดแย้ง</string>
+    <string name="error_conflict_generic">กิจกรรมนี้ถูกแก้ไขบนอุปกรณ์อื่น บังคับซิงค์เพื่อรับเวอร์ชันล่าสุด</string>
+    <string name="error_conflict_with_event">\"%1$s\" ถูกแก้ไขบนอุปกรณ์อื่น บังคับซิงค์เพื่อรับเวอร์ชันล่าสุด</string>
+    <string name="error_sync_token_expired">ข้อมูลซิงค์หมดอายุ กำลังซิงค์ทั้งหมด…</string>
+
+    <string name="error_event_not_found">ไม่พบกิจกรรม</string>
+    <string name="error_calendar_not_found">ไม่พบปฏิทิน</string>
+    <string name="error_calendar_read_only">ไม่สามารถแก้ไขกิจกรรมใน \"%1$s\" (ปฏิทินอ่านอย่างเดียว)</string>
+    <string name="error_event_invalid_data">ข้อมูลกิจกรรมไม่ถูกต้อง กรุณาตรวจสอบเวลาเริ่มต้นและสิ้นสุด</string>
+    <string name="error_event_invalid_recurrence">รูปแบบการเกิดซ้ำไม่ถูกต้อง</string>
+
+    <string name="error_display_name_exists">บัญชีชื่อ \"%1$s\" มีอยู่แล้ว</string>
+
+    <string name="error_import_file_not_found">ไม่พบไฟล์หรืออ่านไม่ได้</string>
+    <string name="error_import_invalid_format">รูปแบบไฟล์ปฏิทินไม่ถูกต้อง</string>
+    <string name="error_import_partial">นำเข้า %1$d กิจกรรม, %2$d ไม่สำเร็จ</string>
+    <string name="error_export_failed">ส่งออกกิจกรรมไม่สำเร็จ</string>
+    <string name="error_export_no_events">ไม่มีกิจกรรมให้ส่งออก</string>
+    <string name="error_end_before_start">เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น</string>
+
+    <string name="error_storage_full_title">พื้นที่เก็บข้อมูลเต็ม</string>
+    <string name="error_storage_full">พื้นที่เก็บข้อมูลไม่เพียงพอ กรุณาเพิ่มพื้นที่ว่างแล้วลองอีกครั้ง</string>
+    <string name="error_database_corruption_title">ข้อมูลผิดพลาด</string>
+    <string name="error_database_corruption">ข้อมูลปฏิทินของคุณอาจเสียหาย กรุณาติดต่อฝ่ายสนับสนุน</string>
+    <string name="error_migration_title">อัปเดตผิดพลาด</string>
+    <string name="error_migration_failed">อัปเดตข้อมูลแอปไม่สำเร็จ กรุณาติดตั้งแอปใหม่</string>
+
+    <string name="error_permission_notification_title">เปิดการแจ้งเตือน?</string>
+    <string name="error_permission_notification">KashCal ต้องการสิทธิ์การแจ้งเตือนเพื่อเตือนกิจกรรมที่จะมาถึง</string>
+    <string name="error_permission_alarm_title">เปิดการตั้งเตือนที่แม่นยำ?</string>
+    <string name="error_permission_alarm">KashCal ต้องการสิทธิ์การตั้งเตือนที่แม่นยำเพื่อการเตือนที่แม่นยำ</string>
+    <string name="error_permission_storage">ต้องการสิทธิ์พื้นที่เก็บข้อมูลสำหรับนำเข้า/ส่งออก</string>
+
+    <string name="error_device_calendar_title">ข้อผิดพลาดของปฏิทิน</string>
+    <string name="error_device_calendar_write_failed">บันทึกลงปฏิทินอุปกรณ์ไม่สำเร็จ กรุณาลองอีกครั้ง</string>
+    <string name="error_device_calendar_permission">ต้องการสิทธิ์เขียนปฏิทิน กรุณาอนุญาตในการตั้งค่า</string>
+    <string name="error_device_calendar_not_found">ไม่พบปฏิทิน อาจถูกลบไปแล้ว</string>
+    <string name="error_device_event_not_found">ไม่พบกิจกรรม อาจถูกลบไปแล้ว</string>
+    <string name="error_device_calendar_read_only">ปฏิทินนี้เป็นแบบอ่านอย่างเดียว</string>
+
+    <string name="error_sync_no_accounts">ยังไม่ได้ตั้งค่าบัญชี iCloud ตั้งค่า iCloud เพื่อซิงค์ปฏิทิน</string>
+    <string name="error_sync_partial">ซิงค์ %1$d ปฏิทิน, %2$d ไม่สำเร็จ</string>
+
+    <string name="error_unknown">มีบางอย่างผิดพลาด กรุณาลองอีกครั้ง</string>
+
+    <!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <string name="cd_selected">เลือกแล้ว</string>
+    <string name="cd_back">ย้อนกลับ</string>
+    <string name="cd_close">ปิด</string>
+    <string name="cd_search">ค้นหา</string>
+    <string name="cd_create_event">สร้างกิจกรรม</string>
+    <string name="cd_settings">การตั้งค่า</string>
+    <string name="cd_today">วันนี้</string>
+    <string name="cd_previous_week">สัปดาห์ก่อน</string>
+    <string name="cd_next_week">สัปดาห์ถัดไป</string>
+    <string name="cd_delete">ลบ</string>
+    <string name="cd_refresh">รีเฟรช</string>
+    <string name="cd_more_options">ตัวเลือกเพิ่มเติม</string>
+    <string name="cd_duplicate">ทำซ้ำ</string>
+    <string name="cd_share">แชร์</string>
+    <string name="cd_export_ics">ส่งออกเป็น ICS</string>
+    <string name="cd_open_link">เปิดลิงก์</string>
+    <string name="cd_open_maps">เปิดในแผนที่</string>
+    <string name="cd_copy_clipboard">คัดลอกไปคลิปบอร์ด</string>
+    <string name="cd_clear_history">ล้างประวัติ</string>
+    <string name="cd_recurring">เกิดซ้ำ</string>
+    <string name="cd_enabled">เปิดใช้แล้ว</string>
+    <string name="cd_sync_error">ซิงค์ผิดพลาด</string>
+    <string name="cd_select_option">เลือกตัวเลือก</string>
+    <string name="cd_select_label">เลือก%1$s</string>
+    <string name="cd_wheel_picker">ตัวเลือกแบบวงล้อ %1$d ตัวเลือก</string>
+    <string name="cd_version_info">KashCal เวอร์ชัน %1$s กดค้างเพื่อดูตัวเลือกดีบัก</string>
+    <string name="cd_color_slider">แถบเลื่อนสี ปัจจุบัน %1$s</string>
+    <string name="cd_color_slider_state">%1$s, %2$d องศา</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <string name="label_calendar">ปฏิทิน</string>
+    <string name="label_color">สี:</string>
+    <string name="label_repeat">เกิดซ้ำ</string>
+    <string name="label_sync_interval">ช่วงเวลาซิงค์:</string>
+    <string name="label_scheduled_events">กิจกรรมที่กำหนดเวลา</string>
+    <string name="label_all_day_events">กิจกรรมทั้งวัน</string>
+    <string name="label_server_url">URL เซิร์ฟเวอร์</string>
+    <string name="label_username">ชื่อผู้ใช้</string>
+    <string name="label_password">รหัสผ่าน</string>
+    <string name="label_display_name_optional">ชื่อที่แสดง (ไม่จำเป็น)</string>
+
+    <string name="placeholder_search_events">ค้นหากิจกรรม…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <string name="hint_https_default">ค่าเริ่มต้นเป็น https:// หากไม่ระบุ</string>
+    <string name="hint_name_shown_in_settings">ชื่อที่แสดงในการตั้งค่า</string>
+    <string name="caldav_trust_insecure_subtitle">สำหรับใบรับรองที่ลงนามเอง หรือเซิร์ฟเวอร์ HTTP ในเครื่อง</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <string name="label_recurrence_after">หลังจาก</string>
+    <string name="label_recurrence_occurrences">ครั้ง</string>
+    <string name="label_recurrence_on_date">วันที่กำหนด</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">ปฏิทินที่แสดง</string>
+    <string name="settings_default_calendar">ปฏิทินเริ่มต้น</string>
+    <string name="settings_default_event_length">ระยะเวลากิจกรรมเริ่มต้น</string>
+    <string name="settings_default_alerts">แจ้งเตือนเริ่มต้น</string>
+    <string name="settings_notifications">การแจ้งเตือน</string>
+    <string name="settings_new_events">กิจกรรมใหม่</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <string name="option_system_default">ค่าเริ่มต้นของระบบ</string>
+    <string name="option_12_hour">12 ชั่วโมง</string>
+    <string name="option_24_hour">24 ชั่วโมง</string>
+    <string name="option_sunday">วันอาทิตย์</string>
+    <string name="option_monday">วันจันทร์</string>
+    <string name="option_saturday">วันเสาร์</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">ไม่พบกิจกรรม</string>
+    <string name="empty_no_upcoming_events">ไม่มีกิจกรรมที่จะมาถึง</string>
+    <string name="empty_no_calendars">ไม่มีปฏิทินที่ใช้ได้</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">กำลังเชื่อมต่อ…</string>
+    <string name="status_fetching">กำลังดึงข้อมูล…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">ดึงปฏิทิน</string>
+    <string name="action_import_from_file">นำเข้าจากไฟล์</string>
+    <string name="action_export_local_calendar">ส่งออกปฏิทินในเครื่อง</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <string name="help_app_password_description">รหัสผ่านเฉพาะแอปช่วยให้คุณลงชื่อเข้าใช้แอปอื่นได้โดยไม่ต้องแชร์รหัสผ่าน Apple ID หลัก</string>
+    <string name="help_app_password_steps_header">วิธีสร้าง:</string>
+    <string name="help_app_password_step_1">1. ไปที่ appleid.apple.com</string>
+    <string name="help_app_password_step_2">2. ลงชื่อเข้าใช้ด้วย Apple ID</string>
+    <string name="help_app_password_step_3">3. ไปที่การลงชื่อเข้าและความปลอดภัย</string>
+    <string name="help_app_password_step_4">4. คลิกรหัสผ่านเฉพาะแอป</string>
+    <string name="help_app_password_step_5">5. คลิกสร้างแล้วคัดลอกมาที่นี่</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal ต้องการสิทธิ์การแจ้งเตือนเพื่อเตือนกิจกรรมที่จะมาถึง</string>
+    <string name="dialog_notification_permission_settings_hint">สามารถเปลี่ยนได้ในภายหลังที่การตั้งค่า</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <string name="accounts_title">บัญชี</string>
+    <string name="accounts_section_connected">เชื่อมต่อแล้ว</string>
+    <string name="accounts_section_add">เพิ่มบัญชี</string>
+    <string name="accounts_empty_title">ไม่มีบัญชีที่เชื่อมต่อ</string>
+    <string name="accounts_empty_subtitle">เพิ่มบัญชีเพื่อซิงค์ปฏิทินข้ามอุปกรณ์</string>
+    <string name="accounts_row_label">iCloud, Nextcloud และอื่น ๆ</string>
+    <string name="accounts_add_icloud">เพิ่ม iCloud</string>
+    <string name="accounts_add_caldav">เพิ่ม CalDAV</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail และอื่น ๆ</string>
+    <string name="accounts_caldav_help_title">CalDAV คืออะไร?</string>
+    <string name="accounts_caldav_help_description">CalDAV เป็นมาตรฐานเปิดสำหรับซิงค์ปฏิทิน รองรับโดย:</string>
+    <string name="accounts_caldav_help_more">และอื่น ๆ</string>
+    <string name="accounts_calendars_syncing">กำลังซิงค์…</string>
+    <string name="accounts_cd_icloud_icon">บัญชี iCloud</string>
+    <string name="accounts_cd_caldav_icon">บัญชี CalDAV</string>
+    <string name="accounts_cd_back">ย้อนกลับ</string>
+    <string name="accounts_sync_issue">ปัญหาการซิงค์</string>
+    <string name="accounts_cd_sync_warning">คำเตือนการซิงค์</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <string name="subscriptions_title">การสมัครรับ</string>
+    <string name="subscriptions_section_ics_calendars">ปฏิทิน ICS</string>
+    <string name="subscriptions_section_add">เพิ่ม</string>
+    <string name="subscriptions_empty_ics">ไม่มีการสมัครรับ ICS</string>
+    <string name="subscriptions_empty_ics_hint">เพิ่มฟีดปฏิทินเพื่อดูกิจกรรม</string>
+    <string name="subscriptions_add_ics">เพิ่มปฏิทิน ICS</string>
+    <string name="subscriptions_row_label">วันหยุด โรงเรียน และอื่น ๆ</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">วันเกิดและวันครบรอบ</string>
+    <string name="birthdays_section_title">วันเกิด</string>
+    <string name="anniversaries_section_title">วันครบรอบ</string>
+    <string name="settings_contact_birthdays">วันเกิดผู้ติดต่อ</string>
+    <string name="settings_contact_birthdays_description">แสดงวันเกิดจากผู้ติดต่อเป็นกิจกรรมทั้งวัน</string>
+    <string name="settings_contact_anniversaries">วันครบรอบผู้ติดต่อ</string>
+    <string name="settings_contact_anniversaries_description">แสดงวันครบรอบจากผู้ติดต่อเป็นกิจกรรมทั้งวัน</string>
+    <string name="settings_anniversary_reminder">แจ้งเตือนวันครบรอบ</string>
+    <string name="settings_calendar_color">สีปฏิทิน</string>
+    <string name="settings_default_reminder">แจ้งเตือนเริ่มต้น</string>
+    <string name="action_change">เปลี่ยน</string>
+    <string name="settings_contacts_footer">อ่านจากผู้ติดต่อในอุปกรณ์ ต้องการสิทธิ์ผู้ติดต่อ</string>
+    <string name="settings_contacts_permission_required">ต้องการสิทธิ์ผู้ติดต่อ</string>
+    <string name="subscriptions_cd_back">ย้อนกลับ</string>
+    <string name="subscriptions_cd_add">เพิ่มการสมัครรับ</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <string name="account_detail_section_sync">ซิงค์</string>
+    <string name="account_detail_section_calendars">ปฏิทิน</string>
+    <string name="account_detail_section_account">บัญชี</string>
+    <string name="account_detail_enabled">เปิดใช้</string>
+    <string name="account_detail_enabled_subtitle">ซิงค์บัญชีนี้อัตโนมัติ</string>
+    <string name="account_detail_sync_now">ซิงค์เดี๋ยวนี้</string>
+    <string name="account_detail_syncing">กำลังซิงค์…</string>
+    <string name="account_detail_discovering">กำลังค้นหา…</string>
+    <string name="account_detail_discover_calendars">ค้นหาปฏิทินใหม่</string>
+    <string name="account_detail_change_password">เปลี่ยนรหัสผ่าน</string>
+    <string name="account_detail_sign_out">ลงชื่อออก</string>
+    <string name="account_detail_never_synced">ยังไม่เคยซิงค์</string>
+    <string name="account_detail_last_success">สำเร็จล่าสุด: %1$s</string>
+    <string name="account_detail_cd_rename">เปลี่ยนชื่อ</string>
+    <string name="account_detail_cd_show_password">แสดงรหัสผ่าน</string>
+    <string name="account_detail_cd_hide_password">ซ่อนรหัสผ่าน</string>
+
+    <string name="sync_failure_notification_title">ปัญหาซิงค์กับ %1$s</string>
+    <string name="sync_failure_notification_text">การซิงค์ปฏิทินล้มเหลว %1$d ครั้ง</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">เปลี่ยนชื่อบัญชี</string>
+    <string name="rename_account_label">ชื่อบัญชี</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">เปลี่ยนรหัสผ่าน</string>
+    <string name="change_password_label_icloud">รหัสผ่านเฉพาะแอป</string>
+    <string name="change_password_label_default">รหัสผ่าน</string>
+
+    <!-- ==================== System Account ==================== -->
+    <string name="kashcal_account_label">KashCal</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
+    <string name="settings_quick_event_add">เพิ่มกิจกรรมด่วน</string>
+    <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
+    <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
+    <string name="settings_sync_lookback">ซิงค์ย้อนหลัง</string>
+    <string name="settings_auto_detect_emojis">ตรวจจับอิโมจิอัตโนมัติ</string>
+    <string name="settings_events_per_day">กิจกรรมต่อวัน</string>
+    <string name="settings_not_set">ไม่ได้ตั้งค่า</string>
+    <string name="settings_on">เปิด</string>
+    <string name="settings_off">ปิด</string>
+    <string name="settings_tap_to_enable">แตะเพื่อเปิดใช้</string>
+    <string name="settings_device_calendars_enabled">%1$d เปิดใช้</string>
+    <string name="settings_per_day">%1$d ต่อวัน</string>
+
+    <string name="signin_icloud_help_question">รหัสผ่านเฉพาะแอปคืออะไร?</string>
+    <string name="caldav_trust_insecure_label">เชื่อถือการเชื่อมต่อที่ไม่ปลอดภัย</string>
+    <string name="action_add_another">เพิ่มบัญชีอื่น</string>
+    <string name="account_connected_found_calendars">พบ %1$d ปฏิทินสำหรับ %2$s</string>
+    <string name="account_connected_syncing_hint">กำลังซิงค์ \u2014 กิจกรรมจะปรากฏในอีกสักครู่</string>
+    <string name="settings_time_format_currently_24h">ปัจจุบัน: 24 ชั่วโมง (%1$s)</string>
+    <string name="settings_time_format_currently_12h">ปัจจุบัน: 12 ชั่วโมง (%1$s)</string>
+    <string name="settings_time_format_example">ตัวอย่าง: %1$s</string>
+    <string name="settings_system_default_with_value">ค่าเริ่มต้นของระบบ (%1$s)</string>
+    <string name="alert_none">ไม่มี</string>
+    <string name="cd_collapse">ยุบ</string>
+    <string name="cd_expand">ขยาย</string>
+    <string name="cd_hide_calendar">ซ่อนปฏิทิน</string>
+    <string name="cd_show_calendar">แสดงปฏิทิน</string>
+    <string name="cd_pick_month_year">เลือกเดือนและปี</string>
+    <string name="cd_previous_month">เดือนก่อน</string>
+    <string name="cd_next_month">เดือนถัดไป</string>
+    <string name="cd_month_year_picker">ตัวเลือกเดือนและปี</string>
+    <string name="cd_remove_alert">ลบแจ้งเตือน</string>
+    <string name="cd_warning">คำเตือน</string>
+    <string name="cd_refresh_calendars">รีเฟรชปฏิทิน</string>
+    <string name="cd_timezone_tap_to_change">เขตเวลา: %1$s แตะเพื่อเปลี่ยน</string>
+    <string name="cd_day_events">วันที่ %1$d, %2$d กิจกรรม</string>
+
+    <!-- ==================== i18n: Pickers / Forms ==================== -->
+    <string name="label_frequency">ความถี่</string>
+    <string name="label_on_days">วัน</string>
+    <string name="label_pattern">รูปแบบ</string>
+    <string name="label_ends">สิ้นสุด</string>
+    <string name="label_alerts">แจ้งเตือน</string>
+    <string name="label_add_alert">เพิ่มแจ้งเตือน</string>
+    <string name="label_recurrence_never">ไม่มี</string>
+    <string name="label_tomorrow">พรุ่งนี้</string>
+    <string name="label_yesterday">เมื่อวาน</string>
+    <string name="label_device_calendars">ปฏิทินอุปกรณ์</string>
+    <string name="label_default_calendar_hint">กิจกรรมใหม่จะถูกสร้างในปฏิทินนี้</string>
+    <string name="label_visible_count">%1$d / %2$d แสดง</string>
+    <string name="label_enabled_count">%1$d / %2$d เปิดใช้</string>
+    <string name="label_reminders_truncated">%1$d ไม่แสดง (ทั้งหมด %2$d, แก้ไขได้สูงสุด %3$d)</string>
+    <string name="label_found_events">พบ: %1$d กิจกรรม</string>
+    <string name="label_open_debug_menu">เปิดเมนูดีบัก</string>
+    <string name="placeholder_search">ค้นหา\u2026</string>
+    <string name="status_sync_paused">หยุดซิงค์ชั่วคราว</string>
+    <string name="status_not_synced">ไม่ได้ซิงค์</string>
+    <string name="status_sync_error">ซิงค์ผิดพลาด</string>
+    <string name="status_minutes_ago">%1$d นาทีที่แล้ว</string>
+    <string name="status_hours_ago">%1$d ชั่วโมงที่แล้ว</string>
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <string name="device_calendars_description">แสดงกิจกรรมจากแอปปฏิทินอื่นในอุปกรณ์ (ตัวซิงค์ ปฏิทินในเครื่อง)</string>
+    <string name="device_calendars_permission_required">ต้องการสิทธิ์ปฏิทิน แตะเปิดใช้เพื่ออนุญาต</string>
+    <string name="device_calendars_read_only_access">อ่านอย่างเดียว</string>
+    <string name="device_calendars_grant_write">อนุญาตการเขียนเพื่อแก้ไขกิจกรรมปฏิทินอุปกรณ์</string>
+    <string name="device_calendars_grant">อนุญาต</string>
+    <string name="device_calendars_none_found">ไม่พบปฏิทินอุปกรณ์</string>
+    <string name="device_calendars_local">ในเครื่อง</string>
+    <string name="device_calendars_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
+    <string name="device_calendars_reminders">การเตือน</string>
+    <string name="device_calendars_reminders_desc">รับแจ้งเตือนกิจกรรมปฏิทินอุปกรณ์</string>
+    <string name="device_calendars_read_only_no_write">อ่านอย่างเดียว (ไม่มีสิทธิ์เขียน)</string>
+    <string name="device_calendars_read_only_calendar">อ่านอย่างเดียว (ปฏิทินอ่านอย่างเดียว)</string>
+
+    <string name="settings_developer_options">ตัวเลือกนักพัฒนา</string>
+    <string name="settings_sync_frequency">ความถี่การซิงค์</string>
+    <string name="settings_preview">ตัวอย่าง</string>
+    <string name="settings_n_events">%1$d กิจกรรม</string>
+    <string name="settings_n_events_default">%1$d กิจกรรม (ค่าเริ่มต้น)</string>
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <string name="drawer_calendars">ปฏิทิน</string>
+    <string name="drawer_contacts">ผู้ติดต่อ</string>
+    <string name="drawer_device_calendars">ปฏิทินอุปกรณ์</string>
+    <string name="drawer_share_feedback">แสดงความคิดเห็น</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <string name="status_privacy_tagline">เพื่อคุณ ไม่ใช่ข้อมูลของคุณ</string>
+    <string name="action_keep_it_that_way">สนับสนุนเรา</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <string name="status_already_synced">ซิงค์แล้ว</string>
+    <string name="status_warnings">คำเตือน</string>
+    <string name="sync_history_events_failed">กิจกรรมที่ล้มเหลว</string>
+    <string name="sync_history_abandoned_max_retries">ยกเลิก (ลองครบจำนวนสูงสุดแล้ว)</string>
+    <string name="sync_history_events_skipped">กิจกรรมที่ข้าม</string>
+    <string name="sync_history_duration">ระยะเวลา</string>
+    <string name="sync_history_already_synced_count">%1$d ซิงค์แล้ว</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">ไม่มีกิจกรรม</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">คุณออฟไลน์อยู่</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <string name="dialog_sign_out_title">ลงชื่อออกจาก %1$s?</string>
+    <string name="dialog_sign_out_message">คุณลงชื่อเข้าใช้เป็น %1$s การลงชื่อออกจะลบปฏิทินที่ซิงค์ออกจากอุปกรณ์นี้</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <plurals name="accounts_count">
+        <item quantity="other">%1$d บัญชี</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="other">%1$s \u00B7 %2$d ปฏิทิน</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="other">%1$d การสมัครรับ</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="other">ซิงค์ล้มเหลว (%1$d ครั้ง)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="other">%1$d ปฏิทิน</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="other">%1$d ปฏิทิน (%2$d ใหม่)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="other">%1$d กิจกรรม</item>
+    </plurals>
+    <plurals name="birthday_count">
+        <item quantity="other">%1$d วันเกิด</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="other">%1$d วันครบรอบ</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="other">+ อีก %1$d รายการ</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="other">นำเข้า %1$d กิจกรรม</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="other">นำเข้า</item>
+    </plurals>
+    <plurals name="ics_remaining_events">
+        <item quantity="other">\u2026อีก %1$d รายการ</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="other">นำเข้า %1$d กิจกรรมแล้ว</item>
+    </plurals>
+    <plurals name="exported_events">
+        <item quantity="other">ส่งออก %1$d กิจกรรมแล้ว</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="other">%1$d กิจกรรม</item>
+    </plurals>
+    <plurals name="time_minutes">
+        <item quantity="other">%1$d นาที</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="other">%1$d นาที</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="other">%1$d ชั่วโมง</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="other">%1$d วัน</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="other">%1$d สัปดาห์</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="other">%1$d เดือน</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="other">%1$d ปี</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="other">%1$d วินาที</item>
+    </plurals>
+    <plurals name="reminder_minutes_before">
+        <item quantity="other">%1$d นาทีก่อน</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="other">%1$d ชั่วโมงก่อน</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="other">%1$d วันก่อน</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="other">%1$d สัปดาห์ก่อน</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <string name="dialog_edit_recurring_title">แก้ไขกิจกรรมที่เกิดซ้ำ</string>
+    <string name="dialog_delete_recurring_title">ลบกิจกรรมที่เกิดซ้ำ</string>
+    <string name="dialog_edit_recurring_message">นี่คือกิจกรรมที่เกิดซ้ำ ต้องการใช้การเปลี่ยนแปลงอย่างไร?</string>
+    <string name="recurring_this_event">กิจกรรมนี้เท่านั้น</string>
+    <string name="recurring_all_events">กิจกรรมทั้งหมด</string>
+    <string name="empty_pick_a_day">เลือกวัน แล้วคว้ามันไว้</string>
+    <string name="empty_no_events_day">ไม่มีอะไรที่นี่ ออกไปเดินเล่นดีไหม?</string>
+    <string name="label_upcoming_events">กิจกรรมที่จะมาถึง</string>
+    <string name="filter_date">วันที่</string>
+    <string name="label_select_date">เลือกวันที่</string>
+    <string name="hint_tap_date_range">แตะวันเดียวกันสำหรับวันเดียว หรือแตะวันอื่นสำหรับช่วงเวลา</string>
+
+    <string name="cd_clear">ล้าง</string>
+    <string name="cd_offline">ออฟไลน์</string>
+    <string name="cd_previous">ก่อนหน้า</string>
+    <string name="cd_next">ถัดไป</string>
+    <string name="cd_open_drawer">เปิดลิ้นชัก</string>
+    <string name="cd_close_drawer">ปิดลิ้นชัก</string>
+    <string name="cd_calendar_view">มุมมองปฏิทิน</string>
+    <string name="cd_active_view">มุมมองที่ใช้งาน</string>
+
+    <string name="view_agenda">กำหนดการ</string>
+    <string name="view_month_full">เดือน (เต็ม)</string>
+    <string name="view_three_days">3 วัน</string>
+    <string name="view_year">ปี</string>
+
+    <string name="label_go_to_month">ไปที่เดือน</string>
+
+    <string name="action_more_options">ตัวเลือกเพิ่มเติม</string>
+
+    <string name="label_duration_days">วัน</string>
+    <string name="label_duration_hrs">ชม.</string>
+    <string name="label_duration_min">นาที</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <string name="recurrence_on_day">วันที่ %1$d ของเดือน</string>
+    <string name="recurrence_on_last_day">วันสุดท้ายของเดือน</string>
+    <string name="recurrence_on_nth_weekday">%2$sที่ %1$s ของเดือน</string>
+    <string name="ordinal_1st">1</string>
+    <string name="ordinal_2nd">2</string>
+    <string name="ordinal_3rd">3</string>
+    <string name="ordinal_4th">4</string>
+    <string name="ordinal_nth">%1$d</string>
+
+    <!-- ==================== Sync Summary ==================== -->
+    <string name="sync_summary_new">%1$d ใหม่</string>
+    <string name="sync_summary_updated">%1$d อัปเดต</string>
+    <string name="sync_summary_removed">%1$d ลบ</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_previous_3_days">3 วันก่อน</string>
+    <string name="cd_next_3_days">3 วันถัดไป</string>
+    <string name="cd_circular_scrolling">เปิดการเลื่อนวนรอบ</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">ไม่มีการแจ้งเตือน</string>
+    <string name="reminder_at_time_of_event">เมื่อเริ่มกิจกรรม</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s ก่อน</string>
+    <string name="reminder_time_after">%1$s หลัง</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">9 AM วันที่มีกิจกรรม</string>
+    <string name="reminder_day_of_event_24h">09:00 วันที่มีกิจกรรม</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s ก่อน เวลา 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s ก่อน เวลา 09:00</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">ปิด</string>
+    <string name="reminder_short_at_event">เมื่อเริ่ม</string>
+    <string name="reminder_short_9am_12h">9AM</string>
+    <string name="reminder_short_9am_24h">09:00</string>
+    <string name="reminder_short_minutes">%1$d นาที</string>
+    <string name="reminder_short_hours">%1$d ชม.</string>
+    <string name="reminder_short_days">%1$d วัน</string>
+    <string name="reminder_short_weeks">%1$d สัปดาห์</string>
+    <string name="reminder_summary_none">ไม่มี</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$d ชม. %2$d นาที</string>
+    <string name="duration_compact_short">%1$dชม.%2$dนาที</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">ซิงค์เองเท่านั้น</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">กิจกรรมทั้งหมด</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">เลื่อนแจ้งเตือน</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">กำลังจะเริ่ม</string>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">พรุ่งนี้ %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">ซิงค์เสร็จสมบูรณ์</string>
+    <string name="sync_notification_partial">ซิงค์เสร็จบางส่วน</string>
+    <string name="sync_notification_auth_failed">การยืนยันตัวตนในการซิงค์ล้มเหลว</string>
+    <string name="sync_notification_auth_reauth">กรุณายืนยันตัวตนบัญชีอีกครั้ง</string>
+    <string name="sync_notification_failed">ซิงค์ล้มเหลว</string>
+    <string name="sync_notification_parse_title">บางกิจกรรมไม่สามารถซิงค์ได้</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%1$s ใน %2$s ไม่สามารถซิงค์ได้ ลองบังคับซิงค์ในการตั้งค่า</string>
+    <string name="sync_notification_conflict_title">ข้อขัดแย้งในการซิงค์ได้รับการแก้ไขแล้ว</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">การแก้ไขในเครื่องของ \"%1$s\" สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">การแก้ไขในเครื่องของ %1$s สูญหายเนื่องจากข้อขัดแย้งในการซิงค์ จะใช้เวอร์ชันจากเซิร์ฟเวอร์</string>
+    <string name="sync_notification_expired_title">การเปลี่ยนแปลงการซิงค์หมดอายุ</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s ไม่สามารถซิงค์ได้หลังจาก 30 วัน จะใช้เวอร์ชันจากเซิร์ฟเวอร์ บังคับซิงค์เพื่อลองอีกครั้ง</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="other">ซิงค์แล้ว %1$d ปฏิทิน</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="other">, %1$d การเปลี่ยนแปลง</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="other">, %1$d ข้อผิดพลาด</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">วันเกิดปีที่ %2$s ของ%1$s</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">วันเกิดของ%1$s</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">ครบรอบปีที่ %2$s ของ%1$s</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">วันครบรอบของ%1$s</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">ที่ %1$d</string>
+    <string name="ordinal_suffix_nd">ที่ %1$d</string>
+    <string name="ordinal_suffix_rd">ที่ %1$d</string>
+    <string name="ordinal_suffix_th">ที่ %1$d</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">กำลังซิงค์ปฏิทิน\u2026</string>
+    <string name="sync_banner_preparing">กำลังเตรียมซิงค์\u2026</string>
+    <string name="sync_banner_complete_errors">ซิงค์เสร็จ มีข้อผิดพลาด</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">ซิงค์ล้มเหลว: %1$s</string>
+    <string name="error_unknown_error">ข้อผิดพลาดที่ไม่ทราบสาเหตุ</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">กิจกรรมใหม่: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="other">%1$d กิจกรรมใหม่</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="other">%1$d กิจกรรมอัปเดต</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="other">%1$d กิจกรรมถูกลบ</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="other">%1$d การอัปเดตปฏิทิน</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">วันที่ %1$d จาก %2$d</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">วันที่ 1 จาก %1$d \u00b7 เริ่ม %2$s</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">วันที่ %1$d จาก %2$d \u00b7 สิ้นสุด %3$s</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 ทั้งวัน</string>
+    <string name="event_date_all_day">%1$s \u00b7 ทั้งวัน</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (ทั้งวัน)</string>
+    <string name="event_date_all_day_parens">%1$s (ทั้งวัน)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">บันทึกกิจกรรม</string>
+    <!-- Badges -->
+    <string name="badge_beta">เบต้า</string>
+    <string name="badge_new">ใหม่</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">แดง</string>
+    <string name="color_orange">ส้ม</string>
+    <string name="color_yellow">เหลือง</string>
+    <string name="color_green">เขียว</string>
+    <string name="color_cyan">ฟ้า</string>
+    <string name="color_blue">น้ำเงิน</string>
+    <string name="color_purple">ม่วง</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">ลิงก์ประชุม: %1$s</string>
+    <string name="cd_phone_number">หมายเลขโทรศัพท์</string>
+    <string name="cd_email_link">อีเมล: %1$s</string>
+    <string name="cd_web_link">ลิงก์: %1$s</string>
+    <string name="cd_text_with_links">ข้อความที่มี %1$d ลิงก์: %2$s</string>
+    <string name="cd_text_with_link">ข้อความที่มี 1 ลิงก์: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">วันที่ %1$d จาก %2$d (ทั้งวัน)</string>
+    <!-- Sync history stats header -->
+    <string name="sync_history_stats">%1$d ครั้งซิงค์   \u2191%2$d พุช   \u2193%3$d พูล</string>
+    <string name="sync_history_stats_issues">%1$d ครั้งซิงค์   \u2191%2$d พุช   \u2193%3$d พูล   \u26a0 %4$d ปัญหา</string>
+    <string name="sync_history_failed">ล้มเหลว</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">ทุกชั่วโมง</string>
+    <string name="ics_sync_every_n_hours">ทุก %1$d ชั่วโมง</string>
+    <string name="ics_sync_daily">ทุกวัน</string>
+    <string name="ics_sync_weekly">ทุกสัปดาห์</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">ต้องระบุ URL</string>
+    <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
+    <!-- Event confirmation snackbar -->
+    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (ทั้งวัน)</string>
+    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <plurals name="rrule_count_suffix">
+        <item quantity="other">, %1$d ครั้ง</item>
+    </plurals>
+
+    <!-- Missing translations -->
+    <string name="cd_widget_calendar">ปฏิทิน</string>
+    <string name="cd_widget_add_event">เพิ่มกิจกรรม</string>
+    <string name="cd_widget_day_cell">%1$s, %2$s</string>
+    <string name="cd_widget_no_events">ไม่มีกิจกรรม</string>
+    <string name="channel_event_reminders">การแจ้งเตือนกิจกรรม</string>
+    <string name="channel_event_reminders_desc">การแจ้งเตือนสำหรับกิจกรรมในปฏิทินที่กำลังจะมาถึง</string>
+    <string name="channel_sync_progress">ความคืบหน้าการซิงค์</string>
+    <string name="channel_sync_progress_desc">แสดงความคืบหน้าขณะซิงค์ปฏิทิน</string>
+    <string name="channel_sync_status">สถานะการซิงค์</string>
+    <string name="channel_sync_status_desc">การแจ้งเตือนเกี่ยวกับการซิงค์เสร็จสมบูรณ์และข้อผิดพลาด</string>
+    <string name="rrule_does_not_repeat">ไม่ซ้ำ</string>
+    <string name="rrule_freq_daily">ทุกวัน</string>
+    <string name="rrule_freq_weekly">ทุกสัปดาห์</string>
+    <string name="rrule_freq_biweekly">ทุกสองสัปดาห์</string>
+    <string name="rrule_freq_monthly">ทุกเดือน</string>
+    <string name="rrule_freq_quarterly">ทุกไตรมาส</string>
+    <string name="rrule_freq_yearly">ทุกปี</string>
+    <string name="rrule_repeats">ทำซ้ำ</string>
+    <string name="rrule_every_n_days">ทุก %1$d วัน</string>
+    <string name="rrule_every_n_weeks">ทุก %1$d สัปดาห์</string>
+    <string name="rrule_every_n_months">ทุก %1$d เดือน</string>
+    <string name="rrule_every_n_years">ทุก %1$d ปี</string>
+    <string name="rrule_freq_on_days">%1$s ใน%2$s</string>
+    <string name="rrule_freq_on_ordinal_day">%1$s ใน%2$s%3$s</string>
+    <string name="rrule_freq_on_last_day">%1$s ในวันสุดท้าย</string>
+    <string name="rrule_freq_on_day_n">%1$s ในวันที่ %2$d</string>
+    <string name="rrule_ordinal_last">สุดท้าย</string>
+    <string name="rrule_until_suffix">, จนถึง%1$s</string>
+    <string name="rrule_freq_never">ไม่เคย</string>
+    <string name="rrule_starting">%1$s เริ่ม%2$s%3$s</string>
+    <string name="rrule_since">%1$s · ตั้งแต่%2$s</string>
+</resources>

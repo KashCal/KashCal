@@ -129,6 +129,18 @@ fun hueToColorName(hue: Float): String = when {
     else -> "Red"
 }
 
+@Composable
+fun hueToColorNameI18n(hue: Float): String = when {
+    hue < 15 -> stringResource(R.string.color_red)
+    hue < 45 -> stringResource(R.string.color_orange)
+    hue < 75 -> stringResource(R.string.color_yellow)
+    hue < 150 -> stringResource(R.string.color_green)
+    hue < 210 -> stringResource(R.string.color_cyan)
+    hue < 270 -> stringResource(R.string.color_blue)
+    hue < 330 -> stringResource(R.string.color_purple)
+    else -> stringResource(R.string.color_red)
+}
+
 // ============================================================================
 // Composables
 // ============================================================================
@@ -303,7 +315,7 @@ private fun HueSlider(
     var lastHapticHue by remember { mutableFloatStateOf(hue) }
     var sliderWidth by remember { mutableFloatStateOf(0f) }
 
-    val colorName = hueToColorName(hue)
+    val colorName = hueToColorNameI18n(hue)
 
     // Accessibility strings (captured outside semantics block since it's not @Composable)
     val sliderDescription = stringResource(R.string.cd_color_slider, colorName)

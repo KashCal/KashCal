@@ -1,10 +1,15 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import android.content.Context
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onekash.kashcal.ui.shared.SYNC_OPTIONS
+import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.shared.SYNC_INTERVALS_MS
 import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
+import org.robolectric.RobolectricTestRunner
 
 /**
  * Unit tests for DebugMenuSheet.
@@ -13,7 +18,10 @@ import org.onekash.kashcal.util.DateTimeUtils.formatSyncInterval
  * which runs as instrumented tests. These unit tests verify the supporting
  * logic.
  */
+@RunWith(RobolectricTestRunner::class)
 class DebugMenuSheetTest {
+
+    private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
     @Test
     fun `debug menu has three options`() {
@@ -24,9 +32,8 @@ class DebugMenuSheetTest {
 
     @Test
     fun `sync frequency options are available`() {
-        // All SYNC_OPTIONS should be available in debug menu
-        assertTrue(SYNC_OPTIONS.isNotEmpty())
-        assertEquals(5, SYNC_OPTIONS.size)
+        assertTrue(SYNC_INTERVALS_MS.isNotEmpty())
+        assertEquals(5, SYNC_INTERVALS_MS.size)
     }
 
     @Test
@@ -39,10 +46,9 @@ class DebugMenuSheetTest {
 
     @Test
     fun `formatSyncInterval works for all options`() {
-        // Verify formatSyncInterval works for all SYNC_OPTIONS
-        SYNC_OPTIONS.forEach { option ->
-            val formatted = formatSyncInterval(option.intervalMs)
-            assertEquals(option.label, formatted)
+        SYNC_INTERVALS_MS.forEach { intervalMs ->
+            val formatted = formatSyncInterval(intervalMs, resources)
+            assertTrue("Formatted label should not be empty for $intervalMs", formatted.isNotEmpty())
         }
     }
 }

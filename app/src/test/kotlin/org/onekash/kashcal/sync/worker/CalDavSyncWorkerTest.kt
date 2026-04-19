@@ -185,7 +185,7 @@ class CalDavSyncWorkerTest {
         val result = worker.getForegroundInfo()
 
         assertEquals(mockForegroundInfo, result)
-        verify { notificationManager.createForegroundInfo("Syncing calendars...", null) }
+        verify { notificationManager.createForegroundInfo(any(), null) }
     }
 
     // ==================== Full Sync Tests ====================

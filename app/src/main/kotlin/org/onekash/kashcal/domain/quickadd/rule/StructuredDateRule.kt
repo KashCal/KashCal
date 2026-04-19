@@ -11,6 +11,12 @@ object StructuredDateRule : ParseRule {
             if (context.isConsumed(index)) continue
             if (token.type != TokenType.STRUCTURED_DATE) continue
 
+            // Dot-separated token followed by MERIDIEM → defer to TimeRule
+            if (isDotOnly(token.text)) {
+                val nextIdx = context.findNextUnconsumed(tokens, index + 1)
+                if (nextIdx != null && tokens[nextIdx].type == TokenType.MERIDIEM) continue
+            }
+
             val parts = token.value as? WordTokenizer.DateParts ?: continue
 
             val date = context.resolveFutureDate(parts.day, parts.month, parts.year)
@@ -22,4 +28,5 @@ object StructuredDateRule : ParseRule {
             return
         }
     }
+
 }

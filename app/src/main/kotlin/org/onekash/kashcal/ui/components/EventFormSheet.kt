@@ -55,8 +55,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -653,10 +655,10 @@ fun EventFormSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { onDismiss() }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
                 Text(
-                    text = if (state.isEditMode) "Edit Event" else "New Event",
+                    text = if (state.isEditMode) stringResource(R.string.dialog_edit_event_title) else stringResource(R.string.dialog_new_event_title),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -670,7 +672,7 @@ fun EventFormSheet(
                             strokeWidth = 2.dp
                         )
                     } else {
-                        Text("Save", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -701,7 +703,7 @@ fun EventFormSheet(
                     OutlinedTextField(
                         value = state.title,
                         onValueChange = { state = state.copy(title = it) },
-                        label = { Text("Event title") },
+                        label = { Text(stringResource(R.string.label_event_title)) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(titleFocusRequester),
@@ -735,7 +737,7 @@ fun EventFormSheet(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("All-day", style = MaterialTheme.typography.bodyLarge)
+                        Text(stringResource(R.string.label_all_day), style = MaterialTheme.typography.bodyLarge)
                         Switch(
                             checked = state.isAllDay,
                             onCheckedChange = toggleAllDay
@@ -746,7 +748,7 @@ fun EventFormSheet(
 
                     // Starts card - opens combined date + time picker
                     DateTimePickerCard(
-                        label = "Starts",
+                        label = stringResource(R.string.label_starts),
                         dateMillis = state.dateMillis,
                         hour = state.startHour,
                         minute = state.startMinute,
@@ -760,14 +762,14 @@ fun EventFormSheet(
 
                     // Ends card - opens combined date + time picker
                     DateTimePickerCard(
-                        label = "Ends",
+                        label = stringResource(R.string.label_ends),
                         dateMillis = state.endDateMillis,
                         hour = state.endHour,
                         minute = state.endMinute,
                         isAllDay = state.isAllDay,
                         onClick = { activeSheet = ActiveDateTimeSheet.END },
                         isError = hasTimeConflict,
-                        errorMessage = if (hasTimeConflict) "End time must be after start time" else null,
+                        errorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
                         timezone = state.timezone,
                         timePattern = timePattern
                     )
@@ -885,8 +887,8 @@ fun EventFormSheet(
                                     locationExpanded = false
                                 }
                             },
-                            label = { Text("Location") },
-                            placeholder = { Text("Address, room, or meeting link") },
+                            label = { Text(stringResource(R.string.label_location)) },
+                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor(MenuAnchorType.PrimaryEditable),
@@ -898,7 +900,7 @@ fun EventFormSheet(
                                         strokeWidth = 2.dp
                                     )
                                 } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
-                                    Icon(Icons.Default.Search, contentDescription = "Search")
+                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
                                 }
                             }
                         )
@@ -930,7 +932,7 @@ fun EventFormSheet(
                     OutlinedTextField(
                         value = state.description,
                         onValueChange = { state = state.copy(description = it) },
-                        label = { Text("Notes") },
+                        label = { Text(stringResource(R.string.label_notes)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 4
@@ -970,7 +972,7 @@ fun EventFormSheet(
                                     contentColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Text("Delete Event")
+                                Text(stringResource(R.string.action_delete_event))
                             }
                         } else {
                             Row(
@@ -984,7 +986,7 @@ fun EventFormSheet(
                                         .weight(1f)
                                         .height(48.dp)
                                 ) {
-                                    Text("Cancel")
+                                    Text(stringResource(R.string.action_cancel))
                                 }
                                 Button(
                                     onClick = {
@@ -1035,7 +1037,7 @@ fun EventFormSheet(
                                             color = MaterialTheme.colorScheme.onError
                                         )
                                     } else {
-                                        Text("Confirm Delete")
+                                        Text(stringResource(R.string.action_confirm_delete))
                                     }
                                 }
                             }
@@ -1069,7 +1071,7 @@ fun EventFormSheet(
                             )
                         } else {
                             Text(
-                                "Save Event",
+                                stringResource(R.string.action_save_event),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -1083,7 +1085,7 @@ fun EventFormSheet(
     // Start DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.START) {
         DateTimeSheet(
-            label = "Starts",
+            label = stringResource(R.string.label_starts),
             selectedDateMillis = state.dateMillis,
             selectedHour = state.startHour,
             selectedMinute = state.startMinute,
@@ -1139,7 +1141,7 @@ fun EventFormSheet(
     // End DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.END) {
         DateTimeSheet(
-            label = "Ends",
+            label = stringResource(R.string.label_ends),
             selectedDateMillis = state.endDateMillis,
             selectedHour = state.endHour,
             selectedMinute = state.endMinute,

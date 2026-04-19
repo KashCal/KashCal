@@ -6,10 +6,10 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.ALL_DAY_REMINDER_MINUTES
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
-import org.onekash.kashcal.ui.shared.SYNC_OPTIONS
-import org.onekash.kashcal.ui.shared.TIMED_REMINDER_OPTIONS
+import org.onekash.kashcal.ui.shared.SYNC_INTERVALS_MS
+import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
 
 /**
  * Unit tests for UserPreferencesRepository validation helpers.
@@ -56,18 +56,18 @@ class UserPreferencesRepositoryTest {
     }
 
     @Test
-    fun `TIMED_REMINDER_OPTIONS is non-empty`() {
-        assertTrue(TIMED_REMINDER_OPTIONS.isNotEmpty())
+    fun `TIMED_REMINDER_MINUTES is non-empty`() {
+        assertTrue(TIMED_REMINDER_MINUTES.isNotEmpty())
     }
 
     @Test
-    fun `ALL_DAY_REMINDER_OPTIONS is non-empty`() {
-        assertTrue(ALL_DAY_REMINDER_OPTIONS.isNotEmpty())
+    fun `ALL_DAY_REMINDER_MINUTES is non-empty`() {
+        assertTrue(ALL_DAY_REMINDER_MINUTES.isNotEmpty())
     }
 
     @Test
-    fun `SYNC_OPTIONS is non-empty`() {
-        assertTrue(SYNC_OPTIONS.isNotEmpty())
+    fun `SYNC_INTERVALS_MS is non-empty`() {
+        assertTrue(SYNC_INTERVALS_MS.isNotEmpty())
     }
 
     // ==================== isValidSyncInterval Tests ====================
@@ -85,8 +85,8 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `isValidSyncInterval accepts all defined intervals`() {
-        SYNC_OPTIONS.forEach { option ->
-            assertTrue("Should accept ${option.label}", repository.isValidSyncInterval(option.intervalMs))
+        SYNC_INTERVALS_MS.forEach { intervalMs ->
+            assertTrue("Should accept $intervalMs", repository.isValidSyncInterval(intervalMs))
         }
     }
 
@@ -112,9 +112,8 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `getClosestSyncInterval finds closest option`() {
-        // Given a value between two options, should return closest
         val result = repository.getClosestSyncInterval(KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS + 1000)
-        assertTrue(SYNC_OPTIONS.any { it.intervalMs == result })
+        assertTrue(SYNC_INTERVALS_MS.contains(result))
     }
 
     // ==================== isValidReminder Tests ====================
@@ -201,17 +200,17 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `reminder options include REMINDER_OFF for both types`() {
-        assertTrue(TIMED_REMINDER_OPTIONS.any { it.minutes == REMINDER_OFF })
-        assertTrue(ALL_DAY_REMINDER_OPTIONS.any { it.minutes == REMINDER_OFF })
+        assertTrue(TIMED_REMINDER_MINUTES.contains(REMINDER_OFF))
+        assertTrue(ALL_DAY_REMINDER_MINUTES.contains(REMINDER_OFF))
     }
 
     @Test
     fun `default reminders are in their respective options lists`() {
         assertTrue(
-            TIMED_REMINDER_OPTIONS.any { it.minutes == KashCalDataStore.DEFAULT_REMINDER_MINUTES }
+            TIMED_REMINDER_MINUTES.contains(KashCalDataStore.DEFAULT_REMINDER_MINUTES)
         )
         assertTrue(
-            ALL_DAY_REMINDER_OPTIONS.any { it.minutes == KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES }
+            ALL_DAY_REMINDER_MINUTES.contains(KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES)
         )
     }
 

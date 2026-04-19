@@ -5,6 +5,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -109,11 +110,11 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
 fun DisplayEvent.Device.buildShareText(timePattern: String = "h:mm a"): String = buildString {
     appendLine(title)
 
-    val dateFormat = SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault())
+    val dateFormat = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEMMMd"), Locale.getDefault())
     val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
 
     if (isAllDay) {
-        val utcDateFormat = SimpleDateFormat("EEE, MMM d, yyyy", Locale.getDefault()).apply {
+        val utcDateFormat = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEMMMd"), Locale.getDefault()).apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }
         val startStr = utcDateFormat.format(Date(startTs))

@@ -7,6 +7,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.Locale
 
 @RunWith(RobolectricTestRunner::class)
@@ -70,5 +72,60 @@ class WeekWidgetFormatTest {
     fun `formatDayHeaderText handles single digit day`() {
         // 20260302 is Monday
         assertEquals("Monday 2", formatDayHeaderText(20260302))
+    }
+
+    // ==================== formatWidgetEventTime ====================
+
+    private fun makeEvent(
+        startTs: Long = 1000L,
+        endTs: Long = 2000L,
+        isAllDay: Boolean = false,
+        startDay: Int = 0
+    ) = WidgetDataRepository.WidgetEvent(
+        eventId = 1L,
+        occurrenceStartTs = startTs,
+        title = "Test Event",
+        startTs = startTs,
+        endTs = endTs,
+        isAllDay = isAllDay,
+        calendarColor = 0xFF0000FF.toInt(),
+        isPast = false,
+        isDeviceEvent = false,
+        startDay = startDay
+    )
+
+    @Test
+    fun `formatWidgetEventTime shows time on event start day`() {
+        val zone = ZoneId.systemDefault()
+        val startTs = LocalDateTime.of(2026, 4, 18, 22, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        val event = makeEvent(startTs = startTs, endTs = startTs + 4 * 3600_000, startDay = 20260418)
+        assertEquals("10:00pm", formatWidgetEventTime(event, 20260418, "h:mma", "All day"))
+    }
+
+    @Test
+    fun `formatWidgetEventTime shows continuation marker on non-start day`() {
+        val zone = ZoneId.systemDefault()
+        val startTs = LocalDateTime.of(2026, 4, 18, 22, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        val event = makeEvent(startTs = startTs, endTs = startTs + 4 * 3600_000, startDay = 20260418)
+        assertEquals("\u25B8", formatWidgetEventTime(event, 20260419, "h:mma", "All day"))
+    }
+
+    @Test
+    fun `formatWidgetEventTime shows all-day text regardless of dayCode`() {
+        val event = makeEvent(isAllDay = true, startDay = 20260418)
+        assertEquals("All day", formatWidgetEventTime(event, 20260419, "h:mma", "All day"))
+        assertEquals("All day", formatWidgetEventTime(event, 20260418, "h:mma", "All day"))
+    }
+
+    @Test
+    fun `formatWidgetEventTime shows continuation marker for middle day of multi-day event`() {
+        val zone = ZoneId.systemDefault()
+        val startTs = LocalDateTime.of(2026, 4, 17, 20, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        // 3-day event: Apr 17 8pm -> Apr 19 8am
+        val event = makeEvent(startTs = startTs, endTs = startTs + 36 * 3600_000, startDay = 20260417)
+        assertEquals("\u25B8", formatWidgetEventTime(event, 20260418, "h:mma", "All day"))
     }
 }

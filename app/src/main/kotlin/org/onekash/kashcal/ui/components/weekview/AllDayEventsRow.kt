@@ -33,6 +33,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 
@@ -79,7 +81,7 @@ fun AllDayEventsRow(
                 contentAlignment = Alignment.TopEnd
             ) {
                 Text(
-                    text = "All day",
+                    text = stringResource(R.string.label_all_day),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -169,7 +171,7 @@ private fun AllDayColumn(
         // "+N more" button
         if (!expanded && overflowCount > 0) {
             Text(
-                text = "+$overflowCount more",
+                text = stringResource(R.string.status_more_events, overflowCount),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
@@ -262,7 +264,7 @@ fun StaticAllDayEventsRow(
                 contentAlignment = Alignment.TopEnd
             ) {
                 Text(
-                    text = "All day",
+                    text = stringResource(R.string.label_all_day),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

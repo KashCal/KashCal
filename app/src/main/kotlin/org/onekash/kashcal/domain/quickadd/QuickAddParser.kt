@@ -82,6 +82,8 @@ object QuickAddParser {
             startDate = startDate,
             startTime = startTime,
             endTime = context.endTime,
+            endDate = context.endDate,
+            timezone = context.timezone,
             location = context.location,
             rrule = context.rrule,
             emoji = emoji,
@@ -94,7 +96,7 @@ object QuickAddParser {
         val titleTokens = tokens.indices
             .filter { i -> i !in consumed }
             .map { i -> tokens[i] }
-            .filter { t -> t.type == TokenType.UNKNOWN || t.type == TokenType.NUMBER || t.type == TokenType.KEYWORD }
+            .filter { t -> t.type == TokenType.UNKNOWN || t.type == TokenType.NUMBER || t.type == TokenType.KEYWORD || t.type == TokenType.TIME_KEYWORD }
             .dropWhile { it.type == TokenType.KEYWORD }
             .dropLastWhile { it.type == TokenType.KEYWORD }
         return titleTokens.joinToString(" ") { it.originalText }.trim()

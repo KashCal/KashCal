@@ -18,12 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.onekash.kashcal.R
 
 /**
  * App info bottom sheet showing origin message and website link.
@@ -50,14 +52,14 @@ fun AppInfoSheet(
         ) {
             // Main message - elegant multi-line typography
             Text(
-                text = "Built with Love",
+                text = stringResource(R.string.status_built_with_love),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "in Austin",
+                text = stringResource(R.string.status_in_austin),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Light
             )
@@ -66,7 +68,7 @@ fun AppInfoSheet(
 
             // Value line
             Text(
-                text = "For you, not your data.",
+                text = stringResource(R.string.status_privacy_tagline),
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -89,7 +91,7 @@ fun AppInfoSheet(
                 }
             ) {
                 Text(
-                    text = "Keep it that way",
+                    text = stringResource(R.string.action_keep_it_that_way),
                     style = MaterialTheme.typography.bodyLarge
                 )
             }

@@ -112,6 +112,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import java.util.*
 import java.util.Calendar as JavaCalendar
 
@@ -149,7 +151,6 @@ fun HomeScreen(
     onSearchClose: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
     onSearchResultClick: (Event, Long?) -> Unit = { _, _ -> },  // (event, nextOccurrenceTs)
-    onSearchIncludePastChange: () -> Unit = {},
     // Search date filter callbacks
     onSearchDateFilterChange: (DateFilter) -> Unit = {},
     onSearchShowDatePicker: () -> Unit = {},
@@ -252,13 +253,14 @@ fun HomeScreen(
 
     // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }
+    val viewActionLabel = stringResource(R.string.action_view)
 
     // Handle snackbar messages
     LaunchedEffect(uiState.pendingSnackbarMessage) {
         uiState.pendingSnackbarMessage?.let { message ->
             val result = snackbarHostState.showSnackbar(
                 message = message,
-                actionLabel = if (uiState.pendingSnackbarAction != null) "View" else null,
+                actionLabel = if (uiState.pendingSnackbarAction != null) viewActionLabel else null,
                 duration = SnackbarDuration.Short
             )
             if (result == SnackbarResult.ActionPerformed) {
@@ -374,7 +376,7 @@ fun HomeScreen(
                 onClick = onCreateEvent,
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Create event")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_create_event))
             }
         },
         // No bottom bar - week view is now in agenda panel
@@ -387,8 +389,8 @@ fun HomeScreen(
             // Sync progress banner
             AnimatedVisibility(visible = uiState.showSyncBanner) {
                 SyncBanner(
-                    message = uiState.syncBannerMessage,
-                    state = uiState.syncBannerState
+                    state = uiState.syncBannerState,
+                    errorDetail = uiState.syncErrorDetail
                 )
             }
 
@@ -786,21 +788,21 @@ fun HomeScreen(
         val isDeviceRecurring = pending.displayEvent is DisplayEvent.Device
         AlertDialog(
             onDismissRequest = onCancelPendingReschedule,
-            title = { Text("Edit recurring event") },
-            text = { Text("This is a recurring event. How would you like to apply this change?") },
+            title = { Text(stringResource(R.string.dialog_edit_recurring_title)) },
+            text = { Text(stringResource(R.string.dialog_edit_recurring_message)) },
             confirmButton = {
                 TextButton(onClick = { onConfirmReschedule(EditScope.THIS_EVENT) }) {
-                    Text("This event")
+                    Text(stringResource(R.string.recurring_this_event))
                 }
             },
             dismissButton = {
                 if (isDeviceRecurring) {
                     TextButton(onClick = onCancelPendingReschedule) {
-                        Text("Cancel")
+                        Text(stringResource(R.string.action_cancel))
                     }
                 } else {
                     TextButton(onClick = { onConfirmReschedule(EditScope.ALL_EVENTS) }) {
-                        Text("All events")
+                        Text(stringResource(R.string.recurring_all_events))
                     }
                 }
             }
@@ -842,7 +844,7 @@ private fun HomeTopAppBar(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onSearchClose) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", modifier = Modifier.size(24.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back), modifier = Modifier.size(24.dp))
                         }
                         BasicTextField(
                             value = uiState.searchQuery,
@@ -862,7 +864,7 @@ private fun HomeTopAppBar(
                                     Box(modifier = Modifier.weight(1f)) {
                                         if (uiState.searchQuery.isEmpty()) {
                                             Text(
-                                                "Search events...",
+                                                stringResource(R.string.placeholder_search_events),
                                                 style = MaterialTheme.typography.bodyLarge,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -876,7 +878,7 @@ private fun HomeTopAppBar(
                                         ) {
                                             Icon(
                                                 Icons.Default.Close,
-                                                contentDescription = "Clear",
+                                                contentDescription = stringResource(R.string.cd_clear),
                                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(20.dp)
                                             )
@@ -894,7 +896,7 @@ private fun HomeTopAppBar(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "KashCal",
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable { onInfoClick() }
@@ -905,14 +907,14 @@ private fun HomeTopAppBar(
                         IconButton(onClick = onMenuClick) {
                             Icon(
                                 Icons.Default.Menu,
-                                contentDescription = if (isDrawerOpen) "Close drawer" else "Open drawer",
+                                contentDescription = if (isDrawerOpen) stringResource(R.string.cd_close_drawer) else stringResource(R.string.cd_open_drawer),
                                 modifier = Modifier
                                     .size(28.dp)
                                     .graphicsLayer { rotationZ = menuRotation }
                             )
                         }
                         IconButton(onClick = onSearchClick) {
-                            Icon(Icons.Default.Search, contentDescription = "Search", modifier = Modifier.size(28.dp))
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search), modifier = Modifier.size(28.dp))
                         }
                     }
                 },
@@ -920,14 +922,14 @@ private fun HomeTopAppBar(
                     AnimatedVisibility(visible = !isOnline && uiState.isConfigured) {
                         Icon(
                             Icons.Default.CloudOff,
-                            contentDescription = "Offline",
+                            contentDescription = stringResource(R.string.cd_offline),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     TodayButton(onClick = onGoToToday, refreshKey = refreshKey)
                     IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Tune, contentDescription = "Settings", modifier = Modifier.size(28.dp))
+                        Icon(Icons.Default.Tune, contentDescription = stringResource(R.string.cd_settings), modifier = Modifier.size(28.dp))
                     }
                 }
             )
@@ -944,7 +946,7 @@ private fun TodayButton(onClick: () -> Unit, refreshKey: Int) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 Icons.Default.CalendarToday,
-                contentDescription = "Today",
+                contentDescription = stringResource(R.string.cd_today),
                 modifier = Modifier.size(28.dp)
             )
             Text(
@@ -966,7 +968,7 @@ private fun MonthNavHeader(
     onMonthClick: () -> Unit
 ) {
     val calendar = JavaCalendar.getInstance().apply { set(year, month, 1) }
-    val monthFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
+    val monthFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
@@ -974,7 +976,7 @@ private fun MonthNavHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.Default.ChevronLeft, "Previous")
+            Icon(Icons.Default.ChevronLeft, stringResource(R.string.cd_previous))
         }
         Text(
             text = monthFormat.format(calendar.time),
@@ -983,7 +985,7 @@ private fun MonthNavHeader(
             modifier = Modifier.clickable(onClick = onMonthClick)
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Default.ChevronRight, "Next")
+            Icon(Icons.Default.ChevronRight, stringResource(R.string.cd_next))
         }
     }
 }
@@ -1101,7 +1103,7 @@ private fun CalendarGrid(
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(
                                         when {
-                                            isSelected -> MaterialTheme.colorScheme.primary
+                                            isSelected -> MaterialTheme.colorScheme.inverseSurface
                                             isToday -> MaterialTheme.colorScheme.primaryContainer
                                             else -> Color.Transparent
                                         }
@@ -1118,7 +1120,7 @@ private fun CalendarGrid(
                                         style = if (isCompact) MaterialTheme.typography.bodySmall
                                                 else LocalTextStyle.current,
                                         color = when {
-                                            isSelected -> MaterialTheme.colorScheme.onPrimary
+                                            isSelected -> MaterialTheme.colorScheme.inverseOnSurface
                                             isToday -> MaterialTheme.colorScheme.onPrimaryContainer
                                             cell.isWeekend -> MaterialTheme.colorScheme.error.copy(alpha = 0.8f)
                                             else -> MaterialTheme.colorScheme.onSurface
@@ -1230,7 +1232,7 @@ private fun ColumnScope.DayEventsPager(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                "Pick a day. Seize it.",
+                stringResource(R.string.empty_pick_a_day),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyLarge
             )
@@ -1294,7 +1296,7 @@ private fun DayEventsPage(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Nothing to see here; go touch grass?",
+                    stringResource(R.string.empty_no_events_day),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
@@ -1359,9 +1361,10 @@ private fun SearchResultCard(
     }
 
     // Format title with age for birthday events and optional emoji
+    val resources = LocalContext.current.resources
     val displayTitle = remember(searchResult, showEventEmojis) {
         when (displayEvent) {
-            is DisplayEvent.Room -> formatEventTitle(displayEvent.event, searchResult.displayTs, showEventEmojis)
+            is DisplayEvent.Room -> formatEventTitle(displayEvent.event, searchResult.displayTs, showEventEmojis, resources)
             is DisplayEvent.Device -> EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
         }
     }
@@ -1432,24 +1435,25 @@ private fun SearchContent(
             FilterChip(
                 selected = currentFilter == DateFilter.AnyTime,
                 onClick = { onFilterSelect(DateFilter.AnyTime) },
-                label = { Text("All") }
+                label = { Text(stringResource(R.string.view_all)) }
             )
             FilterChip(
                 selected = currentFilter == DateFilter.ThisWeek,
                 onClick = { onFilterSelect(DateFilter.ThisWeek) },
-                label = { Text("Week") }
+                label = { Text(stringResource(R.string.view_week)) }
             )
             FilterChip(
                 selected = currentFilter == DateFilter.ThisMonth,
                 onClick = { onFilterSelect(DateFilter.ThisMonth) },
-                label = { Text("Month") }
+                label = { Text(stringResource(R.string.view_month)) }
             )
             // Date picker chip - shows selected date or calendar icon
             val isCustom = currentFilter is DateFilter.SingleDay || currentFilter is DateFilter.CustomRange
+            val dateLabel = stringResource(R.string.filter_date)
             FilterChip(
                 selected = isCustom,
                 onClick = onCustomDateClick,
-                label = { Text(if (isCustom) currentFilter.displayName else "Date") }
+                label = { Text(if (isCustom) currentFilter.displayName else dateLabel) }
             )
         }
 
@@ -1462,7 +1466,7 @@ private fun SearchContent(
                     .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text("No events found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.empty_no_events_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         } else {
             LazyColumn(
@@ -1525,25 +1529,30 @@ private fun ViewHeaderRow(
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
-    val displayText = remember(viewMode, pagerPosition, firstDayOfWeek) {
+    val upcomingLabel = stringResource(R.string.label_upcoming_events)
+    val displayText = remember(viewMode, pagerPosition, firstDayOfWeek, upcomingLabel) {
         when (viewMode) {
-            ViewMode.AGENDA -> "Upcoming Events"
-            ViewMode.THREE_DAYS -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(pagerPosition)
-            ViewMode.WEEK -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatWeekRange(pagerPosition, firstDayOfWeek)
+            ViewMode.AGENDA -> upcomingLabel
+            ViewMode.THREE_DAYS -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatThreeDayHeader(pagerPosition)
+            ViewMode.WEEK -> {
+                val weekStart = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
+                org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYearWithWeek(weekStart, firstDayOfWeek)
+            }
             ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR -> ""
         }
     }
 
     when (viewMode) {
         ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-            val navLabel = if (viewMode == ViewMode.WEEK) "week" else "3 days"
+            val previousLabel = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_previous_week) else stringResource(R.string.cd_previous_3_days)
+            val nextLabel = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_next_week) else stringResource(R.string.cd_next_3_days)
             Row(
                 modifier = Modifier.fillMaxWidth().padding(8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(onClick = onPreviousPage) {
-                    Icon(Icons.Default.ChevronLeft, "Previous $navLabel")
+                    Icon(Icons.Default.ChevronLeft, previousLabel)
                 }
                 Text(
                     text = displayText,
@@ -1552,7 +1561,7 @@ private fun ViewHeaderRow(
                     modifier = Modifier.clickable(onClick = onMonthClick)
                 )
                 IconButton(onClick = onNextPage) {
-                    Icon(Icons.Default.ChevronRight, "Next $navLabel")
+                    Icon(Icons.Default.ChevronRight, nextLabel)
                 }
             }
         }
@@ -1595,7 +1604,7 @@ private fun AgendaContent(
     refreshKey: Int = 0,
     onEventClick: (DisplayEvent) -> Unit
 ) {
-    val dateFormat = remember { SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("EEEEMMMMd"), Locale.getDefault()) }
 
     // Calculate today's day code for filtering - refreshes on resume via refreshKey
     val todayDayCode = remember(refreshKey) {
@@ -1641,7 +1650,7 @@ private fun AgendaContent(
             modifier = Modifier.fillMaxSize().padding(32.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text("No upcoming events", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.empty_no_upcoming_events), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     } else {
         LazyColumn(
@@ -1710,8 +1719,9 @@ private fun AgendaCard(
     val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, timePattern)
 
     // Format title with age for birthday events and optional emoji
+    val resources = LocalContext.current.resources
     val displayTitle = remember(displayEvent, showEventEmojis) {
-        formatDisplayEventTitle(displayEvent, showEventEmojis)
+        formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
     Card(
@@ -1852,6 +1862,83 @@ internal fun formatEventTimeDisplay(
     }
 }
 
+internal fun formatEventTimeDisplay(
+    event: Event,
+    selectedDateMillis: Long,
+    resources: android.content.res.Resources,
+    zoneId: ZoneId = ZoneId.systemDefault(),
+    timePattern: String = "h:mm a"
+): String {
+    val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
+
+    val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
+    val endDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
+    val selectedDate = DateTimeUtils.eventTsToLocalDate(selectedDateMillis, isAllDay = false, zoneId)
+
+    val isMultiDay = endDate.isAfter(startDate)
+
+    if (!isMultiDay) {
+        val recurringIndicator = if (event.isRecurring || event.isException) " \uD83D\uDD01" else ""
+        return if (event.isAllDay) resources.getString(R.string.label_all_day) + recurringIndicator
+        else {
+            val startTime = Instant.ofEpochMilli(event.startTs).atZone(zoneId).format(timeFormatter)
+            val endTime = Instant.ofEpochMilli(event.endTs).atZone(zoneId).format(timeFormatter)
+            "$startTime - $endTime$recurringIndicator"
+        }
+    }
+
+    val totalDays = DateTimeUtils.calculateTotalDays(event.startTs, event.endTs, event.isAllDay, zoneId)
+    val currentDay = calculateCurrentDayForEvent(event.startTs, selectedDateMillis, event.isAllDay, zoneId)
+        .coerceIn(1, totalDays)
+    val recurringIndicator = if (event.isRecurring || event.isException) " \uD83D\uDD01" else ""
+
+    return when {
+        currentDay == 1 && !event.isAllDay -> {
+            val startTime = Instant.ofEpochMilli(event.startTs).atZone(zoneId).format(timeFormatter)
+            resources.getString(R.string.day_starts, totalDays, startTime) + recurringIndicator
+        }
+        currentDay == totalDays && !event.isAllDay -> {
+            val endTime = Instant.ofEpochMilli(event.endTs).atZone(zoneId).format(timeFormatter)
+            resources.getString(R.string.day_ends, currentDay, totalDays, endTime) + recurringIndicator
+        }
+        else -> resources.getString(R.string.day_x_of_y, currentDay, totalDays) + recurringIndicator
+    }
+}
+
+private fun formatAgendaCardDate(
+    displayEvent: DisplayEvent,
+    dayNumber: Int,
+    totalDays: Int,
+    resources: android.content.res.Resources,
+    timePattern: String = "h:mm a"
+): String {
+    val timeFormat = SimpleDateFormat(timePattern, Locale.getDefault())
+    val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
+
+    return when {
+        totalDays > 1 -> {
+            when {
+                displayEvent.isAllDay -> resources.getString(R.string.day_x_of_y_all_day, dayNumber, totalDays) + recurringIndicator
+                dayNumber == 1 -> {
+                    val startTime = timeFormat.format(Date(displayEvent.startTs))
+                    resources.getString(R.string.day_starts, totalDays, startTime) + recurringIndicator
+                }
+                dayNumber == totalDays -> {
+                    val endTime = timeFormat.format(Date(displayEvent.endTs))
+                    resources.getString(R.string.day_ends, dayNumber, totalDays, endTime) + recurringIndicator
+                }
+                else -> resources.getString(R.string.day_x_of_y_all_day, dayNumber, totalDays) + recurringIndicator
+            }
+        }
+        displayEvent.isAllDay -> resources.getString(R.string.label_all_day) + recurringIndicator
+        else -> {
+            val startTime = timeFormat.format(Date(displayEvent.startTs))
+            val endTime = timeFormat.format(Date(displayEvent.endTs))
+            "$startTime - $endTime$recurringIndicator"
+        }
+    }
+}
+
 /**
  * Format search result date display string.
  *
@@ -1872,7 +1959,7 @@ internal fun formatSearchResultDate(
     zoneId: ZoneId = ZoneId.systemDefault(),
     timePattern: String = "h:mm a"
 ): String {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
     // Convert timestamps to LocalDate with correct timezone handling
@@ -1909,7 +1996,7 @@ private fun formatSearchResultDate(
     zoneId: ZoneId = ZoneId.systemDefault(),
     timePattern: String = "h:mm a"
 ): String {
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
     val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
@@ -1954,7 +2041,7 @@ internal fun formatSearchResultDateWithOccurrence(
     }
 
     // For recurring events with nextOccurrenceTs, show "Next: date" format
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault())
+    val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
     val nextDate = Instant.ofEpochMilli(nextOccurrenceTs)
@@ -2021,9 +2108,9 @@ private fun SearchDatePickerSheet(
             // Header with instructions
             Text(
                 text = if (selectedDateMs == null) {
-                    "Select a date"
+                    stringResource(R.string.label_select_date)
                 } else {
-                    "Tap same date for single day, or another date for range"
+                    stringResource(R.string.hint_tap_date_range)
                 },
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
@@ -2049,7 +2136,7 @@ private fun SearchDatePickerSheet(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -2098,7 +2185,7 @@ private fun WeekViewDatePickerSheet(
         ) {
             // Header
             Text(
-                text = "Go to date",
+                text = stringResource(R.string.label_go_to_date),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -2124,7 +2211,7 @@ private fun WeekViewDatePickerSheet(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
 
             Spacer(modifier = Modifier.height(8.dp))

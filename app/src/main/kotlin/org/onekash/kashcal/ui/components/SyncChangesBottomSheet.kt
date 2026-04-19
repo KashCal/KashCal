@@ -32,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
 import java.time.Instant
@@ -41,6 +43,8 @@ import java.time.Year
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.util.Locale
+import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Bottom sheet displaying sync changes with details.
@@ -76,7 +80,7 @@ fun SyncChangesBottomSheet(
         ) {
             // Header
             Text(
-                text = "Sync Changes",
+                text = stringResource(R.string.status_sync_changes),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
@@ -86,8 +90,13 @@ fun SyncChangesBottomSheet(
             val modCount = changes.count { it.type == ChangeType.MODIFIED }
             val delCount = changes.count { it.type == ChangeType.DELETED }
 
+            val summaryParts = mutableListOf<String>()
+            if (newCount > 0) summaryParts.add(stringResource(R.string.sync_summary_new, newCount))
+            if (modCount > 0) summaryParts.add(stringResource(R.string.sync_summary_updated, modCount))
+            if (delCount > 0) summaryParts.add(stringResource(R.string.sync_summary_removed, delCount))
+
             Text(
-                text = buildSummaryText(newCount, modCount, delCount),
+                text = summaryParts.joinToString(", "),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(bottom = 16.dp)
@@ -188,7 +197,7 @@ private fun SyncChangeItem(
                     Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.Repeat,
-                        contentDescription = "Recurring",
+                        contentDescription = stringResource(R.string.cd_recurring),
                         modifier = Modifier.size(14.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -198,16 +207,6 @@ private fun SyncChangeItem(
     }
 }
 
-/**
- * Build summary text from counts.
- */
-private fun buildSummaryText(newCount: Int, modCount: Int, delCount: Int): String {
-    val parts = mutableListOf<String>()
-    if (newCount > 0) parts.add("$newCount new")
-    if (modCount > 0) parts.add("$modCount updated")
-    if (delCount > 0) parts.add("$delCount removed")
-    return parts.joinToString(", ")
-}
 
 /**
  * Format event timestamp for display with smart year handling.
@@ -225,18 +224,18 @@ internal fun formatEventTime(timestampMs: Long, isAllDay: Boolean): String {
     val currentYear = Year.now().value
 
     return if (isAllDay) {
-        // All-day: use UTC to avoid date shift, show date only
         val localDate = instant.atZone(ZoneOffset.UTC).toLocalDate()
-        val pattern = if (localDate.year == currentYear) "EEE, MMM d" else "EEE, MMM d, yyyy"
-        localDate.format(DateTimeFormatter.ofPattern(pattern))
+        val pattern = if (localDate.year == currentYear) DateTimeUtils.localizedPattern("EEEMMMd") else DateTimeUtils.localizedPattern("yEEEMMMd")
+        localDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
     } else {
-        // Timed: use local timezone with time
         val localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime()
-        val pattern = if (localDateTime.year == currentYear) {
-            "EEE, MMM d 'at' h:mm a"
+        val datePattern = if (localDateTime.year == currentYear) {
+            DateTimeUtils.localizedPattern("EEEMMMd")
         } else {
-            "EEE, MMM d, yyyy 'at' h:mm a"
+            DateTimeUtils.localizedPattern("yEEEMMMd")
         }
-        localDateTime.format(DateTimeFormatter.ofPattern(pattern))
+        val dateStr = localDateTime.format(DateTimeFormatter.ofPattern(datePattern, Locale.getDefault()))
+        val timeStr = localDateTime.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
+        "$dateStr, $timeStr"
     }
 }

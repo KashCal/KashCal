@@ -1493,6 +1493,60 @@ class OccurrenceEdgeCasesTest {
         }
     }
 
+    // ==================== Bug: Past recurring event found by search but no occurrences ====================
+
+    @Test
+    fun `past recurring event within 1-year window generates occurrences via PullStrategy range`() = runTest {
+        // Scenario: weekly event started 6 months ago, UNTIL 3 months ago.
+        // PullStrategy calls generateOccurrences(event, now - 365 days, now + 2 years).
+        // All occurrences should fall within this range.
+        val now = System.currentTimeMillis()
+        val sixMonthsAgo = now - (180L * 24 * 60 * 60 * 1000)
+        val threeMonthsAgo = now - (90L * 24 * 60 * 60 * 1000)
+
+        val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = threeMonthsAgo
+        val untilStr = String.format(
+            "%04d%02d%02dT%02d%02d%02dZ",
+            cal.get(java.util.Calendar.YEAR),
+            cal.get(java.util.Calendar.MONTH) + 1,
+            cal.get(java.util.Calendar.DAY_OF_MONTH),
+            cal.get(java.util.Calendar.HOUR_OF_DAY),
+            cal.get(java.util.Calendar.MINUTE),
+            cal.get(java.util.Calendar.SECOND)
+        )
+
+        val event = Event(
+            uid = "past-weekly-bug@test.com",
+            calendarId = testCalendarId,
+            title = "Past Weekly Meeting",
+            startTs = sixMonthsAgo,
+            endTs = sixMonthsAgo + 3600000,
+            dtstamp = now,
+            rrule = "FREQ=WEEKLY;UNTIL=$untilStr",
+            syncStatus = SyncStatus.SYNCED
+        )
+        val eventId = database.eventsDao().insert(event)
+        val savedEvent = database.eventsDao().getById(eventId)!!
+
+        // Use PullStrategy's exact range: now - 365 days to now + 2 years
+        val pastWindowMs = 365L * 24 * 60 * 60 * 1000
+        val futureWindowMs = 2 * 365L * 24 * 60 * 60 * 1000
+        val count = occurrenceGenerator.generateOccurrences(
+            savedEvent,
+            rangeStartMs = now - pastWindowMs,
+            rangeEndMs = now + futureWindowMs
+        )
+
+        assertTrue("Past recurring event within 1-year window should have occurrences, got $count", count > 0)
+
+        val occs = database.occurrencesDao().getForEvent(eventId)
+        assertTrue("Should have occurrence rows in database", occs.isNotEmpty())
+
+        // Verify occurrences span the expected ~13 weeks (6 months to 3 months ago)
+        assertTrue("Should have ~13 weekly occurrences, got ${occs.size}", occs.size in 10..15)
+    }
+
     // ==================== Issue #152: Far-past recurring event not visible ====================
 
     @Test

@@ -38,8 +38,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.WheelDurationPicker
 import org.onekash.kashcal.ui.shared.ALL_DAY_PRESET_CHIPS
 import org.onekash.kashcal.ui.shared.PresetChip
@@ -71,8 +74,9 @@ fun AlertsSheet(
     val timedWheelMinutes = if (defaultReminderTimed == REMINDER_OFF) 15 else defaultReminderTimed
     val allDayWheelMinutes = if (defaultReminderAllDay == REMINDER_OFF) 540 else defaultReminderAllDay
 
-    val timedChips = remember { listOf(PresetChip("None", REMINDER_OFF)) + TIMED_PRESET_CHIPS }
-    val allDayChips = remember { listOf(PresetChip("None", REMINDER_OFF)) + ALL_DAY_PRESET_CHIPS }
+    val noneLabel = stringResource(R.string.alert_none)
+    val timedChips = remember(noneLabel) { listOf(PresetChip(noneLabel, REMINDER_OFF)) + TIMED_PRESET_CHIPS }
+    val allDayChips = remember(noneLabel) { listOf(PresetChip(noneLabel, REMINDER_OFF)) + ALL_DAY_PRESET_CHIPS }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -84,7 +88,7 @@ fun AlertsSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                "Default Alerts",
+                stringResource(R.string.settings_default_alerts),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -92,7 +96,7 @@ fun AlertsSheet(
             SettingsCard {
                 AlertSection(
                     iconEmoji = "⏰",
-                    label = "Scheduled Events",
+                    label = stringResource(R.string.label_scheduled_events),
                     currentValue = defaultReminderTimed,
                     isAllDay = false,
                     use24Hour = use24Hour,
@@ -111,7 +115,7 @@ fun AlertsSheet(
 
                 AlertSection(
                     iconEmoji = "📅",
-                    label = "All-Day Events",
+                    label = stringResource(R.string.label_all_day_events),
                     currentValue = defaultReminderAllDay,
                     isAllDay = true,
                     use24Hour = use24Hour,
@@ -218,10 +222,11 @@ private fun AlertSectionRow(
     isExpanded: Boolean,
     onClick: () -> Unit
 ) {
+    val resources = LocalContext.current.resources
     val displayText = if (currentValue == REMINDER_OFF) {
-        "None"
+        stringResource(R.string.alert_none)
     } else {
-        formatReminderDuration(currentValue, isAllDay, use24Hour)
+        formatReminderDuration(currentValue, isAllDay, use24Hour, resources)
     }
 
     Row(
@@ -246,7 +251,7 @@ private fun AlertSectionRow(
         }
         Icon(
             if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-            contentDescription = if (isExpanded) "Collapse" else "Expand",
+            contentDescription = if (isExpanded) stringResource(R.string.cd_collapse) else stringResource(R.string.cd_expand),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(24.dp)
         )
@@ -331,7 +336,7 @@ private fun ReminderOptionRow(
         if (isSelected) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = "Selected",
+                contentDescription = stringResource(R.string.cd_selected),
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(20.dp)
             )

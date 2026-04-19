@@ -11,9 +11,12 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
-import org.onekash.kashcal.ui.shared.EVENT_DURATION_OPTIONS
+import androidx.compose.ui.platform.LocalContext
+import org.onekash.kashcal.ui.shared.getEventDurationOptions
 
 /**
  * Bottom sheet for event emoji settings.
@@ -45,7 +48,7 @@ fun EventEmojisSheet(
         ) {
             // Header
             Text(
-                "Event Emojis",
+                stringResource(R.string.settings_event_emojis),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -53,8 +56,8 @@ fun EventEmojisSheet(
             // Event Emojis Toggle
             SettingsCard {
                 SettingsToggleRow(
-                    label = "Auto-detect Emojis",
-                    subtitle = "Show emojis based on event titles",
+                    label = stringResource(R.string.settings_auto_detect_emojis),
+                    subtitle = stringResource(R.string.settings_emoji_subtitle),
                     checked = showEventEmojis,
                     onCheckedChange = onShowEventEmojisChange,
                     showDivider = false
@@ -65,7 +68,7 @@ fun EventEmojisSheet(
             AnimatedVisibility(visible = showEventEmojis) {
                 Column {
                     Text(
-                        "PREVIEW",
+                        stringResource(R.string.settings_preview),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(
@@ -100,9 +103,9 @@ fun EventDurationSheet(
     onEventDurationChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Find selected duration option
-    val selectedDurationOption = EVENT_DURATION_OPTIONS.find { it.minutes == defaultEventDuration }
-        ?: EVENT_DURATION_OPTIONS[1]  // Default to 30 minutes
+    val durationOptions = getEventDurationOptions(LocalContext.current.resources)
+    val selectedDurationOption = durationOptions.find { it.minutes == defaultEventDuration }
+        ?: durationOptions[1]  // Default to 30 minutes
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -115,7 +118,7 @@ fun EventDurationSheet(
         ) {
             // Header
             Text(
-                "Default Event Length",
+                stringResource(R.string.settings_default_event_length),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
@@ -123,8 +126,8 @@ fun EventDurationSheet(
             // Duration picker
             SettingsCard {
                 SettingsDropdownRow(
-                    label = "New events",
-                    options = EVENT_DURATION_OPTIONS,
+                    label = stringResource(R.string.settings_new_events),
+                    options = durationOptions,
                     selectedOption = selectedDurationOption,
                     onOptionSelected = { onEventDurationChange(it.minutes) },
                     optionLabel = { it.label },
@@ -166,18 +169,20 @@ fun WidgetEventLimitSheet(
                 .padding(bottom = 32.dp)
         ) {
             Text(
-                "Widget Event Limit",
+                stringResource(R.string.settings_widget_event_limit),
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
             )
 
+            val eventsDefaultTemplate = stringResource(R.string.settings_n_events_default)
+            val eventsTemplate = stringResource(R.string.settings_n_events)
             SettingsCard {
                 SettingsDropdownRow(
-                    label = "Events per day",
+                    label = stringResource(R.string.settings_events_per_day),
                     options = WIDGET_EVENT_LIMIT_OPTIONS,
                     selectedOption = selectedOption,
                     onOptionSelected = { onLimitChange(it) },
-                    optionLabel = { if (it == 5) "$it events (default)" else "$it events" },
+                    optionLabel = { if (it == 5) eventsDefaultTemplate.format(it) else eventsTemplate.format(it) },
                     showDivider = false
                 )
             }

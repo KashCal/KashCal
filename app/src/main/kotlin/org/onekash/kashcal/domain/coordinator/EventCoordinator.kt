@@ -738,6 +738,24 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
+     * Find recurring events with zero materialized occurrences and regenerate them.
+     * @return Number of events repaired
+     */
+    suspend fun repairMissingOccurrences(): Int {
+        val eventIds = eventReader.getRecurringEventsWithNoOccurrences()
+        var repaired = 0
+        for (eventId in eventIds) {
+            try {
+                regenerateOccurrences(eventId)
+                repaired++
+            } catch (_: IllegalArgumentException) {
+                // Event deleted between query and regeneration
+            }
+        }
+        return repaired
+    }
+
+    /**
      * Parse RRULE for display.
      */
     fun parseRRule(rrule: String): OccurrenceGenerator.RRuleInfo? {

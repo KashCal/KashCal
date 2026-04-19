@@ -61,6 +61,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.WheelTimePicker
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
@@ -138,7 +140,7 @@ fun DateTimePickerCard(
             readOnly = true,
             label = { Text(label) },
             trailingIcon = {
-                Icon(Icons.Default.ExpandMore, contentDescription = "Select $label")
+                Icon(Icons.Default.ExpandMore, contentDescription = stringResource(R.string.cd_select_label, label))
             },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -192,7 +194,7 @@ fun DateTimePickerCard(
 @Suppress("UNUSED_PARAMETER") // isAllDay kept for API compatibility
 private fun formatDateForPicker(dateMillis: Long, isAllDay: Boolean): String {
     // Always use local timezone - form state is already converted to local time
-    return DateTimeUtils.formatEventDate(dateMillis, isAllDay = false, "EEE, MMM d, yyyy")
+    return DateTimeUtils.formatEventDate(dateMillis, isAllDay = false)
 }
 
 /**
@@ -261,7 +263,7 @@ fun DateTimeSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { onDismiss() }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.action_cancel))
                 }
                 Text(
                     text = label,
@@ -269,7 +271,7 @@ fun DateTimeSheet(
                     fontWeight = FontWeight.Bold
                 )
                 TextButton(onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) }) {
-                    Text("Done", fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.action_done), fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -382,7 +384,7 @@ fun DateTimeSheet(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Done", fontWeight = FontWeight.SemiBold)
+                Text(stringResource(R.string.action_done), fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -403,8 +405,12 @@ fun InlineDatePickerContent(
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
-    val monthYearFormat = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
+    val monthYearFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
     var showMonthYearPicker by remember { mutableStateOf(false) }
+    val cdShowCalendar = stringResource(R.string.cd_show_calendar)
+    val cdPickMonthYear = stringResource(R.string.cd_pick_month_year)
+    val cdPreviousMonth = stringResource(R.string.cd_previous_month)
+    val cdNextMonth = stringResource(R.string.cd_next_month)
 
     Column(
         modifier = Modifier
@@ -449,7 +455,7 @@ fun InlineDatePickerContent(
                     },
                     modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Previous month", modifier = Modifier.size(20.dp))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, cdPreviousMonth, modifier = Modifier.size(20.dp))
                 }
             } else {
                 Spacer(modifier = Modifier.size(32.dp))
@@ -462,8 +468,8 @@ fun InlineDatePickerContent(
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .semantics(mergeDescendants = true) {
                         role = Role.Button
-                        contentDescription = if (showMonthYearPicker) "Show calendar"
-                            else "Pick month and year"
+                        contentDescription = if (showMonthYearPicker) cdShowCalendar
+                            else cdPickMonthYear
                     },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -494,7 +500,7 @@ fun InlineDatePickerContent(
                     },
                     modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Next month", modifier = Modifier.size(20.dp))
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, cdNextMonth, modifier = Modifier.size(20.dp))
                 }
             } else {
                 Spacer(modifier = Modifier.size(32.dp))
@@ -574,7 +580,7 @@ fun InlineDatePickerContent(
                                                 .padding(2.dp)
                                                 .clip(CircleShape)
                                                 .background(
-                                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                                    if (isSelected) MaterialTheme.colorScheme.inverseSurface
                                                     else Color.Transparent
                                                 )
                                                 .clickable {
@@ -589,7 +595,7 @@ fun InlineDatePickerContent(
                                             Text(
                                                 text = dayIndex.toString(),
                                                 style = MaterialTheme.typography.bodyMedium,
-                                                color = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                                                color = if (isSelected) MaterialTheme.colorScheme.inverseOnSurface
                                                 else MaterialTheme.colorScheme.onSurface,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                             )

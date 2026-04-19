@@ -503,11 +503,11 @@ class QuickAddParserAdversarialTest {
     }
 
     @Test
-    fun `this modifier treated as next for weekdays`() {
-        // "this friday" = "next friday"
+    fun `this and next modifiers produce different dates for weekdays`() {
         val resultThis = parse("this friday")
         val resultNext = parse("next friday")
-        assertEquals(resultThis.startDate, resultNext.startDate)
+        assertTrue("this friday should be before next friday",
+            resultThis.startDate.isBefore(resultNext.startDate))
     }
 
     @Test

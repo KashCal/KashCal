@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
@@ -39,6 +40,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
+import android.content.res.Resources
 import org.onekash.kashcal.ui.model.MonthGrid
 import java.time.LocalDate
 import java.time.Month
@@ -140,13 +142,15 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             .padding(end = 0.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val prevMonthDesc = LocalContext.current.getString(R.string.cd_previous_month)
         // Back arrow — 48dp minimum touch target
         Box(
             modifier = GlanceModifier
                 .size(48.dp)
                 .clickable(
                     actionRunCallback<MonthNavPreviousAction>()
-                ),
+                )
+                .semantics { contentDescription = prevMonthDesc },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -188,13 +192,15 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             )
         }
 
+        val nextMonthDesc = LocalContext.current.getString(R.string.cd_next_month)
         // Forward arrow — 48dp minimum touch target
         Box(
             modifier = GlanceModifier
                 .size(48.dp)
                 .clickable(
                     actionRunCallback<MonthNavNextAction>()
-                ),
+                )
+                .semantics { contentDescription = nextMonthDesc },
             contentAlignment = Alignment.Center
         ) {
             Text(
@@ -222,7 +228,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
         ) {
             Image(
                 provider = ImageProvider(R.drawable.ic_widget_add),
-                contentDescription = "Add event",
+                contentDescription = LocalContext.current.getString(R.string.cd_widget_add_event),
                 modifier = GlanceModifier.size(18.dp)
             )
         }
@@ -271,7 +277,8 @@ private fun DayCell(
     isPast: Boolean
 ) {
     val isAdjacentMonth = cell.position != MonthGrid.DayPosition.MonthDate
-    val accessibilityDesc = buildAccessibilityDescription(dayCode, if (isAdjacentMonth) 0 else events.size)
+    val resources = LocalContext.current.resources
+    val accessibilityDesc = buildAccessibilityDescription(resources, dayCode, if (isAdjacentMonth) 0 else events.size)
 
     // Adjacent-month cells: faded day number, tappable, no dots or today highlight
     if (isAdjacentMonth) {
@@ -464,39 +471,43 @@ internal fun getDayOfWeekHeaders(firstDayOfWeek: Int): List<String> {
  * Extracts year/month from the dayCode so adjacent-month cells get the correct month name.
  * Format: "March 15, 2 events" or "March 15, no events"
  *
+ * @param resources Android resources for localized strings
  * @param dayCode YYYYMMDD format day code
  * @param eventCount Number of events on this day
  */
 internal fun buildAccessibilityDescription(
+    resources: Resources,
     dayCode: Int,
     eventCount: Int
 ): String {
     val year = dayCode / 10000
     val month1 = (dayCode / 100) % 100
     val day = dayCode % 100
-    return buildAccessibilityDescription(year, month1 - 1, day, eventCount)
+    return buildAccessibilityDescription(resources, year, month1 - 1, day, eventCount)
 }
 
 /**
  * Build accessibility description for a day cell.
  * Format: "March 15, 2 events" or "March 15, no events"
  *
+ * @param resources Android resources for localized strings
  * @param year Calendar year
  * @param month0 0-indexed month (January = 0)
  * @param dayOfMonth Day of month (1-31)
  * @param eventCount Number of events on this day
  */
 internal fun buildAccessibilityDescription(
+    resources: Resources,
     year: Int,
     month0: Int,
     dayOfMonth: Int,
     eventCount: Int
 ): String {
     val monthName = Month.of(month0 + 1).getDisplayName(JavaTextStyle.FULL, Locale.getDefault())
-    val eventText = when (eventCount) {
-        0 -> "no events"
-        1 -> "1 event"
-        else -> "$eventCount events"
+    val eventText = if (eventCount == 0) {
+        resources.getString(R.string.cd_widget_no_events)
+    } else {
+        resources.getQuantityString(R.plurals.widget_event_count_plural, eventCount, eventCount)
     }
-    return "$monthName $dayOfMonth, $eventText"
+    return resources.getString(R.string.cd_widget_day_cell, "$monthName $dayOfMonth", eventText)
 }

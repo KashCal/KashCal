@@ -35,16 +35,50 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.util.CalendarIntentData
+
+private val placeholderExamples = listOf(
+    // Practical / realistic
+    "Coffee tomorrow at 3pm",
+    "Dentist next Tuesday at 2pm",
+    "Pick up groceries this evening",
+    "Call mom Sunday afternoon",
+    "Buy flowers for wife tomorrow",
+    "Take kids to park Saturday 10am",
+    "Date night Friday at 7pm",
+    "Lunch with Sarah Thursday noon",
+    "Oil change Saturday morning",
+    "Haircut next Friday at 11am",
+    // Feature showcase
+    "Standup every weekday at 9am",
+    "Conference Friday to Sunday",
+    "Team retro Friday at noon",
+    "Book club every Tuesday until December",
+    "Yoga every Saturday morning",
+    "Flight to NYC Monday 3pm EST",
+    "Meeting at quarter past 10",
+    "Walk the dog daily",
+    // Witty
+    "Touch grass tomorrow afternoon",
+    "Panic about deadline Friday night",
+    "Become a morning person Monday 5am",
+    "Nap aggressively Sunday afternoon",
+    "Pretend to be productive Monday morning",
+    "Regret skipping gym tonight",
+    // Easter egg
+    "Buy Kash a coffee tomorrow",
+)
 
 @Composable
 fun QuickAddDialog(
@@ -59,6 +93,7 @@ fun QuickAddDialog(
     val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val focusRequester = remember { FocusRequester() }
+    val placeholder = remember { placeholderExamples.random() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val hapticFeedback = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
@@ -133,7 +168,7 @@ fun QuickAddDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .focusRequester(focusRequester),
-                        placeholder = { Text("Coffee tomorrow at 3pm") },
+                        placeholder = { Text(placeholder) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,
@@ -161,13 +196,13 @@ fun QuickAddDialog(
                                 }
                             }
                         ) {
-                            Text("More options")
+                            Text(stringResource(R.string.action_more_options))
                         }
                         Button(
                             onClick = onSave,
                             enabled = isSaveEnabled && !isSaving
                         ) {
-                            Text("Save")
+                            Text(stringResource(R.string.action_save))
                         }
                     }
                 }

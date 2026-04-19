@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -345,10 +346,8 @@ private fun AccountRow(
         stringResource(R.string.accounts_sync_issue)
     } else if (calendarCount == 0) {
         stringResource(R.string.accounts_calendars_syncing)
-    } else if (calendarCount == 1) {
-        stringResource(R.string.accounts_calendar_count_one, email)
     } else {
-        stringResource(R.string.accounts_calendar_count_other, email, calendarCount)
+        pluralStringResource(R.plurals.accounts_calendar_count, calendarCount, email, calendarCount)
     }
 
     val syncWarningDesc = if (hasSyncWarning) {
