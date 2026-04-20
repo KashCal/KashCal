@@ -646,6 +646,7 @@
     <string name="view_month_full">Mes (completo)</string>
     <string name="view_three_days">3 d\u00edas</string>
     <string name="view_year">Ano</string>
+    <string name="view_insights">Perspectivas</string>
 
     <string name="label_go_to_month">Ir ao mes</string>
 
@@ -881,5 +882,46 @@
     <string name="channel_sync_progress_desc">Mostra o progreso mentres se sincronizan os calendarios</string>
     <string name="channel_sync_status">Estado de sincronización</string>
     <string name="channel_sync_status_desc">Notificacións sobre a finalización e erros de sincronización</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Perspectivas</string>
+    <string name="insights_period_this_week">Semana</string>
+    <string name="insights_period_last_week">Sem. pasada</string>
+    <string name="insights_period_this_month">Mes</string>
+    <string name="insights_empty_state">Ning\u00fan evento programado esta semana</string>
+    <string name="insights_delta_more">+%1$s m\u00e1is que %2$s</string>
+    <string name="insights_delta_less">%1$s menos que %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d evento de todo o d\u00eda</item>
+        <item quantity="other">%d eventos de todo o d\u00eda</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s \u00e9 o teu d\u00eda m\u00e1is ocupado (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s foi o teu d\u00eda m\u00e1is ocupado (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s \u00e9 o teu d\u00eda m\u00e1is lixeiro (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s foi o teu d\u00eda m\u00e1is lixeiro (%2$s)</string>
+    <string name="insight_longest_free_future">Bloque libre m\u00e1is longo: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">O bloque libre m\u00e1is longo foi %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">O teu fin de semana est\u00e1 libre</string>
+    <string name="insight_weekend_load_clear_past">O teu fin de semana estivo libre</string>
+    <string name="insight_weekend_load_light_future">%1$s programados no fin de semana</string>
+    <string name="insight_weekend_load_light_past">%1$s foron programados no fin de semana</string>
+    <string name="insight_weekend_load_busy_future">%1$s programados no fin de semana</string>
+    <string name="insight_weekend_load_busy_past">%1$s foron programados no fin de semana</string>
+    <string name="insight_back_to_back_future">%1$d reuni\u00f3ns consecutivas</string>
+    <string name="insight_back_to_back_past">Tiveches %1$d reuni\u00f3ns consecutivas</string>
+    <string name="insight_calendar_dominant_future">%1$s \u00e9 o %2$d%% do teu tempo programado</string>
+    <string name="insight_calendar_dominant_past">%1$s foi o %2$d%% do teu tempo programado</string>
+    <string name="insight_early_bounds_future">O teu horario comeza antes das 8:00 durante %1$d d\u00edas</string>
+    <string name="insight_early_bounds_past">O teu horario comezou antes das 8:00 durante %1$d d\u00edas</string>
+    <string name="insight_late_bounds_future">Eventos despois das 19:00 durante %1$d d\u00edas</string>
+    <string name="insight_late_bounds_past">Eventos despois das 19:00 durante %1$d d\u00edas</string>
+    <string name="insight_meeting_free_days_future">Tes %1$d d\u00edas sen reuni\u00f3ns</string>
+    <string name="insight_meeting_free_days_past">Tiveches %1$d d\u00edas sen reuni\u00f3ns</string>
+    <string name="insight_tomorrow_preview">Ma\u00f1\u00e1: %1$s programados, comeza \u00e1s %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Ma\u00f1\u00e1: %1$s programados</string>
+    <string name="insight_heaviest_upcoming">%1$s \u00e9 o teu d\u00eda m\u00e1is cargado (%2$s)</string>
+    <string name="insight_next_free_block">Pr\u00f3ximo bloque libre: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Distribuci\u00f3n de calendarios: %1$s</string>
+    <string name="insights_cd_daily_chart">Distribuci\u00f3n diaria: o d\u00eda m\u00e1is ocupado \u00e9 %1$s</string>
 
 </resources>

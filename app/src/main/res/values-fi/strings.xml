@@ -648,6 +648,7 @@
     <string name="view_month_full">Kuukausi (koko)</string>
     <string name="view_three_days">3 päivää</string>
     <string name="view_year">Vuosi</string>
+    <string name="view_insights">Tilastot</string>
 
     <string name="label_go_to_month">Siirry kuukauteen</string>
 
@@ -843,5 +844,46 @@
         <item quantity="one">, %1$d kerran</item>
         <item quantity="other">, %1$d kertaa</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Tilastot</string>
+    <string name="insights_period_this_week">Viikko</string>
+    <string name="insights_period_last_week">Edellinen vko</string>
+    <string name="insights_period_this_month">Kuukausi</string>
+    <string name="insights_empty_state">Tälle viikolle ei ole ajastettuja tapahtumia</string>
+    <string name="insights_delta_more">+%1$s enemmän kuin %2$s</string>
+    <string name="insights_delta_less">%1$s vähemmän kuin %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d koko päivän tapahtuma</item>
+        <item quantity="other">%d koko päivän tapahtumaa</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s on kiireisin päivä (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s oli kiireisin päivä (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s on vapain päivä (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s oli vapain päivä (%2$s)</string>
+    <string name="insight_longest_free_future">Pisin vapaa jakso: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Pisin vapaa jakso oli %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Viikonloppu on vapaa</string>
+    <string name="insight_weekend_load_clear_past">Viikonloppu oli vapaa</string>
+    <string name="insight_weekend_load_light_future">%1$s ajastettu viikonlopulle</string>
+    <string name="insight_weekend_load_light_past">%1$s oli ajastettu viikonlopulle</string>
+    <string name="insight_weekend_load_busy_future">%1$s ajastettu viikonlopulle</string>
+    <string name="insight_weekend_load_busy_past">%1$s oli ajastettu viikonlopulle</string>
+    <string name="insight_back_to_back_future">%1$d peräkkäistä tapaamista</string>
+    <string name="insight_back_to_back_past">Oli %1$d peräkkäistä tapaamista</string>
+    <string name="insight_calendar_dominant_future">%1$s on %2$d%% ajastetusta ajasta</string>
+    <string name="insight_calendar_dominant_past">%1$s oli %2$d%% ajastetusta ajasta</string>
+    <string name="insight_early_bounds_future">Aikataulu alkaa ennen 8:00 %1$d päivänä</string>
+    <string name="insight_early_bounds_past">Aikataulu alkoi ennen 8:00 %1$d päivänä</string>
+    <string name="insight_late_bounds_future">Tapahtumia 19:00 jälkeen %1$d päivänä</string>
+    <string name="insight_late_bounds_past">Tapahtumia oli 19:00 jälkeen %1$d päivänä</string>
+    <string name="insight_meeting_free_days_future">%1$d tapaamistonta päivää</string>
+    <string name="insight_meeting_free_days_past">Oli %1$d tapaamistonta päivää</string>
+    <string name="insight_tomorrow_preview">Huomenna: ajastettu %1$s, alkaa %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Huomenna: ajastettu %1$s</string>
+    <string name="insight_heaviest_upcoming">%1$s on kiireisin tuleva päivä (%2$s)</string>
+    <string name="insight_next_free_block">Seuraava vapaa jakso: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Jakauma kalentereittain: %1$s</string>
+    <string name="insights_cd_daily_chart">Jakauma päivittäin: kiireisin päivä on %1$s</string>
 
 </resources>

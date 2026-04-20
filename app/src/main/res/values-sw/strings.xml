@@ -621,6 +621,7 @@
     <string name="view_month_full">Mwezi (Kamili)</string>
     <string name="view_three_days">Siku 3</string>
     <string name="view_year">Mwaka</string>
+    <string name="view_insights">Maarifa</string>
 
     <string name="label_go_to_month">Nenda mwezi</string>
 
@@ -857,4 +858,58 @@
     <string name="rrule_freq_never">Kamwe</string>
     <string name="rrule_starting">%1$s kuanzia %2$s%3$s</string>
     <string name="rrule_since">%1$s \u00b7 tangu %2$s</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Maarifa</string>
+    <string name="insights_period_this_week">Wiki</string>
+    <string name="insights_period_last_week">Wiki iliyopita</string>
+    <string name="insights_period_this_month">Mwezi</string>
+    <string name="insights_empty_state">Hakuna matukio yaliyoratibiwa wiki hii</string>
+    <string name="insights_delta_more">+%1$s zaidi ya %2$s</string>
+    <string name="insights_delta_less">%1$s pungufu ya %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">tukio %d la siku nzima</item>
+        <item quantity="other">matukio %d ya siku nzima</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s ni siku yako yenye shughuli nyingi zaidi (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ilikuwa siku yako yenye shughuli nyingi zaidi (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s ni siku yako nyepesi zaidi (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ilikuwa siku yako nyepesi zaidi (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Muda mrefu zaidi wa bure: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Muda mrefu zaidi wa bure ulikuwa %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Wikendi yako haina ratiba</string>
+    <string name="insight_weekend_load_clear_past">Wikendi yako haikuwa na ratiba</string>
+    <string name="insight_weekend_load_light_future">%1$s imeratibiwa wikendi</string>
+    <string name="insight_weekend_load_light_past">%1$s ziliratibiwa wikendi</string>
+    <string name="insight_weekend_load_busy_future">%1$s imeratibiwa wikendi</string>
+    <string name="insight_weekend_load_busy_past">%1$s ziliratibiwa wikendi</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">Mikutano %1$d mfululizo</string>
+    <string name="insight_back_to_back_past">Ulikuwa na mikutano %1$d mfululizo</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s ni %2$d%% ya muda wako ulioratibiwa</string>
+    <string name="insight_calendar_dominant_past">%1$s ilikuwa %2$d%% ya muda wako ulioratibiwa</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Ratiba yako inaanza kabla ya saa 2 asubuhi siku %1$d</string>
+    <string name="insight_early_bounds_past">Ratiba yako ilianza kabla ya saa 2 asubuhi siku %1$d</string>
+    <string name="insight_late_bounds_future">Matukio baada ya saa 1 usiku siku %1$d</string>
+    <string name="insight_late_bounds_past">Matukio yalipita saa 1 usiku siku %1$d</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Una siku %1$d zisizo na mikutano</string>
+    <string name="insight_meeting_free_days_past">Ulikuwa na siku %1$d zisizo na mikutano</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Kesho: %1$s imeratibiwa, inaanza saa %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Kesho: %1$s imeratibiwa</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s ni siku yako ijayo yenye shughuli nyingi zaidi (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Muda wa bure unaofuata: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Mgawanyo wa kalenda: %1$s</string>
+    <string name="insights_cd_daily_chart">Usambazaji wa kila siku: siku yenye shughuli nyingi zaidi ni %1$s</string>
 </resources>

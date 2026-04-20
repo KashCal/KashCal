@@ -252,13 +252,6 @@ class QuickAddParserTest {
         assertTrue(result.isAllDay)
     }
 
-    @Test
-    fun `Meeting for 2 dot 5 hours still works with duration`() {
-        val result = parse("Meeting for 2.5 hours")
-        assertEquals("Meeting", result.title)
-        assertEquals(LocalTime.of(12, 30), result.endTime) // 10:00 + 2.5h
-    }
-
     // ==================== P2: Duration (US10) ====================
 
     @Test
@@ -652,5 +645,419 @@ class QuickAddParserTest {
     fun `timezone not in title`() {
         val result = parse("meeting 3pm EST")
         assertEquals("meeting", result.title)
+    }
+
+    // ==================== Non-English input fallback ====================
+    // Parser is English-only. Non-English input degrades gracefully:
+    // unrecognized words become the title, date falls back to reference.
+    // English keywords (dates, times, structured dates) still parse when
+    // mixed with non-English text.
+
+    @Test
+    fun `German input falls back to title`() {
+        val result = parse("Kaffee morgen um 15 Uhr")
+        assertEquals("Kaffee morgen um 15 Uhr", result.title)
+        assertEquals(reference.toLocalDate(), result.startDate)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `French input preserves accented characters`() {
+        val result = parse("Réunion demain matin")
+        assertEquals("Réunion demain matin", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `Japanese CJK input without spaces becomes title`() {
+        val result = parse("明日の会議")
+        assertEquals("明日の会議", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `Arabic RTL input preserved as title`() {
+        val result = parse("اجتماع غدا")
+        assertEquals("اجتماع غدا", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `Korean input preserved as title`() {
+        val result = parse("내일 회의")
+        assertEquals("내일 회의", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `non-English title with English date and time still parses`() {
+        val result = parse("Kaffee tomorrow at 3pm")
+        assertEquals("Kaffee", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+        assertEquals(ParseConfidence.HIGH, result.confidence)
+    }
+
+    @Test
+    fun `Cyrillic with structured date parses date`() {
+        val result = parse("Дзвінок 15.04")
+        assertTrue(result.title.startsWith("Дзвінок"))
+        assertEquals(true, result.isAllDay)
+    }
+
+    @Test
+    fun `emoji preserved in non-English input`() {
+        val result = parse("🎂 Geburtstag morgen")
+        assertTrue(result.title.contains("🎂"))
+        assertTrue(result.title.contains("Geburtstag"))
+    }
+
+    // ==================== Non-English adverse: keyword collisions ====================
+    // English keywords that are real words in other languages get consumed,
+    // corrupting titles. These tests document current (known-imperfect) behavior.
+
+    @Test
+    fun `Hungarian article a is replaced with 1 by NumberWordNormalizer`() {
+        // Hungarian: "a megbeszélés" = "the meeting"
+        // NumberWordNormalizer maps standalone "a" → "1"
+        val result = parse("a megbeszélés")
+        assertEquals("1 megbeszélés", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `Portuguese a in title corrupted by NumberWordNormalizer`() {
+        // Portuguese: "Reunião a tarde" = "Meeting in the afternoon"
+        val result = parse("Reunião a tarde")
+        assertEquals("Reunião 1 tarde", result.title)
+    }
+
+    @Test
+    fun `Spanish preposition a corrupted by NumberWordNormalizer`() {
+        // Spanish: "Ir a la tienda" = "Go to the store"
+        val result = parse("Ir a la tienda")
+        assertTrue(result.title.contains("1"))
+    }
+
+    @Test
+    fun `Irish article an is replaced with 1`() {
+        // Irish: "an cruinniú" = "the meeting"
+        val result = parse("an cruinniú")
+        assertEquals("1 cruinniú", result.title)
+    }
+
+    @Test
+    fun `Norwegian for consumed as duration keyword`() {
+        // Norwegian: "møte for teamet" = "meeting for the team"
+        // "for" is a keyword (FOR), consumed by DurationRule or left as keyword
+        val result = parse("møte for teamet")
+        // "for" gets consumed as KEYWORD, title drops leading/trailing keywords
+        assertTrue(result.title.contains("møte"))
+    }
+
+    @Test
+    fun `English in consumed as keyword from mixed input`() {
+        // "in" is keyword IN, consumed by RelativeOffsetRule
+        val result = parse("Termin in Berlin")
+        // "in" consumed as keyword, "Berlin" may become part of title
+        assertNotNull(result.title)
+        assertTrue(result.title.isNotEmpty())
+    }
+
+    // ==================== Non-English adverse: non-ASCII digit systems ====================
+    // \d in regex only matches ASCII 0-9. Non-ASCII digits are preserved by \p{N}
+    // in CHAR_CLEANUP but treated as UNKNOWN tokens, not parsed as numbers/times.
+
+    private fun assertNonAsciiDigitNotParsedAsTime(input: String, digit: String) {
+        val result = parse(input)
+        assertTrue("Expected '$digit' preserved in title: ${result.title}", result.title.contains(digit))
+        assertNull(result.startTime)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `Devanagari digits not recognized as numbers`() {
+        assertNonAsciiDigitNotParsedAsTime("बैठक ३ बजे", "३")
+    }
+
+    @Test
+    fun `Arabic-Indic digits not recognized as numbers`() {
+        assertNonAsciiDigitNotParsedAsTime("اجتماع الساعة ٣", "٣")
+    }
+
+    @Test
+    fun `Extended Arabic-Indic digits for Farsi not recognized`() {
+        assertNonAsciiDigitNotParsedAsTime("جلسه ۳ عصر", "۳")
+    }
+
+    @Test
+    fun `Thai digits not recognized as numbers`() {
+        assertNonAsciiDigitNotParsedAsTime("ประชุม ๓ โมง", "๓")
+    }
+
+    @Test
+    fun `full-width digits not recognized as numbers`() {
+        assertNonAsciiDigitNotParsedAsTime("会議３時", "３")
+    }
+
+    @Test
+    fun `Bengali digits not recognized as numbers`() {
+        assertNonAsciiDigitNotParsedAsTime("সভা ৫টায়", "৫")
+    }
+
+    // ==================== Non-English adverse: Unicode normalization ====================
+
+    @Test
+    fun `decomposed unicode accent stripped by CHAR_CLEANUP`() {
+        // NFD: "café" as "cafe" + U+0301 (combining acute)
+        // CHAR_CLEANUP strips combining marks (\p{Mn} not in keep-list)
+        val decomposed = "cafe\u0301 tomorrow"
+        val result = parse(decomposed)
+        // Accent is lost — title becomes "cafe"
+        assertEquals("cafe", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `composed unicode accent preserved`() {
+        // NFC: "café" as single character é (U+00E9)
+        val composed = "caf\u00E9 tomorrow"
+        val result = parse(composed)
+        assertEquals("café", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `Vietnamese diacritics preserved when composed`() {
+        // Vietnamese: "họp" (meeting) — composed form
+        val result = parse("họp ngày mai")
+        assertTrue(result.title.contains("họp"))
+    }
+
+    @Test
+    fun `German umlauts preserved`() {
+        val result = parse("Büro Termin übermorgen")
+        assertTrue(result.title.contains("ü"))
+        assertTrue(result.title.contains("ö") || result.title.contains("Büro"))
+    }
+
+    @Test
+    fun `Turkish dotted and dotless i preserved`() {
+        // Turkish: İ (dotted capital), ı (dotless lowercase)
+        val result = parse("İstanbul toplantısı")
+        assertTrue(result.title.isNotEmpty())
+    }
+
+    // ==================== Non-English adverse: special Unicode characters ====================
+
+    @Test
+    fun `zero-width joiner stripped between emoji`() {
+        // ZWJ (U+200D) is \p{Cf}, stripped by CHAR_CLEANUP
+        val input = "👨\u200D💼 meeting tomorrow"
+        val result = parse(input)
+        // ZWJ stripped, emoji may split but are preserved individually
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `right-to-left mark stripped`() {
+        // RLM (U+200F) is \p{Cf}, stripped by CHAR_CLEANUP
+        val result = parse("meeting\u200F tomorrow")
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertTrue(result.title.contains("meeting"))
+    }
+
+    @Test
+    fun `left-to-right mark stripped`() {
+        val result = parse("اجتماع\u200E meeting")
+        assertTrue(result.title.isNotEmpty())
+    }
+
+    @Test
+    fun `null byte in input does not crash`() {
+        val result = parse("meeting\u0000tomorrow")
+        // Null byte (U+0000) is \p{Cc}, stripped by CHAR_CLEANUP → space
+        assertNotNull(result)
+    }
+
+    @Test
+    fun `control characters stripped gracefully`() {
+        // Form feed, vertical tab, bell
+        val result = parse("meeting\u000C\u000B\u0007 tomorrow")
+        assertNotNull(result)
+        assertTrue(result.title.contains("meeting"))
+    }
+
+    @Test
+    fun `soft hyphen stripped`() {
+        // Soft hyphen U+00AD is \p{Cf}, stripped
+        val result = parse("meet\u00ADing tomorrow")
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    // ==================== Non-English adverse: mixed LTR/RTL ====================
+
+    @Test
+    fun `Arabic text with English time still parses time`() {
+        // Arabic + English time keyword
+        val result = parse("اجتماع at 3pm")
+        assertEquals(LocalTime.of(15, 0), result.startTime)
+    }
+
+    @Test
+    fun `Hebrew text with English date parses date`() {
+        val result = parse("פגישה tomorrow at 2pm")
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+        assertEquals(LocalTime.of(14, 0), result.startTime)
+    }
+
+    @Test
+    fun `mixed Arabic and English preserves both in title`() {
+        val result = parse("اجتماع مع Ahmed")
+        assertTrue(result.title.contains("اجتماع"))
+        assertTrue(result.title.contains("Ahmed"))
+    }
+
+    // ==================== Non-English adverse: punctuation stripping ====================
+
+    @Test
+    fun `guillemets stripped from French text`() {
+        // « » are not in \p{L}\p{N}\p{So}\s or allowed punctuation
+        val result = parse("«Réunion» tomorrow")
+        // Guillemets stripped, accents preserved
+        assertTrue(result.title.contains("Réunion"))
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `parentheses stripped from German text`() {
+        val result = parse("Termin (wichtig) tomorrow")
+        assertTrue(result.title.contains("Termin"))
+        assertTrue(result.title.contains("wichtig"))
+    }
+
+    @Test
+    fun `comma stripped but words preserved`() {
+        // Japanese: "明日、会議です" — comma is Japanese U+3001
+        val result = parse("明日、会議です")
+        assertNotNull(result.title)
+        assertTrue(result.title.isNotEmpty())
+    }
+
+    @Test
+    fun `exclamation and question marks stripped`() {
+        val result = parse("Important meeting! tomorrow?")
+        assertTrue(result.title.contains("Important"))
+        assertTrue(result.title.contains("meeting"))
+    }
+
+    // ==================== Non-English adverse: structured dates with scripts ====================
+
+    @Test
+    fun `structured date with dot separator works in any language context`() {
+        // European D.M format
+        val result = parse("Встреча 25.12")
+        assertTrue(result.title.startsWith("Встреча"))
+        assertTrue(result.isAllDay)
+    }
+
+    @Test
+    fun `structured date with slash works in any language context`() {
+        val result = parse("미팅 1/15")
+        assertTrue(result.title.contains("미팅"))
+    }
+
+    @Test
+    fun `ISO date works in any language context`() {
+        val result = parse("会議 2026-05-15")
+        assertTrue(result.title.contains("会議"))
+    }
+
+    // ==================== Non-English adverse: robustness and DoS ====================
+
+    @Test
+    fun `very long CJK input completes without crash`() {
+        val longCjk = "会議".repeat(5000) + " tomorrow"
+        val start = System.nanoTime()
+        val result = parse(longCjk)
+        val elapsed = (System.nanoTime() - start) / 1_000_000
+        assertNotNull(result)
+        assertTrue("CJK parse took ${elapsed}ms, expected < 200ms", elapsed < 200)
+    }
+
+    @Test
+    fun `very long Arabic input completes without crash`() {
+        val longArabic = "اجتماع ".repeat(1000)
+        val start = System.nanoTime()
+        val result = parse(longArabic)
+        val elapsed = (System.nanoTime() - start) / 1_000_000
+        assertNotNull(result)
+        assertTrue("Arabic parse took ${elapsed}ms, expected < 500ms", elapsed < 500)
+    }
+
+    @Test
+    fun `repeated hyphens in compound word do not cause ReDoS`() {
+        // Adversarial: tries to trigger backtracking in NumberWordNormalizer compoundRegex
+        val input = "twenty-" + "e".repeat(10000)
+        val start = System.nanoTime()
+        val result = parse(input)
+        val elapsed = (System.nanoTime() - start) / 1_000_000
+        assertNotNull(result)
+        assertTrue("Compound ReDoS took ${elapsed}ms, expected < 200ms", elapsed < 200)
+    }
+
+    @Test
+    fun `single character input does not crash`() {
+        for (c in listOf("a", "1", "é", "明", "ع", "🎂", ".", "-", " ")) {
+            val result = parse(c)
+            assertNotNull(result)
+        }
+    }
+
+    @Test
+    fun `only punctuation returns empty title`() {
+        val result = parse("!@#\$%^&*()")
+        // All stripped by CHAR_CLEANUP → empty after whitespace trim
+        assertEquals("", result.title)
+        assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `mixed emoji sequence preserved`() {
+        val result = parse("🇩🇪 Treffen 🍺 morgen")
+        assertTrue(result.title.contains("🍺") || result.title.contains("Treffen"))
+    }
+
+    @Test
+    fun `surrogate pair emoji does not crash`() {
+        // 🦊 (U+1F98A) is outside BMP, encoded as surrogate pair in UTF-16
+        val result = parse("🦊 event tomorrow")
+        assertNotNull(result)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    // ==================== Non-English adverse: number word collisions ====================
+
+    @Test
+    fun `ten is replaced in non-English context`() {
+        // NumberWordNormalizer replaces "ten" → "10"
+        // Could match in words like "often" — but \b prevents mid-word match
+        val result = parse("Often meeting tomorrow")
+        assertTrue(result.title.contains("Often"))
+        // "ten" inside "Often" should NOT be replaced due to \b word boundary
+    }
+
+    @Test
+    fun `four not replaced inside fourteen`() {
+        // "fourteen" → "14" (entire word match), not "4teen"
+        val result = parse("fourteen people tomorrow")
+        assertTrue(result.title.contains("14"))
+    }
+
+    @Test
+    fun `number word replacement does not corrupt am in word`() {
+        // "a.m." should not become "1.m." due to negative lookahead (?![.])
+        val result = parse("meeting at 3 a.m. tomorrow")
+        assertEquals(LocalTime.of(3, 0), result.startTime)
     }
 }

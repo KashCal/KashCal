@@ -3334,6 +3334,18 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `setViewMode INSIGHTS does not persist to DataStore`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.INSIGHTS)
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.INSIGHTS, viewModel.uiState.value.viewMode)
+        coVerify(exactly = 0) { dataStore.setDefaultCalendarView("insights") }
+    }
+
+    @Test
     fun `init loads default view from DataStore`() = runTest {
         // Override default view to AGENDA (must be set before createViewModel)
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_AGENDA

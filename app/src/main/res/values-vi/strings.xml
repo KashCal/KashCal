@@ -620,6 +620,7 @@
     <string name="view_month_full">Tháng (đầy đủ)</string>
     <string name="view_three_days">3 ngày</string>
     <string name="view_year">Năm</string>
+    <string name="view_insights">Phân tích</string>
 
     <string name="label_go_to_month">Đi tới tháng</string>
 
@@ -849,4 +850,44 @@
     <string name="rrule_freq_never">Không bao giờ</string>
     <string name="rrule_starting">%1$s bắt đầu %2$s%3$s</string>
     <string name="rrule_since">%1$s · kể từ %2$s</string>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Phân tích</string>
+    <string name="insights_period_this_week">Tuần</string>
+    <string name="insights_period_last_week">Tuần trước</string>
+    <string name="insights_period_this_month">Tháng</string>
+    <string name="insights_empty_state">Tuần này không có sự kiện</string>
+    <string name="insights_delta_more">Nhiều hơn %2$s +%1$s</string>
+    <string name="insights_delta_less">Ít hơn %2$s %1$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">%d sự kiện cả ngày</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s là ngày bận nhất (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s là ngày bận nhất (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s là ngày nhẹ nhất (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s là ngày nhẹ nhất (%2$s)</string>
+    <string name="insight_longest_free_future">Khoảng trống dài nhất: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Khoảng trống dài nhất là %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Cuối tuần rảnh rỗi</string>
+    <string name="insight_weekend_load_clear_past">Cuối tuần đã rảnh rỗi</string>
+    <string name="insight_weekend_load_light_future">Cuối tuần có %1$s lịch hẹn</string>
+    <string name="insight_weekend_load_light_past">Cuối tuần có %1$s lịch hẹn</string>
+    <string name="insight_weekend_load_busy_future">Cuối tuần có %1$s lịch hẹn</string>
+    <string name="insight_weekend_load_busy_past">Cuối tuần có %1$s lịch hẹn</string>
+    <string name="insight_back_to_back_future">%1$d cuộc họp liên tiếp</string>
+    <string name="insight_back_to_back_past">Đã có %1$d cuộc họp liên tiếp</string>
+    <string name="insight_calendar_dominant_future">%1$s chiếm %2$d%% thời gian có lịch</string>
+    <string name="insight_calendar_dominant_past">%1$s chiếm %2$d%% thời gian có lịch</string>
+    <string name="insight_early_bounds_future">Lịch trình bắt đầu trước 8:00 trong %1$d ngày</string>
+    <string name="insight_early_bounds_past">Lịch trình đã bắt đầu trước 8:00 trong %1$d ngày</string>
+    <string name="insight_late_bounds_future">Có sự kiện sau 19:00 trong %1$d ngày</string>
+    <string name="insight_late_bounds_past">Có sự kiện sau 19:00 trong %1$d ngày</string>
+    <string name="insight_meeting_free_days_future">Có %1$d ngày không có cuộc họp</string>
+    <string name="insight_meeting_free_days_past">Đã có %1$d ngày không có cuộc họp</string>
+    <string name="insight_tomorrow_preview">Ngày mai: %1$s lịch hẹn, bắt đầu lúc %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Ngày mai: %1$s lịch hẹn</string>
+    <string name="insight_heaviest_upcoming">%1$s là ngày bận nhất sắp tới (%2$s)</string>
+    <string name="insight_next_free_block">Khoảng trống tiếp theo: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Phân bổ lịch: %1$s</string>
+    <string name="insights_cd_daily_chart">Phân bổ hàng ngày: ngày bận nhất là %1$s</string>
 </resources>

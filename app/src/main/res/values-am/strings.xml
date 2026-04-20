@@ -646,6 +646,7 @@
     <string name="view_month_full">ወር (ሙሉ)</string>
     <string name="view_three_days">3 ቀናት</string>
     <string name="view_year">ዓመት</string>
+    <string name="view_insights">ግንዛቤዎች</string>
 
     <string name="label_go_to_month">ወደ ወር ሂድ</string>
 
@@ -886,4 +887,58 @@
         <item quantity="one">, %1$d ጊዜ</item>
         <item quantity="other">, %1$d ጊዜዎች</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">ግንዛቤዎች</string>
+    <string name="insights_period_this_week">ሳምንት</string>
+    <string name="insights_period_last_week">ያለፈው ሳምንት</string>
+    <string name="insights_period_this_month">ወር</string>
+    <string name="insights_empty_state">በዚህ ሳምንት ምንም ክስተቶች አልተያዙም</string>
+    <string name="insights_delta_more">+%1$s ከ%2$s የበለጠ</string>
+    <string name="insights_delta_less">%1$s ከ%2$s ያነሰ</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d ሙሉ ቀን ክስተት</item>
+        <item quantity="other">%d ሙሉ ቀን ክስተቶች</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s በጣም የተጨናነቀ ቀንህ ነው (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s በጣም የተጨናነቀ ቀንህ ነበር (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s በጣም ቀላሉ ቀንህ ነው (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s በጣም ቀላሉ ቀንህ ነበር (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">ረዥሙ ነፃ ጊዜ: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ረዥሙ ነፃ ጊዜ %1$s %2$s\u2013%3$s (%4$s) ነበር</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">ቅዳሜና እሁድህ ክፍት ነው</string>
+    <string name="insight_weekend_load_clear_past">ቅዳሜና እሁድህ ክፍት ነበር</string>
+    <string name="insight_weekend_load_light_future">%1$s ቅዳሜና እሁድ ላይ ታቅዷል</string>
+    <string name="insight_weekend_load_light_past">%1$s ቅዳሜና እሁድ ላይ ታቅዶ ነበር</string>
+    <string name="insight_weekend_load_busy_future">%1$s ቅዳሜና እሁድ ላይ ታቅዷል</string>
+    <string name="insight_weekend_load_busy_past">%1$s ቅዳሜና እሁድ ላይ ታቅዶ ነበር</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d ተከታታይ ስብሰባዎች</string>
+    <string name="insight_back_to_back_past">%1$d ተከታታይ ስብሰባዎች ነበሩህ</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s %2$d%% የታቀደ ጊዜህ ነው</string>
+    <string name="insight_calendar_dominant_past">%1$s %2$d%% የታቀደ ጊዜህ ነበር</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">የእርስዎ መርሃ ግብር ከጠዋቱ 8 ሰዓት በፊት %1$d ቀናት ይጀምራል</string>
+    <string name="insight_early_bounds_past">የእርስዎ መርሃ ግብር ከጠዋቱ 8 ሰዓት በፊት %1$d ቀናት ጀምሮ ነበር</string>
+    <string name="insight_late_bounds_future">ከምሽቱ 7 ሰዓት በኋላ ክስተቶች %1$d ቀናት</string>
+    <string name="insight_late_bounds_past">ክስተቶች ከምሽቱ 7 ሰዓት በኋላ %1$d ቀናት ነበሩ</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">%1$d ከስብሰባ ነፃ ቀናት አሉህ</string>
+    <string name="insight_meeting_free_days_past">%1$d ከስብሰባ ነፃ ቀናት ነበሩህ</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">ነገ: %1$s ታቅዷል፣ %2$s ይጀምራል</string>
+    <string name="insight_tomorrow_preview_no_start">ነገ: %1$s ታቅዷል</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s በጣም ከባዱ መጪ ቀንህ ነው (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">ቀጣዩ ነፃ ጊዜ: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">የቀን መቁጠሪያ ክፍፍል: %1$s</string>
+    <string name="insights_cd_daily_chart">ዕለታዊ ስርጭት: በጣም የተጨናነቀው ቀን %1$s ነው</string>
 </resources>

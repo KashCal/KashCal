@@ -231,6 +231,7 @@ class HomeViewModel @Inject constructor(
                 ViewMode.MONTH -> {} // goToToday() below handles dot loading + day selection
                 ViewMode.MONTH_FULL -> loadMonthEvents(_uiState.value.viewingYear, _uiState.value.viewingMonth)
                 ViewMode.YEAR -> loadYearDots(_uiState.value.viewingYear)
+                ViewMode.INSIGHTS -> {}
             }
 
             // Build event dots for current month ±6 months
@@ -1051,6 +1052,7 @@ class HomeViewModel @Inject constructor(
             ViewMode.YEAR -> {
                 _uiState.update { it.copy(pendingNavigateToToday = true) }
             }
+            ViewMode.INSIGHTS -> {}
         }
     }
 
@@ -1950,6 +1952,8 @@ class HomeViewModel @Inject constructor(
 
         _uiState.update { it.copy(viewMode = mode) }
 
+        if (mode == ViewMode.INSIGHTS) return
+
         // Auto-persist: last-used view becomes the default on next launch
         viewModelScope.launch {
             dataStore.setDefaultCalendarView(mode.key)
@@ -1978,6 +1982,7 @@ class HomeViewModel @Inject constructor(
                 weekEventsJob?.cancel()
                 loadYearDots(_uiState.value.viewingYear)
             }
+            ViewMode.INSIGHTS -> {}
         }
     }
 

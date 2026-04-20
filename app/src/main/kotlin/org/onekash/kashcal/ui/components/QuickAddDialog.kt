@@ -10,8 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -25,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -40,12 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
+import org.onekash.kashcal.domain.quickadd.QuickAddResult
 import org.onekash.kashcal.util.CalendarIntentData
 
 private val placeholderExamples = listOf(
@@ -88,7 +90,7 @@ fun QuickAddDialog(
     onSaveError: (String) -> Unit,
     viewModel: QuickAddViewModel = hiltViewModel()
 ) {
-    val inputText by viewModel.inputText.collectAsState()
+    val textFieldState = remember { TextFieldState() }
     val parseResult by viewModel.parseResult.collectAsState()
     val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
@@ -98,9 +100,10 @@ fun QuickAddDialog(
     val hapticFeedback = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
 
-    // Reset state when dialog appears
     LaunchedEffect(Unit) {
         viewModel.resetState()
+        snapshotFlow { textFieldState.text.toString() }
+            .collect { viewModel.onInputChanged(it) }
     }
 
     val onSave: () -> Unit = {
@@ -140,71 +143,91 @@ fun QuickAddDialog(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.Top
         ) {
-            Card(
+            QuickAddDialogContent(
+                textFieldState = textFieldState,
+                focusRequester = focusRequester,
+                parseResult = parseResult,
+                isSaveEnabled = isSaveEnabled,
+                isSaving = isSaving,
+                placeholder = placeholder,
+                onSave = onSave,
+                onExpand = {
+                    coroutineScope.launch {
+                        val intentData = viewModel.toCalendarIntentData()
+                        onExpand(intentData)
+                    }
+                }
+            )
+        }
+    }
+}
+
+@Composable
+internal fun QuickAddDialogContent(
+    textFieldState: TextFieldState,
+    focusRequester: FocusRequester,
+    parseResult: QuickAddResult,
+    isSaveEnabled: Boolean,
+    isSaving: Boolean,
+    placeholder: String,
+    onSave: () -> Unit,
+    onExpand: () -> Unit
+) {
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            ) { /* consume clicks so they don't dismiss */ },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+                keyboardController?.show()
+            }
+
+            OutlinedTextField(
+                state = textFieldState,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { /* consume clicks so they don't dismiss */ },
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    // Auto-focus and open keyboard after layout
-                    LaunchedEffect(Unit) {
-                        delay(100) // Wait for focusRequester to attach
-                        focusRequester.requestFocus()
-                        keyboardController?.show()
-                    }
-
-                    OutlinedTextField(
-                        value = inputText,
-                        onValueChange = { viewModel.onInputChanged(it) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        placeholder = { Text(placeholder) },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            capitalization = KeyboardCapitalization.Sentences,
-                            imeAction = if (isSaveEnabled) ImeAction.Done else ImeAction.Default
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onDone = { if (isSaveEnabled && !isSaving) onSave() }
-                        )
+                    .focusRequester(focusRequester),
+                placeholder = { Text(placeholder) },
+                lineLimits = TextFieldLineLimits.SingleLine,
+                keyboardOptions = remember {
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Sentences,
+                        imeAction = ImeAction.Done
                     )
+                },
+                onKeyboardAction = { if (isSaveEnabled && !isSaving) onSave() }
+            )
 
-                    QuickAddPreview(result = parseResult)
+            QuickAddPreview(result = parseResult)
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val intentData = viewModel.toCalendarIntentData()
-                                    onExpand(intentData)
-                                }
-                            }
-                        ) {
-                            Text(stringResource(R.string.action_more_options))
-                        }
-                        Button(
-                            onClick = onSave,
-                            enabled = isSaveEnabled && !isSaving
-                        ) {
-                            Text(stringResource(R.string.action_save))
-                        }
-                    }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = onExpand) {
+                    Text(stringResource(R.string.action_more_options))
+                }
+                Button(
+                    onClick = onSave,
+                    enabled = isSaveEnabled && !isSaving
+                ) {
+                    Text(stringResource(R.string.action_save))
                 }
             }
         }

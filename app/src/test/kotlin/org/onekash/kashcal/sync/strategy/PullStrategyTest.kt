@@ -4197,4 +4197,167 @@ class PullStrategyTest {
         // Upsert SHOULD be called — no race detected
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "normal-uid" }) }
     }
+
+    // ========== hasContentChanged Tests ==========
+
+    @Test
+    fun `hasContentChanged returns false when only etag differs`() {
+        val existing = createEvent().copy(etag = "old-etag")
+        val incoming = createEvent().copy(etag = "new-etag")
+        assertFalse(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when title changed`() {
+        val existing = createEvent(title = "Original")
+        val incoming = createEvent(title = "Updated")
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when time changed`() {
+        val now = System.currentTimeMillis()
+        val existing = createEvent().copy(startTs = now, endTs = now + 3600000)
+        val incoming = createEvent().copy(startTs = now + 1800000, endTs = now + 5400000)
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when location changed`() {
+        val existing = createEvent().copy(location = null)
+        val incoming = createEvent().copy(location = "New York")
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when rrule changed`() {
+        val existing = createEvent().copy(rrule = "FREQ=WEEKLY;BYDAY=MO")
+        val incoming = createEvent().copy(rrule = "FREQ=WEEKLY;BYDAY=MO,WE")
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when exdate changed`() {
+        val existing = createEvent().copy(rrule = "FREQ=WEEKLY", exdate = null)
+        val incoming = createEvent().copy(rrule = "FREQ=WEEKLY", exdate = "20240115T100000Z")
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when reminders changed`() {
+        val existing = createEvent().copy(reminders = listOf("-PT15M"))
+        val incoming = createEvent().copy(reminders = listOf("-PT15M", "-PT1H"))
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when sequence changed`() {
+        val existing = createEvent().copy(sequence = 1)
+        val incoming = createEvent().copy(sequence = 2)
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns false when only sync metadata differs`() {
+        val existing = createEvent().copy(
+            dtstamp = 1000L,
+            syncStatus = SyncStatus.SYNCED,
+            rawIcal = "BEGIN:VCALENDAR...",
+            caldavUrl = "https://old.example.com/event.ics",
+            importId = "old-import",
+            createdAt = 1000L,
+            updatedAt = 2000L,
+            localModifiedAt = 3000L,
+            serverModifiedAt = 4000L,
+            lastSyncError = "old error",
+            syncRetryCount = 1
+        )
+        val incoming = createEvent().copy(
+            dtstamp = 9000L,
+            syncStatus = SyncStatus.PENDING_UPDATE,
+            rawIcal = "BEGIN:VCALENDAR...v2",
+            caldavUrl = "https://new.example.com/event.ics",
+            importId = "new-import",
+            createdAt = 5000L,
+            updatedAt = 6000L,
+            localModifiedAt = 7000L,
+            serverModifiedAt = 8000L,
+            lastSyncError = null,
+            syncRetryCount = 0
+        )
+        assertFalse(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    // ========== Sync Change Suppression for Recurring Series ==========
+
+    @Test
+    fun `recurring series etag-only change on master suppresses SyncChange`() = runTest {
+        // Scenario: A recurring event resource (.ics) is re-fetched with a new etag
+        // (because a sibling VEVENT in the same resource changed). The master's content
+        // is identical. It should be upserted (new etag) but NOT generate a SyncChange.
+        //
+        // Strategy: First sync creates the event. We capture what ICalEventMapper produces
+        // and use it as the "existing" event for the second sync with only etag changed.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}recurring.ics"
+
+        val serverIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:recurring-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            RRULE:FREQ=WEEKLY;BYDAY=MO
+            SUMMARY:Weekly Standup
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // --- First sync: capture the mapped event ---
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-1")
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent(eventUrl, eventUrl, "etag-1", serverIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-1")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
+        coEvery { eventsDao.getMasterByUidAndCalendar("recurring-uid", calendar.id) } returns null
+
+        val upsertSlot = slot<Event>()
+        coEvery { eventsDao.upsert(capture(upsertSlot)) } returns 100L
+
+        val firstResult = pullStrategy.pull(calendar, client = client)
+        assertTrue("First sync should succeed", firstResult is PullResult.Success)
+        assertEquals(1, (firstResult as PullResult.Success).eventsAdded)
+
+        // Build the "existing" event: what was saved + the DB-assigned id
+        val existingMaster = upsertSlot.captured.copy(id = 100L)
+
+        // --- Second sync: same content, new etag ---
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-2")
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent(eventUrl, eventUrl, "etag-2", serverIcal)
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingMaster)
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingMaster
+        coEvery { eventsDao.getMasterByUidAndCalendar("recurring-uid", calendar.id) } returns existingMaster
+        coEvery { eventsDao.getSyncStatus(100L) } returns SyncStatus.SYNCED
+        coEvery { eventsDao.upsert(any()) } returns 100L
+
+        val secondResult = pullStrategy.pull(calendar, client = client)
+
+        assertTrue("Second sync should succeed", secondResult is PullResult.Success)
+        val success = secondResult as PullResult.Success
+        // Upsert still happens (saves new etag) but no SyncChange notification
+        coVerify(atLeast = 2) { eventsDao.upsert(any()) }
+        assertEquals(
+            "Etag-only change should not produce notifications: ${success.changes.map { "${it.type}: ${it.eventTitle}" }}",
+            0, success.changes.size
+        )
+        assertEquals(0, success.eventsUpdated)
+    }
 }

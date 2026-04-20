@@ -646,6 +646,7 @@
     <string name="view_month_full">माह (पूर्ण)</string>
     <string name="view_three_days">3 दिन</string>
     <string name="view_year">वर्ष</string>
+    <string name="view_insights">अंतर्दृष्टि</string>
 
     <string name="label_go_to_month">माह पर जाएँ</string>
 
@@ -887,5 +888,46 @@
         <item quantity="one">, %1$d बार</item>
         <item quantity="other">, %1$d बार</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">अंतर्दृष्टि</string>
+    <string name="insights_period_this_week">सप्ताह</string>
+    <string name="insights_period_last_week">पिछला सप्ताह</string>
+    <string name="insights_period_this_month">माह</string>
+    <string name="insights_empty_state">इस सप्ताह कोई इवेंट निर्धारित नहीं</string>
+    <string name="insights_delta_more">+%1$s %2$s से अधिक</string>
+    <string name="insights_delta_less">%1$s %2$s से कम</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d पूरे दिन का इवेंट</item>
+        <item quantity="other">%d पूरे दिन के इवेंट</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s आपका सबसे व्यस्त दिन है (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s आपका सबसे व्यस्त दिन था (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s आपका सबसे हल्का दिन है (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s आपका सबसे हल्का दिन था (%2$s)</string>
+    <string name="insight_longest_free_future">सबसे लंबा खाली समय: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">सबसे लंबा खाली समय %1$s %2$s–%3$s (%4$s) था</string>
+    <string name="insight_weekend_load_clear_future">आपका सप्ताहांत खाली है</string>
+    <string name="insight_weekend_load_clear_past">आपका सप्ताहांत खाली था</string>
+    <string name="insight_weekend_load_light_future">सप्ताहांत में %1$s निर्धारित</string>
+    <string name="insight_weekend_load_light_past">सप्ताहांत में %1$s निर्धारित थे</string>
+    <string name="insight_weekend_load_busy_future">सप्ताहांत में %1$s निर्धारित</string>
+    <string name="insight_weekend_load_busy_past">सप्ताहांत में %1$s निर्धारित थे</string>
+    <string name="insight_back_to_back_future">%1$d लगातार मीटिंग्स</string>
+    <string name="insight_back_to_back_past">आपकी %1$d लगातार मीटिंग्स थीं</string>
+    <string name="insight_calendar_dominant_future">%1$s आपके निर्धारित समय का %2$d%% है</string>
+    <string name="insight_calendar_dominant_past">%1$s आपके निर्धारित समय का %2$d%% था</string>
+    <string name="insight_early_bounds_future">आपका शेड्यूल %1$d दिन 8 AM से पहले शुरू होता है</string>
+    <string name="insight_early_bounds_past">आपका शेड्यूल %1$d दिन 8 AM से पहले शुरू हुआ</string>
+    <string name="insight_late_bounds_future">%1$d दिन शाम 7 PM के बाद इवेंट हैं</string>
+    <string name="insight_late_bounds_past">%1$d दिन शाम 7 PM के बाद इवेंट रहे</string>
+    <string name="insight_meeting_free_days_future">आपके पास %1$d मीटिंग-मुक्त दिन हैं</string>
+    <string name="insight_meeting_free_days_past">आपके %1$d मीटिंग-मुक्त दिन थे</string>
+    <string name="insight_tomorrow_preview">कल: %1$s निर्धारित, %2$s पर शुरू</string>
+    <string name="insight_tomorrow_preview_no_start">कल: %1$s निर्धारित</string>
+    <string name="insight_heaviest_upcoming">%1$s आपका सबसे भारी आगामी दिन है (%2$s)</string>
+    <string name="insight_next_free_block">अगला खाली समय: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">कैलेंडर विभाजन: %1$s</string>
+    <string name="insights_cd_daily_chart">दैनिक वितरण: सबसे व्यस्त दिन %1$s है</string>
 
 </resources>

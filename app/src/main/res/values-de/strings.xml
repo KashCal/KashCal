@@ -650,6 +650,7 @@
     <string name="view_month_full">Monat (Voll)</string>
     <string name="view_three_days">3 Tage</string>
     <string name="view_year">Jahr</string>
+    <string name="view_insights">Statistiken</string>
 
     <string name="label_go_to_month">Zum Monat</string>
 
@@ -888,4 +889,45 @@
         <item quantity="one">, %1$d Mal</item>
         <item quantity="other">, %1$d Mal</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Statistiken</string>
+    <string name="insights_period_this_week">Woche</string>
+    <string name="insights_period_last_week">Letzte Woche</string>
+    <string name="insights_period_this_month">Monat</string>
+    <string name="insights_empty_state">Keine Termine diese Woche geplant</string>
+    <string name="insights_delta_more">+%1$s mehr als %2$s</string>
+    <string name="insights_delta_less">%1$s weniger als %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d ganztägiger Termin</item>
+        <item quantity="other">%d ganztägige Termine</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ist dein vollster Tag (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s war dein vollster Tag (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ist dein ruhigster Tag (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s war dein ruhigster Tag (%2$s)</string>
+    <string name="insight_longest_free_future">Längster freier Block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Längster freier Block war %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Dein Wochenende ist frei</string>
+    <string name="insight_weekend_load_clear_past">Dein Wochenende war frei</string>
+    <string name="insight_weekend_load_light_future">%1$s am Wochenende geplant</string>
+    <string name="insight_weekend_load_light_past">%1$s waren am Wochenende geplant</string>
+    <string name="insight_weekend_load_busy_future">%1$s am Wochenende geplant</string>
+    <string name="insight_weekend_load_busy_past">%1$s waren am Wochenende geplant</string>
+    <string name="insight_back_to_back_future">%1$d aufeinanderfolgende Termine</string>
+    <string name="insight_back_to_back_past">Du hattest %1$d aufeinanderfolgende Termine</string>
+    <string name="insight_calendar_dominant_future">%1$s macht %2$d%% deiner geplanten Zeit aus</string>
+    <string name="insight_calendar_dominant_past">%1$s machte %2$d%% deiner geplanten Zeit aus</string>
+    <string name="insight_early_bounds_future">Dein Zeitplan beginnt vor 8 Uhr an %1$d Tagen</string>
+    <string name="insight_early_bounds_past">Dein Zeitplan begann vor 8 Uhr an %1$d Tagen</string>
+    <string name="insight_late_bounds_future">Termine nach 19 Uhr an %1$d Tagen</string>
+    <string name="insight_late_bounds_past">Termine gingen über 19 Uhr an %1$d Tagen</string>
+    <string name="insight_meeting_free_days_future">Du hast %1$d terminfreie Tage</string>
+    <string name="insight_meeting_free_days_past">Du hattest %1$d terminfreie Tage</string>
+    <string name="insight_tomorrow_preview">Morgen: %1$s geplant, beginnt um %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Morgen: %1$s geplant</string>
+    <string name="insight_heaviest_upcoming">%1$s ist dein vollster kommender Tag (%2$s)</string>
+    <string name="insight_next_free_block">Nächster freier Block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Kalenderverteilung: %1$s</string>
+    <string name="insights_cd_daily_chart">Tagesverteilung: vollster Tag ist %1$s</string>
 </resources>

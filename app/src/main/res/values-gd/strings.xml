@@ -715,6 +715,7 @@
     <string name="view_month_full">Mìos (Sl\u00e0n)</string>
     <string name="view_three_days">3 Làithean</string>
     <string name="view_year">Bliadhna</string>
+    <string name="view_insights">Fiosrachaidhean</string>
 
     <string name="label_go_to_month">Rach gu mìos</string>
 
@@ -966,5 +967,48 @@
     <string name="channel_sync_progress_desc">A\' sealltainn adhartas fhad \'s a tha mìosachain gan sioncronachadh</string>
     <string name="channel_sync_status">Inbhe sioncronachaidh</string>
     <string name="channel_sync_status_desc">Brathan mu chrìochnachadh agus mearachdan sioncronachaidh</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Fiosrachaidhean</string>
+    <string name="insights_period_this_week">Seachdain</string>
+    <string name="insights_period_last_week">Seachd. sa chaidh</string>
+    <string name="insights_period_this_month">Mìos</string>
+    <string name="insights_empty_state">Chan eil tachartasan air an clàradh an t-seachdain seo</string>
+    <string name="insights_delta_more">+%1$s a bharrachd na %2$s</string>
+    <string name="insights_delta_less">%1$s nas lugha na %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d thachartas fad an latha</item>
+        <item quantity="two">%d thachartas fad an latha</item>
+        <item quantity="few">%d tachartasan fad an latha</item>
+        <item quantity="other">%d tachartas fad an latha</item>
+    </plurals>
+    <string name="insight_busiest_day_future">\'S e %1$s an l\u00e0 as trainge agad (%2$s)</string>
+    <string name="insight_busiest_day_past">B\' e %1$s an l\u00e0 as trainge a bh\' agad (%2$s)</string>
+    <string name="insight_lightest_day_future">\'S e %1$s an l\u00e0 as aotroime agad (%2$s)</string>
+    <string name="insight_lightest_day_past">B\' e %1$s an l\u00e0 as aotroime a bh\' agad (%2$s)</string>
+    <string name="insight_longest_free_future">Am bloca saor as fhaide: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">B\' e am bloca saor as fhaide %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Tha an deireadh-seachdain agad saor</string>
+    <string name="insight_weekend_load_clear_past">Bha an deireadh-seachdain agad saor</string>
+    <string name="insight_weekend_load_light_future">%1$s air an cl\u00e0radh air an deireadh-seachdain</string>
+    <string name="insight_weekend_load_light_past">Chaidh %1$s a chl\u00e0radh air an deireadh-seachdain</string>
+    <string name="insight_weekend_load_busy_future">%1$s air an cl\u00e0radh air an deireadh-seachdain</string>
+    <string name="insight_weekend_load_busy_past">Chaidh %1$s a chl\u00e0radh air an deireadh-seachdain</string>
+    <string name="insight_back_to_back_future">%1$d coinneamhan an d\u00e8idh a ch\u00e8ile</string>
+    <string name="insight_back_to_back_past">Bha %1$d coinneamhan an d\u00e8idh a ch\u00e8ile agad</string>
+    <string name="insight_calendar_dominant_future">\'S e %1$s %2$d%% den \u00f9ine cl\u00e0raichte agad</string>
+    <string name="insight_calendar_dominant_past">B\' e %1$s %2$d%% den \u00f9ine cl\u00e0raichte agad</string>
+    <string name="insight_early_bounds_future">Tha an cl\u00e0r agad a\' t\u00f2iseachadh ro 8:00 air %1$d l\u00e0ithean</string>
+    <string name="insight_early_bounds_past">Th\u00f2isich an cl\u00e0r agad ro 8:00 air %1$d l\u00e0ithean</string>
+    <string name="insight_late_bounds_future">Tachartasan an d\u00e8idh 19:00 air %1$d l\u00e0ithean</string>
+    <string name="insight_late_bounds_past">Chaidh tachartasan seachad air 19:00 air %1$d l\u00e0ithean</string>
+    <string name="insight_meeting_free_days_future">Tha %1$d l\u00e0ithean gun choinneamhan agad</string>
+    <string name="insight_meeting_free_days_past">Bha %1$d l\u00e0ithean gun choinneamhan agad</string>
+    <string name="insight_tomorrow_preview">A-m\u00e0ireach: %1$s air an cl\u00e0radh, a\' t\u00f2iseachadh aig %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">A-m\u00e0ireach: %1$s air an cl\u00e0radh</string>
+    <string name="insight_heaviest_upcoming">\'S e %1$s an l\u00e0 as truime a tha ri thighinn (%2$s)</string>
+    <string name="insight_next_free_block">An ath bhloca saor: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Sgaoileadh mh\u00ecosachain: %1$s</string>
+    <string name="insights_cd_daily_chart">Sgaoileadh l\u00e0itheil: \'s e an l\u00e0 as trainge %1$s</string>
 
 </resources>

@@ -648,6 +648,7 @@
     <string name="view_month_full">Buwan (Buong)</string>
     <string name="view_three_days">3 Araw</string>
     <string name="view_year">Taon</string>
+    <string name="view_insights">Mga Pananaw</string>
 
     <string name="label_go_to_month">Pumunta sa buwan</string>
 
@@ -885,4 +886,58 @@
     <string name="rrule_freq_never">Hindi kailanman</string>
     <string name="rrule_starting">%1$s nagsisimula %2$s%3$s</string>
     <string name="rrule_since">%1$s · mula %2$s</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Mga Pananaw</string>
+    <string name="insights_period_this_week">Linggo</string>
+    <string name="insights_period_last_week">Nakaraang linggo</string>
+    <string name="insights_period_this_month">Buwan</string>
+    <string name="insights_empty_state">Walang naka-iskedyul na kaganapan ngayong linggo</string>
+    <string name="insights_delta_more">+%1$s higit sa %2$s</string>
+    <string name="insights_delta_less">%1$s mas kaunti kaysa %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d buong-araw na kaganapan</item>
+        <item quantity="other">%d buong-araw na kaganapan</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s ang iyong pinaka-abalang araw (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ang iyong pinaka-abalang araw (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s ang iyong pinaka-magaang araw (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ang iyong pinaka-magaang araw (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Pinakamahabang libreng bloke: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Pinakamahabang libreng bloke ay %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Walang laman ang iyong katapusan ng linggo</string>
+    <string name="insight_weekend_load_clear_past">Walang laman ang iyong katapusan ng linggo</string>
+    <string name="insight_weekend_load_light_future">%1$s naka-iskedyul sa katapusan ng linggo</string>
+    <string name="insight_weekend_load_light_past">%1$s naka-iskedyul sa katapusan ng linggo</string>
+    <string name="insight_weekend_load_busy_future">%1$s naka-iskedyul sa katapusan ng linggo</string>
+    <string name="insight_weekend_load_busy_past">%1$s naka-iskedyul sa katapusan ng linggo</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d sunud-sunod na pagpupulong</string>
+    <string name="insight_back_to_back_past">Nagkaroon ka ng %1$d sunud-sunod na pagpupulong</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s ang %2$d%% ng iyong naka-iskedyul na oras</string>
+    <string name="insight_calendar_dominant_past">%1$s ang %2$d%% ng iyong naka-iskedyul na oras</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Nagsisimula ang iyong iskedyul bago mag-8 AM sa %1$d araw</string>
+    <string name="insight_early_bounds_past">Nagsimula ang iyong iskedyul bago mag-8 AM sa %1$d araw</string>
+    <string name="insight_late_bounds_future">Mga kaganapan lampas 7 PM sa %1$d araw</string>
+    <string name="insight_late_bounds_past">Mga kaganapan lumampas sa 7 PM sa %1$d araw</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Mayroon kang %1$d araw na walang pagpupulong</string>
+    <string name="insight_meeting_free_days_past">Nagkaroon ka ng %1$d araw na walang pagpupulong</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Bukas: %1$s naka-iskedyul, nagsisimula sa %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Bukas: %1$s naka-iskedyul</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s ang iyong pinaka-abalang paparating na araw (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Susunod na libreng bloke: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Breakdown ng kalendaryo: %1$s</string>
+    <string name="insights_cd_daily_chart">Pamamahagi araw-araw: pinaka-abalang araw ay %1$s</string>
 </resources>

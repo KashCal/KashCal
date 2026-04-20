@@ -1,16 +1,16 @@
 [versions]
-# Core - LATEST STABLE (Dec 2024)
-agp = "8.9.3"
+# Core - LATEST STABLE (Apr 2026)
+agp = "8.13.2"
 kotlin = "2.1.0"
 ksp = "2.1.0-1.0.29"
 
 # AndroidX
-coreKtx = "1.15.0"
+coreKtx = "1.18.0"
 lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.9.3"
+activityCompose = "1.13.0"
 
 # Compose
-composeBom = "2024.12.01"
+composeBom = "2026.03.01"
 
 # Room (2.8.x has kotlinx.serialization incompatibility with KSP - https://issuetracker.google.com/issues/478659001)
 room = "2.7.0"
@@ -23,10 +23,10 @@ collectionsImmutable = "0.4.0"
 
 # DI
 hilt = "2.53.1"
-hiltNavigationCompose = "1.2.0"
+hiltNavigationCompose = "1.3.0"
 
 # Material
-material = "1.12.0"
+material = "1.13.0"
 
 # JSON
 kotlinxSerializationJson = "1.7.3"
@@ -41,35 +41,35 @@ icaldav = "3.2.0"
 okhttp = "4.12.0"
 
 # DataStore & Security
-datastore = "1.2.0"
-securityCrypto = "1.1.0-alpha06"
+datastore = "1.2.1"
+securityCrypto = "1.1.0"
 
 # WorkManager
-workManager = "2.11.1"
-hiltWork = "1.2.0"
+workManager = "2.11.2"
+hiltWork = "1.3.0"
 
 # Glance (App Widgets)
 glance = "1.1.1"
 
 # Static Analysis
-detekt = "1.23.7"
+detekt = "1.23.8"
 
 # Code Coverage
-kover = "0.9.4"
+kover = "0.9.8"
 
 # Documentation
-dokka = "2.0.0"
+dokka = "2.2.0"
 
 # Testing
 junit = "4.13.2"
-junitExt = "1.2.1"
-espressoCore = "3.6.1"
-mockk = "1.13.12"
-turbine = "1.1.0"
+junitExt = "1.3.0"
+espressoCore = "3.7.0"
+mockk = "1.14.3"
+turbine = "1.2.0"
 coroutinesTest = "1.10.2"
 archCoreTesting = "2.2.0"
-robolectric = "4.14"
-androidxTestCore = "1.6.1"
+robolectric = "4.15.1"
+androidxTestCore = "1.7.0"
 
 [libraries]
 # AndroidX Core

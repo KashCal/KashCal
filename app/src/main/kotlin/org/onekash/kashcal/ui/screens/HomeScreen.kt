@@ -101,6 +101,9 @@ import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
 import org.onekash.kashcal.ui.components.weekview.WeekViewContent
+import org.onekash.kashcal.ui.screens.insights.InsightsScreen
+import org.onekash.kashcal.ui.screens.insights.InsightsViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import org.onekash.kashcal.ui.viewmodels.EditScope
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.viewmodels.DateFilter
@@ -200,6 +203,14 @@ fun HomeScreen(
     // Year view callbacks
     onEnsureDotsForYear: (Int) -> Unit = {},
 ) {
+    // Track the last non-INSIGHTS view for BackHandler navigation
+    var previousNonInsightsMode by remember { mutableStateOf(ViewMode.MONTH) }
+    LaunchedEffect(uiState.viewMode) {
+        if (uiState.viewMode != ViewMode.INSIGHTS) {
+            previousNonInsightsMode = uiState.viewMode
+        }
+    }
+
     // HorizontalPager for smooth month swiping (~100 years each direction)
     val initialPage = MonthPagerUtils.INITIAL_PAGE
     val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
@@ -425,6 +436,25 @@ fun HomeScreen(
                                 onFilterSelect = onSearchDateFilterChange,
                                 onCustomDateClick = onSearchShowDatePicker
                             )
+                        }
+                        uiState.viewMode == ViewMode.INSIGHTS -> {
+                            BackHandler { onViewSelect(previousNonInsightsMode) }
+
+                            val insightsVm: InsightsViewModel = hiltViewModel()
+                            LaunchedEffect(Unit) {
+                                insightsVm.resetToThisWeek()
+                            }
+                            if (drawerState != null) {
+                                LaunchedEffect(Unit) {
+                                    var wasOpen = false
+                                    snapshotFlow { drawerState.isClosed }
+                                        .collect { closed ->
+                                            if (wasOpen && closed) insightsVm.recompute()
+                                            wasOpen = !closed
+                                        }
+                                }
+                            }
+                            InsightsScreen(viewModel = insightsVm)
                         }
                         uiState.viewMode == ViewMode.YEAR -> {
                             YearViewContent(
@@ -1538,7 +1568,7 @@ private fun ViewHeaderRow(
                 val weekStart = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
                 org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYearWithWeek(weekStart, firstDayOfWeek)
             }
-            ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR -> ""
+            ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> ""
         }
     }
 
@@ -1574,7 +1604,7 @@ private fun ViewHeaderRow(
                 modifier = Modifier.fillMaxWidth().padding(8.dp)
             )
         }
-        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR -> {} // Month uses MonthNavHeader, Year has own header
+        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {} // Month uses MonthNavHeader, Year/Insights have own header
     }
 }
 

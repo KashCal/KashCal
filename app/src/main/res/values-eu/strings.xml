@@ -646,6 +646,7 @@
     <string name="view_month_full">Hilabetea (osoa)</string>
     <string name="view_three_days">3 egun</string>
     <string name="view_year">Urtea</string>
+    <string name="view_insights">Ikuspegiak</string>
 
     <string name="label_go_to_month">Hilabetera joan</string>
 
@@ -881,5 +882,46 @@
     <string name="channel_sync_progress_desc">Egutegiak sinkronizatzen diren bitartean aurrerapena erakusten du</string>
     <string name="channel_sync_status">Sinkronizazio egoera</string>
     <string name="channel_sync_status_desc">Sinkronizazioaren osotasunari eta akatsari buruzko jakinarazpenak</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Ikuspegiak</string>
+    <string name="insights_period_this_week">Astea</string>
+    <string name="insights_period_last_week">Aurreko astea</string>
+    <string name="insights_period_this_month">Hilabetea</string>
+    <string name="insights_empty_state">Ez dago gertaerarik programatuta aste honetan</string>
+    <string name="insights_delta_more">+%1$s gehiago %2$s baino</string>
+    <string name="insights_delta_less">%1$s gutxiago %2$s baino</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">Egun osoko gertaera %d</item>
+        <item quantity="other">Egun osoko %d gertaera</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s da zure egunik okupatuena (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s izan zen zure egunik okupatuena (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s da zure egunik arinena (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s izan zen zure egunik arinena (%2$s)</string>
+    <string name="insight_longest_free_future">Bloke libre luzeena: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Bloke libre luzeena izan zen %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Zure asteburua libre dago</string>
+    <string name="insight_weekend_load_clear_past">Zure asteburua libre egon zen</string>
+    <string name="insight_weekend_load_light_future">%1$s programatuta asteburuan</string>
+    <string name="insight_weekend_load_light_past">%1$s programatu ziren asteburuan</string>
+    <string name="insight_weekend_load_busy_future">%1$s programatuta asteburuan</string>
+    <string name="insight_weekend_load_busy_past">%1$s programatu ziren asteburuan</string>
+    <string name="insight_back_to_back_future">%1$d bilera jarraian</string>
+    <string name="insight_back_to_back_past">%1$d bilera jarraian izan zenituen</string>
+    <string name="insight_calendar_dominant_future">%1$s da zure programatutako denboraren %2$d%%</string>
+    <string name="insight_calendar_dominant_past">%1$s izan zen zure programatutako denboraren %2$d%%</string>
+    <string name="insight_early_bounds_future">Zure ordutegia 8:00 baino lehen hasten da %1$d egunetan</string>
+    <string name="insight_early_bounds_past">Zure ordutegia 8:00 baino lehen hasi zen %1$d egunetan</string>
+    <string name="insight_late_bounds_future">Gertaerak 19:00 ondoren %1$d egunetan</string>
+    <string name="insight_late_bounds_past">Gertaerak 19:00 ondoren izan ziren %1$d egunetan</string>
+    <string name="insight_meeting_free_days_future">%1$d egun bilera gabe dituzu</string>
+    <string name="insight_meeting_free_days_past">%1$d egun bilera gabe izan zenituen</string>
+    <string name="insight_tomorrow_preview">Bihar: %1$s programatuta, %2$s-etan hasten da</string>
+    <string name="insight_tomorrow_preview_no_start">Bihar: %1$s programatuta</string>
+    <string name="insight_heaviest_upcoming">%1$s da zure egun kargatuena (%2$s)</string>
+    <string name="insight_next_free_block">Hurrengo bloke librea: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Egutegi banaketa: %1$s</string>
+    <string name="insights_cd_daily_chart">Eguneroko banaketa: egun okupatuena %1$s da</string>
 
 </resources>

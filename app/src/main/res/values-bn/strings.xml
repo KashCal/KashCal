@@ -646,6 +646,7 @@
     <string name="view_month_full">মাস (সম্পূর্ণ)</string>
     <string name="view_three_days">৩ দিন</string>
     <string name="view_year">বছর</string>
+    <string name="view_insights">ইনসাইটস</string>
 
     <string name="label_go_to_month">মাসে যান</string>
 
@@ -887,5 +888,46 @@
         <item quantity="one">, %1$d বার</item>
         <item quantity="other">, %1$d বার</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">ইনসাইটস</string>
+    <string name="insights_period_this_week">সপ্তাহ</string>
+    <string name="insights_period_last_week">গত সপ্তাহ</string>
+    <string name="insights_period_this_month">মাস</string>
+    <string name="insights_empty_state">এই সপ্তাহে কোনো ইভেন্ট নির্ধারিত নেই</string>
+    <string name="insights_delta_more">+%1$s %2$s এর চেয়ে বেশি</string>
+    <string name="insights_delta_less">%1$s %2$s এর চেয়ে কম</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d সারাদিনের ইভেন্ট</item>
+        <item quantity="other">%d সারাদিনের ইভেন্ট</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s আপনার ব্যস্ততম দিন (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s আপনার ব্যস্ততম দিন ছিল (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s আপনার সবচেয়ে হালকা দিন (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s আপনার সবচেয়ে হালকা দিন ছিল (%2$s)</string>
+    <string name="insight_longest_free_future">দীর্ঘতম ফাঁকা সময়: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">দীর্ঘতম ফাঁকা সময় ছিল %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">আপনার সাপ্তাহিক ছুটি ফাঁকা</string>
+    <string name="insight_weekend_load_clear_past">আপনার সাপ্তাহিক ছুটি ফাঁকা ছিল</string>
+    <string name="insight_weekend_load_light_future">সাপ্তাহিক ছুটিতে %1$s নির্ধারিত</string>
+    <string name="insight_weekend_load_light_past">সাপ্তাহিক ছুটিতে %1$s নির্ধারিত ছিল</string>
+    <string name="insight_weekend_load_busy_future">সাপ্তাহিক ছুটিতে %1$s নির্ধারিত</string>
+    <string name="insight_weekend_load_busy_past">সাপ্তাহিক ছুটিতে %1$s নির্ধারিত ছিল</string>
+    <string name="insight_back_to_back_future">%1$d পরপর মিটিং</string>
+    <string name="insight_back_to_back_past">আপনার %1$d পরপর মিটিং ছিল</string>
+    <string name="insight_calendar_dominant_future">%1$s আপনার নির্ধারিত সময়ের %2$d%%</string>
+    <string name="insight_calendar_dominant_past">%1$s আপনার নির্ধারিত সময়ের %2$d%% ছিল</string>
+    <string name="insight_early_bounds_future">আপনার সূচি %1$d দিন সকাল 8 AM-এর আগে শুরু হয়</string>
+    <string name="insight_early_bounds_past">আপনার সূচি %1$d দিন সকাল 8 AM-এর আগে শুরু হয়েছিল</string>
+    <string name="insight_late_bounds_future">%1$d দিন সন্ধ্যা 7 PM-এর পরে ইভেন্ট আছে</string>
+    <string name="insight_late_bounds_past">%1$d দিন সন্ধ্যা 7 PM-এর পরে ইভেন্ট ছিল</string>
+    <string name="insight_meeting_free_days_future">আপনার %1$d মিটিং-মুক্ত দিন আছে</string>
+    <string name="insight_meeting_free_days_past">আপনার %1$d মিটিং-মুক্ত দিন ছিল</string>
+    <string name="insight_tomorrow_preview">আগামীকাল: %1$s নির্ধারিত, শুরু %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">আগামীকাল: %1$s নির্ধারিত</string>
+    <string name="insight_heaviest_upcoming">%1$s আপনার সবচেয়ে ব্যস্ত আসন্ন দিন (%2$s)</string>
+    <string name="insight_next_free_block">পরবর্তী ফাঁকা সময়: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">ক্যালেন্ডার বিভাজন: %1$s</string>
+    <string name="insights_cd_daily_chart">দৈনিক বিতরণ: ব্যস্ততম দিন %1$s</string>
 
 </resources>

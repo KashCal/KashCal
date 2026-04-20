@@ -397,7 +397,9 @@ enum class ViewMode(val key: String) {
     /** Full-height month grid with event snippets */
     MONTH_FULL("month_full"),
     /** 12-month year overview grid */
-    YEAR("year");
+    YEAR("year"),
+    /** Premium insights analytics screen (drawer-only, not persisted as default) */
+    INSIGHTS("insights");
 
     /** True for views that render a scrollable time grid (THREE_DAYS, WEEK). */
     val isTimeGrid: Boolean get() = this == THREE_DAYS || this == WEEK

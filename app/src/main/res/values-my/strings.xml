@@ -620,6 +620,7 @@
     <string name="view_month_full">လ (အပြည့်)</string>
     <string name="view_three_days">၃ ရက်</string>
     <string name="view_year">နှစ်</string>
+    <string name="view_insights">ထိုးထွင်းသိမြင်မှုများ</string>
 
     <string name="label_go_to_month">လသို့ သွားရန်</string>
 
@@ -849,4 +850,57 @@
     <string name="rrule_freq_never">ဘယ်တော့မှ</string>
     <string name="rrule_starting">%1$s %2$s စတင်သည်%3$s</string>
     <string name="rrule_since">%1$s · %2$s ကတည်းက</string>
+
+    <!-- Insights -->
+    <string name="insights_title">ထိုးထွင်းသိမြင်မှုများ</string>
+    <string name="insights_period_this_week">အပတ်</string>
+    <string name="insights_period_last_week">ယခင်အပတ်</string>
+    <string name="insights_period_this_month">လ</string>
+    <string name="insights_empty_state">ဤအပတ်အတွက် ပွဲစဉ်များ စီစဉ်ထားခြင်း မရှိပါ</string>
+    <string name="insights_delta_more">+%1$s %2$s ထက် ပိုများသည်</string>
+    <string name="insights_delta_less">%1$s %2$s ထက် နည်းသည်</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">တစ်နေ့တာ ပွဲစဉ် %d ခု</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s သည် သင့်အအလုပ်များဆုံးနေ့ (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s သည် သင့်အပေါ့ပါးဆုံးနေ့ (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">အရှည်ဆုံး အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">အရှည်ဆုံး အလွတ်အပိုင်းမှာ %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ပါသည်</string>
+    <string name="insight_weekend_load_clear_past">သင့်စနေ/တနင်္ဂနွေ လွတ်လပ်ခဲ့ပါသည်</string>
+    <string name="insight_weekend_load_light_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
+    <string name="insight_weekend_load_light_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
+    <string name="insight_weekend_load_busy_future">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားသည်</string>
+    <string name="insight_weekend_load_busy_past">စနေ/တနင်္ဂနွေတွင် %1$s စီစဉ်ထားခဲ့သည်</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">ဆက်တိုက် အစည်းအဝေး %1$d ခု</string>
+    <string name="insight_back_to_back_past">သင့်တွင် ဆက်တိုက် အစည်းအဝေး %1$d ခု ရှိခဲ့သည်</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်သည်</string>
+    <string name="insight_calendar_dominant_past">%1$s သည် သင့်စီစဉ်ထားသောအချိန်၏ %2$d%% ဖြစ်ခဲ့သည်</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်သည်</string>
+    <string name="insight_early_bounds_past">သင့်အစီအစဉ် မနက် ၈ နာရီ မတိုင်မီ %1$d ရက် စတင်ခဲ့သည်</string>
+    <string name="insight_late_bounds_future">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
+    <string name="insight_late_bounds_past">ည ၇ နာရီ ကျော် ပွဲစဉ်များ %1$d ရက်</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိသည်</string>
+    <string name="insight_meeting_free_days_past">သင့်တွင် အစည်းအဝေးကင်းသော %1$d ရက် ရှိခဲ့သည်</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">မနက်ဖြန်: %1$s စီစဉ်ထားပြီး %2$s တွင် စတင်သည်</string>
+    <string name="insight_tomorrow_preview_no_start">မနက်ဖြန်: %1$s စီစဉ်ထားသည်</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s သည် သင့်လာမည့် အလုပ်အများဆုံးနေ့ (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">နောက် အလွတ်အပိုင်း: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">ပြက္ခဒိန် ခွဲခြမ်းစိတ်ဖြာမှု: %1$s</string>
+    <string name="insights_cd_daily_chart">နေ့စဉ် ဖြန့်ဝေမှု: အအလုပ်များဆုံးနေ့မှာ %1$s</string>
 </resources>

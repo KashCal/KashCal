@@ -650,6 +650,7 @@
     <string name="view_month_full">Måned (Fuld)</string>
     <string name="view_three_days">3 dage</string>
     <string name="view_year">År</string>
+    <string name="view_insights">Indsigt</string>
 
     <string name="label_go_to_month">Gå til måned</string>
 
@@ -888,4 +889,45 @@
         <item quantity="one">, %1$d gang</item>
         <item quantity="other">, %1$d gange</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Indsigt</string>
+    <string name="insights_period_this_week">Uge</string>
+    <string name="insights_period_last_week">Sidste uge</string>
+    <string name="insights_period_this_month">Måned</string>
+    <string name="insights_empty_state">Ingen begivenheder planlagt denne uge</string>
+    <string name="insights_delta_more">+%1$s mere end %2$s</string>
+    <string name="insights_delta_less">%1$s mindre end %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d heldagsbegivenhed</item>
+        <item quantity="other">%d heldagsbegivenheder</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s er din travleste dag (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s var din travleste dag (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s er din roligste dag (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s var din roligste dag (%2$s)</string>
+    <string name="insight_longest_free_future">L\u00e6ngste ledige blok: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">L\u00e6ngste ledige blok var %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Din weekend er fri</string>
+    <string name="insight_weekend_load_clear_past">Din weekend var fri</string>
+    <string name="insight_weekend_load_light_future">%1$s planlagt i weekenden</string>
+    <string name="insight_weekend_load_light_past">%1$s var planlagt i weekenden</string>
+    <string name="insight_weekend_load_busy_future">%1$s planlagt i weekenden</string>
+    <string name="insight_weekend_load_busy_past">%1$s var planlagt i weekenden</string>
+    <string name="insight_back_to_back_future">%1$d m\u00f8der i tr\u00e6k</string>
+    <string name="insight_back_to_back_past">Du havde %1$d m\u00f8der i tr\u00e6k</string>
+    <string name="insight_calendar_dominant_future">%1$s er %2$d%% af din planlagte tid</string>
+    <string name="insight_calendar_dominant_past">%1$s var %2$d%% af din planlagte tid</string>
+    <string name="insight_early_bounds_future">Din tidsplan starter f\u00f8r kl. 8 p\u00e5 %1$d dage</string>
+    <string name="insight_early_bounds_past">Din tidsplan startede f\u00f8r kl. 8 p\u00e5 %1$d dage</string>
+    <string name="insight_late_bounds_future">Begivenheder efter kl. 19 p\u00e5 %1$d dage</string>
+    <string name="insight_late_bounds_past">Begivenheder gik forbi kl. 19 p\u00e5 %1$d dage</string>
+    <string name="insight_meeting_free_days_future">Du har %1$d m\u00f8defrie dage</string>
+    <string name="insight_meeting_free_days_past">Du havde %1$d m\u00f8defrie dage</string>
+    <string name="insight_tomorrow_preview">I morgen: %1$s planlagt, starter kl. %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">I morgen: %1$s planlagt</string>
+    <string name="insight_heaviest_upcoming">%1$s er din travleste kommende dag (%2$s)</string>
+    <string name="insight_next_free_block">N\u00e6ste ledige blok: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Kalenderfordeling: %1$s</string>
+    <string name="insights_cd_daily_chart">Daglig fordeling: travleste dag er %1$s</string>
 </resources>

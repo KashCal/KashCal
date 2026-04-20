@@ -676,6 +676,7 @@
     <string name="view_month_full">Mēnesis (pilns)</string>
     <string name="view_three_days">3 dienas</string>
     <string name="view_year">Gads</string>
+    <string name="view_insights">Statistika</string>
 
     <string name="label_go_to_month">Pāriet uz mēnesi</string>
 
@@ -879,5 +880,47 @@
         <item quantity="one">, %1$d reizi</item>
         <item quantity="other">, %1$d reizes</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Statistika</string>
+    <string name="insights_period_this_week">Nedēļa</string>
+    <string name="insights_period_last_week">Iepr. nedēļa</string>
+    <string name="insights_period_this_month">Mēnesis</string>
+    <string name="insights_empty_state">Šonedēļ nav ieplānotu notikumu</string>
+    <string name="insights_delta_more">+%1$s vairāk nekā par %2$s</string>
+    <string name="insights_delta_less">%1$s mazāk nekā par %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="zero">%d visas dienas notikumu</item>
+        <item quantity="one">%d visas dienas notikums</item>
+        <item quantity="other">%d visas dienas notikumi</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ir aizņemtākā diena (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s bija aizņemtākā diena (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ir brīvākā diena (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s bija brīvākā diena (%2$s)</string>
+    <string name="insight_longest_free_future">Garākais brīvais bloks: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Garākais brīvais bloks bija %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Nedēļas nogale ir brīva</string>
+    <string name="insight_weekend_load_clear_past">Nedēļas nogale bija brīva</string>
+    <string name="insight_weekend_load_light_future">%1$s ieplānoti nedēļas nogalē</string>
+    <string name="insight_weekend_load_light_past">%1$s bija ieplānoti nedēļas nogalē</string>
+    <string name="insight_weekend_load_busy_future">%1$s ieplānoti nedēļas nogalē</string>
+    <string name="insight_weekend_load_busy_past">%1$s bija ieplānoti nedēļas nogalē</string>
+    <string name="insight_back_to_back_future">%1$d tikšanās pēc kārtas</string>
+    <string name="insight_back_to_back_past">Bija %1$d tikšanās pēc kārtas</string>
+    <string name="insight_calendar_dominant_future">%1$s ir %2$d%% no ieplānotā laika</string>
+    <string name="insight_calendar_dominant_past">%1$s bija %2$d%% no ieplānotā laika</string>
+    <string name="insight_early_bounds_future">Grafiks sākas pirms 8:00 %1$d dienās</string>
+    <string name="insight_early_bounds_past">Grafiks sākās pirms 8:00 %1$d dienās</string>
+    <string name="insight_late_bounds_future">Notikumi pēc 19:00 %1$d dienās</string>
+    <string name="insight_late_bounds_past">Notikumi turpinājās pēc 19:00 %1$d dienās</string>
+    <string name="insight_meeting_free_days_future">%1$d dienas bez tikšanām</string>
+    <string name="insight_meeting_free_days_past">Bija %1$d dienas bez tikšanām</string>
+    <string name="insight_tomorrow_preview">Rīt: ieplānots %1$s, sākas %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Rīt: ieplānots %1$s</string>
+    <string name="insight_heaviest_upcoming">%1$s ir aizņemtākā gaidāmā diena (%2$s)</string>
+    <string name="insight_next_free_block">Nākamais brīvais bloks: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Sadalījums pa kalendāriem: %1$s</string>
+    <string name="insights_cd_daily_chart">Sadalījums pa dienām: aizņemtākā diena — %1$s</string>
 
 </resources>

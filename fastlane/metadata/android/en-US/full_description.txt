@@ -1,20 +1,18 @@
-All your calendars. One app.
-
-Your calendars are everywhere. Family stuff on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on device calendar. KashCal brings them together on your Android.
-
-Your schedule, together
-
-• Quick Add: type "Coffee with Kash tomorrow at 3pm at The Roastery" and the event is created. Handles dates, times, recurrence, and locations.
-
-• 67 languages supported.
+Your calendars are everywhere. Family on iCloud. Holidays from some website. Birthdays buried in your contacts. Work on the phone calendar. KashCal pulls them into one app.
 
 • iCloud: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
 
-• CalDAV: Nextcloud, Radicale, FastMail, and more. Native sync, no middleware.
+• Quick Add: type "Coffee with Kash tomorrow 3pm" and the event is created. Handles dates, times, recurrence, and locations.
+
+• Insights: See where your time goes. Busiest days, back-to-back streaks, free blocks, and more. All computed on-device.
+
+• Widgets: Check your schedule without opening the app. Agenda, date, week, and month.
+
+• CalDAV: Nextcloud, Radicale, Fastmail, Baikal, and others. Native sync, no middleware.
 
 • Device calendar: See events from your phone's built-in calendar alongside everything else.
 
-• Holidays & schedules: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
+• ICS subscriptions: Subscribe to any ICS calendar URL. Public holidays, school terms, sports seasons.
 
 • Birthdays & anniversaries: Pulls from your contacts automatically.
 
@@ -22,13 +20,9 @@ Your schedule, together
 
 Private by default
 
-No analytics. No telemetry. No KashCal account. Your data stays on your device unless you set up sync yourself.
+No analytics. No telemetry. No KashCal account. Your data stays on your device.
 
-• Encrypted credentials (AES-256-GCM)
+• Encrypted credentials
 • Fort Knox Mode: other apps can't read your events
-• HTTPS only, no WebViews, minimal permissions
-• Open source: fully auditable
 
-Website: https://kashcal.onekash.org
-
-Source code: https://github.com/KashCal/KashCal
+Free as in speech. Also free as in beer.

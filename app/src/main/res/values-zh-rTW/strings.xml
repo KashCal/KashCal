@@ -620,6 +620,7 @@
     <string name="view_month_full">月（完整）</string>
     <string name="view_three_days">3天</string>
     <string name="view_year">年</string>
+    <string name="view_insights">洞察</string>
 
     <string name="label_go_to_month">前往月份</string>
 
@@ -849,4 +850,44 @@
     <string name="rrule_freq_never">從不</string>
     <string name="rrule_starting">%1$s從%2$s開始%3$s</string>
     <string name="rrule_since">%1$s · 自%2$s起</string>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">洞察</string>
+    <string name="insights_period_this_week">週</string>
+    <string name="insights_period_last_week">上週</string>
+    <string name="insights_period_this_month">月</string>
+    <string name="insights_empty_state">本週沒有事件</string>
+    <string name="insights_delta_more">比%2$s多 +%1$s</string>
+    <string name="insights_delta_less">比%2$s少 %1$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">%d個整天事件</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s是你最忙碌的一天（%2$s）</string>
+    <string name="insight_busiest_day_past">%1$s是你最忙碌的一天（%2$s）</string>
+    <string name="insight_lightest_day_future">%1$s是你最空閒的一天（%2$s）</string>
+    <string name="insight_lightest_day_past">%1$s是你最空閒的一天（%2$s）</string>
+    <string name="insight_longest_free_future">最長空閒時段：%1$s %2$s–%3$s（%4$s）</string>
+    <string name="insight_longest_free_past">最長空閒時段為 %1$s %2$s–%3$s（%4$s）</string>
+    <string name="insight_weekend_load_clear_future">你的週末是空閒的</string>
+    <string name="insight_weekend_load_clear_past">你的週末是空閒的</string>
+    <string name="insight_weekend_load_light_future">週末有%1$s的行程</string>
+    <string name="insight_weekend_load_light_past">週末有%1$s的行程</string>
+    <string name="insight_weekend_load_busy_future">週末有%1$s的行程</string>
+    <string name="insight_weekend_load_busy_past">週末有%1$s的行程</string>
+    <string name="insight_back_to_back_future">%1$d個連續會議</string>
+    <string name="insight_back_to_back_past">有%1$d個連續會議</string>
+    <string name="insight_calendar_dominant_future">%1$s佔你行程時間的%2$d%%</string>
+    <string name="insight_calendar_dominant_past">%1$s佔了你行程時間的%2$d%%</string>
+    <string name="insight_early_bounds_future">%1$d天的行程在8:00前開始</string>
+    <string name="insight_early_bounds_past">%1$d天的行程在8:00前開始了</string>
+    <string name="insight_late_bounds_future">%1$d天有19:00後的事件</string>
+    <string name="insight_late_bounds_past">%1$d天有19:00後的事件</string>
+    <string name="insight_meeting_free_days_future">有%1$d天沒有會議</string>
+    <string name="insight_meeting_free_days_past">有%1$d天沒有會議</string>
+    <string name="insight_tomorrow_preview">明天：%1$s的行程，%2$s開始</string>
+    <string name="insight_tomorrow_preview_no_start">明天：%1$s的行程</string>
+    <string name="insight_heaviest_upcoming">%1$s是你最忙碌的一天（%2$s）</string>
+    <string name="insight_next_free_block">下一個空閒時段：%1$s %2$s–%3$s（%4$s）</string>
+    <string name="insights_cd_calendar_bar">行事曆分佈：%1$s</string>
+    <string name="insights_cd_daily_chart">每日分佈：最忙碌的一天是%1$s</string>
 </resources>

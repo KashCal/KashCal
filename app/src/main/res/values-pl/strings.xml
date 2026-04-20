@@ -707,6 +707,7 @@
     <string name="view_month_full">Miesiąc (pełny)</string>
     <string name="view_three_days">3 dni</string>
     <string name="view_year">Rok</string>
+    <string name="view_insights">Statystyki</string>
 
     <string name="label_go_to_month">Przejdź do miesiąca</string>
 
@@ -961,4 +962,47 @@
         <item quantity="many">, %1$d razy</item>
         <item quantity="other">, %1$d razy</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Statystyki</string>
+    <string name="insights_period_this_week">Tydzień</string>
+    <string name="insights_period_last_week">Ost. tydzień</string>
+    <string name="insights_period_this_month">Miesiąc</string>
+    <string name="insights_empty_state">Brak zaplanowanych wydarzeń w tym tygodniu</string>
+    <string name="insights_delta_more">+%1$s więcej niż %2$s</string>
+    <string name="insights_delta_less">%1$s mniej niż %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d całodzienne wydarzenie</item>
+        <item quantity="few">%d całodzienne wydarzenia</item>
+        <item quantity="many">%d całodziennych wydarzeń</item>
+        <item quantity="other">%d całodziennego wydarzenia</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s to twój najbardziej zajęty dzień (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s był twoim najbardziej zajętym dniem (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s to twój najlżejszy dzień (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s był twoim najlżejszym dniem (%2$s)</string>
+    <string name="insight_longest_free_future">Najdłuższy wolny blok: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Najdłuższy wolny blok to %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Twój weekend jest wolny</string>
+    <string name="insight_weekend_load_clear_past">Twój weekend był wolny</string>
+    <string name="insight_weekend_load_light_future">%1$s zaplanowane na weekend</string>
+    <string name="insight_weekend_load_light_past">%1$s było zaplanowane na weekend</string>
+    <string name="insight_weekend_load_busy_future">%1$s zaplanowane na weekend</string>
+    <string name="insight_weekend_load_busy_past">%1$s było zaplanowane na weekend</string>
+    <string name="insight_back_to_back_future">%1$d spotkań pod rząd</string>
+    <string name="insight_back_to_back_past">Miałeś %1$d spotkań pod rząd</string>
+    <string name="insight_calendar_dominant_future">%1$s to %2$d%% twojego zaplanowanego czasu</string>
+    <string name="insight_calendar_dominant_past">%1$s stanowiło %2$d%% twojego zaplanowanego czasu</string>
+    <string name="insight_early_bounds_future">Twój harmonogram zaczyna się przed 8:00 w %1$d dni</string>
+    <string name="insight_early_bounds_past">Twój harmonogram zaczynał się przed 8:00 w %1$d dni</string>
+    <string name="insight_late_bounds_future">Wydarzenia po 19:00 w %1$d dni</string>
+    <string name="insight_late_bounds_past">Wydarzenia trwały po 19:00 w %1$d dni</string>
+    <string name="insight_meeting_free_days_future">Masz %1$d dni wolnych od spotkań</string>
+    <string name="insight_meeting_free_days_past">Miałeś %1$d dni wolnych od spotkań</string>
+    <string name="insight_tomorrow_preview">Jutro: %1$s zaplanowane, początek o %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Jutro: %1$s zaplanowane</string>
+    <string name="insight_heaviest_upcoming">%1$s to twój najbardziej obciążony nadchodzący dzień (%2$s)</string>
+    <string name="insight_next_free_block">Następny wolny blok: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Podział kalendarzy: %1$s</string>
+    <string name="insights_cd_daily_chart">Rozkład dzienny: najbardziej zajęty dzień to %1$s</string>
 </resources>

@@ -675,6 +675,7 @@
     <string name="view_month_full">Lună (completă)</string>
     <string name="view_three_days">3 zile</string>
     <string name="view_year">An</string>
+    <string name="view_insights">Statistici</string>
 
     <string name="label_go_to_month">Mergi la lună</string>
 
@@ -921,5 +922,60 @@
         <item quantity="few">, %1$d de ori</item>
         <item quantity="other">, %1$d de ori</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">Statistici</string>
+    <string name="insights_period_this_week">Săptămâna</string>
+    <string name="insights_period_last_week">Săpt. trecută</string>
+    <string name="insights_period_this_month">Luna</string>
+    <string name="insights_empty_state">Niciun eveniment programat săptămâna aceasta</string>
+    <string name="insights_delta_more">+%1$s mai mult decât %2$s</string>
+    <string name="insights_delta_less">%1$s mai puțin decât %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d eveniment pe toată ziua</item>
+        <item quantity="few">%d evenimente pe toată ziua</item>
+        <item quantity="other">%d de evenimente pe toată ziua</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s este cea mai aglomerată zi (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s a fost cea mai aglomerată zi (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s este cea mai ușoară zi (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s a fost cea mai ușoară zi (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Cel mai lung interval liber: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Cel mai lung interval liber a fost %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Weekendul tău este liber</string>
+    <string name="insight_weekend_load_clear_past">Weekendul tău a fost liber</string>
+    <string name="insight_weekend_load_light_future">%1$s programate în weekend</string>
+    <string name="insight_weekend_load_light_past">%1$s au fost programate în weekend</string>
+    <string name="insight_weekend_load_busy_future">%1$s programate în weekend</string>
+    <string name="insight_weekend_load_busy_past">%1$s au fost programate în weekend</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d întâlniri consecutive</string>
+    <string name="insight_back_to_back_past">Ai avut %1$d întâlniri consecutive</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s reprezintă %2$d%% din timpul tău programat</string>
+    <string name="insight_calendar_dominant_past">%1$s a reprezentat %2$d%% din timpul tău programat</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Programul tău începe înainte de 8:00 în %1$d zile</string>
+    <string name="insight_early_bounds_past">Programul tău a început înainte de 8:00 în %1$d zile</string>
+    <string name="insight_late_bounds_future">Evenimente după 19:00 în %1$d zile</string>
+    <string name="insight_late_bounds_past">Evenimente au fost după 19:00 în %1$d zile</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Ai %1$d zile fără întâlniri</string>
+    <string name="insight_meeting_free_days_past">Ai avut %1$d zile fără întâlniri</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Mâine: %1$s programate, începe la %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Mâine: %1$s programate</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s este cea mai aglomerată zi viitoare (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Următorul interval liber: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Distribuția calendarelor: %1$s</string>
+    <string name="insights_cd_daily_chart">Distribuția zilnică: cea mai aglomerată zi este %1$s</string>
 
 </resources>

@@ -78,6 +78,24 @@ class PullStrategy @Inject constructor(
         internal fun hasValidTimestamps(event: Event): Boolean =
             event.endTs >= event.startTs
 
+        /**
+         * CalDAV uses one etag per .ics resource. When any VEVENT in a recurring
+         * series changes, the etag changes for ALL of them. This comparison detects
+         * VEVENTs whose content is unchanged — we still upsert (new etag) but skip
+         * the UI notification.
+         */
+        internal fun hasContentChanged(existing: Event, incoming: Event): Boolean =
+            stripSyncMetadata(existing) != stripSyncMetadata(incoming)
+
+        private fun stripSyncMetadata(e: Event): Event = e.copy(
+            id = 0, etag = null, syncStatus = SyncStatus.SYNCED,
+            caldavUrl = null, rawIcal = null, dtstamp = 0,
+            importId = null, originalEventId = null, originalInstanceTime = null,
+            originalSyncId = null, calendarId = 0, uid = "",
+            createdAt = 0, updatedAt = 0, localModifiedAt = null,
+            serverModifiedAt = null, lastSyncError = null, syncRetryCount = 0
+        )
+
         // Sync window: 1 year back, unlimited future (far-future date for CalDAV spec compliance)
         private const val PAST_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
         private const val FUTURE_END_MS = 4102444800000L  // Jan 1, 2100 UTC
@@ -976,6 +994,12 @@ class PullStrategy @Inject constructor(
 
             uidToMasterEvent[meta.parsed.uid] = savedEvent
 
+            // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
+            if (existingEvent != null && !hasContentChanged(existingEvent, savedEvent)) {
+                Log.d(TAG, "Etag-only update for: ${savedEvent.title}")
+                continue
+            }
+
             // Track change for UI notification
             val changeType = if (existingEvent == null) ChangeType.NEW else ChangeType.MODIFIED
             if (existingEvent == null) {
@@ -1123,6 +1147,12 @@ class PullStrategy @Inject constructor(
                     "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp})")
                 sessionBuilder?.incrementSkipAlreadySynced()
                 sessionBuilder?.addWarning("Already-synced exception skipped at ${filenameOf(meta.caldavUrl)}")
+                continue
+            }
+
+            // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
+            if (existingException != null && !hasContentChanged(existingException, savedExceptionEvent)) {
+                Log.d(TAG, "Etag-only update for exception: ${savedExceptionEvent.title}")
                 continue
             }
 

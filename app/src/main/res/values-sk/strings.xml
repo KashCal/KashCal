@@ -679,6 +679,7 @@
     <string name="view_month_full">Mesiac (celý)</string>
     <string name="view_three_days">3 dni</string>
     <string name="view_year">Rok</string>
+    <string name="view_insights">Prehľady</string>
 
     <string name="label_go_to_month">Prejsť na mesiac</string>
 
@@ -930,4 +931,47 @@
         <item quantity="many">, %1$d krát</item>
         <item quantity="other">, %1$d krát</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">Prehľady</string>
+    <string name="insights_period_this_week">Týždeň</string>
+    <string name="insights_period_last_week">Min. týždeň</string>
+    <string name="insights_period_this_month">Mesiac</string>
+    <string name="insights_empty_state">Tento týždeň nie sú naplánované žiadne udalosti</string>
+    <string name="insights_delta_more">+%1$s viac ako %2$s</string>
+    <string name="insights_delta_less">%1$s menej ako %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d celodenná udalosť</item>
+        <item quantity="few">%d celodenné udalosti</item>
+        <item quantity="many">%d celodenných udalostí</item>
+        <item quantity="other">%d celodenných udalostí</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s je váš najvyťaženejší deň (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s bol váš najvyťaženejší deň (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s je váš najvoľnejší deň (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s bol váš najvoľnejší deň (%2$s)</string>
+    <string name="insight_longest_free_future">Najdlhší voľný blok: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Najdlhší voľný blok bol %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Váš víkend je voľný</string>
+    <string name="insight_weekend_load_clear_past">Váš víkend bol voľný</string>
+    <string name="insight_weekend_load_light_future">%1$s naplánovaných na víkend</string>
+    <string name="insight_weekend_load_light_past">%1$s bolo naplánovaných na víkend</string>
+    <string name="insight_weekend_load_busy_future">%1$s naplánovaných na víkend</string>
+    <string name="insight_weekend_load_busy_past">%1$s bolo naplánovaných na víkend</string>
+    <string name="insight_back_to_back_future">%1$d stretnutí za sebou</string>
+    <string name="insight_back_to_back_past">Mali ste %1$d stretnutí za sebou</string>
+    <string name="insight_calendar_dominant_future">%1$s tvorí %2$d%% vášho naplánovaného času</string>
+    <string name="insight_calendar_dominant_past">%1$s tvoril %2$d%% vášho naplánovaného času</string>
+    <string name="insight_early_bounds_future">Váš rozvrh začína pred 8:00 počas %1$d dní</string>
+    <string name="insight_early_bounds_past">Váš rozvrh začínal pred 8:00 počas %1$d dní</string>
+    <string name="insight_late_bounds_future">Udalosti po 19:00 počas %1$d dní</string>
+    <string name="insight_late_bounds_past">Udalosti boli po 19:00 počas %1$d dní</string>
+    <string name="insight_meeting_free_days_future">Máte %1$d dní bez stretnutí</string>
+    <string name="insight_meeting_free_days_past">Mali ste %1$d dní bez stretnutí</string>
+    <string name="insight_tomorrow_preview">Zajtra: %1$s naplánovaných, začiatok o %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Zajtra: %1$s naplánovaných</string>
+    <string name="insight_heaviest_upcoming">%1$s je váš najnáročnejší nadchádzajúci deň (%2$s)</string>
+    <string name="insight_next_free_block">Ďalší voľný blok: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Rozdelenie kalendárov: %1$s</string>
+    <string name="insights_cd_daily_chart">Denné rozloženie: najvyťaženejší deň je %1$s</string>
 </resources>

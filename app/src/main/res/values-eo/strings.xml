@@ -646,6 +646,7 @@
     <string name="view_month_full">Monato (plena)</string>
     <string name="view_three_days">3 tagoj</string>
     <string name="view_year">Jaro</string>
+    <string name="view_insights">Enrigardoj</string>
 
     <string name="label_go_to_month">Iri al monato</string>
 
@@ -881,5 +882,46 @@
     <string name="channel_sync_progress_desc">Montras progreson dum sinkronigo de kalendaroj</string>
     <string name="channel_sync_status">Sinkroniga stato</string>
     <string name="channel_sync_status_desc">Sciigoj pri sinkroniga finiĝo kaj eraroj</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Enrigardoj</string>
+    <string name="insights_period_this_week">Semajno</string>
+    <string name="insights_period_last_week">Pasinta sem.</string>
+    <string name="insights_period_this_month">Monato</string>
+    <string name="insights_empty_state">Neniuj eventoj planitaj \u0109i-semajne</string>
+    <string name="insights_delta_more">+%1$s pli ol %2$s</string>
+    <string name="insights_delta_less">%1$s malpli ol %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d tuttaga evento</item>
+        <item quantity="other">%d tuttagaj eventoj</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s estas via plej okupita tago (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s estis via plej okupita tago (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s estas via plej malpeza tago (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s estis via plej malpeza tago (%2$s)</string>
+    <string name="insight_longest_free_future">Plej longa libera bloko: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Plej longa libera bloko estis %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Via semajnfino estas libera</string>
+    <string name="insight_weekend_load_clear_past">Via semajnfino estis libera</string>
+    <string name="insight_weekend_load_light_future">%1$s planitaj dum la semajnfino</string>
+    <string name="insight_weekend_load_light_past">%1$s estis planitaj dum la semajnfino</string>
+    <string name="insight_weekend_load_busy_future">%1$s planitaj dum la semajnfino</string>
+    <string name="insight_weekend_load_busy_past">%1$s estis planitaj dum la semajnfino</string>
+    <string name="insight_back_to_back_future">%1$d sinsekvaj kunvenoj</string>
+    <string name="insight_back_to_back_past">Vi havis %1$d sinsekvajn kunvenojn</string>
+    <string name="insight_calendar_dominant_future">%1$s estas %2$d%% de via planita tempo</string>
+    <string name="insight_calendar_dominant_past">%1$s estis %2$d%% de via planita tempo</string>
+    <string name="insight_early_bounds_future">Via horaro komenci\u011das anta\u016d 8:00 dum %1$d tagoj</string>
+    <string name="insight_early_bounds_past">Via horaro komenci\u011dis anta\u016d 8:00 dum %1$d tagoj</string>
+    <string name="insight_late_bounds_future">Eventoj post 19:00 dum %1$d tagoj</string>
+    <string name="insight_late_bounds_past">Eventoj pasis 19:00 dum %1$d tagoj</string>
+    <string name="insight_meeting_free_days_future">Vi havas %1$d tagojn sen kunvenoj</string>
+    <string name="insight_meeting_free_days_past">Vi havis %1$d tagojn sen kunvenoj</string>
+    <string name="insight_tomorrow_preview">Morga\u016d: %1$s planitaj, komenci\u011das je %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Morga\u016d: %1$s planitaj</string>
+    <string name="insight_heaviest_upcoming">%1$s estas via plej \u015dar\u011dita venonta tago (%2$s)</string>
+    <string name="insight_next_free_block">Sekva libera bloko: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Kalendara distribuo: %1$s</string>
+    <string name="insights_cd_daily_chart">Taga distribuo: plej okupita tago estas %1$s</string>
 
 </resources>

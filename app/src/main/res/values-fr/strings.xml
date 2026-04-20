@@ -674,6 +674,7 @@
     <string name="view_month_full">Mois (complet)</string>
     <string name="view_three_days">3 jours</string>
     <string name="view_year">Ann\u00e9e</string>
+    <string name="view_insights">Statistiques</string>
 
     <string name="label_go_to_month">Aller au mois</string>
 
@@ -920,5 +921,59 @@
         <item quantity="many">, %1$d fois</item>
         <item quantity="other">, %1$d fois</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">Statistiques</string>
+    <string name="insights_period_this_week">Semaine</string>
+    <string name="insights_period_last_week">Sem. passée</string>
+    <string name="insights_period_this_month">Mois</string>
+    <string name="insights_empty_state">Aucun \u00e9v\u00e9nement pr\u00e9vu cette semaine</string>
+    <string name="insights_delta_more">+%1$s de plus que %2$s</string>
+    <string name="insights_delta_less">%1$s de moins que %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d \u00e9v\u00e9nement sur toute la journ\u00e9e</item>
+        <item quantity="other">%d \u00e9v\u00e9nements sur toute la journ\u00e9e</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s est ton jour le plus charg\u00e9 (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s \u00e9tait ton jour le plus charg\u00e9 (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s est ton jour le plus l\u00e9ger (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s \u00e9tait ton jour le plus l\u00e9ger (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Plus long cr\u00e9neau libre : %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Plus long cr\u00e9neau libre : %1$s %2$s\u2013%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Ton week-end est libre</string>
+    <string name="insight_weekend_load_clear_past">Ton week-end \u00e9tait libre</string>
+    <string name="insight_weekend_load_light_future">%1$s pr\u00e9vus le week-end</string>
+    <string name="insight_weekend_load_light_past">%1$s \u00e9taient pr\u00e9vus le week-end</string>
+    <string name="insight_weekend_load_busy_future">%1$s pr\u00e9vus le week-end</string>
+    <string name="insight_weekend_load_busy_past">%1$s \u00e9taient pr\u00e9vus le week-end</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d r\u00e9unions cons\u00e9cutives</string>
+    <string name="insight_back_to_back_past">Tu as eu %1$d r\u00e9unions cons\u00e9cutives</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s repr\u00e9sente %2$d%% de ton temps planifi\u00e9</string>
+    <string name="insight_calendar_dominant_past">%1$s repr\u00e9sentait %2$d%% de ton temps planifi\u00e9</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Ton agenda commence avant 8 h sur %1$d jours</string>
+    <string name="insight_early_bounds_past">Ton agenda commen\u00e7ait avant 8 h sur %1$d jours</string>
+    <string name="insight_late_bounds_future">\u00c9v\u00e9nements apr\u00e8s 19 h sur %1$d jours</string>
+    <string name="insight_late_bounds_past">\u00c9v\u00e9nements apr\u00e8s 19 h sur %1$d jours</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Tu as %1$d jours sans r\u00e9union</string>
+    <string name="insight_meeting_free_days_past">Tu as eu %1$d jours sans r\u00e9union</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Demain : %1$s pr\u00e9vus, d\u00e9but \u00e0 %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Demain : %1$s pr\u00e9vus</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s est ton jour le plus charg\u00e9 \u00e0 venir (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Prochain cr\u00e9neau libre : %1$s %2$s\u2013%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">R\u00e9partition par calendrier : %1$s</string>
+    <string name="insights_cd_daily_chart">R\u00e9partition quotidienne : le jour le plus charg\u00e9 est %1$s</string>
 
 </resources>

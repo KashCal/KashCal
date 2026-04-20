@@ -858,6 +858,7 @@
     <string name="view_month_full">Month (Full)</string>
     <string name="view_three_days">3 Days</string>
     <string name="view_year">Year</string>
+    <string name="view_insights">Insights</string>
 
     <!-- YearOverlay -->
     <string name="label_go_to_month">Go to month</string>
@@ -1107,5 +1108,59 @@
     <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (All day)</string>
     <!-- Event confirmation snackbar: timed event — %1$s = title, %2$s = date, %3$s = time -->
     <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_period_this_week">Week</string>
+    <string name="insights_period_last_week">Last week</string>
+    <string name="insights_period_this_month">Month</string>
+    <string name="insights_empty_state">No events scheduled this week</string>
+    <string name="insights_delta_more">+%1$s more than %2$s</string>
+    <string name="insights_delta_less">%1$s less than %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d all-day event</item>
+        <item quantity="other">%d all-day events</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s is your busiest day (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s was your busiest day (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s is your lightest day (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s was your lightest day (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Longest free block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Longest free block was %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Your weekend is clear</string>
+    <string name="insight_weekend_load_clear_past">Your weekend was clear</string>
+    <string name="insight_weekend_load_light_future">%1$s scheduled on the weekend</string>
+    <string name="insight_weekend_load_light_past">%1$s were scheduled on the weekend</string>
+    <string name="insight_weekend_load_busy_future">%1$s scheduled on the weekend</string>
+    <string name="insight_weekend_load_busy_past">%1$s were scheduled on the weekend</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d back-to-back meetings</string>
+    <string name="insight_back_to_back_past">You had %1$d back-to-back meetings</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s is %2$d%% of your scheduled time</string>
+    <string name="insight_calendar_dominant_past">%1$s was %2$d%% of your scheduled time</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Your schedule starts before 8 AM on %1$d days</string>
+    <string name="insight_early_bounds_past">Your schedule started before 8 AM on %1$d days</string>
+    <string name="insight_late_bounds_future">Events past 7 PM on %1$d days</string>
+    <string name="insight_late_bounds_past">Events went past 7 PM on %1$d days</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">You have %1$d meeting-free days</string>
+    <string name="insight_meeting_free_days_past">You had %1$d meeting-free days</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Tomorrow: %1$s scheduled, starts at %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Tomorrow: %1$s scheduled</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s is your heaviest upcoming day (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Next free block: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Calendar breakdown: %1$s</string>
+    <string name="insights_cd_daily_chart">Daily distribution: busiest day is %1$s</string>
 
 </resources>

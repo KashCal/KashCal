@@ -646,6 +646,7 @@
     <string name="view_month_full">Hónap (teljes)</string>
     <string name="view_three_days">3 nap</string>
     <string name="view_year">Év</string>
+    <string name="view_insights">Áttekintés</string>
 
     <string name="label_go_to_month">Ugrás hónapra</string>
 
@@ -886,5 +887,59 @@
         <item quantity="one">, %1$d alkalommal</item>
         <item quantity="other">, %1$d alkalommal</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">Áttekintés</string>
+    <string name="insights_period_this_week">Hét</string>
+    <string name="insights_period_last_week">Múlt hét</string>
+    <string name="insights_period_this_month">Hónap</string>
+    <string name="insights_empty_state">Nincs esemény erre a hétre</string>
+    <string name="insights_delta_more">+%1$s több, mint %2$s</string>
+    <string name="insights_delta_less">%1$s kevesebb, mint %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d egész napos esemény</item>
+        <item quantity="other">%d egész napos esemény</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s a legzsúfoltabb napod (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s volt a legzsúfoltabb napod (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s a legkönnyebb napod (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s volt a legkönnyebb napod (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Leghosszabb szabad idő: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">A leghosszabb szabad idő %1$s %2$s–%3$s volt (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">A hétvégéd szabad</string>
+    <string name="insight_weekend_load_clear_past">A hétvégéd szabad volt</string>
+    <string name="insight_weekend_load_light_future">%1$s tervezve a hétvégére</string>
+    <string name="insight_weekend_load_light_past">%1$s volt tervezve a hétvégére</string>
+    <string name="insight_weekend_load_busy_future">%1$s tervezve a hétvégére</string>
+    <string name="insight_weekend_load_busy_past">%1$s volt tervezve a hétvégére</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d egymás utáni megbeszélés</string>
+    <string name="insight_back_to_back_past">%1$d egymás utáni megbeszélésed volt</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s a tervezett időd %2$d%%-a</string>
+    <string name="insight_calendar_dominant_past">%1$s a tervezett időd %2$d%%-a volt</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">A programod %1$d napon 8:00 előtt kezdődik</string>
+    <string name="insight_early_bounds_past">A programod %1$d napon 8:00 előtt kezdődött</string>
+    <string name="insight_late_bounds_future">Események 19:00 után %1$d napon</string>
+    <string name="insight_late_bounds_past">Események 19:00 után voltak %1$d napon</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">%1$d megbeszélésmentes napod van</string>
+    <string name="insight_meeting_free_days_past">%1$d megbeszélésmentes napod volt</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Holnap: %1$s tervezve, kezdés: %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Holnap: %1$s tervezve</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s a legzsúfoltabb közelgő napod (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Következő szabad idő: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Naptár megoszlás: %1$s</string>
+    <string name="insights_cd_daily_chart">Napi eloszlás: a legzsúfoltabb nap %1$s</string>
 
 </resources>

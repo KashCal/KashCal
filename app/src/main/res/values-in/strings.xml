@@ -620,6 +620,7 @@
     <string name="view_month_full">Bulan (Penuh)</string>
     <string name="view_three_days">3 Hari</string>
     <string name="view_year">Tahun</string>
+    <string name="view_insights">Wawasan</string>
 
     <string name="label_go_to_month">Ke bulan</string>
 
@@ -849,4 +850,57 @@
     <string name="rrule_freq_never">Tidak pernah</string>
     <string name="rrule_starting">%1$s dimulai %2$s%3$s</string>
     <string name="rrule_since">%1$s · sejak %2$s</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Wawasan</string>
+    <string name="insights_period_this_week">Minggu</string>
+    <string name="insights_period_last_week">Minggu lalu</string>
+    <string name="insights_period_this_month">Bulan</string>
+    <string name="insights_empty_state">Tidak ada acara dijadwalkan minggu ini</string>
+    <string name="insights_delta_more">+%1$s lebih banyak dari %2$s</string>
+    <string name="insights_delta_less">%1$s lebih sedikit dari %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="other">%d acara sepanjang hari</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s adalah hari tersibuk Anda (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s adalah hari tersibuk Anda (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s adalah hari paling senggang Anda (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s adalah hari paling senggang Anda (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Blok kosong terpanjang: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Blok kosong terpanjang adalah %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Akhir pekan Anda kosong</string>
+    <string name="insight_weekend_load_clear_past">Akhir pekan Anda kosong</string>
+    <string name="insight_weekend_load_light_future">%1$s dijadwalkan di akhir pekan</string>
+    <string name="insight_weekend_load_light_past">%1$s dijadwalkan di akhir pekan</string>
+    <string name="insight_weekend_load_busy_future">%1$s dijadwalkan di akhir pekan</string>
+    <string name="insight_weekend_load_busy_past">%1$s dijadwalkan di akhir pekan</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d rapat berturut-turut</string>
+    <string name="insight_back_to_back_past">Anda memiliki %1$d rapat berturut-turut</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s adalah %2$d%% dari waktu terjadwal Anda</string>
+    <string name="insight_calendar_dominant_past">%1$s adalah %2$d%% dari waktu terjadwal Anda</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Jadwal Anda dimulai sebelum jam 8 pagi pada %1$d hari</string>
+    <string name="insight_early_bounds_past">Jadwal Anda dimulai sebelum jam 8 pagi pada %1$d hari</string>
+    <string name="insight_late_bounds_future">Acara melewati jam 7 malam pada %1$d hari</string>
+    <string name="insight_late_bounds_past">Acara melewati jam 7 malam pada %1$d hari</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Anda memiliki %1$d hari bebas rapat</string>
+    <string name="insight_meeting_free_days_past">Anda memiliki %1$d hari bebas rapat</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Besok: %1$s dijadwalkan, dimulai pukul %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Besok: %1$s dijadwalkan</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s adalah hari terpadat mendatang Anda (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Blok kosong berikutnya: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Rincian kalender: %1$s</string>
+    <string name="insights_cd_daily_chart">Distribusi harian: hari tersibuk adalah %1$s</string>
 </resources>

@@ -743,6 +743,7 @@
     <string name="view_month_full">M\u00ed (Iomláin)</string>
     <string name="view_three_days">3 L\u00e1</string>
     <string name="view_year">Bliain</string>
+    <string name="view_insights">L\u00e9argais</string>
 
     <string name="label_go_to_month">T\u00e9igh go m\u00ed</string>
 
@@ -1002,5 +1003,49 @@
     <string name="channel_sync_progress_desc">Taispeánann sé dul chun cinn agus féilirí á sioncronú</string>
     <string name="channel_sync_status">Stádas sioncronaithe</string>
     <string name="channel_sync_status_desc">Fógraí faoi chríochnú agus earráidí sioncronaithe</string>
+
+    <!-- Insights -->
+    <string name="insights_title">L\u00e9argais</string>
+    <string name="insights_period_this_week">Seachtain</string>
+    <string name="insights_period_last_week">Seachtain seo caite</string>
+    <string name="insights_period_this_month">Mí</string>
+    <string name="insights_empty_state">N\u00edl aon imeachta\u00ed sceidealta an tseachtain seo</string>
+    <string name="insights_delta_more">+%1$s n\u00edos m\u00f3 n\u00e1 %2$s</string>
+    <string name="insights_delta_less">%1$s n\u00edos l\u00fa n\u00e1 %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d imeacht l\u00e1 ioml\u00e1in</item>
+        <item quantity="two">%d imeacht l\u00e1 ioml\u00e1in</item>
+        <item quantity="few">%d imeacht l\u00e1 ioml\u00e1in</item>
+        <item quantity="many">%d n-imeacht l\u00e1 ioml\u00e1in</item>
+        <item quantity="other">%d imeacht l\u00e1 ioml\u00e1in</item>
+    </plurals>
+    <string name="insight_busiest_day_future">Is \u00e9 %1$s an l\u00e1 is gn\u00f3tha\u00ed agat (%2$s)</string>
+    <string name="insight_busiest_day_past">Ba \u00e9 %1$s an l\u00e1 is gn\u00f3tha\u00ed a bh\u00ed agat (%2$s)</string>
+    <string name="insight_lightest_day_future">Is \u00e9 %1$s an l\u00e1 is \u00e9adroime agat (%2$s)</string>
+    <string name="insight_lightest_day_past">Ba \u00e9 %1$s an l\u00e1 is \u00e9adroime a bh\u00ed agat (%2$s)</string>
+    <string name="insight_longest_free_future">An bloc saor is faide: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Ba \u00e9 an bloc saor is faide %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">T\u00e1 do dh\u00e9ireadh seachtaine saor</string>
+    <string name="insight_weekend_load_clear_past">Bh\u00ed do dh\u00e9ireadh seachtaine saor</string>
+    <string name="insight_weekend_load_light_future">%1$s sceidealta ar an d\u00e9ireadh seachtaine</string>
+    <string name="insight_weekend_load_light_past">Sceideala\u00edodh %1$s ar an d\u00e9ireadh seachtaine</string>
+    <string name="insight_weekend_load_busy_future">%1$s sceidealta ar an d\u00e9ireadh seachtaine</string>
+    <string name="insight_weekend_load_busy_past">Sceideala\u00edodh %1$s ar an d\u00e9ireadh seachtaine</string>
+    <string name="insight_back_to_back_future">%1$d cruinni\u00fa as a ch\u00e9ile</string>
+    <string name="insight_back_to_back_past">Bh\u00ed %1$d cruinni\u00fa as a ch\u00e9ile agat</string>
+    <string name="insight_calendar_dominant_future">Is \u00e9 %1$s %2$d%% de do chuid ama sceidealta</string>
+    <string name="insight_calendar_dominant_past">Ba \u00e9 %1$s %2$d%% de do chuid ama sceidealta</string>
+    <string name="insight_early_bounds_future">Tosa\u00edonn do sceideal roimh 8:00 ar %1$d l\u00e1</string>
+    <string name="insight_early_bounds_past">Thosaigh do sceideal roimh 8:00 ar %1$d l\u00e1</string>
+    <string name="insight_late_bounds_future">Imeachta\u00ed tar \u00e9is 19:00 ar %1$d l\u00e1</string>
+    <string name="insight_late_bounds_past">Chuaigh imeachta\u00ed thar 19:00 ar %1$d l\u00e1</string>
+    <string name="insight_meeting_free_days_future">T\u00e1 %1$d l\u00e1 gan chruinnithe agat</string>
+    <string name="insight_meeting_free_days_past">Bh\u00ed %1$d l\u00e1 gan chruinnithe agat</string>
+    <string name="insight_tomorrow_preview">Am\u00e1rach: %1$s sceidealta, ag tosú ar %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Am\u00e1rach: %1$s sceidealta</string>
+    <string name="insight_heaviest_upcoming">Is \u00e9 %1$s an l\u00e1 is troime at\u00e1 le teacht (%2$s)</string>
+    <string name="insight_next_free_block">An ch\u00e9ad bhloc saor eile: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Miondealú f\u00e9ilir\u00ed: %1$s</string>
+    <string name="insights_cd_daily_chart">Dáileadh laethúil: is é an lá is gnóthaí %1$s</string>
 
 </resources>

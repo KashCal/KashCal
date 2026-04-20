@@ -646,6 +646,7 @@
     <string name="view_month_full">Inyanga (Ephelele)</string>
     <string name="view_three_days">Izinsuku Ezi-3</string>
     <string name="view_year">Unyaka</string>
+    <string name="view_insights">Ukuqonda</string>
 
     <string name="label_go_to_month">Iya enyangeni</string>
 
@@ -886,4 +887,58 @@
         <item quantity="one">, izikhathi ezingu-%1$d</item>
         <item quantity="other">, izikhathi ezingu-%1$d</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Ukuqonda</string>
+    <string name="insights_period_this_week">Isonto</string>
+    <string name="insights_period_last_week">Isonto eledlule</string>
+    <string name="insights_period_this_month">Inyanga</string>
+    <string name="insights_empty_state">Ayikho imicimbi ehlelwe kuleli sonto</string>
+    <string name="insights_delta_more">+%1$s ngaphezu kwe-%2$s</string>
+    <string name="insights_delta_less">%1$s ngaphansi kwe-%2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d umcimbi wosuku lonke</item>
+        <item quantity="other">%d imicimbi yosuku lonke</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s usuku lwakho olumatasa kakhulu (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s kwakungusuku lwakho olumatasa kakhulu (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s usuku lwakho olulula kakhulu (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s kwakungusuku lwakho olulula kakhulu (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Isikhathi eside esikhululekile: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Isikhathi eside esikhululekile sasingu-%1$s %2$s\u2013%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Impelasonto yakho ikhululekile</string>
+    <string name="insight_weekend_load_clear_past">Impelasonto yakho yayikhululekile</string>
+    <string name="insight_weekend_load_light_future">%1$s kuhlelwe empelasonto</string>
+    <string name="insight_weekend_load_light_past">%1$s yayihlelwe empelasonto</string>
+    <string name="insight_weekend_load_busy_future">%1$s kuhlelwe empelasonto</string>
+    <string name="insight_weekend_load_busy_past">%1$s yayihlelwe empelasonto</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d imihlangano elandelanayo</string>
+    <string name="insight_back_to_back_past">Ubunemihlangano engu-%1$d elandelanayo</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s ingu-%2$d%% yesikhathi sakho esihlelwe</string>
+    <string name="insight_calendar_dominant_past">%1$s yayingu-%2$d%% yesikhathi sakho esihlelwe</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Isheduli yakho iqala ngaphambi kuka-8 ekuseni ngezinsuku ezingu-%1$d</string>
+    <string name="insight_early_bounds_past">Isheduli yakho yayiqala ngaphambi kuka-8 ekuseni ngezinsuku ezingu-%1$d</string>
+    <string name="insight_late_bounds_future">Imicimbi ngemuva kuka-7 ntambama ngezinsuku ezingu-%1$d</string>
+    <string name="insight_late_bounds_past">Imicimbi yedlulile ngemva kuka-7 ntambama ngezinsuku ezingu-%1$d</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Unezinsuku ezingu-%1$d ezingenayo imihlangano</string>
+    <string name="insight_meeting_free_days_past">Ubunezinsuku ezingu-%1$d ezingenayo imihlangano</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Kusasa: %1$s kuhlelwe, kuqala ngo-%2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Kusasa: %1$s kuhlelwe</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s usuku lwakho oluzayo olumatasa kakhulu (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Isikhathi esikhululekile esilandelayo: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Ukuhlukaniswa kwekhalenda: %1$s</string>
+    <string name="insights_cd_daily_chart">Ukusabalala kwansuku zonke: usuku olumatasa kakhulu ngu-%1$s</string>
 </resources>

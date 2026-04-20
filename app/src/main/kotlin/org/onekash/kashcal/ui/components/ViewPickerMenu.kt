@@ -46,7 +46,7 @@ internal val viewOptions = listOf(
 )
 
 internal fun iconForMode(mode: ViewMode): ImageVector =
-    viewOptions.first { it.mode == mode }.icon
+    viewOptions.firstOrNull { it.mode == mode }?.icon ?: Icons.Default.CalendarMonth
 
 @Composable
 internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
@@ -56,6 +56,7 @@ internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
     ViewMode.THREE_DAYS -> stringResource(R.string.view_three_days)
     ViewMode.WEEK -> stringResource(R.string.view_week)
     ViewMode.YEAR -> stringResource(R.string.view_year)
+    ViewMode.INSIGHTS -> stringResource(R.string.view_insights)
 }
 
 /**

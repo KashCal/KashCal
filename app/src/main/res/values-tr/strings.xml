@@ -646,6 +646,7 @@
     <string name="view_month_full">Ay (Tam)</string>
     <string name="view_three_days">3 Gün</string>
     <string name="view_year">Yıl</string>
+    <string name="view_insights">İstatistikler</string>
 
     <string name="label_go_to_month">Aya git</string>
 
@@ -886,4 +887,59 @@
         <item quantity="one">, %1$d kez</item>
         <item quantity="other">, %1$d kez</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">İstatistikler</string>
+    <string name="insights_period_this_week">Hafta</string>
+    <string name="insights_period_last_week">Geçen hafta</string>
+    <string name="insights_period_this_month">Ay</string>
+    <string name="insights_empty_state">Bu hafta planlanmış etkinlik yok</string>
+    <string name="insights_delta_more">%2$s\'dan +%1$s fazla</string>
+    <string name="insights_delta_less">%2$s\'dan %1$s az</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d tüm gün etkinliği</item>
+        <item quantity="other">%d tüm gün etkinliği</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s en yoğun günün (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s en yoğun günündü (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s en hafif günün (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s en hafif günündü (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">En uzun boş zaman: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">En uzun boş zaman %1$s %2$s–%3$s (%4$s) idi</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Hafta sonun boş</string>
+    <string name="insight_weekend_load_clear_past">Hafta sonun boştu</string>
+    <string name="insight_weekend_load_light_future">Hafta sonunda %1$s planlandı</string>
+    <string name="insight_weekend_load_light_past">Hafta sonunda %1$s planlanmıştı</string>
+    <string name="insight_weekend_load_busy_future">Hafta sonunda %1$s planlandı</string>
+    <string name="insight_weekend_load_busy_past">Hafta sonunda %1$s planlanmıştı</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d arka arkaya toplantı</string>
+    <string name="insight_back_to_back_past">%1$d arka arkaya toplantın vardı</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s planlanan zamanının %2$d%%\'si</string>
+    <string name="insight_calendar_dominant_past">%1$s planlanan zamanının %2$d%%\'siydi</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Programın %1$d gün 08:00\'den önce başlıyor</string>
+    <string name="insight_early_bounds_past">Programın %1$d gün 08:00\'den önce başladı</string>
+    <string name="insight_late_bounds_future">%1$d gün 19:00\'dan sonra etkinlik var</string>
+    <string name="insight_late_bounds_past">%1$d gün 19:00\'dan sonra etkinlik vardı</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">%1$d toplantısız günün var</string>
+    <string name="insight_meeting_free_days_past">%1$d toplantısız günün vardı</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Yarın: %1$s planlandı, %2$s\'de başlıyor</string>
+    <string name="insight_tomorrow_preview_no_start">Yarın: %1$s planlandı</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s en yoğun yaklaşan günün (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Sonraki boş zaman: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Takvim dağılımı: %1$s</string>
+    <string name="insights_cd_daily_chart">Günlük dağılım: en yoğun gün %1$s</string>
+
 </resources>

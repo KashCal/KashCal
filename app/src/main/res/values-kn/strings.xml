@@ -646,6 +646,7 @@
     <string name="view_month_full">ತಿಂಗಳು (ಪೂರ್ಣ)</string>
     <string name="view_three_days">3 ದಿನಗಳು</string>
     <string name="view_year">ವರ್ಷ</string>
+    <string name="view_insights">ಇನ್‌ಸೈಟ್ಸ್</string>
 
     <string name="label_go_to_month">ತಿಂಗಳಿಗೆ ಹೋಗಿ</string>
 
@@ -887,5 +888,46 @@
         <item quantity="one">, %1$d ಬಾರಿ</item>
         <item quantity="other">, %1$d ಬಾರಿ</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">ಇನ್‌ಸೈಟ್ಸ್</string>
+    <string name="insights_period_this_week">ವಾರ</string>
+    <string name="insights_period_last_week">ಕಳೆದ ವಾರ</string>
+    <string name="insights_period_this_month">ತಿಂಗಳು</string>
+    <string name="insights_empty_state">ಈ ವಾರ ಈವೆಂಟ್‌ಗಳು ನಿಗದಿಯಾಗಿಲ್ಲ</string>
+    <string name="insights_delta_more">+%1$s %2$s ಗಿಂತ ಹೆಚ್ಚು</string>
+    <string name="insights_delta_less">%1$s %2$s ಗಿಂತ ಕಡಿಮೆ</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d ದಿನವಿಡೀ ಈವೆಂಟ್</item>
+        <item quantity="other">%d ದಿನವಿಡೀ ಈವೆಂಟ್‌ಗಳು</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s ನಿಮ್ಮ ಅತ್ಯಂತ ಬಿಜಿ ದಿನ (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ನಿಮ್ಮ ಅತ್ಯಂತ ಬಿಜಿ ದಿನವಾಗಿತ್ತು (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s ನಿಮ್ಮ ಅತ್ಯಂತ ಹಗುರ ದಿನ (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ನಿಮ್ಮ ಅತ್ಯಂತ ಹಗುರ ದಿನವಾಗಿತ್ತು (%2$s)</string>
+    <string name="insight_longest_free_future">ಅತಿ ಉದ್ದದ ಖಾಲಿ ಸಮಯ: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ಅತಿ ಉದ್ದದ ಖಾಲಿ ಸಮಯ %1$s %2$s–%3$s (%4$s) ಆಗಿತ್ತು</string>
+    <string name="insight_weekend_load_clear_future">ನಿಮ್ಮ ವಾರಾಂತ್ಯ ಖಾಲಿಯಾಗಿದೆ</string>
+    <string name="insight_weekend_load_clear_past">ನಿಮ್ಮ ವಾರಾಂತ್ಯ ಖಾಲಿಯಾಗಿತ್ತು</string>
+    <string name="insight_weekend_load_light_future">ವಾರಾಂತ್ಯದಲ್ಲಿ %1$s ನಿಗದಿಯಾಗಿದೆ</string>
+    <string name="insight_weekend_load_light_past">ವಾರಾಂತ್ಯದಲ್ಲಿ %1$s ನಿಗದಿಯಾಗಿತ್ತು</string>
+    <string name="insight_weekend_load_busy_future">ವಾರಾಂತ್ಯದಲ್ಲಿ %1$s ನಿಗದಿಯಾಗಿದೆ</string>
+    <string name="insight_weekend_load_busy_past">ವಾರಾಂತ್ಯದಲ್ಲಿ %1$s ನಿಗದಿಯಾಗಿತ್ತು</string>
+    <string name="insight_back_to_back_future">%1$d ಸತತ ಮೀಟಿಂಗ್‌ಗಳು</string>
+    <string name="insight_back_to_back_past">ನಿಮಗೆ %1$d ಸತತ ಮೀಟಿಂಗ್‌ಗಳಿದ್ದವು</string>
+    <string name="insight_calendar_dominant_future">%1$s ನಿಮ್ಮ ನಿಗದಿತ ಸಮಯದ %2$d%%</string>
+    <string name="insight_calendar_dominant_past">%1$s ನಿಮ್ಮ ನಿಗದಿತ ಸಮಯದ %2$d%% ಆಗಿತ್ತು</string>
+    <string name="insight_early_bounds_future">ನಿಮ್ಮ ಶೆಡ್ಯೂಲ್ %1$d ದಿನ 8 AM ಮೊದಲು ಆರಂಭವಾಗುತ್ತದೆ</string>
+    <string name="insight_early_bounds_past">ನಿಮ್ಮ ಶೆಡ್ಯೂಲ್ %1$d ದಿನ 8 AM ಮೊದಲು ಆರಂಭವಾಗಿತ್ತು</string>
+    <string name="insight_late_bounds_future">%1$d ದಿನ 7 PM ನಂತರ ಈವೆಂಟ್‌ಗಳಿವೆ</string>
+    <string name="insight_late_bounds_past">%1$d ದಿನ 7 PM ನಂತರ ಈವೆಂಟ್‌ಗಳಿದ್ದವು</string>
+    <string name="insight_meeting_free_days_future">ನಿಮಗೆ %1$d ಮೀಟಿಂಗ್-ಮುಕ್ತ ದಿನಗಳಿವೆ</string>
+    <string name="insight_meeting_free_days_past">ನಿಮಗೆ %1$d ಮೀಟಿಂಗ್-ಮುಕ್ತ ದಿನಗಳಿದ್ದವು</string>
+    <string name="insight_tomorrow_preview">ನಾಳೆ: %1$s ನಿಗದಿ, %2$s ಗೆ ಆರಂಭ</string>
+    <string name="insight_tomorrow_preview_no_start">ನಾಳೆ: %1$s ನಿಗದಿ</string>
+    <string name="insight_heaviest_upcoming">%1$s ನಿಮ್ಮ ಅತ್ಯಂತ ಬಿಜಿ ಮುಂಬರುವ ದಿನ (%2$s)</string>
+    <string name="insight_next_free_block">ಮುಂದಿನ ಖಾಲಿ ಸಮಯ: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">ಕ್ಯಾಲೆಂಡರ್ ವಿಭಜನೆ: %1$s</string>
+    <string name="insights_cd_daily_chart">ದೈನಿಕ ಹಂಚಿಕೆ: ಅತ್ಯಂತ ಬಿಜಿ ದಿನ %1$s</string>
 
 </resources>

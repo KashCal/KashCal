@@ -646,6 +646,7 @@
     <string name="view_month_full">Месец (целосен)</string>
     <string name="view_three_days">3 дена</string>
     <string name="view_year">Година</string>
+    <string name="view_insights">Статистика</string>
 
     <string name="label_go_to_month">Оди на месец</string>
 
@@ -884,4 +885,59 @@
         <item quantity="one">, %1$d пат</item>
         <item quantity="other">, %1$d пати</item>
     </plurals>
+
+    <!-- Insights -->
+    <string name="insights_title">Статистика</string>
+    <string name="insights_period_this_week">Седмица</string>
+    <string name="insights_period_last_week">Мин. седмица</string>
+    <string name="insights_period_this_month">Месец</string>
+    <string name="insights_empty_state">Нема закажани настани оваа седмица</string>
+    <string name="insights_delta_more">+%1$s повеќе од %2$s</string>
+    <string name="insights_delta_less">%1$s помалку од %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d целодневен настан</item>
+        <item quantity="other">%d целодневни настани</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s е твојот најзафатен ден (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s беше твојот најзафатен ден (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s е твојот најлесен ден (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s беше твојот најлесен ден (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">Најдолг слободен период: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Најдолгиот слободен период беше %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">Твојот викенд е слободен</string>
+    <string name="insight_weekend_load_clear_past">Твојот викенд беше слободен</string>
+    <string name="insight_weekend_load_light_future">%1$s закажани за викенд</string>
+    <string name="insight_weekend_load_light_past">%1$s беа закажани за викенд</string>
+    <string name="insight_weekend_load_busy_future">%1$s закажани за викенд</string>
+    <string name="insight_weekend_load_busy_past">%1$s беа закажани за викенд</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d последователни состаноци</string>
+    <string name="insight_back_to_back_past">Имавте %1$d последователни состаноци</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s е %2$d%% од твоето закажано време</string>
+    <string name="insight_calendar_dominant_past">%1$s беше %2$d%% од твоето закажано време</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">Твојот распоред започнува пред 8:00 во %1$d дена</string>
+    <string name="insight_early_bounds_past">Твојот распоред започнуваше пред 8:00 во %1$d дена</string>
+    <string name="insight_late_bounds_future">Настани по 19:00 во %1$d дена</string>
+    <string name="insight_late_bounds_past">Настани по 19:00 во %1$d дена</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">Имаш %1$d дена без состаноци</string>
+    <string name="insight_meeting_free_days_past">Имавте %1$d дена без состаноци</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">Утре: %1$s закажани, започнува во %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Утре: %1$s закажани</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s е твојот најзафатен претстоен ден (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">Следен слободен период: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">Распределба по календари: %1$s</string>
+    <string name="insights_cd_daily_chart">Дневна распределба: најзафатениот ден е %1$s</string>
+
 </resources>

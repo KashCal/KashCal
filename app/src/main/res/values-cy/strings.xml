@@ -771,6 +771,7 @@
     <string name="view_month_full">Mis (Llawn)</string>
     <string name="view_three_days">3 Diwrnod</string>
     <string name="view_year">Blwyddyn</string>
+    <string name="view_insights">Mewnwelediadau</string>
 
     <string name="label_go_to_month">Mynd i\'r mis</string>
 
@@ -1038,5 +1039,50 @@
     <string name="channel_sync_progress_desc">Yn dangos cynnydd wrth gydamseru calendrau</string>
     <string name="channel_sync_status">Statws cydamseru</string>
     <string name="channel_sync_status_desc">Hysbysiadau am gwblhau a gwallau cydamseru</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Mewnwelediadau</string>
+    <string name="insights_period_this_week">Wythnos</string>
+    <string name="insights_period_last_week">Wythnos ddiwethaf</string>
+    <string name="insights_period_this_month">Mis</string>
+    <string name="insights_empty_state">Dim digwyddiadau wedi\'u trefnu\'r wythnos hon</string>
+    <string name="insights_delta_more">+%1$s yn fwy na %2$s</string>
+    <string name="insights_delta_less">%1$s yn llai na %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="zero">%d digwyddiad drwy\'r dydd</item>
+        <item quantity="one">%d digwyddiad drwy\'r dydd</item>
+        <item quantity="two">%d ddigwyddiad drwy\'r dydd</item>
+        <item quantity="few">%d digwyddiad drwy\'r dydd</item>
+        <item quantity="many">%d digwyddiad drwy\'r dydd</item>
+        <item quantity="other">%d digwyddiad drwy\'r dydd</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s yw eich diwrnod prysuraf (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s oedd eich diwrnod prysuraf (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s yw eich diwrnod ysgafnaf (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s oedd eich diwrnod ysgafnaf (%2$s)</string>
+    <string name="insight_longest_free_future">Bloc rhydd hiraf: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Y bloc rhydd hiraf oedd %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Mae eich penwythnos yn rhydd</string>
+    <string name="insight_weekend_load_clear_past">Roedd eich penwythnos yn rhydd</string>
+    <string name="insight_weekend_load_light_future">%1$s wedi\'u trefnu ar y penwythnos</string>
+    <string name="insight_weekend_load_light_past">Trefnwyd %1$s ar y penwythnos</string>
+    <string name="insight_weekend_load_busy_future">%1$s wedi\'u trefnu ar y penwythnos</string>
+    <string name="insight_weekend_load_busy_past">Trefnwyd %1$s ar y penwythnos</string>
+    <string name="insight_back_to_back_future">%1$d cyfarfod yn olynol</string>
+    <string name="insight_back_to_back_past">Cawsoch %1$d cyfarfod yn olynol</string>
+    <string name="insight_calendar_dominant_future">%1$s yw %2$d%% o\'ch amser wedi\'i drefnu</string>
+    <string name="insight_calendar_dominant_past">%1$s oedd %2$d%% o\'ch amser wedi\'i drefnu</string>
+    <string name="insight_early_bounds_future">Mae eich amserlen yn dechrau cyn 8:00 ar %1$d diwrnod</string>
+    <string name="insight_early_bounds_past">Dechreuodd eich amserlen cyn 8:00 ar %1$d diwrnod</string>
+    <string name="insight_late_bounds_future">Digwyddiadau ar \u00f4l 19:00 ar %1$d diwrnod</string>
+    <string name="insight_late_bounds_past">Aeth digwyddiadau heibio 19:00 ar %1$d diwrnod</string>
+    <string name="insight_meeting_free_days_future">Mae gennych %1$d diwrnod heb gyfarfodydd</string>
+    <string name="insight_meeting_free_days_past">Cawsoch %1$d diwrnod heb gyfarfodydd</string>
+    <string name="insight_tomorrow_preview">Yfory: %1$s wedi\'u trefnu, yn dechrau am %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Yfory: %1$s wedi\'u trefnu</string>
+    <string name="insight_heaviest_upcoming">%1$s yw eich diwrnod trymaf sydd i ddod (%2$s)</string>
+    <string name="insight_next_free_block">Bloc rhydd nesaf: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Dosraniad calendrau: %1$s</string>
+    <string name="insights_cd_daily_chart">Dosraniad dyddiol: y diwrnod prysuraf yw %1$s</string>
 
 </resources>

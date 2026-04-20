@@ -621,6 +621,7 @@
     <string name="view_month_full">महिना (पूर्ण)</string>
     <string name="view_three_days">३ दिन</string>
     <string name="view_year">वर्ष</string>
+    <string name="view_insights">अन्तरदृष्टि</string>
 
     <string name="label_go_to_month">महिनामा जानुहोस्</string>
 
@@ -859,5 +860,59 @@
     <string name="rrule_freq_never">कहिल्यै होइन</string>
     <string name="rrule_starting">%1$s %2$s देखि सुरु%3$s</string>
     <string name="rrule_since">%1$s \u00b7 %2$s देखि</string>
+
+    <!-- Insights -->
+    <string name="insights_title">अन्तरदृष्टि</string>
+    <string name="insights_period_this_week">हप्ता</string>
+    <string name="insights_period_last_week">गत हप्ता</string>
+    <string name="insights_period_this_month">महिना</string>
+    <string name="insights_empty_state">यो हप्ता कुनै कार्यक्रम तालिकाबद्ध छैन</string>
+    <string name="insights_delta_more">+%1$s %2$s भन्दा बढी</string>
+    <string name="insights_delta_less">%1$s %2$s भन्दा कम</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d दिनभरको कार्यक्रम</item>
+        <item quantity="other">%d दिनभरका कार्यक्रमहरू</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s तपाईंको सबैभन्दा व्यस्त दिन हो (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s तपाईंको सबैभन्दा व्यस्त दिन थियो (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s तपाईंको सबैभन्दा हलुका दिन हो (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s तपाईंको सबैभन्दा हलुका दिन थियो (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">सबैभन्दा लामो खाली समय: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">सबैभन्दा लामो खाली समय %1$s %2$s–%3$s (%4$s) थियो</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">तपाईंको सप्ताहन्त खाली छ</string>
+    <string name="insight_weekend_load_clear_past">तपाईंको सप्ताहन्त खाली थियो</string>
+    <string name="insight_weekend_load_light_future">सप्ताहन्तमा %1$s तालिकाबद्ध छ</string>
+    <string name="insight_weekend_load_light_past">सप्ताहन्तमा %1$s तालिकाबद्ध थियो</string>
+    <string name="insight_weekend_load_busy_future">सप्ताहन्तमा %1$s तालिकाबद्ध छ</string>
+    <string name="insight_weekend_load_busy_past">सप्ताहन्तमा %1$s तालिकाबद्ध थियो</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d लगातार बैठकहरू</string>
+    <string name="insight_back_to_back_past">तपाईंसँग %1$d लगातार बैठकहरू थिए</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s तपाईंको तालिकाबद्ध समयको %2$d%% हो</string>
+    <string name="insight_calendar_dominant_past">%1$s तपाईंको तालिकाबद्ध समयको %2$d%% थियो</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">तपाईंको तालिका %1$d दिन बिहान ८ बजे अघि सुरु हुन्छ</string>
+    <string name="insight_early_bounds_past">तपाईंको तालिका %1$d दिन बिहान ८ बजे अघि सुरु भएको थियो</string>
+    <string name="insight_late_bounds_future">%1$d दिन बेलुका ७ बजे पछिका कार्यक्रमहरू</string>
+    <string name="insight_late_bounds_past">%1$d दिन बेलुका ७ बजे पछि कार्यक्रमहरू भए</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">तपाईंसँग %1$d बैठकमुक्त दिनहरू छन्</string>
+    <string name="insight_meeting_free_days_past">तपाईंसँग %1$d बैठकमुक्त दिनहरू थिए</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">भोलि: %1$s तालिकाबद्ध, %2$s मा सुरु हुन्छ</string>
+    <string name="insight_tomorrow_preview_no_start">भोलि: %1$s तालिकाबद्ध</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s तपाईंको आगामी सबैभन्दा भारी दिन हो (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">अर्को खाली समय: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_calendar_bar">पात्रो विश्लेषण: %1$s</string>
+    <string name="insights_cd_daily_chart">दैनिक वितरण: सबैभन्दा व्यस्त दिन %1$s हो</string>
 
 </resources>

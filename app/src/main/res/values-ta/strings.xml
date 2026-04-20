@@ -646,6 +646,7 @@
     <string name="view_month_full">மாதம் (முழு)</string>
     <string name="view_three_days">3 நாட்கள்</string>
     <string name="view_year">ஆண்டு</string>
+    <string name="view_insights">நுண்ணறிவுகள்</string>
 
     <string name="label_go_to_month">மாதத்திற்குச் செல்</string>
 
@@ -887,5 +888,46 @@
         <item quantity="one">, %1$d முறை</item>
         <item quantity="other">, %1$d முறை</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">நுண்ணறிவுகள்</string>
+    <string name="insights_period_this_week">வாரம்</string>
+    <string name="insights_period_last_week">கடந்த வாரம்</string>
+    <string name="insights_period_this_month">மாதம்</string>
+    <string name="insights_empty_state">இந்த வாரம் நிகழ்வுகள் திட்டமிடப்படவில்லை</string>
+    <string name="insights_delta_more">+%1$s %2$s-ஐ விட அதிகம்</string>
+    <string name="insights_delta_less">%1$s %2$s-ஐ விட குறைவு</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d நாள் முழுவதும் நிகழ்வு</item>
+        <item quantity="other">%d நாள் முழுவதும் நிகழ்வுகள்</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s உங்கள் மிகவும் பரபரப்பான நாள் (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s உங்கள் மிகவும் பரபரப்பான நாளாக இருந்தது (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s உங்கள் மிகவும் இலகுவான நாள் (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s உங்கள் மிகவும் இலகுவான நாளாக இருந்தது (%2$s)</string>
+    <string name="insight_longest_free_future">நீண்ட காலி நேரம்: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">நீண்ட காலி நேரம் %1$s %2$s–%3$s (%4$s) ஆக இருந்தது</string>
+    <string name="insight_weekend_load_clear_future">உங்கள் வார இறுதி காலியாக உள்ளது</string>
+    <string name="insight_weekend_load_clear_past">உங்கள் வார இறுதி காலியாக இருந்தது</string>
+    <string name="insight_weekend_load_light_future">வார இறுதியில் %1$s திட்டமிடப்பட்டுள்ளது</string>
+    <string name="insight_weekend_load_light_past">வார இறுதியில் %1$s திட்டமிடப்பட்டிருந்தது</string>
+    <string name="insight_weekend_load_busy_future">வார இறுதியில் %1$s திட்டமிடப்பட்டுள்ளது</string>
+    <string name="insight_weekend_load_busy_past">வார இறுதியில் %1$s திட்டமிடப்பட்டிருந்தது</string>
+    <string name="insight_back_to_back_future">%1$d தொடர் சந்திப்புகள்</string>
+    <string name="insight_back_to_back_past">உங்களுக்கு %1$d தொடர் சந்திப்புகள் இருந்தன</string>
+    <string name="insight_calendar_dominant_future">%1$s உங்கள் திட்டமிட்ட நேரத்தில் %2$d%%</string>
+    <string name="insight_calendar_dominant_past">%1$s உங்கள் திட்டமிட்ட நேரத்தில் %2$d%% ஆக இருந்தது</string>
+    <string name="insight_early_bounds_future">உங்கள் அட்டவணை %1$d நாட்கள் காலை 8 AM-க்கு முன் தொடங்குகிறது</string>
+    <string name="insight_early_bounds_past">உங்கள் அட்டவணை %1$d நாட்கள் காலை 8 AM-க்கு முன் தொடங்கியது</string>
+    <string name="insight_late_bounds_future">%1$d நாட்கள் மாலை 7 PM-க்கு பிறகு நிகழ்வுகள்</string>
+    <string name="insight_late_bounds_past">%1$d நாட்கள் மாலை 7 PM-க்கு பிறகு நிகழ்வுகள் இருந்தன</string>
+    <string name="insight_meeting_free_days_future">உங்களுக்கு %1$d சந்திப்பு-இல்லா நாட்கள் உள்ளன</string>
+    <string name="insight_meeting_free_days_past">உங்களுக்கு %1$d சந்திப்பு-இல்லா நாட்கள் இருந்தன</string>
+    <string name="insight_tomorrow_preview">நாளை: %1$s திட்டமிடப்பட்டது, %2$s-ல் தொடங்குகிறது</string>
+    <string name="insight_tomorrow_preview_no_start">நாளை: %1$s திட்டமிடப்பட்டது</string>
+    <string name="insight_heaviest_upcoming">%1$s உங்கள் மிகவும் நிரம்பிய வரவிருக்கும் நாள் (%2$s)</string>
+    <string name="insight_next_free_block">அடுத்த காலி நேரம்: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">நாட்காட்டி பிரிவு: %1$s</string>
+    <string name="insights_cd_daily_chart">தினசரி விநியோகம்: மிகவும் பரபரப்பான நாள் %1$s</string>
 
 </resources>

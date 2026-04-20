@@ -703,6 +703,7 @@
     <string name="view_month_full">Месяц (полный)</string>
     <string name="view_three_days">3 дня</string>
     <string name="view_year">Год</string>
+    <string name="view_insights">Аналитика</string>
 
     <string name="label_go_to_month">Перейти к месяцу</string>
 
@@ -912,4 +913,47 @@
         <item quantity="many">, %1$d раз</item>
         <item quantity="other">, %1$d раз</item>
     </plurals>
+
+    <!-- ==================== Insights ==================== -->
+    <string name="insights_title">Аналитика</string>
+    <string name="insights_period_this_week">Неделя</string>
+    <string name="insights_period_last_week">Прошлая нед.</string>
+    <string name="insights_period_this_month">Месяц</string>
+    <string name="insights_empty_state">На этой неделе нет запланированных событий</string>
+    <string name="insights_delta_more">+%1$s больше, чем за %2$s</string>
+    <string name="insights_delta_less">%1$s меньше, чем за %2$s</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d событие на весь день</item>
+        <item quantity="few">%d события на весь день</item>
+        <item quantity="many">%d событий на весь день</item>
+        <item quantity="other">%d событий на весь день</item>
+    </plurals>
+    <string name="insight_busiest_day_future">%1$s — самый загруженный день (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s был самым загруженным днём (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s — самый свободный день (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s был самым свободным днём (%2$s)</string>
+    <string name="insight_longest_free_future">Самый длинный свободный блок: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Самый длинный свободный блок был %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Выходные свободны</string>
+    <string name="insight_weekend_load_clear_past">Выходные были свободны</string>
+    <string name="insight_weekend_load_light_future">%1$s запланировано на выходные</string>
+    <string name="insight_weekend_load_light_past">%1$s было запланировано на выходные</string>
+    <string name="insight_weekend_load_busy_future">%1$s запланировано на выходные</string>
+    <string name="insight_weekend_load_busy_past">%1$s было запланировано на выходные</string>
+    <string name="insight_back_to_back_future">%1$d встреч подряд</string>
+    <string name="insight_back_to_back_past">Было %1$d встреч подряд</string>
+    <string name="insight_calendar_dominant_future">%1$s — это %2$d%% запланированного времени</string>
+    <string name="insight_calendar_dominant_past">%1$s составлял %2$d%% запланированного времени</string>
+    <string name="insight_early_bounds_future">Расписание начинается до 8:00 в %1$d дн.</string>
+    <string name="insight_early_bounds_past">Расписание начиналось до 8:00 в %1$d дн.</string>
+    <string name="insight_late_bounds_future">События после 19:00 в %1$d дн.</string>
+    <string name="insight_late_bounds_past">События шли после 19:00 в %1$d дн.</string>
+    <string name="insight_meeting_free_days_future">%1$d дн. без встреч</string>
+    <string name="insight_meeting_free_days_past">Было %1$d дн. без встреч</string>
+    <string name="insight_tomorrow_preview">Завтра: запланировано %1$s, начало в %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Завтра: запланировано %1$s</string>
+    <string name="insight_heaviest_upcoming">%1$s — самый загруженный предстоящий день (%2$s)</string>
+    <string name="insight_next_free_block">Следующий свободный блок: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Распределение по календарям: %1$s</string>
+    <string name="insights_cd_daily_chart">Распределение по дням: самый загруженный день — %1$s</string>
 </resources>

@@ -62,7 +62,7 @@ class ViewModeTest {
     }
 
     @Test
-    fun `ViewMode has 6 entries`() {
-        assertEquals(6, ViewMode.entries.size)
+    fun `ViewMode has 7 entries`() {
+        assertEquals(7, ViewMode.entries.size)
     }
 }
