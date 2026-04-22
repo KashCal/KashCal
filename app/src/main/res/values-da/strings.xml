@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valgt</string>
+    <string name="cd_checkmark">Valgt</string>
     <string name="cd_back">Tilbage</string>
     <string name="cd_close">Luk</string>
     <string name="cd_search">Søg</string>
@@ -440,6 +441,8 @@
     <string name="label_on_days">På dage</string>
     <string name="label_pattern">Mønster</string>
     <string name="label_ends">Slutter</string>
+    <string name="label_timezone">Tidszone</string>
+    <string name="label_device_timezone">Enhedens tidszone</string>
     <string name="label_alerts">Påmindelser</string>
     <string name="label_add_alert">Tilføj påmindelse</string>
     <string name="label_recurrence_never">Aldrig</string>
@@ -930,4 +933,24 @@
     <string name="insight_next_free_block">N\u00e6ste ledige blok: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Kalenderfordeling: %1$s</string>
     <string name="insights_cd_daily_chart">Daglig fordeling: travleste dag er %1$s</string>
+
+    <!-- ==================== Event Color / Availability ==================== -->
+    <string name="label_availability">Tilgængelighed</string>
+    <string name="label_busy">Optaget</string>
+    <string name="label_free">Ledig</string>
+    <string name="label_event_color">Begivenhedsfarve</string>
+    <string name="label_calendar_default">Kalenderstandard</string>
+    <string name="label_custom">Brugerdefineret</string>
+    <string name="cd_event_color">Begivenhedsfarve</string>
+    <string name="color_tomato">Tomat</string>
+    <string name="color_darkorange">Mørkeorange</string>
+    <string name="color_gold">Guld</string>
+    <string name="color_yellowgreen">Gulgrøn</string>
+    <string name="color_mediumseagreen">Havgrøn</string>
+    <string name="color_teal">Blågrøn</string>
+    <string name="color_steelblue">Stålblå</string>
+    <string name="color_slateblue">Skiferblå</string>
+    <string name="color_mediumorchid">Orkidé</string>
+    <string name="color_hotpink">Knaldpink</string>
+    <string name="color_slategray">Skifergrå</string>
 </resources>

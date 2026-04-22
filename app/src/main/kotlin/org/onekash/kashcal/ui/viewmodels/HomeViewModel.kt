@@ -2226,10 +2226,11 @@ class HomeViewModel @Inject constructor(
                                 rrule = null, // Exception events don't have RRULE
                                 reminders = reminders,
                                 calendarId = calendarId,
+                                transp = formState.transp,
+                                color = formState.eventColor,
                                 // Preserve these fields from master for round-trip fidelity:
                                 timezone = masterEvent.timezone,
                                 status = masterEvent.status,
-                                transp = masterEvent.transp,
                                 classification = masterEvent.classification,
                                 extraProperties = masterEvent.extraProperties,
                                 updatedAt = System.currentTimeMillis()
@@ -2267,6 +2268,8 @@ class HomeViewModel @Inject constructor(
                             description = formState.description.ifBlank { null },
                             rrule = formState.rrule,
                             reminders = reminders,
+                            transp = formState.transp,
+                            color = formState.eventColor,
                             updatedAt = System.currentTimeMillis()
                         )
                         eventCoordinator.updateEvent(finalEvent)
@@ -2283,6 +2286,8 @@ class HomeViewModel @Inject constructor(
                             rrule = formState.rrule,
                             reminders = reminders,
                             calendarId = calendarId,
+                            transp = formState.transp,
+                            color = formState.eventColor,
                             updatedAt = System.currentTimeMillis()
                         )
                         eventCoordinator.updateEvent(updatedEvent)
@@ -2304,6 +2309,8 @@ class HomeViewModel @Inject constructor(
                         description = formState.description.ifBlank { null },
                         rrule = formState.rrule,
                         reminders = reminders,
+                        transp = formState.transp,
+                        color = formState.eventColor,
                         dtstamp = now,
                         createdAt = now,
                         updatedAt = now
@@ -2868,7 +2875,9 @@ class HomeViewModel @Inject constructor(
                             rrule = null, // Exceptions don't have RRULE
                             duration = null,
                             timezone = timezone,
-                            reminders = reminders
+                            reminders = reminders,
+                            availability = transpToAvailability(formState.transp),
+                            eventColor = formState.eventColor
                         ).map { existingExceptionId }
                     } else {
                         // Create new exception
@@ -2883,7 +2892,9 @@ class HomeViewModel @Inject constructor(
                             endTs = endTs,
                             isAllDay = formState.isAllDay,
                             timezone = timezone,
-                            reminders = reminders
+                            reminders = reminders,
+                            availability = transpToAvailability(formState.transp),
+                            eventColor = formState.eventColor
                         )
                     }
                 }
@@ -2902,7 +2913,9 @@ class HomeViewModel @Inject constructor(
                         rrule = formState.rrule,
                         duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
                         timezone = timezone,
-                        reminders = reminders
+                        reminders = reminders,
+                        availability = transpToAvailability(formState.transp),
+                        eventColor = formState.eventColor
                     ).map { eventId }
                 }
 
@@ -2919,7 +2932,9 @@ class HomeViewModel @Inject constructor(
                         rrule = formState.rrule,
                         duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
                         timezone = timezone,
-                        reminders = reminders
+                        reminders = reminders,
+                        availability = transpToAvailability(formState.transp),
+                        eventColor = formState.eventColor
                     )
                 }
             }.also { result ->
@@ -2931,6 +2946,9 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
+
+    private fun transpToAvailability(transp: String): Int =
+        if (transp == "TRANSPARENT") 1 else 0
 
     /**
      * Compute start/end timestamps from form state.

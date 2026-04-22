@@ -13,6 +13,7 @@ import org.onekash.icaldav.parser.ICalGenerator
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.ZoneId
 
 /**
@@ -80,7 +81,7 @@ object IcsPatcher {
             // RFC 5545/7986 extended properties
             priority = event.priority,
             geo = formatGeo(event.geoLat, event.geoLon),
-            color = event.color?.let { formatColorFromArgb(it) },
+            color = iCalColorFor(event.color),
             url = event.url,
             categories = event.categories.orEmpty()
             // The following are PRESERVED from original:
@@ -153,7 +154,7 @@ object IcsPatcher {
             categories = event.categories.orEmpty(),
             organizer = organizer,
             attendees = emptyList(),
-            color = event.color?.let { formatColorFromArgb(it) },
+            color = iCalColorFor(event.color),
             dtstamp = ICalDateTime.fromTimestamp(event.dtstamp, null, false),
             lastModified = null,
             created = null,
@@ -289,7 +290,7 @@ object IcsPatcher {
             categories = exception.categories.orEmpty(),
             organizer = exception.organizerEmail?.let { Organizer(it, exception.organizerName, null) },
             attendees = emptyList(),
-            color = exception.color?.let { formatColorFromArgb(it) },
+            color = iCalColorFor(exception.color),
             dtstamp = ICalDateTime.fromTimestamp(exception.dtstamp, null, false),
             lastModified = null,
             created = null,
@@ -433,13 +434,13 @@ object IcsPatcher {
     }
 
     /**
-     * Format ARGB int to CSS hex color (#RRGGBB) for iCal.
+     * Resolve an ARGB color to its RFC 7986 COLOR value: prefer a CSS3 name when
+     * the palette matches, otherwise fall back to a #RRGGBB hex string.
      * Alpha channel is dropped per RFC 7986 COLOR spec.
-     *
-     * @param argb ARGB color integer
-     * @return CSS hex color string (e.g., "#FF5733")
      */
-    private fun formatColorFromArgb(argb: Int): String {
-        return String.format(java.util.Locale.ROOT, "#%06X", argb and 0xFFFFFF)
+    private fun iCalColorFor(argb: Int?): String? {
+        if (argb == null) return null
+        return EventColorPalette.nameForHex(argb)
+            ?: String.format(java.util.Locale.ROOT, "#%06X", argb and 0xFFFFFF)
     }
 }

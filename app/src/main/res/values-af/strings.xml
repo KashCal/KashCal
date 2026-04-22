@@ -438,6 +438,8 @@
     <string name="label_on_days">Op dae</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindig</string>
+    <string name="label_timezone">Tydsone</string>
+    <string name="label_device_timezone">Toestel-tydsone</string>
     <string name="label_alerts">Waarskuwings</string>
     <string name="label_add_alert">Voeg Waarskuwing By</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -939,4 +941,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Kalenderuiteensetting: %1$s</string>
     <string name="insights_cd_daily_chart">Daaglikse verspreiding: besigste dag is %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Beskikbaarheid</string>
+    <string name="label_busy">Besig</string>
+    <string name="label_free">Vry</string>
+    <string name="label_event_color">Gebeurteniskleur</string>
+    <string name="label_calendar_default">Kalenderverstek</string>
+    <string name="label_custom">Aangepas</string>
+    <string name="cd_event_color">Gebeurteniskleur</string>
+
+    <string name="cd_checkmark">Gekies</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_tomato">Tamatie</string>
+    <string name="color_darkorange">Donker oranje</string>
+    <string name="color_gold">Goud</string>
+    <string name="color_yellowgreen">Geelgroen</string>
+    <string name="color_mediumseagreen">Medium seegroen</string>
+    <string name="color_teal">Blougroen</string>
+    <string name="color_steelblue">Staalblou</string>
+    <string name="color_slateblue">Leiblou</string>
+    <string name="color_mediumorchid">Medium orgidee</string>
+    <string name="color_hotpink">Warmpienk</string>
+    <string name="color_slategray">Leigrou</string>
 </resources>

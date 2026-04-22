@@ -420,6 +420,8 @@
     <string name="label_on_days">V dňoch</string>
     <string name="label_pattern">Vzor</string>
     <string name="label_ends">Končí</string>
+    <string name="label_timezone">Časové pásmo</string>
+    <string name="label_device_timezone">Časové pásmo zariadenia</string>
     <string name="label_alerts">Upozornenia</string>
     <string name="label_add_alert">Pridať upozornenie</string>
     <string name="label_recurrence_never">Nikdy</string>
@@ -866,6 +868,18 @@
     <string name="color_cyan">Azúrová</string>
     <string name="color_blue">Modrá</string>
     <string name="color_purple">Fialová</string>
+    <string name="cd_checkmark">Vybraté</string>
+    <string name="color_tomato">Paradajková</string>
+    <string name="color_darkorange">Tmavo oranžová</string>
+    <string name="color_gold">Zlatá</string>
+    <string name="color_yellowgreen">Žltozelená</string>
+    <string name="color_mediumseagreen">Stredne morská</string>
+    <string name="color_teal">Tyrkysová</string>
+    <string name="color_steelblue">Oceľovo modrá</string>
+    <string name="color_slateblue">Bridlicovo modrá</string>
+    <string name="color_mediumorchid">Stredne orchideová</string>
+    <string name="color_hotpink">Sýto ružová</string>
+    <string name="color_slategray">Bridlicovo sivá</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Odkaz na stretnutie: %1$s</string>
     <string name="cd_phone_number">Telefónne číslo</string>
@@ -974,4 +988,11 @@
     <string name="insight_next_free_block">Ďalší voľný blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Rozdelenie kalendárov: %1$s</string>
     <string name="insights_cd_daily_chart">Denné rozloženie: najvyťaženejší deň je %1$s</string>
+    <string name="label_availability">Dostupnosť</string>
+    <string name="label_busy">Zaneprázdnený</string>
+    <string name="label_free">Voľný</string>
+    <string name="label_event_color">Farba udalosti</string>
+    <string name="label_calendar_default">Predvolené z kalendára</string>
+    <string name="label_custom">Vlastné</string>
+    <string name="cd_event_color">Farba udalosti</string>
 </resources>

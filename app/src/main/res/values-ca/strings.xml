@@ -438,6 +438,7 @@
     <string name="label_on_days">Els dies</string>
     <string name="label_pattern">Patr\u00f3</string>
     <string name="label_ends">Finalitza</string>
+    <string name="label_timezone">Zona horària</string>
     <string name="label_alerts">Alertes</string>
     <string name="label_add_alert">Afegir alerta</string>
     <string name="label_recurrence_never">Mai</string>
@@ -923,5 +924,31 @@
     <string name="insight_next_free_block">Pr\u00f2xim bloc lliure: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Distribuci\u00f3 de calendaris: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuci\u00f3 di\u00e0ria: el dia m\u00e9s ocupat \u00e9s %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">Disponibilitat</string>
+    <string name="label_busy">Ocupat</string>
+    <string name="label_free">Lliure</string>
+    <string name="label_event_color">Color de l\'esdeveniment</string>
+    <string name="label_calendar_default">Per defecte del calendari</string>
+    <string name="label_custom">Personalitzat</string>
+    <string name="cd_event_color">Color de l\'esdeveniment</string>
+
+
+    <string name="cd_checkmark">Seleccionat</string>
+    <string name="label_device_timezone">Zona hor\u00e0ria del dispositiu</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tom\u00e0quet</string>
+    <string name="color_darkorange">Taronja fosc</string>
+    <string name="color_gold">Daurat</string>
+    <string name="color_yellowgreen">Verd groguenc</string>
+    <string name="color_mediumseagreen">Verd mar\u00ed mitj\u00e0</string>
+    <string name="color_teal">Xarxet</string>
+    <string name="color_steelblue">Blau acer</string>
+    <string name="color_slateblue">Blau pissarra</string>
+    <string name="color_mediumorchid">Orqu\u00eddia mitjana</string>
+    <string name="color_hotpink">Rosa intens</string>
+    <string name="color_slategray">Gris pissarra</string>
 
 </resources>

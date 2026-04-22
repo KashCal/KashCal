@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Geselecteerd</string>
+    <string name="cd_checkmark">Geselecteerd</string>
     <string name="cd_back">Terug</string>
     <string name="cd_close">Sluiten</string>
     <string name="cd_search">Zoeken</string>
@@ -440,6 +441,8 @@
     <string name="label_on_days">Op dagen</string>
     <string name="label_pattern">Patroon</string>
     <string name="label_ends">Eindigt</string>
+    <string name="label_timezone">Tijdzone</string>
+    <string name="label_device_timezone">Tijdzone van apparaat</string>
     <string name="label_alerts">Herinneringen</string>
     <string name="label_add_alert">Herinnering toevoegen</string>
     <string name="label_recurrence_never">Nooit</string>
@@ -930,4 +933,24 @@
     <string name="insight_next_free_block">Volgend vrij blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Agendaverdeling: %1$s</string>
     <string name="insights_cd_daily_chart">Dagelijkse verdeling: drukste dag is %1$s</string>
+
+    <!-- ==================== Event Color / Availability ==================== -->
+    <string name="label_availability">Beschikbaarheid</string>
+    <string name="label_busy">Bezet</string>
+    <string name="label_free">Vrij</string>
+    <string name="label_event_color">Afspraakkleur</string>
+    <string name="label_calendar_default">Agendastandaard</string>
+    <string name="label_custom">Aangepast</string>
+    <string name="cd_event_color">Afspraakkleur</string>
+    <string name="color_tomato">Tomaat</string>
+    <string name="color_darkorange">Donkeroranje</string>
+    <string name="color_gold">Goud</string>
+    <string name="color_yellowgreen">Geelgroen</string>
+    <string name="color_mediumseagreen">Zeegroen</string>
+    <string name="color_teal">Blauwgroen</string>
+    <string name="color_steelblue">Staalblauw</string>
+    <string name="color_slateblue">Leiblauw</string>
+    <string name="color_mediumorchid">Orchidee</string>
+    <string name="color_hotpink">Felroze</string>
+    <string name="color_slategray">Leigrijs</string>
 </resources>

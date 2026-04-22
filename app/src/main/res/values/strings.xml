@@ -614,6 +614,10 @@
     <string name="label_pattern">Pattern</string>
     <!-- Event form: when the event/recurrence ends -->
     <string name="label_ends">Ends</string>
+    <!-- Event form: timezone row label -->
+    <string name="label_timezone">Time zone</string>
+    <!-- Event form: shown in the timezone row when the event uses the device's default timezone -->
+    <string name="label_device_timezone">Device time zone</string>
     <!-- Event form section: reminder alerts -->
     <string name="label_alerts">Alerts</string>
     <!-- Button: add another reminder alert to the event -->
@@ -1162,5 +1166,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Calendar breakdown: %1$s</string>
     <string name="insights_cd_daily_chart">Daily distribution: busiest day is %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">Availability</string>
+    <string name="label_busy">Busy</string>
+    <string name="label_free">Free</string>
+    <string name="label_event_color">Event color</string>
+    <string name="label_calendar_default">Calendar default</string>
+    <string name="label_custom">Custom</string>
+    <string name="cd_event_color">Event color</string>
+
+    <string name="cd_checkmark">Selected</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_tomato">Tomato</string>
+    <string name="color_darkorange">Dark Orange</string>
+    <string name="color_gold">Gold</string>
+    <string name="color_yellowgreen">Yellow Green</string>
+    <string name="color_mediumseagreen">Medium Sea Green</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_steelblue">Steel Blue</string>
+    <string name="color_slateblue">Slate Blue</string>
+    <string name="color_mediumorchid">Medium Orchid</string>
+    <string name="color_hotpink">Hot Pink</string>
+    <string name="color_slategray">Slate Gray</string>
 
 </resources>

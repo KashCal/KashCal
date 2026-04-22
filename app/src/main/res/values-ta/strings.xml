@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">தேர்ந்தெடுக்கப்பட்டது</string>
+    <string name="cd_checkmark">தேர்ந்தெடுக்கப்பட்டது</string>
     <string name="cd_back">பின்செல்</string>
     <string name="cd_close">மூடு</string>
     <string name="cd_search">தேடு</string>
@@ -438,6 +439,8 @@
     <string name="label_on_days">நாட்களில்</string>
     <string name="label_pattern">வடிவம்</string>
     <string name="label_ends">முடிவு</string>
+    <string name="label_timezone">நேர மண்டலம்</string>
+    <string name="label_device_timezone">சாதன நேர மண்டலம்</string>
     <string name="label_alerts">எச்சரிக்கைகள்</string>
     <string name="label_add_alert">எச்சரிக்கை சேர்</string>
     <string name="label_recurrence_never">ஒருபோதும் இல்லை</string>
@@ -822,6 +825,17 @@
     <string name="color_cyan">சியான்</string>
     <string name="color_blue">நீலம்</string>
     <string name="color_purple">ஊதா</string>
+    <string name="color_tomato">தக்காளி</string>
+    <string name="color_darkorange">அடர் ஆரஞ்சு</string>
+    <string name="color_gold">தங்கம்</string>
+    <string name="color_yellowgreen">மஞ்சள் பச்சை</string>
+    <string name="color_mediumseagreen">நடுத்தர கடல் பச்சை</string>
+    <string name="color_teal">டீல்</string>
+    <string name="color_steelblue">எஃகு நீலம்</string>
+    <string name="color_slateblue">ஸ்லேட் நீலம்</string>
+    <string name="color_mediumorchid">நடுத்தர ஆர்க்கிட்</string>
+    <string name="color_hotpink">ஹாட் பிங்க்</string>
+    <string name="color_slategray">ஸ்லேட் சாம்பல்</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">கூட்ட இணைப்பு: %1$s</string>
     <string name="cd_phone_number">தொலைபேசி எண்</string>
@@ -929,5 +943,14 @@
     <string name="insight_next_free_block">அடுத்த காலி நேரம்: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">நாட்காட்டி பிரிவு: %1$s</string>
     <string name="insights_cd_daily_chart">தினசரி விநியோகம்: மிகவும் பரபரப்பான நாள் %1$s</string>
+
+    <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
+    <string name="label_availability">கிடைக்கும் நிலை</string>
+    <string name="label_busy">பிஸியாக</string>
+    <string name="label_free">காலியாக</string>
+    <string name="label_event_color">நிகழ்வு நிறம்</string>
+    <string name="label_calendar_default">நாட்காட்டி இயல்புநிலை</string>
+    <string name="label_custom">தனிப்பயன்</string>
+    <string name="cd_event_color">நிகழ்வு நிறம்</string>
 
 </resources>

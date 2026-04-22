@@ -133,6 +133,36 @@ class Rfc7986ExtendedPropertiesTest {
         assertEquals("COLOR should survive round-trip", entity.color, reparsed.color)
     }
 
+    @Test
+    fun `COLOR parses CSS3 named color mediumorchid to ARGB`() {
+        // RFC 7986 §5.9: CSS3 named colors — Android Color.parseColor doesn't support
+        // extended CSS3 names (mediumorchid, slategray, etc.). EventColorPalette fills the gap.
+        val ics = icsWithProperties("COLOR:mediumorchid")
+        val entity = parseToEntity(ics)
+
+        assertNotNull("mediumorchid should be parsed", entity.color)
+        assertEquals(0xFFBA55D3.toInt(), entity.color)
+    }
+
+    @Test
+    fun `COLOR emits CSS3 name when hex matches palette slot`() {
+        // When event.color matches a palette hex, emit the lowercase CSS3 name (RFC 7986 §5.9)
+        val event = createEvent(color = 0xFFBA55D3.toInt())
+        val ics = IcsPatcher.generateFresh(event)
+
+        assertTrue("Should emit COLOR:mediumorchid", ics.contains("COLOR:mediumorchid"))
+        assertFalse("Should not emit hex fallback", ics.contains("COLOR:#BA55D3"))
+    }
+
+    @Test
+    fun `COLOR emits hex fallback for non-palette hex`() {
+        // Non-palette hex values fall back to #RRGGBB form (still valid per RFC 7986)
+        val event = createEvent(color = 0xFF123456.toInt())
+        val ics = IcsPatcher.generateFresh(event)
+
+        assertTrue("Should emit COLOR:#123456", ics.contains("COLOR:#123456"))
+    }
+
     // ========== RFC 7986 Section 5.3: CATEGORIES Property ==========
 
     @Test

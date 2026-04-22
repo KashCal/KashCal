@@ -438,6 +438,8 @@
     <string name="label_on_days">በቀናት</string>
     <string name="label_pattern">ጥለት</string>
     <string name="label_ends">ያበቃል</string>
+    <string name="label_timezone">የሰዓት ክልል</string>
+    <string name="label_device_timezone">የመሣሪያ ሰዓት ክልል</string>
     <string name="label_alerts">ማንቂያዎች</string>
     <string name="label_add_alert">ማንቂያ አክል</string>
     <string name="label_recurrence_never">ፈጽሞ</string>
@@ -941,4 +943,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">የቀን መቁጠሪያ ክፍፍል: %1$s</string>
     <string name="insights_cd_daily_chart">ዕለታዊ ስርጭት: በጣም የተጨናነቀው ቀን %1$s ነው</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">ተገኝነት</string>
+    <string name="label_busy">ስራ ላይ</string>
+    <string name="label_free">ነፃ</string>
+    <string name="label_event_color">የክስተት ቀለም</string>
+    <string name="label_calendar_default">የቀን መቁጠሪያ ነባሪ</string>
+    <string name="label_custom">ብጁ</string>
+    <string name="cd_event_color">የክስተት ቀለም</string>
+
+    <string name="cd_checkmark">ተመርጧል</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_tomato">ቲማቲም</string>
+    <string name="color_darkorange">ጥቁር ብርቱካናማ</string>
+    <string name="color_gold">ወርቃማ</string>
+    <string name="color_yellowgreen">ቢጫ አረንጓዴ</string>
+    <string name="color_mediumseagreen">መካከለኛ ባሕር አረንጓዴ</string>
+    <string name="color_teal">ሰማያዊ አረንጓዴ</string>
+    <string name="color_steelblue">ብረታማ ሰማያዊ</string>
+    <string name="color_slateblue">ስሌት ሰማያዊ</string>
+    <string name="color_mediumorchid">መካከለኛ ኦርኪድ</string>
+    <string name="color_hotpink">ደማቅ ሮዝ</string>
+    <string name="color_slategray">ስሌት ግራጫ</string>
 </resources>

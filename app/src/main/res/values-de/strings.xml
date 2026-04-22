@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Ausgewählt</string>
+    <string name="cd_checkmark">Ausgewählt</string>
     <string name="cd_back">Zurück</string>
     <string name="cd_close">Schließen</string>
     <string name="cd_search">Suche</string>
@@ -440,6 +441,8 @@
     <string name="label_on_days">An Tagen</string>
     <string name="label_pattern">Muster</string>
     <string name="label_ends">Endet</string>
+    <string name="label_timezone">Zeitzone</string>
+    <string name="label_device_timezone">Gerätezeitzone</string>
     <string name="label_alerts">Erinnerungen</string>
     <string name="label_add_alert">Erinnerung hinzufügen</string>
     <string name="label_recurrence_never">Nie</string>
@@ -930,4 +933,24 @@
     <string name="insight_next_free_block">Nächster freier Block: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Kalenderverteilung: %1$s</string>
     <string name="insights_cd_daily_chart">Tagesverteilung: vollster Tag ist %1$s</string>
+
+    <!-- ==================== Event Color / Availability ==================== -->
+    <string name="label_availability">Verfügbarkeit</string>
+    <string name="label_busy">Beschäftigt</string>
+    <string name="label_free">Frei</string>
+    <string name="label_event_color">Terminfarbe</string>
+    <string name="label_calendar_default">Kalenderstandard</string>
+    <string name="label_custom">Benutzerdefiniert</string>
+    <string name="cd_event_color">Terminfarbe</string>
+    <string name="color_tomato">Tomate</string>
+    <string name="color_darkorange">Dunkelorange</string>
+    <string name="color_gold">Gold</string>
+    <string name="color_yellowgreen">Gelbgrün</string>
+    <string name="color_mediumseagreen">Mittelseegrün</string>
+    <string name="color_teal">Blaugrün</string>
+    <string name="color_steelblue">Stahlblau</string>
+    <string name="color_slateblue">Schieferblau</string>
+    <string name="color_mediumorchid">Mittelorchidee</string>
+    <string name="color_hotpink">Knallrosa</string>
+    <string name="color_slategray">Schiefergrau</string>
 </resources>

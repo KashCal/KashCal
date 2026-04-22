@@ -438,6 +438,7 @@
     <string name="label_on_days">В дни</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Край</string>
+    <string name="label_timezone">Часова зона</string>
     <string name="label_alerts">Напомняния</string>
     <string name="label_add_alert">Добави напомняне</string>
     <string name="label_recurrence_never">Никога</string>
@@ -939,5 +940,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Разпределение по календари: %1$s</string>
     <string name="insights_cd_daily_chart">Дневно разпределение: най-натовареният ден е %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Наличност</string>
+    <string name="label_busy">Зает</string>
+    <string name="label_free">Свободен</string>
+    <string name="label_event_color">Цвят на събитието</string>
+    <string name="label_calendar_default">По подразбиране</string>
+    <string name="label_custom">Персонализиран</string>
+    <string name="cd_event_color">Цвят на събитието</string>
+    <string name="cd_checkmark">Избрано</string>
+    <string name="label_device_timezone">Часова зона на устройството</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Доматено червено</string>
+    <string name="color_darkorange">Тъмнооранжево</string>
+    <string name="color_gold">Златисто</string>
+    <string name="color_yellowgreen">Жълто-зелено</string>
+    <string name="color_mediumseagreen">Средно морско зелено</string>
+    <string name="color_teal">Тюркоазено</string>
+    <string name="color_steelblue">Стоманено синьо</string>
+    <string name="color_slateblue">Шиферно синьо</string>
+    <string name="color_mediumorchid">Средно орхидея</string>
+    <string name="color_hotpink">Ярко розово</string>
+    <string name="color_slategray">Шиферно сиво</string>
 
 </resources>

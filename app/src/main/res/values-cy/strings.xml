@@ -451,6 +451,7 @@
     <string name="label_on_days">Ar ddyddiau</string>
     <string name="label_pattern">Patrwm</string>
     <string name="label_ends">Yn Gorffen</string>
+    <string name="label_timezone">Cylchfa amser</string>
     <string name="label_alerts">Rhybuddion</string>
     <string name="label_add_alert">Ychwanegu Rhybudd</string>
     <string name="label_recurrence_never">Byth</string>
@@ -1084,5 +1085,31 @@
     <string name="insight_next_free_block">Bloc rhydd nesaf: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Dosraniad calendrau: %1$s</string>
     <string name="insights_cd_daily_chart">Dosraniad dyddiol: y diwrnod prysuraf yw %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">Argaeledd</string>
+    <string name="label_busy">Prysur</string>
+    <string name="label_free">Rhydd</string>
+    <string name="label_event_color">Lliw digwyddiad</string>
+    <string name="label_calendar_default">Rhagosodiad y calendr</string>
+    <string name="label_custom">Personol</string>
+    <string name="cd_event_color">Lliw digwyddiad</string>
+
+
+    <string name="cd_checkmark">Dewiswyd</string>
+    <string name="label_device_timezone">Cylchfa amser y dyfais</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tomato</string>
+    <string name="color_darkorange">Oren tywyll</string>
+    <string name="color_gold">Aur</string>
+    <string name="color_yellowgreen">Gwyrdd melyn</string>
+    <string name="color_mediumseagreen">Gwyrdd m\u00f4r canolig</string>
+    <string name="color_teal">Glaswyrdd</string>
+    <string name="color_steelblue">Glas dur</string>
+    <string name="color_slateblue">Glas llechen</string>
+    <string name="color_mediumorchid">Tegeirian canolig</string>
+    <string name="color_hotpink">Pinc llachar</string>
+    <string name="color_slategray">Llwyd llechen</string>
 
 </resources>

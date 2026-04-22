@@ -23,7 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.Repeat
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -142,6 +142,7 @@ private fun frequencyLabel(option: FrequencyOption): String {
  * @param onToggle Toggle expansion state
  * @param onSelect Called with new RRULE string (null = no repeat)
  */
+@Deprecated("Use RecurrencePickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
 fun RecurrencePickerCard(
     selectedRrule: String?,
@@ -282,8 +283,6 @@ fun RecurrencePickerCard(
                         .padding(horizontal = 12.dp)
                         .padding(bottom = 12.dp)
                 ) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
                     // Frequency chips - 2 rows
                     Text(
                         stringResource(R.string.label_frequency),
@@ -371,6 +370,185 @@ fun RecurrencePickerCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun RecurrencePickerRow(
+    selectedRrule: String?,
+    startDateMillis: Long,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onSelect: (String?) -> Unit,
+    modifier: Modifier = Modifier,
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+) {
+    val focusManager = LocalFocusManager.current
+    val rruleStrings = rememberRruleDisplayStrings()
+    val displayText = RruleBuilder.formatForDisplay(selectedRrule, rruleStrings)
+
+    val startZoned = remember(startDateMillis) {
+        Instant.ofEpochMilli(startDateMillis)
+            .atZone(ZoneId.systemDefault())
+    }
+    val startDayOfWeek = startZoned.dayOfWeek
+    val startDayOfMonth = startZoned.dayOfMonth
+    val startOrdinalInMonth = remember(startDateMillis) {
+        val day = startZoned.dayOfMonth
+        (day - 1) / 7 + 1
+    }
+
+    val parsed = remember(selectedRrule, startDayOfWeek, startDayOfMonth) {
+        RruleBuilder.parseRrule(selectedRrule, startDayOfWeek, startDayOfMonth, startOrdinalInMonth)
+    }
+
+    var selectedFreqOption by remember(parsed) {
+        mutableStateOf(
+            when {
+                parsed.frequency == RecurrenceFrequency.NONE -> FrequencyOption.NEVER
+                parsed.frequency == RecurrenceFrequency.DAILY -> FrequencyOption.DAILY
+                parsed.frequency == RecurrenceFrequency.WEEKLY && parsed.interval == 2 -> FrequencyOption.BIWEEKLY
+                parsed.frequency == RecurrenceFrequency.WEEKLY -> FrequencyOption.WEEKLY
+                parsed.frequency == RecurrenceFrequency.MONTHLY && parsed.interval == 3 -> FrequencyOption.QUARTERLY
+                parsed.frequency == RecurrenceFrequency.MONTHLY -> FrequencyOption.MONTHLY
+                parsed.frequency == RecurrenceFrequency.YEARLY -> FrequencyOption.YEARLY
+                else -> FrequencyOption.NEVER
+            }
+        )
+    }
+
+    var selectedWeekdays by remember(parsed) {
+        mutableStateOf(parsed.weekdays.ifEmpty { setOf(startDayOfWeek) })
+    }
+
+    var monthlyPattern by remember(parsed) {
+        mutableStateOf(parsed.monthlyPattern ?: MonthlyPattern.SameDay(startDayOfMonth))
+    }
+
+    var endCondition by remember(parsed) {
+        mutableStateOf(parsed.endCondition)
+    }
+
+    fun buildRrule(): String? {
+        if (selectedFreqOption == FrequencyOption.NEVER) return null
+        val base = when (selectedFreqOption) {
+            FrequencyOption.NEVER -> return null
+            FrequencyOption.DAILY -> RruleBuilder.daily()
+            FrequencyOption.WEEKLY -> RruleBuilder.weekly(days = selectedWeekdays)
+            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays)
+            FrequencyOption.MONTHLY -> when (val pattern = monthlyPattern) {
+                is MonthlyPattern.SameDay -> RruleBuilder.monthly(dayOfMonth = pattern.dayOfMonth)
+                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay()
+                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday)
+            }
+            FrequencyOption.QUARTERLY -> when (val pattern = monthlyPattern) {
+                is MonthlyPattern.SameDay -> RruleBuilder.monthly(interval = 3, dayOfMonth = pattern.dayOfMonth)
+                is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay(interval = 3)
+                is MonthlyPattern.NthWeekday -> RruleBuilder.monthlyNthWeekday(pattern.ordinal, pattern.weekday, interval = 3)
+            }
+            FrequencyOption.YEARLY -> RruleBuilder.yearly()
+        }
+        return when (val end = endCondition) {
+            is EndCondition.Never -> base
+            is EndCondition.Count -> RruleBuilder.withCount(base, end.count)
+            is EndCondition.Until -> RruleBuilder.withUntil(base, end.dateMillis)
+        }
+    }
+
+    fun notifyChange() {
+        onSelect(buildRrule())
+    }
+
+    EventFormRow(
+        icon = Icons.Default.Repeat,
+        iconContentDescription = stringResource(R.string.label_repeat),
+        isExpanded = isExpanded,
+        showExpandIcon = true,
+        onToggle = {
+            focusManager.clearFocus()
+            onToggle()
+        },
+        expandedContent = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(bottom = 12.dp)
+            ) {
+                Text(
+                    stringResource(R.string.label_frequency),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                FrequencyChipRow(
+                    options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY, FrequencyOption.BIWEEKLY),
+                    selected = selectedFreqOption,
+                    onSelect = { option -> selectedFreqOption = option; notifyChange() }
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                FrequencyChipRow(
+                    options = listOf(FrequencyOption.MONTHLY, FrequencyOption.QUARTERLY, FrequencyOption.YEARLY),
+                    selected = selectedFreqOption,
+                    onSelect = { option -> selectedFreqOption = option; notifyChange() }
+                )
+
+                if (selectedFreqOption == FrequencyOption.WEEKLY || selectedFreqOption == FrequencyOption.BIWEEKLY) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.label_on_days),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    WeekdaySelector(
+                        selectedDays = selectedWeekdays,
+                        onDaysChange = { days -> selectedWeekdays = days; notifyChange() },
+                        firstDayOfWeek = firstDayOfWeek
+                    )
+                }
+
+                if (selectedFreqOption == FrequencyOption.MONTHLY || selectedFreqOption == FrequencyOption.QUARTERLY) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.label_pattern),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    MonthlyPatternSelector(
+                        pattern = monthlyPattern,
+                        dayOfMonth = startDayOfMonth,
+                        ordinalInMonth = startOrdinalInMonth,
+                        weekday = startDayOfWeek,
+                        onPatternChange = { pattern -> monthlyPattern = pattern; notifyChange() }
+                    )
+                }
+
+                if (selectedFreqOption != FrequencyOption.NEVER) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.label_ends),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    EndConditionSelector(
+                        endCondition = endCondition,
+                        startDateMillis = startDateMillis,
+                        onEndConditionChange = { condition -> endCondition = condition; notifyChange() },
+                        firstDayOfWeek = firstDayOfWeek
+                    )
+                }
+            }
+        },
+        modifier = modifier
+    ) {
+        Text(
+            displayText,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

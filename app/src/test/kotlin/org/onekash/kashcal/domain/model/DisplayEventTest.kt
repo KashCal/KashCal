@@ -240,4 +240,70 @@ class DisplayEventTest {
         val readOnlyDisplay = DisplayEvent.Device(readOnlyInstance)
         assertTrue(readOnlyDisplay.isReadOnly)
     }
+
+    // ========== Per-Event Color Precedence (Room) ==========
+
+    @Test
+    fun `Room calendarColor returns event color when set`() {
+        val eventWithColor = testEvent.copy(color = 0xFF00FF00.toInt())
+        val display = DisplayEvent.Room(eventWithColor, testOccurrence, testCalendar)
+        assertEquals(0xFF00FF00.toInt(), display.calendarColor)
+    }
+
+    @Test
+    fun `Room calendarColor falls back to calendar color when event color is null`() {
+        val eventNoColor = testEvent.copy(color = null)
+        val display = DisplayEvent.Room(eventNoColor, testOccurrence, testCalendar)
+        assertEquals(0xFF2196F3.toInt(), display.calendarColor)
+    }
+
+    @Test
+    fun `Room calendarColor returns 0 when both event and calendar color are null`() {
+        val eventNoColor = testEvent.copy(color = null)
+        val display = DisplayEvent.Room(eventNoColor, testOccurrence, null)
+        assertEquals(0, display.calendarColor)
+    }
+
+    // ========== isFree Property ==========
+
+    @Test
+    fun `Room isFree returns true when transp is TRANSPARENT`() {
+        val freeEvent = testEvent.copy(transp = "TRANSPARENT")
+        val display = DisplayEvent.Room(freeEvent, testOccurrence, testCalendar)
+        assertTrue(display.isFree)
+    }
+
+    @Test
+    fun `Room isFree returns false when transp is OPAQUE`() {
+        val busyEvent = testEvent.copy(transp = "OPAQUE")
+        val display = DisplayEvent.Room(busyEvent, testOccurrence, testCalendar)
+        assertFalse(display.isFree)
+    }
+
+    @Test
+    fun `Room isFree defaults to false`() {
+        val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar)
+        assertFalse(display.isFree)
+    }
+
+    @Test
+    fun `Device isFree returns true when availability is FREE`() {
+        val freeInstance = testInstance.copy(availability = 1)
+        val display = DisplayEvent.Device(freeInstance)
+        assertTrue(display.isFree)
+    }
+
+    @Test
+    fun `Device isFree returns false when availability is BUSY`() {
+        val busyInstance = testInstance.copy(availability = 0)
+        val display = DisplayEvent.Device(busyInstance)
+        assertFalse(display.isFree)
+    }
+
+    @Test
+    fun `Device isFree returns false when availability is TENTATIVE`() {
+        val tentativeInstance = testInstance.copy(availability = 2)
+        val display = DisplayEvent.Device(tentativeInstance)
+        assertFalse(display.isFree)
+    }
 }

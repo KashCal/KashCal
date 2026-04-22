@@ -420,6 +420,8 @@
     <string name="label_on_days">Ve dnech</string>
     <string name="label_pattern">Vzor</string>
     <string name="label_ends">Končí</string>
+    <string name="label_timezone">Časové pásmo</string>
+    <string name="label_device_timezone">Časové pásmo zařízení</string>
     <string name="label_alerts">Upozornění</string>
     <string name="label_add_alert">Přidat upozornění</string>
     <string name="label_recurrence_never">Nikdy</string>
@@ -866,6 +868,18 @@
     <string name="color_cyan">Azurová</string>
     <string name="color_blue">Modrá</string>
     <string name="color_purple">Fialová</string>
+    <string name="cd_checkmark">Vybráno</string>
+    <string name="color_tomato">Rajčatová</string>
+    <string name="color_darkorange">Tmavě oranžová</string>
+    <string name="color_gold">Zlatá</string>
+    <string name="color_yellowgreen">Žlutozelená</string>
+    <string name="color_mediumseagreen">Středně mořská</string>
+    <string name="color_teal">Tyrkysová</string>
+    <string name="color_steelblue">Ocelově modrá</string>
+    <string name="color_slateblue">Břidlicově modrá</string>
+    <string name="color_mediumorchid">Středně orchidejová</string>
+    <string name="color_hotpink">Sytě růžová</string>
+    <string name="color_slategray">Břidlicově šedá</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Odkaz na schůzku: %1$s</string>
     <string name="cd_phone_number">Telefonní číslo</string>
@@ -974,4 +988,11 @@
     <string name="insight_next_free_block">Další volný blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Rozložení kalendářů: %1$s</string>
     <string name="insights_cd_daily_chart">Denní rozložení: nejvytíženější den je %1$s</string>
+    <string name="label_availability">Dostupnost</string>
+    <string name="label_busy">Zaneprázdněn</string>
+    <string name="label_free">Volný</string>
+    <string name="label_event_color">Barva události</string>
+    <string name="label_calendar_default">Výchozí z kalendáře</string>
+    <string name="label_custom">Vlastní</string>
+    <string name="cd_event_color">Barva události</string>
 </resources>

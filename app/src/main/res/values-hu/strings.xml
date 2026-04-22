@@ -438,6 +438,7 @@
     <string name="label_on_days">Napokon</string>
     <string name="label_pattern">Minta</string>
     <string name="label_ends">Befejezés</string>
+    <string name="label_timezone">Időzóna</string>
     <string name="label_alerts">Figyelmeztetések</string>
     <string name="label_add_alert">Figyelmeztetés hozzáadása</string>
     <string name="label_recurrence_never">Soha</string>
@@ -941,5 +942,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Naptár megoszlás: %1$s</string>
     <string name="insights_cd_daily_chart">Napi eloszlás: a legzsúfoltabb nap %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Elérhetőség</string>
+    <string name="label_busy">Elfoglalt</string>
+    <string name="label_free">Szabad</string>
+    <string name="label_event_color">Esemény színe</string>
+    <string name="label_calendar_default">Naptár alapértelmezés</string>
+    <string name="label_custom">Egyéni</string>
+    <string name="cd_event_color">Esemény színe</string>
+    <string name="cd_checkmark">Kiválasztva</string>
+    <string name="label_device_timezone">Eszköz időzónája</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Paradicsom</string>
+    <string name="color_darkorange">Sötétnarancs</string>
+    <string name="color_gold">Arany</string>
+    <string name="color_yellowgreen">Sárgászöld</string>
+    <string name="color_mediumseagreen">Közepes tengerzöld</string>
+    <string name="color_teal">Kékeszöld</string>
+    <string name="color_steelblue">Acélkék</string>
+    <string name="color_slateblue">Palakék</string>
+    <string name="color_mediumorchid">Közepes orchidea</string>
+    <string name="color_hotpink">Élénk rózsaszín</string>
+    <string name="color_slategray">Palaszürke</string>
 
 </resources>

@@ -439,6 +439,7 @@
     <string name="label_on_days">ရက်များတွင်</string>
     <string name="label_pattern">ပုံစံ</string>
     <string name="label_ends">ပြီးဆုံး</string>
+    <string name="label_timezone">အချိန်ဇုန်</string>
     <string name="label_alerts">သတိပေးချက်များ</string>
     <string name="label_add_alert">သတိပေးချက် ထည့်</string>
     <string name="label_recurrence_never">မည်သည့်အခါမျှ</string>
@@ -903,4 +904,26 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">ပြက္ခဒိန် ခွဲခြမ်းစိတ်ဖြာမှု: %1$s</string>
     <string name="insights_cd_daily_chart">နေ့စဉ် ဖြန့်ဝေမှု: အအလုပ်များဆုံးနေ့မှာ %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">ရရှိနိုင်မှု</string>
+    <string name="label_busy">အလုပ်များ</string>
+    <string name="label_free">အားလပ်</string>
+    <string name="label_event_color">ပွဲအရောင်</string>
+    <string name="label_calendar_default">ပြက္ခဒိန် မူရင်း</string>
+    <string name="label_custom">စိတ်ကြိုက်</string>
+    <string name="cd_event_color">ပွဲအရောင်</string>
+    <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
+    <string name="label_device_timezone">စက်၏ အချိန်ဇုန်</string>
+    <string name="color_tomato">ခရမ်းချဉ်သီး</string>
+    <string name="color_darkorange">လိမ္မော်ရင့်</string>
+    <string name="color_gold">ရွှေရောင်</string>
+    <string name="color_yellowgreen">အဝါစိမ်း</string>
+    <string name="color_mediumseagreen">အလယ်အလတ် ပင်လယ်စိမ်း</string>
+    <string name="color_teal">နဂါးငွေ့တန်းစိမ်း</string>
+    <string name="color_steelblue">သံပြာ</string>
+    <string name="color_slateblue">ကျောက်ပြားပြာ</string>
+    <string name="color_mediumorchid">အလယ်အလတ် သစ်ခွရောင်</string>
+    <string name="color_hotpink">ပန်းရောင်ရဲ</string>
+    <string name="color_slategray">ကျောက်ပြားမီးခိုး</string>
 </resources>

@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Vald</string>
+    <string name="cd_checkmark">Vald</string>
     <string name="cd_back">Tillbaka</string>
     <string name="cd_close">Stäng</string>
     <string name="cd_search">Sök</string>
@@ -440,6 +441,8 @@
     <string name="label_on_days">På dagar</string>
     <string name="label_pattern">Mönster</string>
     <string name="label_ends">Slutar</string>
+    <string name="label_timezone">Tidszon</string>
+    <string name="label_device_timezone">Enhetens tidszon</string>
     <string name="label_alerts">Påminnelser</string>
     <string name="label_add_alert">Lägg till påminnelse</string>
     <string name="label_recurrence_never">Aldrig</string>
@@ -930,4 +933,24 @@
     <string name="insight_next_free_block">N\u00e4sta lediga block: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Kalenderf\u00f6rdelning: %1$s</string>
     <string name="insights_cd_daily_chart">Daglig f\u00f6rdelning: mest fullbokade dag \u00e4r %1$s</string>
+
+    <!-- ==================== Event Color / Availability ==================== -->
+    <string name="label_availability">Tillgänglighet</string>
+    <string name="label_busy">Upptagen</string>
+    <string name="label_free">Ledig</string>
+    <string name="label_event_color">Händelsefärg</string>
+    <string name="label_calendar_default">Kalenderstandard</string>
+    <string name="label_custom">Anpassad</string>
+    <string name="cd_event_color">Händelsefärg</string>
+    <string name="color_tomato">Tomat</string>
+    <string name="color_darkorange">Mörkorange</string>
+    <string name="color_gold">Guld</string>
+    <string name="color_yellowgreen">Gulgrön</string>
+    <string name="color_mediumseagreen">Havsgrön</string>
+    <string name="color_teal">Blågrön</string>
+    <string name="color_steelblue">Stålblå</string>
+    <string name="color_slateblue">Skifferblå</string>
+    <string name="color_mediumorchid">Orkidé</string>
+    <string name="color_hotpink">Knallrosa</string>
+    <string name="color_slategray">Skiffergrå</string>
 </resources>

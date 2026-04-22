@@ -441,6 +441,8 @@
     <string name="label_on_days">W dni</string>
     <string name="label_pattern">Wzorzec</string>
     <string name="label_ends">Kończy się</string>
+    <string name="label_timezone">Strefa czasowa</string>
+    <string name="label_device_timezone">Strefa czasowa urządzenia</string>
     <string name="label_alerts">Alerty</string>
     <string name="label_add_alert">Dodaj alert</string>
     <string name="label_recurrence_never">Nigdy</string>
@@ -897,6 +899,18 @@
     <string name="color_cyan">Cyjan</string>
     <string name="color_blue">Niebieski</string>
     <string name="color_purple">Fioletowy</string>
+    <string name="cd_checkmark">Wybrane</string>
+    <string name="color_tomato">Pomidorowy</string>
+    <string name="color_darkorange">Ciemnopomarańczowy</string>
+    <string name="color_gold">Złoty</string>
+    <string name="color_yellowgreen">Żółtozielony</string>
+    <string name="color_mediumseagreen">Średni morski</string>
+    <string name="color_teal">Morski</string>
+    <string name="color_steelblue">Stalowoniebieski</string>
+    <string name="color_slateblue">Łupkowoniebieski</string>
+    <string name="color_mediumorchid">Średnia orchidea</string>
+    <string name="color_hotpink">Gorący róż</string>
+    <string name="color_slategray">Łupkowoszary</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Link do spotkania: %1$s</string>
     <string name="cd_phone_number">Numer telefonu</string>
@@ -1005,4 +1019,11 @@
     <string name="insight_next_free_block">Następny wolny blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Podział kalendarzy: %1$s</string>
     <string name="insights_cd_daily_chart">Rozkład dzienny: najbardziej zajęty dzień to %1$s</string>
+    <string name="label_availability">Dostępność</string>
+    <string name="label_busy">Zajęty</string>
+    <string name="label_free">Wolny</string>
+    <string name="label_event_color">Kolor wydarzenia</string>
+    <string name="label_calendar_default">Domyślny z kalendarza</string>
+    <string name="label_custom">Niestandardowy</string>
+    <string name="cd_event_color">Kolor wydarzenia</string>
 </resources>

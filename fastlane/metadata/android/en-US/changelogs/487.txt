@@ -1,0 +1,4 @@
+• Cleaner event form: timezone gets its own row, date labels removed, dividers simplified
+• Free events now show a hollow outline style in week and 3-day views
+• Save button matches your calendar color
+• Sync fix: event colors no longer reset after server pull

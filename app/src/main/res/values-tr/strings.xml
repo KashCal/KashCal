@@ -438,6 +438,7 @@
     <string name="label_on_days">Günlerde</string>
     <string name="label_pattern">Desen</string>
     <string name="label_ends">Bitiş</string>
+    <string name="label_timezone">Saat dilimi</string>
     <string name="label_alerts">Uyarılar</string>
     <string name="label_add_alert">Uyarı Ekle</string>
     <string name="label_recurrence_never">Asla</string>
@@ -941,5 +942,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Takvim dağılımı: %1$s</string>
     <string name="insights_cd_daily_chart">Günlük dağılım: en yoğun gün %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Uygunluk</string>
+    <string name="label_busy">Meşgul</string>
+    <string name="label_free">Müsait</string>
+    <string name="label_event_color">Etkinlik rengi</string>
+    <string name="label_calendar_default">Takvim varsayılanı</string>
+    <string name="label_custom">Özel</string>
+    <string name="cd_event_color">Etkinlik rengi</string>
+    <string name="cd_checkmark">Seçili</string>
+    <string name="label_device_timezone">Cihaz saat dilimi</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Domates</string>
+    <string name="color_darkorange">Koyu turuncu</string>
+    <string name="color_gold">Altın</string>
+    <string name="color_yellowgreen">Sarı yeşil</string>
+    <string name="color_mediumseagreen">Orta deniz yeşili</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_steelblue">Çelik mavisi</string>
+    <string name="color_slateblue">Şifer mavisi</string>
+    <string name="color_mediumorchid">Orta orkide</string>
+    <string name="color_hotpink">Sıcak pembe</string>
+    <string name="color_slategray">Şifer grisi</string>
 
 </resources>

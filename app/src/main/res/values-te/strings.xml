@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">ఎంపిక చేయబడింది</string>
+    <string name="cd_checkmark">ఎంపిక చేయబడింది</string>
     <string name="cd_back">వెనుకకు</string>
     <string name="cd_close">మూసివేయి</string>
     <string name="cd_search">శోధించు</string>
@@ -438,6 +439,8 @@
     <string name="label_on_days">రోజులలో</string>
     <string name="label_pattern">నమూనా</string>
     <string name="label_ends">ముగింపు</string>
+    <string name="label_timezone">సమయ మండలం</string>
+    <string name="label_device_timezone">పరికర సమయ మండలం</string>
     <string name="label_alerts">హెచ్చరికలు</string>
     <string name="label_add_alert">హెచ్చరిక జోడించు</string>
     <string name="label_recurrence_never">ఎప్పుడూ కాదు</string>
@@ -822,6 +825,17 @@
     <string name="color_cyan">సియాన్</string>
     <string name="color_blue">నీలం</string>
     <string name="color_purple">ఊదా</string>
+    <string name="color_tomato">టొమాటో</string>
+    <string name="color_darkorange">ముదురు నారింజ</string>
+    <string name="color_gold">బంగారు</string>
+    <string name="color_yellowgreen">పసుపు ఆకుపచ్చ</string>
+    <string name="color_mediumseagreen">మధ్యస్థ సముద్ర ఆకుపచ్చ</string>
+    <string name="color_teal">టీల్</string>
+    <string name="color_steelblue">ఉక్కు నీలం</string>
+    <string name="color_slateblue">స్లేట్ నీలం</string>
+    <string name="color_mediumorchid">మధ్యస్థ ఆర్కిడ్</string>
+    <string name="color_hotpink">హాట్ పింక్</string>
+    <string name="color_slategray">స్లేట్ బూడిద</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">మీటింగ్ లింక్: %1$s</string>
     <string name="cd_phone_number">ఫోన్ నంబర్</string>
@@ -929,5 +943,14 @@
     <string name="insight_next_free_block">తదుపరి ఖాళీ సమయం: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">క్యాలెండర్ విభజన: %1$s</string>
     <string name="insights_cd_daily_chart">రోజువారీ పంపిణీ: అత్యంత బిజీ రోజు %1$s</string>
+
+    <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
+    <string name="label_availability">అందుబాటు</string>
+    <string name="label_busy">బిజీ</string>
+    <string name="label_free">ఖాళీ</string>
+    <string name="label_event_color">ఈవెంట్ రంగు</string>
+    <string name="label_calendar_default">క్యాలెండర్ డీఫాల్ట్</string>
+    <string name="label_custom">కస్టమ్</string>
+    <string name="cd_event_color">ఈవెంట్ రంగు</string>
 
 </resources>

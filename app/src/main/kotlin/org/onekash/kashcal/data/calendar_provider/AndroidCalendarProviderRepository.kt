@@ -304,11 +304,15 @@ class AndroidCalendarProviderRepository @Inject constructor(
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
             val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone)
             values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
+            values.put(CalendarContract.Events.AVAILABILITY, availability)
+            eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
 
             // Use batch operation for atomicity (event + reminders)
             val ops = ArrayList<android.content.ContentProviderOperation>()
@@ -357,15 +361,16 @@ class AndroidCalendarProviderRepository @Inject constructor(
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // Detect exception events: when rrule is null, check if this event has ORIGINAL_ID
-            // (meaning it's an exception to a recurring event). Exception events must NOT have
-            // putNull(RRULE) in ContentValues — it triggers CalendarProvider recurrence cleanup
-            // on the master event.
             val isException = rrule == null && isExceptionEvent(eventId)
             val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, rrule, duration, timezone, isException = isException)
+            values.put(CalendarContract.Events.AVAILABILITY, availability)
+            eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
+                ?: values.putNull(CalendarContract.Events.EVENT_COLOR)
 
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId)
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
@@ -430,11 +435,15 @@ class AndroidCalendarProviderRepository @Inject constructor(
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
             val values = buildEventValues(title, description, location, startTs, endTs, isAllDay, null, null, timezone, isException = true)
             values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
+            values.put(CalendarContract.Events.AVAILABILITY, availability)
+            eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
             values.put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
             val masterSyncId = getMasterSyncId(masterEventId)
             if (masterSyncId != null) {

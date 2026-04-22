@@ -2,7 +2,6 @@ package org.onekash.kashcal.ui.components
 
 import android.util.Log
 import org.onekash.kashcal.domain.mapper.toFormState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +36,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.SheetValue
@@ -72,17 +71,39 @@ import java.util.Calendar as JavaCalendar
 import org.onekash.kashcal.util.DateTimeUtils
 import android.text.format.DateFormat
 import androidx.compose.ui.platform.LocalContext
+import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
+import org.onekash.kashcal.ui.components.pickers.CalendarPickerRow
+import org.onekash.kashcal.ui.components.pickers.EventColorSheet
+import org.onekash.kashcal.ui.components.pickers.DateTimeDisplayRow
+import org.onekash.kashcal.ui.components.pickers.EventFormRow
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
-import org.onekash.kashcal.ui.model.CalendarGroup
-import org.onekash.kashcal.ui.model.PickerCalendar
+import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
-import org.onekash.kashcal.ui.components.pickers.DateTimePickerCard
+import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
 import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
 import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
+import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
+import org.onekash.kashcal.util.TimezoneUtils
+import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.model.PickerCalendar
 
 private const val TAG = "EventFormSheet"
 
@@ -125,6 +146,8 @@ data class EventFormState(
     val description: String = "",
     val rrule: String? = null,
     val timezone: String? = null,  // null = device default
+    val transp: String = "OPAQUE",
+    val eventColor: Int? = null,
 
     // UI state
     val calendarGroups: List<CalendarGroup> = emptyList(),
@@ -264,6 +287,14 @@ fun EventFormSheet(
 
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
+    var showColorPicker by remember { mutableStateOf(false) }
+
+    val borderlessFieldColors = OutlinedTextFieldDefaults.colors(
+        unfocusedBorderColor = Color.Transparent,
+        focusedBorderColor = Color.Transparent,
+        unfocusedContainerColor = Color.Transparent,
+        focusedContainerColor = Color.Transparent
+    )
 
     // Auto-focus title field
     val titleFocusRequester = remember { FocusRequester() }
@@ -425,7 +456,9 @@ fun EventFormSheet(
                     truncatedReminderCount = truncatedCount,
                     editingEventId = eventId,
                     isEditMode = true,
-                    editingOccurrenceTs = occurrenceTs
+                    editingOccurrenceTs = occurrenceTs,
+                    transp = event.transp,
+                    eventColor = event.color
                 )
             }
         } else {
@@ -505,7 +538,9 @@ fun EventFormSheet(
                     selectedCalendarColor = sourceCalColor,
                     isDeviceCalendar = sourceCalendar == null && resolvedCal.isDevice,
                     reminders = dupReminders,
-                    rrule = null  // Don't copy recurrence (creates independent event)
+                    rrule = null,  // Don't copy recurrence (creates independent event)
+                    transp = duplicateFrom.transp,
+                    eventColor = duplicateFrom.color
                 )
             }
 
@@ -662,14 +697,25 @@ fun EventFormSheet(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                TextButton(
+                val primaryColor = MaterialTheme.colorScheme.primary
+                val calColor = remember(state.selectedCalendarColor, primaryColor) {
+                    state.selectedCalendarColor?.let { Color(it) } ?: primaryColor
+                }
+                val contrastColor = remember(calColor) { contrastForegroundOn(calColor) }
+                Button(
                     onClick = { performSave() },
-                    enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict
+                    enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = calColor,
+                        contentColor = contrastColor
+                    ),
+                    shape = RoundedCornerShape(20.dp)
                 ) {
                     if (state.isSaving) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
+                            color = contrastColor
                         )
                     } else {
                         Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
@@ -697,29 +743,26 @@ fun EventFormSheet(
                         .verticalScroll(scrollState)
                         .padding(horizontal = 16.dp)
                 ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Title field
                     OutlinedTextField(
                         value = state.title,
                         onValueChange = { state = state.copy(title = it) },
-                        label = { Text(stringResource(R.string.label_event_title)) },
+                        placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(titleFocusRequester),
+                            .focusRequester(titleFocusRequester)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.primary
-                        )
+                        textStyle = MaterialTheme.typography.headlineSmall,
+                        colors = borderlessFieldColors
                     )
 
-                    // All-day toggle
+                    HorizontalDivider()
+
+
                     val toggleAllDay = { newIsAllDay: Boolean ->
                         val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
                         val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
                         val migratedReminders = migrateRemindersForAllDayToggle(state.reminders, currentDefault, newDefault)
-                        // Normalize to midnight when toggling all-day ON to prevent timezone date shift
                         val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
                         val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
                         state = state.copy(
@@ -729,78 +772,99 @@ fun EventFormSheet(
                             reminders = migratedReminders
                         )
                     }
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { toggleAllDay(!state.isAllDay) }
-                            .padding(vertical = 12.dp, horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(stringResource(R.string.label_all_day), style = MaterialTheme.typography.bodyLarge)
-                        Switch(
-                            checked = state.isAllDay,
-                            onCheckedChange = toggleAllDay
-                        )
+
+                    DateTimeDisplayRow(
+                        startDateMillis = state.dateMillis,
+                        startHour = state.startHour,
+                        startMinute = state.startMinute,
+                        endDateMillis = state.endDateMillis,
+                        endHour = state.endHour,
+                        endMinute = state.endMinute,
+                        isAllDay = state.isAllDay,
+                        onAllDayToggle = toggleAllDay,
+                        onStartClick = { activeSheet = ActiveDateTimeSheet.START },
+                        onEndClick = { activeSheet = ActiveDateTimeSheet.END },
+                        isEndError = hasTimeConflict,
+                        endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
+                        timezone = state.timezone,
+                        timePattern = timePattern
+                    )
+
+                    if (!state.isAllDay) {
+                        var showTimezoneSheet by remember { mutableStateOf(false) }
+                        val tzId = state.timezone
+                        val timezoneLabel = if (tzId != null) {
+                            val tzAbbrev = remember(tzId) { TimezoneUtils.getAbbreviation(tzId) }
+                            val tzDisplayName = remember(tzId) {
+                                TimezoneUtils.getTimezoneInfo(tzId)?.displayName
+                                    ?: tzId.substringAfterLast('/').replace('_', ' ')
+                            }
+                            "$tzDisplayName ($tzAbbrev)"
+                        } else {
+                            stringResource(R.string.label_device_timezone)
+                        }
+
+                        EventFormRow(
+                            icon = Icons.Default.Public,
+                            iconContentDescription = stringResource(R.string.label_timezone),
+                            showExpandIcon = true,
+                            onToggle = { showTimezoneSheet = true }
+                        ) {
+                            Text(
+                                timezoneLabel,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = if (tzId == null)
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                else
+                                    MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        if (showTimezoneSheet) {
+                            TimezonePickerSheet(
+                                selectedTimezone = state.timezone,
+                                onTimezoneSelected = { newTimezone ->
+                                    val oldTz = state.timezone?.let { java.util.TimeZone.getTimeZone(it) }
+                                        ?: java.util.TimeZone.getDefault()
+                                    val newTz = newTimezone?.let { java.util.TimeZone.getTimeZone(it) }
+                                        ?: java.util.TimeZone.getDefault()
+
+                                    val (newStartDate, newStartH, newStartM) = convertTimezone(
+                                        oldTz, newTz, state.dateMillis, state.startHour, state.startMinute
+                                    )
+                                    val (newEndDate, newEndH, newEndM) = convertTimezone(
+                                        oldTz, newTz, state.endDateMillis, state.endHour, state.endMinute
+                                    )
+                                    state = state.copy(
+                                        timezone = newTimezone,
+                                        dateMillis = newStartDate,
+                                        startHour = newStartH,
+                                        startMinute = newStartM,
+                                        endDateMillis = newEndDate,
+                                        endHour = newEndH,
+                                        endMinute = newEndM
+                                    )
+                                    showTimezoneSheet = false
+                                },
+                                onDismiss = { showTimezoneSheet = false }
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider()
 
-                    // Starts card - opens combined date + time picker
-                    DateTimePickerCard(
-                        label = stringResource(R.string.label_starts),
-                        dateMillis = state.dateMillis,
-                        hour = state.startHour,
-                        minute = state.startMinute,
-                        isAllDay = state.isAllDay,
-                        onClick = { activeSheet = ActiveDateTimeSheet.START },
-                        timezone = state.timezone,
-                        timePattern = timePattern
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Ends card - opens combined date + time picker
-                    DateTimePickerCard(
-                        label = stringResource(R.string.label_ends),
-                        dateMillis = state.endDateMillis,
-                        hour = state.endHour,
-                        minute = state.endMinute,
-                        isAllDay = state.isAllDay,
-                        onClick = { activeSheet = ActiveDateTimeSheet.END },
-                        isError = hasTimeConflict,
-                        errorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
-                        timezone = state.timezone,
-                        timePattern = timePattern
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Calendar picker
-                    // Disabled for single occurrence edits (CalDAV doesn't support moving exception to different calendar)
-                    // When editing, restrict to same data store (Room or Device)
-                    CalendarPickerCard(
+                    CalendarPickerRow(
                         selectedCalendarId = state.selectedCalendarId,
                         selectedCalendarName = state.selectedCalendarName,
                         selectedCalendarColor = state.selectedCalendarColor,
                         calendarGroups = if (state.isEditMode && state.isDeviceCalendar) {
-                            // Editing device event - only show device calendars
                             emptyList()
-                        } else if (state.isEditMode && !state.isDeviceCalendar) {
-                            // Editing Room event - only show Room calendars
-                            state.calendarGroups
                         } else {
-                            // Creating new event - show Room calendars
                             state.calendarGroups
                         },
                         deviceCalendarGroups = if (state.isEditMode && !state.isDeviceCalendar) {
-                            // Editing Room event - no device calendars
                             emptyList()
-                        } else if (state.isEditMode && state.isDeviceCalendar) {
-                            // Editing device event - only show device calendars
-                            state.deviceCalendarGroups
                         } else {
-                            // Creating new event - show device calendars
                             state.deviceCalendarGroups
                         },
                         isSelectedDeviceCalendar = state.isDeviceCalendar,
@@ -818,131 +882,206 @@ fun EventFormSheet(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    EventFormRow(
+                        icon = Icons.Default.Palette,
+                        iconContentDescription = stringResource(R.string.label_event_color),
+                        onToggle = { showColorPicker = true }
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            val dotColor = state.eventColor
+                                ?: state.selectedCalendarColor
+                                ?: 0xFF6200EE.toInt()
+                            Box(
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(dotColor))
+                            )
+                            Text(
+                                stringResource(EventColorPalette.stringResIdForColor(state.eventColor)),
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
-                    // Dynamic reminder picker with inline wheel duration pickers
-                    ReminderPickerCard(
+                    ReminderPickerRow(
                         reminders = state.reminders,
                         isAllDay = state.isAllDay,
                         use24Hour = use24Hour,
+                        isExpanded = expandedPicker == "reminders",
+                        onToggle = { expandedPicker = if (expandedPicker == "reminders") null else "reminders" },
                         onRemindersChange = { newReminders ->
                             state = state.copy(reminders = newReminders)
                         },
                         truncatedReminderCount = state.truncatedReminderCount
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Recurrence picker - only show when NOT editing a single occurrence
-                    // Single occurrence edits create exception events which don't have RRULE
                     if (state.editingOccurrenceTs == null) {
-                        RecurrencePickerCard(
+                        RecurrencePickerRow(
                             selectedRrule = state.rrule,
                             startDateMillis = state.dateMillis,
                             isExpanded = expandedPicker == "repeat",
                             onToggle = { expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
                             onSelect = { rrule ->
                                 state = state.copy(rrule = rrule)
-                                // Don't auto-close - let user configure all options
                             },
                             firstDayOfWeek = firstDayOfWeek
                         )
-
-                        Spacer(modifier = Modifier.height(12.dp))
                     }
 
-                    // Location field with address autocomplete
+                    EventFormRow(
+                        icon = Icons.Default.EventAvailable,
+                        iconContentDescription = stringResource(R.string.label_availability)
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            FilterChip(
+                                selected = state.transp == "OPAQUE",
+                                onClick = { state = state.copy(transp = "OPAQUE") },
+                                label = { Text(stringResource(R.string.label_busy)) }
+                            )
+                            FilterChip(
+                                selected = state.transp == "TRANSPARENT",
+                                onClick = { state = state.copy(transp = "TRANSPARENT") },
+                                label = { Text(stringResource(R.string.label_free)) }
+                            )
+                        }
+                    }
+
+                    HorizontalDivider()
+
+
                     var locationExpanded by remember { mutableStateOf(false) }
                     var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
                     var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
                     var locationSearchJob by remember { mutableStateOf<Job?>(null) }
 
-                    ExposedDropdownMenuBox(
-                        expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                        onExpandedChange = { locationExpanded = it }
+                    EventFormRow(
+                        icon = Icons.Default.LocationOn,
+                        iconContentDescription = stringResource(R.string.label_location)
                     ) {
-                        OutlinedTextField(
-                            value = state.location,
-                            onValueChange = { newValue ->
-                                state = state.copy(location = newValue)
-
-                                // Cancel previous search
-                                locationSearchJob?.cancel()
-
-                                // Only search if service available AND meaningful input
-                                // (5+ chars with letters - supports addresses AND place names)
-                                if (locationSuggestionService != null &&
-                                    newValue.length >= 5 &&
-                                    newValue.any { it.isLetter() }
-                                ) {
-                                    locationSearchJob = coroutineScope.launch {
-                                        delay(300) // Debounce
-                                        isLoadingLocationSuggestions = true
-                                        locationSuggestions = locationSuggestionService.getSuggestions(newValue)
-                                        isLoadingLocationSuggestions = false
-                                        locationExpanded = locationSuggestions.isNotEmpty()
-                                    }
-                                } else {
-                                    locationSuggestions = emptyList()
-                                    locationExpanded = false
-                                }
-                            },
-                            label = { Text(stringResource(R.string.label_location)) },
-                            placeholder = { Text(stringResource(R.string.label_location_hint)) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-                            singleLine = true,
-                            trailingIcon = {
-                                if (isLoadingLocationSuggestions) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        strokeWidth = 2.dp
-                                    )
-                                } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
-                                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
-                                }
-                            }
-                        )
-
-                        ExposedDropdownMenu(
+                        ExposedDropdownMenuBox(
                             expanded = locationExpanded && locationSuggestions.isNotEmpty(),
-                            onDismissRequest = { locationExpanded = false }
+                            onExpandedChange = { locationExpanded = it },
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            locationSuggestions.forEach { suggestion ->
-                                DropdownMenuItem(
-                                    text = { Text(suggestion.displayName) },
-                                    onClick = {
-                                        state = state.copy(location = suggestion.displayName)
-                                        locationExpanded = false
+                            OutlinedTextField(
+                                value = state.location,
+                                onValueChange = { newValue ->
+                                    state = state.copy(location = newValue)
+                                    locationSearchJob?.cancel()
+                                    if (locationSuggestionService != null &&
+                                        newValue.length >= 5 &&
+                                        newValue.any { it.isLetter() }
+                                    ) {
+                                        locationSearchJob = coroutineScope.launch {
+                                            delay(300)
+                                            isLoadingLocationSuggestions = true
+                                            locationSuggestions = locationSuggestionService.getSuggestions(newValue)
+                                            isLoadingLocationSuggestions = false
+                                            locationExpanded = locationSuggestions.isNotEmpty()
+                                        }
+                                    } else {
                                         locationSuggestions = emptyList()
-                                    },
-                                    leadingIcon = {
-                                        Icon(Icons.Default.Place, contentDescription = null)
-                                    },
-                                    modifier = Modifier.height(48.dp) // Material touch target
-                                )
+                                        locationExpanded = false
+                                    }
+                                },
+                                placeholder = { Text(stringResource(R.string.label_location_hint)) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    unfocusedBorderColor = Color.Transparent,
+                                    focusedBorderColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedContainerColor = Color.Transparent
+                                ),
+                                trailingIcon = {
+                                    if (isLoadingLocationSuggestions) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else if (state.location.isNotEmpty() && locationSuggestionService != null) {
+                                        Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search))
+                                    }
+                                }
+                            )
+
+                            ExposedDropdownMenu(
+                                expanded = locationExpanded && locationSuggestions.isNotEmpty(),
+                                onDismissRequest = { locationExpanded = false }
+                            ) {
+                                locationSuggestions.forEach { suggestion ->
+                                    DropdownMenuItem(
+                                        text = { Text(suggestion.displayName) },
+                                        onClick = {
+                                            state = state.copy(location = suggestion.displayName)
+                                            locationExpanded = false
+                                            locationSuggestions = emptyList()
+                                        },
+                                        leadingIcon = {
+                                            Icon(Icons.Default.Place, contentDescription = null)
+                                        },
+                                        modifier = Modifier.height(48.dp)
+                                    )
+                                }
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    EventFormRow(
+                        icon = Icons.AutoMirrored.Filled.Notes,
+                        iconContentDescription = stringResource(R.string.label_notes)
+                    ) {
+                        OutlinedTextField(
+                            value = state.description,
+                            onValueChange = { state = state.copy(description = it) },
+                            placeholder = { Text(stringResource(R.string.label_notes)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            minLines = 2,
+                            maxLines = 4,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedContainerColor = Color.Transparent
+                            )
+                        )
+                    }
 
-                    // Notes field - always visible
-                    OutlinedTextField(
-                        value = state.description,
-                        onValueChange = { state = state.copy(description = it) },
-                        label = { Text(stringResource(R.string.label_notes)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 2,
-                        maxLines = 4
-                    )
+                    if (showColorPicker) {
+                        EventColorSheet(
+                            selectedArgb = state.eventColor,
+                            calendarDefaultArgb = state.selectedCalendarColor ?: 0xFF6200EE.toInt(),
+                            onColorSelected = { color ->
+                                state = state.copy(eventColor = color)
+                                showColorPicker = false
+                            },
+                            onDismiss = { showColorPicker = false }
+                        )
+                    }
 
                     // Error message
                     if (state.error != null) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer
                             )
@@ -955,28 +1094,31 @@ fun EventFormSheet(
                         }
                     }
 
-                    // Delete button (edit mode only - Room or Device)
+                    HorizontalDivider()
+
+
                     val canDeleteRoom = eventId != null && onDelete != null
                     val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
                     if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
-                        Spacer(modifier = Modifier.height(24.dp))
-
                         if (!showDeleteConfirmation) {
-                            OutlinedButton(
-                                onClick = { showDeleteConfirmation = true },
-                                enabled = !state.isSaving,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(48.dp),
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    contentColor = MaterialTheme.colorScheme.error
-                                )
+                            EventFormRow(
+                                icon = Icons.Default.DeleteOutline,
+                                iconTint = MaterialTheme.colorScheme.error,
+                                iconContentDescription = stringResource(R.string.action_delete_event),
+                                onToggle = { showDeleteConfirmation = true },
+                                enabled = !state.isSaving
                             ) {
-                                Text(stringResource(R.string.action_delete_event))
+                                Text(
+                                    stringResource(R.string.action_delete_event),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.error
+                                )
                             }
                         } else {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
                                 horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
                                 OutlinedButton(
@@ -993,7 +1135,6 @@ fun EventFormSheet(
                                         coroutineScope.launch {
                                             state = state.copy(isSaving = true)
                                             try {
-                                                // Route to device delete if applicable
                                                 val result: Result<Unit> = if (canDeleteDevice && state.editingDeviceEventId != null) {
                                                     onDeleteDeviceEvent!!(state)
                                                 } else if (canDeleteRoom && eventId != null) {
@@ -1042,6 +1183,7 @@ fun EventFormSheet(
                                 }
                             }
                         }
+                        HorizontalDivider()
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -1055,19 +1197,28 @@ fun EventFormSheet(
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.Center
                 ) {
+                    val stickyPrimary = MaterialTheme.colorScheme.primary
+                    val stickyCalColor = remember(state.selectedCalendarColor, stickyPrimary) {
+                        state.selectedCalendarColor?.let { Color(it) } ?: stickyPrimary
+                    }
+                    val stickyContrastColor = remember(stickyCalColor) { contrastForegroundOn(stickyCalColor) }
                     Button(
                         onClick = { performSave() },
                         enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = stickyCalColor,
+                            contentColor = stickyContrastColor
+                        )
                     ) {
                         if (state.isSaving) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(24.dp),
                                 strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = stickyContrastColor
                             )
                         } else {
                             Text(
@@ -1093,7 +1244,7 @@ fun EventFormSheet(
             isAllDay = state.isAllDay,
             use24Hour = use24Hour,
             firstDayOfWeek = firstDayOfWeek,
-            onConfirm = { dateMillis, hour, minute, timezone ->
+            onConfirm = { dateMillis, hour, minute ->
                 // Normalize to midnight for all-day events to prevent timezone date shift
                 val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
 
@@ -1105,8 +1256,7 @@ fun EventFormSheet(
                     val newEndDateMillis = normalizedDateMillis + daySpanMs
                     state = state.copy(
                         dateMillis = normalizedDateMillis,
-                        endDateMillis = newEndDateMillis,
-                        timezone = timezone
+                        endDateMillis = newEndDateMillis
                     )
                 } else {
                     // TIMED: Preserve actual duration when start changes
@@ -1128,8 +1278,7 @@ fun EventFormSheet(
                         startMinute = minute,
                         endDateMillis = normalizedDateMillis + dayOverflowMs,
                         endHour = remainderMins / 60,
-                        endMinute = remainderMins % 60,
-                        timezone = timezone
+                        endMinute = remainderMins % 60
                     )
                 }
                 activeSheet = ActiveDateTimeSheet.NONE
@@ -1149,7 +1298,7 @@ fun EventFormSheet(
             isAllDay = state.isAllDay,
             use24Hour = use24Hour,
             firstDayOfWeek = firstDayOfWeek,
-            onConfirm = { dateMillis, hour, minute, timezone ->
+            onConfirm = { dateMillis, hour, minute ->
                 // Normalize to midnight for all-day events to prevent timezone date shift
                 val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
 
@@ -1166,15 +1315,13 @@ fun EventFormSheet(
                         dateMillis = normalizedDateMillis,
                         endDateMillis = state.dateMillis,
                         endHour = hour,
-                        endMinute = minute,
-                        timezone = timezone
+                        endMinute = minute
                     )
                 } else {
                     state = state.copy(
                         endDateMillis = if (state.isAllDay) normalizeToLocalMidnight(finalEndDateMillis) else finalEndDateMillis,
                         endHour = hour,
-                        endMinute = minute,
-                        timezone = timezone
+                        endMinute = minute
                     )
                 }
                 activeSheet = ActiveDateTimeSheet.NONE
@@ -1283,6 +1430,32 @@ private fun normalizeToLocalMidnight(millis: Long): Long {
     cal.set(JavaCalendar.SECOND, 0)
     cal.set(JavaCalendar.MILLISECOND, 0)
     return cal.timeInMillis
+}
+
+private fun convertTimezone(
+    oldTz: java.util.TimeZone,
+    newTz: java.util.TimeZone,
+    dateMillis: Long,
+    hour: Int,
+    minute: Int
+): Triple<Long, Int, Int> {
+    val oldCal = JavaCalendar.getInstance(oldTz).apply {
+        timeInMillis = dateMillis
+        set(JavaCalendar.HOUR_OF_DAY, hour)
+        set(JavaCalendar.MINUTE, minute)
+        set(JavaCalendar.SECOND, 0)
+        set(JavaCalendar.MILLISECOND, 0)
+    }
+    val newCal = JavaCalendar.getInstance(newTz).apply { timeInMillis = oldCal.timeInMillis }
+    // Normalize to midnight in the target timezone, not device timezone
+    val midnightCal = JavaCalendar.getInstance(newTz).apply {
+        timeInMillis = newCal.timeInMillis
+        set(JavaCalendar.HOUR_OF_DAY, 0)
+        set(JavaCalendar.MINUTE, 0)
+        set(JavaCalendar.SECOND, 0)
+        set(JavaCalendar.MILLISECOND, 0)
+    }
+    return Triple(midnightCal.timeInMillis, newCal.get(JavaCalendar.HOUR_OF_DAY), newCal.get(JavaCalendar.MINUTE))
 }
 
 // DateTimePickerCard, DateTimeSheet, and InlineDatePickerContent moved to ui/components/pickers/DateTimePicker.kt

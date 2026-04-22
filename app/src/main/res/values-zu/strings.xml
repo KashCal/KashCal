@@ -438,6 +438,8 @@
     <string name="label_on_days">Ngezinsuku</string>
     <string name="label_pattern">Iphethini</string>
     <string name="label_ends">Kuphela</string>
+    <string name="label_timezone">Indawo yesikhathi</string>
+    <string name="label_device_timezone">Indawo yesikhathi yedivayisi</string>
     <string name="label_alerts">Izexwayiso</string>
     <string name="label_add_alert">Engeza Isexwayiso</string>
     <string name="label_recurrence_never">Akusoze</string>
@@ -941,4 +943,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Ukuhlukaniswa kwekhalenda: %1$s</string>
     <string name="insights_cd_daily_chart">Ukusabalala kwansuku zonke: usuku olumatasa kakhulu ngu-%1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Ukutholakala</string>
+    <string name="label_busy">Matasa</string>
+    <string name="label_free">Khululekile</string>
+    <string name="label_event_color">Umbala womcimbi</string>
+    <string name="label_calendar_default">Okuzenzakalelayo kwekhalenda</string>
+    <string name="label_custom">Ngokwezifiso</string>
+    <string name="cd_event_color">Umbala womcimbi</string>
+
+    <string name="cd_checkmark">Kukhethiwe</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_tomato">Utamatisi</string>
+    <string name="color_darkorange">Orenji Omnyama</string>
+    <string name="color_gold">Igolide</string>
+    <string name="color_yellowgreen">Phuzi Luhlaza</string>
+    <string name="color_mediumseagreen">Luhlaza Lolwandle Oluphakathi</string>
+    <string name="color_teal">Luhlaza Okwesibhakabhaka</string>
+    <string name="color_steelblue">Luhlaza Lwensimbi</string>
+    <string name="color_slateblue">Luhlaza Lwesileyithi</string>
+    <string name="color_mediumorchid">I-Orchid Ephakathi</string>
+    <string name="color_hotpink">Phinki Eshisayo</string>
+    <string name="color_slategray">Ngwevu Yesileyithi</string>
 </resources>

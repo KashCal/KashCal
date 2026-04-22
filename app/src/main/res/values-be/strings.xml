@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Выбрана</string>
+    <string name="cd_checkmark">Выбрана</string>
     <string name="cd_back">Назад</string>
     <string name="cd_close">Закрыць</string>
     <string name="cd_search">Пошук</string>
@@ -419,6 +420,8 @@
     <string name="label_on_days">Па днях</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчваецца</string>
+    <string name="label_timezone">Часавы пояс</string>
+    <string name="label_device_timezone">Часавы пояс прылады</string>
     <string name="label_alerts">Напамінанні</string>
     <string name="label_add_alert">Дадаць напамінанне</string>
     <string name="label_recurrence_never">Ніколі</string>
@@ -822,6 +825,17 @@
     <string name="color_cyan">Блакітны</string>
     <string name="color_blue">Сіні</string>
     <string name="color_purple">Фіялетавы</string>
+    <string name="color_tomato">Таматны</string>
+    <string name="color_darkorange">Цёмна-аранжавы</string>
+    <string name="color_gold">Залаты</string>
+    <string name="color_yellowgreen">Жоўта-зялёны</string>
+    <string name="color_mediumseagreen">Марскі зялёны</string>
+    <string name="color_teal">Бірузовы</string>
+    <string name="color_steelblue">Сталёва-сіні</string>
+    <string name="color_slateblue">Сланцава-сіні</string>
+    <string name="color_mediumorchid">Архідны</string>
+    <string name="color_hotpink">Ярка-ружовы</string>
+    <string name="color_slategray">Сланцава-шэры</string>
     <string name="cd_meeting_link">Спасылка на сустрэчу: %1$s</string>
     <string name="cd_phone_number">Нумар тэлефона</string>
     <string name="cd_email_link">Эл. пошта: %1$s</string>
@@ -924,4 +938,11 @@
     <string name="insight_next_free_block">Наступны вольны блок: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Размеркаванне па календарах: %1$s</string>
     <string name="insights_cd_daily_chart">Размеркаванне па днях: самы загружаны дзень — %1$s</string>
+    <string name="label_availability">Даступнасць</string>
+    <string name="label_busy">Заняты</string>
+    <string name="label_free">Вольны</string>
+    <string name="label_event_color">Колер падзеі</string>
+    <string name="label_calendar_default">Па змаўчанні</string>
+    <string name="label_custom">Уласны</string>
+    <string name="cd_event_color">Колер падзеі</string>
 </resources>

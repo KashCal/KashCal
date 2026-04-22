@@ -438,6 +438,7 @@
     <string name="label_on_days">Os d\u00edas</string>
     <string name="label_pattern">Padr\u00f3n</string>
     <string name="label_ends">Remata</string>
+    <string name="label_timezone">Fuso horario</string>
     <string name="label_alerts">Alertas</string>
     <string name="label_add_alert">Engadir alerta</string>
     <string name="label_recurrence_never">Nunca</string>
@@ -923,5 +924,31 @@
     <string name="insight_next_free_block">Pr\u00f3ximo bloque libre: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Distribuci\u00f3n de calendarios: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuci\u00f3n diaria: o d\u00eda m\u00e1is ocupado \u00e9 %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">Dispo\u00f1ibilidade</string>
+    <string name="label_busy">Ocupado</string>
+    <string name="label_free">Libre</string>
+    <string name="label_event_color">Cor do evento</string>
+    <string name="label_calendar_default">Por defecto do calendario</string>
+    <string name="label_custom">Personalizado</string>
+    <string name="cd_event_color">Cor do evento</string>
+
+
+    <string name="cd_checkmark">Seleccionado</string>
+    <string name="label_device_timezone">Fuso horario do dispositivo</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tomate</string>
+    <string name="color_darkorange">Laranxa escura</string>
+    <string name="color_gold">Dourado</string>
+    <string name="color_yellowgreen">Verde amarelado</string>
+    <string name="color_mediumseagreen">Verde mari\u00f1o medio</string>
+    <string name="color_teal">Verde azulado</string>
+    <string name="color_steelblue">Azul aceiro</string>
+    <string name="color_slateblue">Azul lousa</string>
+    <string name="color_mediumorchid">Orqu\u00eddea media</string>
+    <string name="color_hotpink">Rosa intenso</string>
+    <string name="color_slategray">Gris lousa</string>
 
 </resources>

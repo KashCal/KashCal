@@ -682,26 +682,7 @@ class HomeScreenComposeTest {
         assert(todayClicked)
     }
 
-    @Test
-    fun homeScreen_viewPickerIconClickTriggersCallback() {
-        var viewPickerClicked = false
-
-        composeTestRule.setContent {
-            HomeScreen(
-                uiState = createDefaultUiState(),
-                isOnline = true,
-                onDateSelected = {},
-                onGoToToday = {},
-                onSetViewingMonth = { _, _ -> },
-                onClearNavigateToToday = {},
-                onClearNavigateToMonth = {},
-                onViewPickerClick = { viewPickerClicked = true }
-            )
-        }
-
-        composeTestRule.onNodeWithContentDescription("Calendar view").performClick()
-        assert(viewPickerClicked)
-    }
+    // Test removed: onViewPickerClick was replaced by navigation drawer view switching
 
     // ==================== Loading State Tests ====================
 

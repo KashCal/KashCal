@@ -438,6 +438,7 @@
     <string name="label_on_days">Τις ημέρες</string>
     <string name="label_pattern">Μοτίβο</string>
     <string name="label_ends">Τέλος</string>
+    <string name="label_timezone">Ζώνη ώρας</string>
     <string name="label_alerts">Ειδοποιήσεις</string>
     <string name="label_add_alert">Προσθήκη ειδοποίησης</string>
     <string name="label_recurrence_never">Ποτέ</string>
@@ -941,5 +942,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Κατανομή ημερολογίων: %1$s</string>
     <string name="insights_cd_daily_chart">Ημερήσια κατανομή: η πιο γεμάτη μέρα είναι %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Διαθεσιμότητα</string>
+    <string name="label_busy">Απασχολημένος</string>
+    <string name="label_free">Ελεύθερος</string>
+    <string name="label_event_color">Χρώμα συμβάντος</string>
+    <string name="label_calendar_default">Προεπιλογή ημερολογίου</string>
+    <string name="label_custom">Προσαρμοσμένο</string>
+    <string name="cd_event_color">Χρώμα συμβάντος</string>
+    <string name="cd_checkmark">Επιλεγμένο</string>
+    <string name="label_device_timezone">Ζώνη ώρας συσκευής</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Ντομάτα</string>
+    <string name="color_darkorange">Σκούρο πορτοκαλί</string>
+    <string name="color_gold">Χρυσό</string>
+    <string name="color_yellowgreen">Κιτρινοπράσινο</string>
+    <string name="color_mediumseagreen">Μεσαίο θαλασσί πράσινο</string>
+    <string name="color_teal">Πετρόλ</string>
+    <string name="color_steelblue">Ατσαλί μπλε</string>
+    <string name="color_slateblue">Σχιστολιθικό μπλε</string>
+    <string name="color_mediumorchid">Μεσαία ορχιδέα</string>
+    <string name="color_hotpink">Έντονο ροζ</string>
+    <string name="color_slategray">Σχιστολιθικό γκρι</string>
 
 </resources>

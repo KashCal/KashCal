@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -60,6 +61,7 @@ import org.onekash.kashcal.ui.model.PickerCalendar
  * @param onToggle Toggle expansion state
  * @param onSelect Called with (calendarId, displayName, color, isDeviceCalendar) when selection changes
  */
+@Deprecated("Use CalendarPickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
 fun CalendarPickerCard(
     selectedCalendarId: Long?,
@@ -129,8 +131,6 @@ fun CalendarPickerCard(
                         .padding(horizontal = 8.dp)
                         .padding(bottom = 8.dp)
                 ) {
-                    HorizontalDivider(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-
                     val allRoomCalendars = calendarGroups.flatMap { it.calendars }
                     val allDeviceCalendars = deviceCalendarGroups.flatMap { it.pickerCalendars }
                     val hasAnyCalendars = allRoomCalendars.isNotEmpty() || allDeviceCalendars.isNotEmpty()
@@ -222,6 +222,7 @@ fun CalendarPickerCard(
  * Legacy overload for backward compatibility.
  * Delegates to the new version with no device calendars.
  */
+@Deprecated("Use CalendarPickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
 fun CalendarPickerCard(
     selectedCalendarId: Long?,
@@ -247,6 +248,149 @@ fun CalendarPickerCard(
         onSelect = { id, name, color, _ -> onSelect(id, name, color) },
         modifier = modifier
     )
+}
+
+@Composable
+fun CalendarPickerContent(
+    selectedCalendarId: Long?,
+    calendarGroups: List<CalendarGroup>,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    isSelectedDeviceCalendar: Boolean = false,
+    onSelect: (Long, String, Int?, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 8.dp)
+    ) {
+        val hasAnyCalendars = calendarGroups.any { it.calendars.isNotEmpty() } ||
+            deviceCalendarGroups.any { it.pickerCalendars.isNotEmpty() }
+
+        if (!hasAnyCalendars) {
+            Text(
+                stringResource(R.string.empty_no_calendars),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(12.dp)
+            )
+        } else {
+            calendarGroups.forEach { group ->
+                Text(
+                    text = group.accountName,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                        .padding(top = 4.dp)
+                )
+                group.calendars.forEach { calendar ->
+                    CalendarItem(
+                        calendar = calendar,
+                        isSelected = !isSelectedDeviceCalendar && selectedCalendarId == calendar.id,
+                        onClick = { onSelect(calendar.id, calendar.displayName, calendar.color, false) }
+                    )
+                }
+            }
+
+            if (deviceCalendarGroups.any { it.pickerCalendars.isNotEmpty() }) {
+                Spacer(modifier = Modifier.height(8.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Text(
+                    text = stringResource(R.string.label_device_calendars),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                )
+
+                deviceCalendarGroups.forEach { group ->
+                    Text(
+                        text = group.accountName,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
+                            .padding(top = 4.dp)
+                    )
+                    group.pickerCalendars.forEach { pickerCal ->
+                        PickerCalendarItem(
+                            pickerCalendar = pickerCal,
+                            isSelected = isSelectedDeviceCalendar && selectedCalendarId == pickerCal.id,
+                            onClick = {
+                                onSelect(pickerCal.id, pickerCal.displayName, pickerCal.color, true)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarPickerRow(
+    selectedCalendarId: Long?,
+    selectedCalendarName: String,
+    selectedCalendarColor: Int?,
+    calendarGroups: List<CalendarGroup>,
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    isSelectedDeviceCalendar: Boolean = false,
+    isExpanded: Boolean,
+    enabled: Boolean = true,
+    onToggle: () -> Unit,
+    onSelect: (Long, String, Int?, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val focusManager = LocalFocusManager.current
+    EventFormRow(
+        icon = Icons.Default.CalendarMonth,
+        iconContentDescription = stringResource(R.string.label_calendar),
+        isExpanded = isExpanded,
+        showExpandIcon = true,
+        enabled = enabled,
+        onToggle = {
+            focusManager.clearFocus()
+            onToggle()
+        },
+        expandedContent = {
+            CalendarPickerContent(
+                selectedCalendarId = selectedCalendarId,
+                calendarGroups = calendarGroups,
+                deviceCalendarGroups = deviceCalendarGroups,
+                isSelectedDeviceCalendar = isSelectedDeviceCalendar,
+                onSelect = onSelect
+            )
+        },
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (selectedCalendarColor != null) {
+                Box(
+                    modifier = Modifier
+                        .size(12.dp)
+                        .clip(CircleShape)
+                        .background(Color(selectedCalendarColor))
+                )
+            }
+            Text(
+                selectedCalendarName.ifEmpty { stringResource(R.string.dialog_select_calendar) },
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    }
 }
 
 /**

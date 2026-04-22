@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valittu</string>
+    <string name="cd_checkmark">Valittu</string>
     <string name="cd_back">Takaisin</string>
     <string name="cd_close">Sulje</string>
     <string name="cd_search">Hae</string>
@@ -439,6 +440,8 @@
     <string name="label_on_days">Päivinä</string>
     <string name="label_pattern">Malli</string>
     <string name="label_ends">Päättyy</string>
+    <string name="label_timezone">Aikavyöhyke</string>
+    <string name="label_device_timezone">Laitteen aikavyöhyke</string>
     <string name="label_alerts">Muistutukset</string>
     <string name="label_add_alert">Lisää muistutus</string>
     <string name="label_recurrence_never">Ei koskaan</string>
@@ -785,6 +788,17 @@
     <string name="color_cyan">Syaani</string>
     <string name="color_blue">Sininen</string>
     <string name="color_purple">Violetti</string>
+    <string name="color_tomato">Tomaatti</string>
+    <string name="color_darkorange">Tummanoranssi</string>
+    <string name="color_gold">Kulta</string>
+    <string name="color_yellowgreen">Keltavihreä</string>
+    <string name="color_mediumseagreen">Merenvihreä</string>
+    <string name="color_teal">Sinivihreä</string>
+    <string name="color_steelblue">Teräksensininen</string>
+    <string name="color_slateblue">Liuskesininen</string>
+    <string name="color_mediumorchid">Orkidea</string>
+    <string name="color_hotpink">Kirkkaanpinkki</string>
+    <string name="color_slategray">Liuskeharmaa</string>
     <string name="cd_meeting_link">Kokouksen linkki: %1$s</string>
     <string name="cd_phone_number">Puhelinnumero</string>
     <string name="cd_email_link">Sähköposti: %1$s</string>
@@ -885,5 +899,12 @@
     <string name="insight_next_free_block">Seuraava vapaa jakso: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Jakauma kalentereittain: %1$s</string>
     <string name="insights_cd_daily_chart">Jakauma päivittäin: kiireisin päivä on %1$s</string>
+    <string name="label_availability">Saatavuus</string>
+    <string name="label_busy">Varattu</string>
+    <string name="label_free">Vapaa</string>
+    <string name="label_event_color">Tapahtuman väri</string>
+    <string name="label_calendar_default">Kalenterin oletus</string>
+    <string name="label_custom">Mukautettu</string>
+    <string name="cd_event_color">Tapahtuman väri</string>
 
 </resources>

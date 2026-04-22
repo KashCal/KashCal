@@ -933,7 +933,8 @@ class PullStrategy @Inject constructor(
                     localModifiedAt = existingEvent.localModifiedAt,
                     // Preserve existing etag when server omits <getetag> from response
                     // (RFC 4791 says SHOULD include etag, but some servers/CDN may omit it)
-                    etag = meta.etag ?: existingEvent.etag
+                    etag = meta.etag ?: existingEvent.etag,
+                    color = event.color ?: existingEvent.color
                 )
             }
 
@@ -1104,7 +1105,8 @@ class PullStrategy @Inject constructor(
                     createdAt = existingException.createdAt,
                     localModifiedAt = existingException.localModifiedAt,
                     // Preserve existing etag when server omits <getetag> from response
-                    etag = meta.etag ?: existingException.etag
+                    etag = meta.etag ?: existingException.etag,
+                    color = event.color ?: existingException.color
                 )
             }
 

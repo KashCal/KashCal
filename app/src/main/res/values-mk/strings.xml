@@ -438,6 +438,7 @@
     <string name="label_on_days">Во денови</string>
     <string name="label_pattern">Образец</string>
     <string name="label_ends">Завршува</string>
+    <string name="label_timezone">Временска зона</string>
     <string name="label_alerts">Известувања</string>
     <string name="label_add_alert">Додај известување</string>
     <string name="label_recurrence_never">Никогаш</string>
@@ -939,5 +940,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Распределба по календари: %1$s</string>
     <string name="insights_cd_daily_chart">Дневна распределба: најзафатениот ден е %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Достапност</string>
+    <string name="label_busy">Зафатен</string>
+    <string name="label_free">Слободен</string>
+    <string name="label_event_color">Боја на настанот</string>
+    <string name="label_calendar_default">Стандардно за календар</string>
+    <string name="label_custom">Прилагодено</string>
+    <string name="cd_event_color">Боја на настанот</string>
+    <string name="cd_checkmark">Избрано</string>
+    <string name="label_device_timezone">Временска зона на уредот</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Доматно црвена</string>
+    <string name="color_darkorange">Темно портокалова</string>
+    <string name="color_gold">Златна</string>
+    <string name="color_yellowgreen">Жолто-зелена</string>
+    <string name="color_mediumseagreen">Средно морско зелена</string>
+    <string name="color_teal">Тиркизна</string>
+    <string name="color_steelblue">Челично сина</string>
+    <string name="color_slateblue">Шкрилесто сина</string>
+    <string name="color_mediumorchid">Средна орхидеја</string>
+    <string name="color_hotpink">Жешка розова</string>
+    <string name="color_slategray">Шкрилесто сива</string>
 
 </resources>

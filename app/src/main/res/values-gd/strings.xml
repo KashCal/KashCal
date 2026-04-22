@@ -451,6 +451,7 @@
     <string name="label_on_days">Air làithean</string>
     <string name="label_pattern">Pàtran</string>
     <string name="label_ends">A\' Crìochnachadh</string>
+    <string name="label_timezone">Roinn-tìde</string>
     <string name="label_alerts">Rabhaidhean</string>
     <string name="label_add_alert">Cuir Rabhadh Ris</string>
     <string name="label_recurrence_never">Gu bràth</string>
@@ -1010,5 +1011,31 @@
     <string name="insight_next_free_block">An ath bhloca saor: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Sgaoileadh mh\u00ecosachain: %1$s</string>
     <string name="insights_cd_daily_chart">Sgaoileadh l\u00e0itheil: \'s e an l\u00e0 as trainge %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">So-ruigsinneachd</string>
+    <string name="label_busy">Trang</string>
+    <string name="label_free">Saor</string>
+    <string name="label_event_color">Dath an tachartais</string>
+    <string name="label_calendar_default">Bun-roghainn a\' mh\u00ecosachain</string>
+    <string name="label_custom">Gnàthaichte</string>
+    <string name="cd_event_color">Dath an tachartais</string>
+
+
+    <string name="cd_checkmark">Air a thaghadh</string>
+    <string name="label_device_timezone">Roinn-t\u00ecde an uidheim</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tom\u00e0to</string>
+    <string name="color_darkorange">Or\u00f2iste dorcha</string>
+    <string name="color_gold">\u00d2r</string>
+    <string name="color_yellowgreen">Uaine bhu\u00ee</string>
+    <string name="color_mediumseagreen">Uaine mara meadhanach</string>
+    <string name="color_teal">Cr\u00f2ilean</string>
+    <string name="color_steelblue">Gorm stailinn</string>
+    <string name="color_slateblue">Gorm sgleat</string>
+    <string name="color_mediumorchid">Mogairlean meadhanach</string>
+    <string name="color_hotpink">Pinc soilleir</string>
+    <string name="color_slategray">Liath sgleat</string>
 
 </resources>

@@ -439,6 +439,7 @@
     <string name="label_on_days">Pada hari</string>
     <string name="label_pattern">Pola</string>
     <string name="label_ends">Berakhir</string>
+    <string name="label_timezone">Zona waktu</string>
     <string name="label_alerts">Peringatan</string>
     <string name="label_add_alert">Tambah Peringatan</string>
     <string name="label_recurrence_never">Tidak pernah</string>
@@ -903,4 +904,26 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Rincian kalender: %1$s</string>
     <string name="insights_cd_daily_chart">Distribusi harian: hari tersibuk adalah %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Ketersediaan</string>
+    <string name="label_busy">Sibuk</string>
+    <string name="label_free">Bebas</string>
+    <string name="label_event_color">Warna acara</string>
+    <string name="label_calendar_default">Default kalender</string>
+    <string name="label_custom">Kustom</string>
+    <string name="cd_event_color">Warna acara</string>
+    <string name="cd_checkmark">Terpilih</string>
+    <string name="label_device_timezone">Zona waktu perangkat</string>
+    <string name="color_tomato">Tomat</string>
+    <string name="color_darkorange">Oranye tua</string>
+    <string name="color_gold">Emas</string>
+    <string name="color_yellowgreen">Hijau kuning</string>
+    <string name="color_mediumseagreen">Hijau laut sedang</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_steelblue">Biru baja</string>
+    <string name="color_slateblue">Biru tulis</string>
+    <string name="color_mediumorchid">Anggrek sedang</string>
+    <string name="color_hotpink">Pink menyala</string>
+    <string name="color_slategray">Abu tulis</string>
 </resources>

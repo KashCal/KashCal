@@ -438,6 +438,8 @@
     <string name="label_on_days">Nei giorni</string>
     <string name="label_pattern">Schema</string>
     <string name="label_ends">Fine</string>
+    <string name="label_timezone">Fuso orario</string>
+    <string name="label_device_timezone">Fuso orario del dispositivo</string>
     <string name="label_alerts">Avvisi</string>
     <string name="label_add_alert">Aggiungi avviso</string>
     <string name="label_recurrence_never">Mai</string>
@@ -975,5 +977,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Distribuzione per calendario: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuzione giornaliera: il giorno pi\u00f9 pieno \u00e8 %1$s</string>
+
+    <!-- Event editor: availability & color -->
+    <string name="label_availability">Disponibilit\u00e0</string>
+    <string name="label_busy">Occupato</string>
+    <string name="label_free">Libero</string>
+    <string name="label_event_color">Colore evento</string>
+    <string name="label_calendar_default">Predefinito del calendario</string>
+    <string name="label_custom">Personalizzato</string>
+    <string name="cd_event_color">Colore evento</string>
+    <string name="cd_checkmark">Selezionato</string>
+
+    <!-- Event color palette (CSS3 color names) -->
+    <string name="color_tomato">Pomodoro</string>
+    <string name="color_darkorange">Arancione scuro</string>
+    <string name="color_gold">Oro</string>
+    <string name="color_yellowgreen">Verde giallo</string>
+    <string name="color_mediumseagreen">Verde mare medio</string>
+    <string name="color_teal">Verde acqua</string>
+    <string name="color_steelblue">Blu acciaio</string>
+    <string name="color_slateblue">Blu ardesia</string>
+    <string name="color_mediumorchid">Orchidea media</string>
+    <string name="color_hotpink">Rosa acceso</string>
+    <string name="color_slategray">Grigio ardesia</string>
 
 </resources>

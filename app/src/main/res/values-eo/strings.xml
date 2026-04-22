@@ -438,6 +438,7 @@
     <string name="label_on_days">En tagoj</string>
     <string name="label_pattern">\u015Cablono</string>
     <string name="label_ends">Fini\u011das</string>
+    <string name="label_timezone">Horzono</string>
     <string name="label_alerts">Alarmoj</string>
     <string name="label_add_alert">Aldoni alarmon</string>
     <string name="label_recurrence_never">Neniam</string>
@@ -923,5 +924,31 @@
     <string name="insight_next_free_block">Sekva libera bloko: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Kalendara distribuo: %1$s</string>
     <string name="insights_cd_daily_chart">Taga distribuo: plej okupita tago estas %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">Disponebleco</string>
+    <string name="label_busy">Okupita</string>
+    <string name="label_free">Libera</string>
+    <string name="label_event_color">Eventa koloro</string>
+    <string name="label_calendar_default">Kalendara defa\u016dlto</string>
+    <string name="label_custom">Propra</string>
+    <string name="cd_event_color">Eventa koloro</string>
+
+
+    <string name="cd_checkmark">Elektita</string>
+    <string name="label_device_timezone">Horzono de aparato</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tomato</string>
+    <string name="color_darkorange">Malhela oran\u011da</string>
+    <string name="color_gold">Ora</string>
+    <string name="color_yellowgreen">Flavverda</string>
+    <string name="color_mediumseagreen">Meza marverda</string>
+    <string name="color_teal">Anasverda</string>
+    <string name="color_steelblue">\u015dtala blua</string>
+    <string name="color_slateblue">Ardeza blua</string>
+    <string name="color_mediumorchid">Meza orkidea</string>
+    <string name="color_hotpink">Arda rozo</string>
+    <string name="color_slategray">Ardeza griza</string>
 
 </resources>

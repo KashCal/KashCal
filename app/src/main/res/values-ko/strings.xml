@@ -440,6 +440,7 @@
     <string name="label_on_days">요일</string>
     <string name="label_pattern">패턴</string>
     <string name="label_ends">종료</string>
+    <string name="label_timezone">시간대</string>
     <string name="label_alerts">알림</string>
     <string name="label_add_alert">알림 추가</string>
     <string name="label_recurrence_never">없음</string>
@@ -890,4 +891,24 @@
     <string name="insight_next_free_block">다음 여유 시간: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">캘린더 분포: %1$s</string>
     <string name="insights_cd_daily_chart">일별 분포: 가장 바쁜 날은 %1$s</string>
+    <string name="label_availability">가용 상태</string>
+    <string name="label_busy">바쁨</string>
+    <string name="label_free">한가함</string>
+    <string name="label_event_color">일정 색상</string>
+    <string name="label_calendar_default">캘린더 기본값</string>
+    <string name="label_custom">사용자 지정</string>
+    <string name="cd_event_color">일정 색상</string>
+    <string name="cd_checkmark">선택됨</string>
+    <string name="label_device_timezone">기기 시간대</string>
+    <string name="color_tomato">토마토</string>
+    <string name="color_darkorange">다크 오렌지</string>
+    <string name="color_gold">골드</string>
+    <string name="color_yellowgreen">옐로 그린</string>
+    <string name="color_mediumseagreen">미디엄 시 그린</string>
+    <string name="color_teal">틸</string>
+    <string name="color_steelblue">스틸 블루</string>
+    <string name="color_slateblue">슬레이트 블루</string>
+    <string name="color_mediumorchid">미디엄 오키드</string>
+    <string name="color_hotpink">핫 핑크</string>
+    <string name="color_slategray">슬레이트 그레이</string>
 </resources>

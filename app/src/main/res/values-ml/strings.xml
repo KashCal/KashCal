@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">തിരഞ്ഞെടുത്തു</string>
+    <string name="cd_checkmark">തിരഞ്ഞെടുത്തു</string>
     <string name="cd_back">പിന്നിലേക്ക്</string>
     <string name="cd_close">അടയ്ക്കുക</string>
     <string name="cd_search">തിരയുക</string>
@@ -438,6 +439,8 @@
     <string name="label_on_days">ദിവസങ്ങളിൽ</string>
     <string name="label_pattern">പാറ്റേൺ</string>
     <string name="label_ends">അവസാനിക്കുന്നു</string>
+    <string name="label_timezone">സമയ മേഖല</string>
+    <string name="label_device_timezone">ഉപകരണ സമയ മേഖല</string>
     <string name="label_alerts">അലേർട്ടുകൾ</string>
     <string name="label_add_alert">അലേർട്ട് ചേർക്കുക</string>
     <string name="label_recurrence_never">ഒരിക്കലും ഇല്ല</string>
@@ -822,6 +825,17 @@
     <string name="color_cyan">സയാൻ</string>
     <string name="color_blue">നീല</string>
     <string name="color_purple">പർപ്പിൾ</string>
+    <string name="color_tomato">തക്കാളി</string>
+    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
+    <string name="color_gold">സ്വർണം</string>
+    <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>
+    <string name="color_mediumseagreen">ഇടത്തരം കടൽ പച്ച</string>
+    <string name="color_teal">ടീൽ</string>
+    <string name="color_steelblue">സ്റ്റീൽ നീല</string>
+    <string name="color_slateblue">സ്ലേറ്റ് നീല</string>
+    <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
+    <string name="color_hotpink">ഹോട്ട് പിങ്ക്</string>
+    <string name="color_slategray">സ്ലേറ്റ് ചാര</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">മീറ്റിംഗ് ലിങ്ക്: %1$s</string>
     <string name="cd_phone_number">ഫോൺ നമ്പർ</string>
@@ -929,5 +943,14 @@
     <string name="insight_next_free_block">അടുത്ത ഒഴിവ് സമയം: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">കലണ്ടർ വിഭജനം: %1$s</string>
     <string name="insights_cd_daily_chart">ദൈനംദിന വിതരണം: ഏറ്റവും തിരക്കുള്ള ദിവസം %1$s</string>
+
+    <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
+    <string name="label_availability">ലഭ്യത</string>
+    <string name="label_busy">തിരക്ക്</string>
+    <string name="label_free">ഒഴിവ്</string>
+    <string name="label_event_color">ഇവന്റ് നിറം</string>
+    <string name="label_calendar_default">കലണ്ടർ ഡിഫോൾട്ട്</string>
+    <string name="label_custom">ഇഷ്ടാനുസൃതം</string>
+    <string name="cd_event_color">ഇവന്റ് നിറം</string>
 
 </resources>

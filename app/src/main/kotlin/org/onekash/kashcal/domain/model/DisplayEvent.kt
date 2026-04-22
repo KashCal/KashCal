@@ -36,6 +36,7 @@ sealed interface DisplayEvent {
     val calendarColor: Int
     val calendarName: String
     val isReadOnly: Boolean
+    val isFree: Boolean
 
     /** Room event with full Event + Occurrence data */
     @Immutable
@@ -53,9 +54,10 @@ sealed interface DisplayEvent {
         override val endDay get() = occurrence.endDay
         override val isAllDay get() = event.isAllDay
         override val hasRrule get() = event.rrule != null
-        override val calendarColor get() = calendar?.color ?: 0
+        override val calendarColor get() = event.color ?: calendar?.color ?: 0
         override val calendarName get() = calendar?.displayName.orEmpty()
         override val isReadOnly get() = calendar?.isReadOnly ?: false
+        override val isFree get() = event.transp == "TRANSPARENT"
     }
 
     /** Device calendar event from CalendarProvider */
@@ -73,6 +75,7 @@ sealed interface DisplayEvent {
         override val calendarColor get() = instance.displayColor
         override val calendarName get() = instance.calendarDisplayName
         override val isReadOnly get() = !instance.isWritable
+        override val isFree get() = instance.availability == 1
 
         /** RFC 5545 RRULE string, null for non-recurring events. */
         val rrule: String? get() = instance.rrule
@@ -98,7 +101,11 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     startTs = startTs,
     endTs = endTs,
     isAllDay = isAllDay,
-    dtstamp = System.currentTimeMillis()
+    dtstamp = System.currentTimeMillis(),
+    transp = when (instance.availability) {
+        1 -> "TRANSPARENT"
+        else -> "OPAQUE"
+    }
 )
 
 /**

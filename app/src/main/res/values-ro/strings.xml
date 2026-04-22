@@ -438,6 +438,7 @@
     <string name="label_on_days">În zilele</string>
     <string name="label_pattern">Model</string>
     <string name="label_ends">Sfârșit</string>
+    <string name="label_timezone">Fus orar</string>
     <string name="label_alerts">Alerte</string>
     <string name="label_add_alert">Adaugă alertă</string>
     <string name="label_recurrence_never">Niciodată</string>
@@ -977,5 +978,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Distribuția calendarelor: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuția zilnică: cea mai aglomerată zi este %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Disponibilitate</string>
+    <string name="label_busy">Ocupat</string>
+    <string name="label_free">Liber</string>
+    <string name="label_event_color">Culoarea evenimentului</string>
+    <string name="label_calendar_default">Implicit calendar</string>
+    <string name="label_custom">Personalizat</string>
+    <string name="cd_event_color">Culoarea evenimentului</string>
+    <string name="cd_checkmark">Selectat</string>
+    <string name="label_device_timezone">Fus orar dispozitiv</string>
+
+    <!-- Color names -->
+    <string name="color_tomato">Roșu tomate</string>
+    <string name="color_darkorange">Portocaliu închis</string>
+    <string name="color_gold">Auriu</string>
+    <string name="color_yellowgreen">Galben-verzui</string>
+    <string name="color_mediumseagreen">Verde marin mediu</string>
+    <string name="color_teal">Turcoaz închis</string>
+    <string name="color_steelblue">Albastru oțel</string>
+    <string name="color_slateblue">Albastru ardezie</string>
+    <string name="color_mediumorchid">Orhidee mediu</string>
+    <string name="color_hotpink">Roz aprins</string>
+    <string name="color_slategray">Gri ardezie</string>
 
 </resources>

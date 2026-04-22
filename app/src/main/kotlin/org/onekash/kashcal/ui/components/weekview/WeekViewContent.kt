@@ -77,6 +77,9 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.lerp
+import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.util.DayPagerUtils
 import kotlin.math.abs
 import java.time.Instant
@@ -917,13 +920,18 @@ private fun CompactEventChip(
     modifier: Modifier = Modifier
 ) {
     val color = displayEvent.calendarColor
+    val isFree = displayEvent.isFree
     val displayText = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
+    val calColor = Color(color)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
 
-    // Cached color calculation (avoids recomputing luminance on every recomposition)
-    val (backgroundColor, textColor) = remember(color) {
-        val bg = Color(color)
-        val luminance = (0.299f * bg.red + 0.587f * bg.green + 0.114f * bg.blue)
-        bg to if (luminance > 0.5f) Color.Black else Color.White
+    val (backgroundColor, textColor) = remember(color, isFree, surfaceColor) {
+        if (isFree) {
+            lerp(surfaceColor, calColor, 0.15f) to onSurfaceColor
+        } else {
+            calColor to contrastForegroundOn(calColor)
+        }
     }
 
     Row(
@@ -931,6 +939,10 @@ private fun CompactEventChip(
             .fillMaxWidth()
             .padding(vertical = 1.dp)
             .clip(RoundedCornerShape(4.dp))
+            .then(
+                if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
+                else Modifier
+            )
             .background(backgroundColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 2.dp),

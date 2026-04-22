@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Выбрано</string>
+    <string name="cd_checkmark">Выбрано</string>
     <string name="cd_back">Назад</string>
     <string name="cd_close">Закрыть</string>
     <string name="cd_search">Поиск</string>
@@ -439,6 +440,8 @@
     <string name="label_on_days">По дням</string>
     <string name="label_pattern">Шаблон</string>
     <string name="label_ends">Заканчивается</string>
+    <string name="label_timezone">Часовой пояс</string>
+    <string name="label_device_timezone">Часовой пояс устройства</string>
     <string name="label_alerts">Напоминания</string>
     <string name="label_add_alert">Добавить напоминание</string>
     <string name="label_recurrence_never">Никогда</string>
@@ -854,6 +857,17 @@
     <string name="color_cyan">Голубой</string>
     <string name="color_blue">Синий</string>
     <string name="color_purple">Фиолетовый</string>
+    <string name="color_tomato">Томатный</string>
+    <string name="color_darkorange">Тёмно-оранжевый</string>
+    <string name="color_gold">Золотой</string>
+    <string name="color_yellowgreen">Жёлто-зелёный</string>
+    <string name="color_mediumseagreen">Среднеморской</string>
+    <string name="color_teal">Бирюзовый</string>
+    <string name="color_steelblue">Стальной синий</string>
+    <string name="color_slateblue">Сланцево-синий</string>
+    <string name="color_mediumorchid">Средний орхидный</string>
+    <string name="color_hotpink">Розовый</string>
+    <string name="color_slategray">Сланцево-серый</string>
     <string name="cd_meeting_link">Ссылка на встречу: %1$s</string>
     <string name="cd_phone_number">Номер телефона</string>
     <string name="cd_email_link">Эл. почта: %1$s</string>
@@ -956,4 +970,11 @@
     <string name="insight_next_free_block">Следующий свободный блок: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Распределение по календарям: %1$s</string>
     <string name="insights_cd_daily_chart">Распределение по дням: самый загруженный день — %1$s</string>
+    <string name="label_availability">Доступность</string>
+    <string name="label_busy">Занят</string>
+    <string name="label_free">Свободен</string>
+    <string name="label_event_color">Цвет события</string>
+    <string name="label_calendar_default">По умолчанию</string>
+    <string name="label_custom">Свой</string>
+    <string name="cd_event_color">Цвет события</string>
 </resources>

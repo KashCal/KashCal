@@ -94,7 +94,9 @@ interface CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int = 0,
+        eventColor: Int? = null
     ): Result<Long>
 
     /**
@@ -126,7 +128,9 @@ interface CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int = 0,
+        eventColor: Int? = null
     ): Result<Unit>
 
     /**
@@ -168,7 +172,9 @@ interface CalendarProviderRepository {
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int = 0,
+        eventColor: Int? = null
     ): Result<Long>
 
     /**

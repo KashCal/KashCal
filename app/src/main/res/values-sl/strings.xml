@@ -420,6 +420,8 @@
     <string name="label_on_days">V dneh</string>
     <string name="label_pattern">Vzorec</string>
     <string name="label_ends">Se konča</string>
+    <string name="label_timezone">Časovni pas</string>
+    <string name="label_device_timezone">Časovni pas naprave</string>
     <string name="label_alerts">Opomniki</string>
     <string name="label_add_alert">Dodaj opomnik</string>
     <string name="label_recurrence_never">Nikoli</string>
@@ -866,6 +868,18 @@
     <string name="color_cyan">Cian</string>
     <string name="color_blue">Modra</string>
     <string name="color_purple">Vijolična</string>
+    <string name="cd_checkmark">Izbrano</string>
+    <string name="color_tomato">Paradižnikova</string>
+    <string name="color_darkorange">Temno oranžna</string>
+    <string name="color_gold">Zlata</string>
+    <string name="color_yellowgreen">Rumenozelena</string>
+    <string name="color_mediumseagreen">Srednje morska</string>
+    <string name="color_teal">Turkizna</string>
+    <string name="color_steelblue">Jeklenomodra</string>
+    <string name="color_slateblue">Skrilasto modra</string>
+    <string name="color_mediumorchid">Srednje orhideja</string>
+    <string name="color_hotpink">Vroče rožnata</string>
+    <string name="color_slategray">Skrilasto siva</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Povezava na sestanek: %1$s</string>
     <string name="cd_phone_number">Telefonska številka</string>
@@ -974,4 +988,11 @@
     <string name="insight_next_free_block">Naslednji prosti blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Razdelitev koledarjev: %1$s</string>
     <string name="insights_cd_daily_chart">Dnevna porazdelitev: najzasedenejši dan je %1$s</string>
+    <string name="label_availability">Razpoložljivost</string>
+    <string name="label_busy">Zasedeno</string>
+    <string name="label_free">Prosto</string>
+    <string name="label_event_color">Barva dogodka</string>
+    <string name="label_calendar_default">Privzeto iz koledarja</string>
+    <string name="label_custom">Po meri</string>
+    <string name="cd_event_color">Barva dogodka</string>
 </resources>

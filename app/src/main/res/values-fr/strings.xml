@@ -438,6 +438,8 @@
     <string name="label_on_days">Les jours</string>
     <string name="label_pattern">Mod\u00e8le</string>
     <string name="label_ends">Fin</string>
+    <string name="label_timezone">Fuseau horaire</string>
+    <string name="label_device_timezone">Fuseau horaire de l\'appareil</string>
     <string name="label_alerts">Alertes</string>
     <string name="label_add_alert">Ajouter une alerte</string>
     <string name="label_recurrence_never">Jamais</string>
@@ -975,5 +977,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">R\u00e9partition par calendrier : %1$s</string>
     <string name="insights_cd_daily_chart">R\u00e9partition quotidienne : le jour le plus charg\u00e9 est %1$s</string>
+
+    <!-- Event editor: availability & color -->
+    <string name="label_availability">Disponibilit\u00e9</string>
+    <string name="label_busy">Occup\u00e9</string>
+    <string name="label_free">Libre</string>
+    <string name="label_event_color">Couleur de l\'\u00e9v\u00e9nement</string>
+    <string name="label_calendar_default">Par d\u00e9faut du calendrier</string>
+    <string name="label_custom">Personnalis\u00e9</string>
+    <string name="cd_event_color">Couleur de l\'\u00e9v\u00e9nement</string>
+    <string name="cd_checkmark">S\u00e9lectionn\u00e9</string>
+
+    <!-- Event color palette (CSS3 color names) -->
+    <string name="color_tomato">Tomate</string>
+    <string name="color_darkorange">Orange fonc\u00e9</string>
+    <string name="color_gold">Or</string>
+    <string name="color_yellowgreen">Vert jaune</string>
+    <string name="color_mediumseagreen">Vert marin moyen</string>
+    <string name="color_teal">Sarcelle</string>
+    <string name="color_steelblue">Bleu acier</string>
+    <string name="color_slateblue">Bleu ardoise</string>
+    <string name="color_mediumorchid">Orchid\u00e9e moyen</string>
+    <string name="color_hotpink">Rose vif</string>
+    <string name="color_slategray">Gris ardoise</string>
 
 </resources>

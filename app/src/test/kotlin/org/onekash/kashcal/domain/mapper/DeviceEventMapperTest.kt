@@ -363,6 +363,114 @@ class DeviceEventMapperTest {
         assertEquals(1, endHour - startHour)
     }
 
+    // ==================== Availability → transp mapping ====================
+
+    @Test
+    fun `toFormState maps availability BUSY to transp OPAQUE`() {
+        val event = createDeviceEvent(availability = 0) // AVAILABILITY_BUSY
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals("OPAQUE", formState.transp)
+    }
+
+    @Test
+    fun `toFormState maps availability FREE to transp TRANSPARENT`() {
+        val event = createDeviceEvent(availability = 1) // AVAILABILITY_FREE
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals("TRANSPARENT", formState.transp)
+    }
+
+    @Test
+    fun `toFormState maps availability TENTATIVE to transp OPAQUE`() {
+        val event = createDeviceEvent(availability = 2) // AVAILABILITY_TENTATIVE
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals("OPAQUE", formState.transp)
+    }
+
+    @Test
+    fun `toFormState defaults transp to OPAQUE`() {
+        val event = createDeviceEvent() // default availability = 0
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals("OPAQUE", formState.transp)
+    }
+
+    // ==================== eventColor passthrough ====================
+
+    @Test
+    fun `toFormState passes eventColor through as separate field`() {
+        val event = createDeviceEvent(eventColor = 0x00FF00)
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertEquals(0x00FF00, formState.eventColor)
+    }
+
+    @Test
+    fun `toFormState keeps eventColor null when device event has no custom color`() {
+        val event = createDeviceEvent(eventColor = null)
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        assertNull(formState.eventColor)
+    }
+
+    @Test
+    fun `toFormState keeps selectedCalendarColor separate from eventColor`() {
+        val event = createDeviceEvent(
+            calendarColor = 0xFF0000,
+            eventColor = 0x00FF00
+        )
+
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = 0xFF0000,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList()
+        )
+
+        // selectedCalendarColor uses eventColor ?? calendarColor for display
+        assertEquals(0x00FF00, formState.selectedCalendarColor)
+        // eventColor is the raw per-event override for the form's "More options" section
+        assertEquals(0x00FF00, formState.eventColor)
+    }
+
     // ==================== Helper ====================
 
     private fun createDeviceEvent(
@@ -378,7 +486,8 @@ class DeviceEventMapperTest {
         rrule: String? = null,
         calendarColor: Int? = null,
         eventColor: Int? = null,
-        originalId: Long? = null
+        originalId: Long? = null,
+        availability: Int = 0
     ): DeviceEvent = DeviceEvent(
         id = id,
         calendarId = calendarId,
@@ -397,7 +506,7 @@ class DeviceEventMapperTest {
         originalId = originalId,
         originalInstanceTime = null,
         status = 1,
-        availability = 0,
+        availability = availability,
         accessLevel = 700,
         calendarColor = calendarColor,
         eventColor = eventColor

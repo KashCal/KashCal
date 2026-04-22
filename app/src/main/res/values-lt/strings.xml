@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions ==================== -->
     <string name="cd_selected">Pasirinkta</string>
+    <string name="cd_checkmark">Pasirinkta</string>
     <string name="cd_back">Atgal</string>
     <string name="cd_close">Uždaryti</string>
     <string name="cd_search">Paieška</string>
@@ -419,6 +420,8 @@
     <string name="label_on_days">Dienomis</string>
     <string name="label_pattern">Šablonas</string>
     <string name="label_ends">Baigiasi</string>
+    <string name="label_timezone">Laiko juosta</string>
+    <string name="label_device_timezone">Įrenginio laiko juosta</string>
     <string name="label_alerts">Priminimai</string>
     <string name="label_add_alert">Pridėti priminimą</string>
     <string name="label_recurrence_never">Niekada</string>
@@ -823,6 +826,17 @@
     <string name="color_cyan">Žydra</string>
     <string name="color_blue">Mėlyna</string>
     <string name="color_purple">Violetinė</string>
+    <string name="color_tomato">Pomidorų</string>
+    <string name="color_darkorange">Tamsiai oranžinė</string>
+    <string name="color_gold">Auksinė</string>
+    <string name="color_yellowgreen">Geltonai žalia</string>
+    <string name="color_mediumseagreen">Jūros žalia</string>
+    <string name="color_teal">Turkio</string>
+    <string name="color_steelblue">Plieno mėlyna</string>
+    <string name="color_slateblue">Skalūnų mėlyna</string>
+    <string name="color_mediumorchid">Orchidėjų</string>
+    <string name="color_hotpink">Ryškiai rožinė</string>
+    <string name="color_slategray">Skalūnų pilka</string>
     <string name="cd_meeting_link">Susitikimo nuoroda: %1$s</string>
     <string name="cd_phone_number">Telefono numeris</string>
     <string name="cd_email_link">El. paštas: %1$s</string>
@@ -927,5 +941,12 @@
     <string name="insight_next_free_block">Kitas laisvas blokas: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Pasiskirstymas pagal kalendorius: %1$s</string>
     <string name="insights_cd_daily_chart">Pasiskirstymas pagal dienas: užimčiausia diena — %1$s</string>
+    <string name="label_availability">Prieinamumas</string>
+    <string name="label_busy">Užimtas</string>
+    <string name="label_free">Laisvas</string>
+    <string name="label_event_color">Įvykio spalva</string>
+    <string name="label_calendar_default">Kalendoriaus numatytoji</string>
+    <string name="label_custom">Pasirinktinė</string>
+    <string name="cd_event_color">Įvykio spalva</string>
 
 </resources>

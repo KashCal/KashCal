@@ -440,6 +440,7 @@
     <string name="label_on_days">วัน</string>
     <string name="label_pattern">รูปแบบ</string>
     <string name="label_ends">สิ้นสุด</string>
+    <string name="label_timezone">เขตเวลา</string>
     <string name="label_alerts">แจ้งเตือน</string>
     <string name="label_add_alert">เพิ่มแจ้งเตือน</string>
     <string name="label_recurrence_never">ไม่มี</string>
@@ -890,4 +891,24 @@
     <string name="insight_next_free_block">ช่วงว่างถัดไป: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">สัดส่วนปฏิทิน: %1$s</string>
     <string name="insights_cd_daily_chart">การกระจายรายวัน: วันที่ยุ่งที่สุดคือ %1$s</string>
+    <string name="label_availability">สถานะว่าง/ไม่ว่าง</string>
+    <string name="label_busy">ไม่ว่าง</string>
+    <string name="label_free">ว่าง</string>
+    <string name="label_event_color">สีกิจกรรม</string>
+    <string name="label_calendar_default">ค่าเริ่มต้นปฏิทิน</string>
+    <string name="label_custom">กำหนดเอง</string>
+    <string name="cd_event_color">สีกิจกรรม</string>
+    <string name="cd_checkmark">เลือกแล้ว</string>
+    <string name="label_device_timezone">เขตเวลาของอุปกรณ์</string>
+    <string name="color_tomato">มะเขือเทศ</string>
+    <string name="color_darkorange">ส้มเข้ม</string>
+    <string name="color_gold">ทอง</string>
+    <string name="color_yellowgreen">เหลืองอมเขียว</string>
+    <string name="color_mediumseagreen">เขียวทะเลกลาง</string>
+    <string name="color_teal">เขียวอมน้ำเงิน</string>
+    <string name="color_steelblue">น้ำเงินเหล็ก</string>
+    <string name="color_slateblue">น้ำเงินหินชนวน</string>
+    <string name="color_mediumorchid">ม่วงกล้วยไม้กลาง</string>
+    <string name="color_hotpink">ชมพูสด</string>
+    <string name="color_slategray">เทาหินชนวน</string>
 </resources>

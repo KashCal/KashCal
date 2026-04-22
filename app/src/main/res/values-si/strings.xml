@@ -419,6 +419,7 @@
     <string name="label_on_days">දිනවල</string>
     <string name="label_pattern">රටාව</string>
     <string name="label_ends">අවසානය</string>
+    <string name="label_timezone">වේලා කලාපය</string>
     <string name="label_alerts">ඇඟවීම්</string>
     <string name="label_add_alert">ඇඟවීමක් එකතු කරන්න</string>
     <string name="label_recurrence_never">කිසිවිටක නැත</string>
@@ -914,5 +915,27 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">දින දර්ශන විභාජනය: %1$s</string>
     <string name="insights_cd_daily_chart">දෛනික බෙදාහැරීම: වඩාත්ම කාර්යබහුල දිනය %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">ලබා ගත හැකි බව</string>
+    <string name="label_busy">කාර්යබහුල</string>
+    <string name="label_free">නිදහස්</string>
+    <string name="label_event_color">සිදුවීමේ වර්ණය</string>
+    <string name="label_calendar_default">දින දර්ශන පෙරනිමිය</string>
+    <string name="label_custom">අභිරුචි</string>
+    <string name="cd_event_color">සිදුවීමේ වර්ණය</string>
+    <string name="cd_checkmark">තෝරාගත්</string>
+    <string name="label_device_timezone">උපාංගයේ වේලා කලාපය</string>
+    <string name="color_tomato">තක්කාලි</string>
+    <string name="color_darkorange">තද තැඹිලි</string>
+    <string name="color_gold">රන්වන්</string>
+    <string name="color_yellowgreen">කහ කොළ</string>
+    <string name="color_mediumseagreen">මධ්‍යම මුහුදු කොළ</string>
+    <string name="color_teal">ටීල්</string>
+    <string name="color_steelblue">වානේ නිල්</string>
+    <string name="color_slateblue">ස්ලේට් නිල්</string>
+    <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
+    <string name="color_hotpink">දීප්තිමත් රෝස</string>
+    <string name="color_slategray">ස්ලේට් අළු</string>
 
 </resources>

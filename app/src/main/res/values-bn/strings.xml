@@ -218,6 +218,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">নির্বাচিত</string>
+    <string name="cd_checkmark">নির্বাচিত</string>
     <string name="cd_back">পিছনে</string>
     <string name="cd_close">বন্ধ করুন</string>
     <string name="cd_search">অনুসন্ধান</string>
@@ -438,6 +439,8 @@
     <string name="label_on_days">দিনগুলিতে</string>
     <string name="label_pattern">প্যাটার্ন</string>
     <string name="label_ends">শেষ</string>
+    <string name="label_timezone">সময় অঞ্চল</string>
+    <string name="label_device_timezone">ডিভাইস সময় অঞ্চল</string>
     <string name="label_alerts">সতর্কতা</string>
     <string name="label_add_alert">সতর্কতা যোগ করুন</string>
     <string name="label_recurrence_never">কখনও না</string>
@@ -822,6 +825,17 @@
     <string name="color_cyan">সায়ান</string>
     <string name="color_blue">নীল</string>
     <string name="color_purple">বেগুনি</string>
+    <string name="color_tomato">টমেটো</string>
+    <string name="color_darkorange">গাঢ় কমলা</string>
+    <string name="color_gold">সোনালি</string>
+    <string name="color_yellowgreen">হলুদ সবুজ</string>
+    <string name="color_mediumseagreen">মাঝারি সামুদ্রিক সবুজ</string>
+    <string name="color_teal">টিল</string>
+    <string name="color_steelblue">ইস্পাত নীল</string>
+    <string name="color_slateblue">স্লেট নীল</string>
+    <string name="color_mediumorchid">মাঝারি অর্কিড</string>
+    <string name="color_hotpink">হট পিঙ্ক</string>
+    <string name="color_slategray">স্লেট ধূসর</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">মিটিং লিঙ্ক: %1$s</string>
     <string name="cd_phone_number">ফোন নম্বর</string>
@@ -929,5 +943,14 @@
     <string name="insight_next_free_block">পরবর্তী ফাঁকা সময়: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">ক্যালেন্ডার বিভাজন: %1$s</string>
     <string name="insights_cd_daily_chart">দৈনিক বিতরণ: ব্যস্ততম দিন %1$s</string>
+
+    <!-- ==================== i18n: Event Form (Availability / Color) ==================== -->
+    <string name="label_availability">প্রাপ্যতা</string>
+    <string name="label_busy">ব্যস্ত</string>
+    <string name="label_free">ফাঁকা</string>
+    <string name="label_event_color">ইভেন্টের রঙ</string>
+    <string name="label_calendar_default">ক্যালেন্ডার ডিফল্ট</string>
+    <string name="label_custom">কাস্টম</string>
+    <string name="cd_event_color">ইভেন্টের রঙ</string>
 
 </resources>

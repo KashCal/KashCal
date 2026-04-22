@@ -438,6 +438,8 @@
     <string name="label_on_days">Күндері</string>
     <string name="label_pattern">Үлгі</string>
     <string name="label_ends">Аяқталуы</string>
+    <string name="label_timezone">Уақыт белдеуі</string>
+    <string name="label_device_timezone">Құрылғы уақыт белдеуі</string>
     <string name="label_alerts">Ескертулер</string>
     <string name="label_add_alert">Ескерту қосу</string>
     <string name="label_recurrence_never">Ешқашан</string>
@@ -941,5 +943,29 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Күнтізбе бойынша бөлу: %1$s</string>
     <string name="insights_cd_daily_chart">Күнделікті бөлу: ең жүктелген күн %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Қолжетімділік</string>
+    <string name="label_busy">Бос емес</string>
+    <string name="label_free">Бос</string>
+    <string name="label_event_color">Оқиға түсі</string>
+    <string name="label_calendar_default">Күнтізбе әдепкісі</string>
+    <string name="label_custom">Таңдамалы</string>
+    <string name="cd_event_color">Оқиға түсі</string>
+
+    <string name="cd_checkmark">Таңдалды</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_tomato">Қызанақ</string>
+    <string name="color_darkorange">Қою қызғылт сары</string>
+    <string name="color_gold">Алтын</string>
+    <string name="color_yellowgreen">Сарғыш жасыл</string>
+    <string name="color_mediumseagreen">Орташа теңіз жасылы</string>
+    <string name="color_teal">Көгілдір-жасыл</string>
+    <string name="color_steelblue">Болат көк</string>
+    <string name="color_slateblue">Тақтатас көк</string>
+    <string name="color_mediumorchid">Орташа орхидея</string>
+    <string name="color_hotpink">Қызғылт</string>
+    <string name="color_slategray">Тақтатас сұр</string>
 
 </resources>

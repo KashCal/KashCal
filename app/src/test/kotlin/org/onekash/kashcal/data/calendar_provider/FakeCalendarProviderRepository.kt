@@ -126,7 +126,9 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Long> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
@@ -149,7 +151,9 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Unit> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
@@ -181,7 +185,9 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>
+        reminders: List<Int>,
+        availability: Int,
+        eventColor: Int?
     ): Result<Long> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {

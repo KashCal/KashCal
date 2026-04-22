@@ -420,6 +420,8 @@
     <string name="label_on_days">U dane</string>
     <string name="label_pattern">Obrazac</string>
     <string name="label_ends">Završava se</string>
+    <string name="label_timezone">Временска зона</string>
+    <string name="label_device_timezone">Временска зона уређаја</string>
     <string name="label_alerts">Podsetnici</string>
     <string name="label_add_alert">Dodaj podsetnik</string>
     <string name="label_recurrence_never">Nikad</string>
@@ -831,6 +833,18 @@
     <string name="color_cyan">Cijan</string>
     <string name="color_blue">Plava</string>
     <string name="color_purple">Ljubičasta</string>
+    <string name="cd_checkmark">Izabrano</string>
+    <string name="color_tomato">Paradajz</string>
+    <string name="color_darkorange">Tamno narandžasta</string>
+    <string name="color_gold">Zlatna</string>
+    <string name="color_yellowgreen">Žutozelena</string>
+    <string name="color_mediumseagreen">Srednje morska</string>
+    <string name="color_teal">Tirkizna</string>
+    <string name="color_steelblue">Čelično plava</string>
+    <string name="color_slateblue">Škriljasto plava</string>
+    <string name="color_mediumorchid">Srednje orhideja</string>
+    <string name="color_hotpink">Vruće roze</string>
+    <string name="color_slategray">Škriljasto siva</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Link za sastanak: %1$s</string>
     <string name="cd_phone_number">Telefonski broj</string>
@@ -937,4 +951,11 @@
     <string name="insight_next_free_block">Sledeći slobodan blok: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Raspodela kalendara: %1$s</string>
     <string name="insights_cd_daily_chart">Dnevna raspodela: najzauzetiji dan je %1$s</string>
+    <string name="label_availability">Dostupnost</string>
+    <string name="label_busy">Zauzeto</string>
+    <string name="label_free">Slobodno</string>
+    <string name="label_event_color">Boja događaja</string>
+    <string name="label_calendar_default">Podrazumevano iz kalendara</string>
+    <string name="label_custom">Prilagođeno</string>
+    <string name="cd_event_color">Boja događaja</string>
 </resources>

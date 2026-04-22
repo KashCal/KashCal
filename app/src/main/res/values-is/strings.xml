@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Valið</string>
+    <string name="cd_checkmark">Valið</string>
     <string name="cd_back">Til baka</string>
     <string name="cd_close">Loka</string>
     <string name="cd_search">Leita</string>
@@ -440,6 +441,8 @@
     <string name="label_on_days">Á dögum</string>
     <string name="label_pattern">Mynstur</string>
     <string name="label_ends">Endar</string>
+    <string name="label_timezone">Tímabelti</string>
+    <string name="label_device_timezone">Tímabelti tækis</string>
     <string name="label_alerts">Áminningar</string>
     <string name="label_add_alert">Bæta við áminningu</string>
     <string name="label_recurrence_never">Aldrei</string>
@@ -933,4 +936,23 @@
     <string name="insights_cd_calendar_bar">Dagatalsdreifing: %1$s</string>
     <string name="insights_cd_daily_chart">Dagleg dreifing: \u00e1nni\u00f0samasti dagur er %1$s</string>
 
+    <!-- ==================== Event Color / Availability ==================== -->
+    <string name="label_availability">Framboð</string>
+    <string name="label_busy">Upptekinn</string>
+    <string name="label_free">Laus</string>
+    <string name="label_event_color">Litur viðburðar</string>
+    <string name="label_calendar_default">Sjálfgefið dagatals</string>
+    <string name="label_custom">Sérsniðið</string>
+    <string name="cd_event_color">Litur viðburðar</string>
+    <string name="color_tomato">Tómatur</string>
+    <string name="color_darkorange">Dökkappelsínugulur</string>
+    <string name="color_gold">Gull</string>
+    <string name="color_yellowgreen">Gulgrænn</string>
+    <string name="color_mediumseagreen">Sjávargrænn</string>
+    <string name="color_teal">Blágrænn</string>
+    <string name="color_steelblue">Stálblár</string>
+    <string name="color_slateblue">Flögublár</string>
+    <string name="color_mediumorchid">Orkideulitur</string>
+    <string name="color_hotpink">Heitbleikur</string>
+    <string name="color_slategray">Flögugrár</string>
 </resources>

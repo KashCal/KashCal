@@ -419,6 +419,7 @@
     <string name="label_on_days">Siku</string>
     <string name="label_pattern">Muundo</string>
     <string name="label_ends">Inaisha</string>
+    <string name="label_timezone">Eneo la saa</string>
     <string name="label_alerts">Tahadhari</string>
     <string name="label_add_alert">Ongeza Tahadhari</string>
     <string name="label_recurrence_never">Kamwe</string>
@@ -912,4 +913,26 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Mgawanyo wa kalenda: %1$s</string>
     <string name="insights_cd_daily_chart">Usambazaji wa kila siku: siku yenye shughuli nyingi zaidi ni %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Upatikanaji</string>
+    <string name="label_busy">Shughuli</string>
+    <string name="label_free">Huru</string>
+    <string name="label_event_color">Rangi ya tukio</string>
+    <string name="label_calendar_default">Chaguomsingi ya kalenda</string>
+    <string name="label_custom">Maalum</string>
+    <string name="cd_event_color">Rangi ya tukio</string>
+    <string name="cd_checkmark">Imechaguliwa</string>
+    <string name="label_device_timezone">Saa za kifaa</string>
+    <string name="color_tomato">Nyanya</string>
+    <string name="color_darkorange">Machungwa iliyokolea</string>
+    <string name="color_gold">Dhahabu</string>
+    <string name="color_yellowgreen">Njano-kijani</string>
+    <string name="color_mediumseagreen">Kijani cha bahari cha wastani</string>
+    <string name="color_teal">Bluu-kijani</string>
+    <string name="color_steelblue">Bluu ya chuma</string>
+    <string name="color_slateblue">Bluu ya slati</string>
+    <string name="color_mediumorchid">Okidi ya wastani</string>
+    <string name="color_hotpink">Waridi iliyong\'aa</string>
+    <string name="color_slategray">Kijivu cha slati</string>
 </resources>

@@ -1,10 +1,7 @@
 package org.onekash.kashcal.ui.components.pickers
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -28,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -37,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -103,6 +102,7 @@ enum class ActiveDateTimeSheet {
  * @param errorMessage Error message to display below the field
  * @param timezone Timezone ID for display (null = device default, no suffix shown)
  */
+@Deprecated("Use DateTimeDisplayRow instead", level = DeprecationLevel.WARNING)
 @Composable
 fun DateTimePickerCard(
     label: String,
@@ -197,6 +197,121 @@ private fun formatDateForPicker(dateMillis: Long, isAllDay: Boolean): String {
     return DateTimeUtils.formatEventDate(dateMillis, isAllDay = false)
 }
 
+@Composable
+fun DateTimeDisplayRow(
+    startDateMillis: Long,
+    startHour: Int,
+    startMinute: Int,
+    endDateMillis: Long,
+    endHour: Int,
+    endMinute: Int,
+    isAllDay: Boolean,
+    onAllDayToggle: (Boolean) -> Unit,
+    onStartClick: () -> Unit,
+    onEndClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isStartError: Boolean = false,
+    isEndError: Boolean = false,
+    startErrorMessage: String? = null,
+    endErrorMessage: String? = null,
+    timezone: String? = null,
+    timePattern: String = "h:mm a"
+) {
+    val deviceTimezone = TimezoneUtils.getDeviceTimezone()
+    val timezoneAbbrev = if (!isAllDay && timezone != null && timezone != deviceTimezone) {
+        TimezoneUtils.getAbbreviation(timezone)
+    } else null
+
+    Column(modifier = modifier) {
+        // All-day toggle with clock icon
+        EventFormRow(
+            icon = Icons.Default.Schedule,
+            iconContentDescription = stringResource(R.string.label_all_day),
+            onToggle = { onAllDayToggle(!isAllDay) }
+        ) {
+            Text(
+                stringResource(R.string.label_all_day),
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            Switch(
+                checked = isAllDay,
+                onCheckedChange = onAllDayToggle
+            )
+        }
+
+        // Start date/time — indented to align with text (past icon column)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onStartClick() }
+                .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val startDisplay = buildString {
+                append(formatDateForPicker(startDateMillis, isAllDay))
+                if (!isAllDay) {
+                    append("  ")
+                    append(DateTimeUtils.formatTime(startHour, startMinute, timePattern))
+                }
+                if (timezoneAbbrev != null) append("  $timezoneAbbrev")
+            }
+            Text(
+                startDisplay,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isStartError) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface,
+                textDecoration = if (isStartError) TextDecoration.LineThrough else TextDecoration.None,
+                maxLines = 1
+            )
+        }
+
+        if (startErrorMessage != null) {
+            Text(
+                startErrorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 52.dp, top = 2.dp)
+            )
+        }
+
+        // End date/time
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onEndClick() }
+                .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            val endDisplay = buildString {
+                append(formatDateForPicker(endDateMillis, isAllDay))
+                if (!isAllDay) {
+                    append("  ")
+                    append(DateTimeUtils.formatTime(endHour, endMinute, timePattern))
+                }
+                if (timezoneAbbrev != null) append("  $timezoneAbbrev")
+            }
+            Text(
+                endDisplay,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isEndError) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.onSurface,
+                textDecoration = if (isEndError) TextDecoration.LineThrough else TextDecoration.None,
+                maxLines = 1
+            )
+        }
+
+        if (endErrorMessage != null) {
+            Text(
+                endErrorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 52.dp, top = 2.dp)
+            )
+        }
+    }
+}
+
 /**
  * Combined date + time picker sheet with buffered state and blocked gestural dismiss.
  * Shows calendar and wheel time picker in a single sheet.
@@ -225,7 +340,7 @@ fun DateTimeSheet(
     selectedTimezone: String? = null,
     isAllDay: Boolean,
     use24Hour: Boolean = false,
-    onConfirm: (dateMillis: Long, hour: Int, minute: Int, timezone: String?) -> Unit,
+    onConfirm: (dateMillis: Long, hour: Int, minute: Int) -> Unit,
     onDismiss: () -> Unit,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
@@ -233,7 +348,6 @@ fun DateTimeSheet(
     var localDateMillis by remember { mutableStateOf(selectedDateMillis) }
     var localHour by remember { mutableIntStateOf(selectedHour) }
     var localMinute by remember { mutableIntStateOf(selectedMinute) }
-    var localTimezone by remember { mutableStateOf(selectedTimezone) }
     var displayedMonth by remember {
         mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis })
     }
@@ -270,7 +384,7 @@ fun DateTimeSheet(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                TextButton(onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) }) {
+                TextButton(onClick = { onConfirm(localDateMillis, localHour, localMinute) }) {
                     Text(stringResource(R.string.action_done), fontWeight = FontWeight.Bold)
                 }
             }
@@ -286,101 +400,30 @@ fun DateTimeSheet(
                 firstDayOfWeek = firstDayOfWeek
             )
 
-            // Time picker with timezone - updates LOCAL state (unless all-day)
+            // Time picker - updates LOCAL state (unless all-day)
             if (!isAllDay) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
-                // Track whether timezone search is expanded
-                var isTimezoneSearchOpen by remember { mutableStateOf(false) }
-
-                // Calculate reference time in SELECTED timezone for preview
-                // This allows the preview to show "what time this will be in device timezone"
-                val referenceTimeMs = remember(localDateMillis, localHour, localMinute, localTimezone) {
-                    val tz = localTimezone?.let { java.util.TimeZone.getTimeZone(it) }
-                        ?: java.util.TimeZone.getDefault()
-                    JavaCalendar.getInstance(tz).apply {
-                        timeInMillis = localDateMillis
-                        set(JavaCalendar.HOUR_OF_DAY, localHour)
-                        set(JavaCalendar.MINUTE, localMinute)
-                        set(JavaCalendar.SECOND, 0)
-                        set(JavaCalendar.MILLISECOND, 0)
-                    }.timeInMillis
-                }
-
-                Row(
+                WheelTimePicker(
+                    selectedHour = localHour,
+                    selectedMinute = localMinute,
+                    onTimeSelected = { h, m ->
+                        localHour = h
+                        localMinute = m
+                    },
+                    use24Hour = use24Hour,
+                    visibleItems = 5,
+                    itemHeight = 32.dp,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Time picker wheels - hidden when timezone search is open
-                    // Issue #88: Changed visibleItems 3→5 for better touch targets on small screens
-                    AnimatedVisibility(
-                        visible = !isTimezoneSearchOpen,
-                        enter = fadeIn(),
-                        exit = fadeOut(),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        WheelTimePicker(
-                            selectedHour = localHour,
-                            selectedMinute = localMinute,
-                            onTimeSelected = { h, m ->
-                                localHour = h
-                                localMinute = m
-                            },
-                            use24Hour = use24Hour,
-                            visibleItems = 5,
-                            itemHeight = 32.dp,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    // Timezone picker - compact icon when closed, expands when search is open
-                    // Issue #88: Fixed width (56dp) instead of weight(0.30f) to save space
-                    TimezonePickerChip(
-                        selectedTimezone = localTimezone,
-                        onTimezoneSelected = { newTimezone ->
-                            // Convert time to maintain same instant when timezone changes
-                            val oldTz = localTimezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                ?: java.util.TimeZone.getDefault()
-                            val newTz = newTimezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                ?: java.util.TimeZone.getDefault()
-
-                            // Calculate instant in old timezone
-                            val oldCal = JavaCalendar.getInstance(oldTz).apply {
-                                timeInMillis = localDateMillis
-                                set(JavaCalendar.HOUR_OF_DAY, localHour)
-                                set(JavaCalendar.MINUTE, localMinute)
-                                set(JavaCalendar.SECOND, 0)
-                                set(JavaCalendar.MILLISECOND, 0)
-                            }
-
-                            // Convert to new timezone (same instant, different wall clock time)
-                            val newCal = JavaCalendar.getInstance(newTz).apply {
-                                timeInMillis = oldCal.timeInMillis
-                            }
-
-                            localHour = newCal.get(JavaCalendar.HOUR_OF_DAY)
-                            localMinute = newCal.get(JavaCalendar.MINUTE)
-                            localDateMillis = newCal.timeInMillis // Date might change (crossing midnight)
-                            localTimezone = newTimezone
-                        },
-                        referenceTimeMs = referenceTimeMs,
-                        modifier = if (isTimezoneSearchOpen) {
-                            Modifier.fillMaxWidth()
-                        } else {
-                            Modifier.width(56.dp)
-                        },
-                        onSearchOpenChange = { isTimezoneSearchOpen = it }
-                    )
-                }
+                        .padding(horizontal = 8.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { onConfirm(localDateMillis, localHour, localMinute, localTimezone) },
+                onClick = { onConfirm(localDateMillis, localHour, localMinute) },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {

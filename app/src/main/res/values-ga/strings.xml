@@ -451,6 +451,7 @@
     <string name="label_on_days">Ar laethanta</string>
     <string name="label_pattern">Patr\u00fan</string>
     <string name="label_ends">Cr\u00edochna\u00edonn</string>
+    <string name="label_timezone">Crios ama</string>
     <string name="label_alerts">Foláirimh</string>
     <string name="label_add_alert">Cuir Foláireamh Leis</string>
     <string name="label_recurrence_never">Go br\u00e1ch</string>
@@ -1047,5 +1048,31 @@
     <string name="insight_next_free_block">An ch\u00e9ad bhloc saor eile: %1$s %2$s\u2013%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Miondealú f\u00e9ilir\u00ed: %1$s</string>
     <string name="insights_cd_daily_chart">Dáileadh laethúil: is é an lá is gnóthaí %1$s</string>
+
+    <!-- Event Form Redesign -->
+    <string name="label_availability">Infhaighteacht</string>
+    <string name="label_busy">Gn\u00f3thach</string>
+    <string name="label_free">Saor</string>
+    <string name="label_event_color">Dath an imeachta</string>
+    <string name="label_calendar_default">R\u00e9amhshocr\u00fa an fh\u00e9ilire</string>
+    <string name="label_custom">Saincheaptha</string>
+    <string name="cd_event_color">Dath an imeachta</string>
+
+
+    <string name="cd_checkmark">Roghnaithe</string>
+    <string name="label_device_timezone">Crios ama an ghl\u00e9is</string>
+
+    <!-- Event Color Palette (CSS3) -->
+    <string name="color_tomato">Tr\u00e1ta\u00ed</string>
+    <string name="color_darkorange">Or\u00e1iste dorcha</string>
+    <string name="color_gold">\u00d3r</string>
+    <string name="color_yellowgreen">Glas bu\u00ed</string>
+    <string name="color_mediumseagreen">Glas mara me\u00e1nach</string>
+    <string name="color_teal">Glasuaine</string>
+    <string name="color_steelblue">Gorm cruach</string>
+    <string name="color_slateblue">Gorm sl\u00edne</string>
+    <string name="color_mediumorchid">Magairl\u00edn me\u00e1nach</string>
+    <string name="color_hotpink">B\u00e1nd\u00e9arg te</string>
+    <string name="color_slategray">Liath sl\u00edne</string>
 
 </resources>

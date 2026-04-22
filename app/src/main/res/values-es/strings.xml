@@ -438,6 +438,8 @@
     <string name="label_on_days">En los d\u00edas</string>
     <string name="label_pattern">Patr\u00f3n</string>
     <string name="label_ends">Termina</string>
+    <string name="label_timezone">Zona horaria</string>
+    <string name="label_device_timezone">Zona horaria del dispositivo</string>
     <string name="label_alerts">Alertas</string>
     <string name="label_add_alert">A\u00f1adir alerta</string>
     <string name="label_recurrence_never">Nunca</string>
@@ -975,5 +977,28 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Distribuci\u00f3n por calendario: %1$s</string>
     <string name="insights_cd_daily_chart">Distribuci\u00f3n diaria: el d\u00eda m\u00e1s ocupado es %1$s</string>
+
+    <!-- Event editor: availability & color -->
+    <string name="label_availability">Disponibilidad</string>
+    <string name="label_busy">Ocupado</string>
+    <string name="label_free">Libre</string>
+    <string name="label_event_color">Color del evento</string>
+    <string name="label_calendar_default">Predeterminado del calendario</string>
+    <string name="label_custom">Personalizado</string>
+    <string name="cd_event_color">Color del evento</string>
+    <string name="cd_checkmark">Seleccionado</string>
+
+    <!-- Event color palette (CSS3 color names) -->
+    <string name="color_tomato">Tomate</string>
+    <string name="color_darkorange">Naranja oscuro</string>
+    <string name="color_gold">Dorado</string>
+    <string name="color_yellowgreen">Verde amarillento</string>
+    <string name="color_mediumseagreen">Verde mar medio</string>
+    <string name="color_teal">Verde azulado</string>
+    <string name="color_steelblue">Azul acero</string>
+    <string name="color_slateblue">Azul pizarra</string>
+    <string name="color_mediumorchid">Orqu\u00eddea medio</string>
+    <string name="color_hotpink">Rosa fuerte</string>
+    <string name="color_slategray">Gris pizarra</string>
 
 </resources>

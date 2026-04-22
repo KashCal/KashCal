@@ -30,6 +30,9 @@ import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.shared.contrastForegroundOn
+import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.lerp
 
 @Composable
 fun EventBlock(
@@ -46,12 +49,18 @@ fun EventBlock(
     modifier: Modifier = Modifier
 ) {
     val color = displayEvent.calendarColor
+    val isFree = displayEvent.isFree
+    val calColor = Color(color)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
 
-    // Solid fill with contrasting text for readability (cached per color)
-    val (backgroundColor, textColor) = remember(color) {
-        val bg = Color(color)
-        val luminance = (0.299f * bg.red + 0.587f * bg.green + 0.114f * bg.blue)
-        bg to if (luminance > 0.5f) Color.Black else Color.White
+    val (backgroundColor, textColor) = remember(color, isFree, surfaceColor) {
+        if (isFree) {
+            val bg = lerp(surfaceColor, calColor, 0.15f)
+            bg to onSurfaceColor
+        } else {
+            calColor to contrastForegroundOn(calColor)
+        }
     }
 
     // Determine what content fits based on height
@@ -95,6 +104,10 @@ fun EventBlock(
         modifier = modifier
             .height(height)
             .clip(RoundedCornerShape(4.dp))
+            .then(
+                if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
+                else Modifier
+            )
             .background(backgroundColor)
             .then(gestureModifier)
     ) {
@@ -154,15 +167,27 @@ fun CompactEventBlock(
     timePattern: String = "h:mma",
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = Color(displayEvent.calendarColor)
-    // Calculate luminance to determine text color
-    val luminance = (0.299f * backgroundColor.red + 0.587f * backgroundColor.green + 0.114f * backgroundColor.blue)
-    val textColor = if (luminance > 0.5f) Color.Black else Color.White
+    val isFree = displayEvent.isFree
+    val color = displayEvent.calendarColor
+    val calColor = Color(color)
+    val surfaceColor = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val (backgroundColor, textColor) = remember(color, isFree, surfaceColor) {
+        if (isFree) {
+            lerp(surfaceColor, calColor, 0.15f) to onSurfaceColor
+        } else {
+            calColor to contrastForegroundOn(calColor)
+        }
+    }
     val formattedTitle = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(4.dp))
+            .then(
+                if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
+                else Modifier
+            )
             .background(backgroundColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp)

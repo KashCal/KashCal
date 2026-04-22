@@ -419,6 +419,7 @@
     <string name="label_on_days">ਦਿਨਾਂ \'ਤੇ</string>
     <string name="label_pattern">ਪੈਟਰਨ</string>
     <string name="label_ends">ਖ਼ਤਮ ਹੁੰਦਾ ਹੈ</string>
+    <string name="label_timezone">ਸਮਾਂ ਖੇਤਰ</string>
     <string name="label_alerts">ਚੇਤਾਵਨੀਆਂ</string>
     <string name="label_add_alert">ਚੇਤਾਵਨੀ ਜੋੜੋ</string>
     <string name="label_recurrence_never">ਕਦੇ ਨਹੀਂ</string>
@@ -914,5 +915,27 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">ਕੈਲੰਡਰ ਵਿਸ਼ਲੇਸ਼ਣ: %1$s</string>
     <string name="insights_cd_daily_chart">ਰੋਜ਼ਾਨਾ ਵੰਡ: ਸਭ ਤੋਂ ਵਿਅਸਤ ਦਿਨ %1$s ਹੈ</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">ਉਪਲਬਧਤਾ</string>
+    <string name="label_busy">ਰੁੱਝਿਆ</string>
+    <string name="label_free">ਖਾਲੀ</string>
+    <string name="label_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
+    <string name="label_calendar_default">ਕੈਲੰਡਰ ਡਿਫ਼ੌਲਟ</string>
+    <string name="label_custom">ਕਸਟਮ</string>
+    <string name="cd_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
+    <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
+    <string name="label_device_timezone">ਡਿਵਾਈਸ ਸਮਾਂ ਖੇਤਰ</string>
+    <string name="color_tomato">ਟਮਾਟਰ</string>
+    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
+    <string name="color_gold">ਸੁਨਹਿਰੀ</string>
+    <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>
+    <string name="color_mediumseagreen">ਦਰਮਿਆਨਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
+    <string name="color_teal">ਟੀਲ</string>
+    <string name="color_steelblue">ਸਟੀਲ ਨੀਲਾ</string>
+    <string name="color_slateblue">ਸਲੇਟੀ ਨੀਲਾ</string>
+    <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
+    <string name="color_hotpink">ਚਮਕਦਾਰ ਗੁਲਾਬੀ</string>
+    <string name="color_slategray">ਸਲੇਟੀ ਸੁਰਮਈ</string>
 
 </resources>

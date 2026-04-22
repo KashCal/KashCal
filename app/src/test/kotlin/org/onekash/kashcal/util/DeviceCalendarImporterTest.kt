@@ -40,7 +40,8 @@ class DeviceCalendarImporterTest {
             calendarId: Long, title: String, description: String?,
             location: String?, startTs: Long, endTs: Long?,
             isAllDay: Boolean, rrule: String?, duration: String?,
-            timezone: String, reminders: List<Int>
+            timezone: String, reminders: List<Int>,
+            availability: Int, eventColor: Int?
         ): Result<Long> {
             callCount++
             if (callCount == failOnCall) {
@@ -65,9 +66,9 @@ class DeviceCalendarImporterTest {
         override suspend fun getInstancesForDayRange(startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
         override suspend fun searchInstances(query: String, startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
         override suspend fun pruneStaleCalendarIds(dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore) {}
-        override suspend fun updateEvent(eventId: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long?, isAllDay: Boolean, rrule: String?, duration: String?, timezone: String, reminders: List<Int>): Result<Unit> = Result.success(Unit)
+        override suspend fun updateEvent(eventId: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long?, isAllDay: Boolean, rrule: String?, duration: String?, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Unit> = Result.success(Unit)
         override suspend fun deleteEvent(eventId: Long): Result<Unit> = Result.success(Unit)
-        override suspend fun createException(calendarId: Long, masterEventId: Long, originalInstanceTime: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long, isAllDay: Boolean, timezone: String, reminders: List<Int>): Result<Long> = Result.success(0L)
+        override suspend fun createException(calendarId: Long, masterEventId: Long, originalInstanceTime: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long, isAllDay: Boolean, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Long> = Result.success(0L)
         override suspend fun deleteSingleOccurrence(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
         override suspend fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
         override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = Result.success(Unit)

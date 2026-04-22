@@ -48,6 +48,7 @@ import org.onekash.kashcal.R
  * @param enabled When false, card is dimmed and not clickable
  * @param content Composable content to show when expanded
  */
+@Deprecated("Use EventFormRow-based variants instead", level = DeprecationLevel.WARNING)
 @Composable
 fun ExpandablePickerCard(
     label: String,
@@ -122,6 +123,7 @@ fun ExpandablePickerCard(
  * @param headerContent Custom content for the right side of the header
  * @param content Composable content to show when expanded
  */
+@Deprecated("Use EventFormRow-based variants instead", level = DeprecationLevel.WARNING)
 @Composable
 fun ExpandablePickerCardWithCustomHeader(
     label: String,

@@ -5,6 +5,7 @@ import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.Duration
 
 /**
@@ -194,6 +195,9 @@ object ICalEventMapper {
      */
     private fun parseColorToArgb(color: String?): Int? {
         if (color.isNullOrBlank()) return null
+        // RFC 7986 §5.9: CSS3 extended color names (e.g., "mediumorchid") aren't supported
+        // by Android's Color.parseColor — resolve them via EventColorPalette first.
+        EventColorPalette.hexForName(color)?.let { return it }
         // Expand 3-digit CSS hex (#RGB → #RRGGBB) since Color.parseColor doesn't support it
         val expanded = if (color.length == 4 && color.startsWith("#")) {
             val r = color[1]; val g = color[2]; val b = color[3]

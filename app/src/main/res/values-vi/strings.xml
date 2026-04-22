@@ -440,6 +440,7 @@
     <string name="label_on_days">Vào ngày</string>
     <string name="label_pattern">Mẫu</string>
     <string name="label_ends">Kết thúc</string>
+    <string name="label_timezone">Múi giờ</string>
     <string name="label_alerts">Nhắc nhở</string>
     <string name="label_add_alert">Thêm nhắc nhở</string>
     <string name="label_recurrence_never">Không bao giờ</string>
@@ -890,4 +891,24 @@
     <string name="insight_next_free_block">Khoảng trống tiếp theo: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Phân bổ lịch: %1$s</string>
     <string name="insights_cd_daily_chart">Phân bổ hàng ngày: ngày bận nhất là %1$s</string>
+    <string name="label_availability">Trạng thái rảnh/bận</string>
+    <string name="label_busy">Bận</string>
+    <string name="label_free">Rảnh</string>
+    <string name="label_event_color">Màu sự kiện</string>
+    <string name="label_calendar_default">Mặc định lịch</string>
+    <string name="label_custom">Tùy chỉnh</string>
+    <string name="cd_event_color">Màu sự kiện</string>
+    <string name="cd_checkmark">Đã chọn</string>
+    <string name="label_device_timezone">Múi giờ thiết bị</string>
+    <string name="color_tomato">Đỏ cà chua</string>
+    <string name="color_darkorange">Cam đậm</string>
+    <string name="color_gold">Vàng kim</string>
+    <string name="color_yellowgreen">Vàng lục</string>
+    <string name="color_mediumseagreen">Lục biển trung</string>
+    <string name="color_teal">Mòng két</string>
+    <string name="color_steelblue">Xanh thép</string>
+    <string name="color_slateblue">Xanh đá phiến</string>
+    <string name="color_mediumorchid">Tím lan trung</string>
+    <string name="color_hotpink">Hồng đậm</string>
+    <string name="color_slategray">Xám đá phiến</string>
 </resources>

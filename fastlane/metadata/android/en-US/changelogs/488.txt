@@ -1,0 +1,4 @@
+• New color picker: tap a named swatch (Tomato, Gold, Teal, Medium Orchid and more) instead of picking a hex value
+• Cleaner event form: inline Event color and Availability rows, Busy/Free as quick chips
+• Save button uses your calendar color for faster visual confirmation
+• Time zone row is always visible on timed events

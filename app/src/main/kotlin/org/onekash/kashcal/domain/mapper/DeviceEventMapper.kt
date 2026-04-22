@@ -78,6 +78,11 @@ fun DeviceEvent.toFormState(
         description = description.orEmpty(),
         rrule = rrule,
         timezone = timezone,
+        transp = when (availability) {
+            1 -> "TRANSPARENT"
+            else -> "OPAQUE"
+        },
+        eventColor = this.eventColor,
         deviceCalendarGroups = deviceCalendarGroups,
         isLoading = false,
         isDeviceCalendar = true,

@@ -50,10 +50,13 @@ internal fun EventCard(
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
+    val effectiveAlpha = if (isPast) 0.5f else 1f
+    val leftStripeColor = if (displayEvent.isFree) eventColor.copy(alpha = 0.4f) else eventColor
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (isPast) 0.5f else 1f)
+            .alpha(effectiveAlpha)
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = eventColor.copy(alpha = 0.15f)),
         shape = RoundedCornerShape(12.dp)
@@ -63,7 +66,7 @@ internal fun EventCard(
                 modifier = Modifier
                     .width(4.dp)
                     .fillMaxHeight()
-                    .background(eventColor)
+                    .background(leftStripeColor)
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(

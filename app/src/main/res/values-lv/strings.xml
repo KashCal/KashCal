@@ -219,6 +219,7 @@
 
     <!-- ==================== Content Descriptions (Accessibility) ==================== -->
     <string name="cd_selected">Atlasīts</string>
+    <string name="cd_checkmark">Atlasīts</string>
     <string name="cd_back">Atpakaļ</string>
     <string name="cd_close">Aizvērt</string>
     <string name="cd_search">Meklēt</string>
@@ -439,6 +440,8 @@
     <string name="label_on_days">Dienās</string>
     <string name="label_pattern">Modelis</string>
     <string name="label_ends">Beidzas</string>
+    <string name="label_timezone">Laika josla</string>
+    <string name="label_device_timezone">Ierīces laika josla</string>
     <string name="label_alerts">Atgādinājumi</string>
     <string name="label_add_alert">Pievienot atgādinājumu</string>
     <string name="label_recurrence_never">Nekad</string>
@@ -820,6 +823,17 @@
     <string name="color_cyan">Ciāns</string>
     <string name="color_blue">Zils</string>
     <string name="color_purple">Violets</string>
+    <string name="color_tomato">Tomātu</string>
+    <string name="color_darkorange">Tumši oranžs</string>
+    <string name="color_gold">Zelta</string>
+    <string name="color_yellowgreen">Dzelteni zaļš</string>
+    <string name="color_mediumseagreen">Jūras zaļš</string>
+    <string name="color_teal">Tirkīza</string>
+    <string name="color_steelblue">Tērauda zils</string>
+    <string name="color_slateblue">Slānekļa zils</string>
+    <string name="color_mediumorchid">Orhideju</string>
+    <string name="color_hotpink">Koši rozā</string>
+    <string name="color_slategray">Slānekļa pelēks</string>
     <string name="cd_meeting_link">Sapulces saite: %1$s</string>
     <string name="cd_phone_number">Tālruņa numurs</string>
     <string name="cd_email_link">E-pasts: %1$s</string>
@@ -922,5 +936,12 @@
     <string name="insight_next_free_block">Nākamais brīvais bloks: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Sadalījums pa kalendāriem: %1$s</string>
     <string name="insights_cd_daily_chart">Sadalījums pa dienām: aizņemtākā diena — %1$s</string>
+    <string name="label_availability">Pieejamība</string>
+    <string name="label_busy">Aizņemts</string>
+    <string name="label_free">Brīvs</string>
+    <string name="label_event_color">Notikuma krāsa</string>
+    <string name="label_calendar_default">Kalendāra noklusējums</string>
+    <string name="label_custom">Pielāgota</string>
+    <string name="cd_event_color">Notikuma krāsa</string>
 
 </resources>

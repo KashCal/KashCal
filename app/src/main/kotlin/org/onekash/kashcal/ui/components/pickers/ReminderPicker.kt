@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +59,7 @@ import org.onekash.kashcal.ui.shared.formatReminderSummary
  * @param truncatedReminderCount Number of reminders that were truncated on load
  * @param modifier Modifier for the card
  */
+@Deprecated("Use ReminderPickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
 fun ReminderPickerCard(
     reminders: List<Int>,
@@ -138,11 +138,6 @@ fun ReminderPickerCard(
                         .padding(horizontal = 8.dp)
                         .padding(bottom = 8.dp)
                 ) {
-                    HorizontalDivider(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = MaterialTheme.colorScheme.outlineVariant
-                    )
-
                     // Dynamic reminder rows
                     reminders.forEachIndexed { index, minutes ->
                         ReminderItemRow(
@@ -228,6 +223,143 @@ fun ReminderPickerCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ReminderPickerContent(
+    reminders: List<Int>,
+    isAllDay: Boolean,
+    use24Hour: Boolean,
+    onRemindersChange: (List<Int>) -> Unit,
+    truncatedReminderCount: Int = 0,
+    modifier: Modifier = Modifier
+) {
+    var expandedPickerIndex by remember { mutableIntStateOf(-1) }
+    val presets = if (isAllDay) ALL_DAY_PRESET_CHIPS else TIMED_PRESET_CHIPS
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 8.dp)
+    ) {
+        reminders.forEachIndexed { index, minutes ->
+            ReminderItemRow(
+                index = index,
+                minutes = minutes,
+                isAllDay = isAllDay,
+                use24Hour = use24Hour,
+                isPickerOpen = expandedPickerIndex == index,
+                presets = presets,
+                onTogglePicker = {
+                    expandedPickerIndex = if (expandedPickerIndex == index) -1 else index
+                },
+                onDurationSelected = { newMinutes ->
+                    val updated = reminders.toMutableList()
+                    updated[index] = newMinutes
+                    onRemindersChange(updated)
+                },
+                onDelete = {
+                    val updated = reminders.toMutableList()
+                    updated.removeAt(index)
+                    onRemindersChange(updated)
+                    expandedPickerIndex = when {
+                        expandedPickerIndex == index -> -1
+                        expandedPickerIndex > index -> expandedPickerIndex - 1
+                        else -> expandedPickerIndex
+                    }
+                },
+                onDismissPicker = {
+                    expandedPickerIndex = -1
+                }
+            )
+        }
+
+        if (reminders.size < MAX_REMINDERS) {
+            TextButton(
+                onClick = {
+                    val updated = reminders + 15
+                    onRemindersChange(updated)
+                    expandedPickerIndex = updated.size - 1
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+            ) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    stringResource(R.string.label_add_alert),
+                    modifier = Modifier.padding(start = 4.dp)
+                )
+            }
+        }
+
+        if (truncatedReminderCount > 0) {
+            val totalReminders = reminders.size + truncatedReminderCount
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = stringResource(R.string.cd_warning),
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.error
+                )
+                Text(
+                    stringResource(R.string.label_reminders_truncated, truncatedReminderCount, totalReminders, MAX_REMINDERS),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ReminderPickerRow(
+    reminders: List<Int>,
+    isAllDay: Boolean,
+    use24Hour: Boolean,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    onRemindersChange: (List<Int>) -> Unit,
+    truncatedReminderCount: Int = 0,
+    modifier: Modifier = Modifier
+) {
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalContext.current.resources)
+
+    EventFormRow(
+        icon = Icons.Default.Notifications,
+        iconContentDescription = stringResource(R.string.label_alerts),
+        isExpanded = isExpanded,
+        showExpandIcon = true,
+        onToggle = onToggle,
+        expandedContent = {
+            ReminderPickerContent(
+                reminders = reminders,
+                isAllDay = isAllDay,
+                use24Hour = use24Hour,
+                onRemindersChange = onRemindersChange,
+                truncatedReminderCount = truncatedReminderCount
+            )
+        },
+        modifier = modifier
+    ) {
+        Text(
+            summaryText,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 

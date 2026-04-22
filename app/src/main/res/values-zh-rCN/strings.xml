@@ -440,6 +440,7 @@
     <string name="label_on_days">选择日期</string>
     <string name="label_pattern">模式</string>
     <string name="label_ends">结束</string>
+    <string name="label_timezone">时区</string>
     <string name="label_alerts">提醒</string>
     <string name="label_add_alert">添加提醒</string>
     <string name="label_recurrence_never">永不</string>
@@ -890,4 +891,24 @@
     <string name="insight_next_free_block">下一个空闲时段：%1$s %2$s–%3$s（%4$s）</string>
     <string name="insights_cd_calendar_bar">日历分布：%1$s</string>
     <string name="insights_cd_daily_chart">每日分布：最忙碌的一天是%1$s</string>
+    <string name="label_availability">忙闲状态</string>
+    <string name="label_busy">忙碌</string>
+    <string name="label_free">空闲</string>
+    <string name="label_event_color">日程颜色</string>
+    <string name="label_calendar_default">日历默认</string>
+    <string name="label_custom">自定义</string>
+    <string name="cd_event_color">日程颜色</string>
+    <string name="cd_checkmark">已选择</string>
+    <string name="label_device_timezone">设备时区</string>
+    <string name="color_tomato">西红柿</string>
+    <string name="color_darkorange">深橙</string>
+    <string name="color_gold">金</string>
+    <string name="color_yellowgreen">黄绿</string>
+    <string name="color_mediumseagreen">中海绿</string>
+    <string name="color_teal">蓝绿</string>
+    <string name="color_steelblue">钢蓝</string>
+    <string name="color_slateblue">石板蓝</string>
+    <string name="color_mediumorchid">中兰花紫</string>
+    <string name="color_hotpink">桃红</string>
+    <string name="color_slategray">石板灰</string>
 </resources>

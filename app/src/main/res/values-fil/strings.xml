@@ -439,6 +439,7 @@
     <string name="label_on_days">Sa mga araw na</string>
     <string name="label_pattern">Pattern</string>
     <string name="label_ends">Natatapos</string>
+    <string name="label_timezone">Time zone</string>
     <string name="label_alerts">Mga Alerto</string>
     <string name="label_add_alert">Magdagdag ng Alerto</string>
     <string name="label_recurrence_never">Hindi kailanman</string>
@@ -940,4 +941,26 @@
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Breakdown ng kalendaryo: %1$s</string>
     <string name="insights_cd_daily_chart">Pamamahagi araw-araw: pinaka-abalang araw ay %1$s</string>
+
+    <!-- ==================== Event Form: Availability & Color ==================== -->
+    <string name="label_availability">Availability</string>
+    <string name="label_busy">Abala</string>
+    <string name="label_free">Bakante</string>
+    <string name="label_event_color">Kulay ng event</string>
+    <string name="label_calendar_default">Default ng kalendaryo</string>
+    <string name="label_custom">Custom</string>
+    <string name="cd_event_color">Kulay ng event</string>
+    <string name="cd_checkmark">Napili</string>
+    <string name="label_device_timezone">Time zone ng device</string>
+    <string name="color_tomato">Kamatis</string>
+    <string name="color_darkorange">Madilim na kahel</string>
+    <string name="color_gold">Ginto</string>
+    <string name="color_yellowgreen">Dilaw-berde</string>
+    <string name="color_mediumseagreen">Katamtamang dagat-berde</string>
+    <string name="color_teal">Teal</string>
+    <string name="color_steelblue">Asul na bakal</string>
+    <string name="color_slateblue">Asul na pisara</string>
+    <string name="color_mediumorchid">Katamtamang orkidya</string>
+    <string name="color_hotpink">Maningning na rosas</string>
+    <string name="color_slategray">Kulay-abong pisara</string>
 </resources>
