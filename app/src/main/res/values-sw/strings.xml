@@ -925,14 +925,18 @@
     <string name="cd_checkmark">Imechaguliwa</string>
     <string name="label_device_timezone">Saa za kifaa</string>
     <string name="color_tomato">Nyanya</string>
+    <string name="color_orangered">Machungwa-nyekundu</string>
     <string name="color_darkorange">Machungwa iliyokolea</string>
     <string name="color_gold">Dhahabu</string>
     <string name="color_yellowgreen">Njano-kijani</string>
+    <string name="color_limegreen">Kijani cha ndimu</string>
     <string name="color_mediumseagreen">Kijani cha bahari cha wastani</string>
-    <string name="color_teal">Bluu-kijani</string>
-    <string name="color_steelblue">Bluu ya chuma</string>
-    <string name="color_slateblue">Bluu ya slati</string>
+    <string name="color_seagreen">Kijani cha bahari</string>
+    <string name="color_lightseagreen">Kijani chepesi cha bahari</string>
+    <string name="color_dodgerblue">Bluu ya dodger</string>
+    <string name="color_royalblue">Bluu ya kifalme</string>
+    <string name="color_mediumslateblue">Bluu ya slati ya wastani</string>
     <string name="color_mediumorchid">Okidi ya wastani</string>
     <string name="color_hotpink">Waridi iliyong\'aa</string>
-    <string name="color_slategray">Kijivu cha slati</string>
+    <string name="color_dimgray">Kijivu hafifu</string>
 </resources>

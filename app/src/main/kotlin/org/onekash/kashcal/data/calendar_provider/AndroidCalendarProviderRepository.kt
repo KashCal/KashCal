@@ -1,7 +1,9 @@
 package org.onekash.kashcal.data.calendar_provider
 
+import android.accounts.Account
 import android.content.ContentResolver
 import android.content.ContentUris
+import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.CalendarContract.Attendees
 import android.provider.CalendarContract.Calendars
@@ -288,6 +290,74 @@ class AndroidCalendarProviderRepository @Inject constructor(
         if (staleIds.isNotEmpty()) {
             Log.i(TAG, "Pruning ${staleIds.size} stale calendar IDs: $staleIds")
             dataStore.setEnabledDeviceCalendarIds(storedIds - staleIds)
+        }
+    }
+
+    override suspend fun ensureCalendarVisible(calendarId: Long) = withContext(Dispatchers.IO) {
+        val account = readCalendarAccount(calendarId)
+        if (account == null) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): calendar row not found, skipping")
+            return@withContext
+        }
+
+        val values = buildCalendarVisibleValues()
+        val uri = ContentUris.withAppendedId(CalendarContract.Calendars.CONTENT_URI, calendarId)
+        try {
+            val rowsUpdated = contentResolver.update(uri, values, null, null)
+            Log.i(TAG, "ensureCalendarVisible($calendarId): SYNC_EVENTS=1, VISIBLE=1, rowsUpdated=$rowsUpdated")
+        } catch (e: SecurityException) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): WRITE_CALENDAR blocked, skipping", e)
+            return@withContext
+        } catch (e: Exception) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): update failed, skipping", e)
+            return@withContext
+        }
+
+        if (shouldSkipRequestSync(account)) {
+            Log.d(TAG, "ensureCalendarVisible($calendarId): skipping requestSync for account type='${account.type}'")
+            return@withContext
+        }
+
+        try {
+            val extras = Bundle().apply {
+                putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+            }
+            ContentResolver.requestSync(account, CalendarContract.AUTHORITY, extras)
+            Log.d(TAG, "ensureCalendarVisible($calendarId): requested sync on ${account.type}")
+        } catch (e: SecurityException) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): requestSync blocked", e)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): requestSync rejected account", e)
+        } catch (e: Exception) {
+            Log.w(TAG, "ensureCalendarVisible($calendarId): requestSync failed", e)
+        }
+    }
+
+    /**
+     * Read the ACCOUNT_NAME/ACCOUNT_TYPE of a calendar row.
+     * Returns null if the row doesn't exist (race with sync adapter deletion)
+     * or if permission is revoked.
+     */
+    private fun readCalendarAccount(calendarId: Long): Account? {
+        return try {
+            contentResolver.query(
+                ContentUris.withAppendedId(Calendars.CONTENT_URI, calendarId),
+                arrayOf(Calendars.ACCOUNT_NAME, Calendars.ACCOUNT_TYPE),
+                null, null, null
+            )?.use { cursor ->
+                if (!cursor.moveToFirst()) return@use null
+                val name = cursor.getString(0).orEmpty()
+                val type = cursor.getString(1).orEmpty()
+                // Account(String, String) throws IllegalArgumentException on blanks;
+                // guard explicitly so shouldSkipRequestSync can assume non-blank inputs.
+                if (name.isBlank() || type.isBlank()) null else Account(name, type)
+            }
+        } catch (e: SecurityException) {
+            Log.w(TAG, "readCalendarAccount($calendarId): permission revoked", e)
+            null
+        } catch (e: Exception) {
+            Log.w(TAG, "readCalendarAccount($calendarId): query failed", e)
+            null
         }
     }
 
@@ -1046,6 +1116,33 @@ class AndroidCalendarProviderRepository @Inject constructor(
             eventColor = if (cursor.isNull(20)) null else cursor.getInt(20)
         )
     }
+}
+
+/**
+ * Build the ContentValues written when the user ticks a device calendar.
+ *
+ * Flips both flags together because on Xiaomi/MIUI Google calendars ship with
+ * SYNC_EVENTS=0 AND VISIBLE=0 by default. Our Instances query filters on
+ * VISIBLE=1, and events are never downloaded without SYNC_EVENTS=1.
+ * Extracted to file level so tests can verify both keys are written (a typo
+ * in either would silently break MIUI users).
+ */
+internal fun buildCalendarVisibleValues(): android.content.ContentValues {
+    return android.content.ContentValues().apply {
+        put(android.provider.CalendarContract.Calendars.SYNC_EVENTS, 1)
+        put(android.provider.CalendarContract.Calendars.VISIBLE, 1)
+    }
+}
+
+/**
+ * Whether `requestSync` should be skipped for this account.
+ *
+ * Skips LOCAL accounts since they have no sync adapter to receive the request.
+ * Callers must ensure `account.name` and `account.type` are non-blank;
+ * `readCalendarAccount` guards this.
+ */
+internal fun shouldSkipRequestSync(account: android.accounts.Account): Boolean {
+    return account.type.equals(android.provider.CalendarContract.ACCOUNT_TYPE_LOCAL, ignoreCase = true)
 }
 
 /**

@@ -835,16 +835,20 @@
     <string name="color_purple">Ljubičasta</string>
     <string name="cd_checkmark">Odabrano</string>
     <string name="color_tomato">Paradajz</string>
+    <string name="color_orangered">Crvenonarandžasta</string>
     <string name="color_darkorange">Tamno narandžasta</string>
     <string name="color_gold">Zlatna</string>
     <string name="color_yellowgreen">Žutozelena</string>
+    <string name="color_limegreen">Limeta zelena</string>
     <string name="color_mediumseagreen">Srednje morska</string>
-    <string name="color_teal">Tirkizna</string>
-    <string name="color_steelblue">Čelično plava</string>
-    <string name="color_slateblue">Škriljasto plava</string>
+    <string name="color_seagreen">Morska</string>
+    <string name="color_lightseagreen">Svijetlo morska</string>
+    <string name="color_dodgerblue">Jarko plava</string>
+    <string name="color_royalblue">Kraljevska plava</string>
+    <string name="color_mediumslateblue">Srednje škriljasto plava</string>
     <string name="color_mediumorchid">Srednje orhideja</string>
     <string name="color_hotpink">Vruće roze</string>
-    <string name="color_slategray">Škriljasto siva</string>
+    <string name="color_dimgray">Tamno siva</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Link za sastanak: %1$s</string>
     <string name="cd_phone_number">Telefonski broj</string>

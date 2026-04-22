@@ -901,14 +901,18 @@
     <string name="cd_checkmark">선택됨</string>
     <string name="label_device_timezone">기기 시간대</string>
     <string name="color_tomato">토마토</string>
+    <string name="color_orangered">오렌지 레드</string>
     <string name="color_darkorange">다크 오렌지</string>
     <string name="color_gold">골드</string>
     <string name="color_yellowgreen">옐로 그린</string>
+    <string name="color_limegreen">라임 그린</string>
     <string name="color_mediumseagreen">미디엄 시 그린</string>
-    <string name="color_teal">틸</string>
-    <string name="color_steelblue">스틸 블루</string>
-    <string name="color_slateblue">슬레이트 블루</string>
+    <string name="color_seagreen">시 그린</string>
+    <string name="color_lightseagreen">라이트 시 그린</string>
+    <string name="color_dodgerblue">다저 블루</string>
+    <string name="color_royalblue">로열 블루</string>
+    <string name="color_mediumslateblue">미디엄 슬레이트 블루</string>
     <string name="color_mediumorchid">미디엄 오키드</string>
     <string name="color_hotpink">핫 핑크</string>
-    <string name="color_slategray">슬레이트 그레이</string>
+    <string name="color_dimgray">딤 그레이</string>
 </resources>

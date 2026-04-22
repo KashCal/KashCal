@@ -901,14 +901,18 @@
     <string name="cd_checkmark">已选择</string>
     <string name="label_device_timezone">设备时区</string>
     <string name="color_tomato">西红柿</string>
+    <string name="color_orangered">橙红</string>
     <string name="color_darkorange">深橙</string>
     <string name="color_gold">金</string>
     <string name="color_yellowgreen">黄绿</string>
+    <string name="color_limegreen">酸橙绿</string>
     <string name="color_mediumseagreen">中海绿</string>
-    <string name="color_teal">蓝绿</string>
-    <string name="color_steelblue">钢蓝</string>
-    <string name="color_slateblue">石板蓝</string>
+    <string name="color_seagreen">海绿</string>
+    <string name="color_lightseagreen">浅海绿</string>
+    <string name="color_dodgerblue">道奇蓝</string>
+    <string name="color_royalblue">宝蓝</string>
+    <string name="color_mediumslateblue">中板岩蓝</string>
     <string name="color_mediumorchid">中兰花紫</string>
     <string name="color_hotpink">桃红</string>
-    <string name="color_slategray">石板灰</string>
+    <string name="color_dimgray">暗灰</string>
 </resources>

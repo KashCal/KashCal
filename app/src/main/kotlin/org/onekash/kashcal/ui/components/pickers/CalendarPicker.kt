@@ -380,7 +380,7 @@ fun CalendarPickerRow(
             if (selectedCalendarColor != null) {
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(16.dp)
                         .clip(CircleShape)
                         .background(Color(selectedCalendarColor))
                 )

@@ -956,15 +956,19 @@
 
     <!-- Color names -->
     <string name="color_tomato">Domates</string>
+    <string name="color_orangered">Turuncu kırmızı</string>
     <string name="color_darkorange">Koyu turuncu</string>
     <string name="color_gold">Altın</string>
     <string name="color_yellowgreen">Sarı yeşil</string>
+    <string name="color_limegreen">Limon yeşili</string>
     <string name="color_mediumseagreen">Orta deniz yeşili</string>
-    <string name="color_teal">Teal</string>
-    <string name="color_steelblue">Çelik mavisi</string>
-    <string name="color_slateblue">Şifer mavisi</string>
+    <string name="color_seagreen">Deniz yeşili</string>
+    <string name="color_lightseagreen">Açık deniz yeşili</string>
+    <string name="color_dodgerblue">Canlı mavi</string>
+    <string name="color_royalblue">Kraliyet mavisi</string>
+    <string name="color_mediumslateblue">Orta şifer mavisi</string>
     <string name="color_mediumorchid">Orta orkide</string>
     <string name="color_hotpink">Sıcak pembe</string>
-    <string name="color_slategray">Şifer grisi</string>
+    <string name="color_dimgray">Soluk gri</string>
 
 </resources>

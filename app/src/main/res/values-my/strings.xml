@@ -916,14 +916,18 @@
     <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
     <string name="label_device_timezone">စက်၏ အချိန်ဇုန်</string>
     <string name="color_tomato">ခရမ်းချဉ်သီး</string>
+    <string name="color_orangered">လိမ္မော်နီ</string>
     <string name="color_darkorange">လိမ္မော်ရင့်</string>
     <string name="color_gold">ရွှေရောင်</string>
     <string name="color_yellowgreen">အဝါစိမ်း</string>
+    <string name="color_limegreen">သံပုရာစိမ်း</string>
     <string name="color_mediumseagreen">အလယ်အလတ် ပင်လယ်စိမ်း</string>
-    <string name="color_teal">နဂါးငွေ့တန်းစိမ်း</string>
-    <string name="color_steelblue">သံပြာ</string>
-    <string name="color_slateblue">ကျောက်ပြားပြာ</string>
+    <string name="color_seagreen">ပင်လယ်စိမ်း</string>
+    <string name="color_lightseagreen">ပင်လယ်စိမ်းဖျော့</string>
+    <string name="color_dodgerblue">ဒေါ့ဂျာပြာ</string>
+    <string name="color_royalblue">ဘုရင့်ပြာ</string>
+    <string name="color_mediumslateblue">အလယ်အလတ် ကျောက်ပြားပြာ</string>
     <string name="color_mediumorchid">အလယ်အလတ် သစ်ခွရောင်</string>
     <string name="color_hotpink">ပန်းရောင်ရဲ</string>
-    <string name="color_slategray">ကျောက်ပြားမီးခိုး</string>
+    <string name="color_dimgray">မီးခိုးမှိန်</string>
 </resources>

@@ -901,16 +901,20 @@
     <string name="color_purple">Fioletowy</string>
     <string name="cd_checkmark">Wybrane</string>
     <string name="color_tomato">Pomidorowy</string>
+    <string name="color_orangered">Czerwonopomarańczowy</string>
     <string name="color_darkorange">Ciemnopomarańczowy</string>
     <string name="color_gold">Złoty</string>
     <string name="color_yellowgreen">Żółtozielony</string>
+    <string name="color_limegreen">Limonkowy</string>
     <string name="color_mediumseagreen">Średni morski</string>
-    <string name="color_teal">Morski</string>
-    <string name="color_steelblue">Stalowoniebieski</string>
-    <string name="color_slateblue">Łupkowoniebieski</string>
+    <string name="color_seagreen">Morski</string>
+    <string name="color_lightseagreen">Jasnomorski</string>
+    <string name="color_dodgerblue">Błękit Dodger</string>
+    <string name="color_royalblue">Królewski niebieski</string>
+    <string name="color_mediumslateblue">Średni łupkowoniebieski</string>
     <string name="color_mediumorchid">Średnia orchidea</string>
     <string name="color_hotpink">Gorący róż</string>
-    <string name="color_slategray">Łupkowoszary</string>
+    <string name="color_dimgray">Przygaszony szary</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Link do spotkania: %1$s</string>
     <string name="cd_phone_number">Numer telefonu</string>

@@ -870,16 +870,20 @@
     <string name="color_purple">Fialová</string>
     <string name="cd_checkmark">Vybráno</string>
     <string name="color_tomato">Rajčatová</string>
+    <string name="color_orangered">Oranžovočervená</string>
     <string name="color_darkorange">Tmavě oranžová</string>
     <string name="color_gold">Zlatá</string>
     <string name="color_yellowgreen">Žlutozelená</string>
+    <string name="color_limegreen">Limetkově zelená</string>
     <string name="color_mediumseagreen">Středně mořská</string>
-    <string name="color_teal">Tyrkysová</string>
-    <string name="color_steelblue">Ocelově modrá</string>
-    <string name="color_slateblue">Břidlicově modrá</string>
+    <string name="color_seagreen">Mořská</string>
+    <string name="color_lightseagreen">Světle mořská</string>
+    <string name="color_dodgerblue">Modrá Dodger</string>
+    <string name="color_royalblue">Královská modrá</string>
+    <string name="color_mediumslateblue">Středně břidlicově modrá</string>
     <string name="color_mediumorchid">Středně orchidejová</string>
     <string name="color_hotpink">Sytě růžová</string>
-    <string name="color_slategray">Břidlicově šedá</string>
+    <string name="color_dimgray">Tlumeně šedá</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Odkaz na schůzku: %1$s</string>
     <string name="cd_phone_number">Telefonní číslo</string>

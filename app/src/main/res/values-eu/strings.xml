@@ -940,15 +940,19 @@
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_tomato">Tomate</string>
+    <string name="color_orangered">Gorri laranja</string>
     <string name="color_darkorange">Laranja iluna</string>
     <string name="color_gold">Urre-kolorea</string>
     <string name="color_yellowgreen">Berde horixka</string>
+    <string name="color_limegreen">Karea berde</string>
     <string name="color_mediumseagreen">Itsas-berde ertaina</string>
-    <string name="color_teal">Itsas-urdina</string>
-    <string name="color_steelblue">Urdin altzairua</string>
-    <string name="color_slateblue">Arbel-urdina</string>
+    <string name="color_seagreen">Itsas berde</string>
+    <string name="color_lightseagreen">Itsas berde argi</string>
+    <string name="color_dodgerblue">Dodger urdin</string>
+    <string name="color_royalblue">Erregetza urdin</string>
+    <string name="color_mediumslateblue">Arbel urdin ertain</string>
     <string name="color_mediumorchid">Orkidea-kolore ertaina</string>
     <string name="color_hotpink">Arrosa bizia</string>
-    <string name="color_slategray">Arbel-grisa</string>
+    <string name="color_dimgray">Gris ilun</string>
 
 </resources>

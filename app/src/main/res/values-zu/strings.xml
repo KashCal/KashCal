@@ -957,14 +957,18 @@
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_tomato">Utamatisi</string>
+    <string name="color_orangered">Ibomvu elisawolintshi</string>
     <string name="color_darkorange">Orenji Omnyama</string>
     <string name="color_gold">Igolide</string>
     <string name="color_yellowgreen">Phuzi Luhlaza</string>
+    <string name="color_limegreen">Iluhlaza lelamula</string>
     <string name="color_mediumseagreen">Luhlaza Lolwandle Oluphakathi</string>
-    <string name="color_teal">Luhlaza Okwesibhakabhaka</string>
-    <string name="color_steelblue">Luhlaza Lwensimbi</string>
-    <string name="color_slateblue">Luhlaza Lwesileyithi</string>
+    <string name="color_seagreen">Iluhlaza lolwandle</string>
+    <string name="color_lightseagreen">Iluhlaza lolwandle olukhanyayo</string>
+    <string name="color_dodgerblue">Iluhlaza okwesibhakabhaka sodaji</string>
+    <string name="color_royalblue">Iluhlaza okwesibhakabhaka sasebukhosini</string>
+    <string name="color_mediumslateblue">Iluhlaza okwesibhakabhaka esiphakathi</string>
     <string name="color_mediumorchid">I-Orchid Ephakathi</string>
     <string name="color_hotpink">Phinki Eshisayo</string>
-    <string name="color_slategray">Ngwevu Yesileyithi</string>
+    <string name="color_dimgray">Impunga efiphele</string>
 </resources>

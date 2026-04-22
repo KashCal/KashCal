@@ -1661,8 +1661,10 @@ class AccountSettingsViewModel @Inject constructor(
             val currentIds = _enabledDeviceCalendarIds.value.toMutableSet()
             if (enabled) currentIds.add(calendarId) else currentIds.remove(calendarId)
             dataStore.setEnabledDeviceCalendarIds(currentIds)
-            // When disabling, also clear from hidden set so it doesn't linger
-            if (!enabled) {
+            if (enabled) {
+                calendarProviderRepository.ensureCalendarVisible(calendarId)
+            } else {
+                // When disabling, also clear from hidden set so it doesn't linger
                 dataStore.removeFromHiddenDeviceCalendarIds(calendarId)
             }
             // Increment change signal so day view refreshes

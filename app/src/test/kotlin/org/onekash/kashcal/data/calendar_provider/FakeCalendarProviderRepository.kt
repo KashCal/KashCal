@@ -113,6 +113,12 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         }
     }
 
+    val ensureCalendarVisibleCalls = mutableListOf<Long>()
+
+    override suspend fun ensureCalendarVisible(calendarId: Long) {
+        ensureCalendarVisibleCalls.add(calendarId)
+    }
+
     // ==================== Write Operations (Phase 3) ====================
 
     override suspend fun createEvent(
@@ -306,6 +312,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         exceptionEvents.clear()
         nextUpcomingReminder = null
         maxReminders = 5
+        ensureCalendarVisibleCalls.clear()
     }
 }
 

@@ -826,16 +826,20 @@
     <string name="color_blue">ನೀಲಿ</string>
     <string name="color_purple">ನೇರಳೆ</string>
     <string name="color_tomato">ಟೊಮೆಟೊ</string>
+    <string name="color_orangered">ಕಿತ್ತಳೆ ಕೆಂಪು</string>
     <string name="color_darkorange">ಗಾಢ ಕಿತ್ತಳೆ</string>
     <string name="color_gold">ಚಿನ್ನ</string>
     <string name="color_yellowgreen">ಹಳದಿ ಹಸಿರು</string>
+    <string name="color_limegreen">ನಿಂಬೆ ಹಸಿರು</string>
     <string name="color_mediumseagreen">ಮಧ್ಯಮ ಸಮುದ್ರ ಹಸಿರು</string>
-    <string name="color_teal">ಟೀಲ್</string>
-    <string name="color_steelblue">ಉಕ್ಕಿನ ನೀಲಿ</string>
-    <string name="color_slateblue">ಸ್ಲೇಟ್ ನೀಲಿ</string>
+    <string name="color_seagreen">ಸಮುದ್ರ ಹಸಿರು</string>
+    <string name="color_lightseagreen">ತಿಳಿ ಸಮುದ್ರ ಹಸಿರು</string>
+    <string name="color_dodgerblue">ಡಾಡ್ಜರ್ ನೀಲಿ</string>
+    <string name="color_royalblue">ರಾಯಲ್ ನೀಲಿ</string>
+    <string name="color_mediumslateblue">ಮಧ್ಯಮ ಸ್ಲೇಟ್ ನೀಲಿ</string>
     <string name="color_mediumorchid">ಮಧ್ಯಮ ಆರ್ಕಿಡ್</string>
     <string name="color_hotpink">ಹಾಟ್ ಪಿಂಕ್</string>
-    <string name="color_slategray">ಸ್ಲೇಟ್ ಬೂದು</string>
+    <string name="color_dimgray">ಮಂದ ಬೂದು</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">ಮೀಟಿಂಗ್ ಲಿಂಕ್: %1$s</string>
     <string name="cd_phone_number">ಫೋನ್ ನಂಬರ್</string>

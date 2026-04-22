@@ -956,15 +956,19 @@
 
     <!-- Color names -->
     <string name="color_tomato">Ντομάτα</string>
+    <string name="color_orangered">Πορτοκαλοκόκκινο</string>
     <string name="color_darkorange">Σκούρο πορτοκαλί</string>
     <string name="color_gold">Χρυσό</string>
     <string name="color_yellowgreen">Κιτρινοπράσινο</string>
+    <string name="color_limegreen">Λαχανί</string>
     <string name="color_mediumseagreen">Μεσαίο θαλασσί πράσινο</string>
-    <string name="color_teal">Πετρόλ</string>
-    <string name="color_steelblue">Ατσαλί μπλε</string>
-    <string name="color_slateblue">Σχιστολιθικό μπλε</string>
+    <string name="color_seagreen">Θαλασσί πράσινο</string>
+    <string name="color_lightseagreen">Ανοιχτό θαλασσί πράσινο</string>
+    <string name="color_dodgerblue">Έντονο μπλε</string>
+    <string name="color_royalblue">Βασιλικό μπλε</string>
+    <string name="color_mediumslateblue">Μεσαίο σχιστολιθικό μπλε</string>
     <string name="color_mediumorchid">Μεσαία ορχιδέα</string>
     <string name="color_hotpink">Έντονο ροζ</string>
-    <string name="color_slategray">Σχιστολιθικό γκρι</string>
+    <string name="color_dimgray">Σκούρο γκρι</string>
 
 </resources>

@@ -38,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -89,6 +88,7 @@ import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
 import org.onekash.kashcal.ui.components.pickers.CalendarPickerRow
 import org.onekash.kashcal.ui.components.pickers.EventColorSheet
@@ -664,16 +664,16 @@ fun EventFormSheet(
         }
     }
 
-    // Sheet state — gestural dismiss disabled
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { it != SheetValue.Hidden }
-    )
+    // Sheet state — gestural dismiss disabled via sheetGesturesEnabled below.
+    // Using confirmValueChange to block drag-to-hide causes a flicker: the sheet
+    // tracks the finger, then reverse-animates back when the transition is rejected.
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
         sheetState = sheetState,
-        dragHandle = {}
+        dragHandle = {},
+        sheetGesturesEnabled = false
     ) {
         Column(
             modifier = Modifier
@@ -793,16 +793,13 @@ fun EventFormSheet(
                     if (!state.isAllDay) {
                         var showTimezoneSheet by remember { mutableStateOf(false) }
                         val tzId = state.timezone
-                        val timezoneLabel = if (tzId != null) {
-                            val tzAbbrev = remember(tzId) { TimezoneUtils.getAbbreviation(tzId) }
-                            val tzDisplayName = remember(tzId) {
-                                TimezoneUtils.getTimezoneInfo(tzId)?.displayName
-                                    ?: tzId.substringAfterLast('/').replace('_', ' ')
-                            }
-                            "$tzDisplayName ($tzAbbrev)"
-                        } else {
-                            stringResource(R.string.label_device_timezone)
+                        val effectiveTzId = tzId ?: remember { TimezoneUtils.getDeviceTimezone() }
+                        val tzAbbrev = remember(effectiveTzId) { TimezoneUtils.getAbbreviation(effectiveTzId) }
+                        val tzDisplayName = remember(effectiveTzId) {
+                            TimezoneUtils.getTimezoneInfo(effectiveTzId)?.displayName
+                                ?: effectiveTzId.substringAfterLast('/').replace('_', ' ')
                         }
+                        val timezoneLabel = "$tzDisplayName ($tzAbbrev)"
 
                         EventFormRow(
                             icon = Icons.Default.Public,
@@ -892,9 +889,10 @@ fun EventFormSheet(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
+                            val fallbackArgb = MaterialTheme.colorScheme.primary.toArgb()
                             val dotColor = state.eventColor
                                 ?: state.selectedCalendarColor
-                                ?: 0xFF6200EE.toInt()
+                                ?: fallbackArgb
                             Box(
                                 modifier = Modifier
                                     .size(16.dp)
@@ -902,7 +900,10 @@ fun EventFormSheet(
                                     .background(Color(dotColor))
                             )
                             Text(
-                                stringResource(EventColorPalette.stringResIdForColor(state.eventColor)),
+                                stringResource(
+                                    if (state.eventColor == null) R.string.label_event_color
+                                    else EventColorPalette.stringResIdForColor(state.eventColor)
+                                ),
                                 style = MaterialTheme.typography.bodyLarge
                             )
                         }
@@ -1066,7 +1067,7 @@ fun EventFormSheet(
                     if (showColorPicker) {
                         EventColorSheet(
                             selectedArgb = state.eventColor,
-                            calendarDefaultArgb = state.selectedCalendarColor ?: 0xFF6200EE.toInt(),
+                            calendarDefaultArgb = state.selectedCalendarColor ?: MaterialTheme.colorScheme.primary.toArgb(),
                             onColorSelected = { color ->
                                 state = state.copy(eventColor = color)
                                 showColorPicker = false

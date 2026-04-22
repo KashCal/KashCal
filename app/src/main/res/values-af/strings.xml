@@ -955,14 +955,18 @@
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_tomato">Tamatie</string>
+    <string name="color_orangered">Oranjerooi</string>
     <string name="color_darkorange">Donker oranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>
+    <string name="color_limegreen">Lemmetjiegroen</string>
     <string name="color_mediumseagreen">Medium seegroen</string>
-    <string name="color_teal">Blougroen</string>
-    <string name="color_steelblue">Staalblou</string>
-    <string name="color_slateblue">Leiblou</string>
+    <string name="color_seagreen">Seegroen</string>
+    <string name="color_lightseagreen">Ligte seegroen</string>
+    <string name="color_dodgerblue">Dodgerblou</string>
+    <string name="color_royalblue">Koninklikblou</string>
+    <string name="color_mediumslateblue">Medium leiblou</string>
     <string name="color_mediumorchid">Medium orgidee</string>
     <string name="color_hotpink">Warmpienk</string>
-    <string name="color_slategray">Leigrou</string>
+    <string name="color_dimgray">Dowwe grys</string>
 </resources>

@@ -990,15 +990,19 @@
 
     <!-- Event color palette (CSS3 color names) -->
     <string name="color_tomato">Tomate</string>
+    <string name="color_orangered">Rojo anaranjado</string>
     <string name="color_darkorange">Naranja oscuro</string>
     <string name="color_gold">Dorado</string>
     <string name="color_yellowgreen">Verde amarillento</string>
+    <string name="color_limegreen">Verde lima</string>
     <string name="color_mediumseagreen">Verde mar medio</string>
-    <string name="color_teal">Verde azulado</string>
-    <string name="color_steelblue">Azul acero</string>
-    <string name="color_slateblue">Azul pizarra</string>
+    <string name="color_seagreen">Verde mar</string>
+    <string name="color_lightseagreen">Verde mar claro</string>
+    <string name="color_dodgerblue">Azul Dodger</string>
+    <string name="color_royalblue">Azul real</string>
+    <string name="color_mediumslateblue">Azul pizarra medio</string>
     <string name="color_mediumorchid">Orqu\u00eddea medio</string>
     <string name="color_hotpink">Rosa fuerte</string>
-    <string name="color_slategray">Gris pizarra</string>
+    <string name="color_dimgray">Gris tenue</string>
 
 </resources>

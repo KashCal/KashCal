@@ -927,15 +927,19 @@
     <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
     <string name="label_device_timezone">ਡਿਵਾਈਸ ਸਮਾਂ ਖੇਤਰ</string>
     <string name="color_tomato">ਟਮਾਟਰ</string>
+    <string name="color_orangered">ਸੰਤਰੀ-ਲਾਲ</string>
     <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
     <string name="color_gold">ਸੁਨਹਿਰੀ</string>
     <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>
+    <string name="color_limegreen">ਨਿੰਬੂ ਹਰਾ</string>
     <string name="color_mediumseagreen">ਦਰਮਿਆਨਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
-    <string name="color_teal">ਟੀਲ</string>
-    <string name="color_steelblue">ਸਟੀਲ ਨੀਲਾ</string>
-    <string name="color_slateblue">ਸਲੇਟੀ ਨੀਲਾ</string>
+    <string name="color_seagreen">ਸਮੁੰਦਰੀ ਹਰਾ</string>
+    <string name="color_lightseagreen">ਹਲਕਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
+    <string name="color_dodgerblue">ਡੌਜਰ ਨੀਲਾ</string>
+    <string name="color_royalblue">ਸ਼ਾਹੀ ਨੀਲਾ</string>
+    <string name="color_mediumslateblue">ਦਰਮਿਆਨਾ ਸਲੇਟੀ ਨੀਲਾ</string>
     <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
     <string name="color_hotpink">ਚਮਕਦਾਰ ਗੁਲਾਬੀ</string>
-    <string name="color_slategray">ਸਲੇਟੀ ਸੁਰਮਈ</string>
+    <string name="color_dimgray">ਮੱਧਮ ਸੁਰਮਈ</string>
 
 </resources>

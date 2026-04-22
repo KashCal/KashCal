@@ -954,15 +954,19 @@
 
     <!-- Color names -->
     <string name="color_tomato">Доматно црвена</string>
+    <string name="color_orangered">Портокалово-црвена</string>
     <string name="color_darkorange">Темно портокалова</string>
     <string name="color_gold">Златна</string>
     <string name="color_yellowgreen">Жолто-зелена</string>
+    <string name="color_limegreen">Лимета зелена</string>
     <string name="color_mediumseagreen">Средно морско зелена</string>
-    <string name="color_teal">Тиркизна</string>
-    <string name="color_steelblue">Челично сина</string>
-    <string name="color_slateblue">Шкрилесто сина</string>
+    <string name="color_seagreen">Морско зелена</string>
+    <string name="color_lightseagreen">Светло морско зелена</string>
+    <string name="color_dodgerblue">Силно сина</string>
+    <string name="color_royalblue">Кралско сина</string>
+    <string name="color_mediumslateblue">Средно шкрилесто сина</string>
     <string name="color_mediumorchid">Средна орхидеја</string>
     <string name="color_hotpink">Жешка розова</string>
-    <string name="color_slategray">Шкрилесто сива</string>
+    <string name="color_dimgray">Темно сива</string>
 
 </resources>

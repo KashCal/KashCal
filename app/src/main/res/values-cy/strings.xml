@@ -1101,15 +1101,19 @@
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_tomato">Tomato</string>
+    <string name="color_orangered">Coch Oren</string>
     <string name="color_darkorange">Oren tywyll</string>
     <string name="color_gold">Aur</string>
     <string name="color_yellowgreen">Gwyrdd melyn</string>
+    <string name="color_limegreen">Gwyrdd Leim</string>
     <string name="color_mediumseagreen">Gwyrdd m\u00f4r canolig</string>
-    <string name="color_teal">Glaswyrdd</string>
-    <string name="color_steelblue">Glas dur</string>
-    <string name="color_slateblue">Glas llechen</string>
+    <string name="color_seagreen">Gwyrdd Môr</string>
+    <string name="color_lightseagreen">Gwyrdd Môr Golau</string>
+    <string name="color_dodgerblue">Glas Dodger</string>
+    <string name="color_royalblue">Glas Brenhinol</string>
+    <string name="color_mediumslateblue">Glas Llechen Canolig</string>
     <string name="color_mediumorchid">Tegeirian canolig</string>
     <string name="color_hotpink">Pinc llachar</string>
-    <string name="color_slategray">Llwyd llechen</string>
+    <string name="color_dimgray">Llwyd Pŵl</string>
 
 </resources>

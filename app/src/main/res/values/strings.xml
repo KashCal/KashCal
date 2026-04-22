@@ -1180,15 +1180,19 @@
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_tomato">Tomato</string>
+    <string name="color_orangered">Orange Red</string>
     <string name="color_darkorange">Dark Orange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Yellow Green</string>
+    <string name="color_limegreen">Lime Green</string>
     <string name="color_mediumseagreen">Medium Sea Green</string>
-    <string name="color_teal">Teal</string>
-    <string name="color_steelblue">Steel Blue</string>
-    <string name="color_slateblue">Slate Blue</string>
+    <string name="color_seagreen">Sea Green</string>
+    <string name="color_lightseagreen">Light Sea Green</string>
+    <string name="color_dodgerblue">Dodger Blue</string>
+    <string name="color_royalblue">Royal Blue</string>
+    <string name="color_mediumslateblue">Medium Slate Blue</string>
     <string name="color_mediumorchid">Medium Orchid</string>
     <string name="color_hotpink">Hot Pink</string>
-    <string name="color_slategray">Slate Gray</string>
+    <string name="color_dimgray">Dim Gray</string>
 
 </resources>

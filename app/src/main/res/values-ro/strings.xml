@@ -992,15 +992,19 @@
 
     <!-- Color names -->
     <string name="color_tomato">Roșu tomate</string>
+    <string name="color_orangered">Roșu portocaliu</string>
     <string name="color_darkorange">Portocaliu închis</string>
     <string name="color_gold">Auriu</string>
     <string name="color_yellowgreen">Galben-verzui</string>
+    <string name="color_limegreen">Verde lime</string>
     <string name="color_mediumseagreen">Verde marin mediu</string>
-    <string name="color_teal">Turcoaz închis</string>
-    <string name="color_steelblue">Albastru oțel</string>
-    <string name="color_slateblue">Albastru ardezie</string>
+    <string name="color_seagreen">Verde marin</string>
+    <string name="color_lightseagreen">Verde marin deschis</string>
+    <string name="color_dodgerblue">Albastru vibrant</string>
+    <string name="color_royalblue">Albastru regal</string>
+    <string name="color_mediumslateblue">Albastru ardezie mediu</string>
     <string name="color_mediumorchid">Orhidee mediu</string>
     <string name="color_hotpink">Roz aprins</string>
-    <string name="color_slategray">Gri ardezie</string>
+    <string name="color_dimgray">Gri estompat</string>
 
 </resources>

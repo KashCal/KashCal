@@ -943,14 +943,18 @@
     <string name="label_custom">Brugerdefineret</string>
     <string name="cd_event_color">Begivenhedsfarve</string>
     <string name="color_tomato">Tomat</string>
+    <string name="color_orangered">Orangerød</string>
     <string name="color_darkorange">Mørkeorange</string>
     <string name="color_gold">Guld</string>
     <string name="color_yellowgreen">Gulgrøn</string>
+    <string name="color_limegreen">Limegrøn</string>
     <string name="color_mediumseagreen">Havgrøn</string>
-    <string name="color_teal">Blågrøn</string>
-    <string name="color_steelblue">Stålblå</string>
-    <string name="color_slateblue">Skiferblå</string>
+    <string name="color_seagreen">Havgrøn</string>
+    <string name="color_lightseagreen">Lys havgrøn</string>
+    <string name="color_dodgerblue">Dodgerblå</string>
+    <string name="color_royalblue">Kongeblå</string>
+    <string name="color_mediumslateblue">Mellemskiferblå</string>
     <string name="color_mediumorchid">Orkidé</string>
     <string name="color_hotpink">Knaldpink</string>
-    <string name="color_slategray">Skifergrå</string>
+    <string name="color_dimgray">Mat grå</string>
 </resources>

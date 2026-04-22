@@ -957,14 +957,18 @@
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_tomato">ቲማቲም</string>
+    <string name="color_orangered">ብርቱካናማ ቀይ</string>
     <string name="color_darkorange">ጥቁር ብርቱካናማ</string>
     <string name="color_gold">ወርቃማ</string>
     <string name="color_yellowgreen">ቢጫ አረንጓዴ</string>
+    <string name="color_limegreen">አረንጓዴ ሎሚ</string>
     <string name="color_mediumseagreen">መካከለኛ ባሕር አረንጓዴ</string>
-    <string name="color_teal">ሰማያዊ አረንጓዴ</string>
-    <string name="color_steelblue">ብረታማ ሰማያዊ</string>
-    <string name="color_slateblue">ስሌት ሰማያዊ</string>
+    <string name="color_seagreen">ባህር አረንጓዴ</string>
+    <string name="color_lightseagreen">ብርሃን ባህር አረንጓዴ</string>
+    <string name="color_dodgerblue">ዶጀር ሰማያዊ</string>
+    <string name="color_royalblue">ንጉሳዊ ሰማያዊ</string>
+    <string name="color_mediumslateblue">መካከለኛ ስሌት ሰማያዊ</string>
     <string name="color_mediumorchid">መካከለኛ ኦርኪድ</string>
     <string name="color_hotpink">ደማቅ ሮዝ</string>
-    <string name="color_slategray">ስሌት ግራጫ</string>
+    <string name="color_dimgray">ደብዛዛ ግራጫ</string>
 </resources>

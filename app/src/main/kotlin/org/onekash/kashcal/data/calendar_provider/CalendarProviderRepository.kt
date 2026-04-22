@@ -63,6 +63,39 @@ interface CalendarProviderRepository {
      */
     suspend fun pruneStaleCalendarIds(dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore)
 
+    /**
+     * Ensure the given calendar's events are downloaded AND visible.
+     *
+     * On Xiaomi/MIUI, Google calendars ship with both `VISIBLE = 0` and
+     * `SYNC_EVENTS = 0` by default — not as a user preference, but as the
+     * initial state. Our `Instances` query filters on `VISIBLE = 1`, and
+     * events are never downloaded unless `SYNC_EVENTS = 1`. The result is a
+     * blank view even after the user ticks the calendar in KashCal. See
+     * issue #170. Confirmed by the reporter via Etar, which exposes a
+     * dedicated per-calendar "View Events" toggle that flips `VISIBLE` —
+     * doing so resolves the blank view.
+     *
+     * This method:
+     *  1. Writes `SYNC_EVENTS = 1` and `VISIBLE = 1` on the Calendars row —
+     *     the same action Etar's UI triggers, and the same default-flip the
+     *     stock Google Calendar app does on first open.
+     *  2. Requests a manual sync on the owning account so events populate
+     *     within a minute rather than on the next idle cycle. Honors metered
+     *     connection preferences (no expedited flag).
+     *
+     * Failures (SecurityException, IllegalArgumentException from bad account,
+     * missing row, etc.) are logged but never propagated — the UI remains
+     * usable on devices that block the write.
+     *
+     * Only called when the user ticks a calendar in KashCal's settings.
+     * Unticking does NOT flip `VISIBLE = 0` back — the user's untick only
+     * means "hide from KashCal" (governed by `hiddenDeviceCalendarIds`), not
+     * "hide system-wide".
+     *
+     * @param calendarId Calendar ID to enable sync and visibility for
+     */
+    suspend fun ensureCalendarVisible(calendarId: Long)
+
     // ==================== Write Operations (Phase 3) ====================
 
     /**

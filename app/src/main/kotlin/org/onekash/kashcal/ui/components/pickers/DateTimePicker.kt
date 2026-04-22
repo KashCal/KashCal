@@ -34,7 +34,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -351,16 +350,23 @@ fun DateTimeSheet(
     var displayedMonth by remember {
         mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis })
     }
+    // Hoisted so the Done buttons can collapse the month/year wheel back to the day grid
+    // when it's open, instead of confirming the whole sheet.
+    var showMonthYearPicker by remember { mutableStateOf(false) }
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { it != SheetValue.Hidden }
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    // Done: collapse wheel if open, otherwise confirm and dismiss
+    val onDoneClick: () -> Unit = {
+        if (showMonthYearPicker) showMonthYearPicker = false
+        else onConfirm(localDateMillis, localHour, localMinute)
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = {}
+        dragHandle = {},
+        sheetGesturesEnabled = false
     ) {
         Column(
             modifier = Modifier
@@ -384,7 +390,7 @@ fun DateTimeSheet(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
-                TextButton(onClick = { onConfirm(localDateMillis, localHour, localMinute) }) {
+                TextButton(onClick = onDoneClick) {
                     Text(stringResource(R.string.action_done), fontWeight = FontWeight.Bold)
                 }
             }
@@ -397,7 +403,9 @@ fun DateTimeSheet(
                 displayedMonth = displayedMonth,
                 onDateSelect = { localDateMillis = it },
                 onMonthChange = { displayedMonth = it },
-                firstDayOfWeek = firstDayOfWeek
+                firstDayOfWeek = firstDayOfWeek,
+                showMonthYearPicker = showMonthYearPicker,
+                onShowMonthYearPickerChange = { showMonthYearPicker = it }
             )
 
             // Time picker - updates LOCAL state (unless all-day)
@@ -423,7 +431,7 @@ fun DateTimeSheet(
             Spacer(modifier = Modifier.height(8.dp))
 
             Button(
-                onClick = { onConfirm(localDateMillis, localHour, localMinute) },
+                onClick = onDoneClick,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp)
             ) {
@@ -443,13 +451,21 @@ fun InlineDatePickerContent(
     displayedMonth: JavaCalendar,
     onDateSelect: (Long) -> Unit,
     onMonthChange: (JavaCalendar) -> Unit,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    showMonthYearPicker: Boolean? = null,
+    onShowMonthYearPickerChange: ((Boolean) -> Unit)? = null
 ) {
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDateMillis }
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
     val monthYearFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
-    var showMonthYearPicker by remember { mutableStateOf(false) }
+    // Fall back to internal state when the caller isn't managing visibility (e.g., RecurrencePicker "Until" date).
+    var localShowMonthYearPicker by remember { mutableStateOf(false) }
+    val effectiveShowMonthYearPicker = showMonthYearPicker ?: localShowMonthYearPicker
+    val setShowMonthYearPicker: (Boolean) -> Unit = { value ->
+        if (onShowMonthYearPickerChange != null) onShowMonthYearPickerChange(value)
+        else localShowMonthYearPicker = value
+    }
     val cdShowCalendar = stringResource(R.string.cd_show_calendar)
     val cdPickMonthYear = stringResource(R.string.cd_pick_month_year)
     val cdPreviousMonth = stringResource(R.string.cd_previous_month)
@@ -460,7 +476,7 @@ fun InlineDatePickerContent(
             .fillMaxWidth()
             .padding(horizontal = 4.dp, vertical = 4.dp)
             .then(
-                if (!showMonthYearPicker) Modifier.pointerInput(displayedMonth) {
+                if (!effectiveShowMonthYearPicker) Modifier.pointerInput(displayedMonth) {
                     detectHorizontalDragGestures(
                         onDragStart = { totalDrag = 0f },
                         onDragEnd = {
@@ -489,7 +505,7 @@ fun InlineDatePickerContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (!showMonthYearPicker) {
+            if (!effectiveShowMonthYearPicker) {
                 IconButton(
                     onClick = {
                         val newMonth = displayedMonth.clone() as JavaCalendar
@@ -507,11 +523,11 @@ fun InlineDatePickerContent(
             Row(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { showMonthYearPicker = !showMonthYearPicker }
+                    .clickable { setShowMonthYearPicker(!effectiveShowMonthYearPicker) }
                     .padding(horizontal = 8.dp, vertical = 4.dp)
                     .semantics(mergeDescendants = true) {
                         role = Role.Button
-                        contentDescription = if (showMonthYearPicker) cdShowCalendar
+                        contentDescription = if (effectiveShowMonthYearPicker) cdShowCalendar
                             else cdPickMonthYear
                     },
                 verticalAlignment = Alignment.CenterVertically,
@@ -521,20 +537,20 @@ fun InlineDatePickerContent(
                     text = monthYearFormat.format(displayedMonth.time),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium,
-                    color = if (showMonthYearPicker) MaterialTheme.colorScheme.primary
+                    color = if (effectiveShowMonthYearPicker) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurface
                 )
                 Icon(
-                    imageVector = if (showMonthYearPicker) Icons.Default.ExpandLess
+                    imageVector = if (effectiveShowMonthYearPicker) Icons.Default.ExpandLess
                                   else Icons.Default.ExpandMore,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = if (showMonthYearPicker) MaterialTheme.colorScheme.primary
+                    tint = if (effectiveShowMonthYearPicker) MaterialTheme.colorScheme.primary
                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            if (!showMonthYearPicker) {
+            if (!effectiveShowMonthYearPicker) {
                 IconButton(
                     onClick = {
                         val newMonth = displayedMonth.clone() as JavaCalendar
@@ -553,7 +569,7 @@ fun InlineDatePickerContent(
         // Crossfade between calendar grid and month/year wheel picker
         Box(modifier = Modifier.heightIn(min = 220.dp)) {
             Crossfade(
-                targetState = showMonthYearPicker,
+                targetState = effectiveShowMonthYearPicker,
                 animationSpec = tween(200),
                 label = "calendar-wheel-crossfade"
             ) { showWheels ->

@@ -927,15 +927,19 @@
     <string name="cd_checkmark">තෝරාගත්</string>
     <string name="label_device_timezone">උපාංගයේ වේලා කලාපය</string>
     <string name="color_tomato">තක්කාලි</string>
+    <string name="color_orangered">තැඹිලි රතු</string>
     <string name="color_darkorange">තද තැඹිලි</string>
     <string name="color_gold">රන්වන්</string>
     <string name="color_yellowgreen">කහ කොළ</string>
+    <string name="color_limegreen">දෙහි කොළ</string>
     <string name="color_mediumseagreen">මධ්‍යම මුහුදු කොළ</string>
-    <string name="color_teal">ටීල්</string>
-    <string name="color_steelblue">වානේ නිල්</string>
-    <string name="color_slateblue">ස්ලේට් නිල්</string>
+    <string name="color_seagreen">මුහුදු කොළ</string>
+    <string name="color_lightseagreen">ලා මුහුදු කොළ</string>
+    <string name="color_dodgerblue">ඩොජර් නිල්</string>
+    <string name="color_royalblue">රාජකීය නිල්</string>
+    <string name="color_mediumslateblue">මධ්‍යම ස්ලේට් නිල්</string>
     <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
     <string name="color_hotpink">දීප්තිමත් රෝස</string>
-    <string name="color_slategray">ස්ලේට් අළු</string>
+    <string name="color_dimgray">අඳුරු අළු</string>
 
 </resources>

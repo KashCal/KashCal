@@ -62,7 +62,8 @@ fun EventColorSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp)
+                .padding(bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 stringResource(R.string.label_event_color),
@@ -94,7 +95,6 @@ fun EventColorSheet(
 
             cells.chunked(4).forEach { row ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     row.forEach { cell -> cell() }
@@ -121,16 +121,17 @@ private fun SwatchCell(
     onClick: () -> Unit
 ) {
     val checkColor = remember(color) { contrastForegroundOn(color) }
+    val outlineColor = MaterialTheme.colorScheme.outline
     Box(
         modifier = Modifier
             .size(56.dp)
             .clip(CircleShape)
-            .background(if (isDefault) Color.Transparent else color)
+            .background(color)
             .then(
                 if (isDefault)
                     Modifier.border(
-                        width = 2.dp,
-                        color = color,
+                        width = 1.dp,
+                        color = outlineColor,
                         shape = CircleShape
                     )
                 else Modifier
@@ -142,7 +143,7 @@ private fun SwatchCell(
             Icon(
                 Icons.Default.Check,
                 contentDescription = stringResource(R.string.cd_checkmark),
-                tint = if (isDefault) color else checkColor,
+                tint = checkColor,
                 modifier = Modifier.size(28.dp)
             )
         }

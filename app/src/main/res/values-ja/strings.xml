@@ -901,14 +901,18 @@
     <string name="cd_checkmark">選択済み</string>
     <string name="label_device_timezone">デバイスのタイムゾーン</string>
     <string name="color_tomato">トマト</string>
+    <string name="color_orangered">オレンジレッド</string>
     <string name="color_darkorange">ダークオレンジ</string>
     <string name="color_gold">ゴールド</string>
     <string name="color_yellowgreen">イエローグリーン</string>
+    <string name="color_limegreen">ライムグリーン</string>
     <string name="color_mediumseagreen">ミディアムシーグリーン</string>
-    <string name="color_teal">ティール</string>
-    <string name="color_steelblue">スチールブルー</string>
-    <string name="color_slateblue">スレートブルー</string>
+    <string name="color_seagreen">シーグリーン</string>
+    <string name="color_lightseagreen">ライトシーグリーン</string>
+    <string name="color_dodgerblue">ドジャーブルー</string>
+    <string name="color_royalblue">ロイヤルブルー</string>
+    <string name="color_mediumslateblue">ミディアムスレートブルー</string>
     <string name="color_mediumorchid">ミディアムオーキッド</string>
     <string name="color_hotpink">ホットピンク</string>
-    <string name="color_slategray">スレートグレー</string>
+    <string name="color_dimgray">ディムグレー</string>
 </resources>

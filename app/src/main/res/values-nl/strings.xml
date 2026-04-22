@@ -943,14 +943,18 @@
     <string name="label_custom">Aangepast</string>
     <string name="cd_event_color">Afspraakkleur</string>
     <string name="color_tomato">Tomaat</string>
+    <string name="color_orangered">Oranjerood</string>
     <string name="color_darkorange">Donkeroranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>
-    <string name="color_mediumseagreen">Zeegroen</string>
-    <string name="color_teal">Blauwgroen</string>
-    <string name="color_steelblue">Staalblauw</string>
-    <string name="color_slateblue">Leiblauw</string>
+    <string name="color_limegreen">Limoengroen</string>
+    <string name="color_mediumseagreen">Middenzeegroen</string>
+    <string name="color_seagreen">Zeegroen</string>
+    <string name="color_lightseagreen">Lichtzeegroen</string>
+    <string name="color_dodgerblue">Dodgerblauw</string>
+    <string name="color_royalblue">Koningsblauw</string>
+    <string name="color_mediumslateblue">Middenleiblauw</string>
     <string name="color_mediumorchid">Orchidee</string>
     <string name="color_hotpink">Felroze</string>
-    <string name="color_slategray">Leigrijs</string>
+    <string name="color_dimgray">Dofgrijs</string>
 </resources>

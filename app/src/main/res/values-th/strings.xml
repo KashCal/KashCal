@@ -901,14 +901,18 @@
     <string name="cd_checkmark">เลือกแล้ว</string>
     <string name="label_device_timezone">เขตเวลาของอุปกรณ์</string>
     <string name="color_tomato">มะเขือเทศ</string>
+    <string name="color_orangered">แดงส้ม</string>
     <string name="color_darkorange">ส้มเข้ม</string>
     <string name="color_gold">ทอง</string>
     <string name="color_yellowgreen">เหลืองอมเขียว</string>
+    <string name="color_limegreen">เขียวมะนาว</string>
     <string name="color_mediumseagreen">เขียวทะเลกลาง</string>
-    <string name="color_teal">เขียวอมน้ำเงิน</string>
-    <string name="color_steelblue">น้ำเงินเหล็ก</string>
-    <string name="color_slateblue">น้ำเงินหินชนวน</string>
+    <string name="color_seagreen">เขียวทะเล</string>
+    <string name="color_lightseagreen">เขียวทะเลอ่อน</string>
+    <string name="color_dodgerblue">น้ำเงินสด</string>
+    <string name="color_royalblue">น้ำเงินรอยัล</string>
+    <string name="color_mediumslateblue">น้ำเงินหินชนวนกลาง</string>
     <string name="color_mediumorchid">ม่วงกล้วยไม้กลาง</string>
     <string name="color_hotpink">ชมพูสด</string>
-    <string name="color_slategray">เทาหินชนวน</string>
+    <string name="color_dimgray">เทาเข้ม</string>
 </resources>

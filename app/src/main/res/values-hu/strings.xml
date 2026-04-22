@@ -956,15 +956,19 @@
 
     <!-- Color names -->
     <string name="color_tomato">Paradicsom</string>
+    <string name="color_orangered">Narancsvörös</string>
     <string name="color_darkorange">Sötétnarancs</string>
     <string name="color_gold">Arany</string>
     <string name="color_yellowgreen">Sárgászöld</string>
+    <string name="color_limegreen">Lime zöld</string>
     <string name="color_mediumseagreen">Közepes tengerzöld</string>
-    <string name="color_teal">Kékeszöld</string>
-    <string name="color_steelblue">Acélkék</string>
-    <string name="color_slateblue">Palakék</string>
+    <string name="color_seagreen">Tengerzöld</string>
+    <string name="color_lightseagreen">Világos tengerzöld</string>
+    <string name="color_dodgerblue">Élénk kék</string>
+    <string name="color_royalblue">Királykék</string>
+    <string name="color_mediumslateblue">Közepes palakék</string>
     <string name="color_mediumorchid">Közepes orchidea</string>
     <string name="color_hotpink">Élénk rózsaszín</string>
-    <string name="color_slategray">Palaszürke</string>
+    <string name="color_dimgray">Halvány szürke</string>
 
 </resources>

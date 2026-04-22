@@ -1,0 +1,3 @@
+• Event color palette expanded to 15 CSS3 colors curated from Google Calendar
+• Timezone row shows the actual device timezone instead of "Device time zone"
+• Start/end date picker: tapping Done after spinning the month/year wheel now drops you into the day grid

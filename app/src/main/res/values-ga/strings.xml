@@ -1064,15 +1064,19 @@
 
     <!-- Event Color Palette (CSS3) -->
     <string name="color_tomato">Tr\u00e1ta\u00ed</string>
+    <string name="color_orangered">Dearg-oráiste</string>
     <string name="color_darkorange">Or\u00e1iste dorcha</string>
     <string name="color_gold">\u00d3r</string>
     <string name="color_yellowgreen">Glas bu\u00ed</string>
+    <string name="color_limegreen">Glas líoma</string>
     <string name="color_mediumseagreen">Glas mara me\u00e1nach</string>
-    <string name="color_teal">Glasuaine</string>
-    <string name="color_steelblue">Gorm cruach</string>
-    <string name="color_slateblue">Gorm sl\u00edne</string>
+    <string name="color_seagreen">Glas mara</string>
+    <string name="color_lightseagreen">Glas mara éadrom</string>
+    <string name="color_dodgerblue">Gorm Dodger</string>
+    <string name="color_royalblue">Gorm ríoga</string>
+    <string name="color_mediumslateblue">Gorm sclátach meánach</string>
     <string name="color_mediumorchid">Magairl\u00edn me\u00e1nach</string>
     <string name="color_hotpink">B\u00e1nd\u00e9arg te</string>
-    <string name="color_slategray">Liath sl\u00edne</string>
+    <string name="color_dimgray">Liath breacach</string>
 
 </resources>

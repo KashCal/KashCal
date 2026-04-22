@@ -943,14 +943,18 @@
     <string name="label_custom">Egendefinert</string>
     <string name="cd_event_color">Hendelsesfarge</string>
     <string name="color_tomato">Tomat</string>
+    <string name="color_orangered">Oransjerød</string>
     <string name="color_darkorange">Mørk oransje</string>
     <string name="color_gold">Gull</string>
     <string name="color_yellowgreen">Gulgrønn</string>
+    <string name="color_limegreen">Limegrønn</string>
     <string name="color_mediumseagreen">Sjøgrønn</string>
-    <string name="color_teal">Blågrønn</string>
-    <string name="color_steelblue">Stålblå</string>
-    <string name="color_slateblue">Skiferblå</string>
+    <string name="color_seagreen">Havgrønn</string>
+    <string name="color_lightseagreen">Lys havgrønn</string>
+    <string name="color_dodgerblue">Dodgerblå</string>
+    <string name="color_royalblue">Kongeblå</string>
+    <string name="color_mediumslateblue">Middels skiferblå</string>
     <string name="color_mediumorchid">Orkidé</string>
     <string name="color_hotpink">Knallrosa</string>
-    <string name="color_slategray">Skifergrå</string>
+    <string name="color_dimgray">Matt grå</string>
 </resources>

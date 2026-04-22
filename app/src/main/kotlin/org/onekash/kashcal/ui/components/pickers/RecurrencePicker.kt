@@ -475,12 +475,6 @@ fun RecurrencePickerRow(
                     .padding(horizontal = 12.dp)
                     .padding(bottom = 12.dp)
             ) {
-                Text(
-                    stringResource(R.string.label_frequency),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
                 FrequencyChipRow(
                     options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY, FrequencyOption.BIWEEKLY),
                     selected = selectedFreqOption,
@@ -577,6 +571,11 @@ fun FrequencyChipRow(
                         if (isSelected) MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
+                    .then(
+                        if (!isSelected)
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                        else Modifier
+                    )
                     .clickable { onSelect(option) }
                     .padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
@@ -621,6 +620,11 @@ fun WeekdaySelector(
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    .then(
+                        if (!isSelected)
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        else Modifier
                     )
                     .clickable {
                         val newDays = if (isSelected) {
@@ -778,6 +782,11 @@ fun EndConditionSelector(
                             MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
                     )
+                    .then(
+                        if (endCondition !is EndCondition.Count)
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        else Modifier
+                    )
                     .clickable {
                         val count = countTextFieldState.text.toString().toIntOrNull() ?: 10
                         onEndConditionChange(EndCondition.Count(count))
@@ -853,6 +862,11 @@ fun EndConditionSelector(
                         if (endCondition is EndCondition.Until)
                             MaterialTheme.colorScheme.inverseSurface
                         else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                    .then(
+                        if (endCondition !is EndCondition.Until)
+                            Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                        else Modifier
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -933,6 +947,11 @@ fun RadioOption(
                 .background(
                     if (selected) MaterialTheme.colorScheme.inverseSurface
                     else MaterialTheme.colorScheme.surfaceVariant
+                )
+                .then(
+                    if (!selected)
+                        Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    else Modifier
                 ),
             contentAlignment = Alignment.Center
         ) {

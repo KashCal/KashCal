@@ -943,14 +943,18 @@
     <string name="label_custom">Benutzerdefiniert</string>
     <string name="cd_event_color">Terminfarbe</string>
     <string name="color_tomato">Tomate</string>
+    <string name="color_orangered">Orangerot</string>
     <string name="color_darkorange">Dunkelorange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Gelbgrün</string>
+    <string name="color_limegreen">Limonengrün</string>
     <string name="color_mediumseagreen">Mittelseegrün</string>
-    <string name="color_teal">Blaugrün</string>
-    <string name="color_steelblue">Stahlblau</string>
-    <string name="color_slateblue">Schieferblau</string>
+    <string name="color_seagreen">Seegrün</string>
+    <string name="color_lightseagreen">Helles Seegrün</string>
+    <string name="color_dodgerblue">Dodgerblau</string>
+    <string name="color_royalblue">Königsblau</string>
+    <string name="color_mediumslateblue">Mittleres Schieferblau</string>
     <string name="color_mediumorchid">Mittelorchidee</string>
     <string name="color_hotpink">Knallrosa</string>
-    <string name="color_slategray">Schiefergrau</string>
+    <string name="color_dimgray">Dunkelgrau</string>
 </resources>

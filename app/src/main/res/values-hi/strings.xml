@@ -826,16 +826,20 @@
     <string name="color_blue">नीला</string>
     <string name="color_purple">बैंगनी</string>
     <string name="color_tomato">टमाटर</string>
+    <string name="color_orangered">नारंगी लाल</string>
     <string name="color_darkorange">गहरा नारंगी</string>
     <string name="color_gold">सुनहरा</string>
     <string name="color_yellowgreen">पीला हरा</string>
+    <string name="color_limegreen">नींबू हरा</string>
     <string name="color_mediumseagreen">मध्यम समुद्री हरा</string>
-    <string name="color_teal">टील</string>
-    <string name="color_steelblue">इस्पाती नीला</string>
-    <string name="color_slateblue">स्लेट नीला</string>
+    <string name="color_seagreen">समुद्री हरा</string>
+    <string name="color_lightseagreen">हल्का समुद्री हरा</string>
+    <string name="color_dodgerblue">डॉजर नीला</string>
+    <string name="color_royalblue">शाही नीला</string>
+    <string name="color_mediumslateblue">मध्यम स्लेट नीला</string>
     <string name="color_mediumorchid">मध्यम आर्किड</string>
     <string name="color_hotpink">हॉट पिंक</string>
-    <string name="color_slategray">स्लेट ग्रे</string>
+    <string name="color_dimgray">धुंधला ग्रे</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">मीटिंग लिंक: %1$s</string>
     <string name="cd_phone_number">फ़ोन नंबर</string>

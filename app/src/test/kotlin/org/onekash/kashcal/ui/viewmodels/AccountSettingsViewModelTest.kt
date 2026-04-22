@@ -2283,6 +2283,47 @@ class AccountSettingsViewModelTest {
         // Should not throw, just do nothing (feature disabled)
     }
 
+    // Issue #170: MIUI Google calendars install with SYNC_EVENTS=0 so the sync
+    // adapter never populates the Events table. Ticking a calendar must flip
+    // that flag on and kick off a sync; unticking must NOT flip it off
+    // (the user only meant "hide from KashCal", not "disable system sync").
+    @Test
+    fun `onToggleDeviceCalendar enabled calls ensureCalendarVisible`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { calendarProviderRepository.ensureCalendarVisible(42L) }
+    }
+
+    @Test
+    fun `onToggleDeviceCalendar disabled does not call ensureCalendarVisible`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = false)
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { calendarProviderRepository.ensureCalendarVisible(any()) }
+    }
+
+    @Test
+    fun `onToggleDeviceCalendar enabled re-toggles re-run ensureCalendarVisible`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
+        advanceUntilIdle()
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = false)
+        advanceUntilIdle()
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 2) { calendarProviderRepository.ensureCalendarVisible(42L) }
+    }
+
     // ==================== Default Calendar (DefaultCalendar type) Tests ====================
 
     @Test

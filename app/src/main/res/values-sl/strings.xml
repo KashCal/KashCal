@@ -870,16 +870,20 @@
     <string name="color_purple">Vijolična</string>
     <string name="cd_checkmark">Izbrano</string>
     <string name="color_tomato">Paradižnikova</string>
+    <string name="color_orangered">Rdečeoranžna</string>
     <string name="color_darkorange">Temno oranžna</string>
     <string name="color_gold">Zlata</string>
     <string name="color_yellowgreen">Rumenozelena</string>
+    <string name="color_limegreen">Limetna</string>
     <string name="color_mediumseagreen">Srednje morska</string>
-    <string name="color_teal">Turkizna</string>
-    <string name="color_steelblue">Jeklenomodra</string>
-    <string name="color_slateblue">Skrilasto modra</string>
+    <string name="color_seagreen">Morska</string>
+    <string name="color_lightseagreen">Svetlo morska</string>
+    <string name="color_dodgerblue">Živo modra</string>
+    <string name="color_royalblue">Kraljevsko modra</string>
+    <string name="color_mediumslateblue">Srednje skrilasto modra</string>
     <string name="color_mediumorchid">Srednje orhideja</string>
     <string name="color_hotpink">Vroče rožnata</string>
-    <string name="color_slategray">Skrilasto siva</string>
+    <string name="color_dimgray">Zamolklo siva</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Povezava na sestanek: %1$s</string>
     <string name="cd_phone_number">Telefonska številka</string>

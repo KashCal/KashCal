@@ -826,16 +826,20 @@
     <string name="color_blue">ନୀଳ</string>
     <string name="color_purple">ବାଇଗଣୀ</string>
     <string name="color_tomato">ଟମାଟୋ</string>
+    <string name="color_orangered">କମଳା ଲାଲ</string>
     <string name="color_darkorange">ଗାଢ଼ କମଳା</string>
     <string name="color_gold">ସୁନେଲି</string>
     <string name="color_yellowgreen">ହଳଦିଆ ସବୁଜ</string>
+    <string name="color_limegreen">ଲେମ୍ବୁ ସବୁଜ</string>
     <string name="color_mediumseagreen">ମଧ୍ୟମ ସାମୁଦ୍ରିକ ସବୁଜ</string>
-    <string name="color_teal">ଟିଲ</string>
-    <string name="color_steelblue">ଷ୍ଟିଲ ନୀଳ</string>
-    <string name="color_slateblue">ସ୍ଲେଟ ନୀଳ</string>
+    <string name="color_seagreen">ସମୁଦ୍ର ସବୁଜ</string>
+    <string name="color_lightseagreen">ହାଲୁକା ସମୁଦ୍ର ସବୁଜ</string>
+    <string name="color_dodgerblue">ଡୋଜର ନୀଳ</string>
+    <string name="color_royalblue">ରୟାଲ ନୀଳ</string>
+    <string name="color_mediumslateblue">ମଧ୍ୟମ ସ୍ଲେଟ ନୀଳ</string>
     <string name="color_mediumorchid">ମଧ୍ୟମ ଅର୍କିଡ୍</string>
     <string name="color_hotpink">ହଟ ପିଙ୍କ</string>
-    <string name="color_slategray">ସ୍ଲେଟ ଧୂସର</string>
+    <string name="color_dimgray">ମଳିନ ଧୂସର</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">ମିଟିଂ ଲିଙ୍କ: %1$s</string>
     <string name="cd_phone_number">ଫୋନ ନମ୍ବର</string>

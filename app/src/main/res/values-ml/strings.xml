@@ -826,16 +826,20 @@
     <string name="color_blue">നീല</string>
     <string name="color_purple">പർപ്പിൾ</string>
     <string name="color_tomato">തക്കാളി</string>
+    <string name="color_orangered">ഓറഞ്ച് ചുവപ്പ്</string>
     <string name="color_darkorange">കടുംഓറഞ്ച്</string>
     <string name="color_gold">സ്വർണം</string>
     <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>
+    <string name="color_limegreen">നാരങ്ങാ പച്ച</string>
     <string name="color_mediumseagreen">ഇടത്തരം കടൽ പച്ച</string>
-    <string name="color_teal">ടീൽ</string>
-    <string name="color_steelblue">സ്റ്റീൽ നീല</string>
-    <string name="color_slateblue">സ്ലേറ്റ് നീല</string>
+    <string name="color_seagreen">കടൽ പച്ച</string>
+    <string name="color_lightseagreen">ഇളം കടൽ പച്ച</string>
+    <string name="color_dodgerblue">ഡോഡ്ജർ നീല</string>
+    <string name="color_royalblue">രാജകീയ നീല</string>
+    <string name="color_mediumslateblue">മധ്യ സ്ലേറ്റ് നീല</string>
     <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
     <string name="color_hotpink">ഹോട്ട് പിങ്ക്</string>
-    <string name="color_slategray">സ്ലേറ്റ് ചാര</string>
+    <string name="color_dimgray">മങ്ങിയ ചാര</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">മീറ്റിംഗ് ലിങ്ക്: %1$s</string>
     <string name="cd_phone_number">ഫോൺ നമ്പർ</string>
