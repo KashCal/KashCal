@@ -60,8 +60,16 @@ interface CalendarProviderRepository {
      * Returns empty list when [visibleCalendarIds] is empty, permission is
      * denied, or no events match.
      *
+     * Recency: recurring events (RRULE non-null and non-empty) bypass the
+     * window. Non-recurring events require DTSTART in [sinceMs, untilMs].
+     *
+     * Cross-calendar dedup: a (title, dtstart) pair visible on multiple
+     * calendars is counted as ONE use. This prevents dual-account Google
+     * invites (same event on personal + work) from inflating frequency.
+     *
      * @param prefix Text the user has typed (no wildcards)
-     * @param sinceMs Cutoff (epoch ms); events with DTSTART older than this are ignored
+     * @param sinceMs Lower-bound of the non-recurring window (epoch ms, inclusive)
+     * @param untilMs Upper-bound of the non-recurring window (epoch ms, inclusive)
      * @param visibleCalendarIds Calendar IDs to include
      * @param minFreq Minimum use count for a title to appear in results
      * @param limit Max suggestions to return
@@ -69,6 +77,7 @@ interface CalendarProviderRepository {
     suspend fun suggestTitlesByPrefix(
         prefix: String,
         sinceMs: Long,
+        untilMs: Long,
         visibleCalendarIds: Set<Long>,
         minFreq: Int = 2,
         limit: Int = 5

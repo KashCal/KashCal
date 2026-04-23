@@ -43,6 +43,13 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val resultId: Long
     )
 
+    data class DeviceTitleRow(
+        val title: String,
+        val dtstart: Long,
+        val calendarId: Long,
+        val rrule: String? = null
+    )
+
     data class CreatedException(
         val calendarId: Long,
         val masterEventId: Long,
@@ -101,15 +108,16 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     }
 
     /**
-     * Backing store for suggestTitlesByPrefix. Each entry: (title, lastUsed)
-     * regardless of calendar. Tests populate this then assert the returned
-     * aggregation / ordering.
+     * Backing store for suggestTitlesByPrefix. Mirrors the structure of the real
+     * device query: title + DTSTART + calendarId + optional RRULE. Tests populate
+     * this, then assert the aggregated [TitleSuggestion] output.
      */
-    var deviceTitleRows: List<Pair<String, Long>> = emptyList()
+    var deviceTitleRows: List<DeviceTitleRow> = emptyList()
 
     override suspend fun suggestTitlesByPrefix(
         prefix: String,
         sinceMs: Long,
+        untilMs: Long,
         visibleCalendarIds: Set<Long>,
         minFreq: Int,
         limit: Int
@@ -117,19 +125,33 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
         if (visibleCalendarIds.isEmpty() || prefix.isBlank()) return emptyList()
         val lowerPrefix = prefix.trim().lowercase()
-        return deviceTitleRows
-            .filter { (title, ts) ->
-                title.trim().lowercase().startsWith(lowerPrefix) &&
-                    title.isNotBlank() &&
-                    ts >= sinceMs
-            }
-            .groupBy { it.first.trim().lowercase() }
+
+        // Filter: prefix, visible calendar, non-blank title, and recurring-aware
+        // window. Recurring (rrule non-null, non-empty) bypasses the DTSTART bounds.
+        val matching = deviceTitleRows.filter { row ->
+            row.calendarId in visibleCalendarIds &&
+                row.title.isNotBlank() &&
+                row.title.trim().lowercase().startsWith(lowerPrefix) &&
+                (
+                    (!row.rrule.isNullOrEmpty()) ||
+                        (row.dtstart in sinceMs..untilMs)
+                )
+        }
+
+        // Cross-calendar dedup: same (title.lowercase().trim(), dtstart) on two
+        // calendars (e.g., a Google invite visible on personal + work) counts once.
+        val deduped = matching.distinctBy {
+            it.title.trim().lowercase() to it.dtstart
+        }
+
+        return deduped
+            .groupBy { it.title.trim().lowercase() }
             .map { (_, entries) ->
-                val latest = entries.maxByOrNull { it.second }!!
+                val latest = entries.maxByOrNull { it.dtstart }!!
                 org.onekash.kashcal.data.db.dao.TitleSuggestion(
-                    title = latest.first.trim(),
+                    title = latest.title.trim(),
                     freq = entries.size,
-                    lastUsed = latest.second
+                    lastUsed = latest.dtstart
                 )
             }
             .filter { it.freq >= minFreq }

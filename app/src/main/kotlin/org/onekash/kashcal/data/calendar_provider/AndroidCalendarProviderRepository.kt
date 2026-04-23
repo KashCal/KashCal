@@ -264,6 +264,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
     override suspend fun suggestTitlesByPrefix(
         prefix: String,
         sinceMs: Long,
+        untilMs: Long,
         visibleCalendarIds: Set<Long>,
         minFreq: Int,
         limit: Int
@@ -272,18 +273,23 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
         try {
             val calendarIdList = visibleCalendarIds.joinToString(",")
-            // LIKE with COLLATE NOCASE for ASCII case-insensitivity (device CalendarProvider
-            // doesn't support GROUP BY in sortOrder, so we aggregate in Kotlin).
+            // Recurring events (RRULE non-null, non-empty) bypass the DTSTART window;
+            // the master row's DTSTART is the first occurrence and may be very old even
+            // while the series is still active. Non-recurring events are bound to
+            // [sinceMs, untilMs]. LIKE with COLLATE NOCASE handles ASCII case folding.
             val selection = """
                 ${CalendarContract.Events.TITLE} LIKE ? COLLATE NOCASE
                 AND ${CalendarContract.Events.CALENDAR_ID} IN ($calendarIdList)
                 AND ${CalendarContract.Events.DELETED} = 0
-                AND ${CalendarContract.Events.DTSTART} >= ?
                 AND ${CalendarContract.Events.TITLE} IS NOT NULL
                 AND LENGTH(TRIM(${CalendarContract.Events.TITLE})) > 0
                 AND ${CalendarContract.Events.ORIGINAL_ID} IS NULL
+                AND (
+                    (${CalendarContract.Events.RRULE} IS NOT NULL AND ${CalendarContract.Events.RRULE} != '')
+                    OR (${CalendarContract.Events.DTSTART} >= ? AND ${CalendarContract.Events.DTSTART} <= ?)
+                )
             """.trimIndent()
-            val args = arrayOf("${prefix.trim()}%", sinceMs.toString())
+            val args = arrayOf("${prefix.trim()}%", sinceMs.toString(), untilMs.toString())
             val projection = arrayOf(
                 CalendarContract.Events.TITLE,
                 CalendarContract.Events.DTSTART
@@ -308,9 +314,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 out
             }.orEmpty()
 
-            // Aggregate in Kotlin: group by lowercase title, sum freq, max dtstart,
-            // keep most-recent original casing for display.
-            rows.groupBy { it.first.lowercase() }
+            // Cross-calendar dedup: same (title.lowercase(), dtstart) on multiple calendars
+            // (e.g., a Google invite visible on personal + work accounts) counts as ONE use,
+            // not N. Case-insensitive to match the Fake's contract and handle providers that
+            // might round-trip the same invite with different casing.
+            rows.distinctBy { it.first.lowercase() to it.second }
+                .groupBy { it.first.lowercase() }
                 .map { (_, entries) ->
                     val latest = entries.maxByOrNull { it.second }!!
                     org.onekash.kashcal.data.db.dao.TitleSuggestion(

@@ -694,20 +694,28 @@ interface EventsDao {
      *
      * Filters:
      * - Title starts with [prefix] (case-insensitive, after TRIM)
-     * - Event created on/after [sinceMs] (recency window)
+     * - Recency: recurring events (rrule non-null and non-empty) bypass the
+     *   window; non-recurring events require start_ts in [sinceMs, untilMs].
+     *   Using start_ts — not created_at — means sync-imported historical events
+     *   don't leak in via their fresh row-insert time.
      * - Not a recurring-event exception (original_event_id IS NULL) — avoids
      *   inflating counts for a series that's been rescheduled many times
      * - Not pending-delete (user has deleted locally but not yet synced)
      * - Title not blank
      *
-     * Groups by case/whitespace-normalized title, sums frequency, tracks the
-     * most recent created_at, then filters to titles used at least [minFreq]
-     * times and ranks by frequency DESC, most-recent DESC.
+     * Groups by case/whitespace-normalized title, sums frequency, and ranks by
+     * frequency DESC, then last_used DESC where last_used =
+     * MAX(COALESCE(local_modified_at, start_ts)). local_modified_at is set
+     * only on user-originated writes — null on pull-sync inserts — so this
+     * naturally promotes recently-edited events without letting import time
+     * corrupt the ordering.
      *
-     * Display title uses the most-recent original casing (via sub-query).
+     * Display title uses the casing from the entry with the highest
+     * COALESCE(local_modified_at, start_ts).
      *
      * @param prefix Text the user has typed (no wildcards — added in SQL)
-     * @param sinceMs Cutoff epoch ms; events older than this are ignored
+     * @param sinceMs Lower-bound of the non-recurring window (epoch ms, inclusive)
+     * @param untilMs Upper-bound of the non-recurring window (epoch ms, inclusive)
      * @param minFreq Minimum use count for a title to appear
      * @param limit Max suggestions to return
      */
@@ -718,17 +726,20 @@ interface EventsDao {
                 WHERE LOWER(TRIM(inner_e.title)) = LOWER(TRIM(outer_e.title))
                   AND inner_e.original_event_id IS NULL
                   AND inner_e.sync_status != 'PENDING_DELETE'
-                ORDER BY inner_e.created_at DESC
+                ORDER BY COALESCE(inner_e.local_modified_at, inner_e.start_ts) DESC
                 LIMIT 1
             ) AS title,
             COUNT(*) AS freq,
-            MAX(outer_e.created_at) AS last_used
+            MAX(COALESCE(outer_e.local_modified_at, outer_e.start_ts)) AS last_used
         FROM events outer_e
         WHERE LOWER(TRIM(outer_e.title)) LIKE LOWER(:prefix) || '%'
           AND LENGTH(TRIM(outer_e.title)) > 0
-          AND outer_e.created_at >= :sinceMs
           AND outer_e.original_event_id IS NULL
           AND outer_e.sync_status != 'PENDING_DELETE'
+          AND (
+            (outer_e.rrule IS NOT NULL AND outer_e.rrule != '')
+            OR (outer_e.start_ts >= :sinceMs AND outer_e.start_ts <= :untilMs)
+          )
         GROUP BY LOWER(TRIM(outer_e.title))
         HAVING COUNT(*) >= :minFreq
         ORDER BY freq DESC, last_used DESC
@@ -737,6 +748,7 @@ interface EventsDao {
     suspend fun suggestTitlesByPrefix(
         prefix: String,
         sinceMs: Long,
+        untilMs: Long,
         minFreq: Int,
         limit: Int
     ): List<TitleSuggestion>

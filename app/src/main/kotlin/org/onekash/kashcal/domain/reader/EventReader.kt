@@ -46,10 +46,11 @@ class EventReader @Inject constructor(
     suspend fun suggestTitles(
         prefix: String,
         sinceMs: Long,
+        untilMs: Long,
         minFreq: Int,
         limit: Int
     ): List<TitleSuggestion> =
-        eventsDao.suggestTitlesByPrefix(prefix, sinceMs, minFreq, limit)
+        eventsDao.suggestTitlesByPrefix(prefix, sinceMs, untilMs, minFreq, limit)
 
     /**
      * Get event by ID.

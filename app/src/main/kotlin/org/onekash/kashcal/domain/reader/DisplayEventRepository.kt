@@ -233,22 +233,25 @@ class DisplayEventRepository @Inject constructor(
     suspend fun suggestTitles(
         prefix: String,
         windowDays: Int = TITLE_SUGGESTION_WINDOW_DAYS,
+        futureWindowDays: Int = TITLE_SUGGESTION_WINDOW_FUTURE_DAYS,
         minFreq: Int = TITLE_SUGGESTION_MIN_FREQ,
         limit: Int = TITLE_SUGGESTION_LIMIT
     ): List<TitleSuggestion> {
         if (prefix.length < TITLE_SUGGESTION_MIN_PREFIX) return emptyList()
 
-        val sinceMs = System.currentTimeMillis() - windowDays * DateUtils.DAY_IN_MILLIS
+        val nowMs = System.currentTimeMillis()
+        val sinceMs = nowMs - windowDays * DateUtils.DAY_IN_MILLIS
+        val untilMs = nowMs + futureWindowDays * DateUtils.DAY_IN_MILLIS
 
         val (roomResults, deviceResults) = coroutineScope {
             val roomAsync = async {
-                eventReader.suggestTitles(prefix, sinceMs, minFreq = minFreq, limit = limit)
+                eventReader.suggestTitles(prefix, sinceMs, untilMs, minFreq = minFreq, limit = limit)
             }
             val deviceAsync = async {
                 val visibleIds = getVisibleDeviceCalendarIds()
                 if (visibleIds.isEmpty()) emptyList()
                 else calendarProviderRepository.suggestTitlesByPrefix(
-                    prefix, sinceMs, visibleIds, minFreq = minFreq, limit = limit
+                    prefix, sinceMs, untilMs, visibleIds, minFreq = minFreq, limit = limit
                 )
             }
             roomAsync.await() to deviceAsync.await()
@@ -318,6 +321,7 @@ private const val MAX_RANGE_DAYS = 366L
 /** Defaults for [DisplayEventRepository.suggestTitles]. */
 const val TITLE_SUGGESTION_MIN_PREFIX = 3
 const val TITLE_SUGGESTION_WINDOW_DAYS = 90
+const val TITLE_SUGGESTION_WINDOW_FUTURE_DAYS = 7
 const val TITLE_SUGGESTION_MIN_FREQ = 2
 const val TITLE_SUGGESTION_LIMIT = 5
 
