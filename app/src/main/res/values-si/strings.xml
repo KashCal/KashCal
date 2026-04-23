@@ -926,20 +926,26 @@
     <string name="cd_event_color">සිදුවීමේ වර්ණය</string>
     <string name="cd_checkmark">තෝරාගත්</string>
     <string name="label_device_timezone">උපාංගයේ වේලා කලාපය</string>
-    <string name="color_tomato">තක්කාලි</string>
-    <string name="color_orangered">තැඹිලි රතු</string>
-    <string name="color_darkorange">තද තැඹිලි</string>
+    <string name="color_tomato">තක්කාලි</string>    <string name="color_darkorange">තද තැඹිලි</string>
     <string name="color_gold">රන්වන්</string>
     <string name="color_yellowgreen">කහ කොළ</string>
-    <string name="color_limegreen">දෙහි කොළ</string>
-    <string name="color_mediumseagreen">මධ්‍යම මුහුදු කොළ</string>
-    <string name="color_seagreen">මුහුදු කොළ</string>
-    <string name="color_lightseagreen">ලා මුහුදු කොළ</string>
+    <string name="color_limegreen">දෙහි කොළ</string>    <string name="color_lightseagreen">ලා මුහුදු කොළ</string>
     <string name="color_dodgerblue">ඩොජර් නිල්</string>
-    <string name="color_royalblue">රාජකීය නිල්</string>
-    <string name="color_mediumslateblue">මධ්‍යම ස්ලේට් නිල්</string>
-    <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
+    <string name="color_royalblue">රාජකීය නිල්</string>    <string name="color_mediumorchid">මධ්‍යම ඕර්කිඩ්</string>
     <string name="color_hotpink">දීප්තිමත් රෝස</string>
     <string name="color_dimgray">අඳුරු අළු</string>
 
+    <string name="hue_red">රතු</string>
+    <string name="hue_orange">තැඹිලි</string>
+    <string name="hue_yellow">කහ</string>
+    <string name="hue_green">කොළ</string>
+    <string name="hue_teal">නිල්-කොළ</string>
+    <string name="hue_blue">නිල්</string>
+    <string name="hue_purple">දම්</string>
+    <string name="hue_pink">රෝස</string>
+    <string name="hue_brown">දුඹුරු</string>
+    <string name="hue_neutral">උදාසීන</string>
+    <string name="label_more_colors">තවත් වර්ණ</string>
+    <string name="label_back_to_grid">ආපසු</string>
+    <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
 </resources>

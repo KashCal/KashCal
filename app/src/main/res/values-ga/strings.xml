@@ -1063,20 +1063,26 @@
     <string name="label_device_timezone">Crios ama an ghl\u00e9is</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tr\u00e1ta\u00ed</string>
-    <string name="color_orangered">Dearg-oráiste</string>
-    <string name="color_darkorange">Or\u00e1iste dorcha</string>
+    <string name="color_tomato">Tr\u00e1ta\u00ed</string>    <string name="color_darkorange">Or\u00e1iste dorcha</string>
     <string name="color_gold">\u00d3r</string>
     <string name="color_yellowgreen">Glas bu\u00ed</string>
-    <string name="color_limegreen">Glas líoma</string>
-    <string name="color_mediumseagreen">Glas mara me\u00e1nach</string>
-    <string name="color_seagreen">Glas mara</string>
-    <string name="color_lightseagreen">Glas mara éadrom</string>
+    <string name="color_limegreen">Glas líoma</string>    <string name="color_lightseagreen">Glas mara éadrom</string>
     <string name="color_dodgerblue">Gorm Dodger</string>
-    <string name="color_royalblue">Gorm ríoga</string>
-    <string name="color_mediumslateblue">Gorm sclátach meánach</string>
-    <string name="color_mediumorchid">Magairl\u00edn me\u00e1nach</string>
+    <string name="color_royalblue">Gorm ríoga</string>    <string name="color_mediumorchid">Magairl\u00edn me\u00e1nach</string>
     <string name="color_hotpink">B\u00e1nd\u00e9arg te</string>
     <string name="color_dimgray">Liath breacach</string>
 
+    <string name="hue_red">Dearg</string>
+    <string name="hue_orange">Oráiste</string>
+    <string name="hue_yellow">Buí</string>
+    <string name="hue_green">Glas</string>
+    <string name="hue_teal">Dúghlas</string>
+    <string name="hue_blue">Gorm</string>
+    <string name="hue_purple">Corcra</string>
+    <string name="hue_pink">Bándearg</string>
+    <string name="hue_brown">Donn</string>
+    <string name="hue_neutral">Neodrach</string>
+    <string name="label_more_colors">Tuilleadh dathanna</string>
+    <string name="label_back_to_grid">Ar ais</string>
+    <string name="settings_suggest_titles">Mol teidil imeachtaí</string>
 </resources>

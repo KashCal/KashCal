@@ -60,6 +60,16 @@ data class EventUrlProjection(
 )
 
 /**
+ * A title suggestion for the event-form autocomplete dropdown.
+ * Aggregated from past events in the user's history.
+ */
+data class TitleSuggestion(
+    @ColumnInfo(name = "title") val title: String,
+    @ColumnInfo(name = "freq") val freq: Int,
+    @ColumnInfo(name = "last_used") val lastUsed: Long
+)
+
+/**
  * Data Access Object for Event operations.
  *
  * Provides comprehensive CRUD and sync operations for calendar events.
@@ -677,6 +687,59 @@ interface EventsDao {
      */
     @Query("SELECT COUNT(*) FROM events")
     suspend fun getTotalCount(): Int
+
+    /**
+     * Suggest previously-used event titles matching a prefix, for the event-form
+     * autocomplete dropdown.
+     *
+     * Filters:
+     * - Title starts with [prefix] (case-insensitive, after TRIM)
+     * - Event created on/after [sinceMs] (recency window)
+     * - Not a recurring-event exception (original_event_id IS NULL) — avoids
+     *   inflating counts for a series that's been rescheduled many times
+     * - Not pending-delete (user has deleted locally but not yet synced)
+     * - Title not blank
+     *
+     * Groups by case/whitespace-normalized title, sums frequency, tracks the
+     * most recent created_at, then filters to titles used at least [minFreq]
+     * times and ranks by frequency DESC, most-recent DESC.
+     *
+     * Display title uses the most-recent original casing (via sub-query).
+     *
+     * @param prefix Text the user has typed (no wildcards — added in SQL)
+     * @param sinceMs Cutoff epoch ms; events older than this are ignored
+     * @param minFreq Minimum use count for a title to appear
+     * @param limit Max suggestions to return
+     */
+    @Query("""
+        SELECT
+            (
+                SELECT TRIM(inner_e.title) FROM events inner_e
+                WHERE LOWER(TRIM(inner_e.title)) = LOWER(TRIM(outer_e.title))
+                  AND inner_e.original_event_id IS NULL
+                  AND inner_e.sync_status != 'PENDING_DELETE'
+                ORDER BY inner_e.created_at DESC
+                LIMIT 1
+            ) AS title,
+            COUNT(*) AS freq,
+            MAX(outer_e.created_at) AS last_used
+        FROM events outer_e
+        WHERE LOWER(TRIM(outer_e.title)) LIKE LOWER(:prefix) || '%'
+          AND LENGTH(TRIM(outer_e.title)) > 0
+          AND outer_e.created_at >= :sinceMs
+          AND outer_e.original_event_id IS NULL
+          AND outer_e.sync_status != 'PENDING_DELETE'
+        GROUP BY LOWER(TRIM(outer_e.title))
+        HAVING COUNT(*) >= :minFreq
+        ORDER BY freq DESC, last_used DESC
+        LIMIT :limit
+    """)
+    suspend fun suggestTitlesByPrefix(
+        prefix: String,
+        sinceMs: Long,
+        minFreq: Int,
+        limit: Int
+    ): List<TitleSuggestion>
 
     /**
      * Search events by title, location, or description using FTS4 full-text search.

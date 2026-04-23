@@ -825,19 +825,12 @@
     <string name="color_cyan">సియాన్</string>
     <string name="color_blue">నీలం</string>
     <string name="color_purple">ఊదా</string>
-    <string name="color_tomato">టొమాటో</string>
-    <string name="color_orangered">నారింజ ఎరుపు</string>
-    <string name="color_darkorange">ముదురు నారింజ</string>
+    <string name="color_tomato">టొమాటో</string>    <string name="color_darkorange">ముదురు నారింజ</string>
     <string name="color_gold">బంగారు</string>
     <string name="color_yellowgreen">పసుపు ఆకుపచ్చ</string>
-    <string name="color_limegreen">నిమ్మ ఆకుపచ్చ</string>
-    <string name="color_mediumseagreen">మధ్యస్థ సముద్ర ఆకుపచ్చ</string>
-    <string name="color_seagreen">సముద్ర ఆకుపచ్చ</string>
-    <string name="color_lightseagreen">లేత సముద్ర ఆకుపచ్చ</string>
+    <string name="color_limegreen">నిమ్మ ఆకుపచ్చ</string>    <string name="color_lightseagreen">లేత సముద్ర ఆకుపచ్చ</string>
     <string name="color_dodgerblue">డాడ్జర్ నీలం</string>
-    <string name="color_royalblue">రాజ నీలం</string>
-    <string name="color_mediumslateblue">మధ్యస్థ స్లేట్ నీలం</string>
-    <string name="color_mediumorchid">మధ్యస్థ ఆర్కిడ్</string>
+    <string name="color_royalblue">రాజ నీలం</string>    <string name="color_mediumorchid">మధ్యస్థ ఆర్కిడ్</string>
     <string name="color_hotpink">హాట్ పింక్</string>
     <string name="color_dimgray">మసక బూడిద</string>
     <!-- Accessibility: link types -->
@@ -957,4 +950,17 @@
     <string name="label_custom">కస్టమ్</string>
     <string name="cd_event_color">ఈవెంట్ రంగు</string>
 
+    <string name="hue_red">ఎరుపు</string>
+    <string name="hue_orange">నారింజ</string>
+    <string name="hue_yellow">పసుపు</string>
+    <string name="hue_green">ఆకుపచ్చ</string>
+    <string name="hue_teal">నీలి-ఆకుపచ్చ</string>
+    <string name="hue_blue">నీలం</string>
+    <string name="hue_purple">ఊదా</string>
+    <string name="hue_pink">గులాబీ</string>
+    <string name="hue_brown">గోధుమ</string>
+    <string name="hue_neutral">తటస్థ</string>
+    <string name="label_more_colors">మరిన్ని రంగులు</string>
+    <string name="label_back_to_grid">వెనుకకు</string>
+    <string name="settings_suggest_titles">ఈవెంట్ శీర్షికలను సూచించండి</string>
 </resources>

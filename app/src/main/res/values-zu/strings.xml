@@ -956,19 +956,25 @@
     <string name="cd_checkmark">Kukhethiwe</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
-    <string name="color_tomato">Utamatisi</string>
-    <string name="color_orangered">Ibomvu elisawolintshi</string>
-    <string name="color_darkorange">Orenji Omnyama</string>
+    <string name="color_tomato">Utamatisi</string>    <string name="color_darkorange">Orenji Omnyama</string>
     <string name="color_gold">Igolide</string>
     <string name="color_yellowgreen">Phuzi Luhlaza</string>
-    <string name="color_limegreen">Iluhlaza lelamula</string>
-    <string name="color_mediumseagreen">Luhlaza Lolwandle Oluphakathi</string>
-    <string name="color_seagreen">Iluhlaza lolwandle</string>
-    <string name="color_lightseagreen">Iluhlaza lolwandle olukhanyayo</string>
+    <string name="color_limegreen">Iluhlaza lelamula</string>    <string name="color_lightseagreen">Iluhlaza lolwandle olukhanyayo</string>
     <string name="color_dodgerblue">Iluhlaza okwesibhakabhaka sodaji</string>
-    <string name="color_royalblue">Iluhlaza okwesibhakabhaka sasebukhosini</string>
-    <string name="color_mediumslateblue">Iluhlaza okwesibhakabhaka esiphakathi</string>
-    <string name="color_mediumorchid">I-Orchid Ephakathi</string>
+    <string name="color_royalblue">Iluhlaza okwesibhakabhaka sasebukhosini</string>    <string name="color_mediumorchid">I-Orchid Ephakathi</string>
     <string name="color_hotpink">Phinki Eshisayo</string>
     <string name="color_dimgray">Impunga efiphele</string>
+    <string name="hue_red">Okubomvu</string>
+    <string name="hue_orange">Okuwolintshi</string>
+    <string name="hue_yellow">Okuphuzi</string>
+    <string name="hue_green">Okuluhlaza</string>
+    <string name="hue_teal">Okuluhlaza sasibhakabhaka</string>
+    <string name="hue_blue">Okuluhlaza okwesibhakabhaka</string>
+    <string name="hue_purple">Okunsomi</string>
+    <string name="hue_pink">Okupinki</string>
+    <string name="hue_brown">Okunsundu</string>
+    <string name="hue_neutral">Okungathathi hlangothi</string>
+    <string name="label_more_colors">Eminye imibala</string>
+    <string name="label_back_to_grid">Emuva</string>
+    <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
 </resources>

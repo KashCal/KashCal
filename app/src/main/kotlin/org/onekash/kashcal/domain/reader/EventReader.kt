@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
+import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -36,6 +37,19 @@ class EventReader @Inject constructor(
     private val accountsDao by lazy { database.accountsDao() }
 
     // ========== Event Lookups ==========
+
+    /**
+     * Suggest Room event titles matching a prefix for the form autocomplete.
+     * Pure pass-through — see [org.onekash.kashcal.data.db.dao.EventsDao.suggestTitlesByPrefix]
+     * for filter semantics.
+     */
+    suspend fun suggestTitles(
+        prefix: String,
+        sinceMs: Long,
+        minFreq: Int,
+        limit: Int
+    ): List<TitleSuggestion> =
+        eventsDao.suggestTitlesByPrefix(prefix, sinceMs, minFreq, limit)
 
     /**
      * Get event by ID.

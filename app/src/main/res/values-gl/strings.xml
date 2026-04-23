@@ -939,20 +939,26 @@
     <string name="label_device_timezone">Fuso horario do dispositivo</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tomate</string>
-    <string name="color_orangered">Vermello alaranxado</string>
-    <string name="color_darkorange">Laranxa escura</string>
+    <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranxa escura</string>
     <string name="color_gold">Dourado</string>
     <string name="color_yellowgreen">Verde amarelado</string>
-    <string name="color_limegreen">Verde lima</string>
-    <string name="color_mediumseagreen">Verde mari\u00f1o medio</string>
-    <string name="color_seagreen">Verde mar</string>
-    <string name="color_lightseagreen">Verde mar claro</string>
+    <string name="color_limegreen">Verde lima</string>    <string name="color_lightseagreen">Verde mar claro</string>
     <string name="color_dodgerblue">Azul Dodger</string>
-    <string name="color_royalblue">Azul real</string>
-    <string name="color_mediumslateblue">Azul lousa medio</string>
-    <string name="color_mediumorchid">Orqu\u00eddea media</string>
+    <string name="color_royalblue">Azul real</string>    <string name="color_mediumorchid">Orqu\u00eddea media</string>
     <string name="color_hotpink">Rosa intenso</string>
     <string name="color_dimgray">Gris apagado</string>
 
+    <string name="hue_red">Vermello</string>
+    <string name="hue_orange">Laranxa</string>
+    <string name="hue_yellow">Amarelo</string>
+    <string name="hue_green">Verde</string>
+    <string name="hue_teal">Verde azulado</string>
+    <string name="hue_blue">Azul</string>
+    <string name="hue_purple">Morado</string>
+    <string name="hue_pink">Rosa</string>
+    <string name="hue_brown">Marrón</string>
+    <string name="hue_neutral">Neutro</string>
+    <string name="label_more_colors">Máis cores</string>
+    <string name="label_back_to_grid">Volver</string>
+    <string name="settings_suggest_titles">Suxerir títulos de eventos</string>
 </resources>

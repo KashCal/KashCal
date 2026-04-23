@@ -788,19 +788,12 @@
     <string name="color_cyan">Syaani</string>
     <string name="color_blue">Sininen</string>
     <string name="color_purple">Violetti</string>
-    <string name="color_tomato">Tomaatti</string>
-    <string name="color_orangered">Oranssinpunainen</string>
-    <string name="color_darkorange">Tummanoranssi</string>
+    <string name="color_tomato">Tomaatti</string>    <string name="color_darkorange">Tummanoranssi</string>
     <string name="color_gold">Kulta</string>
     <string name="color_yellowgreen">Keltavihreä</string>
-    <string name="color_limegreen">Limetinvihreä</string>
-    <string name="color_mediumseagreen">Merenvihreä</string>
-    <string name="color_seagreen">Merenvihreä</string>
-    <string name="color_lightseagreen">Vaalea merenvihreä</string>
+    <string name="color_limegreen">Limetinvihreä</string>    <string name="color_lightseagreen">Vaalea merenvihreä</string>
     <string name="color_dodgerblue">Kirkas sininen</string>
-    <string name="color_royalblue">Kuninkaallinen sininen</string>
-    <string name="color_mediumslateblue">Keskiliuskeensininen</string>
-    <string name="color_mediumorchid">Orkidea</string>
+    <string name="color_royalblue">Kuninkaallinen sininen</string>    <string name="color_mediumorchid">Orkidea</string>
     <string name="color_hotpink">Kirkkaanpinkki</string>
     <string name="color_dimgray">Tumman harmaa</string>
     <string name="cd_meeting_link">Kokouksen linkki: %1$s</string>
@@ -911,4 +904,17 @@
     <string name="label_custom">Mukautettu</string>
     <string name="cd_event_color">Tapahtuman väri</string>
 
+    <string name="hue_red">Punainen</string>
+    <string name="hue_orange">Oranssi</string>
+    <string name="hue_yellow">Keltainen</string>
+    <string name="hue_green">Vihreä</string>
+    <string name="hue_teal">Sinivihreä</string>
+    <string name="hue_blue">Sininen</string>
+    <string name="hue_purple">Violetti</string>
+    <string name="hue_pink">Vaaleanpunainen</string>
+    <string name="hue_brown">Ruskea</string>
+    <string name="hue_neutral">Neutraali</string>
+    <string name="label_more_colors">Lisää värejä</string>
+    <string name="label_back_to_grid">Takaisin</string>
+    <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
 </resources>

@@ -115,6 +115,18 @@ class HomeViewModel @Inject constructor(
     val quickAddEnabled: StateFlow<Boolean> = dataStore.quickAddEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    /**
+     * Suggest prior event titles matching [prefix] for the form autocomplete.
+     *
+     * Honors the `titleSuggestionsEnabled` user preference: when disabled,
+     * returns empty list regardless of history. UI doesn't know about this
+     * preference — enforcing it here keeps the composable preference-agnostic.
+     */
+    suspend fun suggestTitles(prefix: String): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> {
+        if (!dataStore.getTitleSuggestionsEnabled()) return emptyList()
+        return displayEventRepository.suggestTitles(prefix)
+    }
+
     /** Time format preference: "system", "12h", or "24h" */
     val timeFormat: StateFlow<String> = dataStore.timeFormat
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.TIME_FORMAT_SYSTEM)

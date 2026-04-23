@@ -955,20 +955,26 @@
     <string name="label_device_timezone">Cihaz saat dilimi</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Domates</string>
-    <string name="color_orangered">Turuncu kırmızı</string>
-    <string name="color_darkorange">Koyu turuncu</string>
+    <string name="color_tomato">Domates</string>    <string name="color_darkorange">Koyu turuncu</string>
     <string name="color_gold">Altın</string>
     <string name="color_yellowgreen">Sarı yeşil</string>
-    <string name="color_limegreen">Limon yeşili</string>
-    <string name="color_mediumseagreen">Orta deniz yeşili</string>
-    <string name="color_seagreen">Deniz yeşili</string>
-    <string name="color_lightseagreen">Açık deniz yeşili</string>
+    <string name="color_limegreen">Limon yeşili</string>    <string name="color_lightseagreen">Açık deniz yeşili</string>
     <string name="color_dodgerblue">Canlı mavi</string>
-    <string name="color_royalblue">Kraliyet mavisi</string>
-    <string name="color_mediumslateblue">Orta şifer mavisi</string>
-    <string name="color_mediumorchid">Orta orkide</string>
+    <string name="color_royalblue">Kraliyet mavisi</string>    <string name="color_mediumorchid">Orta orkide</string>
     <string name="color_hotpink">Sıcak pembe</string>
     <string name="color_dimgray">Soluk gri</string>
 
+    <string name="hue_red">Kırmızı</string>
+    <string name="hue_orange">Turuncu</string>
+    <string name="hue_yellow">Sarı</string>
+    <string name="hue_green">Yeşil</string>
+    <string name="hue_teal">Turkuaz</string>
+    <string name="hue_blue">Mavi</string>
+    <string name="hue_purple">Mor</string>
+    <string name="hue_pink">Pembe</string>
+    <string name="hue_brown">Kahverengi</string>
+    <string name="hue_neutral">Nötr</string>
+    <string name="label_more_colors">Daha fazla renk</string>
+    <string name="label_back_to_grid">Geri</string>
+    <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
 </resources>

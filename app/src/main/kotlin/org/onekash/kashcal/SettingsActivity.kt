@@ -101,6 +101,7 @@ class SettingsActivity : ComponentActivity() {
                 val defaultEventDuration by viewModel.defaultEventDuration.collectAsStateWithLifecycle()
                 val showEventEmojis by viewModel.showEventEmojis.collectAsStateWithLifecycle()
                 val quickAddEnabled by viewModel.quickAddEnabled.collectAsStateWithLifecycle()
+                val titleSuggestionsEnabled by viewModel.titleSuggestionsEnabled.collectAsStateWithLifecycle()
                 val timeFormat by viewModel.timeFormat.collectAsStateWithLifecycle()
                 val firstDayOfWeek by viewModel.firstDayOfWeek.collectAsStateWithLifecycle()
                 val showWeekNumbers by viewModel.showWeekNumbers.collectAsStateWithLifecycle()
@@ -465,6 +466,8 @@ class SettingsActivity : ComponentActivity() {
                             onShowEventEmojisChange = viewModel::setShowEventEmojis,
                             quickAddEnabled = quickAddEnabled,
                             onQuickAddEnabledChange = viewModel::setQuickAddEnabled,
+                            titleSuggestionsEnabled = titleSuggestionsEnabled,
+                            onTitleSuggestionsEnabledChange = viewModel::setTitleSuggestionsEnabled,
                             timeFormat = timeFormat,
                             onTimeFormatChange = viewModel::setTimeFormat,
                             firstDayOfWeek = firstDayOfWeek,

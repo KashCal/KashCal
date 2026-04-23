@@ -939,20 +939,26 @@
     <string name="label_device_timezone">Zona hor\u00e0ria del dispositiu</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tom\u00e0quet</string>
-    <string name="color_orangered">Vermell ataronjat</string>
-    <string name="color_darkorange">Taronja fosc</string>
+    <string name="color_tomato">Tom\u00e0quet</string>    <string name="color_darkorange">Taronja fosc</string>
     <string name="color_gold">Daurat</string>
     <string name="color_yellowgreen">Verd groguenc</string>
-    <string name="color_limegreen">Verd llima</string>
-    <string name="color_mediumseagreen">Verd mar\u00ed mitj\u00e0</string>
-    <string name="color_seagreen">Verd mar</string>
-    <string name="color_lightseagreen">Verd mar clar</string>
+    <string name="color_limegreen">Verd llima</string>    <string name="color_lightseagreen">Verd mar clar</string>
     <string name="color_dodgerblue">Blau Dodger</string>
-    <string name="color_royalblue">Blau reial</string>
-    <string name="color_mediumslateblue">Blau pissarra mitjà</string>
-    <string name="color_mediumorchid">Orqu\u00eddia mitjana</string>
+    <string name="color_royalblue">Blau reial</string>    <string name="color_mediumorchid">Orqu\u00eddia mitjana</string>
     <string name="color_hotpink">Rosa intens</string>
     <string name="color_dimgray">Gris apagat</string>
 
+    <string name="hue_red">Vermell</string>
+    <string name="hue_orange">Taronja</string>
+    <string name="hue_yellow">Groc</string>
+    <string name="hue_green">Verd</string>
+    <string name="hue_teal">Verd blavós</string>
+    <string name="hue_blue">Blau</string>
+    <string name="hue_purple">Lila</string>
+    <string name="hue_pink">Rosa</string>
+    <string name="hue_brown">Marró</string>
+    <string name="hue_neutral">Neutre</string>
+    <string name="label_more_colors">Més colors</string>
+    <string name="label_back_to_grid">Enrere</string>
+    <string name="settings_suggest_titles">Suggereix títols d\'esdeveniments</string>
 </resources>

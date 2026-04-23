@@ -100,6 +100,46 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         }
     }
 
+    /**
+     * Backing store for suggestTitlesByPrefix. Each entry: (title, lastUsed)
+     * regardless of calendar. Tests populate this then assert the returned
+     * aggregation / ordering.
+     */
+    var deviceTitleRows: List<Pair<String, Long>> = emptyList()
+
+    override suspend fun suggestTitlesByPrefix(
+        prefix: String,
+        sinceMs: Long,
+        visibleCalendarIds: Set<Long>,
+        minFreq: Int,
+        limit: Int
+    ): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> {
+        if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
+        if (visibleCalendarIds.isEmpty() || prefix.isBlank()) return emptyList()
+        val lowerPrefix = prefix.trim().lowercase()
+        return deviceTitleRows
+            .filter { (title, ts) ->
+                title.trim().lowercase().startsWith(lowerPrefix) &&
+                    title.isNotBlank() &&
+                    ts >= sinceMs
+            }
+            .groupBy { it.first.trim().lowercase() }
+            .map { (_, entries) ->
+                val latest = entries.maxByOrNull { it.second }!!
+                org.onekash.kashcal.data.db.dao.TitleSuggestion(
+                    title = latest.first.trim(),
+                    freq = entries.size,
+                    lastUsed = latest.second
+                )
+            }
+            .filter { it.freq >= minFreq }
+            .sortedWith(
+                compareByDescending<org.onekash.kashcal.data.db.dao.TitleSuggestion> { it.freq }
+                    .thenByDescending { it.lastUsed }
+            )
+            .take(limit)
+    }
+
     override suspend fun pruneStaleCalendarIds(
         dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore
     ) {

@@ -956,20 +956,26 @@
     <string name="cd_checkmark">Таңдалды</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
-    <string name="color_tomato">Қызанақ</string>
-    <string name="color_orangered">Қызғылт сары-қызыл</string>
-    <string name="color_darkorange">Қою қызғылт сары</string>
+    <string name="color_tomato">Қызанақ</string>    <string name="color_darkorange">Қою қызғылт сары</string>
     <string name="color_gold">Алтын</string>
     <string name="color_yellowgreen">Сарғыш жасыл</string>
-    <string name="color_limegreen">Лайм жасыл</string>
-    <string name="color_mediumseagreen">Орташа теңіз жасылы</string>
-    <string name="color_seagreen">Теңіз жасыл</string>
-    <string name="color_lightseagreen">Ашық теңіз жасыл</string>
+    <string name="color_limegreen">Лайм жасыл</string>    <string name="color_lightseagreen">Ашық теңіз жасыл</string>
     <string name="color_dodgerblue">Ашық көк</string>
-    <string name="color_royalblue">Патшалық көк</string>
-    <string name="color_mediumslateblue">Орташа тақтатас көк</string>
-    <string name="color_mediumorchid">Орташа орхидея</string>
+    <string name="color_royalblue">Патшалық көк</string>    <string name="color_mediumorchid">Орташа орхидея</string>
     <string name="color_hotpink">Қызғылт</string>
     <string name="color_dimgray">Күңгірт сұр</string>
 
+    <string name="hue_red">Қызыл</string>
+    <string name="hue_orange">Қызғылт сары</string>
+    <string name="hue_yellow">Сары</string>
+    <string name="hue_green">Жасыл</string>
+    <string name="hue_teal">Көгілдір жасыл</string>
+    <string name="hue_blue">Көк</string>
+    <string name="hue_purple">Күлгін</string>
+    <string name="hue_pink">Қызғылт</string>
+    <string name="hue_brown">Қоңыр</string>
+    <string name="hue_neutral">Бейтарап</string>
+    <string name="label_more_colors">Басқа түстер</string>
+    <string name="label_back_to_grid">Артқа</string>
+    <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
 </resources>

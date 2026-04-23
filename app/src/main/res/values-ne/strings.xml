@@ -926,20 +926,26 @@
     <string name="cd_event_color">कार्यक्रम रंग</string>
     <string name="cd_checkmark">चयन गरिएको</string>
     <string name="label_device_timezone">उपकरणको समय क्षेत्र</string>
-    <string name="color_tomato">गोलभेडा</string>
-    <string name="color_orangered">रातो सुन्तला</string>
-    <string name="color_darkorange">गाढा सुन्तला</string>
+    <string name="color_tomato">गोलभेडा</string>    <string name="color_darkorange">गाढा सुन्तला</string>
     <string name="color_gold">सुन</string>
     <string name="color_yellowgreen">पहेँलो-हरियो</string>
-    <string name="color_limegreen">कागती हरियो</string>
-    <string name="color_mediumseagreen">मध्यम समुद्री हरियो</string>
-    <string name="color_seagreen">समुद्री हरियो</string>
-    <string name="color_lightseagreen">हल्का समुद्री हरियो</string>
+    <string name="color_limegreen">कागती हरियो</string>    <string name="color_lightseagreen">हल्का समुद्री हरियो</string>
     <string name="color_dodgerblue">डजर निलो</string>
-    <string name="color_royalblue">राजकीय निलो</string>
-    <string name="color_mediumslateblue">मध्यम स्लेट निलो</string>
-    <string name="color_mediumorchid">मध्यम अर्किड</string>
+    <string name="color_royalblue">राजकीय निलो</string>    <string name="color_mediumorchid">मध्यम अर्किड</string>
     <string name="color_hotpink">चहकिलो गुलाबी</string>
     <string name="color_dimgray">मधुरो खरानी</string>
 
+    <string name="hue_red">रातो</string>
+    <string name="hue_orange">सुन्तला</string>
+    <string name="hue_yellow">पहेँलो</string>
+    <string name="hue_green">हरियो</string>
+    <string name="hue_teal">निलो-हरियो</string>
+    <string name="hue_blue">निलो</string>
+    <string name="hue_purple">बैजनी</string>
+    <string name="hue_pink">गुलाबी</string>
+    <string name="hue_brown">खैरो</string>
+    <string name="hue_neutral">तटस्थ</string>
+    <string name="label_more_colors">थप रङहरू</string>
+    <string name="label_back_to_grid">फिर्ता</string>
+    <string name="settings_suggest_titles">घटना शीर्षकहरू सुझाव</string>
 </resources>

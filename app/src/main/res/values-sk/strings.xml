@@ -869,19 +869,12 @@
     <string name="color_blue">Modrá</string>
     <string name="color_purple">Fialová</string>
     <string name="cd_checkmark">Vybraté</string>
-    <string name="color_tomato">Paradajková</string>
-    <string name="color_orangered">Červenooranžová</string>
-    <string name="color_darkorange">Tmavo oranžová</string>
+    <string name="color_tomato">Paradajková</string>    <string name="color_darkorange">Tmavo oranžová</string>
     <string name="color_gold">Zlatá</string>
     <string name="color_yellowgreen">Žltozelená</string>
-    <string name="color_limegreen">Limetková</string>
-    <string name="color_mediumseagreen">Stredne morská</string>
-    <string name="color_seagreen">Morská</string>
-    <string name="color_lightseagreen">Svetlo morská</string>
+    <string name="color_limegreen">Limetková</string>    <string name="color_lightseagreen">Svetlo morská</string>
     <string name="color_dodgerblue">Sýto modrá</string>
-    <string name="color_royalblue">Kráľovská modrá</string>
-    <string name="color_mediumslateblue">Stredne bridlicovo modrá</string>
-    <string name="color_mediumorchid">Stredne orchideová</string>
+    <string name="color_royalblue">Kráľovská modrá</string>    <string name="color_mediumorchid">Stredne orchideová</string>
     <string name="color_hotpink">Sýto ružová</string>
     <string name="color_dimgray">Tmavosivá</string>
     <!-- Accessibility: link types -->
@@ -999,4 +992,17 @@
     <string name="label_calendar_default">Predvolené z kalendára</string>
     <string name="label_custom">Vlastné</string>
     <string name="cd_event_color">Farba udalosti</string>
+    <string name="hue_red">Červená</string>
+    <string name="hue_orange">Oranžová</string>
+    <string name="hue_yellow">Žltá</string>
+    <string name="hue_green">Zelená</string>
+    <string name="hue_teal">Modrozelená</string>
+    <string name="hue_blue">Modrá</string>
+    <string name="hue_purple">Fialová</string>
+    <string name="hue_pink">Ružová</string>
+    <string name="hue_brown">Hnedá</string>
+    <string name="hue_neutral">Neutrálna</string>
+    <string name="label_more_colors">Viac farieb</string>
+    <string name="label_back_to_grid">Späť</string>
+    <string name="settings_suggest_titles">Navrhovať názvy udalostí</string>
 </resources>

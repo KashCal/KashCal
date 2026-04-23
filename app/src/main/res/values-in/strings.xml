@@ -915,19 +915,25 @@
     <string name="cd_event_color">Warna acara</string>
     <string name="cd_checkmark">Terpilih</string>
     <string name="label_device_timezone">Zona waktu perangkat</string>
-    <string name="color_tomato">Tomat</string>
-    <string name="color_orangered">Merah oranye</string>
-    <string name="color_darkorange">Oranye tua</string>
+    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Oranye tua</string>
     <string name="color_gold">Emas</string>
     <string name="color_yellowgreen">Hijau kuning</string>
-    <string name="color_limegreen">Hijau limau</string>
-    <string name="color_mediumseagreen">Hijau laut sedang</string>
-    <string name="color_seagreen">Hijau laut</string>
-    <string name="color_lightseagreen">Hijau laut muda</string>
+    <string name="color_limegreen">Hijau limau</string>    <string name="color_lightseagreen">Hijau laut muda</string>
     <string name="color_dodgerblue">Biru dodger</string>
-    <string name="color_royalblue">Biru royal</string>
-    <string name="color_mediumslateblue">Biru tulis sedang</string>
-    <string name="color_mediumorchid">Anggrek sedang</string>
+    <string name="color_royalblue">Biru royal</string>    <string name="color_mediumorchid">Anggrek sedang</string>
     <string name="color_hotpink">Pink menyala</string>
     <string name="color_dimgray">Abu redup</string>
+    <string name="hue_red">Merah</string>
+    <string name="hue_orange">Oranye</string>
+    <string name="hue_yellow">Kuning</string>
+    <string name="hue_green">Hijau</string>
+    <string name="hue_teal">Hijau kebiruan</string>
+    <string name="hue_blue">Biru</string>
+    <string name="hue_purple">Ungu</string>
+    <string name="hue_pink">Merah muda</string>
+    <string name="hue_brown">Cokelat</string>
+    <string name="hue_neutral">Netral</string>
+    <string name="label_more_colors">Warna lainnya</string>
+    <string name="label_back_to_grid">Kembali</string>
+    <string name="settings_suggest_titles">Sarankan judul acara</string>
 </resources>

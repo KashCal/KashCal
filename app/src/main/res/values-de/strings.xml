@@ -942,19 +942,25 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Benutzerdefiniert</string>
     <string name="cd_event_color">Terminfarbe</string>
-    <string name="color_tomato">Tomate</string>
-    <string name="color_orangered">Orangerot</string>
-    <string name="color_darkorange">Dunkelorange</string>
+    <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Dunkelorange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Gelbgrün</string>
-    <string name="color_limegreen">Limonengrün</string>
-    <string name="color_mediumseagreen">Mittelseegrün</string>
-    <string name="color_seagreen">Seegrün</string>
-    <string name="color_lightseagreen">Helles Seegrün</string>
+    <string name="color_limegreen">Limonengrün</string>    <string name="color_lightseagreen">Helles Seegrün</string>
     <string name="color_dodgerblue">Dodgerblau</string>
-    <string name="color_royalblue">Königsblau</string>
-    <string name="color_mediumslateblue">Mittleres Schieferblau</string>
-    <string name="color_mediumorchid">Mittelorchidee</string>
+    <string name="color_royalblue">Königsblau</string>    <string name="color_mediumorchid">Mittelorchidee</string>
     <string name="color_hotpink">Knallrosa</string>
     <string name="color_dimgray">Dunkelgrau</string>
+    <string name="hue_red">Rot</string>
+    <string name="hue_orange">Orange</string>
+    <string name="hue_yellow">Gelb</string>
+    <string name="hue_green">Grün</string>
+    <string name="hue_teal">Blaugrün</string>
+    <string name="hue_blue">Blau</string>
+    <string name="hue_purple">Lila</string>
+    <string name="hue_pink">Pink</string>
+    <string name="hue_brown">Braun</string>
+    <string name="hue_neutral">Neutral</string>
+    <string name="label_more_colors">Weitere Farben</string>
+    <string name="label_back_to_grid">Zurück</string>
+    <string name="settings_suggest_titles">Ereignistitel vorschlagen</string>
 </resources>

@@ -53,6 +53,28 @@ interface CalendarProviderRepository {
     ): List<DeviceCalendarInstance>
 
     /**
+     * Suggest device-calendar event titles matching a prefix, aggregated by
+     * normalized title with frequency and last-used timestamp. Used by the
+     * event-form autocomplete dropdown.
+     *
+     * Returns empty list when [visibleCalendarIds] is empty, permission is
+     * denied, or no events match.
+     *
+     * @param prefix Text the user has typed (no wildcards)
+     * @param sinceMs Cutoff (epoch ms); events with DTSTART older than this are ignored
+     * @param visibleCalendarIds Calendar IDs to include
+     * @param minFreq Minimum use count for a title to appear in results
+     * @param limit Max suggestions to return
+     */
+    suspend fun suggestTitlesByPrefix(
+        prefix: String,
+        sinceMs: Long,
+        visibleCalendarIds: Set<Long>,
+        minFreq: Int = 2,
+        limit: Int = 5
+    ): List<org.onekash.kashcal.data.db.dao.TitleSuggestion>
+
+    /**
      * Remove stored enabled calendar IDs that no longer exist in CalendarProvider.
      *
      * Handles uninstalled sync adapters, removed accounts, and deleted calendars.

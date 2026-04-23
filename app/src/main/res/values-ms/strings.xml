@@ -900,19 +900,25 @@
     <string name="cd_event_color">Warna acara</string>
     <string name="cd_checkmark">Dipilih</string>
     <string name="label_device_timezone">Zon waktu peranti</string>
-    <string name="color_tomato">Tomato</string>
-    <string name="color_orangered">Merah jingga</string>
-    <string name="color_darkorange">Jingga Gelap</string>
+    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
     <string name="color_gold">Emas</string>
     <string name="color_yellowgreen">Hijau Kuning</string>
-    <string name="color_limegreen">Hijau limau</string>
-    <string name="color_mediumseagreen">Hijau Laut Sederhana</string>
-    <string name="color_seagreen">Hijau laut</string>
-    <string name="color_lightseagreen">Hijau laut cerah</string>
+    <string name="color_limegreen">Hijau limau</string>    <string name="color_lightseagreen">Hijau laut cerah</string>
     <string name="color_dodgerblue">Biru dodger</string>
-    <string name="color_royalblue">Biru diraja</string>
-    <string name="color_mediumslateblue">Biru batu sederhana</string>
-    <string name="color_mediumorchid">Ungu Orkid Sederhana</string>
+    <string name="color_royalblue">Biru diraja</string>    <string name="color_mediumorchid">Ungu Orkid Sederhana</string>
     <string name="color_hotpink">Merah Jambu Terang</string>
     <string name="color_dimgray">Kelabu malap</string>
+    <string name="hue_red">Merah</string>
+    <string name="hue_orange">Jingga</string>
+    <string name="hue_yellow">Kuning</string>
+    <string name="hue_green">Hijau</string>
+    <string name="hue_teal">Hijau kebiruan</string>
+    <string name="hue_blue">Biru</string>
+    <string name="hue_purple">Ungu</string>
+    <string name="hue_pink">Merah jambu</string>
+    <string name="hue_brown">Coklat</string>
+    <string name="hue_neutral">Neutral</string>
+    <string name="label_more_colors">Lebih banyak warna</string>
+    <string name="label_back_to_grid">Kembali</string>
+    <string name="settings_suggest_titles">Cadangkan tajuk acara</string>
 </resources>

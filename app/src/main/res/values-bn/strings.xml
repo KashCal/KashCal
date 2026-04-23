@@ -825,19 +825,12 @@
     <string name="color_cyan">সায়ান</string>
     <string name="color_blue">নীল</string>
     <string name="color_purple">বেগুনি</string>
-    <string name="color_tomato">টমেটো</string>
-    <string name="color_orangered">কমলা লাল</string>
-    <string name="color_darkorange">গাঢ় কমলা</string>
+    <string name="color_tomato">টমেটো</string>    <string name="color_darkorange">গাঢ় কমলা</string>
     <string name="color_gold">সোনালি</string>
     <string name="color_yellowgreen">হলুদ সবুজ</string>
-    <string name="color_limegreen">লেবু সবুজ</string>
-    <string name="color_mediumseagreen">মাঝারি সামুদ্রিক সবুজ</string>
-    <string name="color_seagreen">সামুদ্রিক সবুজ</string>
-    <string name="color_lightseagreen">হালকা সামুদ্রিক সবুজ</string>
+    <string name="color_limegreen">লেবু সবুজ</string>    <string name="color_lightseagreen">হালকা সামুদ্রিক সবুজ</string>
     <string name="color_dodgerblue">ডজার নীল</string>
-    <string name="color_royalblue">রাজকীয় নীল</string>
-    <string name="color_mediumslateblue">মাঝারি স্লেট নীল</string>
-    <string name="color_mediumorchid">মাঝারি অর্কিড</string>
+    <string name="color_royalblue">রাজকীয় নীল</string>    <string name="color_mediumorchid">মাঝারি অর্কিড</string>
     <string name="color_hotpink">হট পিঙ্ক</string>
     <string name="color_dimgray">ম্লান ধূসর</string>
     <!-- Accessibility: link types -->
@@ -957,4 +950,17 @@
     <string name="label_custom">কাস্টম</string>
     <string name="cd_event_color">ইভেন্টের রঙ</string>
 
+    <string name="hue_red">লাল</string>
+    <string name="hue_orange">কমলা</string>
+    <string name="hue_yellow">হলুদ</string>
+    <string name="hue_green">সবুজ</string>
+    <string name="hue_teal">নীলাভ-সবুজ</string>
+    <string name="hue_blue">নীল</string>
+    <string name="hue_purple">বেগুনি</string>
+    <string name="hue_pink">গোলাপি</string>
+    <string name="hue_brown">বাদামি</string>
+    <string name="hue_neutral">নিরপেক্ষ</string>
+    <string name="label_more_colors">আরও রং</string>
+    <string name="label_back_to_grid">ফিরে যান</string>
+    <string name="settings_suggest_titles">ইভেন্টের শিরোনাম প্রস্তাব করুন</string>
 </resources>

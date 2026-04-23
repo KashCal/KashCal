@@ -989,20 +989,26 @@
     <string name="cd_checkmark">Selecionado</string>
 
     <!-- Event color palette (CSS3 color names) -->
-    <string name="color_tomato">Tomate</string>
-    <string name="color_orangered">Vermelho alaranjado</string>
-    <string name="color_darkorange">Laranja escuro</string>
+    <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranja escuro</string>
     <string name="color_gold">Dourado</string>
     <string name="color_yellowgreen">Verde-amarelado</string>
-    <string name="color_limegreen">Verde lima</string>
-    <string name="color_mediumseagreen">Verde-mar m\u00e9dio</string>
-    <string name="color_seagreen">Verde mar</string>
-    <string name="color_lightseagreen">Verde mar claro</string>
+    <string name="color_limegreen">Verde lima</string>    <string name="color_lightseagreen">Verde mar claro</string>
     <string name="color_dodgerblue">Azul Dodger</string>
-    <string name="color_royalblue">Azul real</string>
-    <string name="color_mediumslateblue">Azul ardósia médio</string>
-    <string name="color_mediumorchid">Orqu\u00eddea m\u00e9dio</string>
+    <string name="color_royalblue">Azul real</string>    <string name="color_mediumorchid">Orqu\u00eddea m\u00e9dio</string>
     <string name="color_hotpink">Rosa-choque</string>
     <string name="color_dimgray">Cinza escuro</string>
 
+    <string name="hue_red">Vermelho</string>
+    <string name="hue_orange">Laranja</string>
+    <string name="hue_yellow">Amarelo</string>
+    <string name="hue_green">Verde</string>
+    <string name="hue_teal">Verde-azulado</string>
+    <string name="hue_blue">Azul</string>
+    <string name="hue_purple">Roxo</string>
+    <string name="hue_pink">Rosa</string>
+    <string name="hue_brown">Marrom</string>
+    <string name="hue_neutral">Neutro</string>
+    <string name="label_more_colors">Mais cores</string>
+    <string name="label_back_to_grid">Voltar</string>
+    <string name="settings_suggest_titles">Sugerir títulos de eventos</string>
 </resources>

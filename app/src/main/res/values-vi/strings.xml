@@ -900,19 +900,25 @@
     <string name="cd_event_color">Màu sự kiện</string>
     <string name="cd_checkmark">Đã chọn</string>
     <string name="label_device_timezone">Múi giờ thiết bị</string>
-    <string name="color_tomato">Đỏ cà chua</string>
-    <string name="color_orangered">Đỏ cam</string>
-    <string name="color_darkorange">Cam đậm</string>
+    <string name="color_tomato">Đỏ cà chua</string>    <string name="color_darkorange">Cam đậm</string>
     <string name="color_gold">Vàng kim</string>
     <string name="color_yellowgreen">Vàng lục</string>
-    <string name="color_limegreen">Xanh chanh</string>
-    <string name="color_mediumseagreen">Lục biển trung</string>
-    <string name="color_seagreen">Xanh biển</string>
-    <string name="color_lightseagreen">Xanh biển nhạt</string>
+    <string name="color_limegreen">Xanh chanh</string>    <string name="color_lightseagreen">Xanh biển nhạt</string>
     <string name="color_dodgerblue">Xanh Dodger</string>
-    <string name="color_royalblue">Xanh hoàng gia</string>
-    <string name="color_mediumslateblue">Xanh đá phiến vừa</string>
-    <string name="color_mediumorchid">Tím lan trung</string>
+    <string name="color_royalblue">Xanh hoàng gia</string>    <string name="color_mediumorchid">Tím lan trung</string>
     <string name="color_hotpink">Hồng đậm</string>
     <string name="color_dimgray">Xám mờ</string>
+    <string name="hue_red">Đỏ</string>
+    <string name="hue_orange">Cam</string>
+    <string name="hue_yellow">Vàng</string>
+    <string name="hue_green">Xanh lá</string>
+    <string name="hue_teal">Xanh mòng két</string>
+    <string name="hue_blue">Xanh dương</string>
+    <string name="hue_purple">Tím</string>
+    <string name="hue_pink">Hồng</string>
+    <string name="hue_brown">Nâu</string>
+    <string name="hue_neutral">Trung tính</string>
+    <string name="label_more_colors">Thêm màu</string>
+    <string name="label_back_to_grid">Quay lại</string>
+    <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
 </resources>

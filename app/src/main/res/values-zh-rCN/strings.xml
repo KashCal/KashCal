@@ -900,19 +900,25 @@
     <string name="cd_event_color">日程颜色</string>
     <string name="cd_checkmark">已选择</string>
     <string name="label_device_timezone">设备时区</string>
-    <string name="color_tomato">西红柿</string>
-    <string name="color_orangered">橙红</string>
-    <string name="color_darkorange">深橙</string>
+    <string name="color_tomato">西红柿</string>    <string name="color_darkorange">深橙</string>
     <string name="color_gold">金</string>
     <string name="color_yellowgreen">黄绿</string>
-    <string name="color_limegreen">酸橙绿</string>
-    <string name="color_mediumseagreen">中海绿</string>
-    <string name="color_seagreen">海绿</string>
-    <string name="color_lightseagreen">浅海绿</string>
+    <string name="color_limegreen">酸橙绿</string>    <string name="color_lightseagreen">浅海绿</string>
     <string name="color_dodgerblue">道奇蓝</string>
-    <string name="color_royalblue">宝蓝</string>
-    <string name="color_mediumslateblue">中板岩蓝</string>
-    <string name="color_mediumorchid">中兰花紫</string>
+    <string name="color_royalblue">宝蓝</string>    <string name="color_mediumorchid">中兰花紫</string>
     <string name="color_hotpink">桃红</string>
     <string name="color_dimgray">暗灰</string>
+    <string name="hue_red">红色</string>
+    <string name="hue_orange">橙色</string>
+    <string name="hue_yellow">黄色</string>
+    <string name="hue_green">绿色</string>
+    <string name="hue_teal">蓝绿色</string>
+    <string name="hue_blue">蓝色</string>
+    <string name="hue_purple">紫色</string>
+    <string name="hue_pink">粉色</string>
+    <string name="hue_brown">棕色</string>
+    <string name="hue_neutral">中性色</string>
+    <string name="label_more_colors">更多颜色</string>
+    <string name="label_back_to_grid">返回</string>
+    <string name="settings_suggest_titles">建议事件标题</string>
 </resources>

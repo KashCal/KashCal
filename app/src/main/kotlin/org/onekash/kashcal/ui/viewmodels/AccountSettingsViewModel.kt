@@ -279,6 +279,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _quickAddEnabled = MutableStateFlow(false)
     val quickAddEnabled: StateFlow<Boolean> = _quickAddEnabled.asStateFlow()
 
+    private val _titleSuggestionsEnabled = MutableStateFlow(true)
+    val titleSuggestionsEnabled: StateFlow<Boolean> = _titleSuggestionsEnabled.asStateFlow()
+
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
 
@@ -611,6 +614,11 @@ class AccountSettingsViewModel @Inject constructor(
                 _quickAddEnabled.value = enabled
             }
         }
+        viewModelScope.launch {
+            dataStore.titleSuggestionsEnabled.collect { enabled ->
+                _titleSuggestionsEnabled.value = enabled
+            }
+        }
     }
 
     /**
@@ -625,6 +633,12 @@ class AccountSettingsViewModel @Inject constructor(
     fun setQuickAddEnabled(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setQuickAddEnabled(enabled)
+        }
+    }
+
+    fun setTitleSuggestionsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            dataStore.setTitleSuggestionsEnabled(enabled)
         }
     }
 

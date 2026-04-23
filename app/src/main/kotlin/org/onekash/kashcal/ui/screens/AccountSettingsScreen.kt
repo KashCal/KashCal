@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Check
@@ -220,6 +221,8 @@ fun AccountSettingsScreen(
     onShowEventEmojisChange: (Boolean) -> Unit = {},
     quickAddEnabled: Boolean = false,
     onQuickAddEnabledChange: (Boolean) -> Unit = {},
+    titleSuggestionsEnabled: Boolean = true,
+    onTitleSuggestionsEnabledChange: (Boolean) -> Unit = {},
     timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     onTimeFormatChange: (String) -> Unit = {},
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
@@ -308,6 +311,8 @@ fun AccountSettingsScreen(
                     onShowEventEmojisChange = onShowEventEmojisChange,
                     quickAddEnabled = quickAddEnabled,
                     onQuickAddEnabledChange = onQuickAddEnabledChange,
+                    titleSuggestionsEnabled = titleSuggestionsEnabled,
+                    onTitleSuggestionsEnabledChange = onTitleSuggestionsEnabledChange,
                     timeFormat = timeFormat,
                     onTimeFormatChange = onTimeFormatChange,
                     firstDayOfWeek = firstDayOfWeek,
@@ -440,6 +445,8 @@ private fun FlatSettingsContent(
     onShowEventEmojisChange: (Boolean) -> Unit,
     quickAddEnabled: Boolean,
     onQuickAddEnabledChange: (Boolean) -> Unit,
+    titleSuggestionsEnabled: Boolean,
+    onTitleSuggestionsEnabledChange: (Boolean) -> Unit,
     timeFormat: String,
     onTimeFormatChange: (String) -> Unit,
     firstDayOfWeek: Int,
@@ -587,6 +594,12 @@ private fun FlatSettingsContent(
                 subtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
                 badge = { NewBadge() },
                 onClick = { onQuickAddEnabledChange(!quickAddEnabled) }
+            )
+            SettingsRow(
+                icon = Icons.Default.History,
+                label = stringResource(R.string.settings_suggest_titles),
+                subtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) }
             )
             SettingsRow(
                 icon = Icons.Default.SentimentSatisfied,

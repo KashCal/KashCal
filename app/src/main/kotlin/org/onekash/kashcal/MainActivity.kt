@@ -827,6 +827,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         locationSuggestionService = locationSuggestionService,
+                        onSuggestTitles = { prefix -> homeViewModel.suggestTitles(prefix) },
                         timeFormat = uiState.timeFormat,
                         firstDayOfWeek = uiState.firstDayOfWeek,
                         // Device calendar edit support

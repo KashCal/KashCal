@@ -857,19 +857,12 @@
     <string name="color_cyan">Блакитний</string>
     <string name="color_blue">Синій</string>
     <string name="color_purple">Фіолетовий</string>
-    <string name="color_tomato">Томатний</string>
-    <string name="color_orangered">Оранжево-червоний</string>
-    <string name="color_darkorange">Темно-помаранчевий</string>
+    <string name="color_tomato">Томатний</string>    <string name="color_darkorange">Темно-помаранчевий</string>
     <string name="color_gold">Золотий</string>
     <string name="color_yellowgreen">Жовто-зелений</string>
-    <string name="color_limegreen">Лаймовий</string>
-    <string name="color_mediumseagreen">Морський зелений</string>
-    <string name="color_seagreen">Морський зелений</string>
-    <string name="color_lightseagreen">Світло-морський зелений</string>
+    <string name="color_limegreen">Лаймовий</string>    <string name="color_lightseagreen">Світло-морський зелений</string>
     <string name="color_dodgerblue">Яскраво-синій</string>
-    <string name="color_royalblue">Королівський синій</string>
-    <string name="color_mediumslateblue">Середній синьо-бузковий</string>
-    <string name="color_mediumorchid">Світло-орхідний</string>
+    <string name="color_royalblue">Королівський синій</string>    <string name="color_mediumorchid">Світло-орхідний</string>
     <string name="color_hotpink">Яскраво-рожевий</string>
     <string name="color_dimgray">Темно-сірий</string>
     <string name="cd_meeting_link">Посилання на зустріч: %1$s</string>
@@ -981,4 +974,17 @@
     <string name="label_calendar_default">За замовчуванням</string>
     <string name="label_custom">Власний</string>
     <string name="cd_event_color">Колір події</string>
+    <string name="hue_red">Червоний</string>
+    <string name="hue_orange">Помаранчевий</string>
+    <string name="hue_yellow">Жовтий</string>
+    <string name="hue_green">Зелений</string>
+    <string name="hue_teal">Синьо-зелений</string>
+    <string name="hue_blue">Синій</string>
+    <string name="hue_purple">Фіолетовий</string>
+    <string name="hue_pink">Рожевий</string>
+    <string name="hue_brown">Коричневий</string>
+    <string name="hue_neutral">Нейтральний</string>
+    <string name="label_more_colors">Більше кольорів</string>
+    <string name="label_back_to_grid">Назад</string>
+    <string name="settings_suggest_titles">Пропонувати назви подій</string>
 </resources>

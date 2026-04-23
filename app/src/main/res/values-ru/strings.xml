@@ -857,19 +857,12 @@
     <string name="color_cyan">Голубой</string>
     <string name="color_blue">Синий</string>
     <string name="color_purple">Фиолетовый</string>
-    <string name="color_tomato">Томатный</string>
-    <string name="color_orangered">Оранжево-красный</string>
-    <string name="color_darkorange">Тёмно-оранжевый</string>
+    <string name="color_tomato">Томатный</string>    <string name="color_darkorange">Тёмно-оранжевый</string>
     <string name="color_gold">Золотой</string>
     <string name="color_yellowgreen">Жёлто-зелёный</string>
-    <string name="color_limegreen">Лаймовый</string>
-    <string name="color_mediumseagreen">Среднеморской</string>
-    <string name="color_seagreen">Морской зелёный</string>
-    <string name="color_lightseagreen">Светлый морской зелёный</string>
+    <string name="color_limegreen">Лаймовый</string>    <string name="color_lightseagreen">Светлый морской зелёный</string>
     <string name="color_dodgerblue">Ярко-синий</string>
-    <string name="color_royalblue">Королевский синий</string>
-    <string name="color_mediumslateblue">Средний сине-сиреневый</string>
-    <string name="color_mediumorchid">Средний орхидный</string>
+    <string name="color_royalblue">Королевский синий</string>    <string name="color_mediumorchid">Средний орхидный</string>
     <string name="color_hotpink">Розовый</string>
     <string name="color_dimgray">Тёмно-серый</string>
     <string name="cd_meeting_link">Ссылка на встречу: %1$s</string>
@@ -981,4 +974,17 @@
     <string name="label_calendar_default">По умолчанию</string>
     <string name="label_custom">Свой</string>
     <string name="cd_event_color">Цвет события</string>
+    <string name="hue_red">Красный</string>
+    <string name="hue_orange">Оранжевый</string>
+    <string name="hue_yellow">Жёлтый</string>
+    <string name="hue_green">Зелёный</string>
+    <string name="hue_teal">Сине-зелёный</string>
+    <string name="hue_blue">Синий</string>
+    <string name="hue_purple">Фиолетовый</string>
+    <string name="hue_pink">Розовый</string>
+    <string name="hue_brown">Коричневый</string>
+    <string name="hue_neutral">Нейтральный</string>
+    <string name="label_more_colors">Больше цветов</string>
+    <string name="label_back_to_grid">Назад</string>
+    <string name="settings_suggest_titles">Предлагать названия событий</string>
 </resources>

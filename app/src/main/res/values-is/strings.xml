@@ -944,19 +944,25 @@
     <string name="label_calendar_default">Sjálfgefið dagatals</string>
     <string name="label_custom">Sérsniðið</string>
     <string name="cd_event_color">Litur viðburðar</string>
-    <string name="color_tomato">Tómatur</string>
-    <string name="color_orangered">Appelsínurauður</string>
-    <string name="color_darkorange">Dökkappelsínugulur</string>
+    <string name="color_tomato">Tómatur</string>    <string name="color_darkorange">Dökkappelsínugulur</string>
     <string name="color_gold">Gull</string>
     <string name="color_yellowgreen">Gulgrænn</string>
-    <string name="color_limegreen">Límónugrænn</string>
-    <string name="color_mediumseagreen">Sjávargrænn</string>
-    <string name="color_seagreen">Hafgrænn</string>
-    <string name="color_lightseagreen">Ljós hafgrænn</string>
+    <string name="color_limegreen">Límónugrænn</string>    <string name="color_lightseagreen">Ljós hafgrænn</string>
     <string name="color_dodgerblue">Dodger blár</string>
-    <string name="color_royalblue">Konungsblár</string>
-    <string name="color_mediumslateblue">Miðlungs flögublár</string>
-    <string name="color_mediumorchid">Orkideulitur</string>
+    <string name="color_royalblue">Konungsblár</string>    <string name="color_mediumorchid">Orkideulitur</string>
     <string name="color_hotpink">Heitbleikur</string>
     <string name="color_dimgray">Daufur grár</string>
+    <string name="hue_red">Rauður</string>
+    <string name="hue_orange">Appelsínugulur</string>
+    <string name="hue_yellow">Gulur</string>
+    <string name="hue_green">Grænn</string>
+    <string name="hue_teal">Blágrænn</string>
+    <string name="hue_blue">Blár</string>
+    <string name="hue_purple">Fjólublár</string>
+    <string name="hue_pink">Bleikur</string>
+    <string name="hue_brown">Brúnn</string>
+    <string name="hue_neutral">Hlutlaus</string>
+    <string name="label_more_colors">Fleiri litir</string>
+    <string name="label_back_to_grid">Til baka</string>
+    <string name="settings_suggest_titles">Stinga upp á heiti atburða</string>
 </resources>

@@ -1284,7 +1284,8 @@ class IcsPatcherTest {
         val event = events.first()
 
         assertNotNull("Should have COLOR", event.color)
-        assertEquals("#FF0000", event.color)
+        // Pure red maps to CSS3 "red" in the wheel palette → emitted as the name
+        assertEquals("red", event.color)
     }
 
     @Test
@@ -1365,7 +1366,7 @@ class IcsPatcherTest {
         assertEquals("Updated Event", event.summary)
         assertEquals(1, event.priority)
         assertTrue("GEO should be updated", event.geo?.contains("40.7128") == true)
-        assertEquals("#FF0000", event.color)
+        assertEquals("red", event.color)
         assertEquals("https://new.example.com", event.url)
         assertEquals(2, event.categories.size)
         assertTrue(event.categories.contains("NEW"))
@@ -1403,7 +1404,8 @@ class IcsPatcherTest {
 
         assertEquals(2, parsedException.priority)
         assertNotNull("Exception should have GEO", parsedException.geo)
-        assertEquals("#00FF00", parsedException.color)
+        // 0xFF00FF00 maps to CSS3 "lime" in the wheel palette → emitted as the name
+        assertEquals("lime", parsedException.color)
         assertEquals("https://special.example.com", parsedException.url)
         assertEquals(2, parsedException.categories.size)
     }

@@ -953,20 +953,26 @@
     <string name="label_device_timezone">Часова зона на устройството</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Доматено червено</string>
-    <string name="color_orangered">Оранжево-червено</string>
-    <string name="color_darkorange">Тъмнооранжево</string>
+    <string name="color_tomato">Доматено червено</string>    <string name="color_darkorange">Тъмнооранжево</string>
     <string name="color_gold">Златисто</string>
     <string name="color_yellowgreen">Жълто-зелено</string>
-    <string name="color_limegreen">Лаймово зелено</string>
-    <string name="color_mediumseagreen">Средно морско зелено</string>
-    <string name="color_seagreen">Морско зелено</string>
-    <string name="color_lightseagreen">Светло морско зелено</string>
+    <string name="color_limegreen">Лаймово зелено</string>    <string name="color_lightseagreen">Светло морско зелено</string>
     <string name="color_dodgerblue">Яркосиньо</string>
-    <string name="color_royalblue">Кралско синьо</string>
-    <string name="color_mediumslateblue">Средно шиферно синьо</string>
-    <string name="color_mediumorchid">Средно орхидея</string>
+    <string name="color_royalblue">Кралско синьо</string>    <string name="color_mediumorchid">Средно орхидея</string>
     <string name="color_hotpink">Ярко розово</string>
     <string name="color_dimgray">Тъмносиво</string>
 
+    <string name="hue_red">Червено</string>
+    <string name="hue_orange">Оранжево</string>
+    <string name="hue_yellow">Жълто</string>
+    <string name="hue_green">Зелено</string>
+    <string name="hue_teal">Синьо-зелено</string>
+    <string name="hue_blue">Синьо</string>
+    <string name="hue_purple">Лилаво</string>
+    <string name="hue_pink">Розово</string>
+    <string name="hue_brown">Кафяво</string>
+    <string name="hue_neutral">Неутрално</string>
+    <string name="label_more_colors">Още цветове</string>
+    <string name="label_back_to_grid">Назад</string>
+    <string name="settings_suggest_titles">Предлагай заглавия на събития</string>
 </resources>

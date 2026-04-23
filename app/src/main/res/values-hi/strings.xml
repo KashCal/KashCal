@@ -825,19 +825,12 @@
     <string name="color_cyan">सियान</string>
     <string name="color_blue">नीला</string>
     <string name="color_purple">बैंगनी</string>
-    <string name="color_tomato">टमाटर</string>
-    <string name="color_orangered">नारंगी लाल</string>
-    <string name="color_darkorange">गहरा नारंगी</string>
+    <string name="color_tomato">टमाटर</string>    <string name="color_darkorange">गहरा नारंगी</string>
     <string name="color_gold">सुनहरा</string>
     <string name="color_yellowgreen">पीला हरा</string>
-    <string name="color_limegreen">नींबू हरा</string>
-    <string name="color_mediumseagreen">मध्यम समुद्री हरा</string>
-    <string name="color_seagreen">समुद्री हरा</string>
-    <string name="color_lightseagreen">हल्का समुद्री हरा</string>
+    <string name="color_limegreen">नींबू हरा</string>    <string name="color_lightseagreen">हल्का समुद्री हरा</string>
     <string name="color_dodgerblue">डॉजर नीला</string>
-    <string name="color_royalblue">शाही नीला</string>
-    <string name="color_mediumslateblue">मध्यम स्लेट नीला</string>
-    <string name="color_mediumorchid">मध्यम आर्किड</string>
+    <string name="color_royalblue">शाही नीला</string>    <string name="color_mediumorchid">मध्यम आर्किड</string>
     <string name="color_hotpink">हॉट पिंक</string>
     <string name="color_dimgray">धुंधला ग्रे</string>
     <!-- Accessibility: link types -->
@@ -957,4 +950,17 @@
     <string name="label_custom">कस्टम</string>
     <string name="cd_event_color">इवेंट का रंग</string>
 
+    <string name="hue_red">लाल</string>
+    <string name="hue_orange">नारंगी</string>
+    <string name="hue_yellow">पीला</string>
+    <string name="hue_green">हरा</string>
+    <string name="hue_teal">नीला-हरा</string>
+    <string name="hue_blue">नीला</string>
+    <string name="hue_purple">बैंगनी</string>
+    <string name="hue_pink">गुलाबी</string>
+    <string name="hue_brown">भूरा</string>
+    <string name="hue_neutral">तटस्थ</string>
+    <string name="label_more_colors">और रंग</string>
+    <string name="label_back_to_grid">वापस</string>
+    <string name="settings_suggest_titles">कार्यक्रम शीर्षक सुझाएँ</string>
 </resources>

@@ -926,20 +926,26 @@
     <string name="cd_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
     <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
     <string name="label_device_timezone">ਡਿਵਾਈਸ ਸਮਾਂ ਖੇਤਰ</string>
-    <string name="color_tomato">ਟਮਾਟਰ</string>
-    <string name="color_orangered">ਸੰਤਰੀ-ਲਾਲ</string>
-    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
+    <string name="color_tomato">ਟਮਾਟਰ</string>    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
     <string name="color_gold">ਸੁਨਹਿਰੀ</string>
     <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>
-    <string name="color_limegreen">ਨਿੰਬੂ ਹਰਾ</string>
-    <string name="color_mediumseagreen">ਦਰਮਿਆਨਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
-    <string name="color_seagreen">ਸਮੁੰਦਰੀ ਹਰਾ</string>
-    <string name="color_lightseagreen">ਹਲਕਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
+    <string name="color_limegreen">ਨਿੰਬੂ ਹਰਾ</string>    <string name="color_lightseagreen">ਹਲਕਾ ਸਮੁੰਦਰੀ ਹਰਾ</string>
     <string name="color_dodgerblue">ਡੌਜਰ ਨੀਲਾ</string>
-    <string name="color_royalblue">ਸ਼ਾਹੀ ਨੀਲਾ</string>
-    <string name="color_mediumslateblue">ਦਰਮਿਆਨਾ ਸਲੇਟੀ ਨੀਲਾ</string>
-    <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
+    <string name="color_royalblue">ਸ਼ਾਹੀ ਨੀਲਾ</string>    <string name="color_mediumorchid">ਦਰਮਿਆਨਾ ਆਰਕਿਡ</string>
     <string name="color_hotpink">ਚਮਕਦਾਰ ਗੁਲਾਬੀ</string>
     <string name="color_dimgray">ਮੱਧਮ ਸੁਰਮਈ</string>
 
+    <string name="hue_red">ਲਾਲ</string>
+    <string name="hue_orange">ਸੰਤਰੀ</string>
+    <string name="hue_yellow">ਪੀਲਾ</string>
+    <string name="hue_green">ਹਰਾ</string>
+    <string name="hue_teal">ਨੀਲਾ-ਹਰਾ</string>
+    <string name="hue_blue">ਨੀਲਾ</string>
+    <string name="hue_purple">ਜਾਮਨੀ</string>
+    <string name="hue_pink">ਗੁਲਾਬੀ</string>
+    <string name="hue_brown">ਭੂਰਾ</string>
+    <string name="hue_neutral">ਨਿਰਪੱਖ</string>
+    <string name="label_more_colors">ਹੋਰ ਰੰਗ</string>
+    <string name="label_back_to_grid">ਵਾਪਸ</string>
+    <string name="settings_suggest_titles">ਇਵੈਂਟ ਟਾਇਟਲ ਸੁਝਾਓ</string>
 </resources>

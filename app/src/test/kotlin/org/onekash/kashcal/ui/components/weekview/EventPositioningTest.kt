@@ -551,6 +551,112 @@ class EventPositioningTest {
         assertEquals(0, endDayPositioned.size)
     }
 
+    // ==================== Regression: Issue #175 ====================
+
+    @Test
+    fun `long event with two disjoint shorter events all get slots`() {
+        // Regression for github.com/KashCal/KashCal/issues/175 (positioning layer)
+        // Event 1: 11:00-23:00 (spans most of the day)
+        // Event 2: 13:00-14:00 (inside event 1, disjoint from event 3)
+        // Event 3: 15:00-16:00 (inside event 1, disjoint from event 2)
+        // Expected: all three positioned — event 2 and event 3 share a slot next to event 1.
+        val date = LocalDate.now()
+        val e1 = toDisplayEvent(
+            createTestEvent(id = 1, title = "Event 1"),
+            createTestOccurrence(eventId = 1, startHour = 11, endHour = 23, date = date)
+        )
+        val e2 = toDisplayEvent(
+            createTestEvent(id = 2, title = "Event 2"),
+            createTestOccurrence(eventId = 2, startHour = 13, endHour = 14, date = date)
+        )
+        val e3 = toDisplayEvent(
+            createTestEvent(id = 3, title = "Event 3"),
+            createTestOccurrence(eventId = 3, startHour = 15, endHour = 16, date = date)
+        )
+
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(e1, e2, e3), date = date, dayIndex = 0
+        )
+
+        assertEquals(3, positioned.size)
+
+        val byTitle = positioned.associateBy { it.displayEvent.title }
+        val p1 = byTitle["Event 1"]!!
+        val p2 = byTitle["Event 2"]!!
+        val p3 = byTitle["Event 3"]!!
+
+        // Two slots total: long event in one, both short events share the other.
+        assertEquals(2, p1.overlapTotal)
+        assertEquals(2, p2.overlapTotal)
+        assertEquals(2, p3.overlapTotal)
+
+        // Long event owns slot 0, short events share slot 1.
+        assertEquals(0, p1.overlapIndex)
+        assertEquals(1, p2.overlapIndex)
+        assertEquals(1, p3.overlapIndex)
+
+        // Half-width side by side.
+        assertEquals(0.5f, p1.widthFraction, 0.01f)
+        assertEquals(0.5f, p2.widthFraction, 0.01f)
+        assertEquals(0.5f, p3.widthFraction, 0.01f)
+    }
+
+    @Test
+    fun `groupForDisplay shows all events that fit within slot cap with no overflow`() {
+        // Regression for github.com/KashCal/KashCal/issues/175 (display layer)
+        // With MAX_VISIBLE_OVERLAP = 2, three events fitting in 2 slots must ALL be visible.
+        val date = LocalDate.now()
+        val positioned = WeekViewUtils.positionEventsForDay(
+            listOf(
+                toDisplayEvent(
+                    createTestEvent(id = 1, title = "Event 1"),
+                    createTestOccurrence(eventId = 1, startHour = 11, endHour = 23, date = date)
+                ),
+                toDisplayEvent(
+                    createTestEvent(id = 2, title = "Event 2"),
+                    createTestOccurrence(eventId = 2, startHour = 13, endHour = 14, date = date)
+                ),
+                toDisplayEvent(
+                    createTestEvent(id = 3, title = "Event 3"),
+                    createTestOccurrence(eventId = 3, startHour = 15, endHour = 16, date = date)
+                )
+            ),
+            date = date, dayIndex = 0
+        )
+
+        val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned)
+
+        assertEquals("All three events fit in 2 slots; no overflow expected", 0, overflow)
+        assertEquals(3, visible.size)
+        val titles = visible.map { it.displayEvent.title }.toSet()
+        assertEquals(setOf("Event 1", "Event 2", "Event 3"), titles)
+    }
+
+    @Test
+    fun `groupForDisplay overflows events in slots beyond cap`() {
+        // Four events fully overlapping at 9-10am: 4 slots required, cap is 2.
+        // Events in slots 0-1 visible, events in slots 2-3 go to overflow.
+        val date = LocalDate.now()
+        val positioned = WeekViewUtils.positionEventsForDay(
+            (1..4).map { id ->
+                toDisplayEvent(
+                    createTestEvent(id = id.toLong(), title = "Event $id"),
+                    createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10, date = date)
+                )
+            },
+            date = date, dayIndex = 0
+        )
+
+        val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned)
+
+        assertEquals(2, overflow)
+        assertEquals(2, visible.size)
+        visible.forEach { pos ->
+            assertTrue("Visible events must be in slots below the cap",
+                pos.overlapIndex < WeekViewUtils.MAX_VISIBLE_OVERLAP)
+        }
+    }
+
     // ==================== Exception Event Tests ====================
 
     @Test

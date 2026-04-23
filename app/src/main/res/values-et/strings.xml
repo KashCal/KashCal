@@ -788,19 +788,12 @@
     <string name="color_cyan">Tsüaan</string>
     <string name="color_blue">Sinine</string>
     <string name="color_purple">Lilla</string>
-    <string name="color_tomato">Tomat</string>
-    <string name="color_orangered">Oranžpunane</string>
-    <string name="color_darkorange">Tumeoranž</string>
+    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Tumeoranž</string>
     <string name="color_gold">Kuldne</string>
     <string name="color_yellowgreen">Kollakasroheline</string>
-    <string name="color_limegreen">Laimiroheline</string>
-    <string name="color_mediumseagreen">Mereroheline</string>
-    <string name="color_seagreen">Meriroheline</string>
-    <string name="color_lightseagreen">Hele meriroheline</string>
+    <string name="color_limegreen">Laimiroheline</string>    <string name="color_lightseagreen">Hele meriroheline</string>
     <string name="color_dodgerblue">Erksinine</string>
-    <string name="color_royalblue">Kuninglik sinine</string>
-    <string name="color_mediumslateblue">Keskmine kiltkivi sinine</string>
-    <string name="color_mediumorchid">Orhidee</string>
+    <string name="color_royalblue">Kuninglik sinine</string>    <string name="color_mediumorchid">Orhidee</string>
     <string name="color_hotpink">Erkroosa</string>
     <string name="color_dimgray">Hall tuhm</string>
     <string name="cd_meeting_link">Koosoleku link: %1$s</string>
@@ -911,4 +904,17 @@
     <string name="label_custom">Kohandatud</string>
     <string name="cd_event_color">Sündmuse värvus</string>
 
+    <string name="hue_red">Punane</string>
+    <string name="hue_orange">Oranž</string>
+    <string name="hue_yellow">Kollane</string>
+    <string name="hue_green">Roheline</string>
+    <string name="hue_teal">Sinakasroheline</string>
+    <string name="hue_blue">Sinine</string>
+    <string name="hue_purple">Lilla</string>
+    <string name="hue_pink">Roosa</string>
+    <string name="hue_brown">Pruun</string>
+    <string name="hue_neutral">Neutraalne</string>
+    <string name="label_more_colors">Rohkem värve</string>
+    <string name="label_back_to_grid">Tagasi</string>
+    <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
 </resources>

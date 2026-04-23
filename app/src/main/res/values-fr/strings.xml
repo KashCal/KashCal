@@ -989,20 +989,26 @@
     <string name="cd_checkmark">S\u00e9lectionn\u00e9</string>
 
     <!-- Event color palette (CSS3 color names) -->
-    <string name="color_tomato">Tomate</string>
-    <string name="color_orangered">Rouge orangé</string>
-    <string name="color_darkorange">Orange fonc\u00e9</string>
+    <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Orange fonc\u00e9</string>
     <string name="color_gold">Or</string>
     <string name="color_yellowgreen">Vert jaune</string>
-    <string name="color_limegreen">Vert citron</string>
-    <string name="color_mediumseagreen">Vert marin moyen</string>
-    <string name="color_seagreen">Vert de mer</string>
-    <string name="color_lightseagreen">Vert de mer clair</string>
+    <string name="color_limegreen">Vert citron</string>    <string name="color_lightseagreen">Vert de mer clair</string>
     <string name="color_dodgerblue">Bleu Dodger</string>
-    <string name="color_royalblue">Bleu royal</string>
-    <string name="color_mediumslateblue">Bleu ardoise moyen</string>
-    <string name="color_mediumorchid">Orchid\u00e9e moyen</string>
+    <string name="color_royalblue">Bleu royal</string>    <string name="color_mediumorchid">Orchid\u00e9e moyen</string>
     <string name="color_hotpink">Rose vif</string>
     <string name="color_dimgray">Gris tamisé</string>
 
+    <string name="hue_red">Rouge</string>
+    <string name="hue_orange">Orange</string>
+    <string name="hue_yellow">Jaune</string>
+    <string name="hue_green">Vert</string>
+    <string name="hue_teal">Sarcelle</string>
+    <string name="hue_blue">Bleu</string>
+    <string name="hue_purple">Violet</string>
+    <string name="hue_pink">Rose</string>
+    <string name="hue_brown">Marron</string>
+    <string name="hue_neutral">Neutre</string>
+    <string name="label_more_colors">Plus de couleurs</string>
+    <string name="label_back_to_grid">Retour</string>
+    <string name="settings_suggest_titles">Suggérer des titres d\'événements</string>
 </resources>

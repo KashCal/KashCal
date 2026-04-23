@@ -310,6 +310,15 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.QUICK_ADD_ENABLED, enabled)
     }
 
+    val titleSuggestionsEnabled: Flow<Boolean>
+        get() = getPreference(PreferencesKeys.TITLE_SUGGESTIONS_ENABLED, true)
+
+    suspend fun getTitleSuggestionsEnabled(): Boolean = titleSuggestionsEnabled.first()
+
+    suspend fun setTitleSuggestionsEnabled(enabled: Boolean) {
+        setPreference(PreferencesKeys.TITLE_SUGGESTIONS_ENABLED, enabled)
+    }
+
     // ========== Display Settings ==========
 
     /**

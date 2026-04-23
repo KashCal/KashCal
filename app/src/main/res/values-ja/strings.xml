@@ -900,19 +900,25 @@
     <string name="cd_event_color">予定の色</string>
     <string name="cd_checkmark">選択済み</string>
     <string name="label_device_timezone">デバイスのタイムゾーン</string>
-    <string name="color_tomato">トマト</string>
-    <string name="color_orangered">オレンジレッド</string>
-    <string name="color_darkorange">ダークオレンジ</string>
+    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
     <string name="color_gold">ゴールド</string>
     <string name="color_yellowgreen">イエローグリーン</string>
-    <string name="color_limegreen">ライムグリーン</string>
-    <string name="color_mediumseagreen">ミディアムシーグリーン</string>
-    <string name="color_seagreen">シーグリーン</string>
-    <string name="color_lightseagreen">ライトシーグリーン</string>
+    <string name="color_limegreen">ライムグリーン</string>    <string name="color_lightseagreen">ライトシーグリーン</string>
     <string name="color_dodgerblue">ドジャーブルー</string>
-    <string name="color_royalblue">ロイヤルブルー</string>
-    <string name="color_mediumslateblue">ミディアムスレートブルー</string>
-    <string name="color_mediumorchid">ミディアムオーキッド</string>
+    <string name="color_royalblue">ロイヤルブルー</string>    <string name="color_mediumorchid">ミディアムオーキッド</string>
     <string name="color_hotpink">ホットピンク</string>
     <string name="color_dimgray">ディムグレー</string>
+    <string name="hue_red">赤</string>
+    <string name="hue_orange">オレンジ</string>
+    <string name="hue_yellow">黄</string>
+    <string name="hue_green">緑</string>
+    <string name="hue_teal">青緑</string>
+    <string name="hue_blue">青</string>
+    <string name="hue_purple">紫</string>
+    <string name="hue_pink">ピンク</string>
+    <string name="hue_brown">茶</string>
+    <string name="hue_neutral">ニュートラル</string>
+    <string name="label_more_colors">その他の色</string>
+    <string name="label_back_to_grid">戻る</string>
+    <string name="settings_suggest_titles">イベントのタイトルを提案</string>
 </resources>

@@ -823,19 +823,12 @@
     <string name="color_cyan">Ciāns</string>
     <string name="color_blue">Zils</string>
     <string name="color_purple">Violets</string>
-    <string name="color_tomato">Tomātu</string>
-    <string name="color_orangered">Oranži sarkana</string>
-    <string name="color_darkorange">Tumši oranžs</string>
+    <string name="color_tomato">Tomātu</string>    <string name="color_darkorange">Tumši oranžs</string>
     <string name="color_gold">Zelta</string>
     <string name="color_yellowgreen">Dzelteni zaļš</string>
-    <string name="color_limegreen">Laima zaļa</string>
-    <string name="color_mediumseagreen">Jūras zaļš</string>
-    <string name="color_seagreen">Jūras zaļa</string>
-    <string name="color_lightseagreen">Gaiši jūras zaļa</string>
+    <string name="color_limegreen">Laima zaļa</string>    <string name="color_lightseagreen">Gaiši jūras zaļa</string>
     <string name="color_dodgerblue">Spilgti zila</string>
-    <string name="color_royalblue">Karaliski zila</string>
-    <string name="color_mediumslateblue">Vidēji šīfera zila</string>
-    <string name="color_mediumorchid">Orhideju</string>
+    <string name="color_royalblue">Karaliski zila</string>    <string name="color_mediumorchid">Orhideju</string>
     <string name="color_hotpink">Koši rozā</string>
     <string name="color_dimgray">Tumši pelēka</string>
     <string name="cd_meeting_link">Sapulces saite: %1$s</string>
@@ -948,4 +941,17 @@
     <string name="label_custom">Pielāgota</string>
     <string name="cd_event_color">Notikuma krāsa</string>
 
+    <string name="hue_red">Sarkana</string>
+    <string name="hue_orange">Oranža</string>
+    <string name="hue_yellow">Dzeltena</string>
+    <string name="hue_green">Zaļa</string>
+    <string name="hue_teal">Zilzaļa</string>
+    <string name="hue_blue">Zila</string>
+    <string name="hue_purple">Violeta</string>
+    <string name="hue_pink">Rozā</string>
+    <string name="hue_brown">Brūna</string>
+    <string name="hue_neutral">Neitrāla</string>
+    <string name="label_more_colors">Vairāk krāsu</string>
+    <string name="label_back_to_grid">Atpakaļ</string>
+    <string name="settings_suggest_titles">Ieteikt notikumu nosaukumus</string>
 </resources>

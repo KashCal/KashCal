@@ -942,19 +942,25 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Eigendefinert</string>
     <string name="cd_event_color">Hendingsfarge</string>
-    <string name="color_tomato">Tomat</string>
-    <string name="color_orangered">Oransjeraud</string>
-    <string name="color_darkorange">Mørk oransje</string>
+    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørk oransje</string>
     <string name="color_gold">Gull</string>
     <string name="color_yellowgreen">Gulgrøn</string>
-    <string name="color_limegreen">Limegrøn</string>
-    <string name="color_mediumseagreen">Sjøgrøn</string>
-    <string name="color_seagreen">Havgrøn</string>
-    <string name="color_lightseagreen">Ljos havgrøn</string>
+    <string name="color_limegreen">Limegrøn</string>    <string name="color_lightseagreen">Ljos havgrøn</string>
     <string name="color_dodgerblue">Dodgerblå</string>
-    <string name="color_royalblue">Kongeblå</string>
-    <string name="color_mediumslateblue">Middels skiferblå</string>
-    <string name="color_mediumorchid">Orkidé</string>
+    <string name="color_royalblue">Kongeblå</string>    <string name="color_mediumorchid">Orkidé</string>
     <string name="color_hotpink">Knallrosa</string>
     <string name="color_dimgray">Matt grå</string>
+    <string name="hue_red">Raud</string>
+    <string name="hue_orange">Oransje</string>
+    <string name="hue_yellow">Gul</string>
+    <string name="hue_green">Grøn</string>
+    <string name="hue_teal">Blågrøn</string>
+    <string name="hue_blue">Blå</string>
+    <string name="hue_purple">Lilla</string>
+    <string name="hue_pink">Rosa</string>
+    <string name="hue_brown">Brun</string>
+    <string name="hue_neutral">Nøytral</string>
+    <string name="label_more_colors">Fleire fargar</string>
+    <string name="label_back_to_grid">Tilbake</string>
+    <string name="settings_suggest_titles">Foreslå hendelsestitlar</string>
 </resources>

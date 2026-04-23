@@ -954,19 +954,25 @@
     <string name="cd_checkmark">Gekies</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
-    <string name="color_tomato">Tamatie</string>
-    <string name="color_orangered">Oranjerooi</string>
-    <string name="color_darkorange">Donker oranje</string>
+    <string name="color_tomato">Tamatie</string>    <string name="color_darkorange">Donker oranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>
-    <string name="color_limegreen">Lemmetjiegroen</string>
-    <string name="color_mediumseagreen">Medium seegroen</string>
-    <string name="color_seagreen">Seegroen</string>
-    <string name="color_lightseagreen">Ligte seegroen</string>
+    <string name="color_limegreen">Lemmetjiegroen</string>    <string name="color_lightseagreen">Ligte seegroen</string>
     <string name="color_dodgerblue">Dodgerblou</string>
-    <string name="color_royalblue">Koninklikblou</string>
-    <string name="color_mediumslateblue">Medium leiblou</string>
-    <string name="color_mediumorchid">Medium orgidee</string>
+    <string name="color_royalblue">Koninklikblou</string>    <string name="color_mediumorchid">Medium orgidee</string>
     <string name="color_hotpink">Warmpienk</string>
     <string name="color_dimgray">Dowwe grys</string>
+    <string name="hue_red">Rooi</string>
+    <string name="hue_orange">Oranje</string>
+    <string name="hue_yellow">Geel</string>
+    <string name="hue_green">Groen</string>
+    <string name="hue_teal">Blougroen</string>
+    <string name="hue_blue">Blou</string>
+    <string name="hue_purple">Pers</string>
+    <string name="hue_pink">Pienk</string>
+    <string name="hue_brown">Bruin</string>
+    <string name="hue_neutral">Neutraal</string>
+    <string name="label_more_colors">Meer kleure</string>
+    <string name="label_back_to_grid">Terug</string>
+    <string name="settings_suggest_titles">Stel gebeurtenistitels voor</string>
 </resources>

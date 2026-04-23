@@ -939,20 +939,26 @@
     <string name="label_device_timezone">Gailuaren ordu-zona</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tomate</string>
-    <string name="color_orangered">Gorri laranja</string>
-    <string name="color_darkorange">Laranja iluna</string>
+    <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranja iluna</string>
     <string name="color_gold">Urre-kolorea</string>
     <string name="color_yellowgreen">Berde horixka</string>
-    <string name="color_limegreen">Karea berde</string>
-    <string name="color_mediumseagreen">Itsas-berde ertaina</string>
-    <string name="color_seagreen">Itsas berde</string>
-    <string name="color_lightseagreen">Itsas berde argi</string>
+    <string name="color_limegreen">Karea berde</string>    <string name="color_lightseagreen">Itsas berde argi</string>
     <string name="color_dodgerblue">Dodger urdin</string>
-    <string name="color_royalblue">Erregetza urdin</string>
-    <string name="color_mediumslateblue">Arbel urdin ertain</string>
-    <string name="color_mediumorchid">Orkidea-kolore ertaina</string>
+    <string name="color_royalblue">Erregetza urdin</string>    <string name="color_mediumorchid">Orkidea-kolore ertaina</string>
     <string name="color_hotpink">Arrosa bizia</string>
     <string name="color_dimgray">Gris ilun</string>
 
+    <string name="hue_red">Gorria</string>
+    <string name="hue_orange">Laranja</string>
+    <string name="hue_yellow">Horia</string>
+    <string name="hue_green">Berdea</string>
+    <string name="hue_teal">Berde urdinxka</string>
+    <string name="hue_blue">Urdina</string>
+    <string name="hue_purple">Morea</string>
+    <string name="hue_pink">Arrosa</string>
+    <string name="hue_brown">Marroia</string>
+    <string name="hue_neutral">Neutroa</string>
+    <string name="label_more_colors">Kolore gehiago</string>
+    <string name="label_back_to_grid">Atzera</string>
+    <string name="settings_suggest_titles">Iradoki ekitaldien izenburuak</string>
 </resources>

@@ -826,19 +826,12 @@
     <string name="color_cyan">Žydra</string>
     <string name="color_blue">Mėlyna</string>
     <string name="color_purple">Violetinė</string>
-    <string name="color_tomato">Pomidorų</string>
-    <string name="color_orangered">Oranžiškai raudona</string>
-    <string name="color_darkorange">Tamsiai oranžinė</string>
+    <string name="color_tomato">Pomidorų</string>    <string name="color_darkorange">Tamsiai oranžinė</string>
     <string name="color_gold">Auksinė</string>
     <string name="color_yellowgreen">Geltonai žalia</string>
-    <string name="color_limegreen">Žalsvai gelsva</string>
-    <string name="color_mediumseagreen">Jūros žalia</string>
-    <string name="color_seagreen">Jūrinė žalia</string>
-    <string name="color_lightseagreen">Šviesi jūrinė žalia</string>
+    <string name="color_limegreen">Žalsvai gelsva</string>    <string name="color_lightseagreen">Šviesi jūrinė žalia</string>
     <string name="color_dodgerblue">Ryški mėlyna</string>
-    <string name="color_royalblue">Karališka mėlyna</string>
-    <string name="color_mediumslateblue">Vidutinė skalūno mėlyna</string>
-    <string name="color_mediumorchid">Orchidėjų</string>
+    <string name="color_royalblue">Karališka mėlyna</string>    <string name="color_mediumorchid">Orchidėjų</string>
     <string name="color_hotpink">Ryškiai rožinė</string>
     <string name="color_dimgray">Tamsiai pilka</string>
     <string name="cd_meeting_link">Susitikimo nuoroda: %1$s</string>
@@ -953,4 +946,17 @@
     <string name="label_custom">Pasirinktinė</string>
     <string name="cd_event_color">Įvykio spalva</string>
 
+    <string name="hue_red">Raudona</string>
+    <string name="hue_orange">Oranžinė</string>
+    <string name="hue_yellow">Geltona</string>
+    <string name="hue_green">Žalia</string>
+    <string name="hue_teal">Žydra</string>
+    <string name="hue_blue">Mėlyna</string>
+    <string name="hue_purple">Violetinė</string>
+    <string name="hue_pink">Rožinė</string>
+    <string name="hue_brown">Ruda</string>
+    <string name="hue_neutral">Neutrali</string>
+    <string name="label_more_colors">Daugiau spalvų</string>
+    <string name="label_back_to_grid">Atgal</string>
+    <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
 </resources>

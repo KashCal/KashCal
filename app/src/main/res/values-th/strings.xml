@@ -900,19 +900,25 @@
     <string name="cd_event_color">สีกิจกรรม</string>
     <string name="cd_checkmark">เลือกแล้ว</string>
     <string name="label_device_timezone">เขตเวลาของอุปกรณ์</string>
-    <string name="color_tomato">มะเขือเทศ</string>
-    <string name="color_orangered">แดงส้ม</string>
-    <string name="color_darkorange">ส้มเข้ม</string>
+    <string name="color_tomato">มะเขือเทศ</string>    <string name="color_darkorange">ส้มเข้ม</string>
     <string name="color_gold">ทอง</string>
     <string name="color_yellowgreen">เหลืองอมเขียว</string>
-    <string name="color_limegreen">เขียวมะนาว</string>
-    <string name="color_mediumseagreen">เขียวทะเลกลาง</string>
-    <string name="color_seagreen">เขียวทะเล</string>
-    <string name="color_lightseagreen">เขียวทะเลอ่อน</string>
+    <string name="color_limegreen">เขียวมะนาว</string>    <string name="color_lightseagreen">เขียวทะเลอ่อน</string>
     <string name="color_dodgerblue">น้ำเงินสด</string>
-    <string name="color_royalblue">น้ำเงินรอยัล</string>
-    <string name="color_mediumslateblue">น้ำเงินหินชนวนกลาง</string>
-    <string name="color_mediumorchid">ม่วงกล้วยไม้กลาง</string>
+    <string name="color_royalblue">น้ำเงินรอยัล</string>    <string name="color_mediumorchid">ม่วงกล้วยไม้กลาง</string>
     <string name="color_hotpink">ชมพูสด</string>
     <string name="color_dimgray">เทาเข้ม</string>
+    <string name="hue_red">แดง</string>
+    <string name="hue_orange">ส้ม</string>
+    <string name="hue_yellow">เหลือง</string>
+    <string name="hue_green">เขียว</string>
+    <string name="hue_teal">เขียวอมน้ำเงิน</string>
+    <string name="hue_blue">น้ำเงิน</string>
+    <string name="hue_purple">ม่วง</string>
+    <string name="hue_pink">ชมพู</string>
+    <string name="hue_brown">น้ำตาล</string>
+    <string name="hue_neutral">สีกลาง</string>
+    <string name="label_more_colors">สีเพิ่มเติม</string>
+    <string name="label_back_to_grid">กลับ</string>
+    <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
 </resources>

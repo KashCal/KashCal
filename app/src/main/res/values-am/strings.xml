@@ -956,19 +956,25 @@
     <string name="cd_checkmark">ተመርጧል</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
-    <string name="color_tomato">ቲማቲም</string>
-    <string name="color_orangered">ብርቱካናማ ቀይ</string>
-    <string name="color_darkorange">ጥቁር ብርቱካናማ</string>
+    <string name="color_tomato">ቲማቲም</string>    <string name="color_darkorange">ጥቁር ብርቱካናማ</string>
     <string name="color_gold">ወርቃማ</string>
     <string name="color_yellowgreen">ቢጫ አረንጓዴ</string>
-    <string name="color_limegreen">አረንጓዴ ሎሚ</string>
-    <string name="color_mediumseagreen">መካከለኛ ባሕር አረንጓዴ</string>
-    <string name="color_seagreen">ባህር አረንጓዴ</string>
-    <string name="color_lightseagreen">ብርሃን ባህር አረንጓዴ</string>
+    <string name="color_limegreen">አረንጓዴ ሎሚ</string>    <string name="color_lightseagreen">ብርሃን ባህር አረንጓዴ</string>
     <string name="color_dodgerblue">ዶጀር ሰማያዊ</string>
-    <string name="color_royalblue">ንጉሳዊ ሰማያዊ</string>
-    <string name="color_mediumslateblue">መካከለኛ ስሌት ሰማያዊ</string>
-    <string name="color_mediumorchid">መካከለኛ ኦርኪድ</string>
+    <string name="color_royalblue">ንጉሳዊ ሰማያዊ</string>    <string name="color_mediumorchid">መካከለኛ ኦርኪድ</string>
     <string name="color_hotpink">ደማቅ ሮዝ</string>
     <string name="color_dimgray">ደብዛዛ ግራጫ</string>
+    <string name="hue_red">ቀይ</string>
+    <string name="hue_orange">ብርቱካናማ</string>
+    <string name="hue_yellow">ቢጫ</string>
+    <string name="hue_green">አረንጓዴ</string>
+    <string name="hue_teal">ሰማያዊ አረንጓዴ</string>
+    <string name="hue_blue">ሰማያዊ</string>
+    <string name="hue_purple">ሐምራዊ</string>
+    <string name="hue_pink">ሮዝ</string>
+    <string name="hue_brown">ቡናማ</string>
+    <string name="hue_neutral">ገለልተኛ</string>
+    <string name="label_more_colors">ተጨማሪ ቀለማት</string>
+    <string name="label_back_to_grid">ተመለስ</string>
+    <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
 </resources>

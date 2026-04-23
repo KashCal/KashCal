@@ -84,6 +84,9 @@ object PreferencesKeys {
     /** Quick add event enabled (shows FAB) */
     val QUICK_ADD_ENABLED = booleanPreferencesKey("quick_add_enabled")
 
+    /** Event title autocomplete from past events (default true). */
+    val TITLE_SUGGESTIONS_ENABLED = booleanPreferencesKey("title_suggestions_enabled")
+
     // ========== Display Settings ==========
 
     /** Show auto-detected emojis in event titles */

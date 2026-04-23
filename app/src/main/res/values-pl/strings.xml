@@ -900,19 +900,12 @@
     <string name="color_blue">Niebieski</string>
     <string name="color_purple">Fioletowy</string>
     <string name="cd_checkmark">Wybrane</string>
-    <string name="color_tomato">Pomidorowy</string>
-    <string name="color_orangered">Czerwonopomarańczowy</string>
-    <string name="color_darkorange">Ciemnopomarańczowy</string>
+    <string name="color_tomato">Pomidorowy</string>    <string name="color_darkorange">Ciemnopomarańczowy</string>
     <string name="color_gold">Złoty</string>
     <string name="color_yellowgreen">Żółtozielony</string>
-    <string name="color_limegreen">Limonkowy</string>
-    <string name="color_mediumseagreen">Średni morski</string>
-    <string name="color_seagreen">Morski</string>
-    <string name="color_lightseagreen">Jasnomorski</string>
+    <string name="color_limegreen">Limonkowy</string>    <string name="color_lightseagreen">Jasnomorski</string>
     <string name="color_dodgerblue">Błękit Dodger</string>
-    <string name="color_royalblue">Królewski niebieski</string>
-    <string name="color_mediumslateblue">Średni łupkowoniebieski</string>
-    <string name="color_mediumorchid">Średnia orchidea</string>
+    <string name="color_royalblue">Królewski niebieski</string>    <string name="color_mediumorchid">Średnia orchidea</string>
     <string name="color_hotpink">Gorący róż</string>
     <string name="color_dimgray">Przygaszony szary</string>
     <!-- Accessibility: link types -->
@@ -1030,4 +1023,17 @@
     <string name="label_calendar_default">Domyślny z kalendarza</string>
     <string name="label_custom">Niestandardowy</string>
     <string name="cd_event_color">Kolor wydarzenia</string>
+    <string name="hue_red">Czerwony</string>
+    <string name="hue_orange">Pomarańczowy</string>
+    <string name="hue_yellow">Żółty</string>
+    <string name="hue_green">Zielony</string>
+    <string name="hue_teal">Morski</string>
+    <string name="hue_blue">Niebieski</string>
+    <string name="hue_purple">Fioletowy</string>
+    <string name="hue_pink">Różowy</string>
+    <string name="hue_brown">Brązowy</string>
+    <string name="hue_neutral">Neutralny</string>
+    <string name="label_more_colors">Więcej kolorów</string>
+    <string name="label_back_to_grid">Wróć</string>
+    <string name="settings_suggest_titles">Sugeruj tytuły wydarzeń</string>
 </resources>

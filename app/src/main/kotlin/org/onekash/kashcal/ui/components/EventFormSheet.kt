@@ -108,6 +108,31 @@ import org.onekash.kashcal.ui.model.PickerCalendar
 private const val TAG = "EventFormSheet"
 
 /**
+ * Pure predicate: should the title-autocomplete dropdown appear?
+ *
+ * Returns true iff both:
+ * - at least [MIN_TITLE_PREFIX] characters have been typed
+ * - the user has changed the text from whatever was initially loaded (so
+ *   opening an existing event to correct a typo doesn't flash a dropdown)
+ *
+ * The feature-enabled preference is enforced upstream in the ViewModel by
+ * returning an empty suggestion list. The UI doesn't know about it.
+ */
+internal const val MIN_TITLE_PREFIX = 3
+
+/** Wait this long after the last keystroke before querying the suggestion backend. */
+private const val TITLE_SUGGEST_DEBOUNCE_MS = 150L
+
+internal fun shouldShowTitleSuggestions(
+    currentText: String,
+    initialText: String
+): Boolean {
+    if (currentText.length < MIN_TITLE_PREFIX) return false
+    if (currentText == initialText) return false
+    return true
+}
+
+/**
  * Migrate reminders when toggling all-day.
  * Swaps the default reminder value; keeps all custom values as-is.
  * Deduplicates after swap.
@@ -252,6 +277,7 @@ fun EventFormSheet(
     defaultEventDuration: Int = 30,
     onRequestNotificationPermission: ((onResult: (Boolean) -> Unit) -> Unit)? = null,
     locationSuggestionService: LocationSuggestionService? = null,
+    onSuggestTitles: (suspend (String) -> List<org.onekash.kashcal.data.db.dao.TitleSuggestion>)? = null,
     timeFormat: String = "system",
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     // Device calendar edit support
@@ -743,18 +769,68 @@ fun EventFormSheet(
                         .verticalScroll(scrollState)
                         .padding(horizontal = 16.dp)
                 ) {
-                    OutlinedTextField(
-                        value = state.title,
-                        onValueChange = { state = state.copy(title = it) },
-                        placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(titleFocusRequester)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineSmall,
-                        colors = borderlessFieldColors
-                    )
+                    // titleInitial captures the pre-filled value once after load so
+                    // edit mode doesn't flash a dropdown before the user types.
+                    var titleInitial by remember { mutableStateOf<String?>(null) }
+                    LaunchedEffect(state.isLoading, state.title) {
+                        if (!state.isLoading && titleInitial == null) {
+                            titleInitial = state.title
+                        }
+                    }
+                    var titleSuggestions by remember { mutableStateOf<List<org.onekash.kashcal.data.db.dao.TitleSuggestion>>(emptyList()) }
+                    var titleSearchJob by remember { mutableStateOf<Job?>(null) }
+                    val dropdownOpen = titleSuggestions.isNotEmpty()
+
+                    ExposedDropdownMenuBox(
+                        expanded = dropdownOpen,
+                        onExpandedChange = { if (!it) titleSuggestions = emptyList() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        OutlinedTextField(
+                            value = state.title,
+                            onValueChange = { newValue ->
+                                state = state.copy(title = newValue)
+                                titleSearchJob?.cancel()
+                                val shouldQuery = shouldShowTitleSuggestions(
+                                    currentText = newValue,
+                                    initialText = titleInitial.orEmpty()
+                                )
+                                if (shouldQuery && onSuggestTitles != null) {
+                                    titleSearchJob = coroutineScope.launch {
+                                        delay(TITLE_SUGGEST_DEBOUNCE_MS)
+                                        titleSuggestions = onSuggestTitles(newValue)
+                                    }
+                                } else {
+                                    titleSuggestions = emptyList()
+                                }
+                            },
+                            placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(titleFocusRequester)
+                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.headlineSmall,
+                            colors = borderlessFieldColors
+                        )
+
+                        ExposedDropdownMenu(
+                            expanded = dropdownOpen,
+                            onDismissRequest = { titleSuggestions = emptyList() }
+                        ) {
+                            titleSuggestions.forEach { suggestion ->
+                                DropdownMenuItem(
+                                    text = { Text(suggestion.title) },
+                                    onClick = {
+                                        state = state.copy(title = suggestion.title)
+                                        titleSuggestions = emptyList()
+                                    },
+                                    modifier = Modifier.height(48.dp)
+                                )
+                            }
+                        }
+                    }
 
                     HorizontalDivider()
 

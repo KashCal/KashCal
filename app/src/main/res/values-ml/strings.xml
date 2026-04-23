@@ -825,19 +825,12 @@
     <string name="color_cyan">സയാൻ</string>
     <string name="color_blue">നീല</string>
     <string name="color_purple">പർപ്പിൾ</string>
-    <string name="color_tomato">തക്കാളി</string>
-    <string name="color_orangered">ഓറഞ്ച് ചുവപ്പ്</string>
-    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
+    <string name="color_tomato">തക്കാളി</string>    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
     <string name="color_gold">സ്വർണം</string>
     <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>
-    <string name="color_limegreen">നാരങ്ങാ പച്ച</string>
-    <string name="color_mediumseagreen">ഇടത്തരം കടൽ പച്ച</string>
-    <string name="color_seagreen">കടൽ പച്ച</string>
-    <string name="color_lightseagreen">ഇളം കടൽ പച്ച</string>
+    <string name="color_limegreen">നാരങ്ങാ പച്ച</string>    <string name="color_lightseagreen">ഇളം കടൽ പച്ച</string>
     <string name="color_dodgerblue">ഡോഡ്ജർ നീല</string>
-    <string name="color_royalblue">രാജകീയ നീല</string>
-    <string name="color_mediumslateblue">മധ്യ സ്ലേറ്റ് നീല</string>
-    <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
+    <string name="color_royalblue">രാജകീയ നീല</string>    <string name="color_mediumorchid">ഇടത്തരം ഓർക്കിഡ്</string>
     <string name="color_hotpink">ഹോട്ട് പിങ്ക്</string>
     <string name="color_dimgray">മങ്ങിയ ചാര</string>
     <!-- Accessibility: link types -->
@@ -957,4 +950,17 @@
     <string name="label_custom">ഇഷ്ടാനുസൃതം</string>
     <string name="cd_event_color">ഇവന്റ് നിറം</string>
 
+    <string name="hue_red">ചുവപ്പ്</string>
+    <string name="hue_orange">ഓറഞ്ച്</string>
+    <string name="hue_yellow">മഞ്ഞ</string>
+    <string name="hue_green">പച്ച</string>
+    <string name="hue_teal">ടീൽ</string>
+    <string name="hue_blue">നീല</string>
+    <string name="hue_purple">പർപ്പിൾ</string>
+    <string name="hue_pink">പിങ്ക്</string>
+    <string name="hue_brown">തവിട്ട്</string>
+    <string name="hue_neutral">നിഷ്പക്ഷം</string>
+    <string name="label_more_colors">കൂടുതൽ നിറങ്ങൾ</string>
+    <string name="label_back_to_grid">തിരികെ</string>
+    <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
 </resources>

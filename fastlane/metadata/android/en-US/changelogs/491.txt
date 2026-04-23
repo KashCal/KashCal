@@ -1,0 +1,2 @@
+• New event color picker with grid plus a color-wheel browser for all 92 CSS3 colors
+• Event title autocomplete suggests from your past events as you type

@@ -942,19 +942,25 @@
     <string name="label_calendar_default">Agendastandaard</string>
     <string name="label_custom">Aangepast</string>
     <string name="cd_event_color">Afspraakkleur</string>
-    <string name="color_tomato">Tomaat</string>
-    <string name="color_orangered">Oranjerood</string>
-    <string name="color_darkorange">Donkeroranje</string>
+    <string name="color_tomato">Tomaat</string>    <string name="color_darkorange">Donkeroranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>
-    <string name="color_limegreen">Limoengroen</string>
-    <string name="color_mediumseagreen">Middenzeegroen</string>
-    <string name="color_seagreen">Zeegroen</string>
-    <string name="color_lightseagreen">Lichtzeegroen</string>
+    <string name="color_limegreen">Limoengroen</string>    <string name="color_lightseagreen">Lichtzeegroen</string>
     <string name="color_dodgerblue">Dodgerblauw</string>
-    <string name="color_royalblue">Koningsblauw</string>
-    <string name="color_mediumslateblue">Middenleiblauw</string>
-    <string name="color_mediumorchid">Orchidee</string>
+    <string name="color_royalblue">Koningsblauw</string>    <string name="color_mediumorchid">Orchidee</string>
     <string name="color_hotpink">Felroze</string>
     <string name="color_dimgray">Dofgrijs</string>
+    <string name="hue_red">Rood</string>
+    <string name="hue_orange">Oranje</string>
+    <string name="hue_yellow">Geel</string>
+    <string name="hue_green">Groen</string>
+    <string name="hue_teal">Blauwgroen</string>
+    <string name="hue_blue">Blauw</string>
+    <string name="hue_purple">Paars</string>
+    <string name="hue_pink">Roze</string>
+    <string name="hue_brown">Bruin</string>
+    <string name="hue_neutral">Neutraal</string>
+    <string name="label_more_colors">Meer kleuren</string>
+    <string name="label_back_to_grid">Terug</string>
+    <string name="settings_suggest_titles">Titels van afspraken voorstellen</string>
 </resources>

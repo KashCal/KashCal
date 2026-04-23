@@ -472,8 +472,7 @@ fun RecurrencePickerRow(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
-                    .padding(bottom = 12.dp)
+                    .padding(horizontal = 12.dp, vertical = 12.dp)
             ) {
                 FrequencyChipRow(
                     options = listOf(FrequencyOption.NEVER, FrequencyOption.DAILY, FrequencyOption.WEEKLY, FrequencyOption.BIWEEKLY),

@@ -952,19 +952,25 @@
     <string name="cd_event_color">Kulay ng event</string>
     <string name="cd_checkmark">Napili</string>
     <string name="label_device_timezone">Time zone ng device</string>
-    <string name="color_tomato">Kamatis</string>
-    <string name="color_orangered">Kahel na pula</string>
-    <string name="color_darkorange">Madilim na kahel</string>
+    <string name="color_tomato">Kamatis</string>    <string name="color_darkorange">Madilim na kahel</string>
     <string name="color_gold">Ginto</string>
     <string name="color_yellowgreen">Dilaw-berde</string>
-    <string name="color_limegreen">Berdeng limon</string>
-    <string name="color_mediumseagreen">Katamtamang dagat-berde</string>
-    <string name="color_seagreen">Dagat-berde</string>
-    <string name="color_lightseagreen">Mabababang dagat-berde</string>
+    <string name="color_limegreen">Berdeng limon</string>    <string name="color_lightseagreen">Mabababang dagat-berde</string>
     <string name="color_dodgerblue">Asul na dodger</string>
-    <string name="color_royalblue">Asul na maharlika</string>
-    <string name="color_mediumslateblue">Katamtamang asul na pisara</string>
-    <string name="color_mediumorchid">Katamtamang orkidya</string>
+    <string name="color_royalblue">Asul na maharlika</string>    <string name="color_mediumorchid">Katamtamang orkidya</string>
     <string name="color_hotpink">Maningning na rosas</string>
     <string name="color_dimgray">Malamlam na kulay-abo</string>
+    <string name="hue_red">Pula</string>
+    <string name="hue_orange">Kahel</string>
+    <string name="hue_yellow">Dilaw</string>
+    <string name="hue_green">Berde</string>
+    <string name="hue_teal">Asul-berde</string>
+    <string name="hue_blue">Asul</string>
+    <string name="hue_purple">Lila</string>
+    <string name="hue_pink">Rosas</string>
+    <string name="hue_brown">Kayumanggi</string>
+    <string name="hue_neutral">Neutral</string>
+    <string name="label_more_colors">Higit pang kulay</string>
+    <string name="label_back_to_grid">Bumalik</string>
+    <string name="settings_suggest_titles">Magmungkahi ng mga pamagat ng kaganapan</string>
 </resources>

@@ -65,6 +65,7 @@ class DeviceCalendarImporterTest {
         override suspend fun getDeviceCalendars(): List<DeviceCalendar> = emptyList()
         override suspend fun getInstancesForDayRange(startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
         override suspend fun searchInstances(query: String, startDayCode: Int, endDayCode: Int, enabledCalendarIds: Set<Long>, hideDeclined: Boolean): List<DeviceCalendarInstance> = emptyList()
+        override suspend fun suggestTitlesByPrefix(prefix: String, sinceMs: Long, visibleCalendarIds: Set<Long>, minFreq: Int, limit: Int): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> = emptyList()
         override suspend fun pruneStaleCalendarIds(dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore) {}
         override suspend fun ensureCalendarVisible(calendarId: Long) {}
         override suspend fun updateEvent(eventId: Long, title: String, description: String?, location: String?, startTs: Long, endTs: Long?, isAllDay: Boolean, rrule: String?, duration: String?, timezone: String, reminders: List<Int>, availability: Int, eventColor: Int?): Result<Unit> = Result.success(Unit)

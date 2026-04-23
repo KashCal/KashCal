@@ -989,20 +989,26 @@
     <string name="cd_checkmark">Selezionato</string>
 
     <!-- Event color palette (CSS3 color names) -->
-    <string name="color_tomato">Pomodoro</string>
-    <string name="color_orangered">Rosso arancione</string>
-    <string name="color_darkorange">Arancione scuro</string>
+    <string name="color_tomato">Pomodoro</string>    <string name="color_darkorange">Arancione scuro</string>
     <string name="color_gold">Oro</string>
     <string name="color_yellowgreen">Verde giallo</string>
-    <string name="color_limegreen">Verde lime</string>
-    <string name="color_mediumseagreen">Verde mare medio</string>
-    <string name="color_seagreen">Verde mare</string>
-    <string name="color_lightseagreen">Verde mare chiaro</string>
+    <string name="color_limegreen">Verde lime</string>    <string name="color_lightseagreen">Verde mare chiaro</string>
     <string name="color_dodgerblue">Blu Dodger</string>
-    <string name="color_royalblue">Blu reale</string>
-    <string name="color_mediumslateblue">Blu ardesia medio</string>
-    <string name="color_mediumorchid">Orchidea media</string>
+    <string name="color_royalblue">Blu reale</string>    <string name="color_mediumorchid">Orchidea media</string>
     <string name="color_hotpink">Rosa acceso</string>
     <string name="color_dimgray">Grigio scuro</string>
 
+    <string name="hue_red">Rosso</string>
+    <string name="hue_orange">Arancione</string>
+    <string name="hue_yellow">Giallo</string>
+    <string name="hue_green">Verde</string>
+    <string name="hue_teal">Verde acqua</string>
+    <string name="hue_blue">Blu</string>
+    <string name="hue_purple">Viola</string>
+    <string name="hue_pink">Rosa</string>
+    <string name="hue_brown">Marrone</string>
+    <string name="hue_neutral">Neutro</string>
+    <string name="label_more_colors">Altri colori</string>
+    <string name="label_back_to_grid">Indietro</string>
+    <string name="settings_suggest_titles">Suggerisci titoli eventi</string>
 </resources>

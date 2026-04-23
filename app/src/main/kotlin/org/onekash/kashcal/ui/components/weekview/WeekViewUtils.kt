@@ -613,15 +613,17 @@ object WeekViewUtils {
     /**
      * Group positioned events for display, separating visible events from overflow.
      *
+     * Filters by slot assignment (`overlapIndex`) rather than list order. This
+     * preserves the layout computed by [positionEventsForDay] — events packed
+     * into slots within the cap all render, even when a long event transitively
+     * connects them into one cluster (see issue #175).
+     *
      * @param events All positioned events for a time slot
      * @return Pair of (visible events, overflow count)
      */
     fun groupForDisplay(events: List<PositionedEvent>): Pair<List<PositionedEvent>, Int> {
-        return if (events.size <= MAX_VISIBLE_OVERLAP) {
-            events to 0
-        } else {
-            events.take(MAX_VISIBLE_OVERLAP) to (events.size - MAX_VISIBLE_OVERLAP)
-        }
+        val (visible, overflow) = events.partition { it.overlapIndex < MAX_VISIBLE_OVERLAP }
+        return visible to overflow.size
     }
 
     // ==================== Time Formatting ====================

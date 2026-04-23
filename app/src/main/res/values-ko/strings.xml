@@ -900,19 +900,25 @@
     <string name="cd_event_color">일정 색상</string>
     <string name="cd_checkmark">선택됨</string>
     <string name="label_device_timezone">기기 시간대</string>
-    <string name="color_tomato">토마토</string>
-    <string name="color_orangered">오렌지 레드</string>
-    <string name="color_darkorange">다크 오렌지</string>
+    <string name="color_tomato">토마토</string>    <string name="color_darkorange">다크 오렌지</string>
     <string name="color_gold">골드</string>
     <string name="color_yellowgreen">옐로 그린</string>
-    <string name="color_limegreen">라임 그린</string>
-    <string name="color_mediumseagreen">미디엄 시 그린</string>
-    <string name="color_seagreen">시 그린</string>
-    <string name="color_lightseagreen">라이트 시 그린</string>
+    <string name="color_limegreen">라임 그린</string>    <string name="color_lightseagreen">라이트 시 그린</string>
     <string name="color_dodgerblue">다저 블루</string>
-    <string name="color_royalblue">로열 블루</string>
-    <string name="color_mediumslateblue">미디엄 슬레이트 블루</string>
-    <string name="color_mediumorchid">미디엄 오키드</string>
+    <string name="color_royalblue">로열 블루</string>    <string name="color_mediumorchid">미디엄 오키드</string>
     <string name="color_hotpink">핫 핑크</string>
     <string name="color_dimgray">딤 그레이</string>
+    <string name="hue_red">빨강</string>
+    <string name="hue_orange">주황</string>
+    <string name="hue_yellow">노랑</string>
+    <string name="hue_green">초록</string>
+    <string name="hue_teal">청록</string>
+    <string name="hue_blue">파랑</string>
+    <string name="hue_purple">보라</string>
+    <string name="hue_pink">분홍</string>
+    <string name="hue_brown">갈색</string>
+    <string name="hue_neutral">중립</string>
+    <string name="label_more_colors">더 많은 색상</string>
+    <string name="label_back_to_grid">뒤로</string>
+    <string name="settings_suggest_titles">이벤트 제목 제안</string>
 </resources>

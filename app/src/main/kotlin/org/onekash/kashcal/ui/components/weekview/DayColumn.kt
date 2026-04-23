@@ -156,7 +156,8 @@ fun DayColumn(
                 OverflowBadge(
                     count = overflowCount,
                     onClick = {
-                        val overflowEvents = group.drop(WeekViewUtils.MAX_VISIBLE_OVERLAP)
+                        val overflowEvents = group
+                            .filter { it.overlapIndex >= WeekViewUtils.MAX_VISIBLE_OVERLAP }
                             .map { it.displayEvent }
                         onOverflowClick(overflowEvents)
                     },

@@ -825,19 +825,12 @@
     <string name="color_cyan">Блакітны</string>
     <string name="color_blue">Сіні</string>
     <string name="color_purple">Фіялетавы</string>
-    <string name="color_tomato">Таматны</string>
-    <string name="color_orangered">Аранжава-чырвоны</string>
-    <string name="color_darkorange">Цёмна-аранжавы</string>
+    <string name="color_tomato">Таматны</string>    <string name="color_darkorange">Цёмна-аранжавы</string>
     <string name="color_gold">Залаты</string>
     <string name="color_yellowgreen">Жоўта-зялёны</string>
-    <string name="color_limegreen">Лаймавы</string>
-    <string name="color_mediumseagreen">Марскі зялёны</string>
-    <string name="color_seagreen">Марскі зялёны</string>
-    <string name="color_lightseagreen">Светлы марскі зялёны</string>
+    <string name="color_limegreen">Лаймавы</string>    <string name="color_lightseagreen">Светлы марскі зялёны</string>
     <string name="color_dodgerblue">Яркі сіні</string>
-    <string name="color_royalblue">Каралеўскі сіні</string>
-    <string name="color_mediumslateblue">Сярэдні шыферны сіні</string>
-    <string name="color_mediumorchid">Архідны</string>
+    <string name="color_royalblue">Каралеўскі сіні</string>    <string name="color_mediumorchid">Архідны</string>
     <string name="color_hotpink">Ярка-ружовы</string>
     <string name="color_dimgray">Цёмна-шэры</string>
     <string name="cd_meeting_link">Спасылка на сустрэчу: %1$s</string>
@@ -949,4 +942,17 @@
     <string name="label_calendar_default">Па змаўчанні</string>
     <string name="label_custom">Уласны</string>
     <string name="cd_event_color">Колер падзеі</string>
+    <string name="hue_red">Чырвоны</string>
+    <string name="hue_orange">Аранжавы</string>
+    <string name="hue_yellow">Жоўты</string>
+    <string name="hue_green">Зялёны</string>
+    <string name="hue_teal">Сіне-зялёны</string>
+    <string name="hue_blue">Сіні</string>
+    <string name="hue_purple">Фіялетавы</string>
+    <string name="hue_pink">Ружовы</string>
+    <string name="hue_brown">Карычневы</string>
+    <string name="hue_neutral">Нейтральны</string>
+    <string name="label_more_colors">Больш колераў</string>
+    <string name="label_back_to_grid">Назад</string>
+    <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
 </resources>

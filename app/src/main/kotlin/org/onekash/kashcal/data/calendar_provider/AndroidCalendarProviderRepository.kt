@@ -261,6 +261,76 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
+    override suspend fun suggestTitlesByPrefix(
+        prefix: String,
+        sinceMs: Long,
+        visibleCalendarIds: Set<Long>,
+        minFreq: Int,
+        limit: Int
+    ): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> = withContext(Dispatchers.IO) {
+        if (visibleCalendarIds.isEmpty() || prefix.isBlank()) return@withContext emptyList()
+
+        try {
+            val calendarIdList = visibleCalendarIds.joinToString(",")
+            // LIKE with COLLATE NOCASE for ASCII case-insensitivity (device CalendarProvider
+            // doesn't support GROUP BY in sortOrder, so we aggregate in Kotlin).
+            val selection = """
+                ${CalendarContract.Events.TITLE} LIKE ? COLLATE NOCASE
+                AND ${CalendarContract.Events.CALENDAR_ID} IN ($calendarIdList)
+                AND ${CalendarContract.Events.DELETED} = 0
+                AND ${CalendarContract.Events.DTSTART} >= ?
+                AND ${CalendarContract.Events.TITLE} IS NOT NULL
+                AND LENGTH(TRIM(${CalendarContract.Events.TITLE})) > 0
+                AND ${CalendarContract.Events.ORIGINAL_ID} IS NULL
+            """.trimIndent()
+            val args = arrayOf("${prefix.trim()}%", sinceMs.toString())
+            val projection = arrayOf(
+                CalendarContract.Events.TITLE,
+                CalendarContract.Events.DTSTART
+            )
+
+            val rows = contentResolver.query(
+                CalendarContract.Events.CONTENT_URI,
+                projection,
+                selection,
+                args,
+                null
+            )?.use { cursor ->
+                val titleIdx = cursor.getColumnIndexOrThrow(CalendarContract.Events.TITLE)
+                val dtstartIdx = cursor.getColumnIndexOrThrow(CalendarContract.Events.DTSTART)
+                val out = mutableListOf<Pair<String, Long>>()
+                while (cursor.moveToNext()) {
+                    val title = cursor.getString(titleIdx)?.trim().orEmpty()
+                    if (title.isEmpty()) continue
+                    val dtstart = cursor.getLong(dtstartIdx)
+                    out.add(title to dtstart)
+                }
+                out
+            }.orEmpty()
+
+            // Aggregate in Kotlin: group by lowercase title, sum freq, max dtstart,
+            // keep most-recent original casing for display.
+            rows.groupBy { it.first.lowercase() }
+                .map { (_, entries) ->
+                    val latest = entries.maxByOrNull { it.second }!!
+                    org.onekash.kashcal.data.db.dao.TitleSuggestion(
+                        title = latest.first,
+                        freq = entries.size,
+                        lastUsed = latest.second
+                    )
+                }
+                .filter { it.freq >= minFreq }
+                .sortedWith(
+                    compareByDescending<org.onekash.kashcal.data.db.dao.TitleSuggestion> { it.freq }
+                        .thenByDescending { it.lastUsed }
+                )
+                .take(limit)
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Calendar permission revoked", e)
+            emptyList()
+        }
+    }
+
     /**
      * Populate instances with reminder data via batch query.
      * Returns new list with reminders field populated.

@@ -825,19 +825,12 @@
     <string name="color_cyan">சியான்</string>
     <string name="color_blue">நீலம்</string>
     <string name="color_purple">ஊதா</string>
-    <string name="color_tomato">தக்காளி</string>
-    <string name="color_orangered">செம்மஞ்சள் சிவப்பு</string>
-    <string name="color_darkorange">அடர் ஆரஞ்சு</string>
+    <string name="color_tomato">தக்காளி</string>    <string name="color_darkorange">அடர் ஆரஞ்சு</string>
     <string name="color_gold">தங்கம்</string>
     <string name="color_yellowgreen">மஞ்சள் பச்சை</string>
-    <string name="color_limegreen">எலுமிச்சை பச்சை</string>
-    <string name="color_mediumseagreen">நடுத்தர கடல் பச்சை</string>
-    <string name="color_seagreen">கடல் பச்சை</string>
-    <string name="color_lightseagreen">இளம் கடல் பச்சை</string>
+    <string name="color_limegreen">எலுமிச்சை பச்சை</string>    <string name="color_lightseagreen">இளம் கடல் பச்சை</string>
     <string name="color_dodgerblue">டாட்ஜர் நீலம்</string>
-    <string name="color_royalblue">அரச நீலம்</string>
-    <string name="color_mediumslateblue">நடுத்தர ஸ்லேட் நீலம்</string>
-    <string name="color_mediumorchid">நடுத்தர ஆர்க்கிட்</string>
+    <string name="color_royalblue">அரச நீலம்</string>    <string name="color_mediumorchid">நடுத்தர ஆர்க்கிட்</string>
     <string name="color_hotpink">ஹாட் பிங்க்</string>
     <string name="color_dimgray">மங்கலான சாம்பல்</string>
     <!-- Accessibility: link types -->
@@ -957,4 +950,17 @@
     <string name="label_custom">தனிப்பயன்</string>
     <string name="cd_event_color">நிகழ்வு நிறம்</string>
 
+    <string name="hue_red">சிவப்பு</string>
+    <string name="hue_orange">ஆரஞ்சு</string>
+    <string name="hue_yellow">மஞ்சள்</string>
+    <string name="hue_green">பச்சை</string>
+    <string name="hue_teal">மயில் பச்சை</string>
+    <string name="hue_blue">நீலம்</string>
+    <string name="hue_purple">ஊதா</string>
+    <string name="hue_pink">இளஞ்சிவப்பு</string>
+    <string name="hue_brown">பழுப்பு</string>
+    <string name="hue_neutral">நடுநிலை</string>
+    <string name="label_more_colors">மேலும் வண்ணங்கள்</string>
+    <string name="label_back_to_grid">பின்</string>
+    <string name="settings_suggest_titles">நிகழ்வு தலைப்புகளை பரிந்துரை</string>
 </resources>

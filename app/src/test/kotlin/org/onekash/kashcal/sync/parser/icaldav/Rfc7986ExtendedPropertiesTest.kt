@@ -107,11 +107,13 @@ class Rfc7986ExtendedPropertiesTest {
     }
 
     @Test
-    fun `COLOR writes black as 000000`() {
+    fun `COLOR emits css3 name black for pure black`() {
+        // Black is in the wheel palette as HueFamily.NEUTRAL, so it round-trips
+        // as the CSS3 name rather than hex — more RFC 7986 §5.9 compliant.
         val event = createEvent(color = 0xFF000000.toInt())
         val ics = IcsPatcher.generateFresh(event)
 
-        assertTrue("Should write COLOR:#000000", ics.contains("COLOR:#000000"))
+        assertTrue("Should write COLOR:black (CSS3 name)", ics.contains("COLOR:black"))
     }
 
     @Test

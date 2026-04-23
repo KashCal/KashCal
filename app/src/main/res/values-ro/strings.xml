@@ -991,20 +991,26 @@
     <string name="label_device_timezone">Fus orar dispozitiv</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Roșu tomate</string>
-    <string name="color_orangered">Roșu portocaliu</string>
-    <string name="color_darkorange">Portocaliu închis</string>
+    <string name="color_tomato">Roșu tomate</string>    <string name="color_darkorange">Portocaliu închis</string>
     <string name="color_gold">Auriu</string>
     <string name="color_yellowgreen">Galben-verzui</string>
-    <string name="color_limegreen">Verde lime</string>
-    <string name="color_mediumseagreen">Verde marin mediu</string>
-    <string name="color_seagreen">Verde marin</string>
-    <string name="color_lightseagreen">Verde marin deschis</string>
+    <string name="color_limegreen">Verde lime</string>    <string name="color_lightseagreen">Verde marin deschis</string>
     <string name="color_dodgerblue">Albastru vibrant</string>
-    <string name="color_royalblue">Albastru regal</string>
-    <string name="color_mediumslateblue">Albastru ardezie mediu</string>
-    <string name="color_mediumorchid">Orhidee mediu</string>
+    <string name="color_royalblue">Albastru regal</string>    <string name="color_mediumorchid">Orhidee mediu</string>
     <string name="color_hotpink">Roz aprins</string>
     <string name="color_dimgray">Gri estompat</string>
 
+    <string name="hue_red">Roșu</string>
+    <string name="hue_orange">Portocaliu</string>
+    <string name="hue_yellow">Galben</string>
+    <string name="hue_green">Verde</string>
+    <string name="hue_teal">Turcoaz</string>
+    <string name="hue_blue">Albastru</string>
+    <string name="hue_purple">Violet</string>
+    <string name="hue_pink">Roz</string>
+    <string name="hue_brown">Maro</string>
+    <string name="hue_neutral">Neutru</string>
+    <string name="label_more_colors">Mai multe culori</string>
+    <string name="label_back_to_grid">Înapoi</string>
+    <string name="settings_suggest_titles">Sugerează titluri de evenimente</string>
 </resources>

@@ -942,19 +942,25 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Brugerdefineret</string>
     <string name="cd_event_color">Begivenhedsfarve</string>
-    <string name="color_tomato">Tomat</string>
-    <string name="color_orangered">Orangerød</string>
-    <string name="color_darkorange">Mørkeorange</string>
+    <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørkeorange</string>
     <string name="color_gold">Guld</string>
     <string name="color_yellowgreen">Gulgrøn</string>
-    <string name="color_limegreen">Limegrøn</string>
-    <string name="color_mediumseagreen">Havgrøn</string>
-    <string name="color_seagreen">Havgrøn</string>
-    <string name="color_lightseagreen">Lys havgrøn</string>
+    <string name="color_limegreen">Limegrøn</string>    <string name="color_lightseagreen">Lys havgrøn</string>
     <string name="color_dodgerblue">Dodgerblå</string>
-    <string name="color_royalblue">Kongeblå</string>
-    <string name="color_mediumslateblue">Mellemskiferblå</string>
-    <string name="color_mediumorchid">Orkidé</string>
+    <string name="color_royalblue">Kongeblå</string>    <string name="color_mediumorchid">Orkidé</string>
     <string name="color_hotpink">Knaldpink</string>
     <string name="color_dimgray">Mat grå</string>
+    <string name="hue_red">Rød</string>
+    <string name="hue_orange">Orange</string>
+    <string name="hue_yellow">Gul</string>
+    <string name="hue_green">Grøn</string>
+    <string name="hue_teal">Blågrøn</string>
+    <string name="hue_blue">Blå</string>
+    <string name="hue_purple">Lilla</string>
+    <string name="hue_pink">Lyserød</string>
+    <string name="hue_brown">Brun</string>
+    <string name="hue_neutral">Neutral</string>
+    <string name="label_more_colors">Flere farver</string>
+    <string name="label_back_to_grid">Tilbage</string>
+    <string name="settings_suggest_titles">Foreslå begivenhedstitler</string>
 </resources>

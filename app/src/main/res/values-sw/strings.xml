@@ -924,19 +924,25 @@
     <string name="cd_event_color">Rangi ya tukio</string>
     <string name="cd_checkmark">Imechaguliwa</string>
     <string name="label_device_timezone">Saa za kifaa</string>
-    <string name="color_tomato">Nyanya</string>
-    <string name="color_orangered">Machungwa-nyekundu</string>
-    <string name="color_darkorange">Machungwa iliyokolea</string>
+    <string name="color_tomato">Nyanya</string>    <string name="color_darkorange">Machungwa iliyokolea</string>
     <string name="color_gold">Dhahabu</string>
     <string name="color_yellowgreen">Njano-kijani</string>
-    <string name="color_limegreen">Kijani cha ndimu</string>
-    <string name="color_mediumseagreen">Kijani cha bahari cha wastani</string>
-    <string name="color_seagreen">Kijani cha bahari</string>
-    <string name="color_lightseagreen">Kijani chepesi cha bahari</string>
+    <string name="color_limegreen">Kijani cha ndimu</string>    <string name="color_lightseagreen">Kijani chepesi cha bahari</string>
     <string name="color_dodgerblue">Bluu ya dodger</string>
-    <string name="color_royalblue">Bluu ya kifalme</string>
-    <string name="color_mediumslateblue">Bluu ya slati ya wastani</string>
-    <string name="color_mediumorchid">Okidi ya wastani</string>
+    <string name="color_royalblue">Bluu ya kifalme</string>    <string name="color_mediumorchid">Okidi ya wastani</string>
     <string name="color_hotpink">Waridi iliyong\'aa</string>
     <string name="color_dimgray">Kijivu hafifu</string>
+    <string name="hue_red">Nyekundu</string>
+    <string name="hue_orange">Machungwa</string>
+    <string name="hue_yellow">Manjano</string>
+    <string name="hue_green">Kijani</string>
+    <string name="hue_teal">Kijani-bluu</string>
+    <string name="hue_blue">Bluu</string>
+    <string name="hue_purple">Zambarau</string>
+    <string name="hue_pink">Waridi</string>
+    <string name="hue_brown">Kahawia</string>
+    <string name="hue_neutral">Kati</string>
+    <string name="label_more_colors">Rangi zaidi</string>
+    <string name="label_back_to_grid">Rudi</string>
+    <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
 </resources>

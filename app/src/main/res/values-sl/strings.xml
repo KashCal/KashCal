@@ -869,19 +869,12 @@
     <string name="color_blue">Modra</string>
     <string name="color_purple">Vijolična</string>
     <string name="cd_checkmark">Izbrano</string>
-    <string name="color_tomato">Paradižnikova</string>
-    <string name="color_orangered">Rdečeoranžna</string>
-    <string name="color_darkorange">Temno oranžna</string>
+    <string name="color_tomato">Paradižnikova</string>    <string name="color_darkorange">Temno oranžna</string>
     <string name="color_gold">Zlata</string>
     <string name="color_yellowgreen">Rumenozelena</string>
-    <string name="color_limegreen">Limetna</string>
-    <string name="color_mediumseagreen">Srednje morska</string>
-    <string name="color_seagreen">Morska</string>
-    <string name="color_lightseagreen">Svetlo morska</string>
+    <string name="color_limegreen">Limetna</string>    <string name="color_lightseagreen">Svetlo morska</string>
     <string name="color_dodgerblue">Živo modra</string>
-    <string name="color_royalblue">Kraljevsko modra</string>
-    <string name="color_mediumslateblue">Srednje skrilasto modra</string>
-    <string name="color_mediumorchid">Srednje orhideja</string>
+    <string name="color_royalblue">Kraljevsko modra</string>    <string name="color_mediumorchid">Srednje orhideja</string>
     <string name="color_hotpink">Vroče rožnata</string>
     <string name="color_dimgray">Zamolklo siva</string>
     <!-- Accessibility: link types -->
@@ -999,4 +992,17 @@
     <string name="label_calendar_default">Privzeto iz koledarja</string>
     <string name="label_custom">Po meri</string>
     <string name="cd_event_color">Barva dogodka</string>
+    <string name="hue_red">Rdeča</string>
+    <string name="hue_orange">Oranžna</string>
+    <string name="hue_yellow">Rumena</string>
+    <string name="hue_green">Zelena</string>
+    <string name="hue_teal">Modrozelena</string>
+    <string name="hue_blue">Modra</string>
+    <string name="hue_purple">Vijolična</string>
+    <string name="hue_pink">Rožnata</string>
+    <string name="hue_brown">Rjava</string>
+    <string name="hue_neutral">Nevtralna</string>
+    <string name="label_more_colors">Več barv</string>
+    <string name="label_back_to_grid">Nazaj</string>
+    <string name="settings_suggest_titles">Predlagaj naslove dogodkov</string>
 </resources>

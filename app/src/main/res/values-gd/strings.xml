@@ -1026,20 +1026,26 @@
     <string name="label_device_timezone">Roinn-t\u00ecde an uidheim</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tom\u00e0to</string>
-    <string name="color_orangered">Dearg-òrainds</string>
-    <string name="color_darkorange">Or\u00f2iste dorcha</string>
+    <string name="color_tomato">Tom\u00e0to</string>    <string name="color_darkorange">Or\u00f2iste dorcha</string>
     <string name="color_gold">\u00d2r</string>
     <string name="color_yellowgreen">Uaine bhu\u00ee</string>
-    <string name="color_limegreen">Uaine lìm</string>
-    <string name="color_mediumseagreen">Uaine mara meadhanach</string>
-    <string name="color_seagreen">Uaine mara</string>
-    <string name="color_lightseagreen">Uaine mara soilleir</string>
+    <string name="color_limegreen">Uaine lìm</string>    <string name="color_lightseagreen">Uaine mara soilleir</string>
     <string name="color_dodgerblue">Gorm Dodger</string>
-    <string name="color_royalblue">Gorm rìoghail</string>
-    <string name="color_mediumslateblue">Gorm sglèata meadhanach</string>
-    <string name="color_mediumorchid">Mogairlean meadhanach</string>
+    <string name="color_royalblue">Gorm rìoghail</string>    <string name="color_mediumorchid">Mogairlean meadhanach</string>
     <string name="color_hotpink">Pinc soilleir</string>
     <string name="color_dimgray">Liath doilleir</string>
 
+    <string name="hue_red">Dearg</string>
+    <string name="hue_orange">Orains</string>
+    <string name="hue_yellow">Buidhe</string>
+    <string name="hue_green">Uaine</string>
+    <string name="hue_teal">Uaine liath</string>
+    <string name="hue_blue">Gorm</string>
+    <string name="hue_purple">Purpaidh</string>
+    <string name="hue_pink">Pinc</string>
+    <string name="hue_brown">Donn</string>
+    <string name="hue_neutral">Neodrach</string>
+    <string name="label_more_colors">Barrachd dhathan</string>
+    <string name="label_back_to_grid">Air ais</string>
+    <string name="settings_suggest_titles">Mol tiotalan thachartasan</string>
 </resources>

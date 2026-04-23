@@ -955,20 +955,26 @@
     <string name="label_device_timezone">Eszköz időzónája</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Paradicsom</string>
-    <string name="color_orangered">Narancsvörös</string>
-    <string name="color_darkorange">Sötétnarancs</string>
+    <string name="color_tomato">Paradicsom</string>    <string name="color_darkorange">Sötétnarancs</string>
     <string name="color_gold">Arany</string>
     <string name="color_yellowgreen">Sárgászöld</string>
-    <string name="color_limegreen">Lime zöld</string>
-    <string name="color_mediumseagreen">Közepes tengerzöld</string>
-    <string name="color_seagreen">Tengerzöld</string>
-    <string name="color_lightseagreen">Világos tengerzöld</string>
+    <string name="color_limegreen">Lime zöld</string>    <string name="color_lightseagreen">Világos tengerzöld</string>
     <string name="color_dodgerblue">Élénk kék</string>
-    <string name="color_royalblue">Királykék</string>
-    <string name="color_mediumslateblue">Közepes palakék</string>
-    <string name="color_mediumorchid">Közepes orchidea</string>
+    <string name="color_royalblue">Királykék</string>    <string name="color_mediumorchid">Közepes orchidea</string>
     <string name="color_hotpink">Élénk rózsaszín</string>
     <string name="color_dimgray">Halvány szürke</string>
 
+    <string name="hue_red">Piros</string>
+    <string name="hue_orange">Narancs</string>
+    <string name="hue_yellow">Sárga</string>
+    <string name="hue_green">Zöld</string>
+    <string name="hue_teal">Kékeszöld</string>
+    <string name="hue_blue">Kék</string>
+    <string name="hue_purple">Lila</string>
+    <string name="hue_pink">Rózsaszín</string>
+    <string name="hue_brown">Barna</string>
+    <string name="hue_neutral">Semleges</string>
+    <string name="label_more_colors">További színek</string>
+    <string name="label_back_to_grid">Vissza</string>
+    <string name="settings_suggest_titles">Eseménycímek javaslata</string>
 </resources>

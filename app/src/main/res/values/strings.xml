@@ -553,6 +553,8 @@
     <!-- "Device Calendars" = calendars from other apps on this phone -->
     <string name="settings_device_calendars">Device Calendars</string>
     <string name="settings_quick_event_add">Quick Event Add</string>
+    <!-- Settings row: enables autocomplete dropdown of prior event titles in the event form -->
+    <string name="settings_suggest_titles">Suggest event titles</string>
     <string name="settings_week_numbers">Week Numbers</string>
     <!-- "Widget" = Android home screen widget. Use platform's standard widget term. -->
     <string name="settings_widget_event_limit">Widget Event Limit</string>
@@ -1180,19 +1182,31 @@
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
     <string name="color_tomato">Tomato</string>
-    <string name="color_orangered">Orange Red</string>
     <string name="color_darkorange">Dark Orange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Yellow Green</string>
     <string name="color_limegreen">Lime Green</string>
-    <string name="color_mediumseagreen">Medium Sea Green</string>
-    <string name="color_seagreen">Sea Green</string>
     <string name="color_lightseagreen">Light Sea Green</string>
     <string name="color_dodgerblue">Dodger Blue</string>
     <string name="color_royalblue">Royal Blue</string>
-    <string name="color_mediumslateblue">Medium Slate Blue</string>
     <string name="color_mediumorchid">Medium Orchid</string>
     <string name="color_hotpink">Hot Pink</string>
     <string name="color_dimgray">Dim Gray</string>
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <!-- Hue family labels for the "More colors" wheel picker -->
+    <string name="hue_red">Red</string>
+    <string name="hue_orange">Orange</string>
+    <string name="hue_yellow">Yellow</string>
+    <string name="hue_green">Green</string>
+    <string name="hue_teal">Teal</string>
+    <string name="hue_blue">Blue</string>
+    <string name="hue_purple">Purple</string>
+    <string name="hue_pink">Pink</string>
+    <string name="hue_brown">Brown</string>
+    <string name="hue_neutral">Neutral</string>
+    <!-- Action: open the full CSS3 color browser from the grid -->
+    <string name="label_more_colors">More colors</string>
+    <!-- Action: return from the wheel picker to the main color grid -->
+    <string name="label_back_to_grid">Back</string>
 
 </resources>

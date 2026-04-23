@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.reader
 
+import android.text.format.DateUtils
 import android.util.Log
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -8,11 +9,14 @@ import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.dayCodeToStartOfDayMs
 import org.onekash.kashcal.data.calendar_provider.dayCodeToEndOfDayMs
+import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
@@ -215,6 +219,45 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
+     * Suggest event titles from user history (Room + device calendar) matching
+     * a prefix, for the event-form autocomplete dropdown.
+     *
+     * Queries both sources in parallel, then merges by case-and-whitespace-
+     * normalized title. Frequencies sum across sources; display casing comes
+     * from the entry with the most recent [TitleSuggestion.lastUsed].
+     *
+     * Respects the user's device-calendar visibility settings via the shared
+     * [getVisibleDeviceCalendarIds] helper. The device repository catches
+     * [SecurityException] internally and returns empty — no extra guard here.
+     */
+    suspend fun suggestTitles(
+        prefix: String,
+        windowDays: Int = TITLE_SUGGESTION_WINDOW_DAYS,
+        minFreq: Int = TITLE_SUGGESTION_MIN_FREQ,
+        limit: Int = TITLE_SUGGESTION_LIMIT
+    ): List<TitleSuggestion> {
+        if (prefix.length < TITLE_SUGGESTION_MIN_PREFIX) return emptyList()
+
+        val sinceMs = System.currentTimeMillis() - windowDays * DateUtils.DAY_IN_MILLIS
+
+        val (roomResults, deviceResults) = coroutineScope {
+            val roomAsync = async {
+                eventReader.suggestTitles(prefix, sinceMs, minFreq = minFreq, limit = limit)
+            }
+            val deviceAsync = async {
+                val visibleIds = getVisibleDeviceCalendarIds()
+                if (visibleIds.isEmpty()) emptyList()
+                else calendarProviderRepository.suggestTitlesByPrefix(
+                    prefix, sinceMs, visibleIds, minFreq = minFreq, limit = limit
+                )
+            }
+            roomAsync.await() to deviceAsync.await()
+        }
+
+        return mergeTitleSuggestions(roomResults, deviceResults, minFreq, limit)
+    }
+
+    /**
      * Query device calendar events for a day code range.
      *
      * Shared helper for all methods that need device events.
@@ -271,6 +314,47 @@ class DisplayEventRepository @Inject constructor(
 
 private const val LOG_TAG = "DisplayEventRepo"
 private const val MAX_RANGE_DAYS = 366L
+
+/** Defaults for [DisplayEventRepository.suggestTitles]. */
+const val TITLE_SUGGESTION_MIN_PREFIX = 3
+const val TITLE_SUGGESTION_WINDOW_DAYS = 90
+const val TITLE_SUGGESTION_MIN_FREQ = 2
+const val TITLE_SUGGESTION_LIMIT = 5
+
+/**
+ * Merge two [TitleSuggestion] lists by normalized title.
+ *
+ * Grouping key: title.trim().lowercase(). For each group:
+ * - `title`: original casing from the entry with max `lastUsed`
+ * - `freq`: sum of entries' freq
+ * - `lastUsed`: max of entries' lastUsed
+ *
+ * Result is filtered to `freq >= minFreq`, sorted by freq DESC then
+ * lastUsed DESC, and truncated to [limit].
+ */
+internal fun mergeTitleSuggestions(
+    room: List<TitleSuggestion>,
+    device: List<TitleSuggestion>,
+    minFreq: Int,
+    limit: Int
+): List<TitleSuggestion> {
+    return (room + device)
+        .groupBy { it.title.trim().lowercase() }
+        .map { (_, entries) ->
+            val latest = entries.maxByOrNull { it.lastUsed }!!
+            TitleSuggestion(
+                title = latest.title.trim(),
+                freq = entries.sumOf { it.freq },
+                lastUsed = entries.maxOf { it.lastUsed }
+            )
+        }
+        .filter { it.freq >= minFreq }
+        .sortedWith(
+            compareByDescending<TitleSuggestion> { it.freq }
+                .thenByDescending { it.lastUsed }
+        )
+        .take(limit)
+}
 
 /**
  * Generate a list of YYYYMMDD day codes for each day from startDayCode to endDayCode (inclusive).
