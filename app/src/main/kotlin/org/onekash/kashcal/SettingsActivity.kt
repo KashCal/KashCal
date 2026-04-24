@@ -28,10 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.ics.IcsParserService
+import org.onekash.kashcal.domain.backup.BackupFilename
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.ui.components.IcsImportSheet
@@ -40,7 +43,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
 import org.onekash.kashcal.ui.screens.AccountSettingsScreen
+import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
+import org.onekash.kashcal.ui.screens.settings.RestoreConfirmationDialog
+import org.onekash.kashcal.ui.screens.settings.RestoreErrorDialog
+import org.onekash.kashcal.ui.screens.settings.RestoreSuccessDialog
 import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.AccountsScreen
@@ -53,6 +60,7 @@ import org.onekash.kashcal.util.IcsFileReader
 import javax.inject.Inject
 
 private const val TAG = "SettingsActivity"
+private const val BACKUP_MIME_TYPE = "application/json"
 
 /**
  * Settings activity hosting AccountSettingsScreen.
@@ -255,6 +263,46 @@ class SettingsActivity : ComponentActivity() {
                     }
                 }
 
+                val backupExportLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE)
+                ) { uri ->
+                    val json = viewModel.consumePendingExportJson()
+                    if (uri == null || json == null) return@rememberLauncherForActivityResult
+                    coroutineScope.launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                contentResolver.openOutputStream(uri)?.use { out ->
+                                    out.write(json.toByteArray(Charsets.UTF_8))
+                                } ?: error("Could not open output stream")
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to write backup file", e)
+                            viewModel.showSnackbar(getString(R.string.backup_error_write_failed))
+                        }
+                    }
+                }
+
+                val backupImportLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.OpenDocument()
+                ) { uri ->
+                    uri ?: return@rememberLauncherForActivityResult
+                    coroutineScope.launch {
+                        try {
+                            val json = withContext(Dispatchers.IO) {
+                                contentResolver.openInputStream(uri)?.use {
+                                    it.readBytes().toString(Charsets.UTF_8)
+                                } ?: error("Could not open input stream")
+                            }
+                            viewModel.onBackupFileSelected(json)
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to read backup file", e)
+                            viewModel.showSnackbar(getString(R.string.backup_error_read_failed))
+                        }
+                    }
+                }
+
+                val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
+
                 Box(modifier = Modifier.fillMaxSize()) {
                     // State-based navigation between settings and detail screens
                     when {
@@ -391,6 +439,25 @@ class SettingsActivity : ComponentActivity() {
                                     "application/ics",
                                     "text/x-vcalendar"
                                 ))
+                            },
+                            onBackupSettings = {
+                                coroutineScope.launch {
+                                    try {
+                                        viewModel.prepareExport()
+                                        backupExportLauncher.launch(
+                                            BackupFilename.generate(
+                                                java.time.Instant.now(),
+                                                java.time.ZoneId.systemDefault(),
+                                            )
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.e(TAG, "Failed to build backup JSON", e)
+                                        viewModel.showSnackbar(getString(R.string.backup_error_build_failed))
+                                    }
+                                }
+                            },
+                            onRestoreSettings = {
+                                backupImportLauncher.launch(arrayOf(BACKUP_MIME_TYPE))
                             },
                             // ICS Export
                             onExportCalendar = { calendarId ->
@@ -566,6 +633,23 @@ class SettingsActivity : ComponentActivity() {
                             onDiscover = viewModel::onCalDavDiscover,
                             onDismiss = viewModel::hideCalDavSignInSheet
                         )
+                    }
+
+                    when (val state = backupRestoreState) {
+                        is BackupRestoreUiState.PendingConfirmation -> RestoreConfirmationDialog(
+                            summary = state.summary,
+                            onConfirm = viewModel::confirmRestore,
+                            onDismiss = viewModel::dismissDialog,
+                        )
+                        is BackupRestoreUiState.Error -> RestoreErrorDialog(
+                            error = state.error,
+                            onDismiss = viewModel::dismissDialog,
+                        )
+                        is BackupRestoreUiState.Success -> RestoreSuccessDialog(
+                            result = state.result,
+                            onDismiss = viewModel::dismissDialog,
+                        )
+                        BackupRestoreUiState.Idle -> Unit
                     }
 
                     // Account Connected Success Sheet (shown after iCloud or CalDAV connection)

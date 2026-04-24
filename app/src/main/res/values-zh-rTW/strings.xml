@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">重新下載所有行事曆資料</string>
     <string name="settings_sync_history">同步紀錄</string>
     <string name="settings_sync_history_subtitle">查看同步工作階段（過去48小時）</string>
-    <string name="settings_import_subtitle">匯入 .ics 檔案</string>
-    <string name="settings_export_subtitle">備份為 .ics 檔案</string>
+    <string name="settings_import_subtitle">從 ICS 檔案將事件加入任一行事曆</string>
+    <string name="settings_export_subtitle">將事件儲存為 ICS 檔案</string>
     <string name="settings_birthday_reminder">生日提醒</string>
     <string name="settings_use_device_timezone">使用裝置時區</string>
     <string name="settings_section_my_calendars">我的行事曆</string>
     <string name="settings_section_display">顯示</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同步</string>
-    <string name="settings_section_data">資料</string>
+    <string name="settings_section_data">備份與還原</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">使用 Apple 行事曆？</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">取得行事曆</string>
-    <string name="action_import_from_file">從檔案匯入</string>
+    <string name="action_import_from_file">從檔案匯入事件</string>
     <string name="action_export_local_calendar">匯出本機行事曆</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">信任不安全的連線</string>
     <string name="action_add_another">新增其他帳號</string>
     <string name="account_connected_found_calendars">為 %2$s 找到 %1$d 個行事曆。</string>
-    <string name="account_connected_syncing_hint">同步進行中 \u2014 事件將很快顯示。</string>
+    <string name="account_connected_syncing_hint">同步進行中 — 事件將很快顯示。</string>
     <string name="settings_time_format_currently_24h">目前：24小時制 (%1$s)</string>
     <string name="settings_time_format_currently_12h">目前：12小時制 (%1$s)</string>
     <string name="settings_time_format_example">範例：%1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d 個未顯示（共 %2$d 個，最多可編輯 %3$d 個）</string>
     <string name="label_found_events">找到：%1$d 個事件</string>
     <string name="label_open_debug_menu">開啟偵錯選單</string>
-    <string name="placeholder_search">搜尋\u2026</string>
+    <string name="placeholder_search">搜尋…</string>
     <string name="status_sync_paused">同步已暫停</string>
     <string name="status_not_synced">未同步</string>
     <string name="status_sync_error">同步錯誤</string>
@@ -514,10 +514,16 @@
         <item quantity="other">%1$d 個帳號</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d 個行事曆</item>
+        <item quantity="other">%1$s · %2$d 個行事曆</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d 個訂閱</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">將匯入 %1$d 個訂閱及您的偏好設定。</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">已匯入 %1$d 個訂閱及您的偏好設定。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同步失敗（%1$d 次嘗試）</item>
@@ -547,7 +553,7 @@
         <item quantity="other">匯入</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026還有 %1$d 個</item>
+        <item quantity="other">…還有 %1$d 個</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">已匯入 %1$d 個事件</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">正在同步行事曆\u2026</string>
-    <string name="sync_banner_preparing">準備同步\u2026</string>
+    <string name="sync_banner_syncing">正在同步行事曆…</string>
+    <string name="sync_banner_preparing">準備同步…</string>
     <string name="sync_banner_complete_errors">同步完成，有錯誤</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">同步失敗: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">第%1$d天（共%2$d天）</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">第1天（共%1$d天）\u00b7 %2$s開始</string>
+    <string name="day_starts">第1天（共%1$d天）· %2$s開始</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">第%1$d天（共%2$d天）\u00b7 %3$s結束</string>
+    <string name="day_ends">第%1$d天（共%2$d天）· %3$s結束</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 全天</string>
-    <string name="event_date_all_day">%1$s \u00b7 全天</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · 全天</string>
+    <string name="event_date_all_day">%1$s · 全天</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s（全天）</string>
     <string name="event_date_all_day_parens">%1$s（全天）</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">第%1$d天（共%2$d天）（全天）</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取</string>
-    <string name="sync_history_stats_issues">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取   \u26a0 %4$d個問題</string>
+    <string name="sync_history_stats">%1$d次同步   ↑%2$d推送   ↓%3$d拉取</string>
+    <string name="sync_history_stats_issues">%1$d次同步   ↑%2$d推送   ↓%3$d拉取   ⚠ %4$d個問題</string>
     <string name="sync_history_failed">失敗</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">每小時</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">需要URL</string>
     <string name="ics_url_invalid_scheme">URL必須以http://、https://或webcal://開頭</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s（全天）</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s，%3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s（全天）</string>
+    <string name="event_confirmation_timed">%1$s · %2$s，%3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">，%1$d次</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">更多顏色</string>
     <string name="label_back_to_grid">返回</string>
     <string name="settings_suggest_titles">建議事件標題</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">備份設定</string>
+    <string name="backup_settings_subtitle">將 KashCal 設定儲存為 JSON 檔案</string>
+    <string name="restore_settings_label">還原設定</string>
+    <string name="restore_settings_subtitle">從備份檔案還原 KashCal 設定</string>
+    <string name="restore_confirm_title">要還原備份嗎？</string>
+    <string name="restore_confirm_from">來自 KashCal %1$s 的備份，%2$s</string>
+    <string name="restore_confirm_message_prefs_only">將匯入您的偏好設定。</string>
+    <string name="action_restore">還原</string>
+    <string name="restore_success_title">還原完成</string>
+    <string name="restore_success_message_prefs_only">已匯入偏好設定。</string>
+    <string name="restore_success_device_calendars_note">若您使用裝置行事曆功能，請重新選擇。</string>
+    <string name="restore_error_title">還原失敗</string>
+    <string name="restore_error_version_too_new">此備份是由較新版本的 KashCal 建立的。請更新 KashCal 後再試一次。</string>
+    <string name="restore_error_malformed_json">此檔案不是有效的 KashCal 備份。</string>
+    <string name="restore_error_invalid_value">此備份檔案含有無效資料，無法還原。</string>
+    <string name="restore_error_apply_failure">套用備份時發生問題。未儲存任何變更。</string>
+    <string name="backup_error_build_failed">備份失敗</string>
+    <string name="backup_error_write_failed">備份失敗：無法寫入檔案</string>
+    <string name="backup_error_read_failed">無法讀取檔案</string>
 </resources>

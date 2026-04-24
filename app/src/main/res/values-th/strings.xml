@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">ดาวน์โหลดข้อมูลปฏิทินทั้งหมดใหม่</string>
     <string name="settings_sync_history">ประวัติการซิงค์</string>
     <string name="settings_sync_history_subtitle">ดูเซสชันการซิงค์ (48 ชั่วโมงล่าสุด)</string>
-    <string name="settings_import_subtitle">นำเข้าไฟล์ .ics</string>
-    <string name="settings_export_subtitle">สำรองข้อมูลเป็นไฟล์ .ics</string>
+    <string name="settings_import_subtitle">เพิ่มกิจกรรมจากไฟล์ ICS ไปยังปฏิทินใดก็ได้</string>
+    <string name="settings_export_subtitle">บันทึกกิจกรรมเป็นไฟล์ ICS</string>
     <string name="settings_birthday_reminder">แจ้งเตือนวันเกิด</string>
     <string name="settings_use_device_timezone">ใช้เขตเวลาของอุปกรณ์</string>
     <string name="settings_section_my_calendars">ปฏิทินของฉัน</string>
     <string name="settings_section_display">การแสดงผล</string>
     <string name="settings_section_notifications">การแจ้งเตือน</string>
     <string name="settings_section_sync">ซิงค์</string>
-    <string name="settings_section_data">ข้อมูล</string>
+    <string name="settings_section_data">สำรองและกู้คืน</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">ใช้ Apple Calendar อยู่?</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">ดึงปฏิทิน</string>
-    <string name="action_import_from_file">นำเข้าจากไฟล์</string>
+    <string name="action_import_from_file">นำเข้ากิจกรรมจากไฟล์</string>
     <string name="action_export_local_calendar">ส่งออกปฏิทินในเครื่อง</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">เชื่อถือการเชื่อมต่อที่ไม่ปลอดภัย</string>
     <string name="action_add_another">เพิ่มบัญชีอื่น</string>
     <string name="account_connected_found_calendars">พบ %1$d ปฏิทินสำหรับ %2$s</string>
-    <string name="account_connected_syncing_hint">กำลังซิงค์ \u2014 กิจกรรมจะปรากฏในอีกสักครู่</string>
+    <string name="account_connected_syncing_hint">กำลังซิงค์ — กิจกรรมจะปรากฏในอีกสักครู่</string>
     <string name="settings_time_format_currently_24h">ปัจจุบัน: 24 ชั่วโมง (%1$s)</string>
     <string name="settings_time_format_currently_12h">ปัจจุบัน: 12 ชั่วโมง (%1$s)</string>
     <string name="settings_time_format_example">ตัวอย่าง: %1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d ไม่แสดง (ทั้งหมด %2$d, แก้ไขได้สูงสุด %3$d)</string>
     <string name="label_found_events">พบ: %1$d กิจกรรม</string>
     <string name="label_open_debug_menu">เปิดเมนูดีบัก</string>
-    <string name="placeholder_search">ค้นหา\u2026</string>
+    <string name="placeholder_search">ค้นหา…</string>
     <string name="status_sync_paused">หยุดซิงค์ชั่วคราว</string>
     <string name="status_not_synced">ไม่ได้ซิงค์</string>
     <string name="status_sync_error">ซิงค์ผิดพลาด</string>
@@ -514,10 +514,16 @@
         <item quantity="other">%1$d บัญชี</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d ปฏิทิน</item>
+        <item quantity="other">%1$s · %2$d ปฏิทิน</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d การสมัครรับ</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">การสมัครสมาชิก %1$d รายการและการตั้งค่าของคุณจะถูกนำเข้า</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">นำเข้าการสมัครสมาชิก %1$d รายการและการตั้งค่าของคุณแล้ว</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">ซิงค์ล้มเหลว (%1$d ครั้ง)</item>
@@ -547,7 +553,7 @@
         <item quantity="other">นำเข้า</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026อีก %1$d รายการ</item>
+        <item quantity="other">…อีก %1$d รายการ</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">นำเข้า %1$d กิจกรรมแล้ว</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">กำลังซิงค์ปฏิทิน\u2026</string>
-    <string name="sync_banner_preparing">กำลังเตรียมซิงค์\u2026</string>
+    <string name="sync_banner_syncing">กำลังซิงค์ปฏิทิน…</string>
+    <string name="sync_banner_preparing">กำลังเตรียมซิงค์…</string>
     <string name="sync_banner_complete_errors">ซิงค์เสร็จ มีข้อผิดพลาด</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">ซิงค์ล้มเหลว: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">วันที่ %1$d จาก %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">วันที่ 1 จาก %1$d \u00b7 เริ่ม %2$s</string>
+    <string name="day_starts">วันที่ 1 จาก %1$d · เริ่ม %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">วันที่ %1$d จาก %2$d \u00b7 สิ้นสุด %3$s</string>
+    <string name="day_ends">วันที่ %1$d จาก %2$d · สิ้นสุด %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 ทั้งวัน</string>
-    <string name="event_date_all_day">%1$s \u00b7 ทั้งวัน</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · ทั้งวัน</string>
+    <string name="event_date_all_day">%1$s · ทั้งวัน</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (ทั้งวัน)</string>
     <string name="event_date_all_day_parens">%1$s (ทั้งวัน)</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">วันที่ %1$d จาก %2$d (ทั้งวัน)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ครั้งซิงค์   \u2191%2$d พุช   \u2193%3$d พูล</string>
-    <string name="sync_history_stats_issues">%1$d ครั้งซิงค์   \u2191%2$d พุช   \u2193%3$d พูล   \u26a0 %4$d ปัญหา</string>
+    <string name="sync_history_stats">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล</string>
+    <string name="sync_history_stats_issues">%1$d ครั้งซิงค์   ↑%2$d พุช   ↓%3$d พูล   ⚠ %4$d ปัญหา</string>
     <string name="sync_history_failed">ล้มเหลว</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">ทุกชั่วโมง</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">ต้องระบุ URL</string>
     <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (ทั้งวัน)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (ทั้งวัน)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d ครั้ง</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">สีเพิ่มเติม</string>
     <string name="label_back_to_grid">กลับ</string>
     <string name="settings_suggest_titles">แนะนำชื่อกิจกรรม</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">สำรองข้อมูลการตั้งค่า</string>
+    <string name="backup_settings_subtitle">บันทึกการตั้งค่า KashCal เป็นไฟล์ JSON</string>
+    <string name="restore_settings_label">กู้คืนการตั้งค่า</string>
+    <string name="restore_settings_subtitle">กู้คืนการตั้งค่า KashCal จากไฟล์สำรอง</string>
+    <string name="restore_confirm_title">กู้คืนข้อมูลสำรองหรือไม่?</string>
+    <string name="restore_confirm_from">ข้อมูลสำรองจาก KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">การตั้งค่าของคุณจะถูกนำเข้า</string>
+    <string name="action_restore">กู้คืน</string>
+    <string name="restore_success_title">กู้คืนสำเร็จ</string>
+    <string name="restore_success_message_prefs_only">นำเข้าการตั้งค่าแล้ว</string>
+    <string name="restore_success_device_calendars_note">หากคุณใช้ฟีเจอร์ปฏิทินของอุปกรณ์ โปรดเลือกอีกครั้ง</string>
+    <string name="restore_error_title">กู้คืนไม่สำเร็จ</string>
+    <string name="restore_error_version_too_new">ข้อมูลสำรองนี้สร้างด้วย KashCal เวอร์ชันที่ใหม่กว่า โปรดอัปเดต KashCal แล้วลองอีกครั้ง</string>
+    <string name="restore_error_malformed_json">ไฟล์นี้ไม่ใช่ไฟล์สำรอง KashCal ที่ถูกต้อง</string>
+    <string name="restore_error_invalid_value">ไฟล์สำรองนี้มีข้อมูลที่ไม่ถูกต้องและไม่สามารถกู้คืนได้</string>
+    <string name="restore_error_apply_failure">เกิดข้อผิดพลาดขณะใช้ข้อมูลสำรอง ไม่มีการบันทึกการเปลี่ยนแปลงใดๆ</string>
+    <string name="backup_error_build_failed">สำรองข้อมูลไม่สำเร็จ</string>
+    <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ — เขียนลงไฟล์ไม่ได้</string>
+    <string name="backup_error_read_failed">อ่านไฟล์ไม่ได้</string>
 </resources>

@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Összes naptáradat újratöltése</string>
     <string name="settings_sync_history">Szinkronizálási előzmények</string>
     <string name="settings_sync_history_subtitle">Szinkronizálási munkamenetek megtekintése (utolsó 48 óra)</string>
-    <string name="settings_import_subtitle">.ics fájl importálása</string>
-    <string name="settings_export_subtitle">Biztonsági mentés .ics fájlba</string>
+    <string name="settings_import_subtitle">Események hozzáadása ICS fájlból bármelyik naptárhoz</string>
+    <string name="settings_export_subtitle">Események mentése ICS fájlba</string>
     <string name="settings_birthday_reminder">Születésnapi emlékeztető</string>
     <string name="settings_use_device_timezone">Eszköz időzónájának használata</string>
     <string name="settings_section_my_calendars">Naptáraim</string>
     <string name="settings_section_display">Megjelenés</string>
     <string name="settings_section_notifications">Értesítések</string>
     <string name="settings_section_sync">Szinkronizálás</string>
-    <string name="settings_section_data">Adatok</string>
+    <string name="settings_section_data">Mentés és visszaállítás</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Beállítások mentése</string>
+    <string name="backup_settings_subtitle">A KashCal beállításainak mentése JSON fájlba</string>
+    <string name="restore_settings_label">Beállítások visszaállítása</string>
+    <string name="restore_settings_subtitle">A KashCal beállításainak visszaállítása mentési fájlból</string>
+    <string name="restore_confirm_title">Visszaállítod a mentést?</string>
+    <string name="restore_confirm_from">Mentés a KashCal %1$s verziójából, %2$s</string>
+    <string name="action_restore">Visszaállítás</string>
+    <string name="restore_success_title">Visszaállítás kész</string>
+    <string name="restore_confirm_message_prefs_only">A beállításaid importálásra kerülnek.</string>
+    <string name="restore_success_message_prefs_only">Beállítások importálva.</string>
+    <string name="restore_success_device_calendars_note">Ha használod az eszköz naptárait, válaszd ki őket újra.</string>
+    <string name="restore_error_title">A visszaállítás sikertelen</string>
+    <string name="restore_error_version_too_new">Ez a mentés a KashCal újabb verziójával készült. Frissítsd a KashCalt, és próbáld újra.</string>
+    <string name="restore_error_malformed_json">Ez a fájl nem érvényes KashCal mentés.</string>
+    <string name="restore_error_invalid_value">A mentési fájl érvénytelen adatokat tartalmaz, és nem állítható vissza.</string>
+    <string name="restore_error_apply_failure">Valami hiba történt a mentés alkalmazása közben. Nem történt módosítás.</string>
+    <string name="backup_error_build_failed">A biztonsági mentés sikertelen</string>
+    <string name="backup_error_write_failed">A biztonsági mentés sikertelen — a fájl írása nem sikerült</string>
+    <string name="backup_error_read_failed">A fájl olvasása nem sikerült</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Naptárad van?</string>
@@ -297,7 +318,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Naptár letöltése</string>
-    <string name="action_import_from_file">Importálás fájlból</string>
+    <string name="action_import_from_file">Események importálása fájlból</string>
     <string name="action_export_local_calendar">Helyi naptár exportálása</string>
 
     <!-- ==================== Providers ==================== -->
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Nem biztonságos kapcsolat megbízása</string>
     <string name="action_add_another">Még egy hozzáadása</string>
     <string name="account_connected_found_calendars">%1$d naptár található ehhez: %2$s.</string>
-    <string name="account_connected_syncing_hint">Szinkronizálás folyamatban \u2014 az események hamarosan megjelennek.</string>
+    <string name="account_connected_syncing_hint">Szinkronizálás folyamatban — az események hamarosan megjelennek.</string>
     <string name="settings_time_format_currently_24h">Jelenleg: 24 órás (%1$s)</string>
     <string name="settings_time_format_currently_12h">Jelenleg: 12 órás (%1$s)</string>
     <string name="settings_time_format_example">Példa: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d nem látható (%2$d összesen, max. %3$d szerkeszthető)</string>
     <string name="label_found_events">Találat: %1$d esemény</string>
     <string name="label_open_debug_menu">Hibakeresési menü megnyitása</string>
-    <string name="placeholder_search">Keresés\u2026</string>
+    <string name="placeholder_search">Keresés…</string>
     <string name="status_sync_paused">Szinkronizálás szüneteltetve</string>
     <string name="status_not_synced">Nincs szinkronizálva</string>
     <string name="status_sync_error">Szinkronizálási hiba</string>
@@ -513,12 +534,20 @@
         <item quantity="other">%1$d fiók</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 naptár</item>
-        <item quantity="other">%1$s \u00B7 %2$d naptár</item>
+        <item quantity="one">%1$s · 1 naptár</item>
+        <item quantity="other">%1$s · %2$d naptár</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d feliratkozás</item>
         <item quantity="other">%1$d feliratkozás</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d feliratkozás és a beállításaid importálásra kerülnek.</item>
+        <item quantity="other">%1$d feliratkozás és a beállításaid importálásra kerülnek.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d feliratkozás és a beállításaid importálva.</item>
+        <item quantity="other">%1$d feliratkozás és a beállításaid importálva.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Szinkronizálás sikertelen (%1$d próbálkozás)</item>
@@ -557,8 +586,8 @@
         <item quantity="other">Importálás</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026és még %1$d</item>
-        <item quantity="other">\u2026és még %1$d</item>
+        <item quantity="one">…és még %1$d</item>
+        <item quantity="other">…és még %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d esemény importálva</item>
@@ -767,8 +796,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Naptárak szinkronizálása\u2026</string>
-    <string name="sync_banner_preparing">Szinkronizálás előkészítése\u2026</string>
+    <string name="sync_banner_syncing">Naptárak szinkronizálása…</string>
+    <string name="sync_banner_preparing">Szinkronizálás előkészítése…</string>
     <string name="sync_banner_complete_errors">Szinkronizálás hibákkal befejeződött</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Szinkronizálás sikertelen: %1$s</string>
@@ -799,12 +828,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">%1$d. nap / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">1. nap / %1$d \u00b7 kezdés %2$s</string>
+    <string name="day_starts">1. nap / %1$d · kezdés %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%1$d. nap / %2$d \u00b7 vége %3$s</string>
+    <string name="day_ends">%1$d. nap / %2$d · vége %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Egész nap</string>
-    <string name="event_date_all_day">%1$s \u00b7 Egész nap</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Egész nap</string>
+    <string name="event_date_all_day">%1$s · Egész nap</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Egész nap)</string>
     <string name="event_date_all_day_parens">%1$s (Egész nap)</string>
@@ -833,8 +862,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">%1$d. nap / %2$d (Egész nap)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d szinkronizálás   \u2191%2$d feltöltve   \u2193%3$d letöltve</string>
-    <string name="sync_history_stats_issues">%1$d szinkronizálás   \u2191%2$d feltöltve   \u2193%3$d letöltve   \u26a0 %4$d probléma</string>
+    <string name="sync_history_stats">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve</string>
+    <string name="sync_history_stats_issues">%1$d szinkronizálás   ↑%2$d feltöltve   ↓%3$d letöltve   ⚠ %4$d probléma</string>
     <string name="sync_history_failed">Sikertelen</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Óránként</string>
@@ -845,8 +874,8 @@
     <string name="ics_url_required">URL szükséges</string>
     <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Egész nap)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Egész nap)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Naptár</string>
@@ -881,7 +910,7 @@
     <string name="rrule_until_suffix">, eddig: %1$s</string>
     <string name="rrule_freq_never">Soha</string>
     <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 óta: %2$s</string>
+    <string name="rrule_since">%1$s · óta: %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">

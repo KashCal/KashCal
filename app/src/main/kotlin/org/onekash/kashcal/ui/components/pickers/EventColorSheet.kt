@@ -83,6 +83,7 @@ fun EventColorSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = {},
         sheetGesturesEnabled = false
     ) {
         Crossfade(
@@ -126,7 +127,7 @@ private fun GridContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 24.dp, end = 24.dp, bottom = 32.dp),
+            .padding(start = 24.dp, top = 16.dp, end = 24.dp, bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val defaultCell: @Composable () -> Unit = {
@@ -205,7 +206,7 @@ private fun WheelContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         ColorWheelPicker(
@@ -227,12 +228,18 @@ private fun WheelContent(
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.size(4.dp))
-                Text(stringResource(R.string.label_back_to_grid))
+                Text(
+                    text = stringResource(R.string.label_back_to_grid),
+                    maxLines = 1,
+                    softWrap = false
+                )
             }
             TextButton(onClick = onDone) {
                 Text(
-                    stringResource(R.string.action_done),
-                    fontWeight = FontWeight.Bold
+                    text = stringResource(R.string.action_done),
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    softWrap = false
                 )
             }
         }

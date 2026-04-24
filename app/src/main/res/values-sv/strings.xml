@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">Ladda ner all kalenderdata igen</string>
     <string name="settings_sync_history">Synkhistorik</string>
     <string name="settings_sync_history_subtitle">Visa synk-sessioner (senaste 48 timmarna)</string>
-    <string name="settings_import_subtitle">Importera .ics-fil</string>
-    <string name="settings_export_subtitle">Säkerhetskopiera till .ics-fil</string>
+    <string name="settings_import_subtitle">Lägg till händelser från en ICS-fil till valfri kalender</string>
+    <string name="settings_export_subtitle">Spara händelser i en ICS-fil</string>
     <string name="settings_birthday_reminder">Födelsedagspåminnelse</string>
     <string name="settings_use_device_timezone">Använd enhetens tidszon</string>
     <string name="settings_section_my_calendars">Mina kalendrar</string>
     <string name="settings_section_display">Visning</string>
     <string name="settings_section_notifications">Aviseringar</string>
     <string name="settings_section_sync">Synkronisering</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Säkerhetskopiering &amp; återställning</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Säkerhetskopiera inställningar</string>
+    <string name="backup_settings_subtitle">Spara KashCal-konfiguration i en JSON-fil</string>
+    <string name="restore_settings_label">Återställ inställningar</string>
+    <string name="restore_settings_subtitle">Återställ KashCal-konfiguration från en säkerhetskopia</string>
+    <string name="restore_confirm_title">Återställa säkerhetskopia?</string>
+    <string name="restore_confirm_from">Säkerhetskopia från KashCal %1$s, %2$s</string>
+    <string name="action_restore">Återställ</string>
+    <string name="restore_success_title">Återställning klar</string>
+    <string name="restore_confirm_message_prefs_only">Dina inställningar importeras.</string>
+    <string name="restore_success_message_prefs_only">Inställningar importerade.</string>
+    <string name="restore_success_device_calendars_note">Välj dina enhetskalendrar igen om du använder den funktionen.</string>
+    <string name="restore_error_title">Återställning misslyckades</string>
+    <string name="restore_error_version_too_new">Den här säkerhetskopian skapades med en nyare version av KashCal. Uppdatera KashCal och försök igen.</string>
+    <string name="restore_error_malformed_json">Filen är inte en giltig KashCal-säkerhetskopia.</string>
+    <string name="restore_error_invalid_value">Säkerhetskopian innehåller ogiltiga data och kan inte återställas.</string>
+    <string name="restore_error_apply_failure">Något gick fel när säkerhetskopian skulle tillämpas. Inga ändringar sparades.</string>
+    <string name="backup_error_build_failed">Säkerhetskopieringen misslyckades</string>
+    <string name="backup_error_write_failed">Säkerhetskopieringen misslyckades — kunde inte skriva till filen</string>
+    <string name="backup_error_read_failed">Kunde inte läsa filen</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
@@ -300,7 +321,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Hämta kalender</string>
-    <string name="action_import_from_file">Importera från fil</string>
+    <string name="action_import_from_file">Importera händelser från fil</string>
     <string name="action_export_local_calendar">Exportera lokal kalender</string>
 
     <!-- ==================== Providers ==================== -->
@@ -416,7 +437,7 @@
     <string name="caldav_trust_insecure_label">Lita på osäker anslutning</string>
     <string name="action_add_another">Lägg till ytterligare</string>
     <string name="account_connected_found_calendars">Hittade %1$d kalend(rar) för %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronisering pågår \u2014 händelser visas snart.</string>
+    <string name="account_connected_syncing_hint">Synkronisering pågår — händelser visas snart.</string>
     <string name="settings_time_format_currently_24h">Just nu: 24-timmar (%1$s)</string>
     <string name="settings_time_format_currently_12h">Just nu: 12-timmar (%1$s)</string>
     <string name="settings_time_format_example">Exempel: %1$s</string>
@@ -455,7 +476,7 @@
     <string name="label_reminders_truncated">%1$d visas inte (%2$d totalt, max %3$d redigerbara)</string>
     <string name="label_found_events">Hittade: %1$d händelser</string>
     <string name="label_open_debug_menu">Öppna debug-meny</string>
-    <string name="placeholder_search">Sök\u2026</string>
+    <string name="placeholder_search">Sök…</string>
     <string name="status_sync_paused">Synk pausad</string>
     <string name="status_not_synced">Ej synkroniserad</string>
     <string name="status_sync_error">Synkroniseringsfel</string>
@@ -517,12 +538,20 @@
         <item quantity="other">%1$d konton</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalender</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendrar</item>
+        <item quantity="one">%1$s · 1 kalender</item>
+        <item quantity="other">%1$s · %2$d kalendrar</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d prenumeration</item>
         <item quantity="other">%1$d prenumerationer</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d prenumeration och dina inställningar importeras.</item>
+        <item quantity="other">%1$d prenumerationer och dina inställningar importeras.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d prenumeration och dina inställningar importerade.</item>
+        <item quantity="other">%1$d prenumerationer och dina inställningar importerade.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synk misslyckades (%1$d försök)</item>
@@ -561,8 +590,8 @@
         <item quantity="other">Importera</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026och %1$d till</item>
-        <item quantity="other">\u2026och %1$d till</item>
+        <item quantity="one">…och %1$d till</item>
+        <item quantity="other">…och %1$d till</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d händelse importerad</item>
@@ -685,21 +714,21 @@
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
     <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Ingen p\u00e5minnelse</string>
-    <string name="reminder_at_time_of_event">Vid tidpunkten f\u00f6r h\u00e4ndelsen</string>
+    <string name="reminder_none">Ingen påminnelse</string>
+    <string name="reminder_at_time_of_event">Vid tidpunkten för händelsen</string>
     <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
     <string name="reminder_time_before">%1$s innan</string>
     <string name="reminder_time_after">%1$s efter</string>
     <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM p\u00e5 h\u00e4ndelsedagen</string>
-    <string name="reminder_day_of_event_24h">09:00 p\u00e5 h\u00e4ndelsedagen</string>
+    <string name="reminder_day_of_event_12h">9 AM på händelsedagen</string>
+    <string name="reminder_day_of_event_24h">09:00 på händelsedagen</string>
     <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
     <!-- %1$s = duration (e.g., "1 day", "2 days") -->
     <string name="reminder_before_at_12h">%1$s innan kl. 9 AM</string>
     <string name="reminder_before_at_24h">%1$s innan kl. 09:00</string>
     <!-- Short/compact reminder labels (used in chips and summaries) -->
     <string name="reminder_short_off">Av</string>
-    <string name="reminder_short_at_event">Vid h\u00e4ndelse</string>
+    <string name="reminder_short_at_event">Vid händelse</string>
     <string name="reminder_short_9am_12h">9AM</string>
     <string name="reminder_short_9am_24h">09:00</string>
     <string name="reminder_short_minutes">%1$dm</string>
@@ -714,13 +743,13 @@
     <!-- Sync interval options -->
     <string name="sync_manual_only">Endast manuellt</string>
     <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Alla h\u00e4ndelser</string>
+    <string name="sync_lookback_all">Alla händelser</string>
 
     <!-- ==================== i18n: Notification Strings ==================== -->
     <!-- Notification action buttons -->
     <string name="action_snooze">Snooze</string>
     <!-- Reminder notification content -->
-    <string name="notification_starting_now">B\u00f6rjar nu</string>
+    <string name="notification_starting_now">Börjar nu</string>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
     <string name="notification_tomorrow_time">Imorgon, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
@@ -729,27 +758,27 @@
     <string name="sync_notification_complete">Synkronisering klar</string>
     <string name="sync_notification_partial">Synkronisering delvis klar</string>
     <string name="sync_notification_auth_failed">Synkronisering: Autentisering misslyckades</string>
-    <string name="sync_notification_auth_reauth">Logga in p\u00e5 ditt konto igen</string>
+    <string name="sync_notification_auth_reauth">Logga in på ditt konto igen</string>
     <string name="sync_notification_failed">Synkronisering misslyckades</string>
-    <string name="sync_notification_parse_title">Vissa h\u00e4ndelser kunde inte synkroniseras</string>
+    <string name="sync_notification_parse_title">Vissa händelser kunde inte synkroniseras</string>
     <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s i %2$s kunde inte synkroniseras. F\u00f6rs\u00f6k en fullst\u00e4ndig synkronisering i Inst\u00e4llningar.</string>
-    <string name="sync_notification_conflict_title">Synkroniseringskonflikt l\u00f6st</string>
+    <string name="sync_notification_parse_content">%1$s i %2$s kunde inte synkroniseras. Försök en fullständig synkronisering i Inställningar.</string>
+    <string name="sync_notification_conflict_title">Synkroniseringskonflikt löst</string>
     <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Lokala \u00e4ndringar av \"%1$s\" gick f\u00f6rlorade p\u00e5 grund av synkroniseringskonflikt. Serverversionen anv\u00e4nds.</string>
+    <string name="sync_notification_conflict_single">Lokala ändringar av \"%1$s\" gick förlorade på grund av synkroniseringskonflikt. Serverversionen används.</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Lokala \u00e4ndringar av %1$s gick f\u00f6rlorade p\u00e5 grund av synkroniseringskonflikter. Serverversionerna anv\u00e4nds.</string>
-    <string name="sync_notification_expired_title">Synkroniserings\u00e4ndringar utg\u00e5ngna</string>
+    <string name="sync_notification_conflict_multi">Lokala ändringar av %1$s gick förlorade på grund av synkroniseringskonflikter. Serverversionerna används.</string>
+    <string name="sync_notification_expired_title">Synkroniseringsändringar utgångna</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s kunde inte synkroniseras efter 30 dagar. Serverversionen anv\u00e4nds. Tvinga synkronisering f\u00f6r att f\u00f6rs\u00f6ka igen.</string>
+    <string name="sync_notification_expired_content">%1$s kunde inte synkroniseras efter 30 dagar. Serverversionen används. Tvinga synkronisering för att försöka igen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender synkroniserad</item>
         <item quantity="other">%1$d kalendrar synkroniserade</item>
     </plurals>
     <plurals name="sync_notification_changes">
-        <item quantity="one">, %1$d \u00e4ndring</item>
-        <item quantity="other">, %1$d \u00e4ndringar</item>
+        <item quantity="one">, %1$d ändring</item>
+        <item quantity="other">, %1$d ändringar</item>
     </plurals>
     <plurals name="sync_notification_errors">
         <item quantity="one">, %1$d fel</item>
@@ -758,9 +787,9 @@
 
     <!-- ==================== i18n: Contact Event Titles ==================== -->
     <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%1$s %2$s f\u00f6delsedag</string>
+    <string name="contact_birthday_with_age">%1$s %2$s födelsedag</string>
     <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">%1$s f\u00f6delsedag</string>
+    <string name="contact_birthday">%1$s födelsedag</string>
     <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
     <string name="contact_anniversary_with_age">%1$s %2$s jubileum</string>
     <!-- Contact anniversary title (no age) — %1$s = contact name -->
@@ -773,27 +802,27 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synkroniserar kalendrar\u2026</string>
-    <string name="sync_banner_preparing">F\u00f6rbereder synkronisering\u2026</string>
+    <string name="sync_banner_syncing">Synkroniserar kalendrar…</string>
+    <string name="sync_banner_preparing">Förbereder synkronisering…</string>
     <string name="sync_banner_complete_errors">Synkronisering klar med fel</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Synkronisering misslyckades: %1$s</string>
-    <string name="error_unknown_error">Ok\u00e4nt fel</string>
+    <string name="error_unknown_error">Okänt fel</string>
 
     <!-- Sync change snackbar messages -->
     <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">Ny h\u00e4ndelse: %1$s</string>
+    <string name="sync_snackbar_new_event">Ny händelse: %1$s</string>
     <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d ny h\u00e4ndelse</item>
-        <item quantity="other">%1$d nya h\u00e4ndelser</item>
+        <item quantity="one">%1$d ny händelse</item>
+        <item quantity="other">%1$d nya händelser</item>
     </plurals>
     <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d h\u00e4ndelse uppdaterad</item>
-        <item quantity="other">%1$d h\u00e4ndelser uppdaterade</item>
+        <item quantity="one">%1$d händelse uppdaterad</item>
+        <item quantity="other">%1$d händelser uppdaterade</item>
     </plurals>
     <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d h\u00e4ndelse borttagen</item>
-        <item quantity="other">%1$d h\u00e4ndelser borttagna</item>
+        <item quantity="one">%1$d händelse borttagen</item>
+        <item quantity="other">%1$d händelser borttagna</item>
     </plurals>
     <!-- %1$d = total change count -->
     <plurals name="sync_snackbar_calendar_updates">
@@ -805,42 +834,42 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dag %1$d av %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 av %1$d \u00b7 b\u00f6rjar %2$s</string>
+    <string name="day_starts">Dag 1 av %1$d · börjar %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d av %2$d \u00b7 slutar %3$s</string>
+    <string name="day_ends">Dag %1$d av %2$d · slutar %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Heldag</string>
-    <string name="event_date_all_day">%1$s \u00b7 Heldag</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Heldag</string>
+    <string name="event_date_all_day">%1$s · Heldag</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Heldag)</string>
     <string name="event_date_all_day_parens">%1$s (Heldag)</string>
 
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <!-- Save button for event form -->
-    <string name="action_save_event">Spara h\u00e4ndelse</string>
+    <string name="action_save_event">Spara händelse</string>
     <!-- Badges -->
     <string name="badge_beta">Beta</string>
     <string name="badge_new">Ny</string>
     <!-- Color names for accessibility -->
-    <string name="color_red">R\u00f6d</string>
+    <string name="color_red">Röd</string>
     <string name="color_orange">Orange</string>
     <string name="color_yellow">Gul</string>
-    <string name="color_green">Gr\u00f6n</string>
+    <string name="color_green">Grön</string>
     <string name="color_cyan">Cyan</string>
-    <string name="color_blue">Bl\u00e5</string>
+    <string name="color_blue">Blå</string>
     <string name="color_purple">Lila</string>
     <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">M\u00f6tesl\u00e4nk: %1$s</string>
+    <string name="cd_meeting_link">Möteslänk: %1$s</string>
     <string name="cd_phone_number">Telefonnummer</string>
     <string name="cd_email_link">E-post: %1$s</string>
-    <string name="cd_web_link">L\u00e4nk: %1$s</string>
-    <string name="cd_text_with_links">Text med %1$d l\u00e4nkar: %2$s</string>
-    <string name="cd_text_with_link">Text med 1 l\u00e4nk: %1$s</string>
+    <string name="cd_web_link">Länk: %1$s</string>
+    <string name="cd_text_with_links">Text med %1$d länkar: %2$s</string>
+    <string name="cd_text_with_link">Text med 1 länk: %1$s</string>
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dag %1$d av %2$d (Heldag)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d synk.   \u2191%2$d skickade   \u2193%3$d mottagna</string>
-    <string name="sync_history_stats_issues">%1$d synk.   \u2191%2$d skickade   \u2193%3$d mottagna   \u26a0 %4$d problem</string>
+    <string name="sync_history_stats">%1$d synk.   ↑%2$d skickade   ↓%3$d mottagna</string>
+    <string name="sync_history_stats_issues">%1$d synk.   ↑%2$d skickade   ↓%3$d mottagna   ⚠ %4$d problem</string>
     <string name="sync_history_failed">Misslyckades</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Varje timme</string>
@@ -848,11 +877,11 @@
     <string name="ics_sync_daily">Dagligen</string>
     <string name="ics_sync_weekly">Veckovis</string>
     <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL kr\u00e4vs</string>
-    <string name="ics_url_invalid_scheme">URL m\u00e5ste b\u00f6rja med http://, https:// eller webcal://</string>
+    <string name="ics_url_required">URL krävs</string>
+    <string name="ics_url_invalid_scheme">URL måste börja med http://, https:// eller webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Heldag)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Heldag)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>
@@ -898,41 +927,41 @@
     <string name="insights_period_this_week">Vecka</string>
     <string name="insights_period_last_week">Förra veckan</string>
     <string name="insights_period_this_month">Månad</string>
-    <string name="insights_empty_state">Inga h\u00e4ndelser schemalagda denna vecka</string>
-    <string name="insights_delta_more">+%1$s mer \u00e4n %2$s</string>
-    <string name="insights_delta_less">%1$s mindre \u00e4n %2$s</string>
+    <string name="insights_empty_state">Inga händelser schemalagda denna vecka</string>
+    <string name="insights_delta_more">+%1$s mer än %2$s</string>
+    <string name="insights_delta_less">%1$s mindre än %2$s</string>
     <plurals name="insights_all_day_count">
-        <item quantity="one">%d heldagsh\u00e4ndelse</item>
-        <item quantity="other">%d heldagsh\u00e4ndelser</item>
+        <item quantity="one">%d heldagshändelse</item>
+        <item quantity="other">%d heldagshändelser</item>
     </plurals>
-    <string name="insight_busiest_day_future">%1$s \u00e4r din mest fullbokade dag (%2$s)</string>
+    <string name="insight_busiest_day_future">%1$s är din mest fullbokade dag (%2$s)</string>
     <string name="insight_busiest_day_past">%1$s var din mest fullbokade dag (%2$s)</string>
-    <string name="insight_lightest_day_future">%1$s \u00e4r din lugnaste dag (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s är din lugnaste dag (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s var din lugnaste dag (%2$s)</string>
-    <string name="insight_longest_free_future">L\u00e4ngsta lediga block: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">L\u00e4ngsta lediga block var %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_weekend_load_clear_future">Din helg \u00e4r ledig</string>
+    <string name="insight_longest_free_future">Längsta lediga block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Längsta lediga block var %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Din helg är ledig</string>
     <string name="insight_weekend_load_clear_past">Din helg var ledig</string>
-    <string name="insight_weekend_load_light_future">%1$s schemalagda p\u00e5 helgen</string>
-    <string name="insight_weekend_load_light_past">%1$s var schemalagda p\u00e5 helgen</string>
-    <string name="insight_weekend_load_busy_future">%1$s schemalagda p\u00e5 helgen</string>
-    <string name="insight_weekend_load_busy_past">%1$s var schemalagda p\u00e5 helgen</string>
-    <string name="insight_back_to_back_future">%1$d m\u00f6ten i rad</string>
-    <string name="insight_back_to_back_past">Du hade %1$d m\u00f6ten i rad</string>
-    <string name="insight_calendar_dominant_future">%1$s \u00e4r %2$d%% av din schemalagda tid</string>
+    <string name="insight_weekend_load_light_future">%1$s schemalagda på helgen</string>
+    <string name="insight_weekend_load_light_past">%1$s var schemalagda på helgen</string>
+    <string name="insight_weekend_load_busy_future">%1$s schemalagda på helgen</string>
+    <string name="insight_weekend_load_busy_past">%1$s var schemalagda på helgen</string>
+    <string name="insight_back_to_back_future">%1$d möten i rad</string>
+    <string name="insight_back_to_back_past">Du hade %1$d möten i rad</string>
+    <string name="insight_calendar_dominant_future">%1$s är %2$d%% av din schemalagda tid</string>
     <string name="insight_calendar_dominant_past">%1$s var %2$d%% av din schemalagda tid</string>
-    <string name="insight_early_bounds_future">Ditt schema b\u00f6rjar f\u00f6re kl. 8 p\u00e5 %1$d dagar</string>
-    <string name="insight_early_bounds_past">Ditt schema b\u00f6rjade f\u00f6re kl. 8 p\u00e5 %1$d dagar</string>
-    <string name="insight_late_bounds_future">H\u00e4ndelser efter kl. 19 p\u00e5 %1$d dagar</string>
-    <string name="insight_late_bounds_past">H\u00e4ndelser gick f\u00f6rbi kl. 19 p\u00e5 %1$d dagar</string>
-    <string name="insight_meeting_free_days_future">Du har %1$d m\u00f6tesfria dagar</string>
-    <string name="insight_meeting_free_days_past">Du hade %1$d m\u00f6tesfria dagar</string>
-    <string name="insight_tomorrow_preview">Imorgon: %1$s schemalagda, b\u00f6rjar kl. %2$s</string>
+    <string name="insight_early_bounds_future">Ditt schema börjar före kl. 8 på %1$d dagar</string>
+    <string name="insight_early_bounds_past">Ditt schema började före kl. 8 på %1$d dagar</string>
+    <string name="insight_late_bounds_future">Händelser efter kl. 19 på %1$d dagar</string>
+    <string name="insight_late_bounds_past">Händelser gick förbi kl. 19 på %1$d dagar</string>
+    <string name="insight_meeting_free_days_future">Du har %1$d mötesfria dagar</string>
+    <string name="insight_meeting_free_days_past">Du hade %1$d mötesfria dagar</string>
+    <string name="insight_tomorrow_preview">Imorgon: %1$s schemalagda, börjar kl. %2$s</string>
     <string name="insight_tomorrow_preview_no_start">Imorgon: %1$s schemalagda</string>
-    <string name="insight_heaviest_upcoming">%1$s \u00e4r din mest fullbokade kommande dag (%2$s)</string>
-    <string name="insight_next_free_block">N\u00e4sta lediga block: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Kalenderf\u00f6rdelning: %1$s</string>
-    <string name="insights_cd_daily_chart">Daglig f\u00f6rdelning: mest fullbokade dag \u00e4r %1$s</string>
+    <string name="insight_heaviest_upcoming">%1$s är din mest fullbokade kommande dag (%2$s)</string>
+    <string name="insight_next_free_block">Nästa lediga block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Kalenderfördelning: %1$s</string>
+    <string name="insights_cd_daily_chart">Daglig fördelning: mest fullbokade dag är %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
     <string name="label_availability">Tillgänglighet</string>

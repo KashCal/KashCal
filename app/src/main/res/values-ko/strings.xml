@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">모든 캘린더 데이터를 다시 다운로드</string>
     <string name="settings_sync_history">동기화 기록</string>
     <string name="settings_sync_history_subtitle">동기화 세션 보기 (최근 48시간)</string>
-    <string name="settings_import_subtitle">.ics 파일 가져오기</string>
-    <string name="settings_export_subtitle">.ics 파일로 백업</string>
+    <string name="settings_import_subtitle">ICS 파일의 일정을 원하는 캘린더에 추가해요</string>
+    <string name="settings_export_subtitle">일정을 ICS 파일로 저장해요</string>
     <string name="settings_birthday_reminder">생일 알림</string>
     <string name="settings_use_device_timezone">기기 시간대 사용</string>
     <string name="settings_section_my_calendars">내 캘린더</string>
     <string name="settings_section_display">디스플레이</string>
     <string name="settings_section_notifications">알림</string>
     <string name="settings_section_sync">동기화</string>
-    <string name="settings_section_data">데이터</string>
+    <string name="settings_section_data">백업 &amp; 복원</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple 캘린더 사용하세요?</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">캘린더 가져오기</string>
-    <string name="action_import_from_file">파일에서 가져오기</string>
+    <string name="action_import_from_file">파일에서 일정 가져오기</string>
     <string name="action_export_local_calendar">로컬 캘린더 내보내기</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">안전하지 않은 연결 허용</string>
     <string name="action_add_another">다른 계정 추가</string>
     <string name="account_connected_found_calendars">%2$s의 캘린더 %1$d개를 찾았어요.</string>
-    <string name="account_connected_syncing_hint">동기화 진행 중 \u2014 곧 일정이 표시돼요.</string>
+    <string name="account_connected_syncing_hint">동기화 진행 중 — 곧 일정이 표시돼요.</string>
     <string name="settings_time_format_currently_24h">현재: 24시간 (%1$s)</string>
     <string name="settings_time_format_currently_12h">현재: 12시간 (%1$s)</string>
     <string name="settings_time_format_example">예: %1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d개 미표시 (전체 %2$d개, 최대 %3$d개 편집 가능)</string>
     <string name="label_found_events">발견: 일정 %1$d개</string>
     <string name="label_open_debug_menu">디버그 메뉴 열기</string>
-    <string name="placeholder_search">검색\u2026</string>
+    <string name="placeholder_search">검색…</string>
     <string name="status_sync_paused">동기화 일시 중지</string>
     <string name="status_not_synced">동기화 안 됨</string>
     <string name="status_sync_error">동기화 오류</string>
@@ -514,10 +514,16 @@
         <item quantity="other">계정 %1$d개</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 캘린더 %2$d개</item>
+        <item quantity="other">%1$s · 캘린더 %2$d개</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">구독 %1$d개</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">구독 %1$d개와 설정을 가져옵니다.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">구독 %1$d개와 설정을 가져왔어요.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">동기화 실패 (%1$d회 시도)</item>
@@ -547,7 +553,7 @@
         <item quantity="other">가져오기</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026%1$d개 더</item>
+        <item quantity="other">…%1$d개 더</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">일정 %1$d개를 가져왔어요</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">캘린더 동기화 중\u2026</string>
-    <string name="sync_banner_preparing">동기화 준비 중\u2026</string>
+    <string name="sync_banner_syncing">캘린더 동기화 중…</string>
+    <string name="sync_banner_preparing">동기화 준비 중…</string>
     <string name="sync_banner_complete_errors">동기화 완료 (오류 있음)</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">동기화 실패: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">%2$d일 중 %1$d일째</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">%1$d일 중 1일째 \u00b7 %2$s 시작</string>
+    <string name="day_starts">%1$d일 중 1일째 · %2$s 시작</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%2$d일 중 %1$d일째 \u00b7 %3$s 종료</string>
+    <string name="day_ends">%2$d일 중 %1$d일째 · %3$s 종료</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 종일</string>
-    <string name="event_date_all_day">%1$s \u00b7 종일</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · 종일</string>
+    <string name="event_date_all_day">%1$s · 종일</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (종일)</string>
     <string name="event_date_all_day_parens">%1$s (종일)</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">%2$d일 중 %1$d일째 (종일)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d회 동기화   \u2191%2$d 푸시   \u2193%3$d 풀</string>
-    <string name="sync_history_stats_issues">%1$d회 동기화   \u2191%2$d 푸시   \u2193%3$d 풀   \u26a0 %4$d건 문제</string>
+    <string name="sync_history_stats">%1$d회 동기화   ↑%2$d 푸시   ↓%3$d 풀</string>
+    <string name="sync_history_stats_issues">%1$d회 동기화   ↑%2$d 푸시   ↓%3$d 풀   ⚠ %4$d건 문제</string>
     <string name="sync_history_failed">실패</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">매시간</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">URL이 필요해요</string>
     <string name="ics_url_invalid_scheme">URL은 http://, https://, 또는 webcal://로 시작해야 해요</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (종일)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (종일)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d회</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">더 많은 색상</string>
     <string name="label_back_to_grid">뒤로</string>
     <string name="settings_suggest_titles">이벤트 제목 제안</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">설정 백업</string>
+    <string name="backup_settings_subtitle">KashCal 설정을 JSON 파일로 저장해요</string>
+    <string name="restore_settings_label">설정 복원</string>
+    <string name="restore_settings_subtitle">백업 파일에서 KashCal 설정을 복원해요</string>
+    <string name="restore_confirm_title">백업을 복원할까요?</string>
+    <string name="restore_confirm_from">KashCal %1$s 의 백업, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">설정을 가져옵니다.</string>
+    <string name="action_restore">복원</string>
+    <string name="restore_success_title">복원 완료</string>
+    <string name="restore_success_message_prefs_only">설정을 가져왔어요.</string>
+    <string name="restore_success_device_calendars_note">기기 캘린더 기능을 사용하고 있다면 다시 선택해 주세요.</string>
+    <string name="restore_error_title">복원 실패</string>
+    <string name="restore_error_version_too_new">이 백업은 더 최신 버전의 KashCal에서 만들어졌어요. KashCal을 업데이트한 뒤 다시 시도해 주세요.</string>
+    <string name="restore_error_malformed_json">이 파일은 올바른 KashCal 백업이 아니에요.</string>
+    <string name="restore_error_invalid_value">이 백업 파일에 잘못된 데이터가 있어 복원할 수 없어요.</string>
+    <string name="restore_error_apply_failure">백업을 적용하는 중에 문제가 발생했어요. 변경 사항은 저장되지 않았어요.</string>
+    <string name="backup_error_build_failed">백업에 실패했어요</string>
+    <string name="backup_error_write_failed">백업에 실패했어요：파일에 쓸 수 없어요</string>
+    <string name="backup_error_read_failed">파일을 읽을 수 없어요</string>
 </resources>

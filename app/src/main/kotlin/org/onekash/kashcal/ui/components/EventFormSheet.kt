@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -55,6 +53,8 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import kotlinx.coroutines.Job
@@ -69,6 +69,7 @@ import org.onekash.kashcal.util.CalendarIntentData
 import java.util.Calendar as JavaCalendar
 import org.onekash.kashcal.util.DateTimeUtils
 import android.text.format.DateFormat
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
@@ -695,6 +696,15 @@ fun EventFormSheet(
     // tracks the finger, then reverse-animates back when the transition is rejected.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
+    // Pin the sheet height so IME open/close doesn't re-trigger ModalBottomSheet's
+    // height animation (fillMaxHeight(fraction) recomputes against the IME-shrunk
+    // window, producing a visible up-then-down hop on every focus/picker transition).
+    // The configuration-keyed remember ensures rotation still resizes correctly.
+    val configuration = LocalConfiguration.current
+    val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
+        (configuration.screenHeightDp * 0.95f).dp
+    }
+
     ModalBottomSheet(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
         sheetState = sheetState,
@@ -704,24 +714,31 @@ fun EventFormSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.95f)
-                .imePadding()
+                .height(sheetHeight)
         ) {
-            // Header with Cancel/Save buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { onDismiss() }) {
-                    Text(stringResource(R.string.action_cancel))
+                    Text(
+                        text = stringResource(R.string.action_cancel),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
                 Text(
                     text = if (state.isEditMode) stringResource(R.string.dialog_edit_event_title) else stringResource(R.string.dialog_new_event_title),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 val primaryColor = MaterialTheme.colorScheme.primary
                 val calColor = remember(state.selectedCalendarColor, primaryColor) {
@@ -744,7 +761,12 @@ fun EventFormSheet(
                             color = contrastColor
                         )
                     } else {
-                        Text(stringResource(R.string.action_save), fontWeight = FontWeight.Bold)
+                        Text(
+                            text = stringResource(R.string.action_save),
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false
+                        )
                     }
                 }
             }

@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">Перезавантажити всі дані</string>
     <string name="settings_sync_history">Історія синхронізації</string>
     <string name="settings_sync_history_subtitle">Переглянути сеанси синхронізації (за 48 годин)</string>
-    <string name="settings_import_subtitle">Імпортувати файл .ics</string>
-    <string name="settings_export_subtitle">Зберегти у файл .ics</string>
+    <string name="settings_import_subtitle">Додати події з файлу ICS у будь-який календар</string>
+    <string name="settings_export_subtitle">Зберегти події у файл ICS</string>
     <string name="settings_birthday_reminder">Нагадування про день народження</string>
     <string name="settings_use_device_timezone">Часовий пояс пристрою</string>
     <string name="settings_section_my_calendars">Мої календарі</string>
     <string name="settings_section_display">Відображення</string>
     <string name="settings_section_notifications">Сповіщення</string>
     <string name="settings_section_sync">Синхронізація</string>
-    <string name="settings_section_data">Дані</string>
+    <string name="settings_section_data">Резервне копіювання та відновлення</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Календар Apple?</string>
@@ -299,8 +299,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Завантажити календар</string>
-    <string name="action_import_from_file">Імпорт із файлу</string>
-    <string name="action_export_local_calendar">Експорт локального календаря</string>
+    <string name="action_import_from_file">Імпортувати події з файлу</string>
+    <string name="action_export_local_calendar">Експортувати локальний календар</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -454,7 +454,7 @@
     <string name="label_reminders_truncated">%1$d не показано (%2$d всього, макс. %3$d для редагування)</string>
     <string name="label_found_events">Знайдено: %1$d подій</string>
     <string name="label_open_debug_menu">Відкрити меню налагодження</string>
-    <string name="placeholder_search">Пошук\u2026</string>
+    <string name="placeholder_search">Пошук…</string>
     <string name="status_sync_paused">Синхронізацію призупинено</string>
     <string name="status_not_synced">Не синхронізовано</string>
     <string name="status_sync_error">Помилка синхронізації</string>
@@ -518,16 +518,28 @@
         <item quantity="other">%1$d облікових записів</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 календар</item>
-        <item quantity="few">%1$s \u00B7 %2$d календарі</item>
-        <item quantity="many">%1$s \u00B7 %2$d календарів</item>
-        <item quantity="other">%1$s \u00B7 %2$d календарів</item>
+        <item quantity="one">%1$s · 1 календар</item>
+        <item quantity="few">%1$s · %2$d календарі</item>
+        <item quantity="many">%1$s · %2$d календарів</item>
+        <item quantity="other">%1$s · %2$d календарів</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d підписка</item>
         <item quantity="few">%1$d підписки</item>
         <item quantity="many">%1$d підписок</item>
         <item quantity="other">%1$d підписок</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d підписку та ваші налаштування буде імпортовано.</item>
+        <item quantity="few">%1$d підписки та ваші налаштування буде імпортовано.</item>
+        <item quantity="many">%1$d підписок та ваші налаштування буде імпортовано.</item>
+        <item quantity="other">%1$d підписки та ваші налаштування буде імпортовано.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Імпортовано %1$d підписку та ваші налаштування.</item>
+        <item quantity="few">Імпортовано %1$d підписки та ваші налаштування.</item>
+        <item quantity="many">Імпортовано %1$d підписок та ваші налаштування.</item>
+        <item quantity="other">Імпортовано %1$d підписки та ваші налаштування.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Помилка синхронізації (%1$d спроба)</item>
@@ -584,10 +596,10 @@
         <item quantity="other">Імпорт</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026і ще %1$d</item>
-        <item quantity="few">\u2026і ще %1$d</item>
-        <item quantity="many">\u2026і ще %1$d</item>
-        <item quantity="other">\u2026і ще %1$d</item>
+        <item quantity="one">…і ще %1$d</item>
+        <item quantity="few">…і ще %1$d</item>
+        <item quantity="many">…і ще %1$d</item>
+        <item quantity="other">…і ще %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Імпортовано %1$d подію</item>
@@ -917,7 +929,7 @@
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Ніколи</string>
     <string name="rrule_starting">%1$s починаючи з %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 з %2$s</string>
+    <string name="rrule_since">%1$s · з %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d раз</item>
         <item quantity="few">, %1$d рази</item>
@@ -987,4 +999,25 @@
     <string name="label_more_colors">Більше кольорів</string>
     <string name="label_back_to_grid">Назад</string>
     <string name="settings_suggest_titles">Пропонувати назви подій</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Зберегти налаштування</string>
+    <string name="backup_settings_subtitle">Зберегти конфігурацію KashCal у файл JSON</string>
+    <string name="restore_settings_label">Відновити налаштування</string>
+    <string name="restore_settings_subtitle">Відновити конфігурацію KashCal із резервної копії</string>
+    <string name="restore_confirm_title">Відновити резервну копію?</string>
+    <string name="restore_confirm_from">Резервна копія KashCal %1$s, %2$s</string>
+    <string name="action_restore">Відновити</string>
+    <string name="restore_success_title">Відновлення завершено</string>
+    <string name="restore_success_device_calendars_note">Обери календарі пристрою знову, якщо користуєшся цією функцією.</string>
+    <string name="restore_confirm_message_prefs_only">Ваші налаштування буде імпортовано.</string>
+    <string name="restore_success_message_prefs_only">Налаштування імпортовано.</string>
+    <string name="restore_error_title">Не вдалося відновити</string>
+    <string name="restore_error_version_too_new">Цю резервну копію створено в новішій версії KashCal. Онови KashCal і спробуй ще раз.</string>
+    <string name="restore_error_malformed_json">Це не схоже на резервну копію KashCal.</string>
+    <string name="restore_error_invalid_value">У файлі резервної копії хибні дані, його не можна відновити.</string>
+    <string name="restore_error_apply_failure">Під час відновлення сталася помилка. Зміни не збережено.</string>
+    <string name="backup_error_build_failed">Не вдалося створити резервну копію</string>
+    <string name="backup_error_write_failed">Не вдалося створити резервну копію — не вдалося записати у файл</string>
+    <string name="backup_error_read_failed">Не вдалося прочитати файл</string>
 </resources>

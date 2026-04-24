@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">Laadi kõik kalendriandmed uuesti alla</string>
     <string name="settings_sync_history">Sünkroonimise ajalugu</string>
     <string name="settings_sync_history_subtitle">Vaata sünkroonimise seansse (viimased 48 tundi)</string>
-    <string name="settings_import_subtitle">Impordi .ics-fail</string>
-    <string name="settings_export_subtitle">Varunda .ics-failina</string>
+    <string name="settings_import_subtitle">Lisa sündmusi ICS-failist mis tahes kalendrisse</string>
+    <string name="settings_export_subtitle">Salvesta sündmused ICS-faili</string>
     <string name="settings_birthday_reminder">Sünnipäeva meeldetuletus</string>
     <string name="settings_use_device_timezone">Kasuta seadme ajavööndit</string>
     <string name="settings_section_my_calendars">Minu kalendrid</string>
     <string name="settings_section_display">Kuva</string>
     <string name="settings_section_notifications">Teavitused</string>
     <string name="settings_section_sync">Sünkroonimine</string>
-    <string name="settings_section_data">Andmed</string>
+    <string name="settings_section_data">Varundus ja taastamine</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -175,7 +175,7 @@
     <string name="error_conflict_title">Sünkroonimise konflikt</string>
     <string name="error_conflict_generic">Seda sündmust muudeti teises seadmes. Sundige sünkroonima, et saada uusim versioon.</string>
     <string name="error_conflict_with_event">\"%1$s\" muudeti teises seadmes. Sundige sünkroonima, et saada uusim versioon.</string>
-    <string name="error_sync_token_expired">Sünkroonimise andmed aegunud. Tehakse täielik sünkroonimine\u2026</string>
+    <string name="error_sync_token_expired">Sünkroonimise andmed aegunud. Tehakse täielik sünkroonimine…</string>
 
     <string name="error_event_not_found">Sündmust ei leitud.</string>
     <string name="error_calendar_not_found">Kalendrit ei leitud.</string>
@@ -260,7 +260,7 @@
     <string name="label_password">Parool</string>
     <string name="label_display_name_optional">Kuvatav nimi (valikuline)</string>
 
-    <string name="placeholder_search_events">Otsi sündmusi\u2026</string>
+    <string name="placeholder_search_events">Otsi sündmusi…</string>
 
     <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">Vaikimisi https://, kui pole määratud</string>
@@ -294,12 +294,12 @@
     <string name="empty_no_calendars">Kalendreid pole saadaval</string>
 
     <!-- ==================== Status (Additional) ==================== -->
-    <string name="status_connecting">Ühendamine\u2026</string>
-    <string name="status_fetching">Laadimine\u2026</string>
+    <string name="status_connecting">Ühendamine…</string>
+    <string name="status_fetching">Laadimine…</string>
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Laadi kalender</string>
-    <string name="action_import_from_file">Impordi failist</string>
+    <string name="action_import_from_file">Impordi sündmused failist</string>
     <string name="action_export_local_calendar">Ekspordi kohalik kalender</string>
 
     <!-- ==================== Providers ==================== -->
@@ -331,7 +331,7 @@
     <string name="accounts_caldav_help_title">Mis on CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV on avatud standard kalendrite sünkroonimiseks. Toetatud:</string>
     <string name="accounts_caldav_help_more">ja muud</string>
-    <string name="accounts_calendars_syncing">Sünkroonib\u2026</string>
+    <string name="accounts_calendars_syncing">Sünkroonib…</string>
     <string name="accounts_cd_icloud_icon">iCloud konto</string>
     <string name="accounts_cd_caldav_icon">CalDAV konto</string>
     <string name="accounts_cd_back">Mine tagasi</string>
@@ -371,8 +371,8 @@
     <string name="account_detail_enabled">Lubatud</string>
     <string name="account_detail_enabled_subtitle">Sünkrooni seda kontot automaatselt</string>
     <string name="account_detail_sync_now">Sünkrooni kohe</string>
-    <string name="account_detail_syncing">Sünkroonib\u2026</string>
-    <string name="account_detail_discovering">Avastab\u2026</string>
+    <string name="account_detail_syncing">Sünkroonib…</string>
+    <string name="account_detail_discovering">Avastab…</string>
     <string name="account_detail_discover_calendars">Avasta uued kalendrid</string>
     <string name="account_detail_change_password">Muuda parooli</string>
     <string name="account_detail_sign_out">Logi välja</string>
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">Usalda ebaturvalist ühendust</string>
     <string name="action_add_another">Lisa veel</string>
     <string name="account_connected_found_calendars">Leiti %1$d kalendrit kontole %2$s.</string>
-    <string name="account_connected_syncing_hint">Sünkroonimine käib \u2014 sündmused ilmuvad peagi.</string>
+    <string name="account_connected_syncing_hint">Sünkroonimine käib — sündmused ilmuvad peagi.</string>
     <string name="settings_time_format_currently_24h">Praegu: 24-tunnine (%1$s)</string>
     <string name="settings_time_format_currently_12h">Praegu: 12-tunnine (%1$s)</string>
     <string name="settings_time_format_example">Näide: %1$s</string>
@@ -454,7 +454,7 @@
     <string name="label_reminders_truncated">%1$d pole kuvatud (%2$d kokku, maks %3$d muudetav)</string>
     <string name="label_found_events">Leitud: %1$d sündmust</string>
     <string name="label_open_debug_menu">Ava silumismenüü</string>
-    <string name="placeholder_search">Otsi\u2026</string>
+    <string name="placeholder_search">Otsi…</string>
     <string name="status_sync_paused">Sünkroonimine peatatud</string>
     <string name="status_not_synced">Pole sünkroonitud</string>
     <string name="status_sync_error">Sünkroonimise viga</string>
@@ -517,12 +517,20 @@
         <item quantity="other">%1$d kontot</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalender</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendrit</item>
+        <item quantity="one">%1$s · 1 kalender</item>
+        <item quantity="other">%1$s · %2$d kalendrit</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d tellimus</item>
         <item quantity="other">%1$d tellimust</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d tellimus ja sinu eelistused imporditakse.</item>
+        <item quantity="other">%1$d tellimust ja sinu eelistused imporditakse.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Imporditi %1$d tellimus ja sinu eelistused.</item>
+        <item quantity="other">Imporditi %1$d tellimust ja sinu eelistused.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sünkroonimine ebaõnnestus (%1$d katse)</item>
@@ -561,8 +569,8 @@
         <item quantity="other">Impordi</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026ja %1$d veel</item>
-        <item quantity="other">\u2026ja %1$d veel</item>
+        <item quantity="one">…ja %1$d veel</item>
+        <item quantity="other">…ja %1$d veel</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Imporditud %1$d sündmus</item>
@@ -848,7 +856,7 @@
     <string name="rrule_until_suffix">, kuni %1$s</string>
     <string name="rrule_freq_never">Mitte kunagi</string>
     <string name="rrule_starting">%1$s alates %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 alates %2$s</string>
+    <string name="rrule_since">%1$s · alates %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">
@@ -917,4 +925,25 @@
     <string name="label_more_colors">Rohkem värve</string>
     <string name="label_back_to_grid">Tagasi</string>
     <string name="settings_suggest_titles">Soovita sündmuste pealkirju</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Varunda sätted</string>
+    <string name="backup_settings_subtitle">Salvesta KashCali seadistus JSON-faili</string>
+    <string name="restore_settings_label">Taasta sätted</string>
+    <string name="restore_settings_subtitle">Taasta KashCali seadistus varundusfailist</string>
+    <string name="restore_confirm_title">Kas taastada varukoopia?</string>
+    <string name="restore_confirm_from">KashCali %1$s varukoopia, %2$s</string>
+    <string name="action_restore">Taasta</string>
+    <string name="restore_success_title">Taastamine lõpetatud</string>
+    <string name="restore_success_device_calendars_note">Vali seadme kalendrid uuesti, kui kasutad seda funktsiooni.</string>
+    <string name="restore_confirm_message_prefs_only">Sinu eelistused imporditakse.</string>
+    <string name="restore_success_message_prefs_only">Eelistused imporditi.</string>
+    <string name="restore_error_title">Taastamine ebaõnnestus</string>
+    <string name="restore_error_version_too_new">See varukoopia on loodud uuema KashCali versiooniga. Uuenda KashCal ja proovi uuesti.</string>
+    <string name="restore_error_malformed_json">See fail ei ole kehtiv KashCali varukoopia.</string>
+    <string name="restore_error_invalid_value">Varundusfail sisaldab vigaseid andmeid ja seda ei saa taastada.</string>
+    <string name="restore_error_apply_failure">Varukoopia rakendamisel tekkis tõrge. Muudatusi ei salvestatud.</string>
+    <string name="backup_error_build_failed">Varukoopia ebaõnnestus</string>
+    <string name="backup_error_write_failed">Varukoopia ebaõnnestus — faili ei saanud kirjutada</string>
+    <string name="backup_error_read_failed">Faili ei saanud lugeda</string>
 </resources>

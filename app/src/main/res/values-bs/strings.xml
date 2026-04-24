@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Ponovo preuzmi sve podatke kalendara</string>
     <string name="settings_sync_history">Historija sinhronizacije</string>
     <string name="settings_sync_history_subtitle">Prikaži sesije sinhronizacije (posljednjih 48 sati)</string>
-    <string name="settings_import_subtitle">Uvezi .ics datoteku</string>
-    <string name="settings_export_subtitle">Rezervna kopija u .ics datoteku</string>
+    <string name="settings_import_subtitle">Dodaj događaje iz ICS datoteke u bilo koji kalendar</string>
+    <string name="settings_export_subtitle">Spremi događaje u ICS datoteku</string>
     <string name="settings_birthday_reminder">Podsjetnik za rođendan</string>
     <string name="settings_use_device_timezone">Koristi vremensku zonu uređaja</string>
     <string name="settings_section_my_calendars">Moji kalendari</string>
     <string name="settings_section_display">Prikaz</string>
     <string name="settings_section_notifications">Obavještenja</string>
     <string name="settings_section_sync">Sinhronizacija</string>
-    <string name="settings_section_data">Podaci</string>
+    <string name="settings_section_data">Rezervna kopija i vraćanje</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Napravi rezervnu kopiju postavki</string>
+    <string name="backup_settings_subtitle">Spremi konfiguraciju KashCal u JSON datoteku</string>
+    <string name="restore_settings_label">Vrati postavke</string>
+    <string name="restore_settings_subtitle">Vrati konfiguraciju KashCal iz datoteke rezervne kopije</string>
+    <string name="restore_confirm_title">Vratiti rezervnu kopiju?</string>
+    <string name="restore_confirm_from">Rezervna kopija iz KashCal %1$s, %2$s</string>
+    <string name="action_restore">Vrati</string>
+    <string name="restore_success_title">Vraćanje završeno</string>
+    <string name="restore_success_device_calendars_note">Ponovo odaberite kalendare uređaja ako koristite tu funkciju.</string>
+    <string name="restore_confirm_message_prefs_only">Vaše postavke će biti uvezene.</string>
+    <string name="restore_success_message_prefs_only">Postavke uvezene.</string>
+    <string name="restore_error_title">Vraćanje nije uspjelo</string>
+    <string name="restore_error_version_too_new">Ova rezervna kopija napravljena je u novijoj verziji KashCal. Ažurirajte KashCal i pokušajte ponovo.</string>
+    <string name="restore_error_malformed_json">Ova datoteka nije važeća rezervna kopija KashCal.</string>
+    <string name="restore_error_invalid_value">Ova datoteka rezervne kopije sadrži nevažeće podatke i ne može se vratiti.</string>
+    <string name="restore_error_apply_failure">Došlo je do greške pri primjeni rezervne kopije. Nikakve promjene nisu spremljene.</string>
+    <string name="backup_error_build_failed">Sigurnosna kopija nije uspjela</string>
+    <string name="backup_error_write_failed">Sigurnosna kopija nije uspjela — zapis u datoteku nije moguć</string>
+    <string name="backup_error_read_failed">Datoteku nije moguće pročitati</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -174,7 +195,7 @@
     <string name="error_conflict_title">Sukob sinhronizacije</string>
     <string name="error_conflict_generic">Ovaj događaj je izmijenjen na drugom uređaju. Pokreni prisilnu sinhronizaciju za najnoviju verziju.</string>
     <string name="error_conflict_with_event">\"%1$s\" je izmijenjen na drugom uređaju. Pokreni prisilnu sinhronizaciju za najnoviju verziju.</string>
-    <string name="error_sync_token_expired">Podaci sinhronizacije istekli. Potpuna sinhronizacija u toku\u2026</string>
+    <string name="error_sync_token_expired">Podaci sinhronizacije istekli. Potpuna sinhronizacija u toku…</string>
 
     <string name="error_event_not_found">Događaj nije pronađen.</string>
     <string name="error_calendar_not_found">Kalendar nije pronađen.</string>
@@ -258,7 +279,7 @@
     <string name="label_password">Lozinka</string>
     <string name="label_display_name_optional">Prikazni naziv (opciono)</string>
 
-    <string name="placeholder_search_events">Traži događaje\u2026</string>
+    <string name="placeholder_search_events">Traži događaje…</string>
 
     <string name="hint_https_default">Podrazumijevano https://, ako nije navedeno</string>
     <string name="hint_name_shown_in_settings">Naziv prikazan u postavkama</string>
@@ -286,12 +307,12 @@
     <string name="empty_no_upcoming_events">Nema predstojećih događaja</string>
     <string name="empty_no_calendars">Nema dostupnih kalendara</string>
 
-    <string name="status_connecting">Povezivanje\u2026</string>
-    <string name="status_fetching">Preuzimanje\u2026</string>
+    <string name="status_connecting">Povezivanje…</string>
+    <string name="status_fetching">Preuzimanje…</string>
 
     <string name="action_fetch_calendar">Preuzmi kalendar</string>
-    <string name="action_import_from_file">Uvezi iz datoteke</string>
-    <string name="action_export_local_calendar">Izvezi lokalni kalendar</string>
+    <string name="action_import_from_file">Uvezi događaje iz datoteke</string>
+    <string name="action_export_local_calendar">Izvezi kalendar Lokalni</string>
 
     <string name="provider_icloud">iCloud</string>
 
@@ -318,7 +339,7 @@
     <string name="accounts_caldav_help_title">Šta je CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV je otvoreni standard za sinhronizaciju kalendara. Podržavaju ga:</string>
     <string name="accounts_caldav_help_more">i više</string>
-    <string name="accounts_calendars_syncing">Sinhronizacija\u2026</string>
+    <string name="accounts_calendars_syncing">Sinhronizacija…</string>
     <string name="accounts_cd_icloud_icon">iCloud račun</string>
     <string name="accounts_cd_caldav_icon">CalDAV račun</string>
     <string name="accounts_cd_back">Nazad</string>
@@ -355,8 +376,8 @@
     <string name="account_detail_enabled">Omogućeno</string>
     <string name="account_detail_enabled_subtitle">Automatski sinhronizuj ovaj račun</string>
     <string name="account_detail_sync_now">Sinhronizuj</string>
-    <string name="account_detail_syncing">Sinhronizacija\u2026</string>
-    <string name="account_detail_discovering">Otkrivanje\u2026</string>
+    <string name="account_detail_syncing">Sinhronizacija…</string>
+    <string name="account_detail_discovering">Otkrivanje…</string>
     <string name="account_detail_discover_calendars">Otkrij nove kalendare</string>
     <string name="account_detail_change_password">Promijeni lozinku</string>
     <string name="account_detail_sign_out">Odjavi se</string>
@@ -396,7 +417,7 @@
     <string name="caldav_trust_insecure_label">Vjeruj nesigurnoj vezi</string>
     <string name="action_add_another">Dodaj još jedan</string>
     <string name="account_connected_found_calendars">Pronađeno %1$d kalendara za %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinhronizacija u toku \u2014 događaji će se uskoro pojaviti.</string>
+    <string name="account_connected_syncing_hint">Sinhronizacija u toku — događaji će se uskoro pojaviti.</string>
     <string name="settings_time_format_currently_24h">Trenutno: 24-satni (%1$s)</string>
     <string name="settings_time_format_currently_12h">Trenutno: 12-satni (%1$s)</string>
     <string name="settings_time_format_example">Primjer: %1$s</string>
@@ -434,7 +455,7 @@
     <string name="label_reminders_truncated">%1$d neprikazanih (%2$d ukupno, maks %3$d za uređivanje)</string>
     <string name="label_found_events">Pronađeno: %1$d događaja</string>
     <string name="label_open_debug_menu">Otvori meni za otklanjanje grešaka</string>
-    <string name="placeholder_search">Traži\u2026</string>
+    <string name="placeholder_search">Traži…</string>
     <string name="status_sync_paused">Sinhronizacija pauzirana</string>
     <string name="status_not_synced">Nije sinhronizovano</string>
     <string name="status_sync_error">Greška sinhronizacije</string>
@@ -492,14 +513,24 @@
         <item quantity="other">%1$d računa</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalendar</item>
-        <item quantity="few">%1$s \u00B7 %2$d kalendara</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendara</item>
+        <item quantity="one">%1$s · 1 kalendar</item>
+        <item quantity="few">%1$s · %2$d kalendara</item>
+        <item quantity="other">%1$s · %2$d kalendara</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d pretplata</item>
         <item quantity="few">%1$d pretplate</item>
         <item quantity="other">%1$d pretplata</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d pretplata i vaše postavke će biti uvezeni.</item>
+        <item quantity="few">%1$d pretplate i vaše postavke će biti uvezeni.</item>
+        <item quantity="other">%1$d pretplata i vaše postavke će biti uvezeni.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Uvezena %1$d pretplata i vaše postavke.</item>
+        <item quantity="few">Uvezene %1$d pretplate i vaše postavke.</item>
+        <item quantity="other">Uvezeno %1$d pretplata i vaše postavke.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinhronizacija neuspješna (%1$d pokušaj)</item>
@@ -547,9 +578,9 @@
         <item quantity="other">Uvezi</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026i %1$d više</item>
-        <item quantity="few">\u2026i %1$d više</item>
-        <item quantity="other">\u2026i %1$d više</item>
+        <item quantity="one">…i %1$d više</item>
+        <item quantity="few">…i %1$d više</item>
+        <item quantity="other">…i %1$d više</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Uvezen %1$d događaj</item>
@@ -773,8 +804,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Sinhronizacija kalendara\u2026</string>
-    <string name="sync_banner_preparing">Priprema za sinhronizaciju\u2026</string>
+    <string name="sync_banner_syncing">Sinhronizacija kalendara…</string>
+    <string name="sync_banner_preparing">Priprema za sinhronizaciju…</string>
     <string name="sync_banner_complete_errors">Sinhronizacija završena s greškama</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sinhronizacija neuspješna: %1$s</string>
@@ -809,12 +840,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dan %1$d od %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dan 1 od %1$d \u00b7 počinje %2$s</string>
+    <string name="day_starts">Dan 1 od %1$d · počinje %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dan %1$d od %2$d \u00b7 završava %3$s</string>
+    <string name="day_ends">Dan %1$d od %2$d · završava %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Cijeli dan</string>
-    <string name="event_date_all_day">%1$s \u00b7 Cijeli dan</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Cijeli dan</string>
+    <string name="event_date_all_day">%1$s · Cijeli dan</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Cijeli dan)</string>
     <string name="event_date_all_day_parens">%1$s (Cijeli dan)</string>
@@ -852,8 +883,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dan %1$d od %2$d (Cijeli dan)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sinh.   \u2191%2$d poslano   \u2193%3$d primljeno</string>
-    <string name="sync_history_stats_issues">%1$d sinh.   \u2191%2$d poslano   \u2193%3$d primljeno   \u26a0 %4$d problema</string>
+    <string name="sync_history_stats">%1$d sinh.   ↑%2$d poslano   ↓%3$d primljeno</string>
+    <string name="sync_history_stats_issues">%1$d sinh.   ↑%2$d poslano   ↓%3$d primljeno   ⚠ %4$d problema</string>
     <string name="sync_history_failed">Neuspješno</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Svaki sat</string>
@@ -864,8 +895,8 @@
     <string name="ics_url_required">URL je obavezan</string>
     <string name="ics_url_invalid_scheme">URL mora počinjati sa http://, https:// ili webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Cijeli dan)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Cijeli dan)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Kalendar</string>
@@ -900,7 +931,7 @@
     <string name="rrule_until_suffix">, do %1$s</string>
     <string name="rrule_freq_never">Nikad</string>
     <string name="rrule_starting">%1$s počevši od %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 od %2$s</string>
+    <string name="rrule_since">%1$s · od %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d put</item>
         <item quantity="few">, %1$d puta</item>

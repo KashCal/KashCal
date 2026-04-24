@@ -100,15 +100,15 @@
     <string name="settings_force_sync_subtitle">Volver a descargar todos los datos del calendario</string>
     <string name="settings_sync_history">Historial de sincronización</string>
     <string name="settings_sync_history_subtitle">Ver sesiones de sincronización (últimas 48 horas)</string>
-    <string name="settings_import_subtitle">Importar archivo .ics</string>
-    <string name="settings_export_subtitle">Copia de seguridad en archivo .ics</string>
+    <string name="settings_import_subtitle">Añade eventos desde un archivo ICS a cualquier calendario</string>
+    <string name="settings_export_subtitle">Guarda los eventos en un archivo ICS</string>
     <string name="settings_birthday_reminder">Recordatorio de cumpleaños</string>
     <string name="settings_use_device_timezone">Usar zona horaria del dispositivo</string>
     <string name="settings_section_my_calendars">Mis calendarios</string>
     <string name="settings_section_display">Pantalla</string>
     <string name="settings_section_notifications">Notificaciones</string>
     <string name="settings_section_sync">Sincronización</string>
-    <string name="settings_section_data">Datos</string>
+    <string name="settings_section_data">Copia de seguridad y restauración</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">¿Calendario de Apple?</string>
@@ -297,8 +297,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Obtener calendario</string>
-    <string name="action_import_from_file">Importar desde archivo</string>
-    <string name="action_export_local_calendar">Exportar calendario local</string>
+    <string name="action_import_from_file">Importar eventos desde archivo</string>
+    <string name="action_export_local_calendar">Exportar calendario Local</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -524,6 +524,16 @@
         <item quantity="many">%1$d suscripciones</item>
         <item quantity="other">%1$d suscripciones</item>
     </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">Se importará %1$d suscripción y tus preferencias.</item>
+        <item quantity="many">Se importarán %1$d suscripciones y tus preferencias.</item>
+        <item quantity="other">Se importarán %1$d suscripciones y tus preferencias.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Se importó %1$d suscripción y tus preferencias.</item>
+        <item quantity="many">Se importaron %1$d suscripciones y tus preferencias.</item>
+        <item quantity="other">Se importaron %1$d suscripciones y tus preferencias.</item>
+    </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sincronización fallida (%1$d intento)</item>
         <item quantity="many">Sincronización fallida (%1$d intentos)</item>
@@ -656,7 +666,7 @@
     <string name="dialog_edit_recurring_message">Este es un evento recurrente. ¿Cómo quieres aplicar este cambio?</string>
     <string name="recurring_this_event">Este evento</string>
     <string name="recurring_all_events">Todos los eventos</string>
-    <string name="empty_pick_a_day">Elige un día. Apróvechalo.</string>
+    <string name="empty_pick_a_day">Elige un día. Aprovéchalo.</string>
     <string name="empty_no_events_day">Nada que ver aquí, ¿sales a tomar aire?</string>
     <string name="label_upcoming_events">Próximos eventos</string>
     <string name="filter_date">Fecha</string>
@@ -1011,4 +1021,25 @@
     <string name="label_more_colors">Más colores</string>
     <string name="label_back_to_grid">Atrás</string>
     <string name="settings_suggest_titles">Sugerir títulos de eventos</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Hacer copia de seguridad de los ajustes</string>
+    <string name="backup_settings_subtitle">Guarda la configuración de KashCal en un archivo JSON</string>
+    <string name="restore_settings_label">Restaurar ajustes</string>
+    <string name="restore_settings_subtitle">Restaura la configuración de KashCal desde un archivo de copia de seguridad</string>
+    <string name="restore_confirm_title">¿Restaurar copia de seguridad?</string>
+    <string name="restore_confirm_from">Copia de seguridad de KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Se importarán tus preferencias.</string>
+    <string name="action_restore">Restaurar</string>
+    <string name="restore_success_title">Restauración completada</string>
+    <string name="restore_success_message_prefs_only">Preferencias importadas.</string>
+    <string name="restore_success_device_calendars_note">Vuelve a seleccionar los calendarios del dispositivo si usas esa función.</string>
+    <string name="restore_error_title">Error al restaurar</string>
+    <string name="restore_error_version_too_new">Esta copia de seguridad se creó con una versión más reciente de KashCal. Actualiza KashCal y vuelve a intentarlo.</string>
+    <string name="restore_error_malformed_json">Este archivo no es una copia de seguridad de KashCal válida.</string>
+    <string name="restore_error_invalid_value">Este archivo de copia de seguridad contiene datos no válidos y no se puede restaurar.</string>
+    <string name="restore_error_apply_failure">Se produjo un error al aplicar la copia de seguridad. No se guardó ningún cambio.</string>
+    <string name="backup_error_build_failed">Error al crear la copia de seguridad</string>
+    <string name="backup_error_write_failed">Error al crear la copia de seguridad — no se pudo escribir en el archivo</string>
+    <string name="backup_error_read_failed">No se pudo leer el archivo</string>
 </resources>

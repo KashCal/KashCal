@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Повторно преземање на сите податоци од календарот</string>
     <string name="settings_sync_history">Историја на синхронизација</string>
     <string name="settings_sync_history_subtitle">Преглед на сесии за синхронизација (последни 48 часа)</string>
-    <string name="settings_import_subtitle">Увези .ics датотека</string>
-    <string name="settings_export_subtitle">Резервна копија во .ics датотека</string>
+    <string name="settings_import_subtitle">Додај настани од ICS датотека во кој било календар</string>
+    <string name="settings_export_subtitle">Зачувај ги настаните во ICS датотека</string>
     <string name="settings_birthday_reminder">Потсетник за роденден</string>
     <string name="settings_use_device_timezone">Користи временска зона на уредот</string>
     <string name="settings_section_my_calendars">Мои календари</string>
     <string name="settings_section_display">Приказ</string>
     <string name="settings_section_notifications">Известувања</string>
     <string name="settings_section_sync">Синхронизација</string>
-    <string name="settings_section_data">Податоци</string>
+    <string name="settings_section_data">Резервна копија и враќање</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Направи резервна копија на поставките</string>
+    <string name="backup_settings_subtitle">Зачувај ја конфигурацијата на KashCal во JSON датотека</string>
+    <string name="restore_settings_label">Врати поставки</string>
+    <string name="restore_settings_subtitle">Врати ја конфигурацијата на KashCal од резервна копија</string>
+    <string name="restore_confirm_title">Да се врати резервната копија?</string>
+    <string name="restore_confirm_from">Резервна копија од KashCal %1$s, %2$s</string>
+    <string name="action_restore">Врати</string>
+    <string name="restore_success_title">Враќањето заврши</string>
+    <string name="restore_confirm_message_prefs_only">Вашите поставки ќе бидат увезени.</string>
+    <string name="restore_success_message_prefs_only">Поставките се увезени.</string>
+    <string name="restore_success_device_calendars_note">Избери ги повторно календарите на уредот ако ја користиш таа функција.</string>
+    <string name="restore_error_title">Враќањето не успеа</string>
+    <string name="restore_error_version_too_new">Оваа резервна копија е направена со поново издание на KashCal. Ажурирај го KashCal и обиди се повторно.</string>
+    <string name="restore_error_malformed_json">Оваа датотека не е валидна резервна копија на KashCal.</string>
+    <string name="restore_error_invalid_value">Оваа резервна копија содржи невалидни податоци и не може да се врати.</string>
+    <string name="restore_error_apply_failure">Нешто тргна наопаку при примената на резервната копија. Не се зачувани промени.</string>
+    <string name="backup_error_build_failed">Резервната копија не успеа</string>
+    <string name="backup_error_write_failed">Резервната копија не успеа — не можеше да се запише во датотеката</string>
+    <string name="backup_error_read_failed">Не можеше да се прочита датотеката</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -297,7 +318,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Преземи календар</string>
-    <string name="action_import_from_file">Увези од датотека</string>
+    <string name="action_import_from_file">Увези настани од датотека</string>
     <string name="action_export_local_calendar">Извези локален календар</string>
 
     <!-- ==================== Providers ==================== -->
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Доверувај се на небезбедна врска</string>
     <string name="action_add_another">Додај друга</string>
     <string name="account_connected_found_calendars">Пронајдени %1$d календар(и) за %2$s.</string>
-    <string name="account_connected_syncing_hint">Синхронизацијата е во тек \u2014 настаните ќе се појават наскоро.</string>
+    <string name="account_connected_syncing_hint">Синхронизацијата е во тек — настаните ќе се појават наскоро.</string>
     <string name="settings_time_format_currently_24h">Моментално: 24-часовен (%1$s)</string>
     <string name="settings_time_format_currently_12h">Моментално: 12-часовен (%1$s)</string>
     <string name="settings_time_format_example">Пример: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d не се прикажани (%2$d вкупно, макс. %3$d уредливи)</string>
     <string name="label_found_events">Пронајдени: %1$d настани</string>
     <string name="label_open_debug_menu">Отвори мени за дебагирање</string>
-    <string name="placeholder_search">Пребарај\u2026</string>
+    <string name="placeholder_search">Пребарај…</string>
     <string name="status_sync_paused">Синхронизацијата е паузирана</string>
     <string name="status_not_synced">Не е синхронизирано</string>
     <string name="status_sync_error">Грешка при синхронизација</string>
@@ -513,12 +534,20 @@
         <item quantity="other">%1$d сметки</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 календар</item>
-        <item quantity="other">%1$s \u00B7 %2$d календари</item>
+        <item quantity="one">%1$s · 1 календар</item>
+        <item quantity="other">%1$s · %2$d календари</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d претплата</item>
         <item quantity="other">%1$d претплати</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d претплата и вашите поставки ќе бидат увезени.</item>
+        <item quantity="other">%1$d претплати и вашите поставки ќе бидат увезени.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d претплата и вашите поставки се увезени.</item>
+        <item quantity="other">%1$d претплати и вашите поставки се увезени.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Синхронизацијата не успеа (%1$d обид)</item>
@@ -557,8 +586,8 @@
         <item quantity="other">Увези</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026и уште %1$d</item>
-        <item quantity="other">\u2026и уште %1$d</item>
+        <item quantity="one">…и уште %1$d</item>
+        <item quantity="other">…и уште %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Увезен %1$d настан</item>
@@ -767,8 +796,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Синхронизација на календарите\u2026</string>
-    <string name="sync_banner_preparing">Подготовка за синхронизација\u2026</string>
+    <string name="sync_banner_syncing">Синхронизација на календарите…</string>
+    <string name="sync_banner_preparing">Подготовка за синхронизација…</string>
     <string name="sync_banner_complete_errors">Синхронизацијата заврши со грешки</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Синхронизацијата не успеа: %1$s</string>
@@ -799,12 +828,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Ден %1$d од %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ден 1 од %1$d \u00b7 почеток %2$s</string>
+    <string name="day_starts">Ден 1 од %1$d · почеток %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ден %1$d од %2$d \u00b7 крај %3$s</string>
+    <string name="day_ends">Ден %1$d од %2$d · крај %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Цел ден</string>
-    <string name="event_date_all_day">%1$s \u00b7 Цел ден</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Цел ден</string>
+    <string name="event_date_all_day">%1$s · Цел ден</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Цел ден)</string>
     <string name="event_date_all_day_parens">%1$s (Цел ден)</string>
@@ -833,8 +862,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Ден %1$d од %2$d (Цел ден)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d синхронизации   \u2191%2$d испратени   \u2193%3$d примени</string>
-    <string name="sync_history_stats_issues">%1$d синхронизации   \u2191%2$d испратени   \u2193%3$d примени   \u26a0 %4$d проблеми</string>
+    <string name="sync_history_stats">%1$d синхронизации   ↑%2$d испратени   ↓%3$d примени</string>
+    <string name="sync_history_stats_issues">%1$d синхронизации   ↑%2$d испратени   ↓%3$d примени   ⚠ %4$d проблеми</string>
     <string name="sync_history_failed">Неуспешно</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Секој час</string>
@@ -845,8 +874,8 @@
     <string name="ics_url_required">URL е задолжителен</string>
     <string name="ics_url_invalid_scheme">URL мора да започне со http://, https:// или webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Цел ден)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Цел ден)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календар</string>
@@ -881,7 +910,7 @@
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Никогаш</string>
     <string name="rrule_starting">%1$s почнувајќи од %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 од %2$s</string>
+    <string name="rrule_since">%1$s · од %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d пат</item>
         <item quantity="other">, %1$d пати</item>

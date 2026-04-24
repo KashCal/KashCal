@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Tüm takvim verilerini yeniden indir</string>
     <string name="settings_sync_history">Eşitleme Geçmişi</string>
     <string name="settings_sync_history_subtitle">Eşitleme oturumlarını görüntüle (son 48 saat)</string>
-    <string name="settings_import_subtitle">.ics dosyasını içe aktar</string>
-    <string name="settings_export_subtitle">.ics dosyasına yedekle</string>
+    <string name="settings_import_subtitle">Bir ICS dosyasından etkinlikleri herhangi bir takvime ekle</string>
+    <string name="settings_export_subtitle">Etkinlikleri ICS dosyasına kaydet</string>
     <string name="settings_birthday_reminder">Doğum Günü Hatırlatıcısı</string>
     <string name="settings_use_device_timezone">Cihaz saat dilimini kullan</string>
     <string name="settings_section_my_calendars">Takvimlerim</string>
     <string name="settings_section_display">Görünüm</string>
     <string name="settings_section_notifications">Bildirimler</string>
     <string name="settings_section_sync">Eşitleme</string>
-    <string name="settings_section_data">Veri</string>
+    <string name="settings_section_data">Yedekle ve Geri Yükle</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Ayarları yedekle</string>
+    <string name="backup_settings_subtitle">KashCal yapılandırmasını JSON dosyasına kaydet</string>
+    <string name="restore_settings_label">Ayarları geri yükle</string>
+    <string name="restore_settings_subtitle">KashCal yapılandırmasını yedek dosyasından geri yükle</string>
+    <string name="restore_confirm_title">Yedek geri yüklensin mi?</string>
+    <string name="restore_confirm_from">KashCal %1$s sürümünden yedek, %2$s</string>
+    <string name="action_restore">Geri Yükle</string>
+    <string name="restore_success_title">Geri yükleme tamamlandı</string>
+    <string name="restore_confirm_message_prefs_only">Tercihlerin içe aktarılacak.</string>
+    <string name="restore_success_message_prefs_only">Tercihler içe aktarıldı.</string>
+    <string name="restore_success_device_calendars_note">Cihaz takvimlerini kullanıyorsan tekrar seç.</string>
+    <string name="restore_error_title">Geri yükleme başarısız</string>
+    <string name="restore_error_version_too_new">Bu yedek, KashCal\'ın daha yeni bir sürümüyle oluşturulmuş. Lütfen KashCal\'ı güncelleyip tekrar dene.</string>
+    <string name="restore_error_malformed_json">Bu dosya geçerli bir KashCal yedeği değil.</string>
+    <string name="restore_error_invalid_value">Bu yedek dosyası geçersiz veri içeriyor ve geri yüklenemez.</string>
+    <string name="restore_error_apply_failure">Yedek uygulanırken bir sorun oluştu. Hiçbir değişiklik kaydedilmedi.</string>
+    <string name="backup_error_build_failed">Yedekleme başarısız oldu</string>
+    <string name="backup_error_write_failed">Yedekleme başarısız oldu — dosyaya yazılamadı</string>
+    <string name="backup_error_read_failed">Dosya okunamadı</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Takvim mi?</string>
@@ -297,8 +318,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Takvimi Getir</string>
-    <string name="action_import_from_file">Dosyadan İçe Aktar</string>
-    <string name="action_export_local_calendar">Yerel Takvimi Dışa Aktar</string>
+    <string name="action_import_from_file">Etkinlikleri dosyadan içe aktar</string>
+    <string name="action_export_local_calendar">Yerel takvimi dışa aktar</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Güvensiz bağlantıya güven</string>
     <string name="action_add_another">Bir Tane Daha Ekle</string>
     <string name="account_connected_found_calendars">%2$s için %1$d takvim bulundu.</string>
-    <string name="account_connected_syncing_hint">Eşitleme devam ediyor \u2014 etkinlikler kısa süre içinde görünecek.</string>
+    <string name="account_connected_syncing_hint">Eşitleme devam ediyor — etkinlikler kısa süre içinde görünecek.</string>
     <string name="settings_time_format_currently_24h">Şu anda: 24 saat (%1$s)</string>
     <string name="settings_time_format_currently_12h">Şu anda: 12 saat (%1$s)</string>
     <string name="settings_time_format_example">Örnek: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d gösterilmiyor (%2$d toplam, en fazla %3$d düzenlenebilir)</string>
     <string name="label_found_events">Bulunan: %1$d etkinlik</string>
     <string name="label_open_debug_menu">Hata ayıklama menüsünü aç</string>
-    <string name="placeholder_search">Ara\u2026</string>
+    <string name="placeholder_search">Ara…</string>
     <string name="status_sync_paused">Eşitleme duraklatıldı</string>
     <string name="status_not_synced">Eşitlenmedi</string>
     <string name="status_sync_error">Eşitleme hatası</string>
@@ -513,12 +534,20 @@
         <item quantity="other">%1$d hesap</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 takvim</item>
-        <item quantity="other">%1$s \u00B7 %2$d takvim</item>
+        <item quantity="one">%1$s · 1 takvim</item>
+        <item quantity="other">%1$s · %2$d takvim</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d abonelik</item>
         <item quantity="other">%1$d abonelik</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d abonelik ve tercihlerin içe aktarılacak.</item>
+        <item quantity="other">%1$d abonelik ve tercihlerin içe aktarılacak.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d abonelik ve tercihlerin içe aktarıldı.</item>
+        <item quantity="other">%1$d abonelik ve tercihlerin içe aktarıldı.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Eşitleme başarısız (%1$d deneme)</item>
@@ -557,8 +586,8 @@
         <item quantity="other">İçe Aktar</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026ve %1$d daha</item>
-        <item quantity="other">\u2026ve %1$d daha</item>
+        <item quantity="one">…ve %1$d daha</item>
+        <item quantity="other">…ve %1$d daha</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d etkinlik içe aktarıldı</item>
@@ -767,8 +796,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Takvimler eşitleniyor\u2026</string>
-    <string name="sync_banner_preparing">Eşitlemeye hazırlanılıyor\u2026</string>
+    <string name="sync_banner_syncing">Takvimler eşitleniyor…</string>
+    <string name="sync_banner_preparing">Eşitlemeye hazırlanılıyor…</string>
     <string name="sync_banner_complete_errors">Eşitleme hatalarla tamamlandı</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Eşitleme başarısız: %1$s</string>
@@ -799,12 +828,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Gün %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Gün 1 / %1$d \u00b7 başlangıç %2$s</string>
+    <string name="day_starts">Gün 1 / %1$d · başlangıç %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Gün %1$d / %2$d \u00b7 bitiş %3$s</string>
+    <string name="day_ends">Gün %1$d / %2$d · bitiş %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Tüm gün</string>
-    <string name="event_date_all_day">%1$s \u00b7 Tüm gün</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Tüm gün</string>
+    <string name="event_date_all_day">%1$s · Tüm gün</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Tüm gün)</string>
     <string name="event_date_all_day_parens">%1$s (Tüm gün)</string>
@@ -833,8 +862,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Gün %1$d / %2$d (Tüm gün)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d eşitleme   \u2191%2$d gönderildi   \u2193%3$d alındı</string>
-    <string name="sync_history_stats_issues">%1$d eşitleme   \u2191%2$d gönderildi   \u2193%3$d alındı   \u26a0 %4$d sorun</string>
+    <string name="sync_history_stats">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı</string>
+    <string name="sync_history_stats_issues">%1$d eşitleme   ↑%2$d gönderildi   ↓%3$d alındı   ⚠ %4$d sorun</string>
     <string name="sync_history_failed">Başarısız</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Her saat</string>
@@ -845,8 +874,8 @@
     <string name="ics_url_required">URL gerekli</string>
     <string name="ics_url_invalid_scheme">URL http://, https:// veya webcal:// ile başlamalı</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Tüm gün)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Tüm gün)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">Takvim</string>
@@ -881,7 +910,7 @@
     <string name="rrule_until_suffix">, %1$s tarihine kadar</string>
     <string name="rrule_freq_never">Asla</string>
     <string name="rrule_starting">%2$s%3$s tarihinden başlayarak %1$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s tarihinden itibaren</string>
+    <string name="rrule_since">%1$s · %2$s tarihinden itibaren</string>
 
     <!-- Recurrence plural -->
     <plurals name="rrule_count_suffix">

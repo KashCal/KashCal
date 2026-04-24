@@ -80,7 +80,7 @@
     <string name="label_calendar_name">Kalendernaam</string>
     <string name="label_name">Naam</string>
     <string name="label_hex_color">Hex-kleur</string>
-    <string name="label_enter_hex">Voer 6 hex-karakters in (0\u20139, A\u2013F)</string>
+    <string name="label_enter_hex">Voer 6 hex-karakters in (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
     <string name="view_all">Alles</string>
@@ -100,15 +100,34 @@
     <string name="settings_force_sync_subtitle">Herlaai alle kalenderdata</string>
     <string name="settings_sync_history">Sinkroniseringsgeskiedenis</string>
     <string name="settings_sync_history_subtitle">Bekyk sinkroniseringsessies (laaste 48 uur)</string>
-    <string name="settings_import_subtitle">Voer .ics-l\u00eaer in</string>
-    <string name="settings_export_subtitle">Rugsteun na .ics-l\u00eaer</string>
+    <string name="settings_import_subtitle">Voeg gebeurtenisse vanaf \'n ICS-lêer by enige kalender</string>
+    <string name="settings_export_subtitle">Stoor gebeurtenisse na \'n ICS-lêer</string>
     <string name="settings_birthday_reminder">Verjaarsdagherinnering</string>
     <string name="settings_use_device_timezone">Gebruik toesteltydzone</string>
     <string name="settings_section_my_calendars">My Kalenders</string>
     <string name="settings_section_display">Vertoning</string>
     <string name="settings_section_notifications">Kennisgewings</string>
     <string name="settings_section_sync">Sinkronisering</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Rugsteun &amp; Herstel</string>
+    <string name="backup_settings_label">Rugsteuninstellings</string>
+    <string name="backup_settings_subtitle">Stoor KashCal-konfigurasie na \'n JSON-lêer</string>
+    <string name="restore_settings_label">Herstel instellings</string>
+    <string name="restore_settings_subtitle">Herstel KashCal-konfigurasie vanaf \'n rugsteunlêer</string>
+    <string name="restore_confirm_title">Herstel rugsteun?</string>
+    <string name="restore_confirm_from">Rugsteun van KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Jou voorkeure sal ingevoer word.</string>
+    <string name="action_restore">Herstel</string>
+    <string name="restore_success_title">Herstel voltooi</string>
+    <string name="restore_success_message_prefs_only">Voorkeure ingevoer.</string>
+    <string name="restore_success_device_calendars_note">Kies weer jou toestelkalenders as jy daardie kenmerk gebruik.</string>
+    <string name="restore_error_title">Herstel het misluk</string>
+    <string name="restore_error_version_too_new">Hierdie rugsteun is met \'n nuwer weergawe van KashCal geskep. Werk KashCal op en probeer weer.</string>
+    <string name="restore_error_malformed_json">Hierdie lêer is nie \'n geldige KashCal-rugsteun nie.</string>
+    <string name="restore_error_invalid_value">Hierdie rugsteunlêer bevat ongeldige data en kan nie herstel word nie.</string>
+    <string name="restore_error_apply_failure">Iets het verkeerd gegaan tydens die toepassing van die rugsteun. Geen veranderinge is gestoor nie.</string>
+    <string name="backup_error_build_failed">Rugsteun het misluk</string>
+    <string name="backup_error_write_failed">Rugsteun het misluk — kon nie na lêer skryf nie</string>
+    <string name="backup_error_read_failed">Kon nie lêer lees nie</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
@@ -145,7 +164,7 @@
     <string name="status_sync_history">Sinkroniseringsgeskiedenis</string>
     <string name="status_parse_failures">Ontledingsfoute</string>
     <string name="status_error">Fout</string>
-    <string name="status_failed_to_parse">\u26A0 %1$d kon nie ontleed word nie</string>
+    <string name="status_failed_to_parse">⚠ %1$d kon nie ontleed word nie</string>
     <string name="status_built_with_love">Gebou met Liefde</string>
     <string name="status_in_austin">in Austin</string>
     <string name="status_version">KashCal v%1$s</string>
@@ -184,8 +203,8 @@
 
     <string name="error_display_name_exists">\'n Rekening met die naam \"%1$s\" bestaan reeds.</string>
 
-    <string name="error_import_file_not_found">L\u00eaer nie gevind nie of kan nie gelees word nie.</string>
-    <string name="error_import_invalid_format">Ongeldige kalenderl\u00eaerformaat.</string>
+    <string name="error_import_file_not_found">Lêer nie gevind nie of kan nie gelees word nie.</string>
+    <string name="error_import_invalid_format">Ongeldige kalenderlêerformaat.</string>
     <string name="error_import_partial">%1$d gebeurtenisse ingevoer, %2$d het misluk.</string>
     <string name="error_export_failed">Kon nie gebeurtenisse uitvoer nie.</string>
     <string name="error_export_no_events">Geen gebeurtenisse om uit te voer nie.</string>
@@ -297,8 +316,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Haal Kalender</string>
-    <string name="action_import_from_file">Invoer vanaf L\u00eaer</string>
-    <string name="action_export_local_calendar">Voer Plaaslike Kalender Uit</string>
+    <string name="action_import_from_file">Voer gebeurtenisse vanaf lêer in</string>
+    <string name="action_export_local_calendar">Voer Plaaslike kalender uit</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -413,7 +432,7 @@
     <string name="caldav_trust_insecure_label">Vertrou onveilige verbinding</string>
     <string name="action_add_another">Voeg Nog Een By</string>
     <string name="account_connected_found_calendars">%1$d kalender(s) gevind vir %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinkronisering is aan die gang \u2014 gebeurtenisse sal binnekort verskyn.</string>
+    <string name="account_connected_syncing_hint">Sinkronisering is aan die gang — gebeurtenisse sal binnekort verskyn.</string>
     <string name="settings_time_format_currently_24h">Tans: 24-uur (%1$s)</string>
     <string name="settings_time_format_currently_12h">Tans: 12-uur (%1$s)</string>
     <string name="settings_time_format_example">Voorbeeld: %1$s</string>
@@ -443,7 +462,7 @@
     <string name="label_alerts">Waarskuwings</string>
     <string name="label_add_alert">Voeg Waarskuwing By</string>
     <string name="label_recurrence_never">Nooit</string>
-    <string name="label_tomorrow">M\u00f4re</string>
+    <string name="label_tomorrow">Môre</string>
     <string name="label_yesterday">Gister</string>
     <string name="label_device_calendars">Toestelkalenders</string>
     <string name="label_default_calendar_hint">Nuwe gebeurtenisse sal in hierdie kalender geskep word</string>
@@ -452,7 +471,7 @@
     <string name="label_reminders_truncated">%1$d nie gewys nie (%2$d totaal, maks %3$d redigeerbaar)</string>
     <string name="label_found_events">Gevind: %1$d gebeurtenisse</string>
     <string name="label_open_debug_menu">Open ontfoutkieslys</string>
-    <string name="placeholder_search">Soek\u2026</string>
+    <string name="placeholder_search">Soek…</string>
     <string name="status_sync_paused">Sinkronisering onderbreek</string>
     <string name="status_not_synced">Nie gesinkroniseer nie</string>
     <string name="status_sync_error">Sinkroniseringsfout</string>
@@ -514,12 +533,20 @@
         <item quantity="other">%1$d rekeninge</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalender</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalenders</item>
+        <item quantity="one">%1$s · 1 kalender</item>
+        <item quantity="other">%1$s · %2$d kalenders</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d intekening</item>
         <item quantity="other">%1$d intekeninge</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d intekening en jou voorkeure sal ingevoer word.</item>
+        <item quantity="other">%1$d intekenings en jou voorkeure sal ingevoer word.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d intekening en jou voorkeure ingevoer.</item>
+        <item quantity="other">%1$d intekenings en jou voorkeure ingevoer.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinkronisering misluk (%1$d poging)</item>
@@ -558,8 +585,8 @@
         <item quantity="other">Invoer</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026en %1$d meer</item>
-        <item quantity="other">\u2026en %1$d meer</item>
+        <item quantity="one">…en %1$d meer</item>
+        <item quantity="other">…en %1$d meer</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d gebeurtenis ingevoer</item>
@@ -768,8 +795,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Kalenders word gesinkroniseer\u2026</string>
-    <string name="sync_banner_preparing">Berei voor om te sinkroniseer\u2026</string>
+    <string name="sync_banner_syncing">Kalenders word gesinkroniseer…</string>
+    <string name="sync_banner_preparing">Berei voor om te sinkroniseer…</string>
     <string name="sync_banner_complete_errors">Sinkronisering voltooi met foute</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sinkronisering misluk: %1$s</string>
@@ -800,12 +827,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dag %1$d van %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 van %1$d \u00b7 begin %2$s</string>
+    <string name="day_starts">Dag 1 van %1$d · begin %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d van %2$d \u00b7 eindig %3$s</string>
+    <string name="day_ends">Dag %1$d van %2$d · eindig %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Heeldag</string>
-    <string name="event_date_all_day">%1$s \u00b7 Heeldag</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Heeldag</string>
+    <string name="event_date_all_day">%1$s · Heeldag</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Heeldag)</string>
     <string name="event_date_all_day_parens">%1$s (Heeldag)</string>
@@ -834,8 +861,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dag %1$d van %2$d (Heeldag)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sinkroniserings   \u2191%2$d gestoot   \u2193%3$d getrek</string>
-    <string name="sync_history_stats_issues">%1$d sinkroniserings   \u2191%2$d gestoot   \u2193%3$d getrek   \u26a0 %4$d probleme</string>
+    <string name="sync_history_stats">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek</string>
+    <string name="sync_history_stats_issues">%1$d sinkroniserings   ↑%2$d gestoot   ↓%3$d getrek   ⚠ %4$d probleme</string>
     <string name="sync_history_failed">Misluk</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Elke uur</string>
@@ -846,8 +873,8 @@
     <string name="ics_url_required">URL is verpligtend</string>
     <string name="ics_url_invalid_scheme">URL moet begin met http://, https://, of webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Heeldag)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Heeldag)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>
@@ -908,8 +935,8 @@
     <string name="insight_lightest_day_future">%1$s is jou ligste dag (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s was jou ligste dag (%2$s)</string>
     <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">Langste vrye blok: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">Langste vrye blok was %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_future">Langste vrye blok: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Langste vrye blok was %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Jou naweek is oop</string>
     <string name="insight_weekend_load_clear_past">Jou naweek was oop</string>
@@ -932,12 +959,12 @@
     <string name="insight_meeting_free_days_future">Jy het %1$d vergaderingvrye dae</string>
     <string name="insight_meeting_free_days_past">Jy het %1$d vergaderingvrye dae gehad</string>
     <!-- Insight text: Tomorrow Preview (forward-only) -->
-    <string name="insight_tomorrow_preview">M\u00f4re: %1$s geskeduleer, begin om %2$s</string>
-    <string name="insight_tomorrow_preview_no_start">M\u00f4re: %1$s geskeduleer</string>
+    <string name="insight_tomorrow_preview">Môre: %1$s geskeduleer, begin om %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Môre: %1$s geskeduleer</string>
     <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s is jou swaarste komende dag (%2$s)</string>
     <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">Volgende vrye blok: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_next_free_block">Volgende vrye blok: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Kalenderuiteensetting: %1$s</string>
     <string name="insights_cd_daily_chart">Daaglikse verspreiding: besigste dag is %1$s</string>

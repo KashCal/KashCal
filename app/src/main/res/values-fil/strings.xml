@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">I-download muli ang lahat ng data ng kalendaryo</string>
     <string name="settings_sync_history">Kasaysayan ng Sync</string>
     <string name="settings_sync_history_subtitle">Tingnan ang mga sync session (huling 48 oras)</string>
-    <string name="settings_import_subtitle">Mag-import ng .ics file</string>
-    <string name="settings_export_subtitle">I-backup sa .ics file</string>
+    <string name="settings_import_subtitle">Magdagdag ng mga event mula sa ICS file sa anumang kalendaryo</string>
+    <string name="settings_export_subtitle">I-save ang mga event sa ICS file</string>
     <string name="settings_birthday_reminder">Paalala ng Kaarawan</string>
     <string name="settings_use_device_timezone">Gamitin ang timezone ng device</string>
     <string name="settings_section_my_calendars">Mga Kalendaryo Ko</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_section_notifications">Mga Notification</string>
     <string name="settings_section_sync">Sync</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Backup &amp; Restore</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">I-backup ang mga setting</string>
+    <string name="backup_settings_subtitle">I-save ang configuration ng KashCal sa isang JSON file</string>
+    <string name="restore_settings_label">I-restore ang mga setting</string>
+    <string name="restore_settings_subtitle">I-restore ang configuration ng KashCal mula sa backup file</string>
+    <string name="restore_confirm_title">I-restore ang backup?</string>
+    <string name="restore_confirm_from">Backup mula sa KashCal %1$s, %2$s</string>
+    <string name="action_restore">I-restore</string>
+    <string name="restore_success_title">Tapos na ang pag-restore</string>
+    <string name="restore_confirm_message_prefs_only">Mai-i-import ang iyong mga kagustuhan.</string>
+    <string name="restore_success_message_prefs_only">Na-import ang mga kagustuhan.</string>
+    <string name="restore_success_device_calendars_note">Piliin muli ang mga kalendaryo ng iyong device kung ginagamit mo ang feature na iyon.</string>
+    <string name="restore_error_title">Nabigo ang pag-restore</string>
+    <string name="restore_error_version_too_new">Ginawa ang backup na ito gamit ang mas bagong bersyon ng KashCal. Mangyaring i-update ang KashCal at subukan muli.</string>
+    <string name="restore_error_malformed_json">Hindi ito isang valid na KashCal backup.</string>
+    <string name="restore_error_invalid_value">Naglalaman ng invalid na data ang backup file na ito at hindi ma-restore.</string>
+    <string name="restore_error_apply_failure">May nangyaring mali habang inilalapat ang backup. Walang mga pagbabagong nai-save.</string>
+    <string name="backup_error_build_failed">Nabigo ang backup</string>
+    <string name="backup_error_write_failed">Nabigo ang backup — hindi maisulat sa file</string>
+    <string name="backup_error_read_failed">Hindi mabasa ang file</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,8 +319,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Kunin ang Kalendaryo</string>
-    <string name="action_import_from_file">Mag-import mula sa File</string>
-    <string name="action_export_local_calendar">I-export ang Lokal na Kalendaryo</string>
+    <string name="action_import_from_file">Mag-import ng mga event mula sa file</string>
+    <string name="action_export_local_calendar">I-export ang Lokal na kalendaryo</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">Pagkatiwalaan ang hindi secure na koneksyon</string>
     <string name="action_add_another">Magdagdag Pa</string>
     <string name="account_connected_found_calendars">Nakakita ng %1$d kalendaryo para sa %2$s.</string>
-    <string name="account_connected_syncing_hint">Sini-sync na \u2014 lalabas na ang mga event.</string>
+    <string name="account_connected_syncing_hint">Sini-sync na — lalabas na ang mga event.</string>
     <string name="settings_time_format_currently_24h">Kasalukuyan: 24 oras (%1$s)</string>
     <string name="settings_time_format_currently_12h">Kasalukuyan: 12 oras (%1$s)</string>
     <string name="settings_time_format_example">Halimbawa: %1$s</string>
@@ -452,7 +473,7 @@
     <string name="label_reminders_truncated">%1$d hindi ipinakita (%2$d kabuuan, max %3$d na mae-edit)</string>
     <string name="label_found_events">Natagpuan: %1$d event</string>
     <string name="label_open_debug_menu">Buksan ang debug menu</string>
-    <string name="placeholder_search">Maghanap\u2026</string>
+    <string name="placeholder_search">Maghanap…</string>
     <string name="status_sync_paused">Naka-pause ang sync</string>
     <string name="status_not_synced">Hindi pa na-sync</string>
     <string name="status_sync_error">Sync error</string>
@@ -515,12 +536,20 @@
         <item quantity="other">%1$d account</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalendaryo</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendaryo</item>
+        <item quantity="one">%1$s · 1 kalendaryo</item>
+        <item quantity="other">%1$s · %2$d kalendaryo</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d subscription</item>
         <item quantity="other">%1$d subscription</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">Mai-i-import ang %1$d subscription at ang iyong mga kagustuhan.</item>
+        <item quantity="other">Mai-i-import ang %1$d na subscription at ang iyong mga kagustuhan.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Na-import ang %1$d subscription at ang iyong mga kagustuhan.</item>
+        <item quantity="other">Na-import ang %1$d na subscription at ang iyong mga kagustuhan.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Nabigo ang sync (%1$d pagsubok)</item>
@@ -559,8 +588,8 @@
         <item quantity="other">I-import</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026at %1$d pa</item>
-        <item quantity="other">\u2026at %1$d pa</item>
+        <item quantity="one">…at %1$d pa</item>
+        <item quantity="other">…at %1$d pa</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Na-import ang %1$d event</item>
@@ -769,8 +798,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Sini-sync ang mga kalendaryo\u2026</string>
-    <string name="sync_banner_preparing">Naghahanda para sa sync\u2026</string>
+    <string name="sync_banner_syncing">Sini-sync ang mga kalendaryo…</string>
+    <string name="sync_banner_preparing">Naghahanda para sa sync…</string>
     <string name="sync_banner_complete_errors">Kumpleto ang sync na may mga error</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Nabigo ang sync: %1$s</string>
@@ -801,12 +830,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Araw %1$d ng %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Araw 1 ng %1$d \u00b7 nagsisimula %2$s</string>
+    <string name="day_starts">Araw 1 ng %1$d · nagsisimula %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Araw %1$d ng %2$d \u00b7 nagtatapos %3$s</string>
+    <string name="day_ends">Araw %1$d ng %2$d · nagtatapos %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Buong araw</string>
-    <string name="event_date_all_day">%1$s \u00b7 Buong araw</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Buong araw</string>
+    <string name="event_date_all_day">%1$s · Buong araw</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Buong araw)</string>
     <string name="event_date_all_day_parens">%1$s (Buong araw)</string>
@@ -835,8 +864,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Araw %1$d ng %2$d (Buong araw)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sync   \u2191%2$d nai-push   \u2193%3$d nai-pull</string>
-    <string name="sync_history_stats_issues">%1$d sync   \u2191%2$d nai-push   \u2193%3$d nai-pull   \u26a0 %4$d isyu</string>
+    <string name="sync_history_stats">%1$d sync   ↑%2$d nai-push   ↓%3$d nai-pull</string>
+    <string name="sync_history_stats_issues">%1$d sync   ↑%2$d nai-push   ↓%3$d nai-pull   ⚠ %4$d isyu</string>
     <string name="sync_history_failed">Nabigo</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Bawat oras</string>
@@ -847,8 +876,8 @@
     <string name="ics_url_required">Kinakailangan ang URL</string>
     <string name="ics_url_invalid_scheme">Ang URL ay dapat magsimula sa http://, https://, o webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Buong araw)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Buong araw)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d beses</item>

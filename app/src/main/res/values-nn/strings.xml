@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">Last ned all kalenderdata på nytt</string>
     <string name="settings_sync_history">Synkroniseringshistorikk</string>
     <string name="settings_sync_history_subtitle">Vis synkroniseringsøkter (siste 48 timar)</string>
-    <string name="settings_import_subtitle">Importer .ics-fil</string>
-    <string name="settings_export_subtitle">Sikkerheitskopier til .ics-fil</string>
+    <string name="settings_import_subtitle">Legg til hendingar frå ei ICS-fil i ein valfri kalender</string>
+    <string name="settings_export_subtitle">Lagre hendingar i ei ICS-fil</string>
     <string name="settings_birthday_reminder">Bursdagspåminning</string>
     <string name="settings_use_device_timezone">Bruk tidssona til eininga</string>
     <string name="settings_section_my_calendars">Mine kalendrar</string>
     <string name="settings_section_display">Vising</string>
     <string name="settings_section_notifications">Varsel</string>
     <string name="settings_section_sync">Synkronisering</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Sikkerheitskopi &amp; gjenoppretting</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Sikkerheitskopier innstillingar</string>
+    <string name="backup_settings_subtitle">Lagre KashCal-konfigurasjon i ei JSON-fil</string>
+    <string name="restore_settings_label">Gjenopprett innstillingar</string>
+    <string name="restore_settings_subtitle">Gjenopprett KashCal-konfigurasjon frå ei sikkerheitskopi</string>
+    <string name="restore_confirm_title">Gjenopprette sikkerheitskopi?</string>
+    <string name="restore_confirm_from">Sikkerheitskopi frå KashCal %1$s, %2$s</string>
+    <string name="action_restore">Gjenopprett</string>
+    <string name="restore_success_title">Gjenoppretting fullført</string>
+    <string name="restore_confirm_message_prefs_only">Innstillingane dine vert importerte.</string>
+    <string name="restore_success_message_prefs_only">Innstillingar importerte.</string>
+    <string name="restore_success_device_calendars_note">Vel einingskalendrane dine på nytt dersom du brukar den funksjonen.</string>
+    <string name="restore_error_title">Gjenoppretting mislykkast</string>
+    <string name="restore_error_version_too_new">Denne sikkerheitskopien blei laga med ein nyare versjon av KashCal. Oppdater KashCal og prøv igjen.</string>
+    <string name="restore_error_malformed_json">Denne fila er ikkje ei gyldig KashCal-sikkerheitskopi.</string>
+    <string name="restore_error_invalid_value">Sikkerheitskopien inneheld ugyldige data og kan ikkje gjenopprettast.</string>
+    <string name="restore_error_apply_failure">Noko gjekk gale under gjenopprettinga. Ingen endringar blei lagra.</string>
+    <string name="backup_error_build_failed">Sikkerheitskopieringa feila</string>
+    <string name="backup_error_write_failed">Sikkerheitskopieringa feila — kunne ikkje skriva til fila</string>
+    <string name="backup_error_read_failed">Kunne ikkje lesa fila</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Kalender?</string>
@@ -300,7 +321,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Hent kalender</string>
-    <string name="action_import_from_file">Importer frå fil</string>
+    <string name="action_import_from_file">Importer hendingar frå fil</string>
     <string name="action_export_local_calendar">Eksporter lokal kalender</string>
 
     <!-- ==================== Providers ==================== -->
@@ -416,7 +437,7 @@
     <string name="caldav_trust_insecure_label">Stol på utrygg tilkopling</string>
     <string name="action_add_another">Legg til endå ein</string>
     <string name="account_connected_found_calendars">Fann %1$d kalender(ar) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronisering pågår \u2014 hendingar dukkar opp snart.</string>
+    <string name="account_connected_syncing_hint">Synkronisering pågår — hendingar dukkar opp snart.</string>
     <string name="settings_time_format_currently_24h">No: 24-timars (%1$s)</string>
     <string name="settings_time_format_currently_12h">No: 12-timars (%1$s)</string>
     <string name="settings_time_format_example">Døme: %1$s</string>
@@ -455,7 +476,7 @@
     <string name="label_reminders_truncated">%1$d ikkje viste (%2$d totalt, maks %3$d redigerbare)</string>
     <string name="label_found_events">Funne: %1$d hendingar</string>
     <string name="label_open_debug_menu">Opne feilsøkingsmeny</string>
-    <string name="placeholder_search">Søk\u2026</string>
+    <string name="placeholder_search">Søk…</string>
     <string name="status_sync_paused">Synkronisering sett på pause</string>
     <string name="status_not_synced">Ikkje synkronisert</string>
     <string name="status_sync_error">Synkroniseringsfeil</string>
@@ -517,12 +538,20 @@
         <item quantity="other">%1$d kontoar</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalender</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendrar</item>
+        <item quantity="one">%1$s · 1 kalender</item>
+        <item quantity="other">%1$s · %2$d kalendrar</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d abonnement</item>
         <item quantity="other">%1$d abonnement</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d abonnement og innstillingane dine vert importerte.</item>
+        <item quantity="other">%1$d abonnement og innstillingane dine vert importerte.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d abonnement og innstillingane dine importerte.</item>
+        <item quantity="other">%1$d abonnement og innstillingane dine importerte.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synkronisering mislukkast (%1$d forsøk)</item>
@@ -561,8 +590,8 @@
         <item quantity="other">Importer</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026og %1$d til</item>
-        <item quantity="other">\u2026og %1$d til</item>
+        <item quantity="one">…og %1$d til</item>
+        <item quantity="other">…og %1$d til</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d hending importert</item>
@@ -685,18 +714,18 @@
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
     <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Inga p\u00e5minning</string>
-    <string name="reminder_at_time_of_event">P\u00e5 tidspunktet for hendinga</string>
+    <string name="reminder_none">Inga påminning</string>
+    <string name="reminder_at_time_of_event">På tidspunktet for hendinga</string>
     <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s f\u00f8r</string>
+    <string name="reminder_time_before">%1$s før</string>
     <string name="reminder_time_after">%1$s etter</string>
     <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM p\u00e5 dagen for hendinga</string>
-    <string name="reminder_day_of_event_24h">09:00 p\u00e5 dagen for hendinga</string>
+    <string name="reminder_day_of_event_12h">9 AM på dagen for hendinga</string>
+    <string name="reminder_day_of_event_24h">09:00 på dagen for hendinga</string>
     <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
     <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s f\u00f8r kl. 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s f\u00f8r kl. 09:00</string>
+    <string name="reminder_before_at_12h">%1$s før kl. 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s før kl. 09:00</string>
     <!-- Short/compact reminder labels (used in chips and summaries) -->
     <string name="reminder_short_off">Av</string>
     <string name="reminder_short_at_event">Ved hending</string>
@@ -726,22 +755,22 @@
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
     <string name="notification_date_time">%1$s, %2$s</string>
     <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Synkronisering fullf\u00f8rt</string>
-    <string name="sync_notification_partial">Synkronisering delvis fullf\u00f8rt</string>
+    <string name="sync_notification_complete">Synkronisering fullført</string>
+    <string name="sync_notification_partial">Synkronisering delvis fullført</string>
     <string name="sync_notification_auth_failed">Synkronisering: Autentisering mislukkast</string>
-    <string name="sync_notification_auth_reauth">Logg inn p\u00e5 kontoen din p\u00e5 nytt</string>
+    <string name="sync_notification_auth_reauth">Logg inn på kontoen din på nytt</string>
     <string name="sync_notification_failed">Synkronisering mislukkast</string>
     <string name="sync_notification_parse_title">Nokre hendingar kunne ikkje synkroniserast</string>
     <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s i %2$s kunne ikkje synkroniserast. Pr\u00f8v ein full synkronisering i Innstillingar.</string>
-    <string name="sync_notification_conflict_title">Synkroniseringskonflikt l\u00f8yst</string>
+    <string name="sync_notification_parse_content">%1$s i %2$s kunne ikkje synkroniserast. Prøv ein full synkronisering i Innstillingar.</string>
+    <string name="sync_notification_conflict_title">Synkroniseringskonflikt løyst</string>
     <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Lokale endringar i \"%1$s\" gjekk tapt p\u00e5 grunn av synkroniseringskonflikt. Tenarversjonen vert brukt.</string>
+    <string name="sync_notification_conflict_single">Lokale endringar i \"%1$s\" gjekk tapt på grunn av synkroniseringskonflikt. Tenarversjonen vert brukt.</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Lokale endringar i %1$s gjekk tapt p\u00e5 grunn av synkroniseringskonfliktar. Tenarversjonane vert brukte.</string>
-    <string name="sync_notification_expired_title">Synkroniseringsendringar utl\u00f8pte</string>
+    <string name="sync_notification_conflict_multi">Lokale endringar i %1$s gjekk tapt på grunn av synkroniseringskonfliktar. Tenarversjonane vert brukte.</string>
+    <string name="sync_notification_expired_title">Synkroniseringsendringar utløpte</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s kunne ikkje synkroniserast etter 30 dagar. Tenarversjonen vert brukt. Tving synkronisering for \u00e5 pr\u00f8va igjen.</string>
+    <string name="sync_notification_expired_content">%1$s kunne ikkje synkroniserast etter 30 dagar. Tenarversjonen vert brukt. Tving synkronisering for å prøva igjen.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d kalender synkronisert</item>
@@ -773,9 +802,9 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synkroniserer kalendrar\u2026</string>
-    <string name="sync_banner_preparing">F\u00f8rebur synkronisering\u2026</string>
-    <string name="sync_banner_complete_errors">Synkronisering fullf\u00f8rt med feil</string>
+    <string name="sync_banner_syncing">Synkroniserer kalendrar…</string>
+    <string name="sync_banner_preparing">Førebur synkronisering…</string>
+    <string name="sync_banner_complete_errors">Synkronisering fullført med feil</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Synkronisering mislukkast: %1$s</string>
     <string name="error_unknown_error">Ukjend feil</string>
@@ -805,12 +834,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dag %1$d av %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 av %1$d \u00b7 startar %2$s</string>
+    <string name="day_starts">Dag 1 av %1$d · startar %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d av %2$d \u00b7 sluttar %3$s</string>
+    <string name="day_ends">Dag %1$d av %2$d · sluttar %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Heile dagen</string>
-    <string name="event_date_all_day">%1$s \u00b7 Heile dagen</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Heile dagen</string>
+    <string name="event_date_all_day">%1$s · Heile dagen</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Heile dagen)</string>
     <string name="event_date_all_day_parens">%1$s (Heile dagen)</string>
@@ -822,15 +851,15 @@
     <string name="badge_beta">Beta</string>
     <string name="badge_new">Ny</string>
     <!-- Color names for accessibility -->
-    <string name="color_red">R\u00f8d</string>
+    <string name="color_red">Rød</string>
     <string name="color_orange">Oransje</string>
     <string name="color_yellow">Gul</string>
-    <string name="color_green">Gr\u00f8n</string>
+    <string name="color_green">Grøn</string>
     <string name="color_cyan">Cyan</string>
-    <string name="color_blue">Bl\u00e5</string>
+    <string name="color_blue">Blå</string>
     <string name="color_purple">Lilla</string>
     <!-- Accessibility: link types -->
-    <string name="cd_meeting_link">M\u00f8telenke: %1$s</string>
+    <string name="cd_meeting_link">Møtelenke: %1$s</string>
     <string name="cd_phone_number">Telefonnummer</string>
     <string name="cd_email_link">E-post: %1$s</string>
     <string name="cd_web_link">Lenkje: %1$s</string>
@@ -839,8 +868,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dag %1$d av %2$d (Heile dagen)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d synk.   \u2191%2$d sendt   \u2193%3$d motteke</string>
-    <string name="sync_history_stats_issues">%1$d synk.   \u2191%2$d sendt   \u2193%3$d motteke   \u26a0 %4$d problem</string>
+    <string name="sync_history_stats">%1$d synk.   ↑%2$d sendt   ↓%3$d motteke</string>
+    <string name="sync_history_stats_issues">%1$d synk.   ↑%2$d sendt   ↓%3$d motteke   ⚠ %4$d problem</string>
     <string name="sync_history_failed">Mislukkast</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Kvar time</string>
@@ -848,11 +877,11 @@
     <string name="ics_sync_daily">Dagleg</string>
     <string name="ics_sync_weekly">Vekevis</string>
     <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL er p\u00e5krevd</string>
-    <string name="ics_url_invalid_scheme">URL m\u00e5 starta med http://, https:// eller webcal://</string>
+    <string name="ics_url_required">URL er påkrevd</string>
+    <string name="ics_url_invalid_scheme">URL må starta med http://, https:// eller webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Heile dagen)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Heile dagen)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>
@@ -909,28 +938,28 @@
     <string name="insight_busiest_day_past">%1$s var din travlaste dag (%2$s)</string>
     <string name="insight_lightest_day_future">%1$s er din rolegaste dag (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s var din rolegaste dag (%2$s)</string>
-    <string name="insight_longest_free_future">Lengste ledige blokk: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">Lengste ledige blokk var %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_future">Lengste ledige blokk: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Lengste ledige blokk var %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_weekend_load_clear_future">Helga di er fri</string>
     <string name="insight_weekend_load_clear_past">Helga di var fri</string>
     <string name="insight_weekend_load_light_future">%1$s planlagde i helga</string>
     <string name="insight_weekend_load_light_past">%1$s var planlagde i helga</string>
     <string name="insight_weekend_load_busy_future">%1$s planlagde i helga</string>
     <string name="insight_weekend_load_busy_past">%1$s var planlagde i helga</string>
-    <string name="insight_back_to_back_future">%1$d m\u00f8te p\u00e5 rad</string>
-    <string name="insight_back_to_back_past">Du hadde %1$d m\u00f8te p\u00e5 rad</string>
+    <string name="insight_back_to_back_future">%1$d møte på rad</string>
+    <string name="insight_back_to_back_past">Du hadde %1$d møte på rad</string>
     <string name="insight_calendar_dominant_future">%1$s er %2$d%% av den planlagde tida di</string>
     <string name="insight_calendar_dominant_past">%1$s var %2$d%% av den planlagde tida di</string>
-    <string name="insight_early_bounds_future">Timeplanen din startar f\u00f8r kl. 8 p\u00e5 %1$d dagar</string>
-    <string name="insight_early_bounds_past">Timeplanen din starta f\u00f8r kl. 8 p\u00e5 %1$d dagar</string>
-    <string name="insight_late_bounds_future">Hendingar etter kl. 19 p\u00e5 %1$d dagar</string>
-    <string name="insight_late_bounds_past">Hendingar gjekk forbi kl. 19 p\u00e5 %1$d dagar</string>
-    <string name="insight_meeting_free_days_future">Du har %1$d m\u00f8tefrie dagar</string>
-    <string name="insight_meeting_free_days_past">Du hadde %1$d m\u00f8tefrie dagar</string>
+    <string name="insight_early_bounds_future">Timeplanen din startar før kl. 8 på %1$d dagar</string>
+    <string name="insight_early_bounds_past">Timeplanen din starta før kl. 8 på %1$d dagar</string>
+    <string name="insight_late_bounds_future">Hendingar etter kl. 19 på %1$d dagar</string>
+    <string name="insight_late_bounds_past">Hendingar gjekk forbi kl. 19 på %1$d dagar</string>
+    <string name="insight_meeting_free_days_future">Du har %1$d møtefrie dagar</string>
+    <string name="insight_meeting_free_days_past">Du hadde %1$d møtefrie dagar</string>
     <string name="insight_tomorrow_preview">I morgon: %1$s planlagde, startar kl. %2$s</string>
     <string name="insight_tomorrow_preview_no_start">I morgon: %1$s planlagde</string>
     <string name="insight_heaviest_upcoming">%1$s er din travlaste komande dag (%2$s)</string>
-    <string name="insight_next_free_block">Neste ledige blokk: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_next_free_block">Neste ledige blokk: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Kalenderfordeling: %1$s</string>
     <string name="insights_cd_daily_chart">Dagleg fordeling: travlaste dag er %1$s</string>
 

@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">Unduh ulang semua data kalender</string>
     <string name="settings_sync_history">Riwayat Sinkronisasi</string>
     <string name="settings_sync_history_subtitle">Lihat sesi sinkronisasi (48 jam terakhir)</string>
-    <string name="settings_import_subtitle">Impor file .ics</string>
-    <string name="settings_export_subtitle">Cadangkan ke file .ics</string>
+    <string name="settings_import_subtitle">Tambahkan acara dari file ICS ke kalender mana pun</string>
+    <string name="settings_export_subtitle">Simpan acara ke file ICS</string>
     <string name="settings_birthday_reminder">Pengingat Ulang Tahun</string>
     <string name="settings_use_device_timezone">Gunakan zona waktu perangkat</string>
     <string name="settings_section_my_calendars">Kalender Saya</string>
     <string name="settings_section_display">Tampilan</string>
     <string name="settings_section_notifications">Notifikasi</string>
     <string name="settings_section_sync">Sinkronisasi</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Cadangkan &amp; Pulihkan</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Cadangkan pengaturan</string>
+    <string name="backup_settings_subtitle">Simpan konfigurasi KashCal ke file JSON</string>
+    <string name="restore_settings_label">Pulihkan pengaturan</string>
+    <string name="restore_settings_subtitle">Pulihkan konfigurasi KashCal dari file cadangan</string>
+    <string name="restore_confirm_title">Pulihkan cadangan?</string>
+    <string name="restore_confirm_from">Cadangan dari KashCal %1$s, %2$s</string>
+    <string name="action_restore">Pulihkan</string>
+    <string name="restore_success_title">Pemulihan selesai</string>
+    <string name="restore_confirm_message_prefs_only">Preferensi Anda akan diimpor.</string>
+    <string name="restore_success_message_prefs_only">Preferensi diimpor.</string>
+    <string name="restore_success_device_calendars_note">Pilih kembali kalender perangkat Anda jika Anda menggunakan fitur tersebut.</string>
+    <string name="restore_error_title">Pemulihan gagal</string>
+    <string name="restore_error_version_too_new">Cadangan ini dibuat dengan KashCal versi yang lebih baru. Perbarui KashCal dan coba lagi.</string>
+    <string name="restore_error_malformed_json">File ini bukan cadangan KashCal yang valid.</string>
+    <string name="restore_error_invalid_value">File cadangan ini berisi data tidak valid dan tidak dapat dipulihkan.</string>
+    <string name="restore_error_apply_failure">Terjadi kesalahan saat menerapkan cadangan. Tidak ada perubahan yang disimpan.</string>
+    <string name="backup_error_build_failed">Pencadangan gagal</string>
+    <string name="backup_error_write_failed">Pencadangan gagal — tidak dapat menulis ke berkas</string>
+    <string name="backup_error_read_failed">Tidak dapat membaca berkas</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,8 +319,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Ambil Kalender</string>
-    <string name="action_import_from_file">Impor dari File</string>
-    <string name="action_export_local_calendar">Ekspor Kalender Lokal</string>
+    <string name="action_import_from_file">Impor acara dari file</string>
+    <string name="action_export_local_calendar">Ekspor kalender Lokal</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">Percayai koneksi tidak aman</string>
     <string name="action_add_another">Tambah Lagi</string>
     <string name="account_connected_found_calendars">Ditemukan %1$d kalender untuk %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinkronisasi sedang berlangsung \u2014 acara akan segera muncul.</string>
+    <string name="account_connected_syncing_hint">Sinkronisasi sedang berlangsung — acara akan segera muncul.</string>
     <string name="settings_time_format_currently_24h">Saat ini: 24 jam (%1$s)</string>
     <string name="settings_time_format_currently_12h">Saat ini: 12 jam (%1$s)</string>
     <string name="settings_time_format_example">Contoh: %1$s</string>
@@ -452,7 +473,7 @@
     <string name="label_reminders_truncated">%1$d tidak ditampilkan (%2$d total, maks %3$d dapat diedit)</string>
     <string name="label_found_events">Ditemukan: %1$d acara</string>
     <string name="label_open_debug_menu">Buka menu debug</string>
-    <string name="placeholder_search">Cari\u2026</string>
+    <string name="placeholder_search">Cari…</string>
     <string name="status_sync_paused">Sinkronisasi dijeda</string>
     <string name="status_not_synced">Belum disinkronkan</string>
     <string name="status_sync_error">Kesalahan sinkronisasi</string>
@@ -514,10 +535,16 @@
         <item quantity="other">%1$d akun</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d kalender</item>
+        <item quantity="other">%1$s · %2$d kalender</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d langganan</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">%1$d langganan dan preferensi Anda akan diimpor.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">%1$d langganan dan preferensi Anda diimpor.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">Sinkronisasi gagal (%1$d percobaan)</item>
@@ -547,7 +574,7 @@
         <item quantity="other">Impor</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026dan %1$d lagi</item>
+        <item quantity="other">…dan %1$d lagi</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">%1$d acara diimpor</item>
@@ -738,8 +765,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Menyinkronkan kalender\u2026</string>
-    <string name="sync_banner_preparing">Menyiapkan sinkronisasi\u2026</string>
+    <string name="sync_banner_syncing">Menyinkronkan kalender…</string>
+    <string name="sync_banner_preparing">Menyiapkan sinkronisasi…</string>
     <string name="sync_banner_complete_errors">Sinkronisasi selesai dengan kesalahan</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sinkronisasi gagal: %1$s</string>
@@ -766,12 +793,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Hari %1$d dari %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Hari 1 dari %1$d \u00b7 mulai %2$s</string>
+    <string name="day_starts">Hari 1 dari %1$d · mulai %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Hari %1$d dari %2$d \u00b7 berakhir %3$s</string>
+    <string name="day_ends">Hari %1$d dari %2$d · berakhir %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Sepanjang hari</string>
-    <string name="event_date_all_day">%1$s \u00b7 Sepanjang hari</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Sepanjang hari</string>
+    <string name="event_date_all_day">%1$s · Sepanjang hari</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Sepanjang hari)</string>
     <string name="event_date_all_day_parens">%1$s (Sepanjang hari)</string>
@@ -800,8 +827,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Hari %1$d dari %2$d (Sepanjang hari)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sinkronisasi   \u2191%2$d dikirim   \u2193%3$d diterima</string>
-    <string name="sync_history_stats_issues">%1$d sinkronisasi   \u2191%2$d dikirim   \u2193%3$d diterima   \u26a0 %4$d masalah</string>
+    <string name="sync_history_stats">%1$d sinkronisasi   ↑%2$d dikirim   ↓%3$d diterima</string>
+    <string name="sync_history_stats_issues">%1$d sinkronisasi   ↑%2$d dikirim   ↓%3$d diterima   ⚠ %4$d masalah</string>
     <string name="sync_history_failed">Gagal</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Setiap jam</string>
@@ -812,8 +839,8 @@
     <string name="ics_url_required">URL diperlukan</string>
     <string name="ics_url_invalid_scheme">URL harus diawali dengan http://, https://, atau webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Sepanjang hari)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Sepanjang hari)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d kali</item>

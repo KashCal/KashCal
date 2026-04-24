@@ -162,9 +162,9 @@
     <string name="settings_sync_history">Sync History</string>
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
     <!-- Keep ".ics" untranslated (file extension) -->
-    <string name="settings_import_subtitle">Import .ics file</string>
+    <string name="settings_import_subtitle">Add events from an ICS file to any calendar</string>
     <!-- Keep ".ics" untranslated -->
-    <string name="settings_export_subtitle">Backup to .ics file</string>
+    <string name="settings_export_subtitle">Save events to an ICS file</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
     <!-- Section headers in Settings screen -->
@@ -173,7 +173,36 @@
     <string name="settings_section_notifications">Notifications</string>
     <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
     <string name="settings_section_sync">Sync</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Backup &amp; Restore</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <!-- Row labels in the Backup &amp; Restore section. Keep "KashCal" and "JSON" untranslated. -->
+    <string name="backup_settings_label">Back up settings</string>
+    <string name="backup_settings_subtitle">Save KashCal configuration to a JSON file</string>
+    <string name="restore_settings_label">Restore settings</string>
+    <string name="restore_settings_subtitle">Restore KashCal configuration from a backup file</string>
+    <!-- Restore confirmation dialog. %1$s = app version, %2$s = ISO-8601 timestamp. Keep "KashCal" untranslated. -->
+    <string name="restore_confirm_title">Restore backup?</string>
+    <string name="restore_confirm_from">Backup from KashCal %1$s, %2$s</string>
+    <!-- Shown in the confirm dialog when the backup has no subscriptions. -->
+    <string name="restore_confirm_message_prefs_only">This will import your preferences.</string>
+    <string name="action_restore">Restore</string>
+    <!-- Post-restore success dialog. -->
+    <string name="restore_success_title">Restore complete</string>
+    <!-- Shown in the success dialog when no subscriptions were restored. -->
+    <string name="restore_success_message_prefs_only">Imported your preferences.</string>
+    <!-- Shown only if the backup enabled device calendars. -->
+    <string name="restore_success_device_calendars_note">Select your device calendars again if you use that feature.</string>
+    <!-- Restore error dialog variants. Keep "KashCal" and "JSON" untranslated. -->
+    <string name="restore_error_title">Restore failed</string>
+    <string name="restore_error_version_too_new">This backup was created with a newer version of KashCal. Please update KashCal and try again.</string>
+    <string name="restore_error_malformed_json">This file is not a valid KashCal backup.</string>
+    <string name="restore_error_invalid_value">This backup file contains invalid data and cannot be restored.</string>
+    <string name="restore_error_apply_failure">Something went wrong while applying the backup. No changes were saved.</string>
+    <!-- Backup/restore error snackbars shown from the Activity. -->
+    <string name="backup_error_build_failed">Backup failed</string>
+    <string name="backup_error_write_failed">Backup failed — could not write to file</string>
+    <string name="backup_error_read_failed">Could not read file</string>
 
     <!-- ==================== Onboarding ==================== -->
     <!-- First-run screen. Casual/friendly tone. Keep "iCloud" untranslated. -->
@@ -430,8 +459,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Fetch Calendar</string>
-    <string name="action_import_from_file">Import from File</string>
-    <string name="action_export_local_calendar">Export Local Calendar</string>
+    <string name="action_import_from_file">Import events from file</string>
+    <string name="action_export_local_calendar">Export Local calendar</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -580,7 +609,7 @@
     <string name="action_add_another">Add Another</string>
     <!-- %1$d = calendar count, %2$s = masked email -->
     <string name="account_connected_found_calendars">Found %1$d calendar(s) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Syncing in progress \u2014 events will appear shortly.</string>
+    <string name="account_connected_syncing_hint">Syncing in progress — events will appear shortly.</string>
     <!-- %1$s = time example -->
     <string name="settings_time_format_currently_24h">Currently: 24-hour (%1$s)</string>
     <!-- %1$s = time example -->
@@ -639,7 +668,7 @@
     <!-- %1$d = event count found from ICS fetch -->
     <string name="label_found_events">Found: %1$d events</string>
     <string name="label_open_debug_menu">Open debug menu</string>
-    <string name="placeholder_search">Search\u2026</string>
+    <string name="placeholder_search">Search…</string>
     <string name="status_sync_paused">Sync paused</string>
     <string name="status_not_synced">Not synced</string>
     <string name="status_sync_error">Sync error</string>
@@ -719,12 +748,22 @@
         <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 calendar</item>
-        <item quantity="other">%1$s \u00B7 %2$d calendars</item>
+        <item quantity="one">%1$s · 1 calendar</item>
+        <item quantity="other">%1$s · %2$d calendars</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d subscription</item>
         <item quantity="other">%1$d subscriptions</item>
+    </plurals>
+    <!-- Restore confirmation dialog body when the backup has at least one subscription. %1$d = subscription count. -->
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">This will import %1$d subscription and your preferences.</item>
+        <item quantity="other">This will import %1$d subscriptions and your preferences.</item>
+    </plurals>
+    <!-- Restore success dialog body when at least one subscription was restored. %1$d = subscription count. -->
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Imported %1$d subscription and your preferences.</item>
+        <item quantity="other">Imported %1$d subscriptions and your preferences.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sync failed (%1$d attempt)</item>
@@ -765,8 +804,8 @@
         <item quantity="other">Import</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026and %1$d more</item>
-        <item quantity="other">\u2026and %1$d more</item>
+        <item quantity="one">…and %1$d more</item>
+        <item quantity="other">…and %1$d more</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Imported %1$d event</item>
@@ -929,7 +968,7 @@
     <!-- Series start date composites for quick view — %1$s = freq, %2$s = date, %3$s = end suffix -->
     <string name="rrule_starting">%1$s starting %2$s%3$s</string>
     <!-- "since" variant (no end suffix) — %1$s = freq, %2$s = date -->
-    <string name="rrule_since">%1$s \u00b7 since %2$s</string>
+    <string name="rrule_since">%1$s · since %2$s</string>
 
     <!-- ==================== Sync Summary ==================== -->
     <!-- Sync result counts — adjective form (e.g., "3 new", "2 updated") -->
@@ -1033,8 +1072,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Syncing calendars\u2026</string>
-    <string name="sync_banner_preparing">Preparing to sync\u2026</string>
+    <string name="sync_banner_syncing">Syncing calendars…</string>
+    <string name="sync_banner_preparing">Preparing to sync…</string>
     <string name="sync_banner_complete_errors">Sync complete with errors</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sync failed: %1$s</string>
@@ -1065,12 +1104,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Day %1$d of %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Day 1 of %1$d \u00b7 starts %2$s</string>
+    <string name="day_starts">Day 1 of %1$d · starts %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Day %1$d of %2$d \u00b7 ends %3$s</string>
+    <string name="day_ends">Day %1$d of %2$d · ends %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 All day</string>
-    <string name="event_date_all_day">%1$s \u00b7 All day</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · All day</string>
+    <string name="event_date_all_day">%1$s · All day</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (All day)</string>
     <string name="event_date_all_day_parens">%1$s (All day)</string>
@@ -1099,8 +1138,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Day %1$d of %2$d (All day)</string>
     <!-- Sync history stats header — %1$d = total syncs, %2$d = pushed, %3$d = pulled -->
-    <string name="sync_history_stats">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled</string>
-    <string name="sync_history_stats_issues">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled   \u26a0 %4$d issues</string>
+    <string name="sync_history_stats">%1$d syncs   ↑%2$d pushed   ↓%3$d pulled</string>
+    <string name="sync_history_stats_issues">%1$d syncs   ↑%2$d pushed   ↓%3$d pulled   ⚠ %4$d issues</string>
     <string name="sync_history_failed">Failed</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Every hour</string>
@@ -1111,9 +1150,9 @@
     <string name="ics_url_required">URL is required</string>
     <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>
     <!-- Event confirmation snackbar: all-day event — %1$s = title, %2$s = date -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (All day)</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (All day)</string>
     <!-- Event confirmation snackbar: timed event — %1$s = title, %2$s = date, %3$s = time -->
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Insights -->
     <string name="insights_title">Insights</string>

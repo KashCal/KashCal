@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">Lejupielādēt visus kalendāra datus no jauna</string>
     <string name="settings_sync_history">Sinhronizācijas vēsture</string>
     <string name="settings_sync_history_subtitle">Skatīt sinhronizācijas sesijas (pēdējās 48 stundas)</string>
-    <string name="settings_import_subtitle">Importēt .ics failu</string>
-    <string name="settings_export_subtitle">Dublējums .ics failā</string>
+    <string name="settings_import_subtitle">Pievienot notikumus no ICS faila jebkuram kalendāram</string>
+    <string name="settings_export_subtitle">Saglabāt notikumus ICS failā</string>
     <string name="settings_birthday_reminder">Dzimšanas dienas atgādinājums</string>
     <string name="settings_use_device_timezone">Izmantot ierīces laika joslu</string>
     <string name="settings_section_my_calendars">Mani kalendāri</string>
     <string name="settings_section_display">Izskats</string>
     <string name="settings_section_notifications">Paziņojumi</string>
     <string name="settings_section_sync">Sinhronizācija</string>
-    <string name="settings_section_data">Dati</string>
+    <string name="settings_section_data">Dublēšana un atjaunošana</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -175,7 +175,7 @@
     <string name="error_conflict_title">Sinhronizācijas konflikts</string>
     <string name="error_conflict_generic">Šis notikums tika mainīts citā ierīcē. Veiciet piespiedu sinhronizāciju, lai iegūtu jaunāko versiju.</string>
     <string name="error_conflict_with_event">\"%1$s\" tika mainīts citā ierīcē. Veiciet piespiedu sinhronizāciju, lai iegūtu jaunāko versiju.</string>
-    <string name="error_sync_token_expired">Sinhronizācijas dati novecojuši. Veic pilnu sinhronizāciju\u2026</string>
+    <string name="error_sync_token_expired">Sinhronizācijas dati novecojuši. Veic pilnu sinhronizāciju…</string>
 
     <string name="error_event_not_found">Notikums nav atrasts.</string>
     <string name="error_calendar_not_found">Kalendārs nav atrasts.</string>
@@ -260,7 +260,7 @@
     <string name="label_password">Parole</string>
     <string name="label_display_name_optional">Attēlojamais vārds (neobligāts)</string>
 
-    <string name="placeholder_search_events">Meklēt notikumus\u2026</string>
+    <string name="placeholder_search_events">Meklēt notikumus…</string>
 
     <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">Pēc noklusējuma izmanto https://, ja nav norādīts</string>
@@ -294,12 +294,12 @@
     <string name="empty_no_calendars">Nav pieejamu kalendāru</string>
 
     <!-- ==================== Status (Additional) ==================== -->
-    <string name="status_connecting">Savienojas\u2026</string>
-    <string name="status_fetching">Ielādē\u2026</string>
+    <string name="status_connecting">Savienojas…</string>
+    <string name="status_fetching">Ielādē…</string>
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Ielādēt kalendāru</string>
-    <string name="action_import_from_file">Importēt no faila</string>
+    <string name="action_import_from_file">Importēt notikumus no faila</string>
     <string name="action_export_local_calendar">Eksportēt lokālo kalendāru</string>
 
     <!-- ==================== Providers ==================== -->
@@ -331,7 +331,7 @@
     <string name="accounts_caldav_help_title">Kas ir CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV ir atvērts standarts kalendāru sinhronizēšanai. Atbalsta:</string>
     <string name="accounts_caldav_help_more">un citi</string>
-    <string name="accounts_calendars_syncing">Sinhronizē\u2026</string>
+    <string name="accounts_calendars_syncing">Sinhronizē…</string>
     <string name="accounts_cd_icloud_icon">iCloud konts</string>
     <string name="accounts_cd_caldav_icon">CalDAV konts</string>
     <string name="accounts_cd_back">Doties atpakaļ</string>
@@ -371,8 +371,8 @@
     <string name="account_detail_enabled">Iespējots</string>
     <string name="account_detail_enabled_subtitle">Automātiski sinhronizēt šo kontu</string>
     <string name="account_detail_sync_now">Sinhronizēt tagad</string>
-    <string name="account_detail_syncing">Sinhronizē\u2026</string>
-    <string name="account_detail_discovering">Atklāj\u2026</string>
+    <string name="account_detail_syncing">Sinhronizē…</string>
+    <string name="account_detail_discovering">Atklāj…</string>
     <string name="account_detail_discover_calendars">Atklāt jaunus kalendārus</string>
     <string name="account_detail_change_password">Mainīt paroli</string>
     <string name="account_detail_sign_out">Izrakstīties</string>
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">Uzticēties nedrošam savienojumam</string>
     <string name="action_add_another">Pievienot vēl</string>
     <string name="account_connected_found_calendars">Atrasti %1$d kalendāri kontam %2$s.</string>
-    <string name="account_connected_syncing_hint">Sinhronizācija notiek \u2014 notikumi drīz parādīsies.</string>
+    <string name="account_connected_syncing_hint">Sinhronizācija notiek — notikumi drīz parādīsies.</string>
     <string name="settings_time_format_currently_24h">Pašlaik: 24 stundu (%1$s)</string>
     <string name="settings_time_format_currently_12h">Pašlaik: 12 stundu (%1$s)</string>
     <string name="settings_time_format_example">Piemērs: %1$s</string>
@@ -454,7 +454,7 @@
     <string name="label_reminders_truncated">%1$d nav rādīti (%2$d kopā, maks. %3$d rediģējami)</string>
     <string name="label_found_events">Atrasti: %1$d notikumi</string>
     <string name="label_open_debug_menu">Atvērt atkļūdošanas izvēlni</string>
-    <string name="placeholder_search">Meklēt\u2026</string>
+    <string name="placeholder_search">Meklēt…</string>
     <string name="status_sync_paused">Sinhronizācija pauzēta</string>
     <string name="status_not_synced">Nav sinhronizēts</string>
     <string name="status_sync_error">Sinhronizācijas kļūda</string>
@@ -518,14 +518,24 @@
         <item quantity="other">%1$d konti</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="zero">%1$s \u00B7 %2$d kalendāru</item>
-        <item quantity="one">%1$s \u00B7 1 kalendārs</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendāri</item>
+        <item quantity="zero">%1$s · %2$d kalendāru</item>
+        <item quantity="one">%1$s · 1 kalendārs</item>
+        <item quantity="other">%1$s · %2$d kalendāri</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="zero">%1$d abonementu</item>
         <item quantity="one">%1$d abonements</item>
         <item quantity="other">%1$d abonementi</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="zero">%1$d abonementi un jūsu iestatījumi tiks importēti.</item>
+        <item quantity="one">%1$d abonements un jūsu iestatījumi tiks importēti.</item>
+        <item quantity="other">%1$d abonementi un jūsu iestatījumi tiks importēti.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="zero">Importēti %1$d abonementi un jūsu iestatījumi.</item>
+        <item quantity="one">Importēts %1$d abonements un jūsu iestatījumi.</item>
+        <item quantity="other">Importēti %1$d abonementi un jūsu iestatījumi.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="zero">Sinhronizācija neizdevās (%1$d mēģinājumu)</item>
@@ -573,9 +583,9 @@
         <item quantity="other">Importēt</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="zero">\u2026un vēl %1$d</item>
-        <item quantity="one">\u2026un vēl %1$d</item>
-        <item quantity="other">\u2026un vēl %1$d</item>
+        <item quantity="zero">…un vēl %1$d</item>
+        <item quantity="one">…un vēl %1$d</item>
+        <item quantity="other">…un vēl %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="zero">Importēti %1$d notikumu</item>
@@ -883,7 +893,7 @@
     <string name="rrule_until_suffix">, līdz %1$s</string>
     <string name="rrule_freq_never">Nekad</string>
     <string name="rrule_starting">%1$s sākot ar %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 kopš %2$s</string>
+    <string name="rrule_since">%1$s · kopš %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">
@@ -954,4 +964,25 @@
     <string name="label_more_colors">Vairāk krāsu</string>
     <string name="label_back_to_grid">Atpakaļ</string>
     <string name="settings_suggest_titles">Ieteikt notikumu nosaukumus</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Dublēt iestatījumus</string>
+    <string name="backup_settings_subtitle">Saglabāt KashCal konfigurāciju JSON failā</string>
+    <string name="restore_settings_label">Atjaunot iestatījumus</string>
+    <string name="restore_settings_subtitle">Atjaunot KashCal konfigurāciju no dublējuma faila</string>
+    <string name="restore_confirm_title">Atjaunot dublējumu?</string>
+    <string name="restore_confirm_from">KashCal %1$s dublējums, %2$s</string>
+    <string name="action_restore">Atjaunot</string>
+    <string name="restore_success_title">Atjaunošana pabeigta</string>
+    <string name="restore_success_device_calendars_note">Izvēlies ierīces kalendārus no jauna, ja izmanto šo funkciju.</string>
+    <string name="restore_confirm_message_prefs_only">Jūsu iestatījumi tiks importēti.</string>
+    <string name="restore_success_message_prefs_only">Iestatījumi importēti.</string>
+    <string name="restore_error_title">Atjaunošana neizdevās</string>
+    <string name="restore_error_version_too_new">Šis dublējums izveidots ar jaunāku KashCal versiju. Atjaunini KashCal un mēģini vēlreiz.</string>
+    <string name="restore_error_malformed_json">Šis fails nav derīgs KashCal dublējums.</string>
+    <string name="restore_error_invalid_value">Dublējuma failā ir nederīgi dati, un to nevar atjaunot.</string>
+    <string name="restore_error_apply_failure">Dublējuma piemērošanas laikā radās kļūda. Izmaiņas netika saglabātas.</string>
+    <string name="backup_error_build_failed">Dublēšana neizdevās</string>
+    <string name="backup_error_write_failed">Dublēšana neizdevās — neizdevās ierakstīt failā</string>
+    <string name="backup_error_read_failed">Neizdevās nolasīt failu</string>
 </resources>

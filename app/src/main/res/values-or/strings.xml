@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">ସର୍ଭରଠାରୁ ସମସ୍ତ କ୍ୟାଲେଣ୍ଡର ଡାଟା ପୁଣି ଡାଉନଲୋଡ କରନ୍ତୁ</string>
     <string name="settings_sync_history">ସିଙ୍କ ଇତିହାସ</string>
     <string name="settings_sync_history_subtitle">ସିଙ୍କ ସେସନଗୁଡ଼ିକ ଦେଖନ୍ତୁ (ଶେଷ 48 ଘଣ୍ଟା)</string>
-    <string name="settings_import_subtitle">.ics ଫାଇଲ ଆମଦାନୀ କରନ୍ତୁ</string>
-    <string name="settings_export_subtitle">.ics ଫାଇଲରେ ବ୍ୟାକଅପ</string>
+    <string name="settings_import_subtitle">ICS ଫାଇଲରୁ ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ଯେକୌଣସି କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="settings_export_subtitle">ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ICS ଫାଇଲରେ ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="settings_birthday_reminder">ଜନ୍ମଦିନ ରିମାଇଣ୍ଡର</string>
     <string name="settings_use_device_timezone">ଡିଭାଇସ ଟାଇମଜୋନ ବ୍ୟବହାର କରନ୍ତୁ</string>
     <string name="settings_section_my_calendars">ମୋ କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ</string>
     <string name="settings_section_display">ଡିସପ୍ଲେ</string>
     <string name="settings_section_notifications">ବିଜ୍ଞପ୍ତି</string>
     <string name="settings_section_sync">ସିଙ୍କ</string>
-    <string name="settings_section_data">ଡାଟା</string>
+    <string name="settings_section_data">ବ୍ୟାକଅପ ଏବଂ ପୁନରୁଦ୍ଧାର</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">ସେଟିଂସ ବ୍ୟାକଅପ କରନ୍ତୁ</string>
+    <string name="backup_settings_subtitle">KashCal କନଫିଗରେସନ JSON ଫାଇଲରେ ସଞ୍ଚୟ କରନ୍ତୁ</string>
+    <string name="restore_settings_label">ସେଟିଂସ ପୁନରୁଦ୍ଧାର କରନ୍ତୁ</string>
+    <string name="restore_settings_subtitle">ବ୍ୟାକଅପ ଫାଇଲରୁ KashCal କନଫିଗରେସନ ପୁନରୁଦ୍ଧାର କରନ୍ତୁ</string>
+    <string name="restore_confirm_title">ବ୍ୟାକଅପ ପୁନରୁଦ୍ଧାର କରିବେ?</string>
+    <string name="restore_confirm_from">KashCal %1$s ରୁ ବ୍ୟାକଅପ, %2$s</string>
+    <string name="action_restore">ପୁନରୁଦ୍ଧାର କରନ୍ତୁ</string>
+    <string name="restore_success_title">ପୁନରୁଦ୍ଧାର ସମ୍ପୂର୍ଣ୍ଣ</string>
+    <string name="restore_confirm_message_prefs_only">ଆପଣଙ୍କ ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଯିବ।</string>
+    <string name="restore_success_message_prefs_only">ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଗଲା।</string>
+    <string name="restore_success_device_calendars_note">ଯଦି ଆପଣ ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର ବୈଶିଷ୍ଟ୍ୟ ବ୍ୟବହାର କରନ୍ତି, ତେବେ ସେଗୁଡ଼ିକୁ ପୁନର୍ବାର ଚୟନ କରନ୍ତୁ।</string>
+    <string name="restore_error_title">ପୁନରୁଦ୍ଧାର ବିଫଳ</string>
+    <string name="restore_error_version_too_new">ଏହି ବ୍ୟାକଅପ KashCal ର ଏକ ନୂତନ ସଂସ୍କରଣରେ ସୃଷ୍ଟି କରାଯାଇଛି। ଦୟାକରି KashCal ଅପଡେଟ କରନ୍ତୁ ଏବଂ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ।</string>
+    <string name="restore_error_malformed_json">ଏହି ଫାଇଲ ଏକ ବୈଧ KashCal ବ୍ୟାକଅପ ନୁହେଁ।</string>
+    <string name="restore_error_invalid_value">ଏହି ବ୍ୟାକଅପ ଫାଇଲରେ ଅବୈଧ ଡାଟା ଅଛି ଏବଂ ଏହାକୁ ପୁନରୁଦ୍ଧାର କରାଯାଇପାରିବ ନାହିଁ।</string>
+    <string name="restore_error_apply_failure">ବ୍ୟାକଅପ ପ୍ରୟୋଗ କରିବା ସମୟରେ କିଛି ଭୁଲ ଘଟିଲା। କୌଣସି ପରିବର୍ତ୍ତନ ସଞ୍ଚୟ ହୋଇନାହିଁ।</string>
+    <string name="backup_error_build_failed">ବ୍ୟାକଅପ୍ ବିଫଳ ହେଲା</string>
+    <string name="backup_error_write_failed">ବ୍ୟାକଅପ୍ ବିଫଳ ହେଲା — ଫାଇଲକୁ ଲେଖି ହୋଇପାରିଲା ନାହିଁ</string>
+    <string name="backup_error_read_failed">ଫାଇଲ ପଢ଼ି ହୋଇପାରିଲା ନାହିଁ</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,7 +319,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">କ୍ୟାଲେଣ୍ଡର ଆଣନ୍ତୁ</string>
-    <string name="action_import_from_file">ଫାଇଲରୁ ଆମଦାନୀ</string>
+    <string name="action_import_from_file">ଫାଇଲରୁ ଇଭେଣ୍ଟ ଆମଦାନୀ କରନ୍ତୁ</string>
     <string name="action_export_local_calendar">ସ୍ଥାନୀୟ କ୍ୟାଲେଣ୍ଡର ରପ୍ତାନୀ</string>
 
     <!-- ==================== Providers ==================== -->
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">ଅସୁରକ୍ଷିତ ସଂଯୋଗ ବିଶ୍ୱାସ କରନ୍ତୁ</string>
     <string name="action_add_another">ଆଉ ଗୋଟେ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="account_connected_found_calendars">%2$s ପାଇଁ %1$d କ୍ୟାଲେଣ୍ଡର(ଗୁଡ଼ିକ) ମିଳିଲା।</string>
-    <string name="account_connected_syncing_hint">ସିଙ୍କ ଚାଲିଛି \u2014 ଇଭେଣ୍ଟ ଶୀଘ୍ର ଦେଖାଯିବ।</string>
+    <string name="account_connected_syncing_hint">ସିଙ୍କ ଚାଲିଛି — ଇଭେଣ୍ଟ ଶୀଘ୍ର ଦେଖାଯିବ।</string>
     <string name="settings_time_format_currently_24h">ବର୍ତ୍ତମାନ: 24-ଘଣ୍ଟା (%1$s)</string>
     <string name="settings_time_format_currently_12h">ବର୍ତ୍ତମାନ: 12-ଘଣ୍ଟା (%1$s)</string>
     <string name="settings_time_format_example">ଉଦାହରଣ: %1$s</string>
@@ -453,7 +474,7 @@
     <string name="label_reminders_truncated">%1$d ଦେଖାଯାଉନାହିଁ (%2$d ମୋଟ, ସର୍ବାଧିକ %3$d ସମ୍ପାଦନାଯୋଗ୍ୟ)</string>
     <string name="label_found_events">ମିଳିଲା: %1$d ଇଭେଣ୍ଟ</string>
     <string name="label_open_debug_menu">ଡିବଗ ମେନୁ ଖୋଲନ୍ତୁ</string>
-    <string name="placeholder_search">ଖୋଜନ୍ତୁ\u2026</string>
+    <string name="placeholder_search">ଖୋଜନ୍ତୁ…</string>
     <string name="status_sync_paused">ସିଙ୍କ ବିରାମିତ</string>
     <string name="status_not_synced">ସିଙ୍କ ହୋଇନାହିଁ</string>
     <string name="status_sync_error">ସିଙ୍କ ତ୍ରୁଟି</string>
@@ -515,12 +536,20 @@
         <item quantity="other">%1$d ଆକାଉଣ୍ଟ</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 କ୍ୟାଲେଣ୍ଡର</item>
-        <item quantity="other">%1$s \u00B7 %2$d କ୍ୟାଲେଣ୍ଡର</item>
+        <item quantity="one">%1$s · 1 କ୍ୟାଲେଣ୍ଡର</item>
+        <item quantity="other">%1$s · %2$d କ୍ୟାଲେଣ୍ଡର</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d ସବସ୍କ୍ରିପସନ</item>
         <item quantity="other">%1$d ସବସ୍କ୍ରିପସନ</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d ସଦସ୍ୟତା ଏବଂ ଆପଣଙ୍କ ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଯିବ।</item>
+        <item quantity="other">%1$d ସଦସ୍ୟତାଗୁଡ଼ିକ ଏବଂ ଆପଣଙ୍କ ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଯିବ।</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d ସଦସ୍ୟତା ଏବଂ ଆପଣଙ୍କ ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଗଲା।</item>
+        <item quantity="other">%1$d ସଦସ୍ୟତାଗୁଡ଼ିକ ଏବଂ ଆପଣଙ୍କ ପସନ୍ଦଗୁଡ଼ିକ ଆମଦାନୀ କରାଗଲା।</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ସିଙ୍କ ବିଫଳ (%1$d ଚେଷ୍ଟା)</item>
@@ -559,8 +588,8 @@
         <item quantity="other">ଆମଦାନୀ</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026ଏବଂ %1$d ଆଉ</item>
-        <item quantity="other">\u2026ଏବଂ %1$d ଆଉ</item>
+        <item quantity="one">…ଏବଂ %1$d ଆଉ</item>
+        <item quantity="other">…ଏବଂ %1$d ଆଉ</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d ଇଭେଣ୍ଟ ଆମଦାନୀ ହୋଇଛି</item>
@@ -769,8 +798,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ ହେଉଛି\u2026</string>
-    <string name="sync_banner_preparing">ସିଙ୍କ ପାଇଁ ପ୍ରସ୍ତୁତ ହେଉଛି\u2026</string>
+    <string name="sync_banner_syncing">କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ ହେଉଛି…</string>
+    <string name="sync_banner_preparing">ସିଙ୍କ ପାଇଁ ପ୍ରସ୍ତୁତ ହେଉଛି…</string>
     <string name="sync_banner_complete_errors">ତ୍ରୁଟି ସହ ସିଙ୍କ ସମ୍ପୂର୍ଣ୍ଣ</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">ସିଙ୍କ ବିଫଳ: %1$s</string>
@@ -801,12 +830,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">ଦିନ %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ଦିନ 1 / %1$d \u00b7 ଆରମ୍ଭ %2$s</string>
+    <string name="day_starts">ଦିନ 1 / %1$d · ଆରମ୍ଭ %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ଦିନ %1$d / %2$d \u00b7 ଶେଷ %3$s</string>
+    <string name="day_ends">ଦିନ %1$d / %2$d · ଶେଷ %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 ସାରାଦିନ</string>
-    <string name="event_date_all_day">%1$s \u00b7 ସାରାଦିନ</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · ସାରାଦିନ</string>
+    <string name="event_date_all_day">%1$s · ସାରାଦିନ</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (ସାରାଦିନ)</string>
     <string name="event_date_all_day_parens">%1$s (ସାରାଦିନ)</string>
@@ -843,8 +872,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">ଦିନ %1$d / %2$d (ସାରାଦିନ)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ସିଙ୍କ   \u2191%2$d ପୁଶ   \u2193%3$d ପୁଲ</string>
-    <string name="sync_history_stats_issues">%1$d ସିଙ୍କ   \u2191%2$d ପୁଶ   \u2193%3$d ପୁଲ   \u26a0 %4$d ସମସ୍ୟା</string>
+    <string name="sync_history_stats">%1$d ସିଙ୍କ   ↑%2$d ପୁଶ   ↓%3$d ପୁଲ</string>
+    <string name="sync_history_stats_issues">%1$d ସିଙ୍କ   ↑%2$d ପୁଶ   ↓%3$d ପୁଲ   ⚠ %4$d ସମସ୍ୟା</string>
     <string name="sync_history_failed">ବିଫଳ</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">ପ୍ରତି ଘଣ୍ଟାରେ</string>
@@ -855,8 +884,8 @@
     <string name="ics_url_required">URL ଆବଶ୍ୟକ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, କିମ୍ବା webcal:// ରେ ଆରମ୍ଭ ହେବା ଉଚିତ</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (ସାରାଦିନ)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (ସାରାଦିନ)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">କ୍ୟାଲେଣ୍ଡର</string>
@@ -893,7 +922,7 @@
     <string name="rrule_until_suffix">, %1$s ପର୍ଯ୍ୟନ୍ତ</string>
     <string name="rrule_freq_never">କେବେ ନୁହେଁ</string>
     <string name="rrule_starting">%1$s %2$s ରୁ ଆରମ୍ଭ%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s ରୁ</string>
+    <string name="rrule_since">%1$s · %2$s ରୁ</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d ଥର</item>

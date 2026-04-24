@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">重新下载所有日历数据</string>
     <string name="settings_sync_history">同步历史</string>
     <string name="settings_sync_history_subtitle">查看同步会话（过去48小时）</string>
-    <string name="settings_import_subtitle">导入 .ics 文件</string>
-    <string name="settings_export_subtitle">备份为 .ics 文件</string>
+    <string name="settings_import_subtitle">从 ICS 文件将事件添加到任意日历</string>
+    <string name="settings_export_subtitle">将事件保存为 ICS 文件</string>
     <string name="settings_birthday_reminder">生日提醒</string>
     <string name="settings_use_device_timezone">使用设备时区</string>
     <string name="settings_section_my_calendars">我的日历</string>
     <string name="settings_section_display">显示</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同步</string>
-    <string name="settings_section_data">数据</string>
+    <string name="settings_section_data">备份与恢复</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">使用 Apple 日历？</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">获取日历</string>
-    <string name="action_import_from_file">从文件导入</string>
+    <string name="action_import_from_file">从文件导入事件</string>
     <string name="action_export_local_calendar">导出本地日历</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">信任不安全的连接</string>
     <string name="action_add_another">添加其他账户</string>
     <string name="account_connected_found_calendars">为 %2$s 找到 %1$d 个日历。</string>
-    <string name="account_connected_syncing_hint">正在同步 \u2014 事件将很快出现。</string>
+    <string name="account_connected_syncing_hint">正在同步 — 事件将很快出现。</string>
     <string name="settings_time_format_currently_24h">当前：24小时制 (%1$s)</string>
     <string name="settings_time_format_currently_12h">当前：12小时制 (%1$s)</string>
     <string name="settings_time_format_example">示例：%1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d 个未显示（共 %2$d 个，最多可编辑 %3$d 个）</string>
     <string name="label_found_events">发现：%1$d 个事件</string>
     <string name="label_open_debug_menu">打开调试菜单</string>
-    <string name="placeholder_search">搜索\u2026</string>
+    <string name="placeholder_search">搜索…</string>
     <string name="status_sync_paused">同步已暂停</string>
     <string name="status_not_synced">未同步</string>
     <string name="status_sync_error">同步错误</string>
@@ -514,10 +514,16 @@
         <item quantity="other">%1$d 个账户</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d 个日历</item>
+        <item quantity="other">%1$s · %2$d 个日历</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d 个订阅</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">将导入 %1$d 个订阅及您的偏好设置。</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">已导入 %1$d 个订阅及您的偏好设置。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同步失败（%1$d 次尝试）</item>
@@ -547,7 +553,7 @@
         <item quantity="other">导入</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026还有 %1$d 个</item>
+        <item quantity="other">…还有 %1$d 个</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">已导入 %1$d 个事件</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">正在同步日历\u2026</string>
-    <string name="sync_banner_preparing">准备同步\u2026</string>
+    <string name="sync_banner_syncing">正在同步日历…</string>
+    <string name="sync_banner_preparing">准备同步…</string>
     <string name="sync_banner_complete_errors">同步完成，有错误</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">同步失败: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">第%1$d天（共%2$d天）</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">第1天（共%1$d天）\u00b7 %2$s开始</string>
+    <string name="day_starts">第1天（共%1$d天）· %2$s开始</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">第%1$d天（共%2$d天）\u00b7 %3$s结束</string>
+    <string name="day_ends">第%1$d天（共%2$d天）· %3$s结束</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 全天</string>
-    <string name="event_date_all_day">%1$s \u00b7 全天</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · 全天</string>
+    <string name="event_date_all_day">%1$s · 全天</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s（全天）</string>
     <string name="event_date_all_day_parens">%1$s（全天）</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">第%1$d天（共%2$d天）（全天）</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取</string>
-    <string name="sync_history_stats_issues">%1$d次同步   \u2191%2$d推送   \u2193%3$d拉取   \u26a0 %4$d个问题</string>
+    <string name="sync_history_stats">%1$d次同步   ↑%2$d推送   ↓%3$d拉取</string>
+    <string name="sync_history_stats_issues">%1$d次同步   ↑%2$d推送   ↓%3$d拉取   ⚠ %4$d个问题</string>
     <string name="sync_history_failed">失败</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">每小时</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">需要URL</string>
     <string name="ics_url_invalid_scheme">URL必须以http://、https://或webcal://开头</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s（全天）</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s，%3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s（全天）</string>
+    <string name="event_confirmation_timed">%1$s · %2$s，%3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">，%1$d次</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">更多颜色</string>
     <string name="label_back_to_grid">返回</string>
     <string name="settings_suggest_titles">建议事件标题</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">备份设置</string>
+    <string name="backup_settings_subtitle">将 KashCal 配置保存为 JSON 文件</string>
+    <string name="restore_settings_label">恢复设置</string>
+    <string name="restore_settings_subtitle">从备份文件恢复 KashCal 配置</string>
+    <string name="restore_confirm_title">恢复备份？</string>
+    <string name="restore_confirm_from">来自 KashCal %1$s 的备份，%2$s</string>
+    <string name="restore_confirm_message_prefs_only">将导入您的偏好设置。</string>
+    <string name="action_restore">恢复</string>
+    <string name="restore_success_title">恢复完成</string>
+    <string name="restore_success_message_prefs_only">已导入偏好设置。</string>
+    <string name="restore_success_device_calendars_note">如果您使用设备日历功能，请重新选择。</string>
+    <string name="restore_error_title">恢复失败</string>
+    <string name="restore_error_version_too_new">此备份是由更高版本的 KashCal 创建的。请更新 KashCal 后重试。</string>
+    <string name="restore_error_malformed_json">此文件不是有效的 KashCal 备份。</string>
+    <string name="restore_error_invalid_value">此备份文件包含无效数据，无法恢复。</string>
+    <string name="restore_error_apply_failure">应用备份时出现问题。未保存任何更改。</string>
+    <string name="backup_error_build_failed">备份失败</string>
+    <string name="backup_error_write_failed">备份失败：无法写入文件</string>
+    <string name="backup_error_read_failed">无法读取文件</string>
 </resources>

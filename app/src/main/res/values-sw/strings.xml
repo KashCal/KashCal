@@ -80,7 +80,7 @@
     <string name="label_calendar_name">Jina la Kalenda</string>
     <string name="label_name">Jina</string>
     <string name="label_hex_color">Rangi ya Hex</string>
-    <string name="label_enter_hex">Ingiza herufi 6 za hex (0\u20139, A\u2013F)</string>
+    <string name="label_enter_hex">Ingiza herufi 6 za hex (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
     <string name="view_all">Zote</string>
@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Pakua upya data yote ya kalenda</string>
     <string name="settings_sync_history">Historia ya Kusawazisha</string>
     <string name="settings_sync_history_subtitle">Tazama vipindi vya kusawazisha (saa 48 zilizopita)</string>
-    <string name="settings_import_subtitle">Ingiza faili ya .ics</string>
-    <string name="settings_export_subtitle">Hifadhi nakala kwa faili ya .ics</string>
+    <string name="settings_import_subtitle">Ongeza matukio kutoka faili ya ICS kwenye kalenda yoyote</string>
+    <string name="settings_export_subtitle">Hifadhi matukio kwenye faili ya ICS</string>
     <string name="settings_birthday_reminder">Ukumbusho wa Siku ya Kuzaliwa</string>
     <string name="settings_use_device_timezone">Tumia eneo la saa la kifaa</string>
     <string name="settings_section_my_calendars">Kalenda Zangu</string>
     <string name="settings_section_display">Onyesho</string>
     <string name="settings_section_notifications">Arifa</string>
     <string name="settings_section_sync">Kusawazisha</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Hifadhi nakala ya mipangilio</string>
+    <string name="backup_settings_subtitle">Hifadhi usanidi wa KashCal kwenye faili ya JSON</string>
+    <string name="restore_settings_label">Rejesha mipangilio</string>
+    <string name="restore_settings_subtitle">Rejesha usanidi wa KashCal kutoka faili ya nakala rudufu</string>
+    <string name="restore_confirm_title">Rejesha nakala rudufu?</string>
+    <string name="restore_confirm_from">Nakala rudufu kutoka KashCal %1$s, %2$s</string>
+    <string name="action_restore">Rejesha</string>
+    <string name="restore_success_title">Urejesho umekamilika</string>
+    <string name="restore_confirm_message_prefs_only">Mapendeleo yako yataingizwa.</string>
+    <string name="restore_success_message_prefs_only">Mapendeleo yameingizwa.</string>
+    <string name="restore_success_device_calendars_note">Chagua tena kalenda za kifaa chako ikiwa unatumia kipengele hicho.</string>
+    <string name="restore_error_title">Urejesho umeshindikana</string>
+    <string name="restore_error_version_too_new">Nakala rudufu hii iliundwa na toleo jipya la KashCal. Tafadhali sasisha KashCal na ujaribu tena.</string>
+    <string name="restore_error_malformed_json">Faili hii si nakala rudufu halali ya KashCal.</string>
+    <string name="restore_error_invalid_value">Faili hii ya nakala rudufu ina data batili na haiwezi kurejeshwa.</string>
+    <string name="restore_error_apply_failure">Kitu kimekwenda vibaya wakati wa kutumia nakala rudufu. Hakuna mabadiliko yaliyohifadhiwa.</string>
+    <string name="backup_error_build_failed">Hifadhi rudufu imeshindikana</string>
+    <string name="backup_error_write_failed">Hifadhi rudufu imeshindikana — haikuweza kuandika kwenye faili</string>
+    <string name="backup_error_read_failed">Haikuweza kusoma faili</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -145,7 +166,7 @@
     <string name="status_sync_history">Historia ya Kusawazisha</string>
     <string name="status_parse_failures">Hitilafu za Uchambuzi</string>
     <string name="status_error">Hitilafu</string>
-    <string name="status_failed_to_parse">\u26A0 %1$d hazikuweza kuchambuliwa</string>
+    <string name="status_failed_to_parse">⚠ %1$d hazikuweza kuchambuliwa</string>
     <string name="status_built_with_love">Imejengwa kwa Upendo</string>
     <string name="status_in_austin">huko Austin</string>
     <string name="status_version">KashCal v%1$s</string>
@@ -174,7 +195,7 @@
     <string name="error_conflict_title">Mgongano wa Kusawazisha</string>
     <string name="error_conflict_generic">Tukio hili limebadilishwa kwenye kifaa kingine. Sawazisha kwa nguvu ili kupata toleo jipya zaidi.</string>
     <string name="error_conflict_with_event">\"%1$s\" limebadilishwa kwenye kifaa kingine. Sawazisha kwa nguvu ili kupata toleo jipya zaidi.</string>
-    <string name="error_sync_token_expired">Data ya kusawazisha imeisha. Inasawazisha kamili\u2026</string>
+    <string name="error_sync_token_expired">Data ya kusawazisha imeisha. Inasawazisha kamili…</string>
 
     <string name="error_event_not_found">Tukio halijapatikana.</string>
     <string name="error_calendar_not_found">Kalenda haijapatikana.</string>
@@ -258,7 +279,7 @@
     <string name="label_password">Nenosiri</string>
     <string name="label_display_name_optional">Jina la Kuonyesha (si lazima)</string>
 
-    <string name="placeholder_search_events">Tafuta matukio\u2026</string>
+    <string name="placeholder_search_events">Tafuta matukio…</string>
 
     <string name="hint_https_default">Chaguomsingi ni https:// isipobainishwa</string>
     <string name="hint_name_shown_in_settings">Jina linaloonyeshwa kwenye mipangilio</string>
@@ -286,12 +307,12 @@
     <string name="empty_no_upcoming_events">Hakuna matukio yanayokuja</string>
     <string name="empty_no_calendars">Hakuna kalenda zinazopatikana</string>
 
-    <string name="status_connecting">Inaunganisha\u2026</string>
-    <string name="status_fetching">Inapakua\u2026</string>
+    <string name="status_connecting">Inaunganisha…</string>
+    <string name="status_fetching">Inapakua…</string>
 
     <string name="action_fetch_calendar">Pakua Kalenda</string>
-    <string name="action_import_from_file">Ingiza kutoka Faili</string>
-    <string name="action_export_local_calendar">Hamisha Kalenda ya Ndani</string>
+    <string name="action_import_from_file">Ingiza matukio kutoka faili</string>
+    <string name="action_export_local_calendar">Hamisha kalenda ya Ndani</string>
 
     <string name="provider_icloud">iCloud</string>
 
@@ -318,7 +339,7 @@
     <string name="accounts_caldav_help_title">CalDAV ni nini?</string>
     <string name="accounts_caldav_help_description">CalDAV ni kiwango huria cha kusawazisha kalenda. Kinasapotiwa na:</string>
     <string name="accounts_caldav_help_more">&amp; zaidi</string>
-    <string name="accounts_calendars_syncing">Inasawazisha\u2026</string>
+    <string name="accounts_calendars_syncing">Inasawazisha…</string>
     <string name="accounts_cd_icloud_icon">Akaunti ya iCloud</string>
     <string name="accounts_cd_caldav_icon">Akaunti ya CalDAV</string>
     <string name="accounts_cd_back">Rudi nyuma</string>
@@ -355,8 +376,8 @@
     <string name="account_detail_enabled">Imewashwa</string>
     <string name="account_detail_enabled_subtitle">Sawazisha akaunti hii kiotomatiki</string>
     <string name="account_detail_sync_now">Sawazisha Sasa</string>
-    <string name="account_detail_syncing">Inasawazisha\u2026</string>
-    <string name="account_detail_discovering">Inagundua\u2026</string>
+    <string name="account_detail_syncing">Inasawazisha…</string>
+    <string name="account_detail_discovering">Inagundua…</string>
     <string name="account_detail_discover_calendars">Gundua Kalenda Mpya</string>
     <string name="account_detail_change_password">Badilisha Nenosiri</string>
     <string name="account_detail_sign_out">Ondoka</string>
@@ -395,7 +416,7 @@
     <string name="caldav_trust_insecure_label">Amini muunganisho usio salama</string>
     <string name="action_add_another">Ongeza Nyingine</string>
     <string name="account_connected_found_calendars">Kalenda %1$d zimepatikana kwa %2$s.</string>
-    <string name="account_connected_syncing_hint">Inasawazisha \u2014 matukio yataonekana hivi karibuni.</string>
+    <string name="account_connected_syncing_hint">Inasawazisha — matukio yataonekana hivi karibuni.</string>
     <string name="settings_time_format_currently_24h">Sasa hivi: Saa 24 (%1$s)</string>
     <string name="settings_time_format_currently_12h">Sasa hivi: Saa 12 (%1$s)</string>
     <string name="settings_time_format_example">Mfano: %1$s</string>
@@ -432,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d hazikuonyeshwa (jumla %2$d, upeo %3$d zinazoweza kuhaririwa)</string>
     <string name="label_found_events">Zimepatikana: matukio %1$d</string>
     <string name="label_open_debug_menu">Fungua menyu ya utatuzi</string>
-    <string name="placeholder_search">Tafuta\u2026</string>
+    <string name="placeholder_search">Tafuta…</string>
     <string name="status_sync_paused">Kusawazisha kumesimamishwa</string>
     <string name="status_not_synced">Haijasawazishwa</string>
     <string name="status_sync_error">Hitilafu ya kusawazisha</string>
@@ -488,12 +509,20 @@
         <item quantity="other">Akaunti %1$d</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 kalenda 1</item>
-        <item quantity="other">%1$s \u00B7 kalenda %2$d</item>
+        <item quantity="one">%1$s · kalenda 1</item>
+        <item quantity="other">%1$s · kalenda %2$d</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">Usajili %1$d</item>
         <item quantity="other">Usajili %1$d</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d usajili na mapendeleo yako yataingizwa.</item>
+        <item quantity="other">Usajili %1$d na mapendeleo yako yataingizwa.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d usajili na mapendeleo yako vimeingizwa.</item>
+        <item quantity="other">Usajili %1$d na mapendeleo yako vimeingizwa.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Kusawazisha kumeshindikana (jaribio %1$d)</item>
@@ -532,8 +561,8 @@
         <item quantity="other">Ingiza</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026na %1$d zaidi</item>
-        <item quantity="other">\u2026na %1$d zaidi</item>
+        <item quantity="one">…na %1$d zaidi</item>
+        <item quantity="other">…na %1$d zaidi</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Tukio %1$d limeingizwa</item>
@@ -739,8 +768,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Inasawazisha kalenda\u2026</string>
-    <string name="sync_banner_preparing">Inaandaa usawazishaji\u2026</string>
+    <string name="sync_banner_syncing">Inasawazisha kalenda…</string>
+    <string name="sync_banner_preparing">Inaandaa usawazishaji…</string>
     <string name="sync_banner_complete_errors">Usawazishaji umekamilika na makosa</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Usawazishaji umeshindwa: %1$s</string>
@@ -771,12 +800,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Siku %1$d ya %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Siku 1 ya %1$d \u00b7 inaanza %2$s</string>
+    <string name="day_starts">Siku 1 ya %1$d · inaanza %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Siku %1$d ya %2$d \u00b7 inaisha %3$s</string>
+    <string name="day_ends">Siku %1$d ya %2$d · inaisha %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Siku nzima</string>
-    <string name="event_date_all_day">%1$s \u00b7 Siku nzima</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Siku nzima</string>
+    <string name="event_date_all_day">%1$s · Siku nzima</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Siku nzima)</string>
     <string name="event_date_all_day_parens">%1$s (Siku nzima)</string>
@@ -805,8 +834,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Siku %1$d ya %2$d (Siku nzima)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d usawazishaji   \u2191%2$d zilizosukumwa   \u2193%3$d zilizovutwa</string>
-    <string name="sync_history_stats_issues">%1$d usawazishaji   \u2191%2$d zilizosukumwa   \u2193%3$d zilizovutwa   \u26a0 %4$d matatizo</string>
+    <string name="sync_history_stats">%1$d usawazishaji   ↑%2$d zilizosukumwa   ↓%3$d zilizovutwa</string>
+    <string name="sync_history_stats_issues">%1$d usawazishaji   ↑%2$d zilizosukumwa   ↓%3$d zilizovutwa   ⚠ %4$d matatizo</string>
     <string name="sync_history_failed">Imeshindwa</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Kila saa</string>
@@ -817,8 +846,8 @@
     <string name="ics_url_required">URL inahitajika</string>
     <string name="ics_url_invalid_scheme">URL lazima ianze na http://, https://, au webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Siku nzima)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Siku nzima)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, mara %1$d</item>
@@ -858,7 +887,7 @@
     <string name="rrule_until_suffix">, hadi %1$s</string>
     <string name="rrule_freq_never">Kamwe</string>
     <string name="rrule_starting">%1$s kuanzia %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 tangu %2$s</string>
+    <string name="rrule_since">%1$s · tangu %2$s</string>
 
     <!-- Insights -->
     <string name="insights_title">Maarifa</string>

@@ -137,6 +137,7 @@ fun ICloudSignInSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
+        dragHandle = {},
         sheetGesturesEnabled = false
     ) {
         Column(
@@ -144,7 +145,7 @@ fun ICloudSignInSheet(
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
+                .padding(top = 16.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Cloud icon

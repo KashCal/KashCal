@@ -10,7 +10,7 @@
     <string name="month_widget_name">Vista mensual</string>
     <string name="month_widget_description">Mostra una graella de calendari mensual amb indicadors d\'esdeveniments</string>
     <string name="date_widget_name">Data</string>
-    <string name="date_widget_description">Mostra la data d\'avui com una icona d\'aplicaci\u00f3</string>
+    <string name="date_widget_description">Mostra la data d\'avui com una icona d\'aplicació</string>
     <string name="widget_no_events_today">Cap esdeveniment avui</string>
     <string name="widget_add_event">+ Afegir esdeveniment</string>
     <string name="widget_no_events">Cap esdeveniment</string>
@@ -26,19 +26,19 @@
     <!-- Common Actions -->
     <string name="action_retry">Reintentar</string>
     <string name="action_try_again">Tornar a provar</string>
-    <string name="action_cancel">Cancel\u00b7lar</string>
+    <string name="action_cancel">Cancel·lar</string>
     <string name="action_close">Tancar</string>
     <string name="action_ok">OK</string>
     <string name="action_not_now">Ara no</string>
-    <string name="action_sign_in">Iniciar sessi\u00f3</string>
+    <string name="action_sign_in">Iniciar sessió</string>
     <string name="action_select">Seleccionar</string>
     <string name="action_show_password">Mostrar contrasenya</string>
     <string name="action_hide_password">Amagar contrasenya</string>
-    <string name="action_sign_out">Tancar sessi\u00f3</string>
-    <string name="action_learn_more">M\u00e9s informaci\u00f3</string>
+    <string name="action_sign_out">Tancar sessió</string>
+    <string name="action_learn_more">Més informació</string>
     <string name="action_open_apple_id">Obrir Apple ID</string>
-    <string name="action_open_settings">Obrir Configuraci\u00f3</string>
-    <string name="action_force_sync">For\u00e7ar sincronitzaci\u00f3</string>
+    <string name="action_open_settings">Obrir Configuració</string>
+    <string name="action_force_sync">Forçar sincronització</string>
     <string name="action_sync_now">Sincronitzar ara</string>
     <string name="action_details">Detalls</string>
     <string name="action_set_up">Configurar</string>
@@ -58,29 +58,29 @@
     <string name="action_duplicate">Duplicar</string>
     <string name="action_share">Compartir</string>
     <string name="action_export_ics">Exportar com a .ics</string>
-    <string name="action_confirm_delete">Confirmar eliminaci\u00f3</string>
+    <string name="action_confirm_delete">Confirmar eliminació</string>
     <string name="action_delete_event">Eliminar esdeveniment</string>
 
     <!-- Recurring Event Actions -->
-    <string name="recurring_just_this">Nom\u00e9s aquest</string>
+    <string name="recurring_just_this">Només aquest</string>
     <string name="recurring_this_and_future">Aquest i tots els futurs</string>
-    <string name="recurring_just_occurrence">Nom\u00e9s aquesta ocurr\u00e8ncia</string>
-    <string name="recurring_all_occurrences">Totes les ocurr\u00e8ncies</string>
+    <string name="recurring_just_occurrence">Només aquesta ocurrència</string>
+    <string name="recurring_all_occurrences">Totes les ocurrències</string>
 
     <!-- Form Labels -->
-    <string name="label_event_title">T\u00edtol de l\'esdeveniment</string>
-    <string name="label_location">Ubicaci\u00f3</string>
-    <string name="label_location_hint">Adre\u00e7a, sala o enlla\u00e7 de reuni\u00f3</string>
+    <string name="label_event_title">Títol de l\'esdeveniment</string>
+    <string name="label_location">Ubicació</string>
+    <string name="label_location_hint">Adreça, sala o enllaç de reunió</string>
     <string name="label_notes">Notes</string>
     <string name="label_starts">Inici</string>
     <string name="label_apple_id">Apple ID</string>
-    <string name="label_app_password">Contrasenya espec\u00edfica d\'aplicaci\u00f3</string>
-    <string name="label_password_hint">16 car\u00e0cters, guions opcionals</string>
+    <string name="label_app_password">Contrasenya específica d\'aplicació</string>
+    <string name="label_password_hint">16 caràcters, guions opcionals</string>
     <string name="label_calendar_url">URL del calendari</string>
     <string name="label_calendar_name">Nom del calendari</string>
     <string name="label_name">Nom</string>
     <string name="label_hex_color">Color Hex</string>
-    <string name="label_enter_hex">Introdu\u00efu 6 car\u00e0cters hexadecimals (0\u20139, A\u2013F)</string>
+    <string name="label_enter_hex">Introduïu 6 caràcters hexadecimals (0–9, A–F)</string>
 
     <!-- View Labels -->
     <string name="view_all">Tot</string>
@@ -91,29 +91,29 @@
     <string name="label_go_to_date">Anar a la data</string>
 
     <!-- Settings -->
-    <string name="settings_title">Configuraci\u00f3</string>
+    <string name="settings_title">Configuració</string>
     <string name="settings_time_format">Format horari</string>
-    <string name="settings_start_week_on">Comen\u00e7ar setmana en</string>
+    <string name="settings_start_week_on">Començar setmana en</string>
     <string name="settings_event_emojis">Emojis d\'esdeveniments</string>
-    <string name="settings_emoji_subtitle">Mostra emojis basats en els t\u00edtols dels esdeveniments</string>
-    <string name="settings_force_sync">For\u00e7ar sincronitzaci\u00f3 completa</string>
+    <string name="settings_emoji_subtitle">Mostra emojis basats en els títols dels esdeveniments</string>
+    <string name="settings_force_sync">Forçar sincronització completa</string>
     <string name="settings_force_sync_subtitle">Tornar a baixar totes les dades del calendari</string>
-    <string name="settings_sync_history">Historial de sincronitzaci\u00f3</string>
-    <string name="settings_sync_history_subtitle">Veure sessions de sincronitzaci\u00f3 (\u00faltimes 48 hores)</string>
-    <string name="settings_import_subtitle">Importar fitxer .ics</string>
-    <string name="settings_export_subtitle">C\u00f2pia de seguretat a fitxer .ics</string>
+    <string name="settings_sync_history">Historial de sincronització</string>
+    <string name="settings_sync_history_subtitle">Veure sessions de sincronització (últimes 48 hores)</string>
+    <string name="settings_import_subtitle">Afegeix esdeveniments d\'un fitxer ICS a qualsevol calendari</string>
+    <string name="settings_export_subtitle">Desa esdeveniments en un fitxer ICS</string>
     <string name="settings_birthday_reminder">Recordatori d\'aniversari</string>
-    <string name="settings_use_device_timezone">Usar zona hor\u00e0ria del dispositiu</string>
+    <string name="settings_use_device_timezone">Usar zona horària del dispositiu</string>
     <string name="settings_section_my_calendars">Els meus calendaris</string>
-    <string name="settings_section_display">Visualitzaci\u00f3</string>
+    <string name="settings_section_display">Visualització</string>
     <string name="settings_section_notifications">Notificacions</string>
-    <string name="settings_section_sync">Sincronitzaci\u00f3</string>
-    <string name="settings_section_data">Dades</string>
+    <string name="settings_section_sync">Sincronització</string>
+    <string name="settings_section_data">Còpia de seguretat i restauració</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
     <string name="onboarding_got_you">T\'ajudem.</string>
-    <string name="onboarding_connect_prompt">Connecta iCloud per veure els teus esdeveniments aqu\u00ed</string>
+    <string name="onboarding_connect_prompt">Connecta iCloud per veure els teus esdeveniments aquí</string>
 
     <!-- Sign-In -->
     <string name="signin_icloud_title">Connectar iCloud</string>
@@ -123,69 +123,69 @@
     <!-- Dialogs -->
     <string name="dialog_new_event_title">Nou esdeveniment</string>
     <string name="dialog_edit_event_title">Editar esdeveniment</string>
-    <string name="dialog_force_sync_title">For\u00e7ar sincronitzaci\u00f3 completa?</string>
-    <string name="dialog_force_sync_message">Aix\u00f2 tornar\u00e0 a baixar totes les dades del calendari des del servidor. Els canvis locals es conservaran.</string>
+    <string name="dialog_force_sync_title">Forçar sincronització completa?</string>
+    <string name="dialog_force_sync_message">Això tornarà a baixar totes les dades del calendari des del servidor. Els canvis locals es conservaran.</string>
     <string name="dialog_enable_notifications">Activar notificacions?</string>
     <string name="dialog_delete_title">Eliminar \"%1$s\"</string>
     <string name="dialog_edit_title">Editar \"%1$s\"</string>
-    <string name="dialog_action_required">Aquesta acci\u00f3 \u00e9s necess\u00e0ria per continuar.</string>
+    <string name="dialog_action_required">Aquesta acció és necessària per continuar.</string>
     <string name="dialog_add_to_calendar">Afegir al calendari</string>
     <string name="dialog_select_calendar">Seleccionar calendari</string>
     <string name="dialog_choose_color">Triar color</string>
-    <string name="dialog_add_subscription">Afegir subscripci\u00f3</string>
-    <string name="dialog_edit_subscription">Editar subscripci\u00f3</string>
+    <string name="dialog_add_subscription">Afegir subscripció</string>
+    <string name="dialog_edit_subscription">Editar subscripció</string>
 
     <!-- Status Messages -->
     <string name="status_no_events_week">Cap esdeveniment aquesta setmana</string>
-    <string name="status_more_events">+%1$d m\u00e9s</string>
-    <string name="status_no_sync_sessions">Encara no hi ha sessions de sincronitzaci\u00f3.\n\nArrossega cap avall per actualitzar a la vista del calendari.</string>
+    <string name="status_more_events">+%1$d més</string>
+    <string name="status_no_sync_sessions">Encara no hi ha sessions de sincronització.\n\nArrossega cap avall per actualitzar a la vista del calendari.</string>
     <string name="status_no_writable_calendars">No hi ha calendaris editables disponibles</string>
     <string name="status_events_count">%1$d esdeveniments</string>
-    <string name="status_sync_changes">Canvis de sincronitzaci\u00f3</string>
-    <string name="status_sync_history">Historial de sincronitzaci\u00f3</string>
-    <string name="status_parse_failures">Errors d\'an\u00e0lisi</string>
+    <string name="status_sync_changes">Canvis de sincronització</string>
+    <string name="status_sync_history">Historial de sincronització</string>
+    <string name="status_parse_failures">Errors d\'anàlisi</string>
     <string name="status_error">Error</string>
-    <string name="status_failed_to_parse">\u26a0 %1$d no s\'han pogut analitzar</string>
+    <string name="status_failed_to_parse">⚠ %1$d no s\'han pogut analitzar</string>
     <string name="status_built_with_love">Fet amb amor</string>
     <string name="status_in_austin">a Austin</string>
     <string name="status_version">KashCal v%1$s</string>
 
     <!-- Success Messages -->
-    <string name="success_sync_complete">Sincronitzaci\u00f3 completada</string>
+    <string name="success_sync_complete">Sincronització completada</string>
 
     <!-- Error Messages -->
-    <string name="error_auth_title">Error d\'inici de sessi\u00f3</string>
-    <string name="error_auth_invalid_credentials">Apple ID o contrasenya espec\u00edfica d\'aplicaci\u00f3 inv\u00e0lids. Comprova les teves credencials i torna a provar.</string>
-    <string name="error_auth_app_specific_password_required">iCloud requereix una contrasenya espec\u00edfica d\'aplicaci\u00f3. La teva contrasenya habitual d\'Apple ID no funcionar\u00e0 aqu\u00ed.</string>
-    <string name="error_auth_session_expired_title">Sessi\u00f3 caducada</string>
-    <string name="error_auth_session_expired">La teva sessi\u00f3 d\'iCloud ha caducat. Inicia sessi\u00f3 de nou per continuar sincronitzant.</string>
-    <string name="error_auth_account_locked">El teu Apple ID est\u00e0 bloquejat. Visita appleid.apple.com per desbloquejar-lo.</string>
+    <string name="error_auth_title">Error d\'inici de sessió</string>
+    <string name="error_auth_invalid_credentials">Apple ID o contrasenya específica d\'aplicació invàlids. Comprova les teves credencials i torna a provar.</string>
+    <string name="error_auth_app_specific_password_required">iCloud requereix una contrasenya específica d\'aplicació. La teva contrasenya habitual d\'Apple ID no funcionarà aquí.</string>
+    <string name="error_auth_session_expired_title">Sessió caducada</string>
+    <string name="error_auth_session_expired">La teva sessió d\'iCloud ha caducat. Inicia sessió de nou per continuar sincronitzant.</string>
+    <string name="error_auth_account_locked">El teu Apple ID està bloquejat. Visita appleid.apple.com per desbloquejar-lo.</string>
 
-    <string name="error_network_offline">Est\u00e0s fora de l\u00ednia. Els canvis es sincronitzaran quan tornis a estar en l\u00ednia.</string>
-    <string name="error_network_timeout">S\'ha esgotat el temps de connexi\u00f3. Comprova la teva connexi\u00f3 a Internet i torna a provar.</string>
-    <string name="error_network_ssl">La connexi\u00f3 segura ha fallat. Comprova la configuraci\u00f3 de xarxa.</string>
-    <string name="error_network_unknown_host">No s\'ha pogut contactar amb iCloud. Comprova la teva connexi\u00f3 a Internet.</string>
-    <string name="error_network_connection_failed">La connexi\u00f3 ha fallat. Torna a provar.</string>
+    <string name="error_network_offline">Estàs fora de línia. Els canvis es sincronitzaran quan tornis a estar en línia.</string>
+    <string name="error_network_timeout">S\'ha esgotat el temps de connexió. Comprova la teva connexió a Internet i torna a provar.</string>
+    <string name="error_network_ssl">La connexió segura ha fallat. Comprova la configuració de xarxa.</string>
+    <string name="error_network_unknown_host">No s\'ha pogut contactar amb iCloud. Comprova la teva connexió a Internet.</string>
+    <string name="error_network_connection_failed">La connexió ha fallat. Torna a provar.</string>
 
-    <string name="error_server_unavailable">iCloud no est\u00e0 disponible temporalment. Torna a provar m\u00e9s tard.</string>
-    <string name="error_server_rate_limited">Massa sol\u00b7licituds. Espera un moment i torna a provar.</string>
-    <string name="error_server_forbidden">Acc\u00e9s denegat. Potser no tens perm\u00eds per a aquest calendari.</string>
-    <string name="error_server_not_found">L\'element sol\u00b7licitat no s\'ha trobat al servidor.</string>
-    <string name="error_conflict_title">Conflicte de sincronitzaci\u00f3</string>
-    <string name="error_conflict_generic">Aquest esdeveniment ha estat modificat en un altre dispositiu. For\u00e7a la sincronitzaci\u00f3 per obtenir la darrera versi\u00f3.</string>
-    <string name="error_conflict_with_event">\"%1$s\" ha estat modificat en un altre dispositiu. For\u00e7a la sincronitzaci\u00f3 per obtenir la darrera versi\u00f3.</string>
-    <string name="error_sync_token_expired">Les dades de sincronitzaci\u00f3 han caducat. Realitzant sincronitzaci\u00f3 completa\u2026</string>
+    <string name="error_server_unavailable">iCloud no està disponible temporalment. Torna a provar més tard.</string>
+    <string name="error_server_rate_limited">Massa sol·licituds. Espera un moment i torna a provar.</string>
+    <string name="error_server_forbidden">Accés denegat. Potser no tens permís per a aquest calendari.</string>
+    <string name="error_server_not_found">L\'element sol·licitat no s\'ha trobat al servidor.</string>
+    <string name="error_conflict_title">Conflicte de sincronització</string>
+    <string name="error_conflict_generic">Aquest esdeveniment ha estat modificat en un altre dispositiu. Força la sincronització per obtenir la darrera versió.</string>
+    <string name="error_conflict_with_event">\"%1$s\" ha estat modificat en un altre dispositiu. Força la sincronització per obtenir la darrera versió.</string>
+    <string name="error_sync_token_expired">Les dades de sincronització han caducat. Realitzant sincronització completa…</string>
 
     <string name="error_event_not_found">Esdeveniment no trobat.</string>
     <string name="error_calendar_not_found">Calendari no trobat.</string>
-    <string name="error_calendar_read_only">No es poden modificar els esdeveniments de \"%1$s\" (calendari de nom\u00e9s lectura).</string>
-    <string name="error_event_invalid_data">Dades d\'esdeveniment inv\u00e0lides. Comprova les hores d\'inici i final.</string>
-    <string name="error_event_invalid_recurrence">Patr\u00f3 de repetici\u00f3 inv\u00e0lid.</string>
+    <string name="error_calendar_read_only">No es poden modificar els esdeveniments de \"%1$s\" (calendari de només lectura).</string>
+    <string name="error_event_invalid_data">Dades d\'esdeveniment invàlides. Comprova les hores d\'inici i final.</string>
+    <string name="error_event_invalid_recurrence">Patró de repetició invàlid.</string>
 
     <string name="error_display_name_exists">Ja existeix un compte amb el nom \"%1$s\".</string>
 
     <string name="error_import_file_not_found">Fitxer no trobat o no es pot llegir.</string>
-    <string name="error_import_invalid_format">Format de fitxer de calendari inv\u00e0lid.</string>
+    <string name="error_import_invalid_format">Format de fitxer de calendari invàlid.</string>
     <string name="error_import_partial">S\'han importat %1$d esdeveniments, %2$d han fallat.</string>
     <string name="error_export_failed">No s\'han pogut exportar els esdeveniments.</string>
     <string name="error_export_no_events">No hi ha esdeveniments per exportar.</string>
@@ -195,21 +195,21 @@
     <string name="error_storage_full">No hi ha prou espai d\'emmagatzematge. Allibera espai i torna a provar.</string>
     <string name="error_database_corruption_title">Error de dades</string>
     <string name="error_database_corruption">Les dades del calendari poden estar danyades. Contacta amb el suport.</string>
-    <string name="error_migration_title">Error d\'actualitzaci\u00f3</string>
-    <string name="error_migration_failed">No s\'han pogut actualitzar les dades de l\'aplicaci\u00f3. Reinstal\u00b7la l\'aplicaci\u00f3.</string>
+    <string name="error_migration_title">Error d\'actualització</string>
+    <string name="error_migration_failed">No s\'han pogut actualitzar les dades de l\'aplicació. Reinstal·la l\'aplicació.</string>
 
     <string name="error_permission_notification_title">Activar notificacions?</string>
-    <string name="error_permission_notification">KashCal necessita perm\u00eds de notificacions per recordar-te els esdeveniments propers.</string>
+    <string name="error_permission_notification">KashCal necessita permís de notificacions per recordar-te els esdeveniments propers.</string>
     <string name="error_permission_alarm_title">Activar alarmes exactes?</string>
-    <string name="error_permission_alarm">KashCal necessita perm\u00eds d\'alarmes exactes per a recordatoris precisos.</string>
-    <string name="error_permission_storage">Es requereix perm\u00eds d\'emmagatzematge per importar/exportar.</string>
+    <string name="error_permission_alarm">KashCal necessita permís d\'alarmes exactes per a recordatoris precisos.</string>
+    <string name="error_permission_storage">Es requereix permís d\'emmagatzematge per importar/exportar.</string>
 
     <string name="error_device_calendar_title">Error de calendari</string>
     <string name="error_device_calendar_write_failed">No s\'ha pogut desar al calendari del dispositiu. Torna a provar.</string>
-    <string name="error_device_calendar_permission">Es requereix perm\u00eds d\'escriptura del calendari. Concedeix el perm\u00eds a Configuraci\u00f3.</string>
+    <string name="error_device_calendar_permission">Es requereix permís d\'escriptura del calendari. Concedeix el permís a Configuració.</string>
     <string name="error_device_calendar_not_found">Calendari no trobat. Pot haver estat eliminat.</string>
     <string name="error_device_event_not_found">Esdeveniment no trobat. Pot haver estat eliminat.</string>
-    <string name="error_device_calendar_read_only">Aquest calendari \u00e9s de nom\u00e9s lectura.</string>
+    <string name="error_device_calendar_read_only">Aquest calendari és de només lectura.</string>
 
     <string name="error_sync_no_accounts">Cap compte d\'iCloud configurat. Configura iCloud per sincronitzar els teus calendaris.</string>
     <string name="error_sync_partial">S\'han sincronitzat %1$d calendaris, %2$d han fallat.</string>
@@ -222,27 +222,27 @@
     <string name="cd_close">Tancar</string>
     <string name="cd_search">Cercar</string>
     <string name="cd_create_event">Crear esdeveniment</string>
-    <string name="cd_settings">Configuraci\u00f3</string>
+    <string name="cd_settings">Configuració</string>
     <string name="cd_today">Avui</string>
     <string name="cd_previous_week">Setmana anterior</string>
-    <string name="cd_next_week">Setmana seg\u00fcent</string>
+    <string name="cd_next_week">Setmana següent</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_refresh">Actualitzar</string>
-    <string name="cd_more_options">M\u00e9s opcions</string>
+    <string name="cd_more_options">Més opcions</string>
     <string name="cd_duplicate">Duplicar</string>
     <string name="cd_share">Compartir</string>
     <string name="cd_export_ics">Exportar com a ICS</string>
-    <string name="cd_open_link">Obrir enlla\u00e7</string>
+    <string name="cd_open_link">Obrir enllaç</string>
     <string name="cd_open_maps">Obrir al mapa</string>
     <string name="cd_copy_clipboard">Copiar al porta-retalls</string>
     <string name="cd_clear_history">Esborrar historial</string>
     <string name="cd_recurring">Recurrent</string>
     <string name="cd_enabled">Activat</string>
-    <string name="cd_sync_error">Error de sincronitzaci\u00f3</string>
-    <string name="cd_select_option">Seleccionar opci\u00f3</string>
+    <string name="cd_sync_error">Error de sincronització</string>
+    <string name="cd_select_option">Seleccionar opció</string>
     <string name="cd_select_label">Seleccionar %1$s</string>
     <string name="cd_wheel_picker">Selector rotatiu amb %1$d opcions</string>
-    <string name="cd_version_info">KashCal versi\u00f3 %1$s. Premeu llargament per a opcions de depuraci\u00f3.</string>
+    <string name="cd_version_info">KashCal versió %1$s. Premeu llargament per a opcions de depuració.</string>
     <string name="cd_color_slider">Control lliscant de color, actualment %1$s</string>
     <string name="cd_color_slider_state">%1$s, %2$d graus</string>
 
@@ -250,7 +250,7 @@
     <string name="label_calendar">Calendari</string>
     <string name="label_color">Color:</string>
     <string name="label_repeat">Repetir</string>
-    <string name="label_sync_interval">Interval de sincronitzaci\u00f3:</string>
+    <string name="label_sync_interval">Interval de sincronització:</string>
     <string name="label_scheduled_events">Esdeveniments programats</string>
     <string name="label_all_day_events">Esdeveniments de tot el dia</string>
     <string name="label_server_url">URL del servidor</string>
@@ -258,16 +258,16 @@
     <string name="label_password">Contrasenya</string>
     <string name="label_display_name_optional">Nom visible (opcional)</string>
 
-    <string name="placeholder_search_events">Cercar esdeveniments\u2026</string>
+    <string name="placeholder_search_events">Cercar esdeveniments…</string>
 
     <!-- Hints -->
     <string name="hint_https_default">Per defecte https:// si no s\'especifica</string>
-    <string name="hint_name_shown_in_settings">Nom mostrat a la configuraci\u00f3</string>
+    <string name="hint_name_shown_in_settings">Nom mostrat a la configuració</string>
     <string name="caldav_trust_insecure_subtitle">Per a certificats autofirmats o servidors HTTP locals</string>
 
     <!-- Recurrence -->
-    <string name="label_recurrence_after">Despr\u00e9s de</string>
-    <string name="label_recurrence_occurrences">ocurr\u00e8ncies</string>
+    <string name="label_recurrence_after">Després de</string>
+    <string name="label_recurrence_occurrences">ocurrències</string>
     <string name="label_recurrence_on_date">A la data</string>
 
     <!-- Settings (Additional) -->
@@ -292,29 +292,29 @@
     <string name="empty_no_calendars">No hi ha calendaris disponibles</string>
 
     <!-- Status (Additional) -->
-    <string name="status_connecting">Connectant\u2026</string>
-    <string name="status_fetching">Obtenint\u2026</string>
+    <string name="status_connecting">Connectant…</string>
+    <string name="status_fetching">Obtenint…</string>
 
     <!-- Actions (Additional) -->
     <string name="action_fetch_calendar">Obtenir calendari</string>
-    <string name="action_import_from_file">Importar des de fitxer</string>
-    <string name="action_export_local_calendar">Exportar calendari local</string>
+    <string name="action_import_from_file">Importa esdeveniments d\'un fitxer</string>
+    <string name="action_export_local_calendar">Exporta el calendari local</string>
 
     <!-- Providers -->
     <string name="provider_icloud">iCloud</string>
 
     <!-- Help Text -->
-    <string name="help_app_password_description">Les contrasenyes espec\u00edfiques d\'aplicaci\u00f3 permeten iniciar sessi\u00f3 en aplicacions de tercers sense compartir la contrasenya principal d\'Apple ID.</string>
+    <string name="help_app_password_description">Les contrasenyes específiques d\'aplicació permeten iniciar sessió en aplicacions de tercers sense compartir la contrasenya principal d\'Apple ID.</string>
     <string name="help_app_password_steps_header">Per crear-ne una:</string>
     <string name="help_app_password_step_1">1. Ves a appleid.apple.com</string>
-    <string name="help_app_password_step_2">2. Inicia sessi\u00f3 amb el teu Apple ID</string>
-    <string name="help_app_password_step_3">3. Ves a Inici de sessi\u00f3 i seguretat</string>
-    <string name="help_app_password_step_4">4. Fes clic a Contrasenyes espec\u00edfiques d\'aplicaci\u00f3</string>
-    <string name="help_app_password_step_5">5. Fes clic a Generar i copia-la aqu\u00ed</string>
+    <string name="help_app_password_step_2">2. Inicia sessió amb el teu Apple ID</string>
+    <string name="help_app_password_step_3">3. Ves a Inici de sessió i seguretat</string>
+    <string name="help_app_password_step_4">4. Fes clic a Contrasenyes específiques d\'aplicació</string>
+    <string name="help_app_password_step_5">5. Fes clic a Generar i copia-la aquí</string>
 
     <!-- Notification Permission Dialog -->
-    <string name="dialog_notification_permission_message">KashCal necessita perm\u00eds de notificacions per recordar-te els esdeveniments propers.</string>
-    <string name="dialog_notification_permission_settings_hint">Pots canviar aix\u00f2 m\u00e9s tard a Configuraci\u00f3.</string>
+    <string name="dialog_notification_permission_message">KashCal necessita permís de notificacions per recordar-te els esdeveniments propers.</string>
+    <string name="dialog_notification_permission_settings_hint">Pots canviar això més tard a Configuració.</string>
 
     <!-- Accounts Screen -->
     <string name="accounts_title">Comptes</string>
@@ -322,66 +322,66 @@
     <string name="accounts_section_add">Afegir compte</string>
     <string name="accounts_empty_title">Cap compte connectat</string>
     <string name="accounts_empty_subtitle">Afegeix un compte per sincronitzar els teus calendaris entre dispositius</string>
-    <string name="accounts_row_label">iCloud, Nextcloud i m\u00e9s</string>
+    <string name="accounts_row_label">iCloud, Nextcloud i més</string>
     <string name="accounts_add_icloud">Afegir iCloud</string>
     <string name="accounts_add_caldav">Afegir CalDAV</string>
-    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail i m\u00e9s</string>
-    <string name="accounts_caldav_help_title">Qu\u00e8 \u00e9s CalDAV?</string>
-    <string name="accounts_caldav_help_description">CalDAV \u00e9s un est\u00e0ndard obert per sincronitzar calendaris. Compatible amb:</string>
-    <string name="accounts_caldav_help_more">i m\u00e9s</string>
-    <string name="accounts_calendars_syncing">Sincronitzant\u2026</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud, FastMail i més</string>
+    <string name="accounts_caldav_help_title">Què és CalDAV?</string>
+    <string name="accounts_caldav_help_description">CalDAV és un estàndard obert per sincronitzar calendaris. Compatible amb:</string>
+    <string name="accounts_caldav_help_more">i més</string>
+    <string name="accounts_calendars_syncing">Sincronitzant…</string>
     <string name="accounts_cd_icloud_icon">Compte d\'iCloud</string>
     <string name="accounts_cd_caldav_icon">Compte CalDAV</string>
     <string name="accounts_cd_back">Tornar enrere</string>
-    <string name="accounts_sync_issue">Problema de sincronitzaci\u00f3</string>
-    <string name="accounts_cd_sync_warning">Av\u00eds de sincronitzaci\u00f3</string>
+    <string name="accounts_sync_issue">Problema de sincronització</string>
+    <string name="accounts_cd_sync_warning">Avís de sincronització</string>
 
     <!-- Subscriptions Screen -->
     <string name="subscriptions_title">Subscripcions</string>
     <string name="subscriptions_section_ics_calendars">Calendaris ICS</string>
     <string name="subscriptions_section_add">Afegir</string>
-    <string name="subscriptions_empty_ics">Cap subscripci\u00f3 ICS</string>
+    <string name="subscriptions_empty_ics">Cap subscripció ICS</string>
     <string name="subscriptions_empty_ics_hint">Afegeix un flux de calendari per veure esdeveniments</string>
     <string name="subscriptions_add_ics">Afegir calendari ICS</string>
-    <string name="subscriptions_row_label">Festius, escola i m\u00e9s</string>
+    <string name="subscriptions_row_label">Festius, escola i més</string>
 
     <!-- Birthdays & Anniversaries -->
-    <string name="birthdays_anniversaries_row_label">Aniversaris i efem\u00e8rides</string>
+    <string name="birthdays_anniversaries_row_label">Aniversaris i efemèrides</string>
     <string name="birthdays_section_title">Aniversaris</string>
-    <string name="anniversaries_section_title">Efem\u00e8rides</string>
+    <string name="anniversaries_section_title">Efemèrides</string>
     <string name="settings_contact_birthdays">Aniversaris de contactes</string>
-    <string name="settings_contact_birthdays_description">Mostra els aniversaris dels contactes del tel\u00e8fon com a esdeveniments de tot el dia.</string>
-    <string name="settings_contact_anniversaries">Efem\u00e8rides de contactes</string>
-    <string name="settings_contact_anniversaries_description">Mostra les efem\u00e8rides dels contactes del tel\u00e8fon com a esdeveniments de tot el dia.</string>
-    <string name="settings_anniversary_reminder">Recordatori d\'efem\u00e8ride</string>
+    <string name="settings_contact_birthdays_description">Mostra els aniversaris dels contactes del telèfon com a esdeveniments de tot el dia.</string>
+    <string name="settings_contact_anniversaries">Efemèrides de contactes</string>
+    <string name="settings_contact_anniversaries_description">Mostra les efemèrides dels contactes del telèfon com a esdeveniments de tot el dia.</string>
+    <string name="settings_anniversary_reminder">Recordatori d\'efemèride</string>
     <string name="settings_calendar_color">Color del calendari</string>
     <string name="settings_default_reminder">Recordatori predeterminat</string>
     <string name="action_change">Canviar</string>
-    <string name="settings_contacts_footer">Llegeix dels contactes del dispositiu. Requereix perm\u00eds de Contactes.</string>
-    <string name="settings_contacts_permission_required">Es requereix perm\u00eds de contactes</string>
+    <string name="settings_contacts_footer">Llegeix dels contactes del dispositiu. Requereix permís de Contactes.</string>
+    <string name="settings_contacts_permission_required">Es requereix permís de contactes</string>
     <string name="subscriptions_cd_back">Tornar enrere</string>
-    <string name="subscriptions_cd_add">Afegir subscripci\u00f3</string>
+    <string name="subscriptions_cd_add">Afegir subscripció</string>
 
     <!-- Account Detail Sheet -->
-    <string name="account_detail_section_sync">SINCRONITZACI\u00d3</string>
+    <string name="account_detail_section_sync">SINCRONITZACIÓ</string>
     <string name="account_detail_section_calendars">CALENDARIS</string>
     <string name="account_detail_section_account">COMPTE</string>
     <string name="account_detail_enabled">Activat</string>
-    <string name="account_detail_enabled_subtitle">Sincronitzar aquest compte autom\u00e0ticament</string>
+    <string name="account_detail_enabled_subtitle">Sincronitzar aquest compte automàticament</string>
     <string name="account_detail_sync_now">Sincronitzar ara</string>
-    <string name="account_detail_syncing">Sincronitzant\u2026</string>
-    <string name="account_detail_discovering">Descobrint\u2026</string>
+    <string name="account_detail_syncing">Sincronitzant…</string>
+    <string name="account_detail_discovering">Descobrint…</string>
     <string name="account_detail_discover_calendars">Descobrir nous calendaris</string>
     <string name="account_detail_change_password">Canviar contrasenya</string>
-    <string name="account_detail_sign_out">Tancar sessi\u00f3</string>
+    <string name="account_detail_sign_out">Tancar sessió</string>
     <string name="account_detail_never_synced">Mai sincronitzat</string>
-    <string name="account_detail_last_success">\u00daltima sincronitzaci\u00f3: %1$s</string>
+    <string name="account_detail_last_success">Última sincronització: %1$s</string>
     <string name="account_detail_cd_rename">Canviar nom</string>
     <string name="account_detail_cd_show_password">Mostrar contrasenya</string>
     <string name="account_detail_cd_hide_password">Amagar contrasenya</string>
 
-    <string name="sync_failure_notification_title">Problema de sincronitzaci\u00f3 amb %1$s</string>
-    <string name="sync_failure_notification_text">La sincronitzaci\u00f3 del calendari ha fallat %1$d vegades</string>
+    <string name="sync_failure_notification_title">Problema de sincronització amb %1$s</string>
+    <string name="sync_failure_notification_text">La sincronització del calendari ha fallat %1$d vegades</string>
 
     <!-- Rename Account Sheet -->
     <string name="rename_account_title">Canviar nom del compte</string>
@@ -389,7 +389,7 @@
 
     <!-- Change Password Sheet -->
     <string name="change_password_title">Canviar contrasenya</string>
-    <string name="change_password_label_icloud">Contrasenya espec\u00edfica d\'aplicaci\u00f3</string>
+    <string name="change_password_label_icloud">Contrasenya específica d\'aplicació</string>
     <string name="change_password_label_default">Contrasenya</string>
 
     <!-- System Account -->
@@ -397,11 +397,11 @@
 
     <!-- Settings Screen -->
     <string name="settings_device_calendars">Calendaris del dispositiu</string>
-    <string name="settings_quick_event_add">Afegir esdeveniment r\u00e0pid</string>
-    <string name="settings_week_numbers">N\u00fameros de setmana</string>
-    <string name="settings_widget_event_limit">L\u00edmit d\'esdeveniments del widget</string>
+    <string name="settings_quick_event_add">Afegir esdeveniment ràpid</string>
+    <string name="settings_week_numbers">Números de setmana</string>
+    <string name="settings_widget_event_limit">Límit d\'esdeveniments del widget</string>
     <string name="settings_sync_lookback">Sincronitzar retrospectivament</string>
-    <string name="settings_auto_detect_emojis">Detecci\u00f3 autom\u00e0tica d\'emojis</string>
+    <string name="settings_auto_detect_emojis">Detecció automàtica d\'emojis</string>
     <string name="settings_events_per_day">Esdeveniments per dia</string>
     <string name="settings_not_set">No configurat</string>
     <string name="settings_on">Activat</string>
@@ -409,11 +409,11 @@
     <string name="settings_tap_to_enable">Toca per activar</string>
     <string name="settings_device_calendars_enabled">%1$d activats</string>
     <string name="settings_per_day">%1$d per dia</string>
-    <string name="signin_icloud_help_question">Qu\u00e8 \u00e9s una contrasenya espec\u00edfica d\'aplicaci\u00f3?</string>
-    <string name="caldav_trust_insecure_label">Confiar en connexi\u00f3 insegura</string>
+    <string name="signin_icloud_help_question">Què és una contrasenya específica d\'aplicació?</string>
+    <string name="caldav_trust_insecure_label">Confiar en connexió insegura</string>
     <string name="action_add_another">Afegir un altre</string>
     <string name="account_connected_found_calendars">S\'han trobat %1$d calendari(s) per a %2$s.</string>
-    <string name="account_connected_syncing_hint">Sincronitzaci\u00f3 en curs \u2014 els esdeveniments apareixeran aviat.</string>
+    <string name="account_connected_syncing_hint">Sincronització en curs — els esdeveniments apareixeran aviat.</string>
     <string name="settings_time_format_currently_24h">Actualment: 24 hores (%1$s)</string>
     <string name="settings_time_format_currently_12h">Actualment: 12 hores (%1$s)</string>
     <string name="settings_time_format_example">Exemple: %1$s</string>
@@ -425,56 +425,56 @@
     <string name="cd_show_calendar">Mostrar calendari</string>
     <string name="cd_pick_month_year">Triar mes i any</string>
     <string name="cd_previous_month">Mes anterior</string>
-    <string name="cd_next_month">Mes seg\u00fcent</string>
+    <string name="cd_next_month">Mes següent</string>
     <string name="cd_month_year_picker">Selector de mes i any</string>
     <string name="cd_remove_alert">Eliminar alerta</string>
-    <string name="cd_warning">Av\u00eds</string>
+    <string name="cd_warning">Avís</string>
     <string name="cd_refresh_calendars">Actualitzar calendaris</string>
-    <string name="cd_timezone_tap_to_change">Zona hor\u00e0ria: %1$s, toca per canviar</string>
+    <string name="cd_timezone_tap_to_change">Zona horària: %1$s, toca per canviar</string>
     <string name="cd_day_events">Dia %1$d, %2$d esdeveniments</string>
 
     <!-- Pickers / Forms -->
-    <string name="label_frequency">Freq\u00fc\u00e8ncia</string>
+    <string name="label_frequency">Freqüència</string>
     <string name="label_on_days">Els dies</string>
-    <string name="label_pattern">Patr\u00f3</string>
+    <string name="label_pattern">Patró</string>
     <string name="label_ends">Finalitza</string>
     <string name="label_timezone">Zona horària</string>
     <string name="label_alerts">Alertes</string>
     <string name="label_add_alert">Afegir alerta</string>
     <string name="label_recurrence_never">Mai</string>
-    <string name="label_tomorrow">Dem\u00e0</string>
+    <string name="label_tomorrow">Demà</string>
     <string name="label_yesterday">Ahir</string>
     <string name="label_device_calendars">Calendaris del dispositiu</string>
     <string name="label_default_calendar_hint">Els nous esdeveniments es crearan en aquest calendari</string>
     <string name="label_visible_count">%1$d / %2$d visibles</string>
     <string name="label_enabled_count">%1$d / %2$d activats</string>
-    <string name="label_reminders_truncated">%1$d no mostrats (%2$d en total, m\u00e0xim %3$d editables)</string>
+    <string name="label_reminders_truncated">%1$d no mostrats (%2$d en total, màxim %3$d editables)</string>
     <string name="label_found_events">Trobats: %1$d esdeveniments</string>
-    <string name="label_open_debug_menu">Obrir men\u00fa de depuraci\u00f3</string>
-    <string name="placeholder_search">Cercar\u2026</string>
-    <string name="status_sync_paused">Sincronitzaci\u00f3 en pausa</string>
+    <string name="label_open_debug_menu">Obrir menú de depuració</string>
+    <string name="placeholder_search">Cercar…</string>
+    <string name="status_sync_paused">Sincronització en pausa</string>
     <string name="status_not_synced">No sincronitzat</string>
-    <string name="status_sync_error">Error de sincronitzaci\u00f3</string>
+    <string name="status_sync_error">Error de sincronització</string>
     <string name="status_minutes_ago">Fa %1$dm</string>
     <string name="status_hours_ago">Fa %1$dh</string>
 
     <!-- Device Calendars Sheet -->
-    <string name="device_calendars_description">Mostra esdeveniments d\'altres aplicacions de calendari del dispositiu (adaptadors de sincronitzaci\u00f3, calendaris locals).</string>
-    <string name="device_calendars_permission_required">Es requereix perm\u00eds de calendari. Toca Activar per concedir acc\u00e9s.</string>
-    <string name="device_calendars_read_only_access">Acc\u00e9s de nom\u00e9s lectura</string>
-    <string name="device_calendars_grant_write">Concedeix perm\u00eds d\'escriptura per editar esdeveniments del calendari del dispositiu</string>
+    <string name="device_calendars_description">Mostra esdeveniments d\'altres aplicacions de calendari del dispositiu (adaptadors de sincronització, calendaris locals).</string>
+    <string name="device_calendars_permission_required">Es requereix permís de calendari. Toca Activar per concedir accés.</string>
+    <string name="device_calendars_read_only_access">Accés de només lectura</string>
+    <string name="device_calendars_grant_write">Concedeix permís d\'escriptura per editar esdeveniments del calendari del dispositiu</string>
     <string name="device_calendars_grant">Concedir</string>
     <string name="device_calendars_none_found">No s\'han trobat calendaris del dispositiu.</string>
     <string name="device_calendars_local">Local</string>
     <string name="device_calendars_show_declined">Mostrar esdeveniments rebutjats</string>
     <string name="device_calendars_reminders">Recordatoris</string>
     <string name="device_calendars_reminders_desc">Rep notificacions per als esdeveniments del calendari del dispositiu</string>
-    <string name="device_calendars_read_only_no_write">Nom\u00e9s lectura (sense perm\u00eds d\'escriptura)</string>
-    <string name="device_calendars_read_only_calendar">Nom\u00e9s lectura (el calendari \u00e9s de nom\u00e9s lectura)</string>
+    <string name="device_calendars_read_only_no_write">Només lectura (sense permís d\'escriptura)</string>
+    <string name="device_calendars_read_only_calendar">Només lectura (el calendari és de només lectura)</string>
 
     <string name="settings_developer_options">Opcions de desenvolupador</string>
-    <string name="settings_sync_frequency">Freq\u00fc\u00e8ncia de sincronitzaci\u00f3</string>
-    <string name="settings_preview">VISTA PR\u00c8VIA</string>
+    <string name="settings_sync_frequency">Freqüència de sincronització</string>
+    <string name="settings_preview">VISTA PRÈVIA</string>
     <string name="settings_n_events">%1$d esdeveniments</string>
     <string name="settings_n_events_default">%1$d esdeveniments (per defecte)</string>
 
@@ -482,17 +482,17 @@
     <string name="drawer_calendars">Calendaris</string>
     <string name="drawer_contacts">Contactes</string>
     <string name="drawer_device_calendars">Calendaris del dispositiu</string>
-    <string name="drawer_share_feedback">Compartir opini\u00f3</string>
+    <string name="drawer_share_feedback">Compartir opinió</string>
 
     <!-- App Info / About -->
     <string name="status_privacy_tagline">Per a tu, no per les teves dades.</string>
-    <string name="action_keep_it_that_way">Mant\u00e9n-ho aix\u00ed</string>
+    <string name="action_keep_it_that_way">Mantén-ho així</string>
 
     <!-- Sync History -->
     <string name="status_already_synced">Ja sincronitzat</string>
     <string name="status_warnings">Avisos</string>
     <string name="sync_history_events_failed">Esdeveniments fallats</string>
-    <string name="sync_history_abandoned_max_retries">Abandonat (m\u00e0xim de reintents)</string>
+    <string name="sync_history_abandoned_max_retries">Abandonat (màxim de reintents)</string>
     <string name="sync_history_events_skipped">Esdeveniments omesos</string>
     <string name="sync_history_duration">Durada</string>
     <string name="sync_history_already_synced_count">%1$d ja sincronitzats</string>
@@ -501,11 +501,11 @@
     <string name="day_events_no_events">Cap esdeveniment</string>
 
     <!-- Offline -->
-    <string name="status_youre_offline">Est\u00e0s fora de l\u00ednia</string>
+    <string name="status_youre_offline">Estàs fora de línia</string>
 
     <!-- Sign Out -->
-    <string name="dialog_sign_out_title">Tancar sessi\u00f3 de %1$s?</string>
-    <string name="dialog_sign_out_message">Has iniciat sessi\u00f3 com a %1$s. Tancar sessi\u00f3 eliminar\u00e0 els calendaris sincronitzats d\'aquest dispositiu.</string>
+    <string name="dialog_sign_out_title">Tancar sessió de %1$s?</string>
+    <string name="dialog_sign_out_message">Has iniciat sessió com a %1$s. Tancar sessió eliminarà els calendaris sincronitzats d\'aquest dispositiu.</string>
 
     <!-- Plural Resources -->
     <plurals name="accounts_count">
@@ -513,16 +513,24 @@
         <item quantity="other">%1$d comptes</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 calendari</item>
-        <item quantity="other">%1$s \u00B7 %2$d calendaris</item>
+        <item quantity="one">%1$s · 1 calendari</item>
+        <item quantity="other">%1$s · %2$d calendaris</item>
     </plurals>
     <plurals name="subscriptions_count">
-        <item quantity="one">%1$d subscripci\u00f3</item>
+        <item quantity="one">%1$d subscripció</item>
         <item quantity="other">%1$d subscripcions</item>
     </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">S\'importaran %1$d subscripció i les teves preferències.</item>
+        <item quantity="other">S\'importaran %1$d subscripcions i les teves preferències.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Importades %1$d subscripció i les teves preferències.</item>
+        <item quantity="other">Importades %1$d subscripcions i les teves preferències.</item>
+    </plurals>
     <plurals name="account_detail_failure">
-        <item quantity="one">Sincronitzaci\u00f3 fallada (%1$d intent)</item>
-        <item quantity="other">Sincronitzaci\u00f3 fallada (%1$d intents)</item>
+        <item quantity="one">Sincronització fallada (%1$d intent)</item>
+        <item quantity="other">Sincronització fallada (%1$d intents)</item>
     </plurals>
     <plurals name="account_detail_calendar_count">
         <item quantity="one">%1$d calendari</item>
@@ -541,12 +549,12 @@
         <item quantity="other">%1$d aniversaris</item>
     </plurals>
     <plurals name="anniversary_count">
-        <item quantity="one">%1$d efem\u00e8ride</item>
-        <item quantity="other">%1$d efem\u00e8rides</item>
+        <item quantity="one">%1$d efemèride</item>
+        <item quantity="other">%1$d efemèrides</item>
     </plurals>
     <plurals name="more_items">
-        <item quantity="one">+ %1$d m\u00e9s</item>
-        <item quantity="other">+ %1$d m\u00e9s</item>
+        <item quantity="one">+ %1$d més</item>
+        <item quantity="other">+ %1$d més</item>
     </plurals>
     <plurals name="import_events_title">
         <item quantity="one">Afegir esdeveniment</item>
@@ -557,8 +565,8 @@
         <item quantity="other">Importar</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026i %1$d m\u00e9s</item>
-        <item quantity="other">\u2026i %1$d m\u00e9s</item>
+        <item quantity="one">…i %1$d més</item>
+        <item quantity="other">…i %1$d més</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">S\'ha importat %1$d esdeveniment</item>
@@ -624,20 +632,20 @@
     <!-- HomeScreen -->
     <string name="dialog_edit_recurring_title">Editar esdeveniment recurrent</string>
     <string name="dialog_delete_recurring_title">Eliminar esdeveniment recurrent</string>
-    <string name="dialog_edit_recurring_message">Aquest \u00e9s un esdeveniment recurrent. Com vols aplicar aquest canvi?</string>
+    <string name="dialog_edit_recurring_message">Aquest és un esdeveniment recurrent. Com vols aplicar aquest canvi?</string>
     <string name="recurring_this_event">Aquest esdeveniment</string>
     <string name="recurring_all_events">Tots els esdeveniments</string>
     <string name="empty_pick_a_day">Tria un dia. Aprofita\'l.</string>
-    <string name="empty_no_events_day">Res a veure aqu\u00ed; surt a passejar?</string>
+    <string name="empty_no_events_day">Res a veure aquí; surt a passejar?</string>
     <string name="label_upcoming_events">Propers esdeveniments</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Selecciona una data</string>
     <string name="hint_tap_date_range">Toca la mateixa data per un sol dia, o una altra data per un rang</string>
 
     <string name="cd_clear">Esborrar</string>
-    <string name="cd_offline">Fora de l\u00ednia</string>
+    <string name="cd_offline">Fora de línia</string>
     <string name="cd_previous">Anterior</string>
-    <string name="cd_next">Seg\u00fcent</string>
+    <string name="cd_next">Següent</string>
     <string name="cd_open_drawer">Obrir calaix</string>
     <string name="cd_close_drawer">Tancar calaix</string>
     <string name="cd_calendar_view">Vista de calendari</string>
@@ -651,7 +659,7 @@
 
     <string name="label_go_to_month">Anar al mes</string>
 
-    <string name="action_more_options">M\u00e9s opcions</string>
+    <string name="action_more_options">Més opcions</string>
 
     <string name="label_duration_days">dies</string>
     <string name="label_duration_hrs">hrs</string>
@@ -659,13 +667,13 @@
 
     <!-- RecurrencePicker -->
     <string name="recurrence_on_day">El dia %1$d</string>
-    <string name="recurrence_on_last_day">L\'\u00faltim dia del mes</string>
+    <string name="recurrence_on_last_day">L\'últim dia del mes</string>
     <string name="recurrence_on_nth_weekday">El %1$s %2$s</string>
     <string name="ordinal_1st">1r</string>
     <string name="ordinal_2nd">2n</string>
     <string name="ordinal_3rd">3r</string>
     <string name="ordinal_4th">4t</string>
-    <string name="ordinal_nth">%1$d\u00e8</string>
+    <string name="ordinal_nth">%1$dè</string>
 
     <!-- RRULE Display -->
     <string name="rrule_does_not_repeat">No es repeteix</string>
@@ -692,7 +700,7 @@
     <string name="rrule_until_suffix">, fins %1$s</string>
     <string name="rrule_freq_never">Mai</string>
     <string name="rrule_starting">%1$s des de %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 des de %2$s</string>
+    <string name="rrule_since">%1$s · des de %2$s</string>
     <!-- Sync Summary -->
     <string name="sync_summary_new">%1$d nous</string>
     <string name="sync_summary_updated">%1$d actualitzats</string>
@@ -700,8 +708,8 @@
 
     <!-- Additional Content Descriptions -->
     <string name="cd_previous_3_days">3 dies anteriors</string>
-    <string name="cd_next_3_days">3 dies seg\u00fcents</string>
-    <string name="cd_circular_scrolling">Despla\u00e7ament circular activat</string>
+    <string name="cd_next_3_days">3 dies següents</string>
+    <string name="cd_circular_scrolling">Desplaçament circular activat</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
     <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
@@ -793,8 +801,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Sincronitzant calendaris\u2026</string>
-    <string name="sync_banner_preparing">Preparant la sincronització\u2026</string>
+    <string name="sync_banner_syncing">Sincronitzant calendaris…</string>
+    <string name="sync_banner_preparing">Preparant la sincronització…</string>
     <string name="sync_banner_complete_errors">Sincronització completada amb errors</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Error de sincronització: %1$s</string>
@@ -825,12 +833,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dia %1$d de %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dia 1 de %1$d \u00b7 comença %2$s</string>
+    <string name="day_starts">Dia 1 de %1$d · comença %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dia %1$d de %2$d \u00b7 acaba %3$s</string>
+    <string name="day_ends">Dia %1$d de %2$d · acaba %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Tot el dia</string>
-    <string name="event_date_all_day">%1$s \u00b7 Tot el dia</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Tot el dia</string>
+    <string name="event_date_all_day">%1$s · Tot el dia</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Tot el dia)</string>
     <string name="event_date_all_day_parens">%1$s (Tot el dia)</string>
@@ -859,8 +867,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dia %1$d de %2$d (Tot el dia)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sincr.   \u2191%2$d pujades   \u2193%3$d baixades</string>
-    <string name="sync_history_stats_issues">%1$d sincr.   \u2191%2$d pujades   \u2193%3$d baixades   \u26a0 %4$d problemes</string>
+    <string name="sync_history_stats">%1$d sincr.   ↑%2$d pujades   ↓%3$d baixades</string>
+    <string name="sync_history_stats_issues">%1$d sincr.   ↑%2$d pujades   ↓%3$d baixades   ⚠ %4$d problemes</string>
     <string name="sync_history_failed">Fallada</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Cada hora</string>
@@ -871,8 +879,8 @@
     <string name="ics_url_required">Cal una URL</string>
     <string name="ics_url_invalid_scheme">La URL ha de començar amb http://, https://, o webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Tot el dia)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Tot el dia)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Calendari</string>
     <string name="cd_widget_add_event">Afegeix un esdeveniment</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
@@ -890,19 +898,19 @@
     <string name="insights_period_last_week">Setm. passada</string>
     <string name="insights_period_this_month">Mes</string>
     <string name="insights_empty_state">Cap esdeveniment programat aquesta setmana</string>
-    <string name="insights_delta_more">+%1$s m\u00e9s que %2$s</string>
+    <string name="insights_delta_more">+%1$s més que %2$s</string>
     <string name="insights_delta_less">%1$s menys que %2$s</string>
     <plurals name="insights_all_day_count">
         <item quantity="one">%d esdeveniment de tot el dia</item>
         <item quantity="other">%d esdeveniments de tot el dia</item>
     </plurals>
-    <string name="insight_busiest_day_future">%1$s \u00e9s el teu dia m\u00e9s ocupat (%2$s)</string>
-    <string name="insight_busiest_day_past">%1$s va ser el teu dia m\u00e9s ocupat (%2$s)</string>
-    <string name="insight_lightest_day_future">%1$s \u00e9s el teu dia m\u00e9s lleuger (%2$s)</string>
-    <string name="insight_lightest_day_past">%1$s va ser el teu dia m\u00e9s lleuger (%2$s)</string>
-    <string name="insight_longest_free_future">Bloc lliure m\u00e9s llarg: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">El bloc lliure m\u00e9s llarg va ser %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_weekend_load_clear_future">El teu cap de setmana est\u00e0 lliure</string>
+    <string name="insight_busiest_day_future">%1$s és el teu dia més ocupat (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s va ser el teu dia més ocupat (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s és el teu dia més lleuger (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s va ser el teu dia més lleuger (%2$s)</string>
+    <string name="insight_longest_free_future">Bloc lliure més llarg: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">El bloc lliure més llarg va ser %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">El teu cap de setmana està lliure</string>
     <string name="insight_weekend_load_clear_past">El teu cap de setmana va estar lliure</string>
     <string name="insight_weekend_load_light_future">%1$s programats el cap de setmana</string>
     <string name="insight_weekend_load_light_past">%1$s van ser programats el cap de setmana</string>
@@ -910,20 +918,20 @@
     <string name="insight_weekend_load_busy_past">%1$s van ser programats el cap de setmana</string>
     <string name="insight_back_to_back_future">%1$d reunions consecutives</string>
     <string name="insight_back_to_back_past">Has tingut %1$d reunions consecutives</string>
-    <string name="insight_calendar_dominant_future">%1$s \u00e9s el %2$d%% del teu temps programat</string>
+    <string name="insight_calendar_dominant_future">%1$s és el %2$d%% del teu temps programat</string>
     <string name="insight_calendar_dominant_past">%1$s va ser el %2$d%% del teu temps programat</string>
-    <string name="insight_early_bounds_future">El teu horari comen\u00e7a abans de les 8:00 durant %1$d dies</string>
-    <string name="insight_early_bounds_past">El teu horari va comen\u00e7ar abans de les 8:00 durant %1$d dies</string>
-    <string name="insight_late_bounds_future">Esdeveniments despr\u00e9s de les 19:00 durant %1$d dies</string>
-    <string name="insight_late_bounds_past">Esdeveniments despr\u00e9s de les 19:00 durant %1$d dies</string>
+    <string name="insight_early_bounds_future">El teu horari comença abans de les 8:00 durant %1$d dies</string>
+    <string name="insight_early_bounds_past">El teu horari va començar abans de les 8:00 durant %1$d dies</string>
+    <string name="insight_late_bounds_future">Esdeveniments després de les 19:00 durant %1$d dies</string>
+    <string name="insight_late_bounds_past">Esdeveniments després de les 19:00 durant %1$d dies</string>
     <string name="insight_meeting_free_days_future">Tens %1$d dies sense reunions</string>
     <string name="insight_meeting_free_days_past">Has tingut %1$d dies sense reunions</string>
-    <string name="insight_tomorrow_preview">Dem\u00e0: %1$s programats, comen\u00e7a a les %2$s</string>
-    <string name="insight_tomorrow_preview_no_start">Dem\u00e0: %1$s programats</string>
-    <string name="insight_heaviest_upcoming">%1$s \u00e9s el teu dia m\u00e9s carregat (%2$s)</string>
-    <string name="insight_next_free_block">Pr\u00f2xim bloc lliure: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insights_cd_calendar_bar">Distribuci\u00f3 de calendaris: %1$s</string>
-    <string name="insights_cd_daily_chart">Distribuci\u00f3 di\u00e0ria: el dia m\u00e9s ocupat \u00e9s %1$s</string>
+    <string name="insight_tomorrow_preview">Demà: %1$s programats, comença a les %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Demà: %1$s programats</string>
+    <string name="insight_heaviest_upcoming">%1$s és el teu dia més carregat (%2$s)</string>
+    <string name="insight_next_free_block">Pròxim bloc lliure: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insights_cd_calendar_bar">Distribució de calendaris: %1$s</string>
+    <string name="insights_cd_daily_chart">Distribució diària: el dia més ocupat és %1$s</string>
 
     <!-- Event Form Redesign -->
     <string name="label_availability">Disponibilitat</string>
@@ -936,15 +944,15 @@
 
 
     <string name="cd_checkmark">Seleccionat</string>
-    <string name="label_device_timezone">Zona hor\u00e0ria del dispositiu</string>
+    <string name="label_device_timezone">Zona horària del dispositiu</string>
 
     <!-- Event Color Palette (CSS3) -->
-    <string name="color_tomato">Tom\u00e0quet</string>    <string name="color_darkorange">Taronja fosc</string>
+    <string name="color_tomato">Tomàquet</string>    <string name="color_darkorange">Taronja fosc</string>
     <string name="color_gold">Daurat</string>
     <string name="color_yellowgreen">Verd groguenc</string>
     <string name="color_limegreen">Verd llima</string>    <string name="color_lightseagreen">Verd mar clar</string>
     <string name="color_dodgerblue">Blau Dodger</string>
-    <string name="color_royalblue">Blau reial</string>    <string name="color_mediumorchid">Orqu\u00eddia mitjana</string>
+    <string name="color_royalblue">Blau reial</string>    <string name="color_mediumorchid">Orquídia mitjana</string>
     <string name="color_hotpink">Rosa intens</string>
     <string name="color_dimgray">Gris apagat</string>
 
@@ -961,4 +969,23 @@
     <string name="label_more_colors">Més colors</string>
     <string name="label_back_to_grid">Enrere</string>
     <string name="settings_suggest_titles">Suggereix títols d\'esdeveniments</string>
+    <string name="backup_settings_label">Fes una còpia de seguretat de la configuració</string>
+    <string name="backup_settings_subtitle">Desa la configuració de KashCal en un fitxer JSON</string>
+    <string name="restore_settings_label">Restaura la configuració</string>
+    <string name="restore_settings_subtitle">Restaura la configuració de KashCal des d\'un fitxer de còpia de seguretat</string>
+    <string name="restore_confirm_title">Vols restaurar la còpia de seguretat?</string>
+    <string name="restore_confirm_from">Còpia de seguretat de KashCal %1$s, %2$s</string>
+    <string name="action_restore">Restaura</string>
+    <string name="restore_success_title">Restauració completada</string>
+    <string name="restore_confirm_message_prefs_only">Les teves preferències s\'importaran.</string>
+    <string name="restore_success_message_prefs_only">Preferències importades.</string>
+    <string name="restore_success_device_calendars_note">Torna a seleccionar els calendaris del dispositiu si fas servir aquesta funció.</string>
+    <string name="restore_error_title">Ha fallat la restauració</string>
+    <string name="restore_error_version_too_new">Aquesta còpia de seguretat es va crear amb una versió més recent de KashCal. Actualitza KashCal i torna-ho a provar.</string>
+    <string name="restore_error_malformed_json">Aquest fitxer no és una còpia de seguretat vàlida de KashCal.</string>
+    <string name="restore_error_invalid_value">Aquest fitxer de còpia de seguretat conté dades no vàlides i no es pot restaurar.</string>
+    <string name="restore_error_apply_failure">S\'ha produït un error en aplicar la còpia de seguretat. No s\'ha desat cap canvi.</string>
+    <string name="backup_error_build_failed">La còpia de seguretat ha fallat</string>
+    <string name="backup_error_write_failed">La còpia de seguretat ha fallat — no s\'ha pogut escriure al fitxer</string>
+    <string name="backup_error_read_failed">No s\'ha pogut llegir el fitxer</string>
 </resources>

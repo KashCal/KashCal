@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">Alle agendagegevens opnieuw downloaden</string>
     <string name="settings_sync_history">Synchronisatiegeschiedenis</string>
     <string name="settings_sync_history_subtitle">Sync-sessies bekijken (afgelopen 48 uur)</string>
-    <string name="settings_import_subtitle">.ics-bestand importeren</string>
-    <string name="settings_export_subtitle">Back-up naar .ics-bestand</string>
+    <string name="settings_import_subtitle">Afspraken vanuit een ICS-bestand aan een agenda toevoegen</string>
+    <string name="settings_export_subtitle">Afspraken opslaan in een ICS-bestand</string>
     <string name="settings_birthday_reminder">Verjaardagsherinnering</string>
     <string name="settings_use_device_timezone">Apparaattijdzone gebruiken</string>
     <string name="settings_section_my_calendars">Mijn agenda\'s</string>
     <string name="settings_section_display">Weergave</string>
     <string name="settings_section_notifications">Meldingen</string>
     <string name="settings_section_sync">Synchronisatie</string>
-    <string name="settings_section_data">Gegevens</string>
+    <string name="settings_section_data">Back-up &amp; herstel</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Instellingen back-uppen</string>
+    <string name="backup_settings_subtitle">KashCal-configuratie opslaan in een JSON-bestand</string>
+    <string name="restore_settings_label">Instellingen herstellen</string>
+    <string name="restore_settings_subtitle">KashCal-configuratie vanuit een back-upbestand herstellen</string>
+    <string name="restore_confirm_title">Back-up herstellen?</string>
+    <string name="restore_confirm_from">Back-up van KashCal %1$s, %2$s</string>
+    <string name="action_restore">Herstellen</string>
+    <string name="restore_success_title">Herstel voltooid</string>
+    <string name="restore_confirm_message_prefs_only">Je voorkeuren worden geïmporteerd.</string>
+    <string name="restore_success_message_prefs_only">Voorkeuren geïmporteerd.</string>
+    <string name="restore_success_device_calendars_note">Selecteer je apparaatagenda\'s opnieuw als je die functie gebruikt.</string>
+    <string name="restore_error_title">Herstel mislukt</string>
+    <string name="restore_error_version_too_new">Deze back-up is gemaakt met een nieuwere versie van KashCal. Werk KashCal bij en probeer het opnieuw.</string>
+    <string name="restore_error_malformed_json">Dit bestand is geen geldige KashCal-back-up.</string>
+    <string name="restore_error_invalid_value">Dit back-upbestand bevat ongeldige gegevens en kan niet worden hersteld.</string>
+    <string name="restore_error_apply_failure">Er ging iets mis bij het toepassen van de back-up. Er zijn geen wijzigingen opgeslagen.</string>
+    <string name="backup_error_build_failed">Back-up mislukt</string>
+    <string name="backup_error_write_failed">Back-up mislukt — kan niet naar bestand schrijven</string>
+    <string name="backup_error_read_failed">Kan bestand niet lezen</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Agenda?</string>
@@ -300,7 +321,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Agenda ophalen</string>
-    <string name="action_import_from_file">Importeren uit bestand</string>
+    <string name="action_import_from_file">Afspraken uit bestand importeren</string>
     <string name="action_export_local_calendar">Lokale agenda exporteren</string>
 
     <!-- ==================== Providers ==================== -->
@@ -416,7 +437,7 @@
     <string name="caldav_trust_insecure_label">Onveilige verbinding vertrouwen</string>
     <string name="action_add_another">Nog een toevoegen</string>
     <string name="account_connected_found_calendars">%1$d agenda(\'s) gevonden voor %2$s.</string>
-    <string name="account_connected_syncing_hint">Synchronisatie bezig \u2014 afspraken verschijnen binnenkort.</string>
+    <string name="account_connected_syncing_hint">Synchronisatie bezig — afspraken verschijnen binnenkort.</string>
     <string name="settings_time_format_currently_24h">Momenteel: 24-uurs (%1$s)</string>
     <string name="settings_time_format_currently_12h">Momenteel: 12-uurs (%1$s)</string>
     <string name="settings_time_format_example">Voorbeeld: %1$s</string>
@@ -455,7 +476,7 @@
     <string name="label_reminders_truncated">%1$d niet getoond (%2$d totaal, max %3$d bewerkbaar)</string>
     <string name="label_found_events">Gevonden: %1$d afspraken</string>
     <string name="label_open_debug_menu">Debug-menu openen</string>
-    <string name="placeholder_search">Zoeken\u2026</string>
+    <string name="placeholder_search">Zoeken…</string>
     <string name="status_sync_paused">Sync gepauzeerd</string>
     <string name="status_not_synced">Niet gesynchroniseerd</string>
     <string name="status_sync_error">Synchronisatiefout</string>
@@ -517,12 +538,20 @@
         <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 agenda</item>
-        <item quantity="other">%1$s \u00B7 %2$d agenda\'s</item>
+        <item quantity="one">%1$s · 1 agenda</item>
+        <item quantity="other">%1$s · %2$d agenda\'s</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d abonnement</item>
         <item quantity="other">%1$d abonnementen</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d abonnement en je voorkeuren worden geïmporteerd.</item>
+        <item quantity="other">%1$d abonnementen en je voorkeuren worden geïmporteerd.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d abonnement en je voorkeuren geïmporteerd.</item>
+        <item quantity="other">%1$d abonnementen en je voorkeuren geïmporteerd.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sync mislukt (%1$d poging)</item>
@@ -561,8 +590,8 @@
         <item quantity="other">Importeren</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026en %1$d meer</item>
-        <item quantity="other">\u2026en %1$d meer</item>
+        <item quantity="one">…en %1$d meer</item>
+        <item quantity="other">…en %1$d meer</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d afspraak geïmporteerd</item>
@@ -773,8 +802,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Agenda\'s synchroniseren\u2026</string>
-    <string name="sync_banner_preparing">Synchronisatie voorbereiden\u2026</string>
+    <string name="sync_banner_syncing">Agenda\'s synchroniseren…</string>
+    <string name="sync_banner_preparing">Synchronisatie voorbereiden…</string>
     <string name="sync_banner_complete_errors">Synchronisatie voltooid met fouten</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Synchronisatie mislukt: %1$s</string>
@@ -805,12 +834,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dag %1$d van %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dag 1 van %1$d \u00b7 begint %2$s</string>
+    <string name="day_starts">Dag 1 van %1$d · begint %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dag %1$d van %2$d \u00b7 eindigt %3$s</string>
+    <string name="day_ends">Dag %1$d van %2$d · eindigt %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Hele dag</string>
-    <string name="event_date_all_day">%1$s \u00b7 Hele dag</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Hele dag</string>
+    <string name="event_date_all_day">%1$s · Hele dag</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Hele dag)</string>
     <string name="event_date_all_day_parens">%1$s (Hele dag)</string>
@@ -819,7 +848,7 @@
     <!-- Save button for event form -->
     <string name="action_save_event">Afspraak opslaan</string>
     <!-- Badges -->
-    <string name="badge_beta">B\u00e8ta</string>
+    <string name="badge_beta">Bèta</string>
     <string name="badge_new">Nieuw</string>
     <!-- Color names for accessibility -->
     <string name="color_red">Rood</string>
@@ -839,8 +868,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dag %1$d van %2$d (Hele dag)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sync   \u2191%2$d verstuurd   \u2193%3$d ontvangen</string>
-    <string name="sync_history_stats_issues">%1$d sync   \u2191%2$d verstuurd   \u2193%3$d ontvangen   \u26a0 %4$d problemen</string>
+    <string name="sync_history_stats">%1$d sync   ↑%2$d verstuurd   ↓%3$d ontvangen</string>
+    <string name="sync_history_stats_issues">%1$d sync   ↑%2$d verstuurd   ↓%3$d ontvangen   ⚠ %4$d problemen</string>
     <string name="sync_history_failed">Mislukt</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Elk uur</string>
@@ -851,8 +880,8 @@
     <string name="ics_url_required">URL is vereist</string>
     <string name="ics_url_invalid_scheme">URL moet beginnen met http://, https:// of webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Hele dag)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Hele dag)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>

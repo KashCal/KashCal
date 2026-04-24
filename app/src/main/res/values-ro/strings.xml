@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Redescarcă toate datele calendarului</string>
     <string name="settings_sync_history">Istoric sincronizări</string>
     <string name="settings_sync_history_subtitle">Vizualizează sesiunile de sincronizare (ultimele 48 de ore)</string>
-    <string name="settings_import_subtitle">Importă fișier .ics</string>
-    <string name="settings_export_subtitle">Salvează copie de rezervă .ics</string>
+    <string name="settings_import_subtitle">Adaugă evenimente dintr-un fișier ICS în orice calendar</string>
+    <string name="settings_export_subtitle">Salvează evenimentele într-un fișier ICS</string>
     <string name="settings_birthday_reminder">Memento zi de naștere</string>
     <string name="settings_use_device_timezone">Folosește fusul orar al dispozitivului</string>
     <string name="settings_section_my_calendars">Calendarele mele</string>
     <string name="settings_section_display">Afișare</string>
     <string name="settings_section_notifications">Notificări</string>
     <string name="settings_section_sync">Sincronizare</string>
-    <string name="settings_section_data">Date</string>
+    <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Salvează setările</string>
+    <string name="backup_settings_subtitle">Salvează configurația KashCal într-un fișier JSON</string>
+    <string name="restore_settings_label">Restaurează setările</string>
+    <string name="restore_settings_subtitle">Restaurează configurația KashCal dintr-un fișier de rezervă</string>
+    <string name="restore_confirm_title">Restaurezi copia de rezervă?</string>
+    <string name="restore_confirm_from">Copie de rezervă din KashCal %1$s, %2$s</string>
+    <string name="action_restore">Restaurează</string>
+    <string name="restore_success_title">Restaurare finalizată</string>
+    <string name="restore_confirm_message_prefs_only">Preferințele tale vor fi importate.</string>
+    <string name="restore_success_message_prefs_only">Preferințe importate.</string>
+    <string name="restore_success_device_calendars_note">Selectează din nou calendarele dispozitivului dacă folosești această funcție.</string>
+    <string name="restore_error_title">Restaurarea a eșuat</string>
+    <string name="restore_error_version_too_new">Această copie de rezervă a fost creată cu o versiune mai nouă a KashCal. Actualizează KashCal și încearcă din nou.</string>
+    <string name="restore_error_malformed_json">Acest fișier nu este o copie de rezervă KashCal validă.</string>
+    <string name="restore_error_invalid_value">Acest fișier de rezervă conține date nevalide și nu poate fi restaurat.</string>
+    <string name="restore_error_apply_failure">Ceva a mers prost la aplicarea copiei de rezervă. Nicio modificare nu a fost salvată.</string>
+    <string name="backup_error_build_failed">Copia de siguranță a eșuat</string>
+    <string name="backup_error_write_failed">Copia de siguranță a eșuat — nu s-a putut scrie în fișier</string>
+    <string name="backup_error_read_failed">Fișierul nu a putut fi citit</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -297,7 +318,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Descarcă calendarul</string>
-    <string name="action_import_from_file">Importă din fișier</string>
+    <string name="action_import_from_file">Importă evenimente din fișier</string>
     <string name="action_export_local_calendar">Exportă calendarul local</string>
 
     <!-- ==================== Providers ==================== -->
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Permite conexiune nesecurizată</string>
     <string name="action_add_another">Adaugă altul</string>
     <string name="account_connected_found_calendars">%1$d calendar(e) găsite pentru %2$s.</string>
-    <string name="account_connected_syncing_hint">Sincronizare în curs \u2014 evenimentele vor apărea în curând.</string>
+    <string name="account_connected_syncing_hint">Sincronizare în curs — evenimentele vor apărea în curând.</string>
     <string name="settings_time_format_currently_24h">Acum: 24 ore (%1$s)</string>
     <string name="settings_time_format_currently_12h">Acum: 12 ore (%1$s)</string>
     <string name="settings_time_format_example">Exemplu: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d neafișate (%2$d total, max %3$d editabile)</string>
     <string name="label_found_events">Găsite: %1$d evenimente</string>
     <string name="label_open_debug_menu">Deschide meniul de depanare</string>
-    <string name="placeholder_search">Caută\u2026</string>
+    <string name="placeholder_search">Caută…</string>
     <string name="status_sync_paused">Sincronizare suspendată</string>
     <string name="status_not_synced">Nesincronizat</string>
     <string name="status_sync_error">Eroare sincronizare</string>
@@ -515,14 +536,24 @@
         <item quantity="other">%1$d de conturi</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 calendar</item>
-        <item quantity="few">%1$s \u00B7 %2$d calendare</item>
-        <item quantity="other">%1$s \u00B7 %2$d de calendare</item>
+        <item quantity="one">%1$s · 1 calendar</item>
+        <item quantity="few">%1$s · %2$d calendare</item>
+        <item quantity="other">%1$s · %2$d de calendare</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d abonament</item>
         <item quantity="few">%1$d abonamente</item>
         <item quantity="other">%1$d de abonamente</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d abonament și preferințele tale vor fi importate.</item>
+        <item quantity="few">%1$d abonamente și preferințele tale vor fi importate.</item>
+        <item quantity="other">%1$d de abonamente și preferințele tale vor fi importate.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d abonament și preferințele tale importate.</item>
+        <item quantity="few">%1$d abonamente și preferințele tale importate.</item>
+        <item quantity="other">%1$d de abonamente și preferințele tale importate.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sincronizare eșuată (%1$d încercare)</item>
@@ -570,9 +601,9 @@
         <item quantity="other">Importă</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026și încă %1$d</item>
-        <item quantity="few">\u2026și încă %1$d</item>
-        <item quantity="other">\u2026și încă %1$d</item>
+        <item quantity="one">…și încă %1$d</item>
+        <item quantity="few">…și încă %1$d</item>
+        <item quantity="other">…și încă %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d eveniment importat</item>
@@ -799,8 +830,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Se sincronizează calendarele\u2026</string>
-    <string name="sync_banner_preparing">Se pregătește sincronizarea\u2026</string>
+    <string name="sync_banner_syncing">Se sincronizează calendarele…</string>
+    <string name="sync_banner_preparing">Se pregătește sincronizarea…</string>
     <string name="sync_banner_complete_errors">Sincronizare finalizată cu erori</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sincronizare eșuată: %1$s</string>
@@ -835,12 +866,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Ziua %1$d din %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ziua 1 din %1$d \u00b7 începe %2$s</string>
+    <string name="day_starts">Ziua 1 din %1$d · începe %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ziua %1$d din %2$d \u00b7 se termină %3$s</string>
+    <string name="day_ends">Ziua %1$d din %2$d · se termină %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Toată ziua</string>
-    <string name="event_date_all_day">%1$s \u00b7 Toată ziua</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Toată ziua</string>
+    <string name="event_date_all_day">%1$s · Toată ziua</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Toată ziua)</string>
     <string name="event_date_all_day_parens">%1$s (Toată ziua)</string>
@@ -869,8 +900,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Ziua %1$d din %2$d (Toată ziua)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sincronizări   \u2191%2$d trimise   \u2193%3$d primite</string>
-    <string name="sync_history_stats_issues">%1$d sincronizări   \u2191%2$d trimise   \u2193%3$d primite   \u26a0 %4$d probleme</string>
+    <string name="sync_history_stats">%1$d sincronizări   ↑%2$d trimise   ↓%3$d primite</string>
+    <string name="sync_history_stats_issues">%1$d sincronizări   ↑%2$d trimise   ↓%3$d primite   ⚠ %4$d probleme</string>
     <string name="sync_history_failed">Eșuat</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">La fiecare oră</string>
@@ -881,8 +912,8 @@
     <string name="ics_url_required">URL-ul este obligatoriu</string>
     <string name="ics_url_invalid_scheme">URL-ul trebuie să înceapă cu http://, https:// sau webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Toată ziua)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Toată ziua)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Adaugă eveniment</string>
@@ -916,7 +947,7 @@
     <string name="rrule_until_suffix">, până la %1$s</string>
     <string name="rrule_freq_never">Niciodată</string>
     <string name="rrule_starting">%1$s începând din %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 din %2$s</string>
+    <string name="rrule_since">%1$s · din %2$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d dată</item>

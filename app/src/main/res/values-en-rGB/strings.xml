@@ -100,15 +100,34 @@
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
     <string name="settings_sync_history">Sync History</string>
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
-    <string name="settings_import_subtitle">Import .ics file</string>
-    <string name="settings_export_subtitle">Backup to .ics file</string>
+    <string name="settings_import_subtitle">Add events from an ICS file to any calendar</string>
+    <string name="settings_export_subtitle">Save events to an ICS file</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
     <string name="settings_section_my_calendars">My Calendars</string>
     <string name="settings_section_display">Display</string>
     <string name="settings_section_notifications">Notifications</string>
     <string name="settings_section_sync">Sync</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Backup &amp; Restore</string>
+    <string name="backup_settings_label">Back up settings</string>
+    <string name="backup_settings_subtitle">Save KashCal configuration to a JSON file</string>
+    <string name="restore_settings_label">Restore settings</string>
+    <string name="restore_settings_subtitle">Restore KashCal configuration from a backup file</string>
+    <string name="restore_confirm_title">Restore backup?</string>
+    <string name="restore_confirm_from">Backup from KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">This will import your preferences.</string>
+    <string name="action_restore">Restore</string>
+    <string name="restore_success_title">Restore complete</string>
+    <string name="restore_success_message_prefs_only">Imported your preferences.</string>
+    <string name="restore_success_device_calendars_note">Select your device calendars again if you use that feature.</string>
+    <string name="restore_error_title">Restore failed</string>
+    <string name="restore_error_version_too_new">This backup was created with a newer version of KashCal. Please update KashCal and try again.</string>
+    <string name="restore_error_malformed_json">This file is not a valid KashCal backup.</string>
+    <string name="restore_error_invalid_value">This backup file contains invalid data and cannot be restored.</string>
+    <string name="restore_error_apply_failure">Something went wrong while applying the backup. No changes were saved.</string>
+    <string name="backup_error_build_failed">Backup failed</string>
+    <string name="backup_error_write_failed">Backup failed — could not write to file</string>
+    <string name="backup_error_read_failed">Could not read file</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -297,8 +316,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Fetch Calendar</string>
-    <string name="action_import_from_file">Import from File</string>
-    <string name="action_export_local_calendar">Export Local Calendar</string>
+    <string name="action_import_from_file">Import events from file</string>
+    <string name="action_export_local_calendar">Export Local calendar</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -413,7 +432,7 @@
     <string name="caldav_trust_insecure_label">Trust insecure connection</string>
     <string name="action_add_another">Add Another</string>
     <string name="account_connected_found_calendars">Found %1$d calendar(s) for %2$s.</string>
-    <string name="account_connected_syncing_hint">Syncing in progress \u2014 events will appear shortly.</string>
+    <string name="account_connected_syncing_hint">Syncing in progress — events will appear shortly.</string>
     <string name="settings_time_format_currently_24h">Currently: 24-hour (%1$s)</string>
     <string name="settings_time_format_currently_12h">Currently: 12-hour (%1$s)</string>
     <string name="settings_time_format_example">Example: %1$s</string>
@@ -452,7 +471,7 @@
     <string name="label_reminders_truncated">%1$d not shown (%2$d total, max %3$d editable)</string>
     <string name="label_found_events">Found: %1$d events</string>
     <string name="label_open_debug_menu">Open debug menu</string>
-    <string name="placeholder_search">Search\u2026</string>
+    <string name="placeholder_search">Search…</string>
     <string name="status_sync_paused">Sync paused</string>
     <string name="status_not_synced">Not synced</string>
     <string name="status_sync_error">Sync error</string>
@@ -514,12 +533,20 @@
         <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 calendar</item>
-        <item quantity="other">%1$s \u00B7 %2$d calendars</item>
+        <item quantity="one">%1$s · 1 calendar</item>
+        <item quantity="other">%1$s · %2$d calendars</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d subscription</item>
         <item quantity="other">%1$d subscriptions</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">This will import %1$d subscription and your preferences.</item>
+        <item quantity="other">This will import %1$d subscriptions and your preferences.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Imported %1$d subscription and your preferences.</item>
+        <item quantity="other">Imported %1$d subscriptions and your preferences.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sync failed (%1$d attempt)</item>
@@ -558,8 +585,8 @@
         <item quantity="other">Import</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026and %1$d more</item>
-        <item quantity="other">\u2026and %1$d more</item>
+        <item quantity="one">…and %1$d more</item>
+        <item quantity="other">…and %1$d more</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Imported %1$d event</item>
@@ -768,8 +795,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synchronising calendars\u2026</string>
-    <string name="sync_banner_preparing">Preparing to synchronise\u2026</string>
+    <string name="sync_banner_syncing">Synchronising calendars…</string>
+    <string name="sync_banner_preparing">Preparing to synchronise…</string>
     <string name="sync_banner_complete_errors">Sync complete with errors</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sync failed: %1$s</string>
@@ -800,12 +827,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Day %1$d of %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Day 1 of %1$d \u00b7 starts %2$s</string>
+    <string name="day_starts">Day 1 of %1$d · starts %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Day %1$d of %2$d \u00b7 ends %3$s</string>
+    <string name="day_ends">Day %1$d of %2$d · ends %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 All day</string>
-    <string name="event_date_all_day">%1$s \u00b7 All day</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · All day</string>
+    <string name="event_date_all_day">%1$s · All day</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (All day)</string>
     <string name="event_date_all_day_parens">%1$s (All day)</string>
@@ -834,8 +861,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Day %1$d of %2$d (All day)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled</string>
-    <string name="sync_history_stats_issues">%1$d syncs   \u2191%2$d pushed   \u2193%3$d pulled   \u26a0 %4$d issues</string>
+    <string name="sync_history_stats">%1$d syncs   ↑%2$d pushed   ↓%3$d pulled</string>
+    <string name="sync_history_stats_issues">%1$d syncs   ↑%2$d pushed   ↓%3$d pulled   ⚠ %4$d issues</string>
     <string name="sync_history_failed">Failed</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Every hour</string>
@@ -846,8 +873,8 @@
     <string name="ics_url_required">URL is required</string>
     <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (All day)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (All day)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Add event</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
@@ -905,8 +932,8 @@
     <string name="insight_lightest_day_future">%1$s is your lightest day (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s was your lightest day (%2$s)</string>
     <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">Longest free block: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">Longest free block was %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_future">Longest free block: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Longest free block was %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">Your weekend is clear</string>
     <string name="insight_weekend_load_clear_past">Your weekend was clear</string>
@@ -934,7 +961,7 @@
     <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s is your heaviest upcoming day (%2$s)</string>
     <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">Next free block: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_next_free_block">Next free block: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">Calendar breakdown: %1$s</string>
     <string name="insights_cd_daily_chart">Daily distribution: busiest day is %1$s</string>

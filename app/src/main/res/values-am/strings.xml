@@ -80,7 +80,7 @@
     <string name="label_calendar_name">የቀን መቁጠሪያ ስም</string>
     <string name="label_name">ስም</string>
     <string name="label_hex_color">Hex ቀለም</string>
-    <string name="label_enter_hex">6 hex ቁምፊዎች ያስገቡ (0\u20139, A\u2013F)</string>
+    <string name="label_enter_hex">6 hex ቁምፊዎች ያስገቡ (0–9, A–F)</string>
 
     <!-- ==================== View Labels ==================== -->
     <string name="view_all">ሁሉም</string>
@@ -100,15 +100,34 @@
     <string name="settings_force_sync_subtitle">ሁሉንም የቀን መቁጠሪያ ውሂብ እንደገና አውርድ</string>
     <string name="settings_sync_history">የማመሳሰል ታሪክ</string>
     <string name="settings_sync_history_subtitle">የማመሳሰል ክፍለ ጊዜዎችን ተመልከት (ባለፉት 48 ሰዓታት)</string>
-    <string name="settings_import_subtitle">.ics ፋይል አስገባ</string>
-    <string name="settings_export_subtitle">ወደ .ics ፋይል ምትኬ</string>
+    <string name="settings_import_subtitle">ከ ICS ፋይል ወደ ማንኛውም ቀን መቁጠሪያ ክስተቶችን ጨምር</string>
+    <string name="settings_export_subtitle">ክስተቶችን ወደ ICS ፋይል አስቀምጥ</string>
     <string name="settings_birthday_reminder">የልደት ቀን ማስታወሻ</string>
     <string name="settings_use_device_timezone">የመሳሪያ ሰዓት ክልል ተጠቀም</string>
     <string name="settings_section_my_calendars">የኔ ቀን መቁጠሪያዎች</string>
     <string name="settings_section_display">ማሳያ</string>
     <string name="settings_section_notifications">ማሳወቂያዎች</string>
     <string name="settings_section_sync">ማመሳሰል</string>
-    <string name="settings_section_data">ውሂብ</string>
+    <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
+    <string name="backup_settings_label">ቅንብሮችን ምትኬ አስቀምጥ</string>
+    <string name="backup_settings_subtitle">የKashCal ውቅርን ወደ JSON ፋይል አስቀምጥ</string>
+    <string name="restore_settings_label">ቅንብሮችን መልስ</string>
+    <string name="restore_settings_subtitle">የKashCal ውቅርን ከምትኬ ፋይል መልስ</string>
+    <string name="restore_confirm_title">ምትኬውን መልስ?</string>
+    <string name="restore_confirm_from">ከKashCal %1$s, %2$s የተገኘ ምትኬ</string>
+    <string name="restore_confirm_message_prefs_only">ምርጫዎችዎ ይገባሉ።</string>
+    <string name="action_restore">መልስ</string>
+    <string name="restore_success_title">መልሶ ማስቀመጥ ተጠናቋል</string>
+    <string name="restore_success_message_prefs_only">ምርጫዎች ተመጥነዋል።</string>
+    <string name="restore_success_device_calendars_note">ያንን ባህሪ የሚጠቀሙ ከሆነ የመሣሪያ ቀን መቁጠሪያዎችዎን እንደገና ይምረጡ።</string>
+    <string name="restore_error_title">መልሶ ማስቀመጥ አልተሳካም</string>
+    <string name="restore_error_version_too_new">ይህ ምትኬ በአዲስ የKashCal ስሪት ተፈጥሯል። እባክዎ KashCalን ያዘምኑ እና እንደገና ይሞክሩ።</string>
+    <string name="restore_error_malformed_json">ይህ ፋይል ትክክለኛ የKashCal ምትኬ አይደለም።</string>
+    <string name="restore_error_invalid_value">ይህ የምትኬ ፋይል ልክ ያልሆነ ውሂብ ይዟል እና መመለስ አይቻልም።</string>
+    <string name="restore_error_apply_failure">ምትኬውን በመተግበር ላይ ሳለ አንድ ችግር ተከስቷል። ምንም ለውጦች አልተቀመጡም።</string>
+    <string name="backup_error_build_failed">ምትኬ አልተሳካም</string>
+    <string name="backup_error_write_failed">ምትኬ አልተሳካም — ወደ ፋይል መጻፍ አልተቻለም</string>
+    <string name="backup_error_read_failed">ፋይሉን ማንበብ አልተቻለም</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -145,7 +164,7 @@
     <string name="status_sync_history">የማመሳሰል ታሪክ</string>
     <string name="status_parse_failures">የመተንተን ስህተቶች</string>
     <string name="status_error">ስህተት</string>
-    <string name="status_failed_to_parse">\u26A0 %1$d መተንተን አልተቻለም</string>
+    <string name="status_failed_to_parse">⚠ %1$d መተንተን አልተቻለም</string>
     <string name="status_built_with_love">በፍቅር የተሰራ</string>
     <string name="status_in_austin">በ Austin</string>
     <string name="status_version">KashCal v%1$s</string>
@@ -297,7 +316,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">ቀን መቁጠሪያ አምጣ</string>
-    <string name="action_import_from_file">ከፋይል አስገባ</string>
+    <string name="action_import_from_file">ከፋይል ክስተቶችን አስገባ</string>
     <string name="action_export_local_calendar">አካባቢያዊ ቀን መቁጠሪያ ላክ</string>
 
     <!-- ==================== Providers ==================== -->
@@ -413,7 +432,7 @@
     <string name="caldav_trust_insecure_label">ደህንነቱ ያልተጠበቀ ግንኙነት ይመኑ</string>
     <string name="action_add_another">ሌላ አክል</string>
     <string name="account_connected_found_calendars">ለ%2$s %1$d ቀን መቁጠሪያ(ዎች) ተገኝተዋል።</string>
-    <string name="account_connected_syncing_hint">ማመሳሰል በሂደት ላይ ነው \u2014 ክስተቶች በቅርቡ ይታያሉ።</string>
+    <string name="account_connected_syncing_hint">ማመሳሰል በሂደት ላይ ነው — ክስተቶች በቅርቡ ይታያሉ።</string>
     <string name="settings_time_format_currently_24h">አሁን: 24-ሰዓት (%1$s)</string>
     <string name="settings_time_format_currently_12h">አሁን: 12-ሰዓት (%1$s)</string>
     <string name="settings_time_format_example">ምሳሌ: %1$s</string>
@@ -452,7 +471,7 @@
     <string name="label_reminders_truncated">%1$d አልታየም (%2$d ጠቅላላ፣ ከፍተኛ %3$d ሊስተካከል የሚችል)</string>
     <string name="label_found_events">ተገኝቷል: %1$d ክስተቶች</string>
     <string name="label_open_debug_menu">የማረም ምናሌ ክፈት</string>
-    <string name="placeholder_search">ፈልግ\u2026</string>
+    <string name="placeholder_search">ፈልግ…</string>
     <string name="status_sync_paused">ማመሳሰል ቆሟል</string>
     <string name="status_not_synced">አልተመሳሰለም</string>
     <string name="status_sync_error">የማመሳሰል ስህተት</string>
@@ -514,12 +533,20 @@
         <item quantity="other">%1$d መለያዎች</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 ቀን መቁጠሪያ</item>
-        <item quantity="other">%1$s \u00B7 %2$d ቀን መቁጠሪያዎች</item>
+        <item quantity="one">%1$s · 1 ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$s · %2$d ቀን መቁጠሪያዎች</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d ምዝገባ</item>
         <item quantity="other">%1$d ምዝገባዎች</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d ምዝገባ እና ምርጫዎችዎ ይገባሉ።</item>
+        <item quantity="other">%1$d ምዝገባዎች እና ምርጫዎችዎ ይገባሉ።</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d ምዝገባ እና ምርጫዎችዎ ተመጥነዋል።</item>
+        <item quantity="other">%1$d ምዝገባዎች እና ምርጫዎችዎ ተመጥነዋል።</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">ማመሳሰል አልተሳካም (%1$d ሙከራ)</item>
@@ -558,8 +585,8 @@
         <item quantity="other">አስገባ</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026እና %1$d ተጨማሪ</item>
-        <item quantity="other">\u2026እና %1$d ተጨማሪ</item>
+        <item quantity="one">…እና %1$d ተጨማሪ</item>
+        <item quantity="other">…እና %1$d ተጨማሪ</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d ክስተት ገብቷል</item>
@@ -768,8 +795,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">ቀን መቁጠሪያዎች በማመሳሰል ላይ\u2026</string>
-    <string name="sync_banner_preparing">ለማመሳሰል በማዘጋጀት ላይ\u2026</string>
+    <string name="sync_banner_syncing">ቀን መቁጠሪያዎች በማመሳሰል ላይ…</string>
+    <string name="sync_banner_preparing">ለማመሳሰል በማዘጋጀት ላይ…</string>
     <string name="sync_banner_complete_errors">ማመሳሰል ከስህተቶች ጋር ተጠናቋል</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">ማመሳሰል አልተሳካም: %1$s</string>
@@ -800,12 +827,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">ቀን %1$d ከ%2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ቀን 1 ከ%1$d \u00b7 ይጀምራል %2$s</string>
+    <string name="day_starts">ቀን 1 ከ%1$d · ይጀምራል %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ቀን %1$d ከ%2$d \u00b7 ያበቃል %3$s</string>
+    <string name="day_ends">ቀን %1$d ከ%2$d · ያበቃል %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 ሙሉ ቀን</string>
-    <string name="event_date_all_day">%1$s \u00b7 ሙሉ ቀን</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · ሙሉ ቀን</string>
+    <string name="event_date_all_day">%1$s · ሙሉ ቀን</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (ሙሉ ቀን)</string>
     <string name="event_date_all_day_parens">%1$s (ሙሉ ቀን)</string>
@@ -834,8 +861,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">ቀን %1$d ከ%2$d (ሙሉ ቀን)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d ማመሳሰሎች   \u2191%2$d ተገፍተዋል   \u2193%3$d ተሳቡ</string>
-    <string name="sync_history_stats_issues">%1$d ማመሳሰሎች   \u2191%2$d ተገፍተዋል   \u2193%3$d ተሳቡ   \u26a0 %4$d ችግሮች</string>
+    <string name="sync_history_stats">%1$d ማመሳሰሎች   ↑%2$d ተገፍተዋል   ↓%3$d ተሳቡ</string>
+    <string name="sync_history_stats_issues">%1$d ማመሳሰሎች   ↑%2$d ተገፍተዋል   ↓%3$d ተሳቡ   ⚠ %4$d ችግሮች</string>
     <string name="sync_history_failed">አልተሳካም</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">በየሰዓቱ</string>
@@ -846,8 +873,8 @@
     <string name="ics_url_required">URL ያስፈልጋል</string>
     <string name="ics_url_invalid_scheme">URL በhttp://፣ https://፣ ወይም webcal:// መጀመር አለበት</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (ሙሉ ቀን)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (ሙሉ ቀን)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">ቀን መቁጠሪያ</string>
@@ -882,7 +909,7 @@
     <string name="rrule_until_suffix">, እስከ %1$s ድረስ</string>
     <string name="rrule_freq_never">በፍጹም</string>
     <string name="rrule_starting">%1$s %2$s%3$s ጀምሮ</string>
-    <string name="rrule_since">%1$s \u00b7 ከ%2$s ጀምሮ</string>
+    <string name="rrule_since">%1$s · ከ%2$s ጀምሮ</string>
 
     <!-- Recurrence plural -->
     <plurals name="rrule_count_suffix">
@@ -910,8 +937,8 @@
     <string name="insight_lightest_day_future">%1$s በጣም ቀላሉ ቀንህ ነው (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s በጣም ቀላሉ ቀንህ ነበር (%2$s)</string>
     <!-- Insight text: Longest Free Block -->
-    <string name="insight_longest_free_future">ረዥሙ ነፃ ጊዜ: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">ረዥሙ ነፃ ጊዜ %1$s %2$s\u2013%3$s (%4$s) ነበር</string>
+    <string name="insight_longest_free_future">ረዥሙ ነፃ ጊዜ: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ረዥሙ ነፃ ጊዜ %1$s %2$s–%3$s (%4$s) ነበር</string>
     <!-- Insight text: Weekend Load -->
     <string name="insight_weekend_load_clear_future">ቅዳሜና እሁድህ ክፍት ነው</string>
     <string name="insight_weekend_load_clear_past">ቅዳሜና እሁድህ ክፍት ነበር</string>
@@ -939,7 +966,7 @@
     <!-- Insight text: Heaviest Upcoming (forward-only) -->
     <string name="insight_heaviest_upcoming">%1$s በጣም ከባዱ መጪ ቀንህ ነው (%2$s)</string>
     <!-- Insight text: Next Free Block (forward-only) -->
-    <string name="insight_next_free_block">ቀጣዩ ነፃ ጊዜ: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_next_free_block">ቀጣዩ ነፃ ጊዜ: %1$s %2$s–%3$s (%4$s)</string>
     <!-- Insight accessibility -->
     <string name="insights_cd_calendar_bar">የቀን መቁጠሪያ ክፍፍል: %1$s</string>
     <string name="insights_cd_daily_chart">ዕለታዊ ስርጭት: በጣም የተጨናነቀው ቀን %1$s ነው</string>

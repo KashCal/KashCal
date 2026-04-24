@@ -221,13 +221,21 @@ internal fun QuickAddDialogContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = onExpand) {
-                    Text(stringResource(R.string.action_more_options))
+                    Text(
+                        text = stringResource(R.string.action_more_options),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
                 Button(
                     onClick = onSave,
                     enabled = isSaveEnabled && !isSaving
                 ) {
-                    Text(stringResource(R.string.action_save))
+                    Text(
+                        text = stringResource(R.string.action_save),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             }
         }

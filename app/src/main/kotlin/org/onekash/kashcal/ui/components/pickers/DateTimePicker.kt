@@ -57,6 +57,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -216,6 +217,7 @@ fun DateTimeDisplayRow(
     timezone: String? = null,
     timePattern: String = "h:mm a"
 ) {
+    val focusManager = LocalFocusManager.current
     val deviceTimezone = TimezoneUtils.getDeviceTimezone()
     val timezoneAbbrev = if (!isAllDay && timezone != null && timezone != deviceTimezone) {
         TimezoneUtils.getAbbreviation(timezone)
@@ -243,7 +245,10 @@ fun DateTimeDisplayRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onStartClick() }
+                .clickable {
+                    focusManager.clearFocus()
+                    onStartClick()
+                }
                 .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -278,7 +283,10 @@ fun DateTimeDisplayRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onEndClick() }
+                .clickable {
+                    focusManager.clearFocus()
+                    onEndClick()
+                }
                 .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -374,24 +382,37 @@ fun DateTimeSheet(
                 .padding(horizontal = 8.dp)
                 .padding(bottom = 8.dp)
         ) {
-            // Header with Cancel/Done buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 TextButton(onClick = { onDismiss() }) {
-                    Text(stringResource(R.string.action_cancel))
+                    Text(
+                        text = stringResource(R.string.action_cancel),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
                 Text(
                     text = label,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 TextButton(onClick = onDoneClick) {
-                    Text(stringResource(R.string.action_done), fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.action_done),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             }
 

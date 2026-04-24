@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">Tải lại toàn bộ dữ liệu lịch</string>
     <string name="settings_sync_history">Lịch sử đồng bộ</string>
     <string name="settings_sync_history_subtitle">Xem phiên đồng bộ (48 giờ gần nhất)</string>
-    <string name="settings_import_subtitle">Nhập tệp .ics</string>
-    <string name="settings_export_subtitle">Sao lưu ra tệp .ics</string>
+    <string name="settings_import_subtitle">Thêm sự kiện từ tệp ICS vào bất kỳ lịch nào</string>
+    <string name="settings_export_subtitle">Lưu sự kiện ra tệp ICS</string>
     <string name="settings_birthday_reminder">Nhắc nhở sinh nhật</string>
     <string name="settings_use_device_timezone">Dùng múi giờ thiết bị</string>
     <string name="settings_section_my_calendars">Lịch của tôi</string>
     <string name="settings_section_display">Hiển thị</string>
     <string name="settings_section_notifications">Thông báo</string>
     <string name="settings_section_sync">Đồng bộ</string>
-    <string name="settings_section_data">Dữ liệu</string>
+    <string name="settings_section_data">Sao lưu &amp; khôi phục</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Dùng Apple Calendar?</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Tải lịch</string>
-    <string name="action_import_from_file">Nhập từ tệp</string>
+    <string name="action_import_from_file">Nhập sự kiện từ tệp</string>
     <string name="action_export_local_calendar">Xuất lịch nội bộ</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">Tin cậy kết nối không an toàn</string>
     <string name="action_add_another">Thêm tài khoản khác</string>
     <string name="account_connected_found_calendars">Tìm thấy %1$d lịch cho %2$s.</string>
-    <string name="account_connected_syncing_hint">Đang đồng bộ \u2014 sự kiện sẽ xuất hiện ngay.</string>
+    <string name="account_connected_syncing_hint">Đang đồng bộ — sự kiện sẽ xuất hiện ngay.</string>
     <string name="settings_time_format_currently_24h">Hiện tại: 24 giờ (%1$s)</string>
     <string name="settings_time_format_currently_12h">Hiện tại: 12 giờ (%1$s)</string>
     <string name="settings_time_format_example">Ví dụ: %1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d bị ẩn (tổng %2$d, tối đa chỉnh sửa %3$d)</string>
     <string name="label_found_events">Tìm thấy: %1$d sự kiện</string>
     <string name="label_open_debug_menu">Mở menu gỡ lỗi</string>
-    <string name="placeholder_search">Tìm kiếm\u2026</string>
+    <string name="placeholder_search">Tìm kiếm…</string>
     <string name="status_sync_paused">Đã tạm dừng đồng bộ</string>
     <string name="status_not_synced">Chưa đồng bộ</string>
     <string name="status_sync_error">Lỗi đồng bộ</string>
@@ -514,10 +514,16 @@
         <item quantity="other">%1$d tài khoản</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d lịch</item>
+        <item quantity="other">%1$s · %2$d lịch</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d đăng ký</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">Sẽ nhập %1$d đăng ký và tùy chọn của bạn.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">Đã nhập %1$d đăng ký và tùy chọn của bạn.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">Đồng bộ thất bại (%1$d lần)</item>
@@ -547,7 +553,7 @@
         <item quantity="other">Nhập</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026và %1$d nữa</item>
+        <item quantity="other">…và %1$d nữa</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">Đã nhập %1$d sự kiện</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Đang đồng bộ lịch\u2026</string>
-    <string name="sync_banner_preparing">Đang chuẩn bị đồng bộ\u2026</string>
+    <string name="sync_banner_syncing">Đang đồng bộ lịch…</string>
+    <string name="sync_banner_preparing">Đang chuẩn bị đồng bộ…</string>
     <string name="sync_banner_complete_errors">Đồng bộ hoàn tất với lỗi</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Đồng bộ thất bại: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Ngày %1$d/%2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ngày 1/%1$d \u00b7 bắt đầu %2$s</string>
+    <string name="day_starts">Ngày 1/%1$d · bắt đầu %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ngày %1$d/%2$d \u00b7 kết thúc %3$s</string>
+    <string name="day_ends">Ngày %1$d/%2$d · kết thúc %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Cả ngày</string>
-    <string name="event_date_all_day">%1$s \u00b7 Cả ngày</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Cả ngày</string>
+    <string name="event_date_all_day">%1$s · Cả ngày</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Cả ngày)</string>
     <string name="event_date_all_day_parens">%1$s (Cả ngày)</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Ngày %1$d/%2$d (Cả ngày)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d lần đồng bộ   \u2191%2$d đẩy   \u2193%3$d kéo</string>
-    <string name="sync_history_stats_issues">%1$d lần đồng bộ   \u2191%2$d đẩy   \u2193%3$d kéo   \u26a0 %4$d vấn đề</string>
+    <string name="sync_history_stats">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo</string>
+    <string name="sync_history_stats_issues">%1$d lần đồng bộ   ↑%2$d đẩy   ↓%3$d kéo   ⚠ %4$d vấn đề</string>
     <string name="sync_history_failed">Thất bại</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Mỗi giờ</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">Cần có URL</string>
     <string name="ics_url_invalid_scheme">URL phải bắt đầu bằng http://, https://, hoặc webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Cả ngày)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Cả ngày)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d lần</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">Thêm màu</string>
     <string name="label_back_to_grid">Quay lại</string>
     <string name="settings_suggest_titles">Gợi ý tiêu đề sự kiện</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Sao lưu cài đặt</string>
+    <string name="backup_settings_subtitle">Lưu cấu hình KashCal vào tệp JSON</string>
+    <string name="restore_settings_label">Khôi phục cài đặt</string>
+    <string name="restore_settings_subtitle">Khôi phục cấu hình KashCal từ tệp sao lưu</string>
+    <string name="restore_confirm_title">Khôi phục bản sao lưu?</string>
+    <string name="restore_confirm_from">Bản sao lưu từ KashCal %1$s, %2$s</string>
+    <string name="restore_confirm_message_prefs_only">Tùy chọn của bạn sẽ được nhập.</string>
+    <string name="action_restore">Khôi phục</string>
+    <string name="restore_success_title">Khôi phục hoàn tất</string>
+    <string name="restore_success_message_prefs_only">Đã nhập tùy chọn.</string>
+    <string name="restore_success_device_calendars_note">Hãy chọn lại lịch thiết bị nếu bạn dùng tính năng đó.</string>
+    <string name="restore_error_title">Khôi phục thất bại</string>
+    <string name="restore_error_version_too_new">Bản sao lưu này được tạo bằng phiên bản KashCal mới hơn. Vui lòng cập nhật KashCal và thử lại.</string>
+    <string name="restore_error_malformed_json">Tệp này không phải là bản sao lưu KashCal hợp lệ.</string>
+    <string name="restore_error_invalid_value">Tệp sao lưu này chứa dữ liệu không hợp lệ và không thể khôi phục.</string>
+    <string name="restore_error_apply_failure">Đã xảy ra lỗi khi áp dụng bản sao lưu. Không có thay đổi nào được lưu.</string>
+    <string name="backup_error_build_failed">Sao lưu không thành công</string>
+    <string name="backup_error_write_failed">Sao lưu không thành công — không thể ghi vào tệp</string>
+    <string name="backup_error_read_failed">Không thể đọc tệp</string>
 </resources>

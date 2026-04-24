@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,6 +39,11 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.backup.BackupParseResult
+import org.onekash.kashcal.domain.backup.BackupImportError
+import org.onekash.kashcal.domain.backup.SettingsBackupExporter
+import org.onekash.kashcal.domain.backup.SettingsBackupImporter
+import org.onekash.kashcal.domain.backup.toSummary
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.domain.model.AccountProvider
@@ -47,6 +53,7 @@ import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
+import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.util.importEventsToDeviceCalendar
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
@@ -125,7 +132,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val calendarProviderRepository: CalendarProviderRepository,
     private val dataStore: KashCalDataStore,
     private val widgetUpdateManager: WidgetUpdateManager,
-    private val deviceCalendarReminderScheduler: org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
+    private val deviceCalendarReminderScheduler: org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler,
+    private val backupExporter: SettingsBackupExporter,
+    private val backupImporter: SettingsBackupImporter,
 ) : AndroidViewModel(application) {
 
     // Account connection state
@@ -284,6 +293,15 @@ class AccountSettingsViewModel @Inject constructor(
 
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
+
+    // Backup & Restore dialog state
+    private val _backupRestoreState = MutableStateFlow<BackupRestoreUiState>(BackupRestoreUiState.Idle)
+    val backupRestoreState: StateFlow<BackupRestoreUiState> = _backupRestoreState.asStateFlow()
+
+    // Backup JSON prepared in-memory between the VM building it and the SAF writer consuming it.
+    // VM-scoped so it survives Activity config changes (e.g., rotation while the SAF picker is up).
+    @Volatile
+    private var pendingExportJson: String? = null
 
     init {
         loadInitialState()
@@ -1906,6 +1924,63 @@ class AccountSettingsViewModel @Inject constructor(
      */
     fun clearSnackbar() {
         _uiState.update { it.copy(pendingSnackbarMessage = null) }
+    }
+
+    // ==================== Backup & Restore ====================
+
+    /**
+     * Build the backup JSON payload and stash it in [pendingExportJson] for the Activity's
+     * SAF writer. Called after the user confirms the pre-export warning dialog.
+     *
+     * @return the built JSON payload
+     */
+    suspend fun prepareExport() {
+        pendingExportJson = backupExporter.exportSettings()
+    }
+
+    /** Consume and clear the stashed JSON after the SAF writer finishes (or aborts). */
+    fun consumePendingExportJson(): String? {
+        val json = pendingExportJson
+        pendingExportJson = null
+        return json
+    }
+
+    /**
+     * Parse a selected backup file. On success transitions to [BackupRestoreUiState.PendingConfirmation]
+     * so the UI can show the confirmation dialog. On failure transitions to
+     * [BackupRestoreUiState.Error]. No DB or prefs writes happen here.
+     */
+    fun onBackupFileSelected(json: String) {
+        _backupRestoreState.value = when (val result = backupImporter.parseAndValidate(json)) {
+            is BackupParseResult.Ok -> BackupRestoreUiState.PendingConfirmation(
+                envelope = result.envelope,
+                summary = result.envelope.toSummary(),
+            )
+            is BackupParseResult.Error -> BackupRestoreUiState.Error(result.error)
+        }
+    }
+
+    /**
+     * Apply the envelope surfaced in [BackupRestoreUiState.PendingConfirmation]. No-op if the
+     * state is anything else (e.g., user raced dismiss + confirm).
+     */
+    fun confirmRestore() {
+        val pending = _backupRestoreState.value as? BackupRestoreUiState.PendingConfirmation ?: return
+        viewModelScope.launch {
+            _backupRestoreState.value = try {
+                BackupRestoreUiState.Success(backupImporter.applyBackup(pending.envelope))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "applyBackup failed", e)
+                BackupRestoreUiState.Error(BackupImportError.ApplyFailed(e.message))
+            }
+        }
+    }
+
+    /** Dismiss any backup/restore dialog, returning to [BackupRestoreUiState.Idle]. */
+    fun dismissDialog() {
+        _backupRestoreState.value = BackupRestoreUiState.Idle
     }
 
     // ==================== Account Connected Sheet ====================

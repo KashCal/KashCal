@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">సర్వర్ నుండి మొత్తం క్యాలెండర్ డేటా మళ్ళీ డౌన్‌లోడ్ చేయి</string>
     <string name="settings_sync_history">సింక్ చరిత్ర</string>
     <string name="settings_sync_history_subtitle">సింక్ సెషన్‌లు చూడు (గత 48 గంటలు)</string>
-    <string name="settings_import_subtitle">.ics ఫైల్ దిగుమతి చేయి</string>
-    <string name="settings_export_subtitle">.ics ఫైల్‌కి బ్యాకప్</string>
+    <string name="settings_import_subtitle">ICS ఫైల్ నుండి ఈవెంట్‌లను ఏదైనా క్యాలెండర్‌కు జోడించండి</string>
+    <string name="settings_export_subtitle">ఈవెంట్‌లను ICS ఫైల్‌లో సేవ్ చేయి</string>
     <string name="settings_birthday_reminder">పుట్టినరోజు రిమైండర్</string>
     <string name="settings_use_device_timezone">పరికర టైమ్‌జోన్ ఉపయోగించు</string>
     <string name="settings_section_my_calendars">నా క్యాలెండర్లు</string>
     <string name="settings_section_display">ప్రదర్శన</string>
     <string name="settings_section_notifications">నోటిఫికేషన్‌లు</string>
     <string name="settings_section_sync">సింక్</string>
-    <string name="settings_section_data">డేటా</string>
+    <string name="settings_section_data">బ్యాకప్ &amp; రీస్టోర్</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">సెట్టింగ్‌లను బ్యాకప్ చేయి</string>
+    <string name="backup_settings_subtitle">KashCal కాన్ఫిగరేషన్‌ను JSON ఫైల్‌లో సేవ్ చేయి</string>
+    <string name="restore_settings_label">సెట్టింగ్‌లను రీస్టోర్ చేయి</string>
+    <string name="restore_settings_subtitle">బ్యాకప్ ఫైల్ నుండి KashCal కాన్ఫిగరేషన్‌ను రీస్టోర్ చేయి</string>
+    <string name="restore_confirm_title">బ్యాకప్‌ను రీస్టోర్ చేయాలా?</string>
+    <string name="restore_confirm_from">KashCal %1$s నుండి బ్యాకప్, %2$s</string>
+    <string name="action_restore">రీస్టోర్</string>
+    <string name="restore_success_title">రీస్టోర్ పూర్తయింది</string>
+    <string name="restore_confirm_message_prefs_only">మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</string>
+    <string name="restore_success_message_prefs_only">ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</string>
+    <string name="restore_success_device_calendars_note">మీరు పరికర క్యాలెండర్ ఫీచర్‌ను ఉపయోగిస్తే, వాటిని మళ్ళీ ఎంచుకోండి.</string>
+    <string name="restore_error_title">రీస్టోర్ విఫలమైంది</string>
+    <string name="restore_error_version_too_new">ఈ బ్యాకప్ KashCal యొక్క కొత్త వెర్షన్‌తో సృష్టించబడింది. దయచేసి KashCal‌ను అప్‌డేట్ చేసి మళ్ళీ ప్రయత్నించండి.</string>
+    <string name="restore_error_malformed_json">ఈ ఫైల్ చెల్లుబాటు అయ్యే KashCal బ్యాకప్ కాదు.</string>
+    <string name="restore_error_invalid_value">ఈ బ్యాకప్ ఫైల్‌లో చెల్లని డేటా ఉంది, దీనిని రీస్టోర్ చేయలేము.</string>
+    <string name="restore_error_apply_failure">బ్యాకప్‌ను వర్తింపజేస్తున్నప్పుడు ఏదో తప్పు జరిగింది. మార్పులు సేవ్ చేయబడలేదు.</string>
+    <string name="backup_error_build_failed">బ్యాక్‌అప్ విఫలమైంది</string>
+    <string name="backup_error_write_failed">బ్యాక్‌అప్ విఫలమైంది — ఫైల్‌కు రాయలేకపోయాం</string>
+    <string name="backup_error_read_failed">ఫైల్‌ను చదవలేకపోయాం</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,7 +319,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">క్యాలెండర్ తీసుకొచ్చు</string>
-    <string name="action_import_from_file">ఫైల్ నుండి దిగుమతి చేయి</string>
+    <string name="action_import_from_file">ఫైల్ నుండి ఈవెంట్‌లను దిగుమతి చేయి</string>
     <string name="action_export_local_calendar">స్థానిక క్యాలెండర్ ఎగుమతి చేయి</string>
 
     <!-- ==================== Providers ==================== -->
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">అసురక్షిత కనెక్షన్‌ను విశ్వసించు</string>
     <string name="action_add_another">మరొకటి జోడించు</string>
     <string name="account_connected_found_calendars">%2$s కోసం %1$d క్యాలెండర్(లు) కనుగొనబడ్డాయి.</string>
-    <string name="account_connected_syncing_hint">సింక్ జరుగుతోంది \u2014 ఈవెంట్‌లు త్వరలో కనిపిస్తాయి.</string>
+    <string name="account_connected_syncing_hint">సింక్ జరుగుతోంది — ఈవెంట్‌లు త్వరలో కనిపిస్తాయి.</string>
     <string name="settings_time_format_currently_24h">ప్రస్తుతం: 24-గంటల (%1$s)</string>
     <string name="settings_time_format_currently_12h">ప్రస్తుతం: 12-గంటల (%1$s)</string>
     <string name="settings_time_format_example">ఉదాహరణ: %1$s</string>
@@ -453,7 +474,7 @@
     <string name="label_reminders_truncated">%1$d చూపబడలేదు (%2$d మొత్తం, గరిష్టం %3$d మార్చగలవి)</string>
     <string name="label_found_events">కనుగొన్నవి: %1$d ఈవెంట్‌లు</string>
     <string name="label_open_debug_menu">డీబగ్ మెనూ తెరువు</string>
-    <string name="placeholder_search">శోధించు\u2026</string>
+    <string name="placeholder_search">శోధించు…</string>
     <string name="status_sync_paused">సింక్ ఆపివేయబడింది</string>
     <string name="status_not_synced">సింక్ చేయబడలేదు</string>
     <string name="status_sync_error">సింక్ లోపం</string>
@@ -515,12 +536,20 @@
         <item quantity="other">%1$d ఖాతాలు</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 క్యాలెండర్</item>
-        <item quantity="other">%1$s \u00B7 %2$d క్యాలెండర్లు</item>
+        <item quantity="one">%1$s · 1 క్యాలెండర్</item>
+        <item quantity="other">%1$s · %2$d క్యాలెండర్లు</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d సబ్‌స్క్రిప్షన్</item>
         <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d సబ్‌స్క్రిప్షన్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
+        <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడతాయి.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d సబ్‌స్క్రిప్షన్ మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
+        <item quantity="other">%1$d సబ్‌స్క్రిప్షన్‌లు మరియు మీ ప్రాధాన్యతలు దిగుమతి చేయబడ్డాయి.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">సింక్ విఫలమైంది (%1$d ప్రయత్నం)</item>
@@ -559,8 +588,8 @@
         <item quantity="other">దిగుమతి</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026మరియు %1$d మరొకటి</item>
-        <item quantity="other">\u2026మరియు %1$d మరిన్ని</item>
+        <item quantity="one">…మరియు %1$d మరొకటి</item>
+        <item quantity="other">…మరియు %1$d మరిన్ని</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d ఈవెంట్ దిగుమతి చేయబడింది</item>
@@ -769,8 +798,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">క్యాలెండర్‌లు సింక్ అవుతున్నాయి\u2026</string>
-    <string name="sync_banner_preparing">సింక్ కోసం సిద్ధమవుతోంది\u2026</string>
+    <string name="sync_banner_syncing">క్యాలెండర్‌లు సింక్ అవుతున్నాయి…</string>
+    <string name="sync_banner_preparing">సింక్ కోసం సిద్ధమవుతోంది…</string>
     <string name="sync_banner_complete_errors">దోషాలతో సింక్ పూర్తయింది</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">సింక్ విఫలం: %1$s</string>
@@ -801,12 +830,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">రోజు %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">రోజు 1 / %1$d \u00b7 ప్రారంభం %2$s</string>
+    <string name="day_starts">రోజు 1 / %1$d · ప్రారంభం %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">రోజు %1$d / %2$d \u00b7 ముగింపు %3$s</string>
+    <string name="day_ends">రోజు %1$d / %2$d · ముగింపు %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 పూర్తి రోజు</string>
-    <string name="event_date_all_day">%1$s \u00b7 పూర్తి రోజు</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · పూర్తి రోజు</string>
+    <string name="event_date_all_day">%1$s · పూర్తి రోజు</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (పూర్తి రోజు)</string>
     <string name="event_date_all_day_parens">%1$s (పూర్తి రోజు)</string>
@@ -843,8 +872,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">రోజు %1$d / %2$d (పూర్తి రోజు)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d సింక్   \u2191%2$d పుష్   \u2193%3$d పుల్</string>
-    <string name="sync_history_stats_issues">%1$d సింక్   \u2191%2$d పుష్   \u2193%3$d పుల్   \u26a0 %4$d సమస్యలు</string>
+    <string name="sync_history_stats">%1$d సింక్   ↑%2$d పుష్   ↓%3$d పుల్</string>
+    <string name="sync_history_stats_issues">%1$d సింక్   ↑%2$d పుష్   ↓%3$d పుల్   ⚠ %4$d సమస్యలు</string>
     <string name="sync_history_failed">విఫలం</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">ప్రతి గంట</string>
@@ -855,8 +884,8 @@
     <string name="ics_url_required">URL అవసరం</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, లేదా webcal:// తో మొదలవ్వాలి</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (పూర్తి రోజు)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (పూర్తి రోజు)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">క్యాలెండర్</string>
@@ -893,7 +922,7 @@
     <string name="rrule_until_suffix">, %1$s వరకు</string>
     <string name="rrule_freq_never">ఎప్పుడూ కాదు</string>
     <string name="rrule_starting">%1$s %2$s నుండి ప్రారంభమవుతోంది%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s నుండి</string>
+    <string name="rrule_since">%1$s · %2$s నుండి</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d సారి</item>

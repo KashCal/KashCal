@@ -104,6 +104,8 @@ class AccountSettingsViewModelTest {
     private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var eventWriter: EventWriter
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
+    private lateinit var backupExporter: org.onekash.kashcal.domain.backup.SettingsBackupExporter
+    private lateinit var backupImporter: org.onekash.kashcal.domain.backup.SettingsBackupImporter
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -177,6 +179,8 @@ class AccountSettingsViewModelTest {
         widgetUpdateManager = mockk(relaxed = true)
         eventWriter = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
+        backupExporter = mockk(relaxed = true)
+        backupImporter = mockk(relaxed = true)
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -256,7 +260,9 @@ class AccountSettingsViewModelTest {
             dataStore = dataStore,
             widgetUpdateManager = widgetUpdateManager,
             eventWriter = eventWriter,
-            deviceCalendarReminderScheduler = deviceCalendarReminderScheduler
+            deviceCalendarReminderScheduler = deviceCalendarReminderScheduler,
+            backupExporter = backupExporter,
+            backupImporter = backupImporter,
         )
     }
 

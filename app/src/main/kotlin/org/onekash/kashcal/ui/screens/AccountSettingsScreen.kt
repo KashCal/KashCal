@@ -195,6 +195,9 @@ fun AccountSettingsScreen(
     // ICS Import/Export
     onImportCalendarFile: () -> Unit = {},
     onExportCalendar: (Long) -> Unit = {},
+    // Settings backup/restore
+    onBackupSettings: () -> Unit = {},
+    onRestoreSettings: () -> Unit = {},
     // Navigation to detail screens
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
@@ -290,6 +293,8 @@ fun AccountSettingsScreen(
                     onDefaultEventDurationChange = onDefaultEventDurationChange,
                     onImportCalendarFile = onImportCalendarFile,
                     onExportCalendar = onExportCalendar,
+                    onBackupSettings = onBackupSettings,
+                    onRestoreSettings = onRestoreSettings,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
                     onNavigateToBirthdaysAnniversaries = onNavigateToBirthdaysAnniversaries,
                     birthdayCount = birthdayCount,
@@ -424,6 +429,8 @@ private fun FlatSettingsContent(
     onDefaultEventDurationChange: (Int) -> Unit,
     onImportCalendarFile: () -> Unit,
     onExportCalendar: (Long) -> Unit,
+    onBackupSettings: () -> Unit,
+    onRestoreSettings: () -> Unit,
     onNavigateToSubscriptions: () -> Unit,
     onNavigateToBirthdaysAnniversaries: () -> Unit,
     birthdayCount: Int,
@@ -504,7 +511,7 @@ private fun FlatSettingsContent(
 
     // Memoized: find local calendar for export
     val localCalendar = remember(calendars) {
-        calendars.find { it.caldavUrl == "local://default" }
+        calendars.find { it.caldavUrl == org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.LOCAL_CALENDAR_URL }
     }
 
     // Add Subscription Dialog - show if local trigger OR intent trigger
@@ -699,28 +706,46 @@ private fun FlatSettingsContent(
             )
         }
 
-        // ==================== DATA Section ====================
+        // ==================== Backup & Restore Section ====================
         SectionHeader(stringResource(R.string.settings_section_data))
         SettingsCard {
-            // Import from File Row
-            SettingsRow(
-                icon = Icons.Default.FileDownload,
-                label = stringResource(R.string.action_import_from_file),
-                subtitle = stringResource(R.string.settings_import_subtitle),
-                onClick = onImportCalendarFile,
-                showDivider = localCalendar != null  // Show divider if Export follows
-            )
-
-            // Export Local Calendar Row (conditional)
+            // Export Local Calendar Row (conditional — only if a Local calendar exists)
             localCalendar?.let { local ->
                 SettingsRow(
                     icon = Icons.Default.FileUpload,
                     label = stringResource(R.string.action_export_local_calendar),
                     subtitle = stringResource(R.string.settings_export_subtitle),
                     onClick = { onExportCalendar(local.id) },
-                    showDivider = false  // Last item in card
+                    showDivider = true
                 )
             }
+
+            // Back up settings — divider separates the export/backup pair from the import/restore pair
+            SettingsRow(
+                icon = Icons.Default.FileUpload,
+                label = stringResource(R.string.backup_settings_label),
+                subtitle = stringResource(R.string.backup_settings_subtitle),
+                onClick = onBackupSettings,
+                showDivider = true
+            )
+
+            // Import events from file
+            SettingsRow(
+                icon = Icons.Default.FileDownload,
+                label = stringResource(R.string.action_import_from_file),
+                subtitle = stringResource(R.string.settings_import_subtitle),
+                onClick = onImportCalendarFile,
+                showDivider = true
+            )
+
+            // Restore settings
+            SettingsRow(
+                icon = Icons.Default.FileDownload,
+                label = stringResource(R.string.restore_settings_label),
+                subtitle = stringResource(R.string.restore_settings_subtitle),
+                onClick = onRestoreSettings,
+                showDivider = false
+            )
         }
 
         // ==================== Version Footer ====================

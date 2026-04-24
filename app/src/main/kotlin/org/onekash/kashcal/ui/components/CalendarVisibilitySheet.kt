@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -61,21 +62,28 @@ fun CalendarVisibilitySheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    stringResource(R.string.drawer_calendars),
+                    text = stringResource(R.string.drawer_calendars),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
                     style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 TextButton(onClick = onDismiss) {
-                    Text(stringResource(R.string.action_done))
+                    Text(
+                        text = stringResource(R.string.action_done),
+                        maxLines = 1,
+                        softWrap = false
+                    )
                 }
             }
 

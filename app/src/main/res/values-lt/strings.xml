@@ -100,15 +100,15 @@
     <string name="settings_force_sync_subtitle">Iš naujo atsisiųsti visus duomenis</string>
     <string name="settings_sync_history">Sinchronizavimo istorija</string>
     <string name="settings_sync_history_subtitle">Peržiūrėti sinchronizavimo seansus (per 48 val.)</string>
-    <string name="settings_import_subtitle">Importuoti .ics failą</string>
-    <string name="settings_export_subtitle">Kopija .ics formatu</string>
+    <string name="settings_import_subtitle">Pridėti įvykius iš ICS failo į bet kurį kalendorių</string>
+    <string name="settings_export_subtitle">Išsaugoti įvykius į ICS failą</string>
     <string name="settings_birthday_reminder">Gimtadienio priminimas</string>
     <string name="settings_use_device_timezone">Įrenginio laiko juosta</string>
     <string name="settings_section_my_calendars">Mano kalendoriai</string>
     <string name="settings_section_display">Atvaizdavimas</string>
     <string name="settings_section_notifications">Pranešimai</string>
     <string name="settings_section_sync">Sinchronizavimas</string>
-    <string name="settings_section_data">Duomenys</string>
+    <string name="settings_section_data">Atsarginė kopija ir atkūrimas</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple kalendorius?</string>
@@ -291,7 +291,7 @@
     <string name="status_fetching">Gaunama…</string>
 
     <string name="action_fetch_calendar">Gauti kalendorių</string>
-    <string name="action_import_from_file">Importuoti iš failo</string>
+    <string name="action_import_from_file">Importuoti įvykius iš failo</string>
     <string name="action_export_local_calendar">Eksportuoti vietinį kalendorių</string>
 
     <string name="provider_icloud">iCloud</string>
@@ -434,7 +434,7 @@
     <string name="label_reminders_truncated">%1$d nerodomi (%2$d iš viso, maks. %3$d redaguojamų)</string>
     <string name="label_found_events">Rasta: %1$d įvykių</string>
     <string name="label_open_debug_menu">Atidaryti derinimo meniu</string>
-    <string name="placeholder_search">Paieška\u2026</string>
+    <string name="placeholder_search">Paieška…</string>
     <string name="status_sync_paused">Sinchronizavimas pristabdytas</string>
     <string name="status_not_synced">Nesinchronizuota</string>
     <string name="status_sync_error">Sinchronizavimo klaida</string>
@@ -491,16 +491,28 @@
         <item quantity="other">%1$d paskyrų</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalendorius</item>
-        <item quantity="few">%1$s \u00B7 %2$d kalendoriai</item>
-        <item quantity="many">%1$s \u00B7 %2$d kalendoriaus</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendorių</item>
+        <item quantity="one">%1$s · 1 kalendorius</item>
+        <item quantity="few">%1$s · %2$d kalendoriai</item>
+        <item quantity="many">%1$s · %2$d kalendoriaus</item>
+        <item quantity="other">%1$s · %2$d kalendorių</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d prenumerata</item>
         <item quantity="few">%1$d prenumeratos</item>
         <item quantity="many">%1$d prenumeratos</item>
         <item quantity="other">%1$d prenumeratų</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">Bus importuota %1$d prenumerata ir jūsų nuostatos.</item>
+        <item quantity="few">Bus importuotos %1$d prenumeratos ir jūsų nuostatos.</item>
+        <item quantity="many">Bus importuota %1$d prenumeratos ir jūsų nuostatos.</item>
+        <item quantity="other">Bus importuota %1$d prenumeratų ir jūsų nuostatos.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Importuota %1$d prenumerata ir jūsų nuostatos.</item>
+        <item quantity="few">Importuotos %1$d prenumeratos ir jūsų nuostatos.</item>
+        <item quantity="many">Importuota %1$d prenumeratos ir jūsų nuostatos.</item>
+        <item quantity="other">Importuota %1$d prenumeratų ir jūsų nuostatos.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinchronizavimas nepavyko (%1$d bandymas)</item>
@@ -557,10 +569,10 @@
         <item quantity="other">Importuoti</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026ir dar %1$d</item>
-        <item quantity="few">\u2026ir dar %1$d</item>
-        <item quantity="many">\u2026ir dar %1$d</item>
-        <item quantity="other">\u2026ir dar %1$d</item>
+        <item quantity="one">…ir dar %1$d</item>
+        <item quantity="few">…ir dar %1$d</item>
+        <item quantity="many">…ir dar %1$d</item>
+        <item quantity="other">…ir dar %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Importuotas %1$d įvykis</item>
@@ -886,7 +898,7 @@
     <string name="rrule_until_suffix">, iki %1$s</string>
     <string name="rrule_freq_never">Niekada</string>
     <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 nuo %2$s</string>
+    <string name="rrule_since">%1$s · nuo %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">
@@ -959,4 +971,25 @@
     <string name="label_more_colors">Daugiau spalvų</string>
     <string name="label_back_to_grid">Atgal</string>
     <string name="settings_suggest_titles">Siūlyti įvykių pavadinimus</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Sukurti atsarginę kopiją</string>
+    <string name="backup_settings_subtitle">Išsaugoti KashCal konfigūraciją į JSON failą</string>
+    <string name="restore_settings_label">Atkurti nustatymus</string>
+    <string name="restore_settings_subtitle">Atkurti KashCal konfigūraciją iš atsarginės kopijos failo</string>
+    <string name="restore_confirm_title">Atkurti atsarginę kopiją?</string>
+    <string name="restore_confirm_from">KashCal atsarginė kopija %1$s, %2$s</string>
+    <string name="action_restore">Atkurti</string>
+    <string name="restore_success_title">Atkūrimas baigtas</string>
+    <string name="restore_success_device_calendars_note">Pasirink įrenginio kalendorius iš naujo, jei naudojiesi šia funkcija.</string>
+    <string name="restore_confirm_message_prefs_only">Jūsų nuostatos bus importuotos.</string>
+    <string name="restore_success_message_prefs_only">Nuostatos importuotos.</string>
+    <string name="restore_error_title">Atkurti nepavyko</string>
+    <string name="restore_error_version_too_new">Ši atsarginė kopija sukurta naujesne KashCal versija. Atnaujink KashCal ir bandyk dar kartą.</string>
+    <string name="restore_error_malformed_json">Šis failas nėra tinkama KashCal atsarginė kopija.</string>
+    <string name="restore_error_invalid_value">Atsarginės kopijos faile yra netinkamų duomenų, jo atkurti negalima.</string>
+    <string name="restore_error_apply_failure">Taikant atsarginę kopiją įvyko klaida. Jokie pakeitimai neišsaugoti.</string>
+    <string name="backup_error_build_failed">Nepavyko sukurti atsarginės kopijos</string>
+    <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos — nepavyko įrašyti į failą</string>
+    <string name="backup_error_read_failed">Nepavyko perskaityti failo</string>
 </resources>

@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">Lataa kaikki kalenteritiedot uudelleen</string>
     <string name="settings_sync_history">Synkronointihistoria</string>
     <string name="settings_sync_history_subtitle">Näytä synkronointiistunnot (viimeiset 48 tuntia)</string>
-    <string name="settings_import_subtitle">Tuo .ics-tiedosto</string>
-    <string name="settings_export_subtitle">Varmuuskopioi .ics-tiedostona</string>
+    <string name="settings_import_subtitle">Lisää tapahtumia ICS-tiedostosta mihin tahansa kalenteriin</string>
+    <string name="settings_export_subtitle">Tallenna tapahtumat ICS-tiedostoon</string>
     <string name="settings_birthday_reminder">Syntymäpäivämuistutus</string>
     <string name="settings_use_device_timezone">Käytä laitteen aikavyöhykettä</string>
     <string name="settings_section_my_calendars">Omat kalenterit</string>
     <string name="settings_section_display">Näkymä</string>
     <string name="settings_section_notifications">Ilmoitukset</string>
     <string name="settings_section_sync">Synkronointi</string>
-    <string name="settings_section_data">Tiedot</string>
+    <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -175,7 +175,7 @@
     <string name="error_conflict_title">Synkronointiristiriita</string>
     <string name="error_conflict_generic">Tätä tapahtumaa muokattiin toisessa laitteessa. Pakota synkronointi saadaksesi uusimman version.</string>
     <string name="error_conflict_with_event">\"%1$s\" muokattiin toisessa laitteessa. Pakota synkronointi saadaksesi uusimman version.</string>
-    <string name="error_sync_token_expired">Synkronointitiedot vanhentuneet. Suoritetaan täysi synkronointi\u2026</string>
+    <string name="error_sync_token_expired">Synkronointitiedot vanhentuneet. Suoritetaan täysi synkronointi…</string>
 
     <string name="error_event_not_found">Tapahtumaa ei löytynyt.</string>
     <string name="error_calendar_not_found">Kalenteria ei löytynyt.</string>
@@ -260,7 +260,7 @@
     <string name="label_password">Salasana</string>
     <string name="label_display_name_optional">Näyttönimi (valinnainen)</string>
 
-    <string name="placeholder_search_events">Hae tapahtumia\u2026</string>
+    <string name="placeholder_search_events">Hae tapahtumia…</string>
 
     <!-- ==================== Hints ==================== -->
     <string name="hint_https_default">Oletuksena https://, jos ei määritetty</string>
@@ -294,12 +294,12 @@
     <string name="empty_no_calendars">Ei kalentereita saatavilla</string>
 
     <!-- ==================== Status (Additional) ==================== -->
-    <string name="status_connecting">Yhdistetään\u2026</string>
-    <string name="status_fetching">Haetaan\u2026</string>
+    <string name="status_connecting">Yhdistetään…</string>
+    <string name="status_fetching">Haetaan…</string>
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Hae kalenteri</string>
-    <string name="action_import_from_file">Tuo tiedostosta</string>
+    <string name="action_import_from_file">Tuo tapahtumat tiedostosta</string>
     <string name="action_export_local_calendar">Vie paikallinen kalenteri</string>
 
     <!-- ==================== Providers ==================== -->
@@ -331,7 +331,7 @@
     <string name="accounts_caldav_help_title">Mikä on CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV on avoin standardi kalenterien synkronointiin. Tuetut:</string>
     <string name="accounts_caldav_help_more">ja muut</string>
-    <string name="accounts_calendars_syncing">Synkronoidaan\u2026</string>
+    <string name="accounts_calendars_syncing">Synkronoidaan…</string>
     <string name="accounts_cd_icloud_icon">iCloud-tili</string>
     <string name="accounts_cd_caldav_icon">CalDAV-tili</string>
     <string name="accounts_cd_back">Siirry takaisin</string>
@@ -371,8 +371,8 @@
     <string name="account_detail_enabled">Käytössä</string>
     <string name="account_detail_enabled_subtitle">Synkronoi tämä tili automaattisesti</string>
     <string name="account_detail_sync_now">Synkronoi nyt</string>
-    <string name="account_detail_syncing">Synkronoidaan\u2026</string>
-    <string name="account_detail_discovering">Etsitään\u2026</string>
+    <string name="account_detail_syncing">Synkronoidaan…</string>
+    <string name="account_detail_discovering">Etsitään…</string>
     <string name="account_detail_discover_calendars">Etsi uusia kalentereita</string>
     <string name="account_detail_change_password">Vaihda salasana</string>
     <string name="account_detail_sign_out">Kirjaudu ulos</string>
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">Luota turvattomaan yhteyteen</string>
     <string name="action_add_another">Lisää toinen</string>
     <string name="account_connected_found_calendars">Löydettiin %1$d kalenteria tilille %2$s.</string>
-    <string name="account_connected_syncing_hint">Synkronointi käynnissä \u2014 tapahtumat ilmestyvät pian.</string>
+    <string name="account_connected_syncing_hint">Synkronointi käynnissä — tapahtumat ilmestyvät pian.</string>
     <string name="settings_time_format_currently_24h">Tällä hetkellä: 24 tunnin (%1$s)</string>
     <string name="settings_time_format_currently_12h">Tällä hetkellä: 12 tunnin (%1$s)</string>
     <string name="settings_time_format_example">Esimerkki: %1$s</string>
@@ -454,7 +454,7 @@
     <string name="label_reminders_truncated">%1$d ei näytetty (%2$d yhteensä, enintään %3$d muokattavissa)</string>
     <string name="label_found_events">Löydetty: %1$d tapahtumaa</string>
     <string name="label_open_debug_menu">Avaa virheenkorjausvalikko</string>
-    <string name="placeholder_search">Hae\u2026</string>
+    <string name="placeholder_search">Hae…</string>
     <string name="status_sync_paused">Synkronointi keskeytetty</string>
     <string name="status_not_synced">Ei synkronoitu</string>
     <string name="status_sync_error">Synkronointivirhe</string>
@@ -517,12 +517,20 @@
         <item quantity="other">%1$d tiliä</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalenteri</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalenteria</item>
+        <item quantity="one">%1$s · 1 kalenteri</item>
+        <item quantity="other">%1$s · %2$d kalenteria</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d tilaus</item>
         <item quantity="other">%1$d tilausta</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d tilaus ja asetuksesi tuodaan.</item>
+        <item quantity="other">%1$d tilausta ja asetuksesi tuodaan.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Tuotu %1$d tilaus ja asetuksesi.</item>
+        <item quantity="other">Tuotu %1$d tilausta ja asetuksesi.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synkronointi epäonnistui (%1$d yritys)</item>
@@ -561,8 +569,8 @@
         <item quantity="other">Tuo</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026ja %1$d lisää</item>
-        <item quantity="other">\u2026ja %1$d lisää</item>
+        <item quantity="one">…ja %1$d lisää</item>
+        <item quantity="other">…ja %1$d lisää</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Tuotiin %1$d tapahtuma</item>
@@ -848,7 +856,7 @@
     <string name="rrule_until_suffix">, kunnes %1$s</string>
     <string name="rrule_freq_never">Ei koskaan</string>
     <string name="rrule_starting">%1$s alkaen %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 lähtien %2$s</string>
+    <string name="rrule_since">%1$s · lähtien %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">
@@ -917,4 +925,25 @@
     <string name="label_more_colors">Lisää värejä</string>
     <string name="label_back_to_grid">Takaisin</string>
     <string name="settings_suggest_titles">Ehdota tapahtumien otsikoita</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Varmuuskopioi asetukset</string>
+    <string name="backup_settings_subtitle">Tallenna KashCalin asetukset JSON-tiedostoon</string>
+    <string name="restore_settings_label">Palauta asetukset</string>
+    <string name="restore_settings_subtitle">Palauta KashCalin asetukset varmuuskopiosta</string>
+    <string name="restore_confirm_title">Palautetaanko varmuuskopio?</string>
+    <string name="restore_confirm_from">KashCal %1$s -varmuuskopio, %2$s</string>
+    <string name="action_restore">Palauta</string>
+    <string name="restore_success_title">Palautus valmis</string>
+    <string name="restore_success_device_calendars_note">Valitse laitteen kalenterit uudelleen, jos käytät tätä toimintoa.</string>
+    <string name="restore_confirm_message_prefs_only">Asetuksesi tuodaan.</string>
+    <string name="restore_success_message_prefs_only">Asetukset tuotu.</string>
+    <string name="restore_error_title">Palautus epäonnistui</string>
+    <string name="restore_error_version_too_new">Tämä varmuuskopio on luotu uudemmalla KashCal-versiolla. Päivitä KashCal ja yritä uudelleen.</string>
+    <string name="restore_error_malformed_json">Tämä tiedosto ei ole kelvollinen KashCal-varmuuskopio.</string>
+    <string name="restore_error_invalid_value">Varmuuskopiotiedosto sisältää virheellisiä tietoja, eikä sitä voi palauttaa.</string>
+    <string name="restore_error_apply_failure">Varmuuskopion käyttöönotossa tapahtui virhe. Muutoksia ei tallennettu.</string>
+    <string name="backup_error_build_failed">Varmuuskopiointi epäonnistui</string>
+    <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui — tiedostoon ei voitu kirjoittaa</string>
+    <string name="backup_error_read_failed">Tiedostoa ei voitu lukea</string>
 </resources>

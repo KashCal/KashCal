@@ -101,15 +101,15 @@
     <string name="settings_force_sync_subtitle">すべてのカレンダーデータを再ダウンロード</string>
     <string name="settings_sync_history">同期履歴</string>
     <string name="settings_sync_history_subtitle">同期セッションを表示（過去48時間）</string>
-    <string name="settings_import_subtitle">.icsファイルをインポート</string>
-    <string name="settings_export_subtitle">.icsファイルにバックアップ</string>
+    <string name="settings_import_subtitle">ICSファイルのイベントを任意のカレンダーに追加します</string>
+    <string name="settings_export_subtitle">ICSファイルにイベントを保存します</string>
     <string name="settings_birthday_reminder">誕生日リマインダー</string>
     <string name="settings_use_device_timezone">デバイスのタイムゾーンを使用</string>
     <string name="settings_section_my_calendars">マイカレンダー</string>
     <string name="settings_section_display">表示</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同期</string>
-    <string name="settings_section_data">データ</string>
+    <string name="settings_section_data">バックアップと復元</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Appleカレンダーをお使いですか？</string>
@@ -298,7 +298,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">カレンダーを取得</string>
-    <string name="action_import_from_file">ファイルからインポート</string>
+    <string name="action_import_from_file">ファイルからイベントをインポート</string>
     <string name="action_export_local_calendar">ローカルカレンダーをエクスポート</string>
 
     <!-- ==================== Providers ==================== -->
@@ -415,7 +415,7 @@
     <string name="caldav_trust_insecure_label">安全でない接続を信頼</string>
     <string name="action_add_another">別のアカウントを追加</string>
     <string name="account_connected_found_calendars">%2$sの%1$d件のカレンダーが見つかりました。</string>
-    <string name="account_connected_syncing_hint">同期中です \u2014 まもなくイベントが表示されます。</string>
+    <string name="account_connected_syncing_hint">同期中です — まもなくイベントが表示されます。</string>
     <string name="settings_time_format_currently_24h">現在: 24時間 (%1$s)</string>
     <string name="settings_time_format_currently_12h">現在: 12時間 (%1$s)</string>
     <string name="settings_time_format_example">例: %1$s</string>
@@ -453,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d件が非表示（合計%2$d件、最大%3$d件まで編集可能）</string>
     <string name="label_found_events">検出: %1$d件のイベント</string>
     <string name="label_open_debug_menu">デバッグメニューを開く</string>
-    <string name="placeholder_search">検索\u2026</string>
+    <string name="placeholder_search">検索…</string>
     <string name="status_sync_paused">同期一時停止中</string>
     <string name="status_not_synced">未同期</string>
     <string name="status_sync_error">同期エラー</string>
@@ -514,10 +514,16 @@
         <item quantity="other">%1$d件のアカウント</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 %2$d件のカレンダー</item>
+        <item quantity="other">%1$s · %2$d件のカレンダー</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">%1$d件の購読</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">%1$d 件のサブスクリプションと設定がインポートされます。</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">%1$d 件のサブスクリプションと設定をインポートしました。</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">同期失敗（%1$d回目）</item>
@@ -547,7 +553,7 @@
         <item quantity="other">インポート</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026他%1$d件</item>
+        <item quantity="other">…他%1$d件</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">%1$d件のイベントをインポートしました</item>
@@ -738,8 +744,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">カレンダーを同期中\u2026</string>
-    <string name="sync_banner_preparing">同期を準備中\u2026</string>
+    <string name="sync_banner_syncing">カレンダーを同期中…</string>
+    <string name="sync_banner_preparing">同期を準備中…</string>
     <string name="sync_banner_complete_errors">同期完了（エラーあり）</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">同期に失敗: %1$s</string>
@@ -766,12 +772,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">%2$d日中%1$d日目</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">%1$d日中1日目 \u00b7 %2$s開始</string>
+    <string name="day_starts">%1$d日中1日目 · %2$s開始</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%2$d日中%1$d日目 \u00b7 %3$s終了</string>
+    <string name="day_ends">%2$d日中%1$d日目 · %3$s終了</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 終日</string>
-    <string name="event_date_all_day">%1$s \u00b7 終日</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · 終日</string>
+    <string name="event_date_all_day">%1$s · 終日</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s（終日）</string>
     <string name="event_date_all_day_parens">%1$s（終日）</string>
@@ -800,8 +806,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">%2$d日中%1$d日目（終日）</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d回同期   \u2191%2$dプッシュ   \u2193%3$dプル</string>
-    <string name="sync_history_stats_issues">%1$d回同期   \u2191%2$dプッシュ   \u2193%3$dプル   \u26a0 %4$d件の問題</string>
+    <string name="sync_history_stats">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル</string>
+    <string name="sync_history_stats_issues">%1$d回同期   ↑%2$dプッシュ   ↓%3$dプル   ⚠ %4$d件の問題</string>
     <string name="sync_history_failed">失敗</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">1時間ごと</string>
@@ -812,8 +818,8 @@
     <string name="ics_url_required">URLが必要です</string>
     <string name="ics_url_invalid_scheme">URLはhttp://、https://、またはwebcal://で始まる必要があります</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s（終日）</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s、%3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s（終日）</string>
+    <string name="event_confirmation_timed">%1$s · %2$s、%3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">、%1$d回</item>
@@ -921,4 +927,25 @@
     <string name="label_more_colors">その他の色</string>
     <string name="label_back_to_grid">戻る</string>
     <string name="settings_suggest_titles">イベントのタイトルを提案</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">設定をバックアップ</string>
+    <string name="backup_settings_subtitle">KashCalの設定をJSONファイルに保存します</string>
+    <string name="restore_settings_label">設定を復元</string>
+    <string name="restore_settings_subtitle">バックアップファイルからKashCalの設定を復元します</string>
+    <string name="restore_confirm_title">バックアップを復元しますか？</string>
+    <string name="restore_confirm_from">KashCal %1$s のバックアップ、%2$s</string>
+    <string name="restore_confirm_message_prefs_only">設定がインポートされます。</string>
+    <string name="action_restore">復元</string>
+    <string name="restore_success_title">復元が完了しました</string>
+    <string name="restore_success_message_prefs_only">設定をインポートしました。</string>
+    <string name="restore_success_device_calendars_note">デバイスのカレンダー機能を使用している場合は、再度選択してください。</string>
+    <string name="restore_error_title">復元に失敗しました</string>
+    <string name="restore_error_version_too_new">このバックアップは新しいバージョンのKashCalで作成されています。KashCalを更新してからもう一度お試しください。</string>
+    <string name="restore_error_malformed_json">このファイルは有効なKashCalのバックアップではありません。</string>
+    <string name="restore_error_invalid_value">このバックアップファイルには無効なデータが含まれており、復元できません。</string>
+    <string name="restore_error_apply_failure">バックアップの適用中に問題が発生しました。変更は保存されていません。</string>
+    <string name="backup_error_build_failed">バックアップに失敗しました</string>
+    <string name="backup_error_write_failed">バックアップに失敗しました：ファイルに書き込めませんでした</string>
+    <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
 </resources>

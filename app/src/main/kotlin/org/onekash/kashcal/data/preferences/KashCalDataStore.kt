@@ -124,6 +124,14 @@ class KashCalDataStore(
         }
     }
 
+    /**
+     * Apply multiple preference writes in a single DataStore transaction. One disk write,
+     * one proto serialization pass, instead of N.
+     */
+    suspend fun edit(block: suspend (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
+        dataStore.edit { preferences -> block(preferences) }
+    }
+
     val firstDayOfWeek: Flow<Int>
         get() = getPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, FIRST_DAY_SYSTEM)
 

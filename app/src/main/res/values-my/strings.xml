@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">ပြက္ခဒိန်ဒေတာ အားလုံး ပြန်ဒေါင်းလုဒ်</string>
     <string name="settings_sync_history">ချိန်ကိုက်မှတ်တမ်း</string>
     <string name="settings_sync_history_subtitle">ချိန်ကိုက်စက်ရှင်များ ကြည့်ရန် (နောက်ဆုံး ၄၈ နာရီ)</string>
-    <string name="settings_import_subtitle">.ics ဖိုင် တင်သွင်း</string>
-    <string name="settings_export_subtitle">.ics ဖိုင်သို့ အရန်ကူး</string>
+    <string name="settings_import_subtitle">မည်သည့် ပြက္ခဒိန်သို့မဆို ICS ဖိုင်မှ ပွဲများ ထည့်ပါ</string>
+    <string name="settings_export_subtitle">ပွဲများကို ICS ဖိုင်သို့ သိမ်းပါ</string>
     <string name="settings_birthday_reminder">မွေးနေ့ သတိပေးချက်</string>
     <string name="settings_use_device_timezone">စက် အချိန်ဇုန် သုံးရန်</string>
     <string name="settings_section_my_calendars">ကျွန်ုပ်၏ ပြက္ခဒိန်များ</string>
     <string name="settings_section_display">ပြသမှု</string>
     <string name="settings_section_notifications">အကြောင်းကြားချက်များ</string>
     <string name="settings_section_sync">ချိန်ကိုက်</string>
-    <string name="settings_section_data">ဒေတာ</string>
+    <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">ဆက်တင်များ အရန်ကူးပါ</string>
+    <string name="backup_settings_subtitle">KashCal ဆက်တင်များကို JSON ဖိုင်သို့ သိမ်းပါ</string>
+    <string name="restore_settings_label">ဆက်တင်များ ပြန်ယူပါ</string>
+    <string name="restore_settings_subtitle">အရန်ကူးဖိုင်မှ KashCal ဆက်တင်များ ပြန်ယူပါ</string>
+    <string name="restore_confirm_title">အရန်ဖိုင် ပြန်ယူမလား?</string>
+    <string name="restore_confirm_from">KashCal %1$s, %2$s မှ အရန်ဖိုင်</string>
+    <string name="action_restore">ပြန်ယူ</string>
+    <string name="restore_success_title">ပြန်ယူခြင်း ပြီးဆုံးပါပြီ</string>
+    <string name="restore_confirm_message_prefs_only">သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</string>
+    <string name="restore_success_message_prefs_only">ရှေးချယ်မှုများ တင်သွင်းပြီးပါပြီ။</string>
+    <string name="restore_success_device_calendars_note">ယင်းအင်္ဂါရပ်ကို အသုံးပြုပါက သင့်စက်၏ ပြက္ခဒိန်များကို ပြန်ရွေးပါ။</string>
+    <string name="restore_error_title">ပြန်ယူခြင်း မအောင်မြင်ပါ</string>
+    <string name="restore_error_version_too_new">ဤအရန်ဖိုင်ကို KashCal ဗားရှင်းအသစ်ဖြင့် ပြုလုပ်ထားပါသည်။ KashCal ကို အပ်ဒိတ်လုပ်ပြီး ထပ်ကြိုးစားပါ။</string>
+    <string name="restore_error_malformed_json">ဤဖိုင်သည် မှန်ကန်သော KashCal အရန်ဖိုင် မဟုတ်ပါ။</string>
+    <string name="restore_error_invalid_value">ဤအရန်ဖိုင်တွင် မမှန်ကန်သော ဒေတာ ပါဝင်နေပြီး ပြန်ယူ၍မရပါ။</string>
+    <string name="restore_error_apply_failure">အရန်ဖိုင် အသုံးချနေစဉ် တစ်စုံတစ်ရာ မှားယွင်းခဲ့သည်။ အပြောင်းအလဲများ မသိမ်းဆည်းခဲ့ပါ။</string>
+    <string name="backup_error_build_failed">အရန်ကူးယူခြင်း မအောင်မြင်ပါ</string>
+    <string name="backup_error_write_failed">အရန်ကူးယူခြင်း မအောင်မြင်ပါ — ဖိုင်ထဲသို့ ရေးသွင်း၍မရပါ</string>
+    <string name="backup_error_read_failed">ဖိုင်ကို ဖတ်၍မရပါ</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,7 +319,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">ပြက္ခဒိန် ရယူ</string>
-    <string name="action_import_from_file">ဖိုင်မှ တင်သွင်း</string>
+    <string name="action_import_from_file">ဖိုင်မှ ပွဲများ တင်သွင်း</string>
     <string name="action_export_local_calendar">ဒေသဆိုင်ရာ ပြက္ခဒိန် ထုတ်ယူ</string>
 
     <!-- ==================== Providers ==================== -->
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">မလုံခြုံသော ချိတ်ဆက်မှုကို ယုံကြည်</string>
     <string name="action_add_another">နောက်ထပ် ထည့်</string>
     <string name="account_connected_found_calendars">%2$s အတွက် ပြက္ခဒိန် %1$d ခု တွေ့ရှိ။</string>
-    <string name="account_connected_syncing_hint">ချိန်ကိုက်နေသည် \u2014 ပွဲများ မကြာမီ ပေါ်လာပါမည်။</string>
+    <string name="account_connected_syncing_hint">ချိန်ကိုက်နေသည် — ပွဲများ မကြာမီ ပေါ်လာပါမည်။</string>
     <string name="settings_time_format_currently_24h">လက်ရှိ: ၂၄ နာရီ (%1$s)</string>
     <string name="settings_time_format_currently_12h">လက်ရှိ: ၁၂ နာရီ (%1$s)</string>
     <string name="settings_time_format_example">ဥပမာ: %1$s</string>
@@ -452,7 +473,7 @@
     <string name="label_reminders_truncated">%1$d ခု မပြထား (%2$d ခု စုစုပေါင်း, အများဆုံး %3$d ခု ပြင်ဆင်နိုင်)</string>
     <string name="label_found_events">တွေ့ရှိ: ပွဲ %1$d ခု</string>
     <string name="label_open_debug_menu">ဒီဘတ်မီနူး ဖွင့်</string>
-    <string name="placeholder_search">ရှာဖွေ\u2026</string>
+    <string name="placeholder_search">ရှာဖွေ…</string>
     <string name="status_sync_paused">ချိန်ကိုက်မှု ရပ်တန့်ထား</string>
     <string name="status_not_synced">ချိန်ကိုက်မထား</string>
     <string name="status_sync_error">ချိန်ကိုက် အမှား</string>
@@ -514,10 +535,16 @@
         <item quantity="other">အကောင့် %1$d ခု</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="other">%1$s \u00B7 ပြက္ခဒိန် %2$d ခု</item>
+        <item quantity="other">%1$s · ပြက္ခဒိန် %2$d ခု</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="other">စာရင်းသွင်းမှု %1$d ခု</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="other">%1$d ခု စာရင်းသွင်းမှုနှင့် သင့်ရှေးချယ်မှုများကို တင်သွင်းပါမည်။</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="other">%1$d ခု စာရင်းသွင်းမှုနှင့် သင့်ရှေးချယ်မှုများ တင်သွင်းပြီးပါပြီ။</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="other">ချိန်ကိုက် မအောင်မြင် (ကြိုးစားမှု %1$d ခု)</item>
@@ -547,7 +574,7 @@
         <item quantity="other">တင်သွင်း</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="other">\u2026နှင့် %1$d ခု ထပ်ရှိ</item>
+        <item quantity="other">…နှင့် %1$d ခု ထပ်ရှိ</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="other">ပွဲ %1$d ခု တင်သွင်းပြီး</item>
@@ -738,8 +765,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">ပြက္ခဒိန်များစင့်ခ်လုပ်နေသည်\u2026</string>
-    <string name="sync_banner_preparing">စင့်ခ်ပြင်ဆင်နေသည်\u2026</string>
+    <string name="sync_banner_syncing">ပြက္ခဒိန်များစင့်ခ်လုပ်နေသည်…</string>
+    <string name="sync_banner_preparing">စင့်ခ်ပြင်ဆင်နေသည်…</string>
     <string name="sync_banner_complete_errors">စင့်ခ်ပြီး အမှားများရှိသည်</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">စင့်ခ်မအောင်မြင်ပါ: %1$s</string>
@@ -766,12 +793,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">ရက် %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ရက် 1 / %1$d \u00b7 စတင် %2$s</string>
+    <string name="day_starts">ရက် 1 / %1$d · စတင် %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ရက် %1$d / %2$d \u00b7 ပြီးဆုံး %3$s</string>
+    <string name="day_ends">ရက် %1$d / %2$d · ပြီးဆုံး %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 တစ်နေ့တာ</string>
-    <string name="event_date_all_day">%1$s \u00b7 တစ်နေ့တာ</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · တစ်နေ့တာ</string>
+    <string name="event_date_all_day">%1$s · တစ်နေ့တာ</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (တစ်နေ့တာ)</string>
     <string name="event_date_all_day_parens">%1$s (တစ်နေ့တာ)</string>
@@ -800,8 +827,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">ရက် %1$d / %2$d (တစ်နေ့တာ)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d စင့်ခ်   \u2191%2$d တင်ပြီး   \u2193%3$d ဆွဲပြီး</string>
-    <string name="sync_history_stats_issues">%1$d စင့်ခ်   \u2191%2$d တင်ပြီး   \u2193%3$d ဆွဲပြီး   \u26a0 %4$d ပြဿနာ</string>
+    <string name="sync_history_stats">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး</string>
+    <string name="sync_history_stats_issues">%1$d စင့်ခ်   ↑%2$d တင်ပြီး   ↓%3$d ဆွဲပြီး   ⚠ %4$d ပြဿနာ</string>
     <string name="sync_history_failed">မအောင်မြင်</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">တစ်နာရီတိုင်း</string>
@@ -812,8 +839,8 @@
     <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
     <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (တစ်နေ့တာ)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (တစ်နေ့တာ)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d ကြိမ်</item>

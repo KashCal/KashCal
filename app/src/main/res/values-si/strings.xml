@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">සේවාදායකයෙන් සියලු දින දර්ශන දත්ත නැවත බාගන්න</string>
     <string name="settings_sync_history">සමමුහුර්ත ඉතිහාසය</string>
     <string name="settings_sync_history_subtitle">සමමුහුර්ත සැසි බලන්න (පසුගිය පැය 48)</string>
-    <string name="settings_import_subtitle">.ics ගොනුව ආයාත කරන්න</string>
-    <string name="settings_export_subtitle">.ics ගොනුවකට උපස්ථ</string>
+    <string name="settings_import_subtitle">ICS ගොනුවකින් ඕනෑම දින දර්ශනයකට සිදුවීම් එකතු කරන්න</string>
+    <string name="settings_export_subtitle">සිදුවීම් ICS ගොනුවකට සුරකින්න</string>
     <string name="settings_birthday_reminder">උපන්දින මතක්කිරීම</string>
     <string name="settings_use_device_timezone">උපාංග වේලා කලාපය භාවිත කරන්න</string>
     <string name="settings_section_my_calendars">මගේ දින දර්ශන</string>
     <string name="settings_section_display">ප්‍රදර්ශනය</string>
     <string name="settings_section_notifications">දැනුම්දීම්</string>
     <string name="settings_section_sync">සමමුහුර්තය</string>
-    <string name="settings_section_data">දත්ත</string>
+    <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">සැකසුම් උපස්ථ කරන්න</string>
+    <string name="backup_settings_subtitle">KashCal වින්‍යාසය JSON ගොනුවකට සුරකින්න</string>
+    <string name="restore_settings_label">සැකසුම් ප්‍රතිසාධනය කරන්න</string>
+    <string name="restore_settings_subtitle">උපස්ථ ගොනුවෙන් KashCal වින්‍යාසය ප්‍රතිසාධනය කරන්න</string>
+    <string name="restore_confirm_title">උපස්ථය ප්‍රතිසාධනය කරන්නද?</string>
+    <string name="restore_confirm_from">KashCal %1$s, %2$s වෙතින් උපස්ථය</string>
+    <string name="action_restore">ප්‍රතිසාධන</string>
+    <string name="restore_success_title">ප්‍රතිසාධනය සම්පූර්ණයි</string>
+    <string name="restore_confirm_message_prefs_only">ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</string>
+    <string name="restore_success_message_prefs_only">මනාපයන් ආයාත කර ඇත.</string>
+    <string name="restore_success_device_calendars_note">ඔබ එම විශේෂාංගය භාවිත කරන්නේ නම් ඔබේ උපාංග දින දර්ශන නැවත තෝරන්න.</string>
+    <string name="restore_error_title">ප්‍රතිසාධනය අසාර්ථකයි</string>
+    <string name="restore_error_version_too_new">මෙම උපස්ථය KashCal හි නව අනුවාදයකින් සාදන ලදී. කරුණාකර KashCal යාවත්කාලීන කර නැවත උත්සාහ කරන්න.</string>
+    <string name="restore_error_malformed_json">මෙම ගොනුව වලංගු KashCal උපස්ථයක් නොවේ.</string>
+    <string name="restore_error_invalid_value">මෙම උපස්ථ ගොනුවේ අවලංගු දත්ත අඩංගු වන අතර ප්‍රතිසාධනය කළ නොහැක.</string>
+    <string name="restore_error_apply_failure">උපස්ථය යෙදීමේදී යමක් වැරදී ඇත. කිසිදු වෙනසක් සුරකින ලද්දේ නැත.</string>
+    <string name="backup_error_build_failed">උපස්ථය අසාර්ථක විය</string>
+    <string name="backup_error_write_failed">උපස්ථය අසාර්ථක විය — ගොනුවට ලිවීමට නොහැකි විය</string>
+    <string name="backup_error_read_failed">ගොනුව කියවීමට නොහැකි විය</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -290,7 +311,7 @@
     <string name="status_fetching">ලබා ගනිමින්…</string>
 
     <string name="action_fetch_calendar">දින දර්ශනය ලබාගන්න</string>
-    <string name="action_import_from_file">ගොනුවෙන් ආයාත</string>
+    <string name="action_import_from_file">ගොනුවෙන් සිදුවීම් ආයාත</string>
     <string name="action_export_local_calendar">දේශීය දින දර්ශනය නිර්යාත</string>
 
     <string name="provider_icloud">iCloud</string>
@@ -395,7 +416,7 @@
     <string name="caldav_trust_insecure_label">අනාරක්ෂිත සම්බන්ධතාවය විශ්වාස කරන්න</string>
     <string name="action_add_another">තවත් එකතු කරන්න</string>
     <string name="account_connected_found_calendars">%2$s සඳහා දින දර්ශන %1$d ක් හමු විය.</string>
-    <string name="account_connected_syncing_hint">සමමුහුර්ත වෙමින් \u2014 සිදුවීම් ඉක්මනින් පෙනෙනු ඇත.</string>
+    <string name="account_connected_syncing_hint">සමමුහුර්ත වෙමින් — සිදුවීම් ඉක්මනින් පෙනෙනු ඇත.</string>
     <string name="settings_time_format_currently_24h">දැනට: පැය 24 (%1$s)</string>
     <string name="settings_time_format_currently_12h">දැනට: පැය 12 (%1$s)</string>
     <string name="settings_time_format_example">උදාහරණ: %1$s</string>
@@ -432,7 +453,7 @@
     <string name="label_reminders_truncated">%1$d නොපෙන්වයි (%2$d මුළු, උපරිම %3$d සංස්කරණය කළ හැකි)</string>
     <string name="label_found_events">හමු විය: සිදුවීම් %1$d</string>
     <string name="label_open_debug_menu">නිදොස්කරණ මෙනුව විවෘත කරන්න</string>
-    <string name="placeholder_search">සොයන්න\u2026</string>
+    <string name="placeholder_search">සොයන්න…</string>
     <string name="status_sync_paused">සමමුහුර්තය විරාමයි</string>
     <string name="status_not_synced">සමමුහුර්ත නැත</string>
     <string name="status_sync_error">සමමුහුර්ත දෝෂය</string>
@@ -488,12 +509,20 @@
         <item quantity="other">ගිණුම් %1$d</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 දින දර්ශන 1</item>
-        <item quantity="other">%1$s \u00B7 දින දර්ශන %2$d</item>
+        <item quantity="one">%1$s · දින දර්ශන 1</item>
+        <item quantity="other">%1$s · දින දර්ශන %2$d</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">දායකත්ව %1$d</item>
         <item quantity="other">දායකත්ව %1$d</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d දායකත්වය සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
+        <item quantity="other">%1$d දායකත්වයන් සහ ඔබගේ මනාපයන් ආයාත කරනු ලැබේ.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d දායකත්වය සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
+        <item quantity="other">%1$d දායකත්වයන් සහ ඔබගේ මනාපයන් ආයාත කර ඇත.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">සමමුහුර්තය අසාර්ථකයි (උත්සාහ %1$d)</item>
@@ -532,8 +561,8 @@
         <item quantity="other">ආයාතය</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026සහ %1$d තව</item>
-        <item quantity="other">\u2026සහ %1$d තව</item>
+        <item quantity="one">…සහ %1$d තව</item>
+        <item quantity="other">…සහ %1$d තව</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">සිදුවීම %1$d ක් ආයාත විය</item>
@@ -739,8 +768,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">දින දර්ශන සමමුහුර්ත වෙමින්\u2026</string>
-    <string name="sync_banner_preparing">සමමුහුර්තයට සූදානම් වෙමින්\u2026</string>
+    <string name="sync_banner_syncing">දින දර්ශන සමමුහුර්ත වෙමින්…</string>
+    <string name="sync_banner_preparing">සමමුහුර්තයට සූදානම් වෙමින්…</string>
     <string name="sync_banner_complete_errors">සමමුහුර්තය දෝෂ සහිතව සම්පූර්ණයි</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">සමමුහුර්තය අසාර්ථකයි: %1$s</string>
@@ -771,12 +800,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">දින %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">දින 1 / %1$d \u00b7 ආරම්භය %2$s</string>
+    <string name="day_starts">දින 1 / %1$d · ආරම්භය %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">දින %1$d / %2$d \u00b7 අවසානය %3$s</string>
+    <string name="day_ends">දින %1$d / %2$d · අවසානය %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 මුළු දිනය</string>
-    <string name="event_date_all_day">%1$s \u00b7 මුළු දිනය</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · මුළු දිනය</string>
+    <string name="event_date_all_day">%1$s · මුළු දිනය</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (මුළු දිනය)</string>
     <string name="event_date_all_day_parens">%1$s (මුළු දිනය)</string>
@@ -805,8 +834,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">දින %1$d / %2$d (මුළු දිනය)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">සමමුහුර්ත %1$d   \u2191%2$d තල්ලු   \u2193%3$d ඇද</string>
-    <string name="sync_history_stats_issues">සමමුහුර්ත %1$d   \u2191%2$d තල්ලු   \u2193%3$d ඇද   \u26a0 %4$d ගැටලු</string>
+    <string name="sync_history_stats">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද</string>
+    <string name="sync_history_stats_issues">සමමුහුර්ත %1$d   ↑%2$d තල්ලු   ↓%3$d ඇද   ⚠ %4$d ගැටලු</string>
     <string name="sync_history_failed">අසාර්ථකයි</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">සෑම පැයකටම</string>
@@ -817,8 +846,8 @@
     <string name="ics_url_required">URL අවශ්‍යයි</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (මුළු දිනය)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (මුළු දිනය)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, වාර %1$d ක්</item>
@@ -860,7 +889,7 @@
     <string name="rrule_until_suffix">, %1$s දක්වා</string>
     <string name="rrule_freq_never">කිසි විටෙකත් නැත</string>
     <string name="rrule_starting">%1$s %2$s සිට ආරම්භ වෙමින්%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s සිට</string>
+    <string name="rrule_since">%1$s · %2$s සිට</string>
 
     <!-- Insights -->
     <string name="insights_title">තීක්ෂ්ණ බුද්ධිය</string>

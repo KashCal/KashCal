@@ -34,8 +34,12 @@ class SystemAccountRegistrarTest {
         context = ApplicationProvider.getApplicationContext()
         accountManager = AccountManager.get(context)
 
-        // Register authenticator type so Robolectric's ShadowAccountManager
-        // accepts addAccountExplicitly() calls for our account type.
+        // AccountManager is a process-wide singleton; Robolectric does not
+        // always reset it between test classes in the same fork, which can
+        // leak accounts into this test and break the idempotency assertion.
+        accountManager.getAccountsByType(KashCalAuthenticator.ACCOUNT_TYPE)
+            .forEach { accountManager.removeAccountExplicitly(it) }
+
         val shadow = Shadows.shadowOf(accountManager)
         shadow.addAuthenticator(AuthenticatorDescription(
             KashCalAuthenticator.ACCOUNT_TYPE,

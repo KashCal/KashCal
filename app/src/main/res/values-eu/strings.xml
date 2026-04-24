@@ -80,7 +80,7 @@
     <string name="label_calendar_name">Egutegiaren izena</string>
     <string name="label_name">Izena</string>
     <string name="label_hex_color">Hex kolorea</string>
-    <string name="label_enter_hex">Sartu 6 karaktere hamaseitarrak (0\u20139, A\u2013F)</string>
+    <string name="label_enter_hex">Sartu 6 karaktere hamaseitarrak (0–9, A–F)</string>
 
     <!-- View Labels -->
     <string name="view_all">Dena</string>
@@ -100,15 +100,15 @@
     <string name="settings_force_sync_subtitle">Egutegiko datu guztiak berriro jaitsi</string>
     <string name="settings_sync_history">Sinkronizazio-historia</string>
     <string name="settings_sync_history_subtitle">Sinkronizazio-saioak ikusi (azken 48 orduak)</string>
-    <string name="settings_import_subtitle">.ics fitxategia inportatu</string>
-    <string name="settings_export_subtitle">.ics fitxategian babeskopia</string>
+    <string name="settings_import_subtitle">Gehitu ICS fitxategi bateko ekitaldiak edozein egutegitara</string>
+    <string name="settings_export_subtitle">Gorde ekitaldiak ICS fitxategi batean</string>
     <string name="settings_birthday_reminder">Urtebetetze-gogorarazlea</string>
     <string name="settings_use_device_timezone">Gailuaren ordu-zona erabili</string>
     <string name="settings_section_my_calendars">Nire egutegiak</string>
     <string name="settings_section_display">Bistaratzea</string>
     <string name="settings_section_notifications">Jakinarazpenak</string>
     <string name="settings_section_sync">Sinkronizazioa</string>
-    <string name="settings_section_data">Datuak</string>
+    <string name="settings_section_data">Babeskopia eta leheneratzea</string>
 
     <!-- Onboarding -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -145,7 +145,7 @@
     <string name="status_sync_history">Sinkronizazio-historia</string>
     <string name="status_parse_failures">Analisi-erroreak</string>
     <string name="status_error">Errorea</string>
-    <string name="status_failed_to_parse">\u26a0 %1$d ezin izan dira analizatu</string>
+    <string name="status_failed_to_parse">⚠ %1$d ezin izan dira analizatu</string>
     <string name="status_built_with_love">Maitasunez egina</string>
     <string name="status_in_austin">Austin-en</string>
     <string name="status_version">KashCal v%1$s</string>
@@ -174,7 +174,7 @@
     <string name="error_conflict_title">Sinkronizazio-gatazka</string>
     <string name="error_conflict_generic">Gertaera hau beste gailu batean aldatu da. Behartu sinkronizazioa azken bertsioa lortzeko.</string>
     <string name="error_conflict_with_event">\"%1$s\" beste gailu batean aldatu da. Behartu sinkronizazioa azken bertsioa lortzeko.</string>
-    <string name="error_sync_token_expired">Sinkronizazio-datuak iraungi dira. Sinkronizazio osoa egiten\u2026</string>
+    <string name="error_sync_token_expired">Sinkronizazio-datuak iraungi dira. Sinkronizazio osoa egiten…</string>
 
     <string name="error_event_not_found">Gertaera ez da aurkitu.</string>
     <string name="error_calendar_not_found">Egutegia ez da aurkitu.</string>
@@ -258,7 +258,7 @@
     <string name="label_password">Pasahitza</string>
     <string name="label_display_name_optional">Erakutsitako izena (aukerakoa)</string>
 
-    <string name="placeholder_search_events">Gertaerak bilatu\u2026</string>
+    <string name="placeholder_search_events">Gertaerak bilatu…</string>
 
     <!-- Hints -->
     <string name="hint_https_default">https:// lehenetsita zehaztu ezean</string>
@@ -292,13 +292,13 @@
     <string name="empty_no_calendars">Ez dago egutegirik erabilgarri</string>
 
     <!-- Status (Additional) -->
-    <string name="status_connecting">Konektatzen\u2026</string>
-    <string name="status_fetching">Eskuratzen\u2026</string>
+    <string name="status_connecting">Konektatzen…</string>
+    <string name="status_fetching">Eskuratzen…</string>
 
     <!-- Actions (Additional) -->
     <string name="action_fetch_calendar">Egutegia eskuratu</string>
-    <string name="action_import_from_file">Fitxategitik inportatu</string>
-    <string name="action_export_local_calendar">Tokiko egutegia esportatu</string>
+    <string name="action_import_from_file">Inportatu ekitaldiak fitxategitik</string>
+    <string name="action_export_local_calendar">Esportatu tokiko egutegia</string>
 
     <!-- Providers -->
     <string name="provider_icloud">iCloud</string>
@@ -329,7 +329,7 @@
     <string name="accounts_caldav_help_title">Zer da CalDAV?</string>
     <string name="accounts_caldav_help_description">CalDAV egutegiak sinkronizatzeko estandar irekia da. Hauek onartzen dute:</string>
     <string name="accounts_caldav_help_more">eta gehiago</string>
-    <string name="accounts_calendars_syncing">Sinkronizatzen\u2026</string>
+    <string name="accounts_calendars_syncing">Sinkronizatzen…</string>
     <string name="accounts_cd_icloud_icon">iCloud kontua</string>
     <string name="accounts_cd_caldav_icon">CalDAV kontua</string>
     <string name="accounts_cd_back">Atzera joan</string>
@@ -369,8 +369,8 @@
     <string name="account_detail_enabled">Gaituta</string>
     <string name="account_detail_enabled_subtitle">Kontu hau automatikoki sinkronizatu</string>
     <string name="account_detail_sync_now">Orain sinkronizatu</string>
-    <string name="account_detail_syncing">Sinkronizatzen\u2026</string>
-    <string name="account_detail_discovering">Aurkitzen\u2026</string>
+    <string name="account_detail_syncing">Sinkronizatzen…</string>
+    <string name="account_detail_discovering">Aurkitzen…</string>
     <string name="account_detail_discover_calendars">Egutegi berriak aurkitu</string>
     <string name="account_detail_change_password">Pasahitza aldatu</string>
     <string name="account_detail_sign_out">Amaitu saioa</string>
@@ -413,7 +413,7 @@
     <string name="caldav_trust_insecure_label">Konexio ez-seguruan fidatu</string>
     <string name="action_add_another">Beste bat gehitu</string>
     <string name="account_connected_found_calendars">%1$d egutegi aurkitu dira %2$s-en.</string>
-    <string name="account_connected_syncing_hint">Sinkronizazioa abian \u2014 gertaerak laster agertuko dira.</string>
+    <string name="account_connected_syncing_hint">Sinkronizazioa abian — gertaerak laster agertuko dira.</string>
     <string name="settings_time_format_currently_24h">Unean: 24 ordu (%1$s)</string>
     <string name="settings_time_format_currently_12h">Unean: 12 ordu (%1$s)</string>
     <string name="settings_time_format_example">Adibidea: %1$s</string>
@@ -451,7 +451,7 @@
     <string name="label_reminders_truncated">%1$d erakutsi gabe (%2$d guztira, gehienez %3$d editagarri)</string>
     <string name="label_found_events">Aurkitutakoak: %1$d gertaera</string>
     <string name="label_open_debug_menu">Arazketa-menua ireki</string>
-    <string name="placeholder_search">Bilatu\u2026</string>
+    <string name="placeholder_search">Bilatu…</string>
     <string name="status_sync_paused">Sinkronizazioa pausatuta</string>
     <string name="status_not_synced">Sinkronizatu gabe</string>
     <string name="status_sync_error">Sinkronizazio-errorea</string>
@@ -513,12 +513,20 @@
         <item quantity="other">%1$d kontu</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 egutegi 1</item>
-        <item quantity="other">%1$s \u00B7 %2$d egutegi</item>
+        <item quantity="one">%1$s · egutegi 1</item>
+        <item quantity="other">%1$s · %2$d egutegi</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">harpidetza %1$d</item>
         <item quantity="other">%1$d harpidetza</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d harpidetza eta zure hobespenak inportatuko dira.</item>
+        <item quantity="other">%1$d harpidetza eta zure hobespenak inportatuko dira.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d harpidetza eta zure hobespenak inportatuta.</item>
+        <item quantity="other">%1$d harpidetza eta zure hobespenak inportatuta.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Sinkronizazioak huts egin du (%1$d saiakera)</item>
@@ -557,8 +565,8 @@
         <item quantity="other">Inportatu</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026eta %1$d gehiago</item>
-        <item quantity="other">\u2026eta %1$d gehiago</item>
+        <item quantity="one">…eta %1$d gehiago</item>
+        <item quantity="other">…eta %1$d gehiago</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Gertaera %1$d inportatu da</item>
@@ -692,7 +700,7 @@
     <string name="rrule_until_suffix">, %1$s arte</string>
     <string name="rrule_freq_never">Inoiz ez</string>
     <string name="rrule_starting">%1$s %2$s-(e)tik%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s-(e)tik</string>
+    <string name="rrule_since">%1$s · %2$s-(e)tik</string>
     <!-- Sync Summary -->
     <string name="sync_summary_new">%1$d berri</string>
     <string name="sync_summary_updated">%1$d eguneratuta</string>
@@ -793,8 +801,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Egutegiak sinkronizatzen\u2026</string>
-    <string name="sync_banner_preparing">Sinkronizazioa prestatzen\u2026</string>
+    <string name="sync_banner_syncing">Egutegiak sinkronizatzen…</string>
+    <string name="sync_banner_preparing">Sinkronizazioa prestatzen…</string>
     <string name="sync_banner_complete_errors">Sinkronizazioa osatuta errorekin</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Sinkronizazio-errorea: %1$s</string>
@@ -825,12 +833,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">%2$d/%1$d eguna</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">%1$d/1 eguna \u00b7 hasten da %2$s</string>
+    <string name="day_starts">%1$d/1 eguna · hasten da %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">%2$d/%1$d eguna \u00b7 amaitzen da %3$s</string>
+    <string name="day_ends">%2$d/%1$d eguna · amaitzen da %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Egun osoa</string>
-    <string name="event_date_all_day">%1$s \u00b7 Egun osoa</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Egun osoa</string>
+    <string name="event_date_all_day">%1$s · Egun osoa</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Egun osoa)</string>
     <string name="event_date_all_day_parens">%1$s (Egun osoa)</string>
@@ -859,8 +867,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">%2$d/%1$d eguna (Egun osoa)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d sinkr.   \u2191%2$d igota   \u2193%3$d jaitsita</string>
-    <string name="sync_history_stats_issues">%1$d sinkr.   \u2191%2$d igota   \u2193%3$d jaitsita   \u26a0 %4$d arazo</string>
+    <string name="sync_history_stats">%1$d sinkr.   ↑%2$d igota   ↓%3$d jaitsita</string>
+    <string name="sync_history_stats_issues">%1$d sinkr.   ↑%2$d igota   ↓%3$d jaitsita   ⚠ %4$d arazo</string>
     <string name="sync_history_failed">Huts egin du</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Orduro</string>
@@ -871,8 +879,8 @@
     <string name="ics_url_required">URL behar da</string>
     <string name="ics_url_invalid_scheme">URLa http://, https://, edo webcal:// bidez hasi behar da</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Egun osoa)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Egun osoa)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Egutegia</string>
     <string name="cd_widget_add_event">Gehitu gertaera</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>
@@ -900,8 +908,8 @@
     <string name="insight_busiest_day_past">%1$s izan zen zure egunik okupatuena (%2$s)</string>
     <string name="insight_lightest_day_future">%1$s da zure egunik arinena (%2$s)</string>
     <string name="insight_lightest_day_past">%1$s izan zen zure egunik arinena (%2$s)</string>
-    <string name="insight_longest_free_future">Bloke libre luzeena: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">Bloke libre luzeena izan zen %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_longest_free_future">Bloke libre luzeena: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Bloke libre luzeena izan zen %1$s %2$s–%3$s (%4$s)</string>
     <string name="insight_weekend_load_clear_future">Zure asteburua libre dago</string>
     <string name="insight_weekend_load_clear_past">Zure asteburua libre egon zen</string>
     <string name="insight_weekend_load_light_future">%1$s programatuta asteburuan</string>
@@ -921,7 +929,7 @@
     <string name="insight_tomorrow_preview">Bihar: %1$s programatuta, %2$s-etan hasten da</string>
     <string name="insight_tomorrow_preview_no_start">Bihar: %1$s programatuta</string>
     <string name="insight_heaviest_upcoming">%1$s da zure egun kargatuena (%2$s)</string>
-    <string name="insight_next_free_block">Hurrengo bloke librea: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_next_free_block">Hurrengo bloke librea: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Egutegi banaketa: %1$s</string>
     <string name="insights_cd_daily_chart">Eguneroko banaketa: egun okupatuena %1$s da</string>
 
@@ -961,4 +969,23 @@
     <string name="label_more_colors">Kolore gehiago</string>
     <string name="label_back_to_grid">Atzera</string>
     <string name="settings_suggest_titles">Iradoki ekitaldien izenburuak</string>
+    <string name="backup_settings_label">Egin ezarpenen babeskopia</string>
+    <string name="backup_settings_subtitle">Gorde KashCal-en konfigurazioa JSON fitxategi batean</string>
+    <string name="restore_settings_label">Leheneratu ezarpenak</string>
+    <string name="restore_settings_subtitle">Leheneratu KashCal-en konfigurazioa babeskopia-fitxategi batetik</string>
+    <string name="restore_confirm_title">Babeskopia leheneratu?</string>
+    <string name="restore_confirm_from">KashCal %1$s-ren babeskopia, %2$s</string>
+    <string name="action_restore">Leheneratu</string>
+    <string name="restore_success_title">Leheneratzea amaitu da</string>
+    <string name="restore_confirm_message_prefs_only">Zure hobespenak inportatuko dira.</string>
+    <string name="restore_success_message_prefs_only">Hobespenak inportatuta.</string>
+    <string name="restore_success_device_calendars_note">Hautatu berriz gailuko egutegiak eginbide hori erabiltzen baduzu.</string>
+    <string name="restore_error_title">Leheneratzeak huts egin du</string>
+    <string name="restore_error_version_too_new">Babeskopia hau KashCal-en bertsio berriago batekin sortu zen. Eguneratu KashCal eta saiatu berriz.</string>
+    <string name="restore_error_malformed_json">Fitxategi hau ez da KashCal-en baliozko babeskopia bat.</string>
+    <string name="restore_error_invalid_value">Babeskopia-fitxategi honek baliogabeko datuak ditu eta ezin da leheneratu.</string>
+    <string name="restore_error_apply_failure">Zerbait gaizki joan da babeskopia aplikatzean. Ez da aldaketarik gorde.</string>
+    <string name="backup_error_build_failed">Babeskopiak huts egin du</string>
+    <string name="backup_error_write_failed">Babeskopiak huts egin du — ezin izan da fitxategian idatzi</string>
+    <string name="backup_error_read_failed">Ezin izan da fitxategia irakurri</string>
 </resources>

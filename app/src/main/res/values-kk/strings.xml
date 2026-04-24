@@ -100,15 +100,34 @@
     <string name="settings_force_sync_subtitle">Барлық күнтізбе деректерін қайта жүктеу</string>
     <string name="settings_sync_history">Синхрондау тарихы</string>
     <string name="settings_sync_history_subtitle">Синхрондау сеанстарын көру (соңғы 48 сағат)</string>
-    <string name="settings_import_subtitle">.ics файлын импорттау</string>
-    <string name="settings_export_subtitle">.ics файлына сақтық көшірме жасау</string>
+    <string name="settings_import_subtitle">ICS файлынан оқиғаларды кез келген күнтізбеге қосу</string>
+    <string name="settings_export_subtitle">Оқиғаларды ICS файлына сақтау</string>
     <string name="settings_birthday_reminder">Туған күн еске салғышы</string>
     <string name="settings_use_device_timezone">Құрылғы уақыт белдеуін пайдалану</string>
     <string name="settings_section_my_calendars">Менің күнтізбелерім</string>
     <string name="settings_section_display">Көрініс</string>
     <string name="settings_section_notifications">Хабарландырулар</string>
     <string name="settings_section_sync">Синхрондау</string>
-    <string name="settings_section_data">Деректер</string>
+    <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
+    <string name="backup_settings_label">Параметрлердің сақтық көшірмесі</string>
+    <string name="backup_settings_subtitle">KashCal конфигурациясын JSON файлына сақтау</string>
+    <string name="restore_settings_label">Параметрлерді қалпына келтіру</string>
+    <string name="restore_settings_subtitle">KashCal конфигурациясын сақтық көшірме файлынан қалпына келтіру</string>
+    <string name="restore_confirm_title">Сақтық көшірмені қалпына келтіру керек пе?</string>
+    <string name="restore_confirm_from">KashCal %1$s, %2$s нұсқасынан жасалған сақтық көшірме</string>
+    <string name="restore_confirm_message_prefs_only">Теңшеулеріңіз импортталады.</string>
+    <string name="action_restore">Қалпына келтіру</string>
+    <string name="restore_success_title">Қалпына келтіру аяқталды</string>
+    <string name="restore_success_message_prefs_only">Теңшеулер импортталды.</string>
+    <string name="restore_success_device_calendars_note">Егер құрылғы күнтізбелерін пайдалансаңыз, оларды қайта таңдаңыз.</string>
+    <string name="restore_error_title">Қалпына келтіру сәтсіз аяқталды</string>
+    <string name="restore_error_version_too_new">Бұл сақтық көшірме KashCal-дың жаңарақ нұсқасымен жасалған. KashCal-ды жаңартып, қайталап көріңіз.</string>
+    <string name="restore_error_malformed_json">Бұл файл жарамды KashCal сақтық көшірмесі емес.</string>
+    <string name="restore_error_invalid_value">Бұл сақтық көшірме файлында жарамсыз деректер бар, қалпына келтіру мүмкін емес.</string>
+    <string name="restore_error_apply_failure">Сақтық көшірмені қолдану кезінде бір нәрсе бұзылды. Ешқандай өзгерістер сақталмады.</string>
+    <string name="backup_error_build_failed">Сақтық көшірме сәтсіз аяқталды</string>
+    <string name="backup_error_write_failed">Сақтық көшірме сәтсіз аяқталды — файлға жазу мүмкін емес</string>
+    <string name="backup_error_read_failed">Файлды оқу мүмкін болмады</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -297,7 +316,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Күнтізбені жүктеу</string>
-    <string name="action_import_from_file">Файлдан импорттау</string>
+    <string name="action_import_from_file">Файлдан оқиғаларды импорттау</string>
     <string name="action_export_local_calendar">Жергілікті күнтізбені экспорттау</string>
 
     <!-- ==================== Providers ==================== -->
@@ -520,6 +539,14 @@
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d жазылым</item>
         <item quantity="other">%1$d жазылым</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d жазылым және теңшеулеріңіз импортталады.</item>
+        <item quantity="other">%1$d жазылым және теңшеулеріңіз импортталады.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d жазылым және теңшеулеріңіз импортталды.</item>
+        <item quantity="other">%1$d жазылым және теңшеулеріңіз импортталды.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Синхрондау сәтсіз (%1$d әрекет)</item>

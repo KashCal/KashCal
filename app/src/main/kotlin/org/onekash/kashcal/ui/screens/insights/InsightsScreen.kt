@@ -108,8 +108,6 @@ fun InsightsScreen(
 
             if (uiState.stats.dailyBreakdown.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(20.dp))
-                SectionHeader(stringResource(R.string.insights_cd_daily_chart, ""))
-                Spacer(modifier = Modifier.height(8.dp))
                 DailyDistributionChart(
                     days = uiState.stats.dailyBreakdown,
                     period = uiState.period
@@ -118,8 +116,6 @@ fun InsightsScreen(
 
             if (uiState.insights.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(20.dp))
-                SectionHeader(stringResource(R.string.insights_title))
-                Spacer(modifier = Modifier.height(8.dp))
                 uiState.insights.forEach { insight ->
                     InsightCard(insight = insight)
                     Spacer(modifier = Modifier.height(6.dp))
@@ -395,16 +391,6 @@ private fun InsightCard(insight: Insight) {
             style = MaterialTheme.typography.bodyMedium
         )
     }
-}
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
 }
 
 @Composable

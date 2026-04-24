@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">സർവറിൽ നിന്ന് എല്ലാ കലണ്ടർ ഡാറ്റയും വീണ്ടും ഡൗൺലോഡ് ചെയ്യുക</string>
     <string name="settings_sync_history">സിങ്ക് ചരിത്രം</string>
     <string name="settings_sync_history_subtitle">സിങ്ക് സെഷനുകൾ കാണുക (കഴിഞ്ഞ 48 മണിക്കൂർ)</string>
-    <string name="settings_import_subtitle">.ics ഫയൽ ഇമ്പോർട്ട് ചെയ്യുക</string>
-    <string name="settings_export_subtitle">.ics ഫയലിലേക്ക് ബാക്കപ്പ്</string>
+    <string name="settings_import_subtitle">ICS ഫയലിൽ നിന്നുള്ള ഇവന്റുകൾ ഏത് കലണ്ടറിലേക്കും ചേർക്കുക</string>
+    <string name="settings_export_subtitle">ഇവന്റുകൾ ICS ഫയലിലേക്ക് സേവ് ചെയ്യുക</string>
     <string name="settings_birthday_reminder">ജന്മദിന റിമൈൻഡർ</string>
     <string name="settings_use_device_timezone">ഉപകരണ ടൈംസോൺ ഉപയോഗിക്കുക</string>
     <string name="settings_section_my_calendars">എന്റെ കലണ്ടറുകൾ</string>
     <string name="settings_section_display">ഡിസ്പ്ലേ</string>
     <string name="settings_section_notifications">അറിയിപ്പുകൾ</string>
     <string name="settings_section_sync">സിങ്ക്</string>
-    <string name="settings_section_data">ഡാറ്റ</string>
+    <string name="settings_section_data">ബാക്കപ്പും പുനഃസ്ഥാപനവും</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">ക്രമീകരണങ്ങൾ ബാക്കപ്പ് ചെയ്യുക</string>
+    <string name="backup_settings_subtitle">KashCal കോൺഫിഗറേഷൻ JSON ഫയലിൽ സേവ് ചെയ്യുക</string>
+    <string name="restore_settings_label">ക്രമീകരണങ്ങൾ പുനഃസ്ഥാപിക്കുക</string>
+    <string name="restore_settings_subtitle">ബാക്കപ്പ് ഫയലിൽ നിന്ന് KashCal കോൺഫിഗറേഷൻ പുനഃസ്ഥാപിക്കുക</string>
+    <string name="restore_confirm_title">ബാക്കപ്പ് പുനഃസ്ഥാപിക്കണോ?</string>
+    <string name="restore_confirm_from">KashCal %1$s-ൽ നിന്നുള്ള ബാക്കപ്പ്, %2$s</string>
+    <string name="action_restore">പുനഃസ്ഥാപിക്കുക</string>
+    <string name="restore_success_title">പുനഃസ്ഥാപനം പൂർത്തിയായി</string>
+    <string name="restore_confirm_message_prefs_only">നിങ്ങളുടെ മുൻഗണനകൾ ഇറക്കുമതി ചെയ്യും.</string>
+    <string name="restore_success_message_prefs_only">മുൻഗണനകൾ ഇറക്കുമതി ചെയ്തു.</string>
+    <string name="restore_success_device_calendars_note">നിങ്ങൾ ഉപകരണ കലണ്ടർ സവിശേഷത ഉപയോഗിക്കുന്നെങ്കിൽ, അവ വീണ്ടും തിരഞ്ഞെടുക്കുക.</string>
+    <string name="restore_error_title">പുനഃസ്ഥാപനം പരാജയപ്പെട്ടു</string>
+    <string name="restore_error_version_too_new">ഈ ബാക്കപ്പ് KashCal-ന്റെ പുതിയ പതിപ്പിൽ സൃഷ്ടിച്ചതാണ്. ദയവായി KashCal അപ്ഡേറ്റ് ചെയ്ത് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="restore_error_malformed_json">ഈ ഫയൽ സാധുവായ ഒരു KashCal ബാക്കപ്പ് അല്ല.</string>
+    <string name="restore_error_invalid_value">ഈ ബാക്കപ്പ് ഫയലിൽ അസാധുവായ ഡാറ്റയുണ്ട്, പുനഃസ്ഥാപിക്കാൻ കഴിയില്ല.</string>
+    <string name="restore_error_apply_failure">ബാക്കപ്പ് പ്രയോഗിക്കുമ്പോൾ എന്തോ തെറ്റ് സംഭവിച്ചു. മാറ്റങ്ങളൊന്നും സേവ് ചെയ്തിട്ടില്ല.</string>
+    <string name="backup_error_build_failed">ബാക്കപ്പ് പരാജയപ്പെട്ടു</string>
+    <string name="backup_error_write_failed">ബാക്കപ്പ് പരാജയപ്പെട്ടു — ഫയലിലേക്ക് എഴുതാനായില്ല</string>
+    <string name="backup_error_read_failed">ഫയൽ വായിക്കാനായില്ല</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,7 +319,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">കലണ്ടർ നേടുക</string>
-    <string name="action_import_from_file">ഫയലിൽ നിന്ന് ഇമ്പോർട്ട് ചെയ്യുക</string>
+    <string name="action_import_from_file">ഫയലിൽ നിന്ന് ഇവന്റുകൾ ഇമ്പോർട്ട് ചെയ്യുക</string>
     <string name="action_export_local_calendar">ലോക്കൽ കലണ്ടർ എക്സ്‌പോർട്ട് ചെയ്യുക</string>
 
     <!-- ==================== Providers ==================== -->
@@ -414,7 +435,7 @@
     <string name="caldav_trust_insecure_label">അസുരക്ഷിത കണക്ഷൻ വിശ്വസിക്കുക</string>
     <string name="action_add_another">ഒന്ന് കൂടി ചേർക്കുക</string>
     <string name="account_connected_found_calendars">%2$s ന് %1$d കലണ്ടർ(കൾ) കണ്ടെത്തി.</string>
-    <string name="account_connected_syncing_hint">സിങ്ക് പുരോഗമിക്കുന്നു \u2014 ഇവന്റുകൾ ഉടൻ ദൃശ്യമാകും.</string>
+    <string name="account_connected_syncing_hint">സിങ്ക് പുരോഗമിക്കുന്നു — ഇവന്റുകൾ ഉടൻ ദൃശ്യമാകും.</string>
     <string name="settings_time_format_currently_24h">ഇപ്പോൾ: 24-മണിക്കൂർ (%1$s)</string>
     <string name="settings_time_format_currently_12h">ഇപ്പോൾ: 12-മണിക്കൂർ (%1$s)</string>
     <string name="settings_time_format_example">ഉദാഹരണം: %1$s</string>
@@ -453,7 +474,7 @@
     <string name="label_reminders_truncated">%1$d കാണിച്ചില്ല (%2$d ആകെ, പരമാവധി %3$d തിരുത്താവുന്നവ)</string>
     <string name="label_found_events">കണ്ടെത്തി: %1$d ഇവന്റുകൾ</string>
     <string name="label_open_debug_menu">ഡീബഗ് മെനു തുറക്കുക</string>
-    <string name="placeholder_search">തിരയുക\u2026</string>
+    <string name="placeholder_search">തിരയുക…</string>
     <string name="status_sync_paused">സിങ്ക് താൽക്കാലികമായി നിർത്തി</string>
     <string name="status_not_synced">സിങ്ക് ചെയ്തിട്ടില്ല</string>
     <string name="status_sync_error">സിങ്ക് പിശക്</string>
@@ -515,12 +536,20 @@
         <item quantity="other">%1$d അക്കൗണ്ടുകൾ</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 കലണ്ടർ</item>
-        <item quantity="other">%1$s \u00B7 %2$d കലണ്ടറുകൾ</item>
+        <item quantity="one">%1$s · 1 കലണ്ടർ</item>
+        <item quantity="other">%1$s · %2$d കലണ്ടറുകൾ</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d സബ്സ്ക്രിപ്ഷൻ</item>
         <item quantity="other">%1$d സബ്സ്ക്രിപ്ഷനുകൾ</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d സബ്‌സ്‌ക്രിപ്ഷനും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
+        <item quantity="other">%1$d സബ്‌സ്‌ക്രിപ്ഷനുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്യും.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d സബ്‌സ്‌ക്രിപ്ഷനും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
+        <item quantity="other">%1$d സബ്‌സ്‌ക്രിപ്ഷനുകളും നിങ്ങളുടെ മുൻഗണനകളും ഇറക്കുമതി ചെയ്തു.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">സിങ്ക് പരാജയപ്പെട്ടു (%1$d ശ്രമം)</item>
@@ -559,8 +588,8 @@
         <item quantity="other">ഇമ്പോർട്ട്</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026കൂടി %1$d എണ്ണം</item>
-        <item quantity="other">\u2026കൂടി %1$d എണ്ണം</item>
+        <item quantity="one">…കൂടി %1$d എണ്ണം</item>
+        <item quantity="other">…കൂടി %1$d എണ്ണം</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d ഇവന്റ് ഇമ്പോർട്ട് ചെയ്തു</item>
@@ -769,8 +798,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുന്നു\u2026</string>
-    <string name="sync_banner_preparing">സിങ്കിനായി തയ്യാറെടുക്കുന്നു\u2026</string>
+    <string name="sync_banner_syncing">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുന്നു…</string>
+    <string name="sync_banner_preparing">സിങ്കിനായി തയ്യാറെടുക്കുന്നു…</string>
     <string name="sync_banner_complete_errors">പിശകുകളോടെ സിങ്ക് പൂർത്തിയായി</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">സിങ്ക് പരാജയം: %1$s</string>
@@ -801,12 +830,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">ദിവസം %1$d / %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">ദിവസം 1 / %1$d \u00b7 ആരംഭം %2$s</string>
+    <string name="day_starts">ദിവസം 1 / %1$d · ആരംഭം %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">ദിവസം %1$d / %2$d \u00b7 അവസാനം %3$s</string>
+    <string name="day_ends">ദിവസം %1$d / %2$d · അവസാനം %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 മുഴുവൻ ദിവസം</string>
-    <string name="event_date_all_day">%1$s \u00b7 മുഴുവൻ ദിവസം</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · മുഴുവൻ ദിവസം</string>
+    <string name="event_date_all_day">%1$s · മുഴുവൻ ദിവസം</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (മുഴുവൻ ദിവസം)</string>
     <string name="event_date_all_day_parens">%1$s (മുഴുവൻ ദിവസം)</string>
@@ -843,8 +872,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">ദിവസം %1$d / %2$d (മുഴുവൻ ദിവസം)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d സിങ്ക്   \u2191%2$d പുഷ്   \u2193%3$d പുൾ</string>
-    <string name="sync_history_stats_issues">%1$d സിങ്ക്   \u2191%2$d പുഷ്   \u2193%3$d പുൾ   \u26a0 %4$d പ്രശ്നങ്ങൾ</string>
+    <string name="sync_history_stats">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ</string>
+    <string name="sync_history_stats_issues">%1$d സിങ്ക്   ↑%2$d പുഷ്   ↓%3$d പുൾ   ⚠ %4$d പ്രശ്നങ്ങൾ</string>
     <string name="sync_history_failed">പരാജയം</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">ഓരോ മണിക്കൂറിലും</string>
@@ -855,8 +884,8 @@
     <string name="ics_url_required">URL ആവശ്യമാണ്</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, അല്ലെങ്കിൽ webcal:// ൽ ആരംഭിക്കണം</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (മുഴുവൻ ദിവസം)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (മുഴുവൻ ദിവസം)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">കലണ്ടർ</string>
@@ -893,7 +922,7 @@
     <string name="rrule_until_suffix">, %1$s വരെ</string>
     <string name="rrule_freq_never">ഒരിക്കലുമില്ല</string>
     <string name="rrule_starting">%1$s %2$s മുതൽ ആരംഭിക്കുന്നു%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 %2$s മുതൽ</string>
+    <string name="rrule_since">%1$s · %2$s മുതൽ</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d തവണ</item>

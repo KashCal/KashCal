@@ -1,0 +1,150 @@
+package org.onekash.kashcal.domain.backup
+
+import androidx.datastore.preferences.core.Preferences
+import org.onekash.kashcal.data.preferences.PreferencesKeys
+
+/**
+ * Controls which DataStore preference keys are included in (or excluded from) a settings backup.
+ *
+ * `KEYS` is the explicit allow-list. `EXCLUDED_KEY_NAMES` names every preference that must not
+ * leave the device — runtime state, migration flags, onboarding flags, device-calendar selection
+ * sets (IDs aren't portable across installs), and legacy superseded keys.
+ *
+ * A reflection-backed test enforces that every key declared in `PreferencesKeys` is categorised
+ * into exactly one of these two lists, so adding a new preference without classifying it fails CI.
+ */
+object ExportablePreferences {
+
+    enum class PrefKind { BOOL, INT, LONG, STRING, STRING_SET }
+
+    private val KIND_BY_KEY: Map<String, PrefKind> = mapOf(
+        PreferencesKeys.FIRST_DAY_OF_WEEK.name to PrefKind.INT,
+        PreferencesKeys.SHOW_WEEK_NUMBERS.name to PrefKind.BOOL,
+        PreferencesKeys.SHOW_DECLINED_EVENTS.name to PrefKind.BOOL,
+        PreferencesKeys.DEFAULT_EVENT_DURATION.name to PrefKind.INT,
+        PreferencesKeys.DEFAULT_REMINDER_MINUTES.name to PrefKind.INT,
+        PreferencesKeys.DEFAULT_ALL_DAY_REMINDER.name to PrefKind.INT,
+        PreferencesKeys.AUTO_SYNC_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.SYNC_INTERVAL_MINUTES.name to PrefKind.INT,
+        PreferencesKeys.SYNC_WIFI_ONLY.name to PrefKind.BOOL,
+        PreferencesKeys.SYNC_PAST_DAYS.name to PrefKind.INT,
+        PreferencesKeys.SYNC_FUTURE_DAYS.name to PrefKind.INT,
+        PreferencesKeys.THEME.name to PrefKind.STRING,
+        PreferencesKeys.NOTIFICATION_SOUND.name to PrefKind.BOOL,
+        PreferencesKeys.NOTIFICATION_VIBRATE.name to PrefKind.BOOL,
+        PreferencesKeys.QUICK_ADD_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.TITLE_SUGGESTIONS_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.SHOW_EVENT_EMOJIS.name to PrefKind.BOOL,
+        PreferencesKeys.TIME_FORMAT.name to PrefKind.STRING,
+        PreferencesKeys.DEFAULT_CALENDAR_VIEW.name to PrefKind.STRING,
+        PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY.name to PrefKind.INT,
+        PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.BIRTHDAY_REMINDER.name to PrefKind.INT,
+        PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.ANNIVERSARY_REMINDER.name to PrefKind.INT,
+        PreferencesKeys.DEVICE_CALENDARS_ENABLED.name to PrefKind.BOOL,
+        PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED.name to PrefKind.BOOL,
+    )
+
+    val KEYS: List<Preferences.Key<*>> = listOf(
+        // Calendar view
+        PreferencesKeys.FIRST_DAY_OF_WEEK,
+        PreferencesKeys.SHOW_WEEK_NUMBERS,
+        PreferencesKeys.SHOW_DECLINED_EVENTS,
+        PreferencesKeys.DEFAULT_EVENT_DURATION,
+        // Event defaults (DEFAULT_CALENDAR excluded — stores non-portable row IDs)
+        PreferencesKeys.DEFAULT_REMINDER_MINUTES,
+        PreferencesKeys.DEFAULT_ALL_DAY_REMINDER,
+        // Sync
+        PreferencesKeys.AUTO_SYNC_ENABLED,
+        PreferencesKeys.SYNC_INTERVAL_MINUTES,
+        PreferencesKeys.SYNC_WIFI_ONLY,
+        PreferencesKeys.SYNC_PAST_DAYS,
+        PreferencesKeys.SYNC_FUTURE_DAYS,
+        // UI
+        PreferencesKeys.THEME,
+        PreferencesKeys.NOTIFICATION_SOUND,
+        PreferencesKeys.NOTIFICATION_VIBRATE,
+        PreferencesKeys.QUICK_ADD_ENABLED,
+        PreferencesKeys.TITLE_SUGGESTIONS_ENABLED,
+        // Display
+        PreferencesKeys.SHOW_EVENT_EMOJIS,
+        PreferencesKeys.TIME_FORMAT,
+        PreferencesKeys.DEFAULT_CALENDAR_VIEW,
+        PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY,
+        // Contact birthdays & anniversaries
+        PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED,
+        PreferencesKeys.BIRTHDAY_REMINDER,
+        PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED,
+        PreferencesKeys.ANNIVERSARY_REMINDER,
+        // Device calendars master toggles only (ID sets excluded — not portable)
+        PreferencesKeys.DEVICE_CALENDARS_ENABLED,
+        PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED,
+    ).also {
+        require(it.size == 26) {
+            "KEYS size drifted; expected 26 allowed keys but got ${it.size}. Update ExportablePreferencesTest expectations too."
+        }
+    }
+
+    val EXCLUDED_KEY_NAMES: Set<String> = setOf(
+        // Runtime state
+        PreferencesKeys.LAST_SYNC_TIME.name,
+        PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
+        PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
+        PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,
+        PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS.name,
+        PreferencesKeys.LAST_APP_VERSION_CODE.name,
+        // Migration flags
+        PreferencesKeys.MIGRATION_V1_COMPLETED.name,
+        PreferencesKeys.SYNC_METADATA_MIGRATED.name,
+        PreferencesKeys.REMINDER_MIGRATION_VERSION.name,
+        PreferencesKeys.PARSER_VERSION.name,
+        PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED.name,
+        // Onboarding flags
+        PreferencesKeys.ONBOARDING_COMPLETED.name,
+        PreferencesKeys.SHOWN_LOCAL_CALENDAR_INTRO.name,
+        PreferencesKeys.ONBOARDING_DISMISSED.name,
+        // Device calendar selection IDs — not portable across installs
+        PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS.name,
+        PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS.name,
+        // Default calendar pref stores "room:<id>" — row IDs are not portable across installs
+        PreferencesKeys.DEFAULT_CALENDAR.name,
+        // Legacy (superseded)
+        PreferencesKeys.DEFAULT_CALENDAR_ID.name,
+    )
+
+    fun toBackupValue(key: Preferences.Key<*>, rawValue: Any): BackupPreferenceValue? {
+        return when (rawValue) {
+            is Boolean -> BackupPreferenceValue.BoolPref(rawValue)
+            is Int -> BackupPreferenceValue.IntPref(rawValue)
+            is Long -> BackupPreferenceValue.LongPref(rawValue)
+            is String -> BackupPreferenceValue.StringPref(rawValue)
+            is Set<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val strings = rawValue.filterIsInstance<String>().toSet()
+                if (strings.size != rawValue.size) null
+                else BackupPreferenceValue.StringSetPref(strings)
+            }
+            else -> null
+        }
+    }
+
+    fun fromBackupValue(
+        name: String,
+        value: BackupPreferenceValue,
+    ): Pair<Preferences.Key<*>, Any>? {
+        val known = KEYS.firstOrNull { it.name == name } ?: return null
+        return matchValueToKey(known, value)?.let { known to it }
+    }
+
+    private fun matchValueToKey(key: Preferences.Key<*>, value: BackupPreferenceValue): Any? {
+        val kind = KIND_BY_KEY[key.name] ?: return null
+        return when (kind) {
+            PrefKind.BOOL -> (value as? BackupPreferenceValue.BoolPref)?.value
+            PrefKind.INT -> (value as? BackupPreferenceValue.IntPref)?.value
+            PrefKind.LONG -> (value as? BackupPreferenceValue.LongPref)?.value
+            PrefKind.STRING -> (value as? BackupPreferenceValue.StringPref)?.value
+            PrefKind.STRING_SET -> (value as? BackupPreferenceValue.StringSetPref)?.value
+        }
+    }
+}

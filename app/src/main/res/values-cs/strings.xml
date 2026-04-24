@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Znovu stáhnout všechna data kalendáře</string>
     <string name="settings_sync_history">Historie synchronizace</string>
     <string name="settings_sync_history_subtitle">Zobrazit relace synchronizace (posledních 48 hodin)</string>
-    <string name="settings_import_subtitle">Importovat soubor .ics</string>
-    <string name="settings_export_subtitle">Záloha do souboru .ics</string>
+    <string name="settings_import_subtitle">Přidat události ze souboru ICS do libovolného kalendáře</string>
+    <string name="settings_export_subtitle">Uložit události do souboru ICS</string>
     <string name="settings_birthday_reminder">Připomínka narozenin</string>
     <string name="settings_use_device_timezone">Použít časové pásmo zařízení</string>
     <string name="settings_section_my_calendars">Moje kalendáře</string>
     <string name="settings_section_display">Zobrazení</string>
     <string name="settings_section_notifications">Oznámení</string>
     <string name="settings_section_sync">Synchronizace</string>
-    <string name="settings_section_data">Data</string>
+    <string name="settings_section_data">Záloha a obnova</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Zálohovat nastavení</string>
+    <string name="backup_settings_subtitle">Uložit konfiguraci KashCal do souboru JSON</string>
+    <string name="restore_settings_label">Obnovit nastavení</string>
+    <string name="restore_settings_subtitle">Obnovit konfiguraci KashCal ze záložního souboru</string>
+    <string name="restore_confirm_title">Obnovit zálohu?</string>
+    <string name="restore_confirm_from">Záloha z KashCal %1$s, %2$s</string>
+    <string name="action_restore">Obnovit</string>
+    <string name="restore_success_title">Obnova dokončena</string>
+    <string name="restore_success_device_calendars_note">Pokud používáte tuto funkci, znovu vyberte kalendáře zařízení.</string>
+    <string name="restore_confirm_message_prefs_only">Vaše předvolby budou importovány.</string>
+    <string name="restore_success_message_prefs_only">Předvolby importovány.</string>
+    <string name="restore_error_title">Obnova selhala</string>
+    <string name="restore_error_version_too_new">Tato záloha byla vytvořena v novější verzi KashCal. Aktualizujte KashCal a zkuste to znovu.</string>
+    <string name="restore_error_malformed_json">Tento soubor není platnou zálohou KashCal.</string>
+    <string name="restore_error_invalid_value">Tento záložní soubor obsahuje neplatná data a nelze ho obnovit.</string>
+    <string name="restore_error_apply_failure">Při použití zálohy došlo k chybě. Žádné změny nebyly uloženy.</string>
+    <string name="backup_error_build_failed">Záloha se nezdařila</string>
+    <string name="backup_error_write_failed">Záloha se nezdařila — nelze zapsat do souboru</string>
+    <string name="backup_error_read_failed">Soubor nelze přečíst</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -290,8 +311,8 @@
     <string name="status_fetching">Načítání…</string>
 
     <string name="action_fetch_calendar">Načíst kalendář</string>
-    <string name="action_import_from_file">Importovat ze souboru</string>
-    <string name="action_export_local_calendar">Exportovat místní kalendář</string>
+    <string name="action_import_from_file">Importovat události ze souboru</string>
+    <string name="action_export_local_calendar">Exportovat kalendář Místní</string>
 
     <string name="provider_icloud">iCloud</string>
 
@@ -396,7 +417,7 @@
     <string name="caldav_trust_insecure_label">Důvěřovat nezabezpečenému připojení</string>
     <string name="action_add_another">Přidat další</string>
     <string name="account_connected_found_calendars">Nalezeno %1$d kalendářů pro %2$s.</string>
-    <string name="account_connected_syncing_hint">Probíhá synchronizace \u2014 události se brzy zobrazí.</string>
+    <string name="account_connected_syncing_hint">Probíhá synchronizace — události se brzy zobrazí.</string>
     <string name="settings_time_format_currently_24h">Aktuálně: 24hodinový (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktuálně: 12hodinový (%1$s)</string>
     <string name="settings_time_format_example">Příklad: %1$s</string>
@@ -434,7 +455,7 @@
     <string name="label_reminders_truncated">%1$d nezobrazeno (%2$d celkem, max %3$d editovatelných)</string>
     <string name="label_found_events">Nalezeno: %1$d událostí</string>
     <string name="label_open_debug_menu">Otevřít ladící nabídku</string>
-    <string name="placeholder_search">Hledat\u2026</string>
+    <string name="placeholder_search">Hledat…</string>
     <string name="status_sync_paused">Synchronizace pozastavena</string>
     <string name="status_not_synced">Nesynchronizováno</string>
     <string name="status_sync_error">Chyba synchronizace</string>
@@ -493,16 +514,26 @@
         <item quantity="other">%1$d účtů</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalendář</item>
-        <item quantity="few">%1$s \u00B7 %2$d kalendáře</item>
-        <item quantity="many">%1$s \u00B7 %2$d kalendářů</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendářů</item>
+        <item quantity="one">%1$s · 1 kalendář</item>
+        <item quantity="few">%1$s · %2$d kalendáře</item>
+        <item quantity="many">%1$s · %2$d kalendářů</item>
+        <item quantity="other">%1$s · %2$d kalendářů</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d odběr</item>
         <item quantity="few">%1$d odběry</item>
         <item quantity="many">%1$d odběrů</item>
         <item quantity="other">%1$d odběrů</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d odběr a vaše předvolby budou importovány.</item>
+        <item quantity="few">%1$d odběry a vaše předvolby budou importovány.</item>
+        <item quantity="other">%1$d odběrů a vaše předvolby budou importovány.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Importován %1$d odběr a vaše předvolby.</item>
+        <item quantity="few">Importovány %1$d odběry a vaše předvolby.</item>
+        <item quantity="other">Importováno %1$d odběrů a vaše předvolby.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronizace selhala (%1$d pokus)</item>
@@ -559,10 +590,10 @@
         <item quantity="other">Importovat</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026a %1$d další</item>
-        <item quantity="few">\u2026a %1$d další</item>
-        <item quantity="many">\u2026a %1$d dalších</item>
-        <item quantity="other">\u2026a %1$d dalších</item>
+        <item quantity="one">…a %1$d další</item>
+        <item quantity="few">…a %1$d další</item>
+        <item quantity="many">…a %1$d dalších</item>
+        <item quantity="other">…a %1$d dalších</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Importována %1$d událost</item>
@@ -804,8 +835,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synchronizace kalendářů\u2026</string>
-    <string name="sync_banner_preparing">Příprava synchronizace\u2026</string>
+    <string name="sync_banner_syncing">Synchronizace kalendářů…</string>
+    <string name="sync_banner_preparing">Příprava synchronizace…</string>
     <string name="sync_banner_complete_errors">Synchronizace dokončena s chybami</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Synchronizace selhala: %1$s</string>
@@ -844,12 +875,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Den %1$d z %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Den 1 z %1$d \u00b7 začátek %2$s</string>
+    <string name="day_starts">Den 1 z %1$d · začátek %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Den %1$d z %2$d \u00b7 konec %3$s</string>
+    <string name="day_ends">Den %1$d z %2$d · konec %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Celý den</string>
-    <string name="event_date_all_day">%1$s \u00b7 Celý den</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Celý den</string>
+    <string name="event_date_all_day">%1$s · Celý den</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Celý den)</string>
     <string name="event_date_all_day_parens">%1$s (Celý den)</string>
@@ -887,8 +918,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Den %1$d z %2$d (Celý den)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d synch.   \u2191%2$d odesláno   \u2193%3$d staženo</string>
-    <string name="sync_history_stats_issues">%1$d synch.   \u2191%2$d odesláno   \u2193%3$d staženo   \u26a0 %4$d problémů</string>
+    <string name="sync_history_stats">%1$d synch.   ↑%2$d odesláno   ↓%3$d staženo</string>
+    <string name="sync_history_stats_issues">%1$d synch.   ↑%2$d odesláno   ↓%3$d staženo   ⚠ %4$d problémů</string>
     <string name="sync_history_failed">Selhalo</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Každou hodinu</string>
@@ -899,8 +930,8 @@
     <string name="ics_url_required">URL je vyžadováno</string>
     <string name="ics_url_invalid_scheme">URL musí začínat http://, https:// nebo webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Celý den)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Celý den)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Kalendář</string>
@@ -935,7 +966,7 @@
     <string name="rrule_until_suffix">, do %1$s</string>
     <string name="rrule_freq_never">Nikdy</string>
     <string name="rrule_starting">%1$s počínaje %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 od %2$s</string>
+    <string name="rrule_since">%1$s · od %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d krát</item>
         <item quantity="few">, %1$d krát</item>

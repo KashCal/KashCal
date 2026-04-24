@@ -100,15 +100,15 @@
     <string name="settings_force_sync_subtitle">Перазагрузіць усе дадзеныя</string>
     <string name="settings_sync_history">Гісторыя сінхранізацыі</string>
     <string name="settings_sync_history_subtitle">Прагляд сеансаў сінхранізацыі (за 48 гадзін)</string>
-    <string name="settings_import_subtitle">Імпартаваць файл .ics</string>
-    <string name="settings_export_subtitle">Захаваць у файл .ics</string>
+    <string name="settings_import_subtitle">Дадаць падзеі з файла ICS у любы каляндар</string>
+    <string name="settings_export_subtitle">Захаваць падзеі ў файл ICS</string>
     <string name="settings_birthday_reminder">Напамінанне пра дзень нараджэння</string>
     <string name="settings_use_device_timezone">Часавы пояс прылады</string>
     <string name="settings_section_my_calendars">Мае календары</string>
     <string name="settings_section_display">Адлюстраванне</string>
     <string name="settings_section_notifications">Апавяшчэнні</string>
     <string name="settings_section_sync">Сінхранізацыя</string>
-    <string name="settings_section_data">Дадзеныя</string>
+    <string name="settings_section_data">Рэзервовае капіяванне і аднаўленне</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Каляндар Apple?</string>
@@ -291,8 +291,8 @@
     <string name="status_fetching">Загрузка…</string>
 
     <string name="action_fetch_calendar">Загрузіць каляндар</string>
-    <string name="action_import_from_file">Імпарт з файла</string>
-    <string name="action_export_local_calendar">Экспарт лакальнага календара</string>
+    <string name="action_import_from_file">Імпартаваць падзеі з файла</string>
+    <string name="action_export_local_calendar">Экспартаваць лакальны каляндар</string>
 
     <string name="provider_icloud">iCloud</string>
 
@@ -434,7 +434,7 @@
     <string name="label_reminders_truncated">%1$d не паказана (%2$d усяго, макс. %3$d для рэдагавання)</string>
     <string name="label_found_events">Знойдзена: %1$d падзей</string>
     <string name="label_open_debug_menu">Адкрыць меню адладкі</string>
-    <string name="placeholder_search">Пошук\u2026</string>
+    <string name="placeholder_search">Пошук…</string>
     <string name="status_sync_paused">Сінхранізацыю прыпынена</string>
     <string name="status_not_synced">Не сінхранізавана</string>
     <string name="status_sync_error">Памылка сінхранізацыі</string>
@@ -490,16 +490,28 @@
         <item quantity="other">%1$d уліковых запісаў</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 каляндар</item>
-        <item quantity="few">%1$s \u00B7 %2$d календары</item>
-        <item quantity="many">%1$s \u00B7 %2$d календароў</item>
-        <item quantity="other">%1$s \u00B7 %2$d календароў</item>
+        <item quantity="one">%1$s · 1 каляндар</item>
+        <item quantity="few">%1$s · %2$d календары</item>
+        <item quantity="many">%1$s · %2$d календароў</item>
+        <item quantity="other">%1$s · %2$d календароў</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d падпіска</item>
         <item quantity="few">%1$d падпіскі</item>
         <item quantity="many">%1$d падпісак</item>
         <item quantity="other">%1$d падпісак</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d падпіска і вашы налады будуць імпартаваны.</item>
+        <item quantity="few">%1$d падпіскі і вашы налады будуць імпартаваны.</item>
+        <item quantity="many">%1$d падпісак і вашы налады будуць імпартаваны.</item>
+        <item quantity="other">%1$d падпіскі і вашы налады будуць імпартаваны.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Імпартавана %1$d падпіска і вашы налады.</item>
+        <item quantity="few">Імпартаваны %1$d падпіскі і вашы налады.</item>
+        <item quantity="many">Імпартавана %1$d падпісак і вашы налады.</item>
+        <item quantity="other">Імпартаваны %1$d падпіскі і вашы налады.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Памылка сінхранізацыі (%1$d спроба)</item>
@@ -556,10 +568,10 @@
         <item quantity="other">Імпарт</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026і яшчэ %1$d</item>
-        <item quantity="few">\u2026і яшчэ %1$d</item>
-        <item quantity="many">\u2026і яшчэ %1$d</item>
-        <item quantity="other">\u2026і яшчэ %1$d</item>
+        <item quantity="one">…і яшчэ %1$d</item>
+        <item quantity="few">…і яшчэ %1$d</item>
+        <item quantity="many">…і яшчэ %1$d</item>
+        <item quantity="other">…і яшчэ %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Імпартавана %1$d падзея</item>
@@ -885,7 +897,7 @@
     <string name="rrule_until_suffix">, да %1$s</string>
     <string name="rrule_freq_never">Ніколі</string>
     <string name="rrule_starting">%1$s пачынаючы з %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 з %2$s</string>
+    <string name="rrule_since">%1$s · з %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d раз</item>
         <item quantity="few">, %1$d разы</item>
@@ -955,4 +967,25 @@
     <string name="label_more_colors">Больш колераў</string>
     <string name="label_back_to_grid">Назад</string>
     <string name="settings_suggest_titles">Прапаноўваць назвы падзей</string>
+
+    <!-- ==================== Backup & Restore ==================== -->
+    <string name="backup_settings_label">Захаваць налады</string>
+    <string name="backup_settings_subtitle">Захаваць канфігурацыю KashCal у файл JSON</string>
+    <string name="restore_settings_label">Аднавіць налады</string>
+    <string name="restore_settings_subtitle">Аднавіць канфігурацыю KashCal з рэзервовай копіі</string>
+    <string name="restore_confirm_title">Аднавіць рэзервовую копію?</string>
+    <string name="restore_confirm_from">Рэзервовая копія KashCal %1$s, %2$s</string>
+    <string name="action_restore">Аднавіць</string>
+    <string name="restore_success_title">Аднаўленне завершана</string>
+    <string name="restore_success_device_calendars_note">Выберы календары прылады зноў, калі карыстаешся гэтай функцыяй.</string>
+    <string name="restore_confirm_message_prefs_only">Вашы налады будуць імпартаваны.</string>
+    <string name="restore_success_message_prefs_only">Налады імпартаваны.</string>
+    <string name="restore_error_title">Не ўдалося аднавіць</string>
+    <string name="restore_error_version_too_new">Гэтая рэзервовая копія створана ў навейшай версіі KashCal. Абнаві KashCal і паспрабуй зноў.</string>
+    <string name="restore_error_malformed_json">Гэта не падобна на рэзервовую копію KashCal.</string>
+    <string name="restore_error_invalid_value">У файле рэзервовай копіі няправільныя даныя, яго нельга аднавіць.</string>
+    <string name="restore_error_apply_failure">Пры аднаўленні нешта пайшло не так. Змены не захаваны.</string>
+    <string name="backup_error_build_failed">Не ўдалося стварыць рэзервную копію</string>
+    <string name="backup_error_write_failed">Не ўдалося стварыць рэзервную копію — не ўдалося запісаць у файл</string>
+    <string name="backup_error_read_failed">Не ўдалося прачытаць файл</string>
 </resources>

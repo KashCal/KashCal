@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Pobierz ponownie wszystkie dane kalendarza</string>
     <string name="settings_sync_history">Historia synchronizacji</string>
     <string name="settings_sync_history_subtitle">Pokaż sesje synchronizacji (ostatnie 48 godzin)</string>
-    <string name="settings_import_subtitle">Importuj plik .ics</string>
-    <string name="settings_export_subtitle">Kopia zapasowa do pliku .ics</string>
+    <string name="settings_import_subtitle">Dodaj wydarzenia z pliku ICS do dowolnego kalendarza</string>
+    <string name="settings_export_subtitle">Zapisz wydarzenia do pliku ICS</string>
     <string name="settings_birthday_reminder">Przypomnienie o urodzinach</string>
     <string name="settings_use_device_timezone">Użyj strefy czasowej urządzenia</string>
     <string name="settings_section_my_calendars">Moje kalendarze</string>
     <string name="settings_section_display">Wyświetlanie</string>
     <string name="settings_section_notifications">Powiadomienia</string>
     <string name="settings_section_sync">Synchronizacja</string>
-    <string name="settings_section_data">Dane</string>
+    <string name="settings_section_data">Kopia zapasowa i przywracanie</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Utwórz kopię zapasową ustawień</string>
+    <string name="backup_settings_subtitle">Zapisz konfigurację KashCal do pliku JSON</string>
+    <string name="restore_settings_label">Przywróć ustawienia</string>
+    <string name="restore_settings_subtitle">Przywróć konfigurację KashCal z pliku kopii zapasowej</string>
+    <string name="restore_confirm_title">Przywrócić kopię zapasową?</string>
+    <string name="restore_confirm_from">Kopia zapasowa z KashCal %1$s, %2$s</string>
+    <string name="action_restore">Przywróć</string>
+    <string name="restore_success_title">Przywracanie zakończone</string>
+    <string name="restore_success_device_calendars_note">Wybierz ponownie kalendarze urządzenia, jeśli korzystasz z tej funkcji.</string>
+    <string name="restore_confirm_message_prefs_only">Twoje preferencje zostaną zaimportowane.</string>
+    <string name="restore_success_message_prefs_only">Zaimportowano preferencje.</string>
+    <string name="restore_error_title">Przywracanie nie powiodło się</string>
+    <string name="restore_error_version_too_new">Ta kopia zapasowa została utworzona w nowszej wersji KashCal. Zaktualizuj KashCal i spróbuj ponownie.</string>
+    <string name="restore_error_malformed_json">Ten plik nie jest prawidłową kopią zapasową KashCal.</string>
+    <string name="restore_error_invalid_value">Ten plik kopii zapasowej zawiera nieprawidłowe dane i nie może zostać przywrócony.</string>
+    <string name="restore_error_apply_failure">Wystąpił błąd podczas stosowania kopii zapasowej. Żadne zmiany nie zostały zapisane.</string>
+    <string name="backup_error_build_failed">Tworzenie kopii zapasowej nie powiodło się</string>
+    <string name="backup_error_write_failed">Tworzenie kopii zapasowej nie powiodło się — nie można zapisać do pliku</string>
+    <string name="backup_error_read_failed">Nie można odczytać pliku</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -298,8 +319,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Pobierz kalendarz</string>
-    <string name="action_import_from_file">Importuj z pliku</string>
-    <string name="action_export_local_calendar">Eksportuj lokalny kalendarz</string>
+    <string name="action_import_from_file">Importuj wydarzenia z pliku</string>
+    <string name="action_export_local_calendar">Eksportuj kalendarz Lokalny</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -416,7 +437,7 @@
     <string name="caldav_trust_insecure_label">Zaufaj niezabezpieczonemu połączeniu</string>
     <string name="action_add_another">Dodaj kolejne</string>
     <string name="account_connected_found_calendars">Znaleziono %1$d kalendarzy dla %2$s.</string>
-    <string name="account_connected_syncing_hint">Trwa synchronizacja \u2014 wydarzenia pojawią się wkrótce.</string>
+    <string name="account_connected_syncing_hint">Trwa synchronizacja — wydarzenia pojawią się wkrótce.</string>
     <string name="settings_time_format_currently_24h">Aktualnie: 24-godzinny (%1$s)</string>
     <string name="settings_time_format_currently_12h">Aktualnie: 12-godzinny (%1$s)</string>
     <string name="settings_time_format_example">Przykład: %1$s</string>
@@ -455,7 +476,7 @@
     <string name="label_reminders_truncated">%1$d niepokazanych (%2$d łącznie, maks. %3$d edytowalnych)</string>
     <string name="label_found_events">Znaleziono: %1$d wydarzeń</string>
     <string name="label_open_debug_menu">Otwórz menu debugowania</string>
-    <string name="placeholder_search">Szukaj\u2026</string>
+    <string name="placeholder_search">Szukaj…</string>
     <string name="status_sync_paused">Synchronizacja wstrzymana</string>
     <string name="status_not_synced">Nie zsynchronizowano</string>
     <string name="status_sync_error">Błąd synchronizacji</string>
@@ -521,16 +542,28 @@
         <item quantity="other">%1$d konta</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 kalendarz</item>
-        <item quantity="few">%1$s \u00B7 %2$d kalendarze</item>
-        <item quantity="many">%1$s \u00B7 %2$d kalendarzy</item>
-        <item quantity="other">%1$s \u00B7 %2$d kalendarza</item>
+        <item quantity="one">%1$s · 1 kalendarz</item>
+        <item quantity="few">%1$s · %2$d kalendarze</item>
+        <item quantity="many">%1$s · %2$d kalendarzy</item>
+        <item quantity="other">%1$s · %2$d kalendarza</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d subskrypcja</item>
         <item quantity="few">%1$d subskrypcje</item>
         <item quantity="many">%1$d subskrypcji</item>
         <item quantity="other">%1$d subskrypcji</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d subskrypcja i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="few">%1$d subskrypcje i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="many">%1$d subskrypcji i twoje preferencje zostaną zaimportowane.</item>
+        <item quantity="other">%1$d subskrypcji i twoje preferencje zostaną zaimportowane.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">Zaimportowano %1$d subskrypcję i twoje preferencje.</item>
+        <item quantity="few">Zaimportowano %1$d subskrypcje i twoje preferencje.</item>
+        <item quantity="many">Zaimportowano %1$d subskrypcji i twoje preferencje.</item>
+        <item quantity="other">Zaimportowano %1$d subskrypcji i twoje preferencje.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Synchronizacja nie powiodła się (%1$d próba)</item>
@@ -587,10 +620,10 @@
         <item quantity="other">Importuj</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026i %1$d więcej</item>
-        <item quantity="few">\u2026i %1$d więcej</item>
-        <item quantity="many">\u2026i %1$d więcej</item>
-        <item quantity="other">\u2026i %1$d więcej</item>
+        <item quantity="one">…i %1$d więcej</item>
+        <item quantity="few">…i %1$d więcej</item>
+        <item quantity="many">…i %1$d więcej</item>
+        <item quantity="other">…i %1$d więcej</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Zaimportowano %1$d wydarzenie</item>
@@ -835,8 +868,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Synchronizacja kalendarzy\u2026</string>
-    <string name="sync_banner_preparing">Przygotowanie do synchronizacji\u2026</string>
+    <string name="sync_banner_syncing">Synchronizacja kalendarzy…</string>
+    <string name="sync_banner_preparing">Przygotowanie do synchronizacji…</string>
     <string name="sync_banner_complete_errors">Synchronizacja zakończona z błędami</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Synchronizacja nieudana: %1$s</string>
@@ -875,12 +908,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dzień %1$d z %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dzień 1 z %1$d \u00b7 początek %2$s</string>
+    <string name="day_starts">Dzień 1 z %1$d · początek %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dzień %1$d z %2$d \u00b7 koniec %3$s</string>
+    <string name="day_ends">Dzień %1$d z %2$d · koniec %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Cały dzień</string>
-    <string name="event_date_all_day">%1$s \u00b7 Cały dzień</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Cały dzień</string>
+    <string name="event_date_all_day">%1$s · Cały dzień</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Cały dzień)</string>
     <string name="event_date_all_day_parens">%1$s (Cały dzień)</string>
@@ -918,8 +951,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dzień %1$d z %2$d (Cały dzień)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d synch.   \u2191%2$d wysłano   \u2193%3$d pobrano</string>
-    <string name="sync_history_stats_issues">%1$d synch.   \u2191%2$d wysłano   \u2193%3$d pobrano   \u26a0 %4$d problemów</string>
+    <string name="sync_history_stats">%1$d synch.   ↑%2$d wysłano   ↓%3$d pobrano</string>
+    <string name="sync_history_stats_issues">%1$d synch.   ↑%2$d wysłano   ↓%3$d pobrano   ⚠ %4$d problemów</string>
     <string name="sync_history_failed">Nieudane</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Co godzinę</string>
@@ -930,8 +963,8 @@
     <string name="ics_url_required">URL jest wymagany</string>
     <string name="ics_url_invalid_scheme">URL musi zaczynać się od http://, https:// lub webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Cały dzień)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Cały dzień)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Kalendarz</string>
@@ -966,7 +999,7 @@
     <string name="rrule_until_suffix">, do %1$s</string>
     <string name="rrule_freq_never">Nigdy</string>
     <string name="rrule_starting">%1$s od %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 od %2$s</string>
+    <string name="rrule_since">%1$s · od %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d raz</item>
         <item quantity="few">, %1$d razy</item>

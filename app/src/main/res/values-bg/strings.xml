@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Повторно изтегляне на всички данни от календара</string>
     <string name="settings_sync_history">Хронология на синхронизациите</string>
     <string name="settings_sync_history_subtitle">Преглед на сесиите за синхронизиране (последните 48 часа)</string>
-    <string name="settings_import_subtitle">Импортиране на .ics файл</string>
-    <string name="settings_export_subtitle">Архивиране в .ics файл</string>
+    <string name="settings_import_subtitle">Добави събития от ICS файл към произволен календар</string>
+    <string name="settings_export_subtitle">Запази събитията в ICS файл</string>
     <string name="settings_birthday_reminder">Напомняне за рожден ден</string>
     <string name="settings_use_device_timezone">Използвай часовата зона на устройството</string>
     <string name="settings_section_my_calendars">Моите календари</string>
     <string name="settings_section_display">Показване</string>
     <string name="settings_section_notifications">Известия</string>
     <string name="settings_section_sync">Синхронизиране</string>
-    <string name="settings_section_data">Данни</string>
+    <string name="settings_section_data">Архивиране и възстановяване</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Архивирай настройките</string>
+    <string name="backup_settings_subtitle">Запази конфигурацията на KashCal в JSON файл</string>
+    <string name="restore_settings_label">Възстанови настройките</string>
+    <string name="restore_settings_subtitle">Възстанови конфигурацията на KashCal от архивен файл</string>
+    <string name="restore_confirm_title">Да се възстанови ли архивът?</string>
+    <string name="restore_confirm_from">Архив от KashCal %1$s, %2$s</string>
+    <string name="action_restore">Възстанови</string>
+    <string name="restore_success_title">Възстановяването приключи</string>
+    <string name="restore_confirm_message_prefs_only">Вашите настройки ще бъдат импортирани.</string>
+    <string name="restore_success_message_prefs_only">Настройките са импортирани.</string>
+    <string name="restore_success_device_calendars_note">Избери отново календарите на устройството, ако използваш тази функция.</string>
+    <string name="restore_error_title">Възстановяването е неуспешно</string>
+    <string name="restore_error_version_too_new">Този архив е създаден с по-нова версия на KashCal. Моля, актуализирай KashCal и опитай отново.</string>
+    <string name="restore_error_malformed_json">Този файл не е валиден архив на KashCal.</string>
+    <string name="restore_error_invalid_value">Архивният файл съдържа невалидни данни и не може да бъде възстановен.</string>
+    <string name="restore_error_apply_failure">Възникна грешка при прилагането на архива. Не са запазени промени.</string>
+    <string name="backup_error_build_failed">Неуспешно резервно копиране</string>
+    <string name="backup_error_write_failed">Неуспешно резервно копиране — файлът не може да бъде записан</string>
+    <string name="backup_error_read_failed">Файлът не може да бъде прочетен</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar?</string>
@@ -297,8 +318,8 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Зареди календар</string>
-    <string name="action_import_from_file">Импортирай от файл</string>
-    <string name="action_export_local_calendar">Експортирай локален календар</string>
+    <string name="action_import_from_file">Импортирай събития от файл</string>
+    <string name="action_export_local_calendar">Експортирай локалния календар</string>
 
     <!-- ==================== Providers ==================== -->
     <string name="provider_icloud">iCloud</string>
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Доверявай се на незащитена връзка</string>
     <string name="action_add_another">Добави още</string>
     <string name="account_connected_found_calendars">Намерени %1$d календар(а) за %2$s.</string>
-    <string name="account_connected_syncing_hint">Синхронизирането е в ход \u2014 събитията ще се появят скоро.</string>
+    <string name="account_connected_syncing_hint">Синхронизирането е в ход — събитията ще се появят скоро.</string>
     <string name="settings_time_format_currently_24h">Текущо: 24-часов (%1$s)</string>
     <string name="settings_time_format_currently_12h">Текущо: 12-часов (%1$s)</string>
     <string name="settings_time_format_example">Пример: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d не са показани (%2$d общо, макс. %3$d редактируеми)</string>
     <string name="label_found_events">Намерени: %1$d събития</string>
     <string name="label_open_debug_menu">Отвори менюто за отстраняване на грешки</string>
-    <string name="placeholder_search">Търсене\u2026</string>
+    <string name="placeholder_search">Търсене…</string>
     <string name="status_sync_paused">Синхронизирането е на пауза</string>
     <string name="status_not_synced">Не е синхронизиран</string>
     <string name="status_sync_error">Грешка при синхронизиране</string>
@@ -513,12 +534,20 @@
         <item quantity="other">%1$d акаунта</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 календар</item>
-        <item quantity="other">%1$s \u00B7 %2$d календара</item>
+        <item quantity="one">%1$s · 1 календар</item>
+        <item quantity="other">%1$s · %2$d календара</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d абонамент</item>
         <item quantity="other">%1$d абонамента</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d абонамент и вашите настройки ще бъдат импортирани.</item>
+        <item quantity="other">%1$d абонамента и вашите настройки ще бъдат импортирани.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d абонамент и вашите настройки са импортирани.</item>
+        <item quantity="other">%1$d абонамента и вашите настройки са импортирани.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Неуспешно синхронизиране (%1$d опит)</item>
@@ -557,8 +586,8 @@
         <item quantity="other">Импортирай</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026и още %1$d</item>
-        <item quantity="other">\u2026и още %1$d</item>
+        <item quantity="one">…и още %1$d</item>
+        <item quantity="other">…и още %1$d</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Импортирано %1$d събитие</item>
@@ -767,8 +796,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Синхронизиране на календарите\u2026</string>
-    <string name="sync_banner_preparing">Подготовка за синхронизиране\u2026</string>
+    <string name="sync_banner_syncing">Синхронизиране на календарите…</string>
+    <string name="sync_banner_preparing">Подготовка за синхронизиране…</string>
     <string name="sync_banner_complete_errors">Синхронизирането завърши с грешки</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Синхронизирането е неуспешно: %1$s</string>
@@ -799,12 +828,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Ден %1$d от %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ден 1 от %1$d \u00b7 начало %2$s</string>
+    <string name="day_starts">Ден 1 от %1$d · начало %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ден %1$d от %2$d \u00b7 край %3$s</string>
+    <string name="day_ends">Ден %1$d от %2$d · край %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Цял ден</string>
-    <string name="event_date_all_day">%1$s \u00b7 Цял ден</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Цял ден</string>
+    <string name="event_date_all_day">%1$s · Цял ден</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Цял ден)</string>
     <string name="event_date_all_day_parens">%1$s (Цял ден)</string>
@@ -833,8 +862,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Ден %1$d от %2$d (Цял ден)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d синхронизации   \u2191%2$d изпратени   \u2193%3$d получени</string>
-    <string name="sync_history_stats_issues">%1$d синхронизации   \u2191%2$d изпратени   \u2193%3$d получени   \u26a0 %4$d проблема</string>
+    <string name="sync_history_stats">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени</string>
+    <string name="sync_history_stats_issues">%1$d синхронизации   ↑%2$d изпратени   ↓%3$d получени   ⚠ %4$d проблема</string>
     <string name="sync_history_failed">Неуспешно</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Всеки час</string>
@@ -845,8 +874,8 @@
     <string name="ics_url_required">URL е задължителен</string>
     <string name="ics_url_invalid_scheme">URL трябва да започва с http://, https:// или webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Цял ден)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Цял ден)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календар</string>
@@ -881,7 +910,7 @@
     <string name="rrule_until_suffix">, до %1$s</string>
     <string name="rrule_freq_never">Никога</string>
     <string name="rrule_starting">%1$s започвайки от %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 от %2$s</string>
+    <string name="rrule_since">%1$s · от %2$s</string>
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d път</item>
         <item quantity="other">, %1$d пъти</item>

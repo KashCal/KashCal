@@ -100,15 +100,36 @@
     <string name="settings_force_sync_subtitle">Εκ νέου λήψη όλων των δεδομένων ημερολογίου</string>
     <string name="settings_sync_history">Ιστορικό συγχρονισμού</string>
     <string name="settings_sync_history_subtitle">Προβολή συνεδριών συγχρονισμού (τελευταίες 48 ώρες)</string>
-    <string name="settings_import_subtitle">Εισαγωγή αρχείου .ics</string>
-    <string name="settings_export_subtitle">Αντίγραφο ασφαλείας σε αρχείο .ics</string>
+    <string name="settings_import_subtitle">Προσθήκη συμβάντων από αρχείο ICS σε οποιοδήποτε ημερολόγιο</string>
+    <string name="settings_export_subtitle">Αποθήκευση συμβάντων σε αρχείο ICS</string>
     <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
     <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
     <string name="settings_section_my_calendars">Τα ημερολόγιά μου</string>
     <string name="settings_section_display">Εμφάνιση</string>
     <string name="settings_section_notifications">Ειδοποιήσεις</string>
     <string name="settings_section_sync">Συγχρονισμός</string>
-    <string name="settings_section_data">Δεδομένα</string>
+    <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
+
+    <!-- ==================== Backup &amp; Restore ==================== -->
+    <string name="backup_settings_label">Δημιουργία αντιγράφου ρυθμίσεων</string>
+    <string name="backup_settings_subtitle">Αποθήκευση της διαμόρφωσης του KashCal σε αρχείο JSON</string>
+    <string name="restore_settings_label">Επαναφορά ρυθμίσεων</string>
+    <string name="restore_settings_subtitle">Επαναφορά της διαμόρφωσης του KashCal από αρχείο αντιγράφου ασφαλείας</string>
+    <string name="restore_confirm_title">Να γίνει επαναφορά του αντιγράφου;</string>
+    <string name="restore_confirm_from">Αντίγραφο από KashCal %1$s, %2$s</string>
+    <string name="action_restore">Επαναφορά</string>
+    <string name="restore_success_title">Η επαναφορά ολοκληρώθηκε</string>
+    <string name="restore_confirm_message_prefs_only">Οι προτιμήσεις σας θα εισαχθούν.</string>
+    <string name="restore_success_message_prefs_only">Οι προτιμήσεις εισήχθησαν.</string>
+    <string name="restore_success_device_calendars_note">Επίλεξε ξανά τα ημερολόγια της συσκευής σου, αν χρησιμοποιείς αυτή τη λειτουργία.</string>
+    <string name="restore_error_title">Η επαναφορά απέτυχε</string>
+    <string name="restore_error_version_too_new">Αυτό το αντίγραφο ασφαλείας δημιουργήθηκε με νεότερη έκδοση του KashCal. Ενημέρωσε το KashCal και δοκίμασε ξανά.</string>
+    <string name="restore_error_malformed_json">Αυτό το αρχείο δεν είναι έγκυρο αντίγραφο ασφαλείας του KashCal.</string>
+    <string name="restore_error_invalid_value">Αυτό το αρχείο αντιγράφου ασφαλείας περιέχει μη έγκυρα δεδομένα και δεν μπορεί να γίνει επαναφορά.</string>
+    <string name="restore_error_apply_failure">Κάτι πήγε στραβά κατά την εφαρμογή του αντιγράφου ασφαλείας. Δεν αποθηκεύτηκαν αλλαγές.</string>
+    <string name="backup_error_build_failed">Η δημιουργία αντιγράφου ασφαλείας απέτυχε</string>
+    <string name="backup_error_write_failed">Η δημιουργία αντιγράφου ασφαλείας απέτυχε — αδύνατη η εγγραφή στο αρχείο</string>
+    <string name="backup_error_read_failed">Αδύνατη η ανάγνωση του αρχείου</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple Calendar;</string>
@@ -297,7 +318,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Λήψη ημερολογίου</string>
-    <string name="action_import_from_file">Εισαγωγή από αρχείο</string>
+    <string name="action_import_from_file">Εισαγωγή συμβάντων από αρχείο</string>
     <string name="action_export_local_calendar">Εξαγωγή τοπικού ημερολογίου</string>
 
     <!-- ==================== Providers ==================== -->
@@ -413,7 +434,7 @@
     <string name="caldav_trust_insecure_label">Εμπιστοσύνη μη ασφαλούς σύνδεσης</string>
     <string name="action_add_another">Προσθήκη άλλου</string>
     <string name="account_connected_found_calendars">Βρέθηκαν %1$d ημερολόγια για %2$s.</string>
-    <string name="account_connected_syncing_hint">Ο συγχρονισμός βρίσκεται σε εξέλιξη \u2014 τα συμβάντα θα εμφανιστούν σύντομα.</string>
+    <string name="account_connected_syncing_hint">Ο συγχρονισμός βρίσκεται σε εξέλιξη — τα συμβάντα θα εμφανιστούν σύντομα.</string>
     <string name="settings_time_format_currently_24h">Τρέχουσα: 24ωρο (%1$s)</string>
     <string name="settings_time_format_currently_12h">Τρέχουσα: 12ωρο (%1$s)</string>
     <string name="settings_time_format_example">Παράδειγμα: %1$s</string>
@@ -451,7 +472,7 @@
     <string name="label_reminders_truncated">%1$d δεν εμφανίζονται (%2$d σύνολο, μέγ. %3$d επεξεργάσιμα)</string>
     <string name="label_found_events">Βρέθηκαν: %1$d συμβάντα</string>
     <string name="label_open_debug_menu">Άνοιγμα μενού εντοπισμού σφαλμάτων</string>
-    <string name="placeholder_search">Αναζήτηση\u2026</string>
+    <string name="placeholder_search">Αναζήτηση…</string>
     <string name="status_sync_paused">Ο συγχρονισμός σε παύση</string>
     <string name="status_not_synced">Δεν έχει συγχρονιστεί</string>
     <string name="status_sync_error">Σφάλμα συγχρονισμού</string>
@@ -513,12 +534,20 @@
         <item quantity="other">%1$d λογαριασμοί</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 ημερολόγιο</item>
-        <item quantity="other">%1$s \u00B7 %2$d ημερολόγια</item>
+        <item quantity="one">%1$s · 1 ημερολόγιο</item>
+        <item quantity="other">%1$s · %2$d ημερολόγια</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d συνδρομή</item>
         <item quantity="other">%1$d συνδρομές</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d συνδρομή και οι προτιμήσεις σας θα εισαχθούν.</item>
+        <item quantity="other">%1$d συνδρομές και οι προτιμήσεις σας θα εισαχθούν.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d συνδρομή και οι προτιμήσεις σας εισήχθησαν.</item>
+        <item quantity="other">%1$d συνδρομές και οι προτιμήσεις σας εισήχθησαν.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Ο συγχρονισμός απέτυχε (%1$d προσπάθεια)</item>
@@ -557,8 +586,8 @@
         <item quantity="other">Εισαγωγή</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026και %1$d ακόμα</item>
-        <item quantity="other">\u2026και %1$d ακόμα</item>
+        <item quantity="one">…και %1$d ακόμα</item>
+        <item quantity="other">…και %1$d ακόμα</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">Εισήχθη %1$d συμβάν</item>
@@ -767,8 +796,8 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Συγχρονισμός ημερολογίων\u2026</string>
-    <string name="sync_banner_preparing">Προετοιμασία συγχρονισμού\u2026</string>
+    <string name="sync_banner_syncing">Συγχρονισμός ημερολογίων…</string>
+    <string name="sync_banner_preparing">Προετοιμασία συγχρονισμού…</string>
     <string name="sync_banner_complete_errors">Ο συγχρονισμός ολοκληρώθηκε με σφάλματα</string>
     <!-- %1$s = error message -->
     <string name="sync_banner_failed">Ο συγχρονισμός απέτυχε: %1$s</string>
@@ -799,12 +828,12 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Ημέρα %1$d από %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Ημέρα 1 από %1$d \u00b7 αρχή %2$s</string>
+    <string name="day_starts">Ημέρα 1 από %1$d · αρχή %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Ημέρα %1$d από %2$d \u00b7 τέλος %3$s</string>
+    <string name="day_ends">Ημέρα %1$d από %2$d · τέλος %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Ολοήμερο</string>
-    <string name="event_date_all_day">%1$s \u00b7 Ολοήμερο</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Ολοήμερο</string>
+    <string name="event_date_all_day">%1$s · Ολοήμερο</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Ολοήμερο)</string>
     <string name="event_date_all_day_parens">%1$s (Ολοήμερο)</string>
@@ -833,8 +862,8 @@
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Ημέρα %1$d από %2$d (Ολοήμερο)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d συγχρονισμοί   \u2191%2$d απεσταλμένα   \u2193%3$d ληφθέντα</string>
-    <string name="sync_history_stats_issues">%1$d συγχρονισμοί   \u2191%2$d απεσταλμένα   \u2193%3$d ληφθέντα   \u26a0 %4$d προβλήματα</string>
+    <string name="sync_history_stats">%1$d συγχρονισμοί   ↑%2$d απεσταλμένα   ↓%3$d ληφθέντα</string>
+    <string name="sync_history_stats_issues">%1$d συγχρονισμοί   ↑%2$d απεσταλμένα   ↓%3$d ληφθέντα   ⚠ %4$d προβλήματα</string>
     <string name="sync_history_failed">Απέτυχε</string>
     <!-- ICS subscription sync intervals -->
     <string name="ics_sync_every_hour">Κάθε ώρα</string>
@@ -845,8 +874,8 @@
     <string name="ics_url_required">Το URL είναι υποχρεωτικό</string>
     <string name="ics_url_invalid_scheme">Το URL πρέπει να ξεκινά με http://, https:// ή webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Ολοήμερο)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Ολοήμερο)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">Ημερολόγιο</string>
@@ -881,7 +910,7 @@
     <string name="rrule_until_suffix">, μέχρι %1$s</string>
     <string name="rrule_freq_never">Ποτέ</string>
     <string name="rrule_starting">%1$s ξεκινώντας από %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 από %2$s</string>
+    <string name="rrule_since">%1$s · από %2$s</string>
 
     <!-- Recurrence plural -->
     <plurals name="rrule_count_suffix">

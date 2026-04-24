@@ -35,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -97,21 +96,7 @@ fun AddSubscriptionDialog(
         }
     }
 
-    // Sheet state with dismiss protection
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { newValue ->
-            when {
-                newValue != SheetValue.Hidden -> true  // Allow expand
-                !hasChanges -> true                     // No changes = allow dismiss
-                showDiscardConfirm -> true              // Second attempt = allow
-                else -> {
-                    showDiscardConfirm = true           // First attempt = block & show confirm
-                    false
-                }
-            }
-        }
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -121,7 +106,8 @@ fun AddSubscriptionDialog(
                 else -> showDiscardConfirm = true
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
+        sheetGesturesEnabled = false
     ) {
         Column(
             modifier = Modifier
@@ -303,21 +289,7 @@ fun EditSubscriptionDialog(
         }
     }
 
-    // Sheet state with dismiss protection
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { newValue ->
-            when {
-                newValue != SheetValue.Hidden -> true  // Allow expand
-                !hasChanges -> true                     // No changes = allow dismiss
-                showDiscardConfirm -> true              // Second attempt = allow
-                else -> {
-                    showDiscardConfirm = true           // First attempt = block & show confirm
-                    false
-                }
-            }
-        }
-    )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
         onDismissRequest = {
@@ -327,7 +299,8 @@ fun EditSubscriptionDialog(
                 else -> showDiscardConfirm = true
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
+        sheetGesturesEnabled = false
     ) {
         Column(
             modifier = Modifier

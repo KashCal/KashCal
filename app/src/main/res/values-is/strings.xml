@@ -101,15 +101,36 @@
     <string name="settings_force_sync_subtitle">Hlaða niður öllum dagatalsupplýsingum aftur</string>
     <string name="settings_sync_history">Samstillingarsaga</string>
     <string name="settings_sync_history_subtitle">Skoða samstillingarlotur (síðustu 48 klukkustundir)</string>
-    <string name="settings_import_subtitle">Flytja inn .ics-skrá</string>
-    <string name="settings_export_subtitle">Afrita á .ics-skrá</string>
+    <string name="settings_import_subtitle">Bæta atburðum úr ICS-skrá við hvaða dagatal sem er</string>
+    <string name="settings_export_subtitle">Vista atburði í ICS-skrá</string>
     <string name="settings_birthday_reminder">Afmælisáminning</string>
     <string name="settings_use_device_timezone">Nota tímabelti tækis</string>
     <string name="settings_section_my_calendars">Dagatölin mín</string>
     <string name="settings_section_display">Birting</string>
     <string name="settings_section_notifications">Tilkynningar</string>
     <string name="settings_section_sync">Samstilling</string>
-    <string name="settings_section_data">Gögn</string>
+    <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <string name="backup_settings_label">Taka öryggisafrit af stillingum</string>
+    <string name="backup_settings_subtitle">Vista KashCal-stillingar í JSON-skrá</string>
+    <string name="restore_settings_label">Endurheimta stillingar</string>
+    <string name="restore_settings_subtitle">Endurheimta KashCal-stillingar úr öryggisafritaskrá</string>
+    <string name="restore_confirm_title">Endurheimta öryggisafrit?</string>
+    <string name="restore_confirm_from">Öryggisafrit úr KashCal %1$s, %2$s</string>
+    <string name="action_restore">Endurheimta</string>
+    <string name="restore_success_title">Endurheimt lokið</string>
+    <string name="restore_confirm_message_prefs_only">Stillingarnar þínar verða fluttar inn.</string>
+    <string name="restore_success_message_prefs_only">Stillingar fluttar inn.</string>
+    <string name="restore_success_device_calendars_note">Veldu dagatöl tækisins þíns aftur ef þú notar þá aðgerð.</string>
+    <string name="restore_error_title">Endurheimt mistókst</string>
+    <string name="restore_error_version_too_new">Þetta öryggisafrit var búið til með nýrri útgáfu af KashCal. Uppfærðu KashCal og reyndu aftur.</string>
+    <string name="restore_error_malformed_json">Þessi skrá er ekki gilt KashCal-öryggisafrit.</string>
+    <string name="restore_error_invalid_value">Öryggisafritaskráin inniheldur ógild gögn og er ekki hægt að endurheimta.</string>
+    <string name="restore_error_apply_failure">Eitthvað fór úrskeiðis þegar öryggisafritið var notað. Engar breytingar voru vistaðar.</string>
+    <string name="backup_error_build_failed">Afritun mistókst</string>
+    <string name="backup_error_write_failed">Afritun mistókst — ekki tókst að skrifa í skrá</string>
+    <string name="backup_error_read_failed">Ekki tókst að lesa skrána</string>
 
     <!-- ==================== Onboarding ==================== -->
     <string name="onboarding_apple_calendar">Apple dagatal?</string>
@@ -300,7 +321,7 @@
 
     <!-- ==================== Actions (Additional) ==================== -->
     <string name="action_fetch_calendar">Sækja dagatal</string>
-    <string name="action_import_from_file">Flytja inn úr skrá</string>
+    <string name="action_import_from_file">Flytja atburði inn úr skrá</string>
     <string name="action_export_local_calendar">Flytja út staðbundið dagatal</string>
 
     <!-- ==================== Providers ==================== -->
@@ -416,7 +437,7 @@
     <string name="caldav_trust_insecure_label">Treysta óöruggri tengingu</string>
     <string name="action_add_another">Bæta við öðru</string>
     <string name="account_connected_found_calendars">Fann %1$d dagatal fyrir %2$s.</string>
-    <string name="account_connected_syncing_hint">Samstilling í gangi \u2014 viðburðir birtast bráðlega.</string>
+    <string name="account_connected_syncing_hint">Samstilling í gangi — viðburðir birtast bráðlega.</string>
     <string name="settings_time_format_currently_24h">Núna: 24 klst. (%1$s)</string>
     <string name="settings_time_format_currently_12h">Núna: 12 klst. (%1$s)</string>
     <string name="settings_time_format_example">Dæmi: %1$s</string>
@@ -455,7 +476,7 @@
     <string name="label_reminders_truncated">%1$d ekki sýndar (%2$d alls, hámark %3$d breytanlegar)</string>
     <string name="label_found_events">Fundust: %1$d viðburðir</string>
     <string name="label_open_debug_menu">Opna villuleitarvalmynd</string>
-    <string name="placeholder_search">Leita\u2026</string>
+    <string name="placeholder_search">Leita…</string>
     <string name="status_sync_paused">Samstilling í bið</string>
     <string name="status_not_synced">Ekki samstillt</string>
     <string name="status_sync_error">Samstillingarvilla</string>
@@ -517,12 +538,20 @@
         <item quantity="other">%1$d reikningar</item>
     </plurals>
     <plurals name="accounts_calendar_count">
-        <item quantity="one">%1$s \u00B7 1 dagatal</item>
-        <item quantity="other">%1$s \u00B7 %2$d dagatöl</item>
+        <item quantity="one">%1$s · 1 dagatal</item>
+        <item quantity="other">%1$s · %2$d dagatöl</item>
     </plurals>
     <plurals name="subscriptions_count">
         <item quantity="one">%1$d áskrift</item>
         <item quantity="other">%1$d áskriftir</item>
+    </plurals>
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">%1$d áskrift og stillingarnar þínar verða fluttar inn.</item>
+        <item quantity="other">%1$d áskriftir og stillingarnar þínar verða fluttar inn.</item>
+    </plurals>
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d áskrift og stillingarnar þínar fluttar inn.</item>
+        <item quantity="other">%1$d áskriftir og stillingarnar þínar fluttar inn.</item>
     </plurals>
     <plurals name="account_detail_failure">
         <item quantity="one">Samstilling mistókst (%1$d tilraun)</item>
@@ -561,8 +590,8 @@
         <item quantity="other">Flytja inn</item>
     </plurals>
     <plurals name="ics_remaining_events">
-        <item quantity="one">\u2026og %1$d í viðbót</item>
-        <item quantity="other">\u2026og %1$d í viðbót</item>
+        <item quantity="one">…og %1$d í viðbót</item>
+        <item quantity="other">…og %1$d í viðbót</item>
     </plurals>
     <plurals name="imported_events">
         <item quantity="one">%1$d viðburður fluttur inn</item>
@@ -685,21 +714,21 @@
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
     <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
-    <string name="reminder_none">Engin \u00e1minning</string>
-    <string name="reminder_at_time_of_event">\u00c1 t\u00edma vi\u00f0bur\u00f0arins</string>
+    <string name="reminder_none">Engin áminning</string>
+    <string name="reminder_at_time_of_event">Á tíma viðburðarins</string>
     <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
-    <string name="reminder_time_before">%1$s \u00e1\u00f0ur</string>
+    <string name="reminder_time_before">%1$s áður</string>
     <string name="reminder_time_after">%1$s eftir</string>
     <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
-    <string name="reminder_day_of_event_12h">9 AM \u00e1 degi vi\u00f0bur\u00f0arins</string>
-    <string name="reminder_day_of_event_24h">09:00 \u00e1 degi vi\u00f0bur\u00f0arins</string>
+    <string name="reminder_day_of_event_12h">9 AM á degi viðburðarins</string>
+    <string name="reminder_day_of_event_24h">09:00 á degi viðburðarins</string>
     <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
     <!-- %1$s = duration (e.g., "1 day", "2 days") -->
-    <string name="reminder_before_at_12h">%1$s \u00e1\u00f0ur kl. 9 AM</string>
-    <string name="reminder_before_at_24h">%1$s \u00e1\u00f0ur kl. 09:00</string>
+    <string name="reminder_before_at_12h">%1$s áður kl. 9 AM</string>
+    <string name="reminder_before_at_24h">%1$s áður kl. 09:00</string>
     <!-- Short/compact reminder labels (used in chips and summaries) -->
     <string name="reminder_short_off">Af</string>
-    <string name="reminder_short_at_event">Vi\u00f0 vi\u00f0bur\u00f0</string>
+    <string name="reminder_short_at_event">Við viðburð</string>
     <string name="reminder_short_9am_12h">9AM</string>
     <string name="reminder_short_9am_24h">09:00</string>
     <string name="reminder_short_minutes">%1$dm</string>
@@ -708,44 +737,44 @@
     <string name="reminder_short_weeks">%1$dv</string>
     <string name="reminder_summary_none">Engin</string>
     <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
-    <string name="duration_compact">%1$dklst %2$dm\u00edn</string>
-    <string name="duration_compact_short">%1$dklst%2$dm\u00edn</string>
+    <string name="duration_compact">%1$dklst %2$dmín</string>
+    <string name="duration_compact_short">%1$dklst%2$dmín</string>
 
     <!-- Sync interval options -->
-    <string name="sync_manual_only">A\u00f0eins handvirkt</string>
+    <string name="sync_manual_only">Aðeins handvirkt</string>
     <!-- Sync lookback options -->
-    <string name="sync_lookback_all">Allir vi\u00f0bur\u00f0ir</string>
+    <string name="sync_lookback_all">Allir viðburðir</string>
 
     <!-- ==================== i18n: Notification Strings ==================== -->
     <!-- Notification action buttons -->
     <string name="action_snooze">Fresta</string>
     <!-- Reminder notification content -->
-    <string name="notification_starting_now">Byrjar n\u00fana</string>
+    <string name="notification_starting_now">Byrjar núna</string>
     <!-- %1$s = formatted time (e.g., "10:30 AM") -->
-    <string name="notification_tomorrow_time">\u00c1 morgun, %1$s</string>
+    <string name="notification_tomorrow_time">Á morgun, %1$s</string>
     <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
     <string name="notification_date_time">%1$s, %2$s</string>
     <!-- Sync notification titles -->
-    <string name="sync_notification_complete">Samstilling loki\u00f0</string>
-    <string name="sync_notification_partial">Samstilling a\u00f0 hluta loki\u00f0</string>
-    <string name="sync_notification_auth_failed">Samstilling: Au\u00f0kenning mist\u00f3kst</string>
-    <string name="sync_notification_auth_reauth">Skr\u00e1\u00f0u \u00feig inn \u00e1 reikninginn \u00feinn aftur</string>
-    <string name="sync_notification_failed">Samstilling mist\u00f3kst</string>
-    <string name="sync_notification_parse_title">Sumir vi\u00f0bur\u00f0ir geti\u00f0 ekki samstillst</string>
+    <string name="sync_notification_complete">Samstilling lokið</string>
+    <string name="sync_notification_partial">Samstilling að hluta lokið</string>
+    <string name="sync_notification_auth_failed">Samstilling: Auðkenning mistókst</string>
+    <string name="sync_notification_auth_reauth">Skráðu þig inn á reikninginn þinn aftur</string>
+    <string name="sync_notification_failed">Samstilling mistókst</string>
+    <string name="sync_notification_parse_title">Sumir viðburðir getið ekki samstillst</string>
     <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
-    <string name="sync_notification_parse_content">%1$s \u00ed %2$s geti\u00f0 ekki samstillst. Pr\u00f3fa\u00f0u fulla samstillingu \u00ed Stillingum.</string>
-    <string name="sync_notification_conflict_title">\u00c1rekstri vi\u00f0 samstillingu leyst</string>
+    <string name="sync_notification_parse_content">%1$s í %2$s getið ekki samstillst. Prófaðu fulla samstillingu í Stillingum.</string>
+    <string name="sync_notification_conflict_title">Árekstri við samstillingu leyst</string>
     <!-- %1$s = event title -->
-    <string name="sync_notification_conflict_single">Sta\u00f0v\u00e6rar breytingar \u00e1 \"%1$s\" t\u00f6pu\u00f0ust vegna \u00e1reksturs vi\u00f0 samstillingu. \u00datg\u00e1fa \u00fej\u00f3nsins ver\u00f0ur notuð.</string>
+    <string name="sync_notification_conflict_single">Staðværar breytingar á \"%1$s\" töpuðust vegna áreksturs við samstillingu. Útgáfa þjónsins verður notuð.</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_conflict_multi">Sta\u00f0v\u00e6rar breytingar \u00e1 %1$s t\u00f6pu\u00f0ust vegna \u00e1rekstra vi\u00f0 samstillingu. \u00datg\u00e1fur \u00fej\u00f3nsins ver\u00f0a nota\u00f0ar.</string>
-    <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar \u00fat</string>
+    <string name="sync_notification_conflict_multi">Staðværar breytingar á %1$s töpuðust vegna árekstra við samstillingu. Útgáfur þjónsins verða notaðar.</string>
+    <string name="sync_notification_expired_title">Samstillingarbreytingar runnnar út</string>
     <!-- %1$s = event count text (e.g., "3 events") -->
-    <string name="sync_notification_expired_content">%1$s geti\u00f0 ekki samstillst eftir 30 daga. \u00datg\u00e1fa \u00fej\u00f3nsins ver\u00f0ur notuð. \u00devingi\u00f0u samstillingu til a\u00f0 reyna aftur.</string>
+    <string name="sync_notification_expired_content">%1$s getið ekki samstillst eftir 30 daga. Útgáfa þjónsins verður notuð. Þvingiðu samstillingu til að reyna aftur.</string>
     <!-- Sync notification content — %1$d = calendar count -->
     <plurals name="sync_notification_calendars">
         <item quantity="one">%1$d dagatal samstillt</item>
-        <item quantity="other">%1$d dagat\u00f6l samstillt</item>
+        <item quantity="other">%1$d dagatöl samstillt</item>
     </plurals>
     <plurals name="sync_notification_changes">
         <item quantity="one">, %1$d breyting</item>
@@ -758,13 +787,13 @@
 
     <!-- ==================== i18n: Contact Event Titles ==================== -->
     <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
-    <string name="contact_birthday_with_age">%2$s afm\u00e6lisdagur %1$s</string>
+    <string name="contact_birthday_with_age">%2$s afmælisdagur %1$s</string>
     <!-- Contact birthday title (no age) — %1$s = contact name -->
-    <string name="contact_birthday">Afm\u00e6lisdagur %1$s</string>
+    <string name="contact_birthday">Afmælisdagur %1$s</string>
     <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
-    <string name="contact_anniversary_with_age">%2$s \u00e1fangadagur %1$s</string>
+    <string name="contact_anniversary_with_age">%2$s áfangadagur %1$s</string>
     <!-- Contact anniversary title (no age) — %1$s = contact name -->
-    <string name="contact_anniversary">\u00c1fangadagur %1$s</string>
+    <string name="contact_anniversary">Áfangadagur %1$s</string>
     <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
     <string name="ordinal_suffix_st">%1$d.</string>
     <string name="ordinal_suffix_nd">%1$d.</string>
@@ -773,27 +802,27 @@
 
     <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
     <!-- Home screen sync banner messages -->
-    <string name="sync_banner_syncing">Samstilli dagatöl\u2026</string>
-    <string name="sync_banner_preparing">Undirb\u00fd samstillingu\u2026</string>
-    <string name="sync_banner_complete_errors">Samstillingu loki\u00f0 me\u00f0 villum</string>
+    <string name="sync_banner_syncing">Samstilli dagatöl…</string>
+    <string name="sync_banner_preparing">Undirbý samstillingu…</string>
+    <string name="sync_banner_complete_errors">Samstillingu lokið með villum</string>
     <!-- %1$s = error message -->
-    <string name="sync_banner_failed">Samstilling mist\u00f3kst: %1$s</string>
-    <string name="error_unknown_error">\u00d3\u00feekkt villa</string>
+    <string name="sync_banner_failed">Samstilling mistókst: %1$s</string>
+    <string name="error_unknown_error">Óþekkt villa</string>
 
     <!-- Sync change snackbar messages -->
     <!-- %1$s = event title (truncated) -->
-    <string name="sync_snackbar_new_event">N\u00fdr vi\u00f0bur\u00f0ur: %1$s</string>
+    <string name="sync_snackbar_new_event">Nýr viðburður: %1$s</string>
     <plurals name="sync_snackbar_new_events">
-        <item quantity="one">%1$d n\u00fdr vi\u00f0bur\u00f0ur</item>
-        <item quantity="other">%1$d n\u00fdjir vi\u00f0bur\u00f0ir</item>
+        <item quantity="one">%1$d nýr viðburður</item>
+        <item quantity="other">%1$d nýjir viðburðir</item>
     </plurals>
     <plurals name="sync_snackbar_events_updated">
-        <item quantity="one">%1$d vi\u00f0bur\u00f0ur uppf\u00e6r\u00f0ur</item>
-        <item quantity="other">%1$d vi\u00f0bur\u00f0ir uppf\u00e6r\u00f0ir</item>
+        <item quantity="one">%1$d viðburður uppfærður</item>
+        <item quantity="other">%1$d viðburðir uppfærðir</item>
     </plurals>
     <plurals name="sync_snackbar_events_removed">
-        <item quantity="one">%1$d vi\u00f0bur\u00f0ur fjarl\u00e6g\u00f0ur</item>
-        <item quantity="other">%1$d vi\u00f0bur\u00f0ir fjarl\u00e6g\u00f0ir</item>
+        <item quantity="one">%1$d viðburður fjarlægður</item>
+        <item quantity="other">%1$d viðburðir fjarlægðir</item>
     </plurals>
     <!-- %1$d = total change count -->
     <plurals name="sync_snackbar_calendar_updates">
@@ -805,54 +834,54 @@
     <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
     <string name="day_x_of_y">Dagur %1$d af %2$d</string>
     <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
-    <string name="day_starts">Dagur 1 af %1$d \u00b7 byrjar %2$s</string>
+    <string name="day_starts">Dagur 1 af %1$d · byrjar %2$s</string>
     <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
-    <string name="day_ends">Dagur %1$d af %2$d \u00b7 endar %3$s</string>
+    <string name="day_ends">Dagur %1$d af %2$d · endar %3$s</string>
     <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
-    <string name="event_date_range_all_day">%1$s \u2192 %2$s \u00b7 Allan daginn</string>
-    <string name="event_date_all_day">%1$s \u00b7 Allan daginn</string>
+    <string name="event_date_range_all_day">%1$s → %2$s · Allan daginn</string>
+    <string name="event_date_all_day">%1$s · Allan daginn</string>
     <!-- ICS import date+all day patterns -->
     <string name="event_date_range_all_day_parens">%1$s - %2$s (Allan daginn)</string>
     <string name="event_date_all_day_parens">%1$s (Allan daginn)</string>
 
     <!-- ==================== i18n: Round 2 audit gaps ==================== -->
     <!-- Save button for event form -->
-    <string name="action_save_event">Vista vi\u00f0bur\u00f0</string>
+    <string name="action_save_event">Vista viðburð</string>
     <!-- Badges -->
     <string name="badge_beta">Beta</string>
-    <string name="badge_new">N\u00fdtt</string>
+    <string name="badge_new">Nýtt</string>
     <!-- Color names for accessibility -->
-    <string name="color_red">Rau\u00f0ur</string>
-    <string name="color_orange">Appels\u00ednugulur</string>
+    <string name="color_red">Rauður</string>
+    <string name="color_orange">Appelsínugulur</string>
     <string name="color_yellow">Gulur</string>
-    <string name="color_green">Gr\u00e6nn</string>
-    <string name="color_cyan">Bl\u00e1gr\u00e6nn</string>
-    <string name="color_blue">Bl\u00e1r</string>
-    <string name="color_purple">Fj\u00f3lubr\u00e1r</string>
+    <string name="color_green">Grænn</string>
+    <string name="color_cyan">Blágrænn</string>
+    <string name="color_blue">Blár</string>
+    <string name="color_purple">Fjólubrár</string>
     <!-- Accessibility: link types -->
     <string name="cd_meeting_link">Fundarhlekk: %1$s</string>
-    <string name="cd_phone_number">S\u00edman\u00famer</string>
-    <string name="cd_email_link">T\u00f6lvup\u00f3stur: %1$s</string>
+    <string name="cd_phone_number">Símanúmer</string>
+    <string name="cd_email_link">Tölvupóstur: %1$s</string>
     <string name="cd_web_link">Hlekkur: %1$s</string>
-    <string name="cd_text_with_links">Texti me\u00f0 %1$d hlekkjum: %2$s</string>
-    <string name="cd_text_with_link">Texti me\u00f0 1 hlekk: %1$s</string>
+    <string name="cd_text_with_links">Texti með %1$d hlekkjum: %2$s</string>
+    <string name="cd_text_with_link">Texti með 1 hlekk: %1$s</string>
     <!-- Multi-day event: all-day indicator with day number -->
     <string name="day_x_of_y_all_day">Dagur %1$d af %2$d (Allan daginn)</string>
     <!-- Sync history stats header -->
-    <string name="sync_history_stats">%1$d samst.   \u2191%2$d sent   \u2193%3$d m\u00f3tteki\u00f0</string>
-    <string name="sync_history_stats_issues">%1$d samst.   \u2191%2$d sent   \u2193%3$d m\u00f3tteki\u00f0   \u26a0 %4$d vand\u00e6mi</string>
-    <string name="sync_history_failed">Mist\u00f3kst</string>
+    <string name="sync_history_stats">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið</string>
+    <string name="sync_history_stats_issues">%1$d samst.   ↑%2$d sent   ↓%3$d móttekið   ⚠ %4$d vandæmi</string>
+    <string name="sync_history_failed">Mistókst</string>
     <!-- ICS subscription sync intervals -->
-    <string name="ics_sync_every_hour">\u00c1 hverri klukkustund</string>
-    <string name="ics_sync_every_n_hours">\u00c1 %1$d klukkustunda fresti</string>
+    <string name="ics_sync_every_hour">Á hverri klukkustund</string>
+    <string name="ics_sync_every_n_hours">Á %1$d klukkustunda fresti</string>
     <string name="ics_sync_daily">Daglega</string>
     <string name="ics_sync_weekly">Vikulega</string>
     <!-- ICS subscription URL validation -->
-    <string name="ics_url_required">URL er nau\u00f0synlegt</string>
-    <string name="ics_url_invalid_scheme">URL ver\u00f0ur a\u00f0 byrja \u00e1 http://, https:// e\u00f0a webcal://</string>
+    <string name="ics_url_required">URL er nauðsynlegt</string>
+    <string name="ics_url_invalid_scheme">URL verður að byrja á http://, https:// eða webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s \u00b7 %2$s (Allan daginn)</string>
-    <string name="event_confirmation_timed">%1$s \u00b7 %2$s, %3$s</string>
+    <string name="event_confirmation_all_day">%1$s · %2$s (Allan daginn)</string>
+    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Dagatal</string>
@@ -887,7 +916,7 @@
     <string name="rrule_until_suffix">, til %1$s</string>
     <string name="rrule_freq_never">Aldrei</string>
     <string name="rrule_starting">%1$s frá %2$s%3$s</string>
-    <string name="rrule_since">%1$s \u00b7 síðan %2$s</string>
+    <string name="rrule_since">%1$s · síðan %2$s</string>
 
     <!-- Recurrence count plural -->
     <plurals name="rrule_count_suffix">
@@ -900,41 +929,41 @@
     <string name="insights_period_this_week">Vika</string>
     <string name="insights_period_last_week">Síðasta vika</string>
     <string name="insights_period_this_month">Mánuður</string>
-    <string name="insights_empty_state">Engir vi\u00f0bur\u00f0ir \u00e1\u00e6tla\u00f0ir \u00feessa viku</string>
+    <string name="insights_empty_state">Engir viðburðir áætlaðir þessa viku</string>
     <string name="insights_delta_more">+%1$s meira en %2$s</string>
     <string name="insights_delta_less">%1$s minna en %2$s</string>
     <plurals name="insights_all_day_count">
-        <item quantity="one">%d heildagsvi\u00f0bur\u00f0ur</item>
-        <item quantity="other">%d heildagsvi\u00f0bur\u00f0ir</item>
+        <item quantity="one">%d heildagsviðburður</item>
+        <item quantity="other">%d heildagsviðburðir</item>
     </plurals>
-    <string name="insight_busiest_day_future">%1$s er \u00feinn \u00e1nni\u00f0samasti dagur (%2$s)</string>
-    <string name="insight_busiest_day_past">%1$s var \u00feinn \u00e1nni\u00f0samasti dagur (%2$s)</string>
-    <string name="insight_lightest_day_future">%1$s er \u00feinn r\u00f3legasti dagur (%2$s)</string>
-    <string name="insight_lightest_day_past">%1$s var \u00feinn r\u00f3legasti dagur (%2$s)</string>
-    <string name="insight_longest_free_future">Lengsti frji t\u00edmi: %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_longest_free_past">Lengsti frji t\u00edmi var %1$s %2$s\u2013%3$s (%4$s)</string>
-    <string name="insight_weekend_load_clear_future">Helgin \u00feín er laus</string>
-    <string name="insight_weekend_load_clear_past">Helgin \u00feín var laus</string>
-    <string name="insight_weekend_load_light_future">%1$s \u00e1\u00e6tlu\u00f0 um helgina</string>
-    <string name="insight_weekend_load_light_past">%1$s voru \u00e1\u00e6tlu\u00f0 um helgina</string>
-    <string name="insight_weekend_load_busy_future">%1$s \u00e1\u00e6tlu\u00f0 um helgina</string>
-    <string name="insight_weekend_load_busy_past">%1$s voru \u00e1\u00e6tlu\u00f0 um helgina</string>
-    <string name="insight_back_to_back_future">%1$d fundir \u00ed r\u00f6\u00f0</string>
-    <string name="insight_back_to_back_past">\u00de\u00fa \u00e1ttir %1$d fundi \u00ed r\u00f6\u00f0</string>
-    <string name="insight_calendar_dominant_future">%1$s er %2$d%% af \u00e1\u00e6tlu\u00f0um t\u00edma \u00feínum</string>
-    <string name="insight_calendar_dominant_past">%1$s var %2$d%% af \u00e1\u00e6tlu\u00f0um t\u00edma \u00feínum</string>
-    <string name="insight_early_bounds_future">Dagskr\u00e1in \u00feín byrjar fyrir kl. 8 \u00e1 %1$d d\u00f6gum</string>
-    <string name="insight_early_bounds_past">Dagskr\u00e1in \u00feín byrja\u00f0i fyrir kl. 8 \u00e1 %1$d d\u00f6gum</string>
-    <string name="insight_late_bounds_future">Vi\u00f0bur\u00f0ir eftir kl. 19 \u00e1 %1$d d\u00f6gum</string>
-    <string name="insight_late_bounds_past">Vi\u00f0bur\u00f0ir f\u00f3ru yfir kl. 19 \u00e1 %1$d d\u00f6gum</string>
-    <string name="insight_meeting_free_days_future">\u00de\u00fa \u00e1tt %1$d fundalausa daga</string>
-    <string name="insight_meeting_free_days_past">\u00de\u00fa \u00e1ttir %1$d fundalausa daga</string>
-    <string name="insight_tomorrow_preview">\u00c1 morgun: %1$s \u00e1\u00e6tlu\u00f0, byrjar kl. %2$s</string>
-    <string name="insight_tomorrow_preview_no_start">\u00c1 morgun: %1$s \u00e1\u00e6tlu\u00f0</string>
-    <string name="insight_heaviest_upcoming">%1$s er \u00feinn \u00e1nni\u00f0samasti komandi dagur (%2$s)</string>
-    <string name="insight_next_free_block">N\u00e6sti frji t\u00edmi: %1$s %2$s\u2013%3$s (%4$s)</string>
+    <string name="insight_busiest_day_future">%1$s er þinn ánniðsamasti dagur (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s var þinn ánniðsamasti dagur (%2$s)</string>
+    <string name="insight_lightest_day_future">%1$s er þinn rólegasti dagur (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s var þinn rólegasti dagur (%2$s)</string>
+    <string name="insight_longest_free_future">Lengsti frji tími: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">Lengsti frji tími var %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_weekend_load_clear_future">Helgin þín er laus</string>
+    <string name="insight_weekend_load_clear_past">Helgin þín var laus</string>
+    <string name="insight_weekend_load_light_future">%1$s áætluð um helgina</string>
+    <string name="insight_weekend_load_light_past">%1$s voru áætluð um helgina</string>
+    <string name="insight_weekend_load_busy_future">%1$s áætluð um helgina</string>
+    <string name="insight_weekend_load_busy_past">%1$s voru áætluð um helgina</string>
+    <string name="insight_back_to_back_future">%1$d fundir í röð</string>
+    <string name="insight_back_to_back_past">Þú áttir %1$d fundi í röð</string>
+    <string name="insight_calendar_dominant_future">%1$s er %2$d%% af áætluðum tíma þínum</string>
+    <string name="insight_calendar_dominant_past">%1$s var %2$d%% af áætluðum tíma þínum</string>
+    <string name="insight_early_bounds_future">Dagskráin þín byrjar fyrir kl. 8 á %1$d dögum</string>
+    <string name="insight_early_bounds_past">Dagskráin þín byrjaði fyrir kl. 8 á %1$d dögum</string>
+    <string name="insight_late_bounds_future">Viðburðir eftir kl. 19 á %1$d dögum</string>
+    <string name="insight_late_bounds_past">Viðburðir fóru yfir kl. 19 á %1$d dögum</string>
+    <string name="insight_meeting_free_days_future">Þú átt %1$d fundalausa daga</string>
+    <string name="insight_meeting_free_days_past">Þú áttir %1$d fundalausa daga</string>
+    <string name="insight_tomorrow_preview">Á morgun: %1$s áætluð, byrjar kl. %2$s</string>
+    <string name="insight_tomorrow_preview_no_start">Á morgun: %1$s áætluð</string>
+    <string name="insight_heaviest_upcoming">%1$s er þinn ánniðsamasti komandi dagur (%2$s)</string>
+    <string name="insight_next_free_block">Næsti frji tími: %1$s %2$s–%3$s (%4$s)</string>
     <string name="insights_cd_calendar_bar">Dagatalsdreifing: %1$s</string>
-    <string name="insights_cd_daily_chart">Dagleg dreifing: \u00e1nni\u00f0samasti dagur er %1$s</string>
+    <string name="insights_cd_daily_chart">Dagleg dreifing: ánniðsamasti dagur er %1$s</string>
 
     <!-- ==================== Event Color / Availability ==================== -->
     <string name="label_availability">Framboð</string>
