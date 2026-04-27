@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Répétition invalide.</string>
 
     <string name="error_display_name_exists">Un compte nommé \"%1$s\" existe déjà.</string>
+    <string name="icloud_error_credentials_required">Apple ID et mot de passe requis</string>
+    <string name="icloud_error_connection_timeout">Délai de connexion dépassé. Veuillez réessayer.</string>
+    <string name="caldav_error_display_name_required">Le nom d\'affichage est requis</string>
+    <string name="caldav_error_credentials_required">URL du serveur, nom d\'utilisateur et mot de passe requis</string>
+    <string name="caldav_error_connection_timeout">Délai de connexion dépassé. Veuillez réessayer.</string>
+    <string name="caldav_error_no_calendars">Aucun calendrier trouvé sur ce serveur.</string>
+    <string name="caldav_error_unexpected">Erreur inattendue. Veuillez réessayer.</string>
 
     <string name="error_import_file_not_found">Fichier introuvable ou illisible.</string>
     <string name="error_import_invalid_format">Format de fichier calendrier invalide.</string>
@@ -691,6 +698,7 @@
     <string name="label_go_to_month">Aller au mois</string>
 
     <string name="action_more_options">Plus d\'options</string>
+    <string name="quick_add_save_failed">Échec de l\'enregistrement</string>
 
     <string name="label_duration_days">jours</string>
     <string name="label_duration_hrs">hrs</string>
@@ -891,8 +899,6 @@
     <string name="ics_url_required">L\'URL est requise</string>
     <string name="ics_url_invalid_scheme">L\'URL doit commencer par http://, https:// ou webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Toute la journée)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendrier</string>
     <string name="cd_widget_add_event">Ajouter un événement</string>

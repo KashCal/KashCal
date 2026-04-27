@@ -52,6 +52,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
+import org.onekash.kashcal.ui.util.asString
 
 /**
  * Bottom sheet for CalDAV account sign-in.
@@ -246,12 +247,13 @@ private fun NotConnectedContent(
 
         // Display Name field (auto-populated from server URL + username, user can override)
         val displayNameHasError = state.errorField == CalDavConnectionState.ErrorField.DISPLAY_NAME
+        val errorText = state.error?.asString()
         OutlinedTextField(
             value = state.displayName,
             onValueChange = onDisplayNameChange,
             label = { Text(stringResource(R.string.label_display_name_optional)) },
-            supportingText = if (displayNameHasError && state.error != null) {
-                { Text(state.error, color = MaterialTheme.colorScheme.error) }
+            supportingText = if (displayNameHasError && errorText != null) {
+                { Text(errorText, color = MaterialTheme.colorScheme.error) }
             } else {
                 { Text(stringResource(R.string.hint_name_shown_in_settings)) }
             },
@@ -267,8 +269,8 @@ private fun NotConnectedContent(
             modifier = Modifier
                 .fillMaxWidth()
                 .semantics {
-                    if (displayNameHasError && state.error != null) {
-                        error(state.error)
+                    if (displayNameHasError && errorText != null) {
+                        error(errorText)
                     }
                 }
         )
@@ -313,7 +315,7 @@ private fun NotConnectedContent(
         }
 
         // Error message
-        if (state.error != null) {
+        if (errorText != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -322,7 +324,7 @@ private fun NotConnectedContent(
                 )
             ) {
                 Text(
-                    state.error,
+                    errorText,
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onErrorContainer,
                     style = MaterialTheme.typography.bodyMedium

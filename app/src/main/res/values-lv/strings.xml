@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">Nederīgs atkārtošanās modelis.</string>
 
     <string name="error_display_name_exists">Konts ar nosaukumu \"%1$s\" jau pastāv.</string>
+    <string name="icloud_error_credentials_required">Nepieciešami Apple ID un parole</string>
+    <string name="icloud_error_connection_timeout">Savienojuma noildze. Mēģiniet vēlreiz.</string>
+    <string name="caldav_error_display_name_required">Nepieciešams attēlotais nosaukums</string>
+    <string name="caldav_error_credentials_required">Nepieciešami servera URL, lietotājvārds un parole</string>
+    <string name="caldav_error_connection_timeout">Savienojuma noildze. Mēģiniet vēlreiz.</string>
+    <string name="caldav_error_no_calendars">Šajā serverī kalendāri nav atrasti.</string>
+    <string name="caldav_error_unexpected">Negaidīta kļūda. Mēģiniet vēlreiz.</string>
 
     <string name="error_import_file_not_found">Fails nav atrasts vai nav lasāms.</string>
     <string name="error_import_invalid_format">Nederīgs kalendāra faila formāts.</string>
@@ -694,6 +701,7 @@
     <string name="label_go_to_month">Pāriet uz mēnesi</string>
 
     <string name="action_more_options">Vairāk iespēju</string>
+    <string name="quick_add_save_failed">Neizdevās saglabāt notikumu</string>
 
     <string name="label_duration_days">dienas</string>
     <string name="label_duration_hrs">st</string>
@@ -857,8 +865,6 @@
     <string name="ics_sync_weekly">Katru nedēļu</string>
     <string name="ics_url_required">Nepieciešams URL</string>
     <string name="ics_url_invalid_scheme">URL jāsākas ar http://, https:// vai webcal://</string>
-    <string name="event_confirmation_all_day">%1$s · %2$s (Visu dienu)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalendārs</string>

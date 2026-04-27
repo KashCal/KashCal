@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">รูปแบบการเกิดซ้ำไม่ถูกต้อง</string>
 
     <string name="error_display_name_exists">บัญชีชื่อ \"%1$s\" มีอยู่แล้ว</string>
+    <string name="icloud_error_credentials_required">ต้องระบุ Apple ID และรหัสผ่าน</string>
+    <string name="icloud_error_connection_timeout">หมดเวลาการเชื่อมต่อ โปรดลองอีกครั้ง</string>
+    <string name="caldav_error_display_name_required">ต้องระบุชื่อที่แสดง</string>
+    <string name="caldav_error_credentials_required">ต้องระบุ URL เซิร์ฟเวอร์ ชื่อผู้ใช้ และรหัสผ่าน</string>
+    <string name="caldav_error_connection_timeout">หมดเวลาการเชื่อมต่อ โปรดลองอีกครั้ง</string>
+    <string name="caldav_error_no_calendars">ไม่พบปฏิทินบนเซิร์ฟเวอร์นี้</string>
+    <string name="caldav_error_unexpected">เกิดข้อผิดพลาดที่ไม่คาดคิด โปรดลองอีกครั้ง</string>
 
     <string name="error_import_file_not_found">ไม่พบไฟล์หรืออ่านไม่ได้</string>
     <string name="error_import_invalid_format">รูปแบบไฟล์ปฏิทินไม่ถูกต้อง</string>
@@ -632,6 +639,7 @@
     <string name="label_go_to_month">ไปที่เดือน</string>
 
     <string name="action_more_options">ตัวเลือกเพิ่มเติม</string>
+    <string name="quick_add_save_failed">บันทึกกิจกรรมไม่สำเร็จ</string>
 
     <string name="label_duration_days">วัน</string>
     <string name="label_duration_hrs">ชม.</string>
@@ -818,8 +826,6 @@
     <string name="ics_url_required">ต้องระบุ URL</string>
     <string name="ics_url_invalid_scheme">URL ต้องเริ่มด้วย http://, https:// หรือ webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (ทั้งวัน)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d ครั้ง</item>

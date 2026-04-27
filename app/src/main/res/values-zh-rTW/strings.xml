@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">重複模式無效。</string>
 
     <string name="error_display_name_exists">名為「%1$s」的帳號已存在。</string>
+    <string name="icloud_error_credentials_required">需要 Apple ID 和密碼</string>
+    <string name="icloud_error_connection_timeout">連線逾時。請重試。</string>
+    <string name="caldav_error_display_name_required">需要顯示名稱</string>
+    <string name="caldav_error_credentials_required">需要伺服器 URL、使用者名稱和密碼</string>
+    <string name="caldav_error_connection_timeout">連線逾時。請重試。</string>
+    <string name="caldav_error_no_calendars">在此伺服器上找不到行事曆。</string>
+    <string name="caldav_error_unexpected">意外錯誤。請重試。</string>
 
     <string name="error_import_file_not_found">找不到檔案或無法讀取。</string>
     <string name="error_import_invalid_format">行事曆檔案格式無效。</string>
@@ -632,6 +639,7 @@
     <string name="label_go_to_month">前往月份</string>
 
     <string name="action_more_options">更多選項</string>
+    <string name="quick_add_save_failed">無法儲存活動</string>
 
     <string name="label_duration_days">天</string>
     <string name="label_duration_hrs">時</string>
@@ -818,8 +826,6 @@
     <string name="ics_url_required">需要URL</string>
     <string name="ics_url_invalid_scheme">URL必須以http://、https://或webcal://開頭</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s（全天）</string>
-    <string name="event_confirmation_timed">%1$s · %2$s，%3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">，%1$d次</item>

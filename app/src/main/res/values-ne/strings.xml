@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">अमान्य दोहोरिने ढाँचा।</string>
 
     <string name="error_display_name_exists">\"%1$s\" नामको खाता पहिले नै छ।</string>
+    <string name="icloud_error_credentials_required">Apple ID र पासवर्ड आवश्यक छ</string>
+    <string name="icloud_error_connection_timeout">जडान समय सकियो। फेरि प्रयास गर्नुहोस्।</string>
+    <string name="caldav_error_display_name_required">प्रदर्शन नाम आवश्यक छ</string>
+    <string name="caldav_error_credentials_required">सर्भर URL, प्रयोगकर्ता नाम र पासवर्ड आवश्यक छ</string>
+    <string name="caldav_error_connection_timeout">जडान समय सकियो। फेरि प्रयास गर्नुहोस्।</string>
+    <string name="caldav_error_no_calendars">यो सर्भरमा कुनै क्यालेन्डर फेला परेन।</string>
+    <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। फेरि प्रयास गर्नुहोस्।</string>
 
     <string name="error_import_file_not_found">फाइल भेटिएन वा पढ्न सकिएन।</string>
     <string name="error_import_invalid_format">अमान्य क्यालेन्डर फाइल ढाँचा।</string>
@@ -656,6 +663,7 @@
     <string name="label_go_to_month">महिनामा जानुहोस्</string>
 
     <string name="action_more_options">थप विकल्पहरू</string>
+    <string name="quick_add_save_failed">कार्यक्रम बचत गर्न असफल</string>
 
     <string name="label_duration_days">दिन</string>
     <string name="label_duration_hrs">घण्</string>
@@ -846,8 +854,6 @@
     <string name="ics_url_required">URL आवश्यक छ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, वा webcal:// बाट सुरु हुनुपर्छ</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (दिनभर)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d पटक</item>

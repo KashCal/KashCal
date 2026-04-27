@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">Virheellinen toistokuvio.</string>
 
     <string name="error_display_name_exists">Tili nimellä \"%1$s\" on jo olemassa.</string>
+    <string name="icloud_error_credentials_required">Apple ID ja salasana vaaditaan</string>
+    <string name="icloud_error_connection_timeout">Yhteys aikakatkaistiin. Yritä uudelleen.</string>
+    <string name="caldav_error_display_name_required">Näyttönimi vaaditaan</string>
+    <string name="caldav_error_credentials_required">Palvelimen URL, käyttäjänimi ja salasana vaaditaan</string>
+    <string name="caldav_error_connection_timeout">Yhteys aikakatkaistiin. Yritä uudelleen.</string>
+    <string name="caldav_error_no_calendars">Tältä palvelimelta ei löytynyt kalentereita.</string>
+    <string name="caldav_error_unexpected">Odottamaton virhe. Yritä uudelleen.</string>
 
     <string name="error_import_file_not_found">Tiedostoa ei löytynyt tai sitä ei voi lukea.</string>
     <string name="error_import_invalid_format">Virheellinen kalenteritiedoston muoto.</string>
@@ -664,6 +671,7 @@
     <string name="label_go_to_month">Siirry kuukauteen</string>
 
     <string name="action_more_options">Lisää vaihtoehtoja</string>
+    <string name="quick_add_save_failed">Tapahtuman tallennus epäonnistui</string>
 
     <string name="label_duration_days">pv</string>
     <string name="label_duration_hrs">t</string>
@@ -820,8 +828,6 @@
     <string name="ics_sync_weekly">Viikoittain</string>
     <string name="ics_url_required">URL vaaditaan</string>
     <string name="ics_url_invalid_scheme">URL:n on alettava http://, https:// tai webcal://</string>
-    <string name="event_confirmation_all_day">%1$s · %2$s (Koko päivä)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalenteri</string>

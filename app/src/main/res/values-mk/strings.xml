@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Невалиден образец на повторување.</string>
 
     <string name="error_display_name_exists">Сметка со име \"%1$s\" веќе постои.</string>
+    <string name="icloud_error_credentials_required">Потребни се Apple ID и лозинка</string>
+    <string name="icloud_error_connection_timeout">Времето за поврзување истече. Обидете се повторно.</string>
+    <string name="caldav_error_display_name_required">Потребно е прикажано име</string>
+    <string name="caldav_error_credentials_required">Потребни се URL на серверот, корисничко име и лозинка</string>
+    <string name="caldav_error_connection_timeout">Времето за поврзување истече. Обидете се повторно.</string>
+    <string name="caldav_error_no_calendars">Не се пронајдени календари на овој сервер.</string>
+    <string name="caldav_error_unexpected">Неочекувана грешка. Обидете се повторно.</string>
 
     <string name="error_import_file_not_found">Датотеката не е пронајдена или не може да се прочита.</string>
     <string name="error_import_invalid_format">Невалиден формат на датотека со календар.</string>
@@ -681,6 +688,7 @@
     <string name="label_go_to_month">Оди на месец</string>
 
     <string name="action_more_options">Повеќе опции</string>
+    <string name="quick_add_save_failed">Не успеа да се зачува настан</string>
 
     <string name="label_duration_days">дена</string>
     <string name="label_duration_hrs">ч</string>
@@ -874,8 +882,6 @@
     <string name="ics_url_required">URL е задолжителен</string>
     <string name="ics_url_invalid_scheme">URL мора да започне со http://, https:// или webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Цел ден)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календар</string>

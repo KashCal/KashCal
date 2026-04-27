@@ -188,6 +188,13 @@
 
     <!-- Account Errors -->
     <string name="error_display_name_exists">Tá cuntas darb ainm \"%1$s\" ann cheana féin.</string>
+    <string name="icloud_error_credentials_required">Tá Apple ID agus pasfhocal ag teastáil</string>
+    <string name="icloud_error_connection_timeout">Chuaigh an ceangal thar am. Bain triail eile as.</string>
+    <string name="caldav_error_display_name_required">Tá ainm taispeána ag teastáil</string>
+    <string name="caldav_error_credentials_required">Tá URL an fhreastalaí, ainm úsáideora agus pasfhocal ag teastáil</string>
+    <string name="caldav_error_connection_timeout">Chuaigh an ceangal thar am. Bain triail eile as.</string>
+    <string name="caldav_error_no_calendars">Níor aimsíodh aon fhéilirí ar an bhfreastalaí seo.</string>
+    <string name="caldav_error_unexpected">Earráid gan choinne. Bain triail eile as.</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Comhad gan aimsiú nó ní féidir é a léamh.</string>
@@ -763,6 +770,7 @@
     <string name="label_go_to_month">Téigh go mí</string>
 
     <string name="action_more_options">Tuilleadh roghanna</string>
+    <string name="quick_add_save_failed">Theip ar shábháil an imeachta</string>
 
     <string name="label_duration_days">lá</string>
     <string name="label_duration_hrs">uair</string>
@@ -1006,8 +1014,6 @@
     <string name="ics_url_required">Tá URL ag teastáil</string>
     <string name="ics_url_invalid_scheme">Caithfidh an URL tosú le http://, https://, nó webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (An lá ar fad)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Féilire</string>
     <string name="cd_widget_add_event">Cuir imeacht leis</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

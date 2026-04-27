@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">Невірний шаблон повторення.</string>
 
     <string name="error_display_name_exists">Обліковий запис «%1$s» вже існує.</string>
+    <string name="icloud_error_credentials_required">Потрібні Apple ID і пароль</string>
+    <string name="icloud_error_connection_timeout">Час очікування з\'єднання вичерпано. Повторіть спробу.</string>
+    <string name="caldav_error_display_name_required">Потрібна відображувана назва</string>
+    <string name="caldav_error_credentials_required">Потрібні URL сервера, ім\'я користувача та пароль</string>
+    <string name="caldav_error_connection_timeout">Час очікування з\'єднання вичерпано. Повторіть спробу.</string>
+    <string name="caldav_error_no_calendars">Календарі на цьому сервері не знайдено.</string>
+    <string name="caldav_error_unexpected">Неочікувана помилка. Повторіть спробу.</string>
 
     <string name="error_import_file_not_found">Файл не знайдено або неможливо прочитати.</string>
     <string name="error_import_invalid_format">Невірний формат файлу календаря.</string>
@@ -723,6 +730,7 @@
     <string name="label_go_to_month">Перейти до місяця</string>
 
     <string name="action_more_options">Ще</string>
+    <string name="quick_add_save_failed">Не вдалося зберегти подію</string>
 
     <string name="label_duration_days">дн.</string>
     <string name="label_duration_hrs">год.</string>
@@ -893,8 +901,6 @@
     <string name="ics_sync_weekly">Щотижня</string>
     <string name="ics_url_required">Потрібен URL</string>
     <string name="ics_url_invalid_scheme">URL має починатися з http://, https:// або webcal://</string>
-    <string name="event_confirmation_all_day">%1$s · %2$s (Увесь день)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календар</string>

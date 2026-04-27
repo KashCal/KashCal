@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">ਗਲਤ ਦੁਹਰਾਓ ਪੈਟਰਨ।</string>
 
     <string name="error_display_name_exists">\"%1$s\" ਨਾਮ ਦਾ ਖਾਤਾ ਪਹਿਲਾਂ ਹੀ ਮੌਜੂਦ ਹੈ।</string>
+    <string name="icloud_error_credentials_required">Apple ID ਅਤੇ ਪਾਸਵਰਡ ਲੋੜੀਂਦੇ ਹਨ</string>
+    <string name="icloud_error_connection_timeout">ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="caldav_error_display_name_required">ਡਿਸਪਲੇ ਨਾਮ ਲੋੜੀਂਦਾ ਹੈ</string>
+    <string name="caldav_error_credentials_required">ਸਰਵਰ URL, ਉਪਭੋਗਤਾ ਨਾਮ ਅਤੇ ਪਾਸਵਰਡ ਲੋੜੀਂਦੇ ਹਨ</string>
+    <string name="caldav_error_connection_timeout">ਕਨੈਕਸ਼ਨ ਦਾ ਸਮਾਂ ਸਮਾਪਤ ਹੋ ਗਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
+    <string name="caldav_error_no_calendars">ਇਸ ਸਰਵਰ \'ਤੇ ਕੋਈ ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ।</string>
+    <string name="caldav_error_unexpected">ਅਣਕਿਆਸੀ ਗਲਤੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
 
     <string name="error_import_file_not_found">ਫ਼ਾਈਲ ਨਹੀਂ ਮਿਲੀ ਜਾਂ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕਦੀ।</string>
     <string name="error_import_invalid_format">ਗਲਤ ਕੈਲੰਡਰ ਫ਼ਾਈਲ ਫ਼ਾਰਮੈਟ।</string>
@@ -656,6 +663,7 @@
     <string name="label_go_to_month">ਮਹੀਨੇ \'ਤੇ ਜਾਓ</string>
 
     <string name="action_more_options">ਹੋਰ ਵਿਕਲਪ</string>
+    <string name="quick_add_save_failed">ਇਵੈਂਟ ਸੁਰੱਖਿਅਤ ਕਰਨ ਵਿੱਚ ਅਸਫਲ</string>
 
     <string name="label_duration_days">ਦਿਨ</string>
     <string name="label_duration_hrs">ਘੰ</string>
@@ -846,8 +854,6 @@
     <string name="ics_url_required">URL ਲੋੜੀਂਦਾ ਹੈ</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, ਜਾਂ webcal:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (ਸਾਰਾ ਦਿਨ)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d ਵਾਰ</item>

@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Μη έγκυρο μοτίβο επανάληψης.</string>
 
     <string name="error_display_name_exists">Υπάρχει ήδη λογαριασμός με το όνομα \"%1$s\".</string>
+    <string name="icloud_error_credentials_required">Απαιτούνται Apple ID και κωδικός πρόσβασης</string>
+    <string name="icloud_error_connection_timeout">Η σύνδεση έληξε. Δοκιμάστε ξανά.</string>
+    <string name="caldav_error_display_name_required">Απαιτείται εμφανιζόμενο όνομα</string>
+    <string name="caldav_error_credentials_required">Απαιτούνται URL διακομιστή, όνομα χρήστη και κωδικός πρόσβασης</string>
+    <string name="caldav_error_connection_timeout">Η σύνδεση έληξε. Δοκιμάστε ξανά.</string>
+    <string name="caldav_error_no_calendars">Δεν βρέθηκαν ημερολόγια σε αυτόν τον διακομιστή.</string>
+    <string name="caldav_error_unexpected">Απρόσμενο σφάλμα. Δοκιμάστε ξανά.</string>
 
     <string name="error_import_file_not_found">Το αρχείο δεν βρέθηκε ή δεν μπορεί να διαβαστεί.</string>
     <string name="error_import_invalid_format">Μη έγκυρη μορφή αρχείου ημερολογίου.</string>
@@ -681,6 +688,7 @@
     <string name="label_go_to_month">Μετάβαση σε μήνα</string>
 
     <string name="action_more_options">Περισσότερες επιλογές</string>
+    <string name="quick_add_save_failed">Αποτυχία αποθήκευσης εκδήλωσης</string>
 
     <string name="label_duration_days">ημ</string>
     <string name="label_duration_hrs">ώρ</string>
@@ -874,8 +882,6 @@
     <string name="ics_url_required">Το URL είναι υποχρεωτικό</string>
     <string name="ics_url_invalid_scheme">Το URL πρέπει να ξεκινά με http://, https:// ή webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Ολοήμερο)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">Ημερολόγιο</string>

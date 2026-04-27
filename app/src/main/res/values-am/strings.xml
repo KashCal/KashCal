@@ -202,6 +202,13 @@
     <string name="error_event_invalid_recurrence">ልክ ያልሆነ የመደጋገም ጥለት።</string>
 
     <string name="error_display_name_exists">\"%1$s\" የሚባል መለያ አስቀድሞ አለ።</string>
+    <string name="icloud_error_credentials_required">Apple ID እና የይለፍ ቃል ያስፈልጋሉ</string>
+    <string name="icloud_error_connection_timeout">ግንኙነቱ ጊዜ አልቋል። እባክዎ እንደገና ይሞክሩ።</string>
+    <string name="caldav_error_display_name_required">የማሳያ ስም ያስፈልጋል</string>
+    <string name="caldav_error_credentials_required">የአገልጋይ URL, የተጠቃሚ ስም እና የይለፍ ቃል ያስፈልጋሉ</string>
+    <string name="caldav_error_connection_timeout">ግንኙነቱ ጊዜ አልቋል። እባክዎ እንደገና ይሞክሩ።</string>
+    <string name="caldav_error_no_calendars">በዚህ አገልጋይ ላይ የቀን መቁጠሪያዎች አልተገኙም።</string>
+    <string name="caldav_error_unexpected">ያልተጠበቀ ስህተት። እባክዎ እንደገና ይሞክሩ።</string>
 
     <string name="error_import_file_not_found">ፋይል አልተገኘም ወይም ሊነበብ አይችልም።</string>
     <string name="error_import_invalid_format">ልክ ያልሆነ የቀን መቁጠሪያ ፋይል ቅርጸት።</string>
@@ -680,6 +687,7 @@
     <string name="label_go_to_month">ወደ ወር ሂድ</string>
 
     <string name="action_more_options">ተጨማሪ አማራጮች</string>
+    <string name="quick_add_save_failed">ክስተቱን ማስቀመጥ አልተቻለም</string>
 
     <string name="label_duration_days">ቀናት</string>
     <string name="label_duration_hrs">ሰዓ</string>
@@ -873,8 +881,6 @@
     <string name="ics_url_required">URL ያስፈልጋል</string>
     <string name="ics_url_invalid_scheme">URL በhttp://፣ https://፣ ወይም webcal:// መጀመር አለበት</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (ሙሉ ቀን)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">ቀን መቁጠሪያ</string>

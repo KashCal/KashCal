@@ -605,10 +605,10 @@ class KashCalDataStore(
 
     /**
      * Whether KashCal should fire reminders for device calendar events.
-     * Default: false (opt-in feature to avoid duplicate notifications)
+     * Default: true (users expect reminders when they add device calendars to KashCal)
      */
     val deviceCalendarRemindersEnabled: Flow<Boolean>
-        get() = getPreference(PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED, false)
+        get() = getPreference(PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED, true)
 
     suspend fun getDeviceCalendarRemindersEnabled(): Boolean = deviceCalendarRemindersEnabled.first()
 

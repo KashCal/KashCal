@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">ထပ်ခါထပ်ခါ ပုံစံ မမှန်ကန်ပါ။</string>
 
     <string name="error_display_name_exists">\"%1$s\" ဟု အမည်ပေးထားသော အကောင့် ရှိပြီးသားဖြစ်သည်။</string>
+    <string name="icloud_error_credentials_required">Apple ID နှင့် စကားဝှက် လိုအပ်သည်</string>
+    <string name="icloud_error_connection_timeout">ချိတ်ဆက်ချိန် ကုန်ဆုံးသွားပါပြီ။ ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="caldav_error_display_name_required">ပြသနာမည် လိုအပ်သည်</string>
+    <string name="caldav_error_credentials_required">ဆာဗာ URL၊ အသုံးပြုသူအမည်နှင့် စကားဝှက် လိုအပ်သည်</string>
+    <string name="caldav_error_connection_timeout">ချိတ်ဆက်ချိန် ကုန်ဆုံးသွားပါပြီ။ ထပ်စမ်းကြည့်ပါ။</string>
+    <string name="caldav_error_no_calendars">ဤဆာဗာတွင် ပြက္ခဒိန်များ မတွေ့ရှိပါ။</string>
+    <string name="caldav_error_unexpected">မမျှော်လင့်သော အမှားတစ်ခု။ ထပ်စမ်းကြည့်ပါ။</string>
 
     <string name="error_import_file_not_found">ဖိုင် မတွေ့ရှိ သို့မဟုတ် ဖတ်၍ မရပါ။</string>
     <string name="error_import_invalid_format">ပြက္ခဒိန် ဖိုင်ပုံစံ မမှန်ကန်ပါ။</string>
@@ -653,6 +660,7 @@
     <string name="label_go_to_month">လသို့ သွားရန်</string>
 
     <string name="action_more_options">ရွေးစရာ အပိုများ</string>
+    <string name="quick_add_save_failed">အဖြစ်အပျက်ကို သိမ်းဆည်း၍ မရပါ</string>
 
     <string name="label_duration_days">ရက်</string>
     <string name="label_duration_hrs">နာရီ</string>
@@ -839,8 +847,6 @@
     <string name="ics_url_required">URL လိုအပ်ပါသည်</string>
     <string name="ics_url_invalid_scheme">URL သည် http://, https://, သို့မဟုတ် webcal:// ဖြင့်စရမည်</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (တစ်နေ့တာ)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d ကြိမ်</item>

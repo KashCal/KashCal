@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.screens.settings
 
 import android.util.Log
 import androidx.compose.runtime.Immutable
+import org.onekash.kashcal.ui.util.UiMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -27,7 +28,7 @@ sealed class ICloudConnectionState {
         val appleId: String = "",
         val password: String = "",
         val showHelp: Boolean = false,
-        val error: String? = null
+        val error: UiMessage? = null
     ) : ICloudConnectionState()
 
     /**

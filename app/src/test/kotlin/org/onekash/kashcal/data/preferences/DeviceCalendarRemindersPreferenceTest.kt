@@ -63,38 +63,38 @@ class DeviceCalendarRemindersPreferenceTest {
     }
 
     @Test
-    fun `deviceCalendarRemindersEnabled defaults to false`() = runTest {
+    fun `deviceCalendarRemindersEnabled defaults to true`() = runTest {
         dataStore.deviceCalendarRemindersEnabled.test {
-            assertFalse(awaitItem())
+            assertTrue(awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `setDeviceCalendarRemindersEnabled stores true`() = runTest {
+    fun `setDeviceCalendarRemindersEnabled stores false`() = runTest {
         dataStore.deviceCalendarRemindersEnabled.test {
             // Default
-            assertFalse(awaitItem())
-
-            // Set to true
-            dataStore.setDeviceCalendarRemindersEnabled(true)
             assertTrue(awaitItem())
+
+            // Set to false
+            dataStore.setDeviceCalendarRemindersEnabled(false)
+            assertFalse(awaitItem())
 
             cancelAndIgnoreRemainingEvents()
         }
     }
 
     @Test
-    fun `setDeviceCalendarRemindersEnabled stores false after true`() = runTest {
-        // Set to true first
-        dataStore.setDeviceCalendarRemindersEnabled(true)
+    fun `setDeviceCalendarRemindersEnabled stores true after false`() = runTest {
+        // Set to false first
+        dataStore.setDeviceCalendarRemindersEnabled(false)
 
         dataStore.deviceCalendarRemindersEnabled.test {
-            assertTrue(awaitItem())
-
-            // Set back to false
-            dataStore.setDeviceCalendarRemindersEnabled(false)
             assertFalse(awaitItem())
+
+            // Set back to true
+            dataStore.setDeviceCalendarRemindersEnabled(true)
+            assertTrue(awaitItem())
 
             cancelAndIgnoreRemainingEvents()
         }
@@ -103,9 +103,6 @@ class DeviceCalendarRemindersPreferenceTest {
     @Test
     fun `deviceCalendarRemindersEnabled flow emits changes`() = runTest {
         dataStore.deviceCalendarRemindersEnabled.test {
-            assertFalse(awaitItem())
-
-            dataStore.setDeviceCalendarRemindersEnabled(true)
             assertTrue(awaitItem())
 
             dataStore.setDeviceCalendarRemindersEnabled(false)
@@ -113,6 +110,9 @@ class DeviceCalendarRemindersPreferenceTest {
 
             dataStore.setDeviceCalendarRemindersEnabled(true)
             assertTrue(awaitItem())
+
+            dataStore.setDeviceCalendarRemindersEnabled(false)
+            assertFalse(awaitItem())
 
             cancelAndIgnoreRemainingEvents()
         }
@@ -121,14 +121,14 @@ class DeviceCalendarRemindersPreferenceTest {
     @Test
     fun `deviceCalendarRemindersEnabled does NOT emit duplicate values`() = runTest {
         dataStore.deviceCalendarRemindersEnabled.test {
-            assertFalse(awaitItem())
+            assertTrue(awaitItem())
 
-            // Set to same value (false) - should NOT emit
-            dataStore.setDeviceCalendarRemindersEnabled(false)
+            // Set to same value (true) - should NOT emit
+            dataStore.setDeviceCalendarRemindersEnabled(true)
 
             // Set to different value - SHOULD emit
-            dataStore.setDeviceCalendarRemindersEnabled(true)
-            assertTrue(awaitItem())
+            dataStore.setDeviceCalendarRemindersEnabled(false)
+            assertFalse(awaitItem())
 
             // No intermediate emission
             expectNoEvents()
@@ -140,14 +140,14 @@ class DeviceCalendarRemindersPreferenceTest {
     @Test
     fun `getDeviceCalendarRemindersEnabled returns current value`() = runTest {
         // Default
-        assertFalse(dataStore.getDeviceCalendarRemindersEnabled())
-
-        // After setting true
-        dataStore.setDeviceCalendarRemindersEnabled(true)
         assertTrue(dataStore.getDeviceCalendarRemindersEnabled())
 
         // After setting false
         dataStore.setDeviceCalendarRemindersEnabled(false)
         assertFalse(dataStore.getDeviceCalendarRemindersEnabled())
+
+        // After setting true
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        assertTrue(dataStore.getDeviceCalendarRemindersEnabled())
     }
 }

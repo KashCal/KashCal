@@ -18,7 +18,6 @@ import kotlinx.coroutines.test.setMain
 import java.io.File
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -96,8 +95,7 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `scheduleNextReminder does nothing when feature disabled`() = runTest {
-        // Feature is disabled by default
-        assertFalse(dataStore.getDeviceCalendarRemindersEnabled())
+        dataStore.setDeviceCalendarRemindersEnabled(false)
 
         // Set up a reminder that would be scheduled if feature was enabled
         dataStore.setDeviceCalendarsEnabled(true)

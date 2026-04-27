@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">చెల్లని పునరావృత నమూనా.</string>
 
     <string name="error_display_name_exists">\"%1$s\" పేరుతో ఖాతా ఇప్పటికే ఉంది.</string>
+    <string name="icloud_error_credentials_required">Apple ID మరియు పాస్‌వర్డ్ అవసరం</string>
+    <string name="icloud_error_connection_timeout">కనెక్షన్ సమయం ముగిసింది. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
+    <string name="caldav_error_display_name_required">ప్రదర్శన పేరు అవసరం</string>
+    <string name="caldav_error_credentials_required">సర్వర్ URL, వినియోగదారు పేరు మరియు పాస్‌వర్డ్ అవసరం</string>
+    <string name="caldav_error_connection_timeout">కనెక్షన్ సమయం ముగిసింది. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
+    <string name="caldav_error_no_calendars">ఈ సర్వర్‌లో క్యాలెండర్లు కనుగొనబడలేదు.</string>
+    <string name="caldav_error_unexpected">ఊహించని లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
 
     <string name="error_import_file_not_found">ఫైల్ కనుగొనబడలేదు లేదా చదవలేము.</string>
     <string name="error_import_invalid_format">చెల్లని క్యాలెండర్ ఫైల్ ఫార్మాట్.</string>
@@ -683,6 +690,7 @@
     <string name="label_go_to_month">నెలకు వెళ్ళు</string>
 
     <string name="action_more_options">మరిన్ని ఎంపికలు</string>
+    <string name="quick_add_save_failed">ఈవెంట్‌ను సేవ్ చేయడం విఫలమైంది</string>
 
     <string name="label_duration_days">రోజులు</string>
     <string name="label_duration_hrs">గం.</string>
@@ -884,8 +892,6 @@
     <string name="ics_url_required">URL అవసరం</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, లేదా webcal:// తో మొదలవ్వాలి</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (పూర్తి రోజు)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">క్యాలెండర్</string>

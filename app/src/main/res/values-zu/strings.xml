@@ -202,6 +202,13 @@
     <string name="error_event_invalid_recurrence">Iphethini yokuphinda engalungile.</string>
 
     <string name="error_display_name_exists">I-akhawunti ebizwa ngokuthi \"%1$s\" isivele ikhona.</string>
+    <string name="icloud_error_credentials_required">I-Apple ID nephasiwedi kuyadingeka</string>
+    <string name="icloud_error_connection_timeout">Ukuxhumana kuphele isikhathi. Sicela uzame futhi.</string>
+    <string name="caldav_error_display_name_required">Igama lokubonisa liyadingeka</string>
+    <string name="caldav_error_credentials_required">I-URL yeseva, igama lomsebenzisi nephasiwedi kuyadingeka</string>
+    <string name="caldav_error_connection_timeout">Ukuxhumana kuphele isikhathi. Sicela uzame futhi.</string>
+    <string name="caldav_error_no_calendars">Akukho amakhalenda atholakele kule seva.</string>
+    <string name="caldav_error_unexpected">Iphutha elingalindelekile. Sicela uzame futhi.</string>
 
     <string name="error_import_file_not_found">Ifayela alitholakalanga noma alikwazi ukufundwa.</string>
     <string name="error_import_invalid_format">Ifomethi yefayela lekhalenda engalungile.</string>
@@ -680,6 +687,7 @@
     <string name="label_go_to_month">Iya enyangeni</string>
 
     <string name="action_more_options">Ezinye izinketho</string>
+    <string name="quick_add_save_failed">Yehlulekile ukugcina isenzakalo</string>
 
     <string name="label_duration_days">izinsuku</string>
     <string name="label_duration_hrs">amahora</string>
@@ -873,8 +881,6 @@
     <string name="ics_url_required">I-URL iyadingeka</string>
     <string name="ics_url_invalid_scheme">I-URL kumele iqale nge-http://, https://, noma webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Usuku lonke)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget strings -->
     <string name="cd_widget_calendar">Ikhalenda</string>

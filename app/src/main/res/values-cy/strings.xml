@@ -188,6 +188,13 @@
 
     <!-- Account Errors -->
     <string name="error_display_name_exists">Mae cyfrif o\'r enw \"%1$s\" yn bodoli\'n barod.</string>
+    <string name="icloud_error_credentials_required">Mae angen Apple ID a chyfrinair</string>
+    <string name="icloud_error_connection_timeout">Mae\'r cysylltiad wedi dod i ben. Rhowch gynnig arall arni.</string>
+    <string name="caldav_error_display_name_required">Mae angen enw arddangos</string>
+    <string name="caldav_error_credentials_required">Mae angen URL y gweinydd, enw defnyddiwr a chyfrinair</string>
+    <string name="caldav_error_connection_timeout">Mae\'r cysylltiad wedi dod i ben. Rhowch gynnig arall arni.</string>
+    <string name="caldav_error_no_calendars">Ni chanfuwyd unrhyw galendrau ar y gweinydd hwn.</string>
+    <string name="caldav_error_unexpected">Gwall annisgwyl. Rhowch gynnig arall arni.</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Ffeil heb ei chanfod neu methu ei darllen.</string>
@@ -793,6 +800,7 @@
     <string name="label_go_to_month">Mynd i\'r mis</string>
 
     <string name="action_more_options">Mwy o opsiynau</string>
+    <string name="quick_add_save_failed">Methu cadw digwyddiad</string>
 
     <string name="label_duration_days">dydd</string>
     <string name="label_duration_hrs">awr</string>
@@ -1044,8 +1052,6 @@
     <string name="ics_url_required">Mae angen URL</string>
     <string name="ics_url_invalid_scheme">Rhaid i\'r URL ddechrau gyda http://, https://, neu webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Drwy\'r dydd)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Calendr</string>
     <string name="cd_widget_add_event">Ychwanegu digwyddiad</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Няправільны шаблон паўтарэння.</string>
 
     <string name="error_display_name_exists">Уліковы запіс «%1$s» ужо існуе.</string>
+    <string name="icloud_error_credentials_required">Патрабуюцца Apple ID і пароль</string>
+    <string name="icloud_error_connection_timeout">Час чакання злучэння вычарпаны. Паспрабуйце зноў.</string>
+    <string name="caldav_error_display_name_required">Патрабуецца адлюстроўванае імя</string>
+    <string name="caldav_error_credentials_required">Патрабуюцца URL сервера, імя карыстальніка і пароль</string>
+    <string name="caldav_error_connection_timeout">Час чакання злучэння вычарпаны. Паспрабуйце зноў.</string>
+    <string name="caldav_error_no_calendars">Каляндары на гэтым серверы не знойдзены.</string>
+    <string name="caldav_error_unexpected">Нечаканая памылка. Паспрабуйце зноў.</string>
 
     <string name="error_import_file_not_found">Файл не знойдзены або не можа быць прачытаны.</string>
     <string name="error_import_invalid_format">Няправільны фармат файла календара.</string>
@@ -694,6 +701,7 @@
 
     <string name="label_go_to_month">Перайсці да месяца</string>
     <string name="action_more_options">Яшчэ</string>
+    <string name="quick_add_save_failed">Не ўдалося захаваць падзею</string>
 
     <string name="label_duration_days">дзён</string>
     <string name="label_duration_hrs">гадз</string>
@@ -861,8 +869,6 @@
     <string name="ics_sync_weekly">Штотыдзень</string>
     <string name="ics_url_required">Патрабуецца URL</string>
     <string name="ics_url_invalid_scheme">URL павінен пачынацца з http://, https:// або webcal://</string>
-    <string name="event_confirmation_all_day">%1$s · %2$s (Увесь дзень)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Каляндар</string>

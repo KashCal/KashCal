@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Nevalida ripeta ŝablono.</string>
 
     <string name="error_display_name_exists">Konto nomata \"%1$s\" jam ekzistas.</string>
+    <string name="icloud_error_credentials_required">Apple ID kaj pasvorto necesas</string>
+    <string name="icloud_error_connection_timeout">Konekto eltempiĝis. Bonvolu reprovi.</string>
+    <string name="caldav_error_display_name_required">Montra nomo necesas</string>
+    <string name="caldav_error_credentials_required">Servila URL, uzantnomo kaj pasvorto necesas</string>
+    <string name="caldav_error_connection_timeout">Konekto eltempiĝis. Bonvolu reprovi.</string>
+    <string name="caldav_error_no_calendars">Neniu kalendaro trovita sur ĉi tiu servilo.</string>
+    <string name="caldav_error_unexpected">Neatendita eraro. Bonvolu reprovi.</string>
 
     <string name="error_import_file_not_found">Dosiero ne trovita aŭ ne legebla.</string>
     <string name="error_import_invalid_format">Nevalida kalendara dosiero-formato.</string>
@@ -660,6 +667,7 @@
     <string name="label_go_to_month">Iri al monato</string>
 
     <string name="action_more_options">Pliaj elektoj</string>
+    <string name="quick_add_save_failed">Malsukcesis konservi eventon</string>
 
     <string name="label_duration_days">tagoj</string>
     <string name="label_duration_hrs">hor</string>
@@ -879,8 +887,6 @@
     <string name="ics_url_required">URL estas postulata</string>
     <string name="ics_url_invalid_scheme">URL devas komenciĝi per http://, https://, aŭ webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Tuttage)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Kalendaro</string>
     <string name="cd_widget_add_event">Aldoni eventon</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

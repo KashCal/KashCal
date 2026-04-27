@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Padrón de repetición non válido.</string>
 
     <string name="error_display_name_exists">Xa existe unha conta co nome \"%1$s\".</string>
+    <string name="icloud_error_credentials_required">Requírese Apple ID e contrasinal</string>
+    <string name="icloud_error_connection_timeout">A conexión esgotou o tempo. Ténteo de novo.</string>
+    <string name="caldav_error_display_name_required">Requírese un nome visible</string>
+    <string name="caldav_error_credentials_required">Requírense URL do servidor, nome de usuario e contrasinal</string>
+    <string name="caldav_error_connection_timeout">A conexión esgotou o tempo. Ténteo de novo.</string>
+    <string name="caldav_error_no_calendars">Non se atoparon calendarios neste servidor.</string>
+    <string name="caldav_error_unexpected">Erro inesperado. Ténteo de novo.</string>
 
     <string name="error_import_file_not_found">Ficheiro non atopado ou non se pode ler.</string>
     <string name="error_import_invalid_format">Formato de ficheiro de calendario non válido.</string>
@@ -660,6 +667,7 @@
     <string name="label_go_to_month">Ir ao mes</string>
 
     <string name="action_more_options">Máis opcións</string>
+    <string name="quick_add_save_failed">Non se puido gardar o evento</string>
 
     <string name="label_duration_days">días</string>
     <string name="label_duration_hrs">hrs</string>
@@ -879,8 +887,6 @@
     <string name="ics_url_required">Reqúrese unha URL</string>
     <string name="ics_url_invalid_scheme">A URL debe comezar con http://, https://, ou webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Todo o día)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Calendario</string>
     <string name="cd_widget_add_event">Engadir evento</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

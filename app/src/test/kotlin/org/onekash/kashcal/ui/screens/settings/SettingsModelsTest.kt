@@ -39,10 +39,13 @@ class SettingsModelsTest {
     @Test
     fun `ICloudConnectionState NotConnected stores error`() {
         val state = ICloudConnectionState.NotConnected(
-            error = "Invalid credentials"
+            error = org.onekash.kashcal.ui.util.UiMessage.Literal("Invalid credentials")
         )
 
-        assertEquals("Invalid credentials", state.error)
+        assertEquals(
+            org.onekash.kashcal.ui.util.UiMessage.Literal("Invalid credentials"),
+            state.error
+        )
     }
 
     @Test

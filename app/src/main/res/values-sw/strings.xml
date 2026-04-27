@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Muundo wa kurudia si sahihi.</string>
 
     <string name="error_display_name_exists">Akaunti inayoitwa \"%1$s\" tayari ipo.</string>
+    <string name="icloud_error_credentials_required">Apple ID na nywila zinahitajika</string>
+    <string name="icloud_error_connection_timeout">Muda wa muunganisho umekwisha. Jaribu tena.</string>
+    <string name="caldav_error_display_name_required">Jina la kuonyesha linahitajika</string>
+    <string name="caldav_error_credentials_required">URL ya seva, jina la mtumiaji na nywila zinahitajika</string>
+    <string name="caldav_error_connection_timeout">Muda wa muunganisho umekwisha. Jaribu tena.</string>
+    <string name="caldav_error_no_calendars">Hakuna kalenda zilizopatikana kwenye seva hii.</string>
+    <string name="caldav_error_unexpected">Hitilafu isiyotarajiwa. Jaribu tena.</string>
 
     <string name="error_import_file_not_found">Faili haijapatikana au haiwezi kusomwa.</string>
     <string name="error_import_invalid_format">Muundo wa faili ya kalenda si sahihi.</string>
@@ -656,6 +663,7 @@
     <string name="label_go_to_month">Nenda mwezi</string>
 
     <string name="action_more_options">Chaguo zaidi</string>
+    <string name="quick_add_save_failed">Imeshindwa kuhifadhi tukio</string>
 
     <string name="label_duration_days">siku</string>
     <string name="label_duration_hrs">saa</string>
@@ -846,8 +854,6 @@
     <string name="ics_url_required">URL inahitajika</string>
     <string name="ics_url_invalid_scheme">URL lazima ianze na http://, https://, au webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Siku nzima)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, mara %1$d</item>

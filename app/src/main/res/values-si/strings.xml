@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">වලංගු නොවන පුනරාවර්තන රටාව.</string>
 
     <string name="error_display_name_exists">\"%1$s\" නමින් ගිණුමක් දැනටමත් පවතී.</string>
+    <string name="icloud_error_credentials_required">Apple ID සහ මුරපදය අවශ්‍යයි</string>
+    <string name="icloud_error_connection_timeout">සම්බන්ධතාවයේ කාලය ඉකුත් විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="caldav_error_display_name_required">ප්‍රදර්ශන නාමය අවශ්‍යයි</string>
+    <string name="caldav_error_credentials_required">සේවාදායක URL, පරිශීලක නාමය සහ මුරපදය අවශ්‍යයි</string>
+    <string name="caldav_error_connection_timeout">සම්බන්ධතාවයේ කාලය ඉකුත් විය. නැවත උත්සාහ කරන්න.</string>
+    <string name="caldav_error_no_calendars">මෙම සේවාදායකයේ දින දසුන් හමු නොවීය.</string>
+    <string name="caldav_error_unexpected">බලාපොරොත්තු නොවූ දෝෂයක්. නැවත උත්සාහ කරන්න.</string>
 
     <string name="error_import_file_not_found">ගොනුව හමු නොවීය හෝ කියවිය නොහැක.</string>
     <string name="error_import_invalid_format">වලංගු නොවන දින දර්ශන ගොනු ආකෘතිය.</string>
@@ -656,6 +663,7 @@
     <string name="label_go_to_month">මාසය වෙත යන්න</string>
 
     <string name="action_more_options">තවත් විකල්ප</string>
+    <string name="quick_add_save_failed">සිදුවීම සුරැකීමට අසමත් විය</string>
 
     <string name="label_duration_days">දින</string>
     <string name="label_duration_hrs">පැ</string>
@@ -846,8 +854,6 @@
     <string name="ics_url_required">URL අවශ්‍යයි</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, හෝ webcal:// වලින් ආරම්භ විය යුතුයි</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (මුළු දිනය)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, වාර %1$d ක්</item>

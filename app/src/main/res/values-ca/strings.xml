@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Patró de repetició invàlid.</string>
 
     <string name="error_display_name_exists">Ja existeix un compte amb el nom \"%1$s\".</string>
+    <string name="icloud_error_credentials_required">Cal Apple ID i contrasenya</string>
+    <string name="icloud_error_connection_timeout">La connexió ha esgotat el temps. Torneu-ho a provar.</string>
+    <string name="caldav_error_display_name_required">El nom per mostrar és obligatori</string>
+    <string name="caldav_error_credentials_required">Calen URL del servidor, nom d\'usuari i contrasenya</string>
+    <string name="caldav_error_connection_timeout">La connexió ha esgotat el temps. Torneu-ho a provar.</string>
+    <string name="caldav_error_no_calendars">No s\'han trobat calendaris en aquest servidor.</string>
+    <string name="caldav_error_unexpected">Error inesperat. Torneu-ho a provar.</string>
 
     <string name="error_import_file_not_found">Fitxer no trobat o no es pot llegir.</string>
     <string name="error_import_invalid_format">Format de fitxer de calendari invàlid.</string>
@@ -660,6 +667,7 @@
     <string name="label_go_to_month">Anar al mes</string>
 
     <string name="action_more_options">Més opcions</string>
+    <string name="quick_add_save_failed">No s\'ha pogut desar l\'esdeveniment</string>
 
     <string name="label_duration_days">dies</string>
     <string name="label_duration_hrs">hrs</string>
@@ -879,8 +887,6 @@
     <string name="ics_url_required">Cal una URL</string>
     <string name="ics_url_invalid_scheme">La URL ha de començar amb http://, https://, o webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Tot el dia)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Calendari</string>
     <string name="cd_widget_add_event">Afegeix un esdeveniment</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

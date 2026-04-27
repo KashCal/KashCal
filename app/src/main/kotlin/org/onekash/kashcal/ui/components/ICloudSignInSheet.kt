@@ -56,6 +56,8 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.util.UiMessage
+import org.onekash.kashcal.ui.util.asString
 
 // iCloud brand color
 private val iCloudBlue = Color(0xFF5AC8FA)
@@ -122,7 +124,7 @@ fun ICloudSignInSheet(
     appleId: String,
     password: String,
     showHelp: Boolean,
-    error: String?,
+    error: UiMessage?,
     isConnecting: Boolean,
     onAppleIdChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
@@ -306,7 +308,7 @@ fun ICloudSignInSheet(
                     )
                 ) {
                     Text(
-                        error,
+                        error.asString(),
                         modifier = Modifier.padding(16.dp),
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         style = MaterialTheme.typography.bodyMedium

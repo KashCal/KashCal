@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">अमान्य दोहराव पैटर्न।</string>
 
     <string name="error_display_name_exists">\"%1$s\" नाम का अकाउंट पहले से मौजूद है।</string>
+    <string name="icloud_error_credentials_required">Apple ID और पासवर्ड आवश्यक हैं</string>
+    <string name="icloud_error_connection_timeout">कनेक्शन का समय समाप्त हो गया। कृपया पुनः प्रयास करें।</string>
+    <string name="caldav_error_display_name_required">प्रदर्शन नाम आवश्यक है</string>
+    <string name="caldav_error_credentials_required">सर्वर URL, उपयोगकर्ता नाम और पासवर्ड आवश्यक हैं</string>
+    <string name="caldav_error_connection_timeout">कनेक्शन का समय समाप्त हो गया। कृपया पुनः प्रयास करें।</string>
+    <string name="caldav_error_no_calendars">इस सर्वर पर कोई कैलेंडर नहीं मिला।</string>
+    <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। कृपया पुनः प्रयास करें।</string>
 
     <string name="error_import_file_not_found">फ़ाइल नहीं मिली या पढ़ी नहीं जा सकती।</string>
     <string name="error_import_invalid_format">अमान्य कैलेंडर फ़ाइल प्रारूप।</string>
@@ -683,6 +690,7 @@
     <string name="label_go_to_month">माह पर जाएँ</string>
 
     <string name="action_more_options">और विकल्प</string>
+    <string name="quick_add_save_failed">इवेंट सहेजने में विफल</string>
 
     <string name="label_duration_days">दिन</string>
     <string name="label_duration_hrs">घं.</string>
@@ -884,8 +892,6 @@
     <string name="ics_url_required">URL आवश्यक है</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, या webcal:// से शुरू होना चाहिए</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (पूरा दिन)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">कैलेंडर</string>

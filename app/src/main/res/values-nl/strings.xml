@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">Ongeldig herhalingspatroon.</string>
 
     <string name="error_display_name_exists">Een account met de naam \"%1$s\" bestaat al.</string>
+    <string name="icloud_error_credentials_required">Apple ID en wachtwoord zijn verplicht</string>
+    <string name="icloud_error_connection_timeout">Verbindingstime-out. Probeer het opnieuw.</string>
+    <string name="caldav_error_display_name_required">Weergavenaam is verplicht</string>
+    <string name="caldav_error_credentials_required">Server-URL, gebruikersnaam en wachtwoord zijn verplicht</string>
+    <string name="caldav_error_connection_timeout">Verbindingstime-out. Probeer het opnieuw.</string>
+    <string name="caldav_error_no_calendars">Geen agenda\'s gevonden op deze server.</string>
+    <string name="caldav_error_unexpected">Onverwachte fout. Probeer het opnieuw.</string>
 
     <string name="error_import_file_not_found">Bestand niet gevonden of kan niet worden gelezen.</string>
     <string name="error_import_invalid_format">Ongeldig agendabestandsformaat.</string>
@@ -687,6 +694,7 @@
     <string name="label_go_to_month">Ga naar maand</string>
 
     <string name="action_more_options">Meer opties</string>
+    <string name="quick_add_save_failed">Kon gebeurtenis niet opslaan</string>
 
     <string name="label_duration_days">dagen</string>
     <string name="label_duration_hrs">uur</string>
@@ -880,8 +888,6 @@
     <string name="ics_url_required">URL is vereist</string>
     <string name="ics_url_invalid_scheme">URL moet beginnen met http://, https:// of webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Hele dag)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>

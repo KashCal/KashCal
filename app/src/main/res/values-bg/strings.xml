@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Невалиден модел на повторение.</string>
 
     <string name="error_display_name_exists">Акаунт с име \"%1$s\" вече съществува.</string>
+    <string name="icloud_error_credentials_required">Изискват се Apple ID и парола</string>
+    <string name="icloud_error_connection_timeout">Времето за изчакване на връзката изтече. Опитайте отново.</string>
+    <string name="caldav_error_display_name_required">Изисква се показвано име</string>
+    <string name="caldav_error_credentials_required">Изискват се URL на сървъра, потребителско име и парола</string>
+    <string name="caldav_error_connection_timeout">Времето за изчакване на връзката изтече. Опитайте отново.</string>
+    <string name="caldav_error_no_calendars">Не са намерени календари на този сървър.</string>
+    <string name="caldav_error_unexpected">Неочаквана грешка. Опитайте отново.</string>
 
     <string name="error_import_file_not_found">Файлът не е намерен или не може да бъде прочетен.</string>
     <string name="error_import_invalid_format">Невалиден формат на файл с календар.</string>
@@ -681,6 +688,7 @@
     <string name="label_go_to_month">Отиди на месец</string>
 
     <string name="action_more_options">Повече опции</string>
+    <string name="quick_add_save_failed">Неуспешно запазване на събитието</string>
 
     <string name="label_duration_days">дни</string>
     <string name="label_duration_hrs">ч</string>
@@ -874,8 +882,6 @@
     <string name="ics_url_required">URL е задължителен</string>
     <string name="ics_url_invalid_scheme">URL трябва да започва с http://, https:// или webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Цял ден)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Календар</string>

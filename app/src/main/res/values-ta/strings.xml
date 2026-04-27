@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">தவறான மறுநிகழ்வு வடிவம்.</string>
 
     <string name="error_display_name_exists">\"%1$s\" என்ற பெயரில் ஒரு கணக்கு ஏற்கனவே உள்ளது.</string>
+    <string name="icloud_error_credentials_required">Apple ID மற்றும் கடவுச்சொல் தேவை</string>
+    <string name="icloud_error_connection_timeout">இணைப்பு நேரம் முடிந்தது. மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="caldav_error_display_name_required">காட்சி பெயர் தேவை</string>
+    <string name="caldav_error_credentials_required">சேவையக URL, பயனர் பெயர் மற்றும் கடவுச்சொல் தேவை</string>
+    <string name="caldav_error_connection_timeout">இணைப்பு நேரம் முடிந்தது. மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="caldav_error_no_calendars">இந்த சேவையகத்தில் நாட்காட்டிகள் எதுவும் இல்லை.</string>
+    <string name="caldav_error_unexpected">எதிர்பாராத பிழை. மீண்டும் முயற்சிக்கவும்.</string>
 
     <string name="error_import_file_not_found">கோப்பு கிடைக்கவில்லை அல்லது படிக்க முடியவில்லை.</string>
     <string name="error_import_invalid_format">தவறான நாட்காட்டிக் கோப்பு வடிவம்.</string>
@@ -683,6 +690,7 @@
     <string name="label_go_to_month">மாதத்திற்குச் செல்</string>
 
     <string name="action_more_options">மேலும் விருப்பங்கள்</string>
+    <string name="quick_add_save_failed">நிகழ்வைச் சேமிக்க முடியவில்லை</string>
 
     <string name="label_duration_days">நாட்கள்</string>
     <string name="label_duration_hrs">ம.</string>
@@ -884,8 +892,6 @@
     <string name="ics_url_required">URL தேவை</string>
     <string name="ics_url_invalid_scheme">URL http://, https://, அல்லது webcal:// உடன் தொடங்க வேண்டும்</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (முழு நாள்)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget content descriptions -->
     <string name="cd_widget_calendar">நாட்காட்டி</string>

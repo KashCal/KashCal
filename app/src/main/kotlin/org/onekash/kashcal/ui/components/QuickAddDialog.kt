@@ -22,18 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -41,14 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
-import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
-import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.domain.quickadd.QuickAddResult
-import org.onekash.kashcal.util.CalendarIntentData
 
 private val placeholderExamples = listOf(
     // Practical / realistic
@@ -82,47 +70,23 @@ private val placeholderExamples = listOf(
     "Buy Kash a coffee tomorrow",
 )
 
+/**
+ * Stateless host for Quick Add input. All state and behavior are hoisted to the caller;
+ * the caller owns the input state, parse preview, and save/expand/dismiss handlers.
+ * See `QuickAddDialogContent` for the pure content composable used in previews/tests.
+ */
 @Composable
 fun QuickAddDialog(
+    textFieldState: TextFieldState,
+    parseResult: QuickAddResult,
+    isSaveEnabled: Boolean,
+    isSaving: Boolean,
     onDismiss: () -> Unit,
-    onSaved: (Event) -> Unit,
-    onExpand: (CalendarIntentData) -> Unit,
-    onSaveError: (String) -> Unit,
-    viewModel: QuickAddViewModel = hiltViewModel()
+    onSave: () -> Unit,
+    onExpand: () -> Unit
 ) {
-    val textFieldState = remember { TextFieldState() }
-    val parseResult by viewModel.parseResult.collectAsState()
-    val isSaveEnabled by viewModel.isSaveEnabled.collectAsState()
-    val isSaving by viewModel.isSaving.collectAsState()
     val focusRequester = remember { FocusRequester() }
     val placeholder = remember { placeholderExamples.random() }
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val hapticFeedback = LocalHapticFeedback.current
-    val coroutineScope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        viewModel.resetState()
-        snapshotFlow { textFieldState.text.toString() }
-            .collect { viewModel.onInputChanged(it) }
-    }
-
-    val onSave: () -> Unit = {
-        coroutineScope.launch {
-            viewModel.save()
-                .onSuccess { event ->
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    onSaved(event)
-                }
-                .onFailure { e ->
-                    if (e is DeviceCalendarException) {
-                        // Default is a device calendar — redirect to full form
-                        onExpand(viewModel.toCalendarIntentData())
-                    } else {
-                        onSaveError(e.message ?: "Failed to save event")
-                    }
-                }
-        }
-    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -151,12 +115,7 @@ fun QuickAddDialog(
                 isSaving = isSaving,
                 placeholder = placeholder,
                 onSave = onSave,
-                onExpand = {
-                    coroutineScope.launch {
-                        val intentData = viewModel.toCalendarIntentData()
-                        onExpand(intentData)
-                    }
-                }
+                onExpand = onExpand
             )
         }
     }

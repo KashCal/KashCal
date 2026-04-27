@@ -1,7 +1,5 @@
 package org.onekash.kashcal.ui.viewmodels
 
-import android.app.Application
-import android.content.pm.PackageManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -55,7 +53,6 @@ class BackupRestoreViewModelStateTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var application: Application
     private lateinit var accountRepository: AccountRepository
     private lateinit var userPreferences: UserPreferencesRepository
     private lateinit var syncScheduler: SyncScheduler
@@ -77,7 +74,6 @@ class BackupRestoreViewModelStateTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        application = mockk(relaxed = true)
         accountRepository = mockk(relaxed = true)
         userPreferences = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
@@ -133,7 +129,6 @@ class BackupRestoreViewModelStateTest {
         coEvery { eventCoordinator.getContactAnniversaryEventCount() } returns 0
         coEvery { eventCoordinator.getContactBirthdaysColor() } returns null
         coEvery { eventCoordinator.getContactAnniversariesColor() } returns null
-        every { application.checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
     }
 
     @After
@@ -142,7 +137,6 @@ class BackupRestoreViewModelStateTest {
     }
 
     private fun createViewModel(): AccountSettingsViewModel = AccountSettingsViewModel(
-        application = application,
         accountRepository = accountRepository,
         userPreferences = userPreferences,
         syncScheduler = syncScheduler,
@@ -159,6 +153,8 @@ class BackupRestoreViewModelStateTest {
         deviceCalendarReminderScheduler = deviceCalendarReminderScheduler,
         backupExporter = backupExporter,
         backupImporter = backupImporter,
+        permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker(),
+        icsScheduler = org.onekash.kashcal.sync.scheduler.FakeIcsScheduler(),
     )
 
     private fun envelope(

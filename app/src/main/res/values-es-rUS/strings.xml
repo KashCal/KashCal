@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Patrón de repetición no válido.</string>
 
     <string name="error_display_name_exists">Ya existe una cuenta con el nombre \"%1$s\".</string>
+    <string name="icloud_error_credentials_required">Se requieren Apple ID y contraseña</string>
+    <string name="icloud_error_connection_timeout">Se agotó el tiempo de conexión. Inténtalo de nuevo.</string>
+    <string name="caldav_error_display_name_required">Se requiere un nombre visible</string>
+    <string name="caldav_error_credentials_required">Se requieren URL del servidor, usuario y contraseña</string>
+    <string name="caldav_error_connection_timeout">Se agotó el tiempo de conexión. Inténtalo de nuevo.</string>
+    <string name="caldav_error_no_calendars">No se encontraron calendarios en este servidor.</string>
+    <string name="caldav_error_unexpected">Error inesperado. Inténtalo de nuevo.</string>
 
     <string name="error_import_file_not_found">Archivo no encontrado o no se puede leer.</string>
     <string name="error_import_invalid_format">Formato de archivo de calendario no válido.</string>
@@ -691,6 +698,7 @@
     <string name="label_go_to_month">Ir al mes</string>
 
     <string name="action_more_options">Más opciones</string>
+    <string name="quick_add_save_failed">No se pudo guardar el evento</string>
 
     <string name="label_duration_days">días</string>
     <string name="label_duration_hrs">hrs</string>
@@ -891,8 +899,6 @@
     <string name="ics_url_required">La URL es obligatoria</string>
     <string name="ics_url_invalid_scheme">La URL debe empezar con http://, https:// o webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Todo el día)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendario</string>
     <string name="cd_widget_add_event">Agregar evento</string>

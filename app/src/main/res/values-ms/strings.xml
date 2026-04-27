@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">Corak ulangan tidak sah.</string>
 
     <string name="error_display_name_exists">Akaun bernama \"%1$s\" sudah wujud.</string>
+    <string name="icloud_error_credentials_required">Apple ID dan kata laluan diperlukan</string>
+    <string name="icloud_error_connection_timeout">Sambungan tamat masa. Sila cuba lagi.</string>
+    <string name="caldav_error_display_name_required">Nama paparan diperlukan</string>
+    <string name="caldav_error_credentials_required">URL pelayan, nama pengguna dan kata laluan diperlukan</string>
+    <string name="caldav_error_connection_timeout">Sambungan tamat masa. Sila cuba lagi.</string>
+    <string name="caldav_error_no_calendars">Tiada kalendar dijumpai pada pelayan ini.</string>
+    <string name="caldav_error_unexpected">Ralat tidak dijangka. Sila cuba lagi.</string>
 
     <string name="error_import_file_not_found">Fail tidak dijumpai atau tidak boleh dibaca.</string>
     <string name="error_import_invalid_format">Format fail kalendar tidak sah.</string>
@@ -632,6 +639,7 @@
     <string name="label_go_to_month">Pergi ke bulan</string>
 
     <string name="action_more_options">Lagi pilihan</string>
+    <string name="quick_add_save_failed">Gagal menyimpan acara</string>
 
     <string name="label_duration_days">hari</string>
     <string name="label_duration_hrs">jam</string>
@@ -818,8 +826,6 @@
     <string name="ics_url_required">URL diperlukan</string>
     <string name="ics_url_invalid_scheme">URL mesti bermula dengan http://, https://, atau webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Sepanjang hari)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">, %1$d kali</item>

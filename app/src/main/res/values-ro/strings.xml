@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Model de repetare invalid.</string>
 
     <string name="error_display_name_exists">Un cont cu numele \"%1$s\" există deja.</string>
+    <string name="icloud_error_credentials_required">Sunt necesare Apple ID și parola</string>
+    <string name="icloud_error_connection_timeout">Conexiunea a expirat. Încercați din nou.</string>
+    <string name="caldav_error_display_name_required">Numele afișat este obligatoriu</string>
+    <string name="caldav_error_credentials_required">Sunt necesare URL-ul serverului, numele de utilizator și parola</string>
+    <string name="caldav_error_connection_timeout">Conexiunea a expirat. Încercați din nou.</string>
+    <string name="caldav_error_no_calendars">Nu s-au găsit calendare pe acest server.</string>
+    <string name="caldav_error_unexpected">Eroare neașteptată. Încercați din nou.</string>
 
     <string name="error_import_file_not_found">Fișierul nu a fost găsit sau nu poate fi citit.</string>
     <string name="error_import_invalid_format">Format de fișier calendar invalid.</string>
@@ -712,6 +719,7 @@
     <string name="label_go_to_month">Mergi la lună</string>
 
     <string name="action_more_options">Mai multe opțiuni</string>
+    <string name="quick_add_save_failed">Evenimentul nu a putut fi salvat</string>
 
     <string name="label_duration_days">zile</string>
     <string name="label_duration_hrs">ore</string>
@@ -912,8 +920,6 @@
     <string name="ics_url_required">URL-ul este obligatoriu</string>
     <string name="ics_url_invalid_scheme">URL-ul trebuie să înceapă cu http://, https:// sau webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Toată ziua)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <!-- Widget/Channel strings -->
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Adaugă eveniment</string>

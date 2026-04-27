@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Érvénytelen ismétlődési minta.</string>
 
     <string name="error_display_name_exists">Már létezik \"%1$s\" nevű fiók.</string>
+    <string name="icloud_error_credentials_required">Apple ID és jelszó szükséges</string>
+    <string name="icloud_error_connection_timeout">A kapcsolat időtúllépést szenvedett. Próbáld újra.</string>
+    <string name="caldav_error_display_name_required">Megjelenítendő név szükséges</string>
+    <string name="caldav_error_credentials_required">Kiszolgáló URL, felhasználónév és jelszó szükséges</string>
+    <string name="caldav_error_connection_timeout">A kapcsolat időtúllépést szenvedett. Próbáld újra.</string>
+    <string name="caldav_error_no_calendars">Ezen a kiszolgálón nem található naptár.</string>
+    <string name="caldav_error_unexpected">Váratlan hiba. Próbáld újra.</string>
 
     <string name="error_import_file_not_found">A fájl nem található vagy nem olvasható.</string>
     <string name="error_import_invalid_format">Érvénytelen naptárfájl formátum.</string>
@@ -681,6 +688,7 @@
     <string name="label_go_to_month">Ugrás hónapra</string>
 
     <string name="action_more_options">További lehetőségek</string>
+    <string name="quick_add_save_failed">Nem sikerült elmenteni az eseményt</string>
 
     <string name="label_duration_days">nap</string>
     <string name="label_duration_hrs">óra</string>
@@ -874,8 +882,6 @@
     <string name="ics_url_required">URL szükséges</string>
     <string name="ics_url_invalid_scheme">Az URL-nek http://, https:// vagy webcal:// előtaggal kell kezdődnie</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Egész nap)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Naptár</string>

@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Neplatný vzor opakování.</string>
 
     <string name="error_display_name_exists">Účet s názvem \"%1$s\" již existuje.</string>
+    <string name="icloud_error_credentials_required">Apple ID a heslo jsou povinné</string>
+    <string name="icloud_error_connection_timeout">Vypršel časový limit připojení. Zkuste to znovu.</string>
+    <string name="caldav_error_display_name_required">Zobrazované jméno je povinné</string>
+    <string name="caldav_error_credentials_required">URL serveru, uživatelské jméno a heslo jsou povinné</string>
+    <string name="caldav_error_connection_timeout">Vypršel časový limit připojení. Zkuste to znovu.</string>
+    <string name="caldav_error_no_calendars">Na tomto serveru nebyly nalezeny žádné kalendáře.</string>
+    <string name="caldav_error_unexpected">Neočekávaná chyba. Zkuste to znovu.</string>
 
     <string name="error_import_file_not_found">Soubor nenalezen nebo nelze přečíst.</string>
     <string name="error_import_invalid_format">Neplatný formát souboru kalendáře.</string>
@@ -717,6 +724,7 @@
     <string name="label_go_to_month">Přejít na měsíc</string>
 
     <string name="action_more_options">Další možnosti</string>
+    <string name="quick_add_save_failed">Událost se nepodařilo uložit</string>
 
     <string name="label_duration_days">dny</string>
     <string name="label_duration_hrs">hod</string>
@@ -930,8 +938,6 @@
     <string name="ics_url_required">URL je vyžadováno</string>
     <string name="ics_url_invalid_scheme">URL musí začínat http://, https:// nebo webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Celý den)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Kalendář</string>

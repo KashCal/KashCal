@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">Hindi wasto ang repeat pattern.</string>
 
     <string name="error_display_name_exists">May account nang may pangalang \"%1$s\".</string>
+    <string name="icloud_error_credentials_required">Kinakailangan ang Apple ID at password</string>
+    <string name="icloud_error_connection_timeout">Nag-time out ang koneksyon. Subukan ulit.</string>
+    <string name="caldav_error_display_name_required">Kinakailangan ang pangalang ipapakita</string>
+    <string name="caldav_error_credentials_required">Kinakailangan ang URL ng server, username, at password</string>
+    <string name="caldav_error_connection_timeout">Nag-time out ang koneksyon. Subukan ulit.</string>
+    <string name="caldav_error_no_calendars">Walang kalendaryong natagpuan sa server na ito.</string>
+    <string name="caldav_error_unexpected">Hindi inaasahang error. Subukan ulit.</string>
 
     <string name="error_import_file_not_found">Hindi natagpuan o hindi mabasa ang file.</string>
     <string name="error_import_invalid_format">Hindi wasto ang format ng calendar file.</string>
@@ -683,6 +690,7 @@
     <string name="label_go_to_month">Pumunta sa buwan</string>
 
     <string name="action_more_options">Higit pang mga opsyon</string>
+    <string name="quick_add_save_failed">Hindi na-save ang kaganapan</string>
 
     <string name="label_duration_days">araw</string>
     <string name="label_duration_hrs">oras</string>
@@ -876,8 +884,6 @@
     <string name="ics_url_required">Kinakailangan ang URL</string>
     <string name="ics_url_invalid_scheme">Ang URL ay dapat magsimula sa http://, https://, o webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Buong araw)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="one">, %1$d beses</item>

@@ -216,7 +216,7 @@ fun AccountSettingsScreen(
     onRequestWriteCalendarPermission: () -> Unit = {},
     showDeclinedEvents: Boolean = false,
     onToggleShowDeclinedEvents: (Boolean) -> Unit = {},
-    deviceCalendarRemindersEnabled: Boolean = false,
+    deviceCalendarRemindersEnabled: Boolean = true,
     onToggleDeviceCalendarReminders: (Boolean) -> Unit = {},
     onRefreshDeviceCalendars: () -> Unit = {},
     // Display settings

@@ -1,15 +1,10 @@
 package org.onekash.kashcal.ui.viewmodels
 
-import android.Manifest
-import android.app.Application
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
-import android.provider.Settings
 import android.util.Log
-import androidx.core.content.ContextCompat
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import org.onekash.kashcal.ui.permission.PermissionChecker
+import org.onekash.kashcal.ui.util.UiMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +28,6 @@ import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.contacts.ContactEventManager
-import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
@@ -51,6 +45,7 @@ import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
+import org.onekash.kashcal.sync.scheduler.IcsScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.BackupRestoreUiState
@@ -118,7 +113,6 @@ private suspend fun <T> withRetryOnTimeout(
  */
 @HiltViewModel
 class AccountSettingsViewModel @Inject constructor(
-    application: Application,
     private val accountRepository: AccountRepository,
     private val userPreferences: UserPreferencesRepository,
     private val syncScheduler: SyncScheduler,
@@ -135,7 +129,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val deviceCalendarReminderScheduler: org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler,
     private val backupExporter: SettingsBackupExporter,
     private val backupImporter: SettingsBackupImporter,
-) : AndroidViewModel(application) {
+    private val permissionChecker: PermissionChecker,
+    private val icsScheduler: IcsScheduler,
+) : ViewModel() {
 
     // Account connection state
     private val _uiState = MutableStateFlow(AccountSettingsUiState(isLoading = true))
@@ -145,7 +141,6 @@ class AccountSettingsViewModel @Inject constructor(
     private var appleIdInput = ""
     private var passwordInput = ""
     private var showHelpState = false
-    private var errorMessage: String? = null
 
     // Initial setup mode - when true, auto-navigate back to HomeScreen after sign-in
     private var isInitialSetup = false
@@ -269,7 +264,7 @@ class AccountSettingsViewModel @Inject constructor(
     val showDeclinedEvents: StateFlow<Boolean> = _showDeclinedEvents.asStateFlow()
 
     // Device calendar reminders
-    private val _deviceCalendarRemindersEnabled = MutableStateFlow(false)
+    private val _deviceCalendarRemindersEnabled = MutableStateFlow(true)
     val deviceCalendarRemindersEnabled: StateFlow<Boolean> = _deviceCalendarRemindersEnabled.asStateFlow()
 
     // Display settings
@@ -352,8 +347,7 @@ class AccountSettingsViewModel @Inject constructor(
                         iCloudState = ICloudConnectionState.NotConnected(
                             appleId = appleIdInput,
                             password = passwordInput,
-                            showHelp = showHelpState,
-                            error = errorMessage
+                            showHelp = showHelpState
                         )
                     )
                 }
@@ -551,15 +545,8 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     private fun checkCalendarPermission() {
-        val context = getApplication<Application>()
-        _hasReadCalendarPermission.value = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_CALENDAR
-        ) == PackageManager.PERMISSION_GRANTED
-        _hasWriteCalendarPermission.value = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.WRITE_CALENDAR
-        ) == PackageManager.PERMISSION_GRANTED
+        _hasReadCalendarPermission.value = permissionChecker.hasCalendarReadPermission()
+        _hasWriteCalendarPermission.value = permissionChecker.hasCalendarWritePermission()
     }
 
     private fun observeUserPreferences() {
@@ -701,23 +688,11 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     private fun checkNotificationPermission() {
-        val context = getApplication<Application>()
-        _notificationsEnabled.value = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-        } else {
-            true
-        }
+        _notificationsEnabled.value = permissionChecker.hasNotificationPermission()
     }
 
     private fun checkContactsPermission() {
-        val context = getApplication<Application>()
-        _hasContactsPermission.value = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_CONTACTS
-        ) == PackageManager.PERMISSION_GRANTED
+        _hasContactsPermission.value = permissionChecker.hasReadContactsPermission()
     }
 
     // ==================== Account Actions ====================
@@ -770,7 +745,6 @@ class AccountSettingsViewModel @Inject constructor(
                         appleId = appleIdInput,
                         password = passwordInput,
                         showHelp = showHelpState,
-                        error = errorMessage
                     )
                 )
             }
@@ -784,19 +758,30 @@ class AccountSettingsViewModel @Inject constructor(
      */
     fun onSignIn() {
         viewModelScope.launch {
-            errorMessage = null
             _uiState.update { it.copy(iCloudState = ICloudConnectionState.Connecting) }
+
+            // Snapshot input buffer so closure captures stable values, not mutable fields.
+            // Guards against later edits clearing passwordInput before an error branch runs.
+            val snappedAppleId = appleIdInput
+            val snappedPassword = passwordInput
+            val snappedShowHelp = showHelpState
+
+            // Rebuilds iCloud NotConnected with the given error; collapses 4 copy-paste sites.
+            val iCloudNotConnectedWith = { error: UiMessage? ->
+                ICloudConnectionState.NotConnected(
+                    appleId = snappedAppleId,
+                    password = snappedPassword,
+                    showHelp = snappedShowHelp,
+                    error = error,
+                )
+            }
 
             // Validate inputs
             if (appleIdInput.isBlank() || passwordInput.isBlank()) {
-                errorMessage = "Apple ID and password are required"
                 _uiState.update {
                     it.copy(
-                        iCloudState = ICloudConnectionState.NotConnected(
-                            appleId = appleIdInput,
-                            password = passwordInput,
-                            showHelp = showHelpState,
-                            error = errorMessage
+                        iCloudState = iCloudNotConnectedWith(
+                            UiMessage.ResId(R.string.icloud_error_credentials_required)
                         )
                     )
                 }
@@ -818,14 +803,10 @@ class AccountSettingsViewModel @Inject constructor(
                 result == null -> {
                     // All retries timed out - network too slow or server unreachable
                     Log.e(TAG, "Discovery timed out after $MAX_DISCOVERY_RETRIES attempts")
-                    errorMessage = "Connection timed out. Please try again."
                     _uiState.update {
                         it.copy(
-                            iCloudState = ICloudConnectionState.NotConnected(
-                                appleId = appleIdInput,
-                                password = passwordInput,
-                                showHelp = showHelpState,
-                                error = errorMessage
+                            iCloudState = iCloudNotConnectedWith(
+                                UiMessage.ResId(R.string.icloud_error_connection_timeout)
                             )
                         )
                     }
@@ -875,32 +856,19 @@ class AccountSettingsViewModel @Inject constructor(
                 }
 
                 result is DiscoveryResult.AuthError -> {
+                    // TODO(gap-3): result.message is English-only from the sync layer.
+                    // A future refactor should make DiscoveryResult carry an error-kind
+                    // enum that the UI maps to a localized string; Literal is a bridge.
                     Log.e(TAG, "Authentication failed: ${result.message}")
-                    errorMessage = result.message
                     _uiState.update {
-                        it.copy(
-                            iCloudState = ICloudConnectionState.NotConnected(
-                                appleId = appleIdInput,
-                                password = passwordInput,
-                                showHelp = showHelpState,
-                                error = errorMessage
-                            )
-                        )
+                        it.copy(iCloudState = iCloudNotConnectedWith(UiMessage.Literal(result.message)))
                     }
                 }
 
                 result is DiscoveryResult.Error -> {
                     Log.e(TAG, "Discovery failed: ${result.message}")
-                    errorMessage = result.message
                     _uiState.update {
-                        it.copy(
-                            iCloudState = ICloudConnectionState.NotConnected(
-                                appleId = appleIdInput,
-                                password = passwordInput,
-                                showHelp = showHelpState,
-                                error = errorMessage
-                            )
-                        )
+                        it.copy(iCloudState = iCloudNotConnectedWith(UiMessage.Literal(result.message)))
                     }
                 }
             }
@@ -935,7 +903,6 @@ class AccountSettingsViewModel @Inject constructor(
             // Reset state
             appleIdInput = ""
             passwordInput = ""
-            errorMessage = null
             showHelpState = false
 
             _uiState.value = AccountSettingsUiState(
@@ -1010,8 +977,9 @@ class AccountSettingsViewModel @Inject constructor(
                 _uiState.update {
                     val current = it.calDavState as? CalDavConnectionState.NotConnected ?: return@launch
                     it.copy(calDavState = current.copy(
-                        error = getApplication<Application>().getString(
-                            R.string.error_display_name_exists, displayName
+                        error = UiMessage.ResId(
+                            R.string.error_display_name_exists,
+                            listOf(displayName)
                         ),
                         errorField = CalDavConnectionState.ErrorField.DISPLAY_NAME
                     ))
@@ -1123,19 +1091,41 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             Log.i(TAG, "Starting CalDAV discovery for: ${calDavUsername.take(3)}***")
 
+            // Snapshot input buffer so closure captures stable values, not mutable fields.
+            val snappedServerUrl = calDavServerUrl
+            val snappedDisplayName = calDavDisplayName
+            val snappedUsername = calDavUsername
+            val snappedPassword = calDavPassword
+            val snappedTrustInsecure = calDavTrustInsecure
+
+            // Rebuilds CalDav NotConnected with the given error; collapses ~10 copy-paste sites.
+            // Server-provided strings (createResult.message, discoveryResult.message) wrap as
+            // UiMessage.Literal. Per TODO(gap-3) on iCloud's AuthError branch: those are
+            // English-only; future refactor should make DiscoveryResult carry an error-kind enum.
+            val calDavNotConnectedWith = { error: UiMessage?, errorField: CalDavConnectionState.ErrorField? ->
+                CalDavConnectionState.NotConnected(
+                    serverUrl = snappedServerUrl,
+                    displayName = snappedDisplayName,
+                    username = snappedUsername,
+                    password = snappedPassword,
+                    trustInsecure = snappedTrustInsecure,
+                    error = error,
+                    errorField = errorField,
+                )
+            }
+
             // Validate inputs
             if (calDavServerUrl.isBlank() || calDavDisplayName.isBlank() || calDavUsername.isBlank() || calDavPassword.isBlank()) {
                 _uiState.update {
                     it.copy(
-                        calDavState = CalDavConnectionState.NotConnected(
-                            serverUrl = calDavServerUrl,
-                            displayName = calDavDisplayName,
-                            username = calDavUsername,
-                            password = calDavPassword,
-                            trustInsecure = calDavTrustInsecure,
-                            error = if (calDavDisplayName.isBlank()) "Display name is required"
-                                    else "Server URL, username, and password are required",
-                            errorField = if (calDavDisplayName.isBlank()) CalDavConnectionState.ErrorField.DISPLAY_NAME else null
+                        calDavState = calDavNotConnectedWith(
+                            UiMessage.ResId(
+                                if (calDavDisplayName.isBlank())
+                                    R.string.caldav_error_display_name_required
+                                else
+                                    R.string.caldav_error_credentials_required
+                            ),
+                            if (calDavDisplayName.isBlank()) CalDavConnectionState.ErrorField.DISPLAY_NAME else null
                         )
                     )
                 }
@@ -1150,16 +1140,12 @@ class AccountSettingsViewModel @Inject constructor(
             if (!calDavDiscoveryService.isDisplayNameAvailable(effectiveDisplayName)) {
                 _uiState.update {
                     it.copy(
-                        calDavState = CalDavConnectionState.NotConnected(
-                            serverUrl = calDavServerUrl,
-                            displayName = calDavDisplayName,
-                            username = calDavUsername,
-                            password = calDavPassword,
-                            trustInsecure = calDavTrustInsecure,
-                            error = getApplication<Application>().getString(
-                                R.string.error_display_name_exists, effectiveDisplayName
+                        calDavState = calDavNotConnectedWith(
+                            UiMessage.ResId(
+                                R.string.error_display_name_exists,
+                                listOf(effectiveDisplayName)
                             ),
-                            errorField = CalDavConnectionState.ErrorField.DISPLAY_NAME
+                            CalDavConnectionState.ErrorField.DISPLAY_NAME
                         )
                     )
                 }
@@ -1191,13 +1177,9 @@ class AccountSettingsViewModel @Inject constructor(
                     Log.e(TAG, "CalDAV discovery timed out after $MAX_DISCOVERY_RETRIES attempts")
                     _uiState.update {
                         it.copy(
-                            calDavState = CalDavConnectionState.NotConnected(
-                                serverUrl = calDavServerUrl,
-                                displayName = calDavDisplayName,
-                                username = calDavUsername,
-                                password = calDavPassword,
-                                trustInsecure = calDavTrustInsecure,
-                                error = "Connection timed out. Please try again."
+                            calDavState = calDavNotConnectedWith(
+                                UiMessage.ResId(R.string.caldav_error_connection_timeout),
+                                null
                             )
                         )
                     }
@@ -1210,13 +1192,9 @@ class AccountSettingsViewModel @Inject constructor(
                     if (discoveryResult.calendars.isEmpty()) {
                         _uiState.update {
                             it.copy(
-                                calDavState = CalDavConnectionState.NotConnected(
-                                    serverUrl = calDavServerUrl,
-                                    displayName = calDavDisplayName,
-                                    username = calDavUsername,
-                                    password = calDavPassword,
-                                    trustInsecure = calDavTrustInsecure,
-                                    error = "No calendars found on this server."
+                                calDavState = calDavNotConnectedWith(
+                                    UiMessage.ResId(R.string.caldav_error_no_calendars),
+                                    null
                                 )
                             )
                         }
@@ -1288,13 +1266,9 @@ class AccountSettingsViewModel @Inject constructor(
                             Log.e(TAG, "CalDAV account creation failed: ${createResult.message}")
                             _uiState.update {
                                 it.copy(
-                                    calDavState = CalDavConnectionState.NotConnected(
-                                        serverUrl = calDavServerUrl,
-                                        displayName = calDavDisplayName,
-                                        username = calDavUsername,
-                                        password = calDavPassword,
-                                        trustInsecure = calDavTrustInsecure,
-                                        error = createResult.message
+                                    calDavState = calDavNotConnectedWith(
+                                        UiMessage.Literal(createResult.message),
+                                        null
                                     )
                                 )
                             }
@@ -1304,13 +1278,9 @@ class AccountSettingsViewModel @Inject constructor(
                             Log.e(TAG, "Unexpected result from createAccountWithSelectedCalendars: $createResult")
                             _uiState.update {
                                 it.copy(
-                                    calDavState = CalDavConnectionState.NotConnected(
-                                        serverUrl = calDavServerUrl,
-                                        displayName = calDavDisplayName,
-                                        username = calDavUsername,
-                                        password = calDavPassword,
-                                        trustInsecure = calDavTrustInsecure,
-                                        error = "Unexpected error. Please try again."
+                                    calDavState = calDavNotConnectedWith(
+                                        UiMessage.ResId(R.string.caldav_error_unexpected),
+                                        null
                                     )
                                 )
                             }
@@ -1322,14 +1292,9 @@ class AccountSettingsViewModel @Inject constructor(
                     Log.e(TAG, "CalDAV authentication failed: ${discoveryResult.message}")
                     _uiState.update {
                         it.copy(
-                            calDavState = CalDavConnectionState.NotConnected(
-                                serverUrl = calDavServerUrl,
-                                displayName = calDavDisplayName,
-                                username = calDavUsername,
-                                password = calDavPassword,
-                                trustInsecure = calDavTrustInsecure,
-                                error = discoveryResult.message,
-                                errorField = CalDavConnectionState.ErrorField.CREDENTIALS
+                            calDavState = calDavNotConnectedWith(
+                                UiMessage.Literal(discoveryResult.message),
+                                CalDavConnectionState.ErrorField.CREDENTIALS
                             )
                         )
                     }
@@ -1345,14 +1310,9 @@ class AccountSettingsViewModel @Inject constructor(
                     }
                     _uiState.update {
                         it.copy(
-                            calDavState = CalDavConnectionState.NotConnected(
-                                serverUrl = calDavServerUrl,
-                                displayName = calDavDisplayName,
-                                username = calDavUsername,
-                                password = calDavPassword,
-                                trustInsecure = calDavTrustInsecure,
-                                error = discoveryResult.message,
-                                errorField = errorField
+                            calDavState = calDavNotConnectedWith(
+                                UiMessage.Literal(discoveryResult.message),
+                                errorField
                             )
                         )
                     }
@@ -1362,13 +1322,9 @@ class AccountSettingsViewModel @Inject constructor(
                     Log.e(TAG, "Unexpected CalDAV discovery result: $discoveryResult")
                     _uiState.update {
                         it.copy(
-                            calDavState = CalDavConnectionState.NotConnected(
-                                serverUrl = calDavServerUrl,
-                                displayName = calDavDisplayName,
-                                username = calDavUsername,
-                                password = calDavPassword,
-                                trustInsecure = calDavTrustInsecure,
-                                error = "Unexpected error. Please try again."
+                            calDavState = calDavNotConnectedWith(
+                                UiMessage.ResId(R.string.caldav_error_unexpected),
+                                null
                             )
                         )
                     }
@@ -1467,7 +1423,7 @@ class AccountSettingsViewModel @Inject constructor(
                 is IcsSubscriptionRepository.SubscriptionResult.Success -> {
                     Log.i(TAG, "Subscription added: ${result.subscription.name}")
                     // Schedule periodic refresh if this is the first subscription
-                    IcsRefreshWorker.schedulePeriodicRefresh(getApplication())
+                    icsScheduler.schedulePeriodicRefresh()
                 }
 
                 is IcsSubscriptionRepository.SubscriptionResult.Error -> {
@@ -1847,15 +1803,6 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     // ==================== Notifications ====================
-
-    fun onRequestNotificationPermission() {
-        val context = getApplication<Application>()
-        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        context.startActivity(intent)
-    }
 
     /**
      * Refresh permission state (call from Activity onResume).

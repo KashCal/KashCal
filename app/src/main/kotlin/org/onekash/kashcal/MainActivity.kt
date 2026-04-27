@@ -10,12 +10,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
@@ -46,8 +52,10 @@ import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
 import org.onekash.kashcal.ui.theme.KashCalTheme
+import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
+import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
 import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.util.CalendarContractAction
@@ -101,15 +109,6 @@ class MainActivity : ComponentActivity() {
                 val quickAddEnabled by homeViewModel.quickAddEnabled.collectAsStateWithLifecycle()
 
                 val coroutineScope = rememberCoroutineScope()
-
-                // Confirmation snackbar for event save — shared across Quick Add, EventFormSheet, and device event paths
-                val showEventSavedSnackbar = { title: String, startTs: Long, isAllDay: Boolean ->
-                    val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
-                    val tp = DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
-                    homeViewModel.showSnackbar(
-                        DateTimeUtils.formatEventConfirmation(title, startTs, isAllDay, tp)
-                    )
-                }
 
                 // Notification permission state and manager
                 val notificationPermissionManager = remember {
@@ -165,6 +164,17 @@ class MainActivity : ComponentActivity() {
                 // ICS import state
                 var icsImportEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
                 var showIcsImportSheet by remember { mutableStateOf(false) }
+
+                // Shared launch helper for opening EventFormSheet from CalendarIntentData
+                // (used by PendingAction.CreateEventFromCalendarIntent and QuickAdd expand/redirect).
+                val launchEventFormWithIntent = { data: CalendarIntentData, invitees: List<String> ->
+                    editingEventId = null
+                    newEventStartTs = data.startTimeMillis
+                    eventOccurrenceTs = null
+                    calendarIntentData = data
+                    calendarIntentInvitees = invitees
+                    showEventFormSheet = true
+                }
 
                 // Process pending actions from intents (notification, widget, shortcut, ICS file)
                 // Uses ViewModel StateFlow pattern - Android's recommended approach for UI events
@@ -245,12 +255,7 @@ class MainActivity : ComponentActivity() {
                                 is PendingAction.CreateEventFromCalendarIntent -> {
                                     // Handle calendar intent from other apps (email clients, browsers, etc.)
                                     Log.d(TAG, "Processing calendar intent: title=${action.data.title}")
-                                    editingEventId = null
-                                    newEventStartTs = action.data.startTimeMillis
-                                    eventOccurrenceTs = null
-                                    calendarIntentData = action.data
-                                    calendarIntentInvitees = action.invitees
-                                    showEventFormSheet = true
+                                    launchEventFormWithIntent(action.data, action.invitees)
                                 }
                                 is PendingAction.ShowDeviceEventQuickView -> {
                                     val deviceEvent = homeViewModel.getDeviceEventForQuickView(
@@ -732,30 +737,54 @@ class MainActivity : ComponentActivity() {
                     )
                 }
 
-                // Quick Add Dialog
+                // Quick Add Dialog — ViewModel owned here (screen-level) per Google's
+                // UI-layer guidance. State flows down; side-effects stay at the caller.
                 if (showQuickAddDialog) {
+                    val quickAddViewModel: QuickAddViewModel = hiltViewModel()
+                    val parseResult by quickAddViewModel.parseResult.collectAsStateWithLifecycle()
+                    val isSaveEnabled by quickAddViewModel.isSaveEnabled.collectAsStateWithLifecycle()
+                    val isSaving by quickAddViewModel.isSaving.collectAsStateWithLifecycle()
+                    val quickAddTextFieldState = remember { TextFieldState() }
+                    LaunchedEffect(Unit) {
+                        quickAddViewModel.resetState()
+                        snapshotFlow { quickAddTextFieldState.text.toString() }
+                            .collect { quickAddViewModel.onInputChanged(it) }
+                    }
+                    val quickAddHaptics = LocalHapticFeedback.current
+                    val saveFailedMessage = stringResource(R.string.quick_add_save_failed)
                     QuickAddDialog(
+                        textFieldState = quickAddTextFieldState,
+                        parseResult = parseResult,
+                        isSaveEnabled = isSaveEnabled,
+                        isSaving = isSaving,
                         onDismiss = { showQuickAddDialog = false },
-                        onSaved = { event ->
-                            showQuickAddDialog = false
-                            showEventSavedSnackbar(event.title, event.startTs, event.isAllDay)
-                            // Navigate to the event's date
-                            val dayCode = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
-                            val date = org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(dayCode)
-                            homeViewModel.navigateToDate(date)
+                        onSave = {
+                            coroutineScope.launch {
+                                quickAddViewModel.save()
+                                    .onSuccess { event ->
+                                        quickAddHaptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        showQuickAddDialog = false
+                                        val dayCode = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
+                                        val date = org.onekash.kashcal.ui.util.DayPagerUtils.dayCodeToLocalDate(dayCode)
+                                        homeViewModel.navigateToDate(date)
+                                    }
+                                    .onFailure { e ->
+                                        showQuickAddDialog = false
+                                        if (e is DeviceCalendarException) {
+                                            // Default calendar is a device calendar — redirect to full form.
+                                            launchEventFormWithIntent(quickAddViewModel.toCalendarIntentData(), emptyList())
+                                        } else {
+                                            homeViewModel.showSnackbar(e.message ?: saveFailedMessage)
+                                        }
+                                    }
+                            }
                         },
-                        onExpand = { intentData ->
-                            showQuickAddDialog = false
-                            editingEventId = null
-                            newEventStartTs = intentData.startTimeMillis
-                            eventOccurrenceTs = null
-                            calendarIntentData = intentData
-                            calendarIntentInvitees = emptyList()
-                            showEventFormSheet = true
-                        },
-                        onSaveError = { message ->
-                            showQuickAddDialog = false
-                            homeViewModel.showSnackbar(message)
+                        onExpand = {
+                            coroutineScope.launch {
+                                val intentData = quickAddViewModel.toCalendarIntentData()
+                                showQuickAddDialog = false
+                                launchEventFormWithIntent(intentData, emptyList())
+                            }
                         }
                     )
                 }
@@ -786,11 +815,7 @@ class MainActivity : ComponentActivity() {
                             deviceEventIsAllDay = false
                         },
                         onSave = { formState ->
-                            homeViewModel.saveEvent(formState).also { result ->
-                                result.onSuccess { event ->
-                                    showEventSavedSnackbar(event.title, event.startTs, event.isAllDay)
-                                }
-                            }
+                            homeViewModel.saveEvent(formState)
                         },
                         onDelete = { eventId ->
                             homeViewModel.deleteEvent(eventId)
@@ -837,22 +862,7 @@ class MainActivity : ComponentActivity() {
                             homeViewModel.getDeviceEventForEdit(eventId, deviceEventOccurrenceTs, deviceEventIsAllDay)
                         },
                         onSaveDeviceEvent = { formState ->
-                            homeViewModel.saveDeviceEvent(formState).also { result ->
-                                result.onSuccess {
-                                    val startTs = if (formState.isAllDay) {
-                                        DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
-                                    } else {
-                                        java.time.Instant.ofEpochMilli(formState.dateMillis)
-                                            .atZone(java.time.ZoneId.systemDefault())
-                                            .toLocalDate()
-                                            .atTime(formState.startHour, formState.startMinute)
-                                            .atZone(java.time.ZoneId.systemDefault())
-                                            .toInstant()
-                                            .toEpochMilli()
-                                    }
-                                    showEventSavedSnackbar(formState.title, startTs, formState.isAllDay)
-                                }
-                            }
+                            homeViewModel.saveDeviceEvent(formState)
                         },
                         onDeleteDeviceEvent = { formState ->
                             homeViewModel.handleDeviceEventFormDelete(formState)

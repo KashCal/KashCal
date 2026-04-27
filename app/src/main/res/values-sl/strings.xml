@@ -204,6 +204,13 @@
     <string name="error_event_invalid_recurrence">Neveljaven vzorec ponavljanja.</string>
 
     <string name="error_display_name_exists">Račun z imenom \"%1$s\" že obstaja.</string>
+    <string name="icloud_error_credentials_required">Apple ID in geslo sta obvezna</string>
+    <string name="icloud_error_connection_timeout">Povezava je potekla. Poskusite znova.</string>
+    <string name="caldav_error_display_name_required">Prikazno ime je obvezno</string>
+    <string name="caldav_error_credentials_required">URL strežnika, uporabniško ime in geslo so obvezni</string>
+    <string name="caldav_error_connection_timeout">Povezava je potekla. Poskusite znova.</string>
+    <string name="caldav_error_no_calendars">Na tem strežniku ni najdenih koledarjev.</string>
+    <string name="caldav_error_unexpected">Nepričakovana napaka. Poskusite znova.</string>
 
     <string name="error_import_file_not_found">Datoteka ni najdena ali je ni mogoče prebrati.</string>
     <string name="error_import_invalid_format">Neveljavna oblika koledarske datoteke.</string>
@@ -719,6 +726,7 @@
     <string name="label_go_to_month">Pojdi na mesec</string>
 
     <string name="action_more_options">Več možnosti</string>
+    <string name="quick_add_save_failed">Dogodka ni bilo mogoče shraniti</string>
 
     <string name="label_duration_days">dni</string>
     <string name="label_duration_hrs">ur</string>
@@ -932,8 +940,6 @@
     <string name="ics_url_required">URL je obvezen</string>
     <string name="ics_url_invalid_scheme">URL se mora začeti s http://, https:// ali webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Ves dan)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/channel strings -->
     <string name="cd_widget_calendar">Kalendar</string>

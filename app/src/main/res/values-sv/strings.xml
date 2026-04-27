@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">Ogiltigt upprepningsmönster.</string>
 
     <string name="error_display_name_exists">Ett konto med namnet \"%1$s\" finns redan.</string>
+    <string name="icloud_error_credentials_required">Apple ID och lösenord krävs</string>
+    <string name="icloud_error_connection_timeout">Anslutningen tog för lång tid. Försök igen.</string>
+    <string name="caldav_error_display_name_required">Visningsnamn krävs</string>
+    <string name="caldav_error_credentials_required">Server-URL, användarnamn och lösenord krävs</string>
+    <string name="caldav_error_connection_timeout">Anslutningen tog för lång tid. Försök igen.</string>
+    <string name="caldav_error_no_calendars">Inga kalendrar hittades på denna server.</string>
+    <string name="caldav_error_unexpected">Oväntat fel. Försök igen.</string>
 
     <string name="error_import_file_not_found">Filen hittades inte eller kan inte läsas.</string>
     <string name="error_import_invalid_format">Ogiltigt kalenderfilformat.</string>
@@ -687,6 +694,7 @@
     <string name="label_go_to_month">Gå till månad</string>
 
     <string name="action_more_options">Fler alternativ</string>
+    <string name="quick_add_save_failed">Kunde inte spara händelse</string>
 
     <string name="label_duration_days">dagar</string>
     <string name="label_duration_hrs">tim</string>
@@ -880,8 +888,6 @@
     <string name="ics_url_required">URL krävs</string>
     <string name="ics_url_invalid_scheme">URL måste börja med http://, https:// eller webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Heldag)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>

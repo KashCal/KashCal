@@ -309,6 +309,15 @@
     <!-- Account Errors -->
     <!-- %1$s = display name -->
     <string name="error_display_name_exists">An account named \"%1$s\" already exists.</string>
+    <!-- Keep "Apple ID" untranslated -->
+    <string name="icloud_error_credentials_required">Apple ID and password are required</string>
+    <string name="icloud_error_connection_timeout">Connection timed out. Please try again.</string>
+    <!-- CalDAV sign-in errors -->
+    <string name="caldav_error_display_name_required">Display name is required</string>
+    <string name="caldav_error_credentials_required">Server URL, username, and password are required</string>
+    <string name="caldav_error_connection_timeout">Connection timed out. Please try again.</string>
+    <string name="caldav_error_no_calendars">No calendars found on this server.</string>
+    <string name="caldav_error_unexpected">Unexpected error. Please try again.</string>
 
     <!-- Import/Export Errors — "import" = load events from .ics file -->
     <string name="error_import_file_not_found">File not found or cannot be read.</string>
@@ -910,6 +919,7 @@
 
     <!-- QuickAddDialog -->
     <string name="action_more_options">More options</string>
+    <string name="quick_add_save_failed">Failed to save event</string>
 
     <!-- Duration wheel picker labels — abbreviated, lowercase -->
     <string name="label_duration_days">days</string>
@@ -1149,11 +1159,6 @@
     <!-- ICS subscription URL validation -->
     <string name="ics_url_required">URL is required</string>
     <string name="ics_url_invalid_scheme">URL must start with http://, https://, or webcal://</string>
-    <!-- Event confirmation snackbar: all-day event — %1$s = title, %2$s = date -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (All day)</string>
-    <!-- Event confirmation snackbar: timed event — %1$s = title, %2$s = date, %3$s = time -->
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
-
     <!-- Insights -->
     <string name="insights_title">Insights</string>
     <string name="insights_period_this_week">Week</string>

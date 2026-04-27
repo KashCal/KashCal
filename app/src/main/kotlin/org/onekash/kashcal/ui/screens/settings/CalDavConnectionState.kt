@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.screens.settings
 
 import androidx.compose.runtime.Immutable
+import org.onekash.kashcal.ui.util.UiMessage
 
 /**
  * State for CalDAV sign-in flow.
@@ -22,7 +23,7 @@ sealed class CalDavConnectionState {
         val username: String = "",
         val password: String = "",
         val trustInsecure: Boolean = false,
-        val error: String? = null,
+        val error: UiMessage? = null,
         val errorField: ErrorField? = null
     ) : CalDavConnectionState()
 

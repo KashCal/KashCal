@@ -3,6 +3,7 @@ package org.onekash.kashcal
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -424,7 +425,12 @@ class SettingsActivity : ComponentActivity() {
                             // System
                             onShowSyncLogs = { showDebugLogSheet = true },
                             notificationsEnabled = notificationsEnabled,
-                            onRequestNotificationPermission = viewModel::onRequestNotificationPermission,
+                            onRequestNotificationPermission = {
+                                // VMs should not start activities. Intent launch lives here.
+                                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                    .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                                startActivity(intent)
+                            },
                             // Default reminders and event duration
                             defaultReminderTimed = defaultReminderTimed,
                             defaultReminderAllDay = defaultReminderAllDay,

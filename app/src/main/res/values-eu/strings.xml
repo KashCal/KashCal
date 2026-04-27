@@ -183,6 +183,13 @@
     <string name="error_event_invalid_recurrence">Errepikapen-eredu baliogabea.</string>
 
     <string name="error_display_name_exists">\"%1$s\" izeneko kontu bat badago jada.</string>
+    <string name="icloud_error_credentials_required">Apple ID eta pasahitza behar dira</string>
+    <string name="icloud_error_connection_timeout">Konexioaren denbora agortu da. Saiatu berriro.</string>
+    <string name="caldav_error_display_name_required">Bistaratzeko izena behar da</string>
+    <string name="caldav_error_credentials_required">Zerbitzariaren URLa, erabiltzaile-izena eta pasahitza behar dira</string>
+    <string name="caldav_error_connection_timeout">Konexioaren denbora agortu da. Saiatu berriro.</string>
+    <string name="caldav_error_no_calendars">Ez da egutegirik aurkitu zerbitzari honetan.</string>
+    <string name="caldav_error_unexpected">Ustekabeko errorea. Saiatu berriro.</string>
 
     <string name="error_import_file_not_found">Fitxategia ez da aurkitu edo ezin da irakurri.</string>
     <string name="error_import_invalid_format">Egutegi-fitxategiaren formatu baliogabea.</string>
@@ -660,6 +667,7 @@
     <string name="label_go_to_month">Hilabetera joan</string>
 
     <string name="action_more_options">Aukera gehiago</string>
+    <string name="quick_add_save_failed">Ezin izan da gertaera gorde</string>
 
     <string name="label_duration_days">egun</string>
     <string name="label_duration_hrs">ord</string>
@@ -879,8 +887,6 @@
     <string name="ics_url_required">URL behar da</string>
     <string name="ics_url_invalid_scheme">URLa http://, https://, edo webcal:// bidez hasi behar da</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Egun osoa)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Egutegia</string>
     <string name="cd_widget_add_event">Gehitu gertaera</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

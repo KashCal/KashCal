@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">Ugyldig gjentakingsmønster.</string>
 
     <string name="error_display_name_exists">Ein konto med namnet \"%1$s\" finst allereie.</string>
+    <string name="icloud_error_credentials_required">Apple ID og passord krevst</string>
+    <string name="icloud_error_connection_timeout">Tilkoplinga fekk tidsavbrot. Prøv igjen.</string>
+    <string name="caldav_error_display_name_required">Visingsnamn er påkravd</string>
+    <string name="caldav_error_credentials_required">Tenar-URL, brukarnamn og passord krevst</string>
+    <string name="caldav_error_connection_timeout">Tilkoplinga fekk tidsavbrot. Prøv igjen.</string>
+    <string name="caldav_error_no_calendars">Ingen kalendrar funne på denne tenaren.</string>
+    <string name="caldav_error_unexpected">Uventa feil. Prøv igjen.</string>
 
     <string name="error_import_file_not_found">Fila vart ikkje funnen eller kan ikkje lesast.</string>
     <string name="error_import_invalid_format">Ugyldig kalenderfilformat.</string>
@@ -687,6 +694,7 @@
     <string name="label_go_to_month">Gå til månad</string>
 
     <string name="action_more_options">Fleire alternativ</string>
+    <string name="quick_add_save_failed">Kunne ikkje lagre hending</string>
 
     <string name="label_duration_days">dagar</string>
     <string name="label_duration_hrs">timar</string>
@@ -880,8 +888,6 @@
     <string name="ics_url_required">URL er påkrevd</string>
     <string name="ics_url_invalid_scheme">URL må starta med http://, https:// eller webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Heile dagen)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>

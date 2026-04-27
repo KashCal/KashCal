@@ -1,7 +1,5 @@
 package org.onekash.kashcal.ui.viewmodels
 
-import android.app.Application
-import android.content.pm.PackageManager
 import app.cash.turbine.test
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -10,9 +8,7 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkObject
 import io.mockk.mockkStatic
-import io.mockk.unmockkObject
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +52,6 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
-import org.onekash.kashcal.data.ics.IcsRefreshWorker
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.contacts.ContactEventManager
@@ -89,7 +84,6 @@ class AccountSettingsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     // Mocks
-    private lateinit var application: Application
     private lateinit var accountRepository: AccountRepository
     private lateinit var userPreferences: UserPreferencesRepository
     private lateinit var syncScheduler: SyncScheduler
@@ -106,6 +100,8 @@ class AccountSettingsViewModelTest {
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var backupExporter: org.onekash.kashcal.domain.backup.SettingsBackupExporter
     private lateinit var backupImporter: org.onekash.kashcal.domain.backup.SettingsBackupImporter
+    private lateinit var permissionChecker: org.onekash.kashcal.ui.permission.FakePermissionChecker
+    private lateinit var icsScheduler: org.onekash.kashcal.sync.scheduler.FakeIcsScheduler
 
     // Flows we control
     private lateinit var calendarsFlow: MutableStateFlow<List<Calendar>>
@@ -164,7 +160,6 @@ class AccountSettingsViewModelTest {
         Dispatchers.setMain(testDispatcher)
 
         // Initialize mocks
-        application = mockk(relaxed = true)
         accountRepository = mockk(relaxed = true)
         userPreferences = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
@@ -181,6 +176,8 @@ class AccountSettingsViewModelTest {
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         backupExporter = mockk(relaxed = true)
         backupImporter = mockk(relaxed = true)
+        permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker()
+        icsScheduler = org.onekash.kashcal.sync.scheduler.FakeIcsScheduler()
 
         // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
@@ -218,9 +215,6 @@ class AccountSettingsViewModelTest {
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
         coEvery { accountRepository.hasCredentials(any()) } returns false
 
-        // Mock application context for notification permission check
-        every { application.checkPermission(any(), any(), any()) } returns PackageManager.PERMISSION_GRANTED
-
         // Mock ICS subscriptions flow
         every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(emptyList())
 
@@ -246,7 +240,6 @@ class AccountSettingsViewModelTest {
 
     private fun createViewModel(): AccountSettingsViewModel {
         return AccountSettingsViewModel(
-            application = application,
             accountRepository = accountRepository,
             userPreferences = userPreferences,
             syncScheduler = syncScheduler,
@@ -263,6 +256,8 @@ class AccountSettingsViewModelTest {
             deviceCalendarReminderScheduler = deviceCalendarReminderScheduler,
             backupExporter = backupExporter,
             backupImporter = backupImporter,
+            permissionChecker = permissionChecker,
+            icsScheduler = icsScheduler,
         )
     }
 
@@ -440,7 +435,12 @@ class AccountSettingsViewModelTest {
         viewModel.uiState.test {
             val state = expectMostRecentItem()
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
-            assertEquals("Apple ID and password are required", (state.iCloudState as ICloudConnectionState.NotConnected).error)
+            assertEquals(
+                org.onekash.kashcal.ui.util.UiMessage.ResId(
+                    org.onekash.kashcal.R.string.icloud_error_credentials_required
+                ),
+                (state.iCloudState as ICloudConnectionState.NotConnected).error
+            )
         }
     }
 
@@ -510,7 +510,11 @@ class AccountSettingsViewModelTest {
         viewModel.uiState.test {
             val state = expectMostRecentItem()
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
-            assertTrue((state.iCloudState as ICloudConnectionState.NotConnected).error?.contains("Invalid credentials") == true)
+            val error = (state.iCloudState as ICloudConnectionState.NotConnected).error
+            assertEquals(
+                org.onekash.kashcal.ui.util.UiMessage.Literal("Invalid credentials"),
+                error
+            )
         }
     }
 
@@ -541,7 +545,12 @@ class AccountSettingsViewModelTest {
             val state = expectMostRecentItem()
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
             val error = (state.iCloudState as ICloudConnectionState.NotConnected).error
-            assertTrue(error?.contains("timed out") == true)
+            assertEquals(
+                org.onekash.kashcal.ui.util.UiMessage.ResId(
+                    org.onekash.kashcal.R.string.icloud_error_connection_timeout
+                ),
+                error
+            )
         }
     }
 
@@ -565,7 +574,41 @@ class AccountSettingsViewModelTest {
         viewModel.uiState.test {
             val state = expectMostRecentItem()
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
-            assertTrue((state.iCloudState as ICloudConnectionState.NotConnected).error?.contains("Network error") == true)
+            val error = (state.iCloudState as ICloudConnectionState.NotConnected).error
+            assertEquals(
+                org.onekash.kashcal.ui.util.UiMessage.Literal("Network error"),
+                error
+            )
+        }
+    }
+
+    @Test
+    fun `onCalDavDisplayNameChange with duplicate name emits UiMessage ResId with name arg`() = runTest {
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable("Personal") } returns false
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onCalDavDisplayNameChange("Personal")
+        // Past the 300ms debounce in onCalDavDisplayNameChange
+        advanceUntilIdle()
+
+        viewModel.uiState.test {
+            val state = expectMostRecentItem()
+            val calDavState = state.calDavState
+            assertTrue(calDavState is org.onekash.kashcal.ui.screens.settings.CalDavConnectionState.NotConnected)
+            val error = (calDavState as org.onekash.kashcal.ui.screens.settings.CalDavConnectionState.NotConnected).error
+            assertEquals(
+                org.onekash.kashcal.ui.util.UiMessage.ResId(
+                    org.onekash.kashcal.R.string.error_display_name_exists,
+                    listOf("Personal")
+                ),
+                error
+            )
+            assertEquals(
+                org.onekash.kashcal.ui.screens.settings.CalDavConnectionState.ErrorField.DISPLAY_NAME,
+                calDavState.errorField
+            )
         }
     }
 
@@ -853,41 +896,74 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onAddSubscription calls eventCoordinator with correct parameters`() = runTest {
-        // Mock IcsRefreshWorker companion object to avoid WorkManager initialization
-        mockkObject(IcsRefreshWorker.Companion)
-        every { IcsRefreshWorker.schedulePeriodicRefresh(any(), any()) } just Runs
+        val testSubscription = IcsSubscription(
+            id = 1L,
+            url = "https://example.com/holidays.ics",
+            name = "US Holidays",
+            color = 0xFFFF5722.toInt(),
+            calendarId = 10L
+        )
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Success(testSubscription)
 
-        try {
-            val testSubscription = IcsSubscription(
-                id = 1L,
-                url = "https://example.com/holidays.ics",
-                name = "US Holidays",
-                color = 0xFFFF5722.toInt(),
-                calendarId = 10L
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription(
+            url = "https://example.com/holidays.ics",
+            name = "US Holidays",
+            color = 0xFFFF5722.toInt()
+        )
+        advanceUntilIdle()
+
+        coVerify {
+            eventCoordinator.addIcsSubscription(
+                "https://example.com/holidays.ics",
+                "US Holidays",
+                0xFFFF5722.toInt()
             )
-            coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
-                IcsSubscriptionRepository.SubscriptionResult.Success(testSubscription)
-
-            val viewModel = createViewModel()
-            advanceUntilIdle()
-
-            viewModel.onAddSubscription(
-                url = "https://example.com/holidays.ics",
-                name = "US Holidays",
-                color = 0xFFFF5722.toInt()
-            )
-            advanceUntilIdle()
-
-            coVerify {
-                eventCoordinator.addIcsSubscription(
-                    "https://example.com/holidays.ics",
-                    "US Holidays",
-                    0xFFFF5722.toInt()
-                )
-            }
-        } finally {
-            unmockkObject(IcsRefreshWorker.Companion)
         }
+    }
+
+    @Test
+    fun `onAddSubscription success schedules periodic ICS refresh via icsScheduler`() = runTest {
+        val testSubscription = IcsSubscription(
+            id = 1L,
+            url = "https://example.com/holidays.ics",
+            name = "US Holidays",
+            color = 0xFFFF5722.toInt(),
+            calendarId = 10L
+        )
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Success(testSubscription)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription("https://example.com/holidays.ics", "US Holidays", 0xFFFF5722.toInt())
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(org.onekash.kashcal.sync.scheduler.IcsScheduler.DEFAULT_INTERVAL_HOURS),
+            icsScheduler.scheduleCalls
+        )
+    }
+
+    @Test
+    fun `onAddSubscription error does not schedule ICS refresh`() = runTest {
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error("bad url")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription("https://example.com/holidays.ics", "US Holidays", 0xFFFF5722.toInt())
+        advanceUntilIdle()
+
+        assertTrue(
+            "scheduler should not be invoked on error; got ${icsScheduler.scheduleCalls}",
+            icsScheduler.scheduleCalls.isEmpty()
+        )
     }
 
     @Test
@@ -1253,7 +1329,7 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `notifications enabled by default on older Android`() = runTest {
-        // Default mock returns PERMISSION_GRANTED
+        // FakePermissionChecker defaults all permissions to true
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -2334,20 +2410,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `writableDeviceCalendarGroups withWritePermission loadsWritableCalendars`() = runTest {
-        // Mock ContextCompat to grant WRITE_CALENDAR permission
-        mockkStatic(androidx.core.content.ContextCompat::class)
-        every {
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                any(),
-                eq(android.Manifest.permission.WRITE_CALENDAR)
-            )
-        } returns PackageManager.PERMISSION_GRANTED
-        every {
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                any(),
-                eq(android.Manifest.permission.READ_CALENDAR)
-            )
-        } returns PackageManager.PERMISSION_GRANTED
+        permissionChecker.calendarRead = true
+        permissionChecker.calendarWrite = true
 
         // Mock writable device calendars (accessLevel >= 500 = writable)
         val deviceCalendars = listOf(
@@ -2392,26 +2456,25 @@ class AccountSettingsViewModelTest {
             assertEquals("Google", groups[0].accountName)
             assertEquals(2, groups[0].pickerCalendars.size)
         }
-
-        unmockkStatic(androidx.core.content.ContextCompat::class)
     }
 
     @Test
     fun `writableDeviceCalendarGroups withoutWritePermission returnsEmpty`() = runTest {
-        // Mock ContextCompat to deny WRITE_CALENDAR permission
-        mockkStatic(androidx.core.content.ContextCompat::class)
-        every {
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                any(),
-                eq(android.Manifest.permission.WRITE_CALENDAR)
+        permissionChecker.calendarRead = false
+        permissionChecker.calendarWrite = false
+        // If the read-path were accidentally taken, this non-empty stub would surface
+        // in the assertion — guards against false-positive "empty because empty source".
+        coEvery { calendarProviderRepository.getDeviceCalendars() } returns listOf(
+            DeviceCalendar(
+                id = 100L,
+                displayName = "Should Not Appear",
+                color = 0,
+                accountName = "Google",
+                accountType = "com.google",
+                visible = true,
+                accessLevel = 700
             )
-        } returns PackageManager.PERMISSION_DENIED
-        every {
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                any(),
-                eq(android.Manifest.permission.READ_CALENDAR)
-            )
-        } returns PackageManager.PERMISSION_DENIED
+        )
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2420,8 +2483,6 @@ class AccountSettingsViewModelTest {
             val groups = expectMostRecentItem()
             assertTrue(groups.isEmpty())
         }
-
-        unmockkStatic(androidx.core.content.ContextCompat::class)
     }
 
     @Test

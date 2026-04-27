@@ -18,6 +18,14 @@ out/
 archive/
 docs/
 
+# Local WIP notes and experimental skill sandboxes
+R8_Configuration_Analysis.md
+skills/
+
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Gradle files
 .gradle/
 build/

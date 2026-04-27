@@ -188,6 +188,13 @@
 
     <!-- Account Errors -->
     <string name="error_display_name_exists">Tha cunntas leis an ainm \"%1$s\" ann mu thràth.</string>
+    <string name="icloud_error_credentials_required">Feumar Apple ID agus facal-faire</string>
+    <string name="icloud_error_connection_timeout">Dh\'fhalbh an ùine air a\' cheangal. Feuch ris a-rithist.</string>
+    <string name="caldav_error_display_name_required">Feumar ainm taisbeanaidh</string>
+    <string name="caldav_error_credentials_required">Feumar URL an fhrithealaiche, ainm-cleachdaiche agus facal-faire</string>
+    <string name="caldav_error_connection_timeout">Dh\'fhalbh an ùine air a\' cheangal. Feuch ris a-rithist.</string>
+    <string name="caldav_error_no_calendars">Cha deach mìosachan sam bith a lorg air an fhrithealaiche seo.</string>
+    <string name="caldav_error_unexpected">Mearachd ris nach robh dùil. Feuch ris a-rithist.</string>
 
     <!-- Import/Export Errors -->
     <string name="error_import_file_not_found">Faidhle nach deach a lorg no nach urrainnear a leughadh.</string>
@@ -733,6 +740,7 @@
     <string name="label_go_to_month">Rach gu mìos</string>
 
     <string name="action_more_options">Barrachd roghainnean</string>
+    <string name="quick_add_save_failed">Cha b\' urrainn an tachartas a shàbhaladh</string>
 
     <string name="label_duration_days">là</string>
     <string name="label_duration_hrs">uair</string>
@@ -968,8 +976,6 @@
     <string name="ics_url_required">Tha feum air URL</string>
     <string name="ics_url_invalid_scheme">Feumaidh an URL tòiseachadh le http://, https://, no webcal://</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Fad an là)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
     <string name="cd_widget_calendar">Mìosachan</string>
     <string name="cd_widget_add_event">Cuir tachartas ris</string>
     <string name="cd_widget_day_cell">%1$s, %2$s</string>

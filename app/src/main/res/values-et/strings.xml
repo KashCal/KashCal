@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">Vigane kordusmuster.</string>
 
     <string name="error_display_name_exists">Konto nimega \"%1$s\" on juba olemas.</string>
+    <string name="icloud_error_credentials_required">Vajalikud on Apple ID ja parool</string>
+    <string name="icloud_error_connection_timeout">Ühenduse ajalõpp. Proovige uuesti.</string>
+    <string name="caldav_error_display_name_required">Kuvatav nimi on nõutav</string>
+    <string name="caldav_error_credentials_required">Vajalikud on serveri URL, kasutajanimi ja parool</string>
+    <string name="caldav_error_connection_timeout">Ühenduse ajalõpp. Proovige uuesti.</string>
+    <string name="caldav_error_no_calendars">Sellel serveril kalendreid ei leitud.</string>
+    <string name="caldav_error_unexpected">Ootamatu viga. Proovige uuesti.</string>
 
     <string name="error_import_file_not_found">Faili ei leitud või ei saa lugeda.</string>
     <string name="error_import_invalid_format">Vigane kalendrifaili vorming.</string>
@@ -664,6 +671,7 @@
     <string name="label_go_to_month">Mine kuule</string>
 
     <string name="action_more_options">Rohkem valikuid</string>
+    <string name="quick_add_save_failed">Sündmuse salvestamine ebaõnnestus</string>
 
     <string name="label_duration_days">päeva</string>
     <string name="label_duration_hrs">t</string>
@@ -820,8 +828,6 @@
     <string name="ics_sync_weekly">Iga nädal</string>
     <string name="ics_url_required">URL on nõutud</string>
     <string name="ics_url_invalid_scheme">URL peab algama http://, https:// või webcal://</string>
-    <string name="event_confirmation_all_day">%1$s · %2$s (Terve päev)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget and Channel strings -->
     <string name="cd_widget_calendar">Kalender</string>

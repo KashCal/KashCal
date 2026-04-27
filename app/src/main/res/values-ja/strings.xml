@@ -184,6 +184,13 @@
     <string name="error_event_invalid_recurrence">繰り返しパターンが無効です。</string>
 
     <string name="error_display_name_exists">\"%1$s\"という名前のアカウントは既に存在します。</string>
+    <string name="icloud_error_credentials_required">Apple IDとパスワードが必要です</string>
+    <string name="icloud_error_connection_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
+    <string name="caldav_error_display_name_required">表示名が必要です</string>
+    <string name="caldav_error_credentials_required">サーバーURL、ユーザー名、パスワードが必要です</string>
+    <string name="caldav_error_connection_timeout">接続がタイムアウトしました。もう一度お試しください。</string>
+    <string name="caldav_error_no_calendars">このサーバーでカレンダーが見つかりませんでした。</string>
+    <string name="caldav_error_unexpected">予期しないエラーが発生しました。もう一度お試しください。</string>
 
     <string name="error_import_file_not_found">ファイルが見つからないか、読み取れません。</string>
     <string name="error_import_invalid_format">無効なカレンダーファイル形式です。</string>
@@ -632,6 +639,7 @@
     <string name="label_go_to_month">月に移動</string>
 
     <string name="action_more_options">その他のオプション</string>
+    <string name="quick_add_save_failed">イベントを保存できませんでした</string>
 
     <string name="label_duration_days">日</string>
     <string name="label_duration_hrs">時間</string>
@@ -818,8 +826,6 @@
     <string name="ics_url_required">URLが必要です</string>
     <string name="ics_url_invalid_scheme">URLはhttp://、https://、またはwebcal://で始まる必要があります</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s（終日）</string>
-    <string name="event_confirmation_timed">%1$s · %2$s、%3$s</string>
 
     <plurals name="rrule_count_suffix">
         <item quantity="other">、%1$d回</item>

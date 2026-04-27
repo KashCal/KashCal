@@ -205,6 +205,13 @@
     <string name="error_event_invalid_recurrence">Ungültiges Wiederholungsmuster.</string>
 
     <string name="error_display_name_exists">Ein Konto mit dem Namen \"%1$s\" existiert bereits.</string>
+    <string name="icloud_error_credentials_required">Apple ID und Passwort erforderlich</string>
+    <string name="icloud_error_connection_timeout">Zeitüberschreitung bei der Verbindung. Bitte versuche es erneut.</string>
+    <string name="caldav_error_display_name_required">Anzeigename erforderlich</string>
+    <string name="caldav_error_credentials_required">Server-URL, Benutzername und Passwort erforderlich</string>
+    <string name="caldav_error_connection_timeout">Zeitüberschreitung bei der Verbindung. Bitte versuche es erneut.</string>
+    <string name="caldav_error_no_calendars">Keine Kalender auf diesem Server gefunden.</string>
+    <string name="caldav_error_unexpected">Unerwarteter Fehler. Bitte versuche es erneut.</string>
 
     <string name="error_import_file_not_found">Datei nicht gefunden oder nicht lesbar.</string>
     <string name="error_import_invalid_format">Ungültiges Kalenderdateiformat.</string>
@@ -687,6 +694,7 @@
     <string name="label_go_to_month">Zum Monat</string>
 
     <string name="action_more_options">Weitere Optionen</string>
+    <string name="quick_add_save_failed">Ereignis konnte nicht gespeichert werden</string>
 
     <string name="label_duration_days">Tage</string>
     <string name="label_duration_hrs">Std.</string>
@@ -880,8 +888,6 @@
     <string name="ics_url_required">URL ist erforderlich</string>
     <string name="ics_url_invalid_scheme">URL muss mit http://, https:// oder webcal:// beginnen</string>
     <!-- Event confirmation snackbar -->
-    <string name="event_confirmation_all_day">%1$s · %2$s (Ganztägig)</string>
-    <string name="event_confirmation_timed">%1$s · %2$s, %3$s</string>
 
     <!-- Widget/Channel accessibility -->
     <string name="cd_widget_calendar">Kalender</string>
