@@ -1,0 +1,3 @@
+• Week and 3-day views open at 6 AM on cold launch instead of midnight
+• New events from the "+" button default to 6 AM when opened fresh
+• Widgets now roll over reliably at midnight, even in Doze power-saving mode

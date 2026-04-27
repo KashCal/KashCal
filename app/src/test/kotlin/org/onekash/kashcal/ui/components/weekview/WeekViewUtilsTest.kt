@@ -772,4 +772,189 @@ class WeekViewUtilsTest {
         assertTrue("Expected 12h format with 2:00, got: $result", result.contains("2:00"))
         assertTrue("Expected 12h format with pm, got: $result", result.lowercase().contains("pm"))
     }
+
+    // ==================== resolveInitialScrollPx Tests (issue #188) ====================
+
+    @Test
+    fun `resolveInitialScrollPx returns savedPosition unchanged when positive`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 1234,
+            hourHeightDp = 60f,
+            density = 1.0f
+        )
+        assertEquals(1234, result)
+    }
+
+    @Test
+    fun `resolveInitialScrollPx defaults to 6 AM at density 1x with 60dp hours`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f
+        )
+        assertEquals(360, result)  // 6 * 60 * 1.0
+    }
+
+    @Test
+    fun `resolveInitialScrollPx scales with density 2x`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 2.0f
+        )
+        assertEquals(720, result)  // 6 * 60 * 2.0
+    }
+
+    @Test
+    fun `resolveInitialScrollPx honors min zoom hour height of 30dp`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = WeekViewUtils.MIN_HOUR_HEIGHT_DP,
+            density = 1.0f
+        )
+        assertEquals(180, result)  // 6 * 30 * 1.0
+    }
+
+    @Test
+    fun `resolveInitialScrollPx honors max zoom hour height of 150dp`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = WeekViewUtils.MAX_HOUR_HEIGHT_DP,
+            density = 1.0f
+        )
+        assertEquals(900, result)  // 6 * 150 * 1.0
+    }
+
+    @Test
+    fun `resolveInitialScrollPx applies custom defaultHour override`() {
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f,
+            defaultHour = 8
+        )
+        assertEquals(480, result)  // 8 * 60 * 1.0
+    }
+
+    @Test
+    fun `resolveInitialScrollPx handles fractional density for xxhdpi devices`() {
+        // Many real devices have non-integer density (e.g. Pixel xxhdpi ≈ 2.625).
+        // Guards against silent regressions from toInt() truncation behavior.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 2.625f
+        )
+        assertEquals(945, result)  // (6 * 60 * 2.625).toInt() == 945
+    }
+
+    @Test
+    fun `resolveInitialScrollPx with defaultHour 0 returns 0`() {
+        // Explicit opt-out path: a future caller can pass 0 to land at midnight.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = 0,
+            hourHeightDp = 60f,
+            density = 1.0f,
+            defaultHour = 0
+        )
+        assertEquals(0, result)
+    }
+
+    @Test
+    fun `resolveInitialScrollPx treats negative savedPosition as no-saved-value`() {
+        // Documents the `savedPosition > 0` gate: non-positive values fall into
+        // the default-hour branch. Real scroll state never emits negative, but
+        // the gate semantics are worth pinning.
+        val result = WeekViewUtils.resolveInitialScrollPx(
+            savedPosition = -1,
+            hourHeightDp = 60f,
+            density = 1.0f
+        )
+        assertEquals(360, result)  // falls through to 6 AM default
+    }
+
+    // ==================== resolveVisibleStartHour Tests (issue #188 FAB sync) ====================
+
+    @Test
+    fun `resolveVisibleStartHour returns default hour when savedPosition is 0`() {
+        // Cold-launch path: FAB falls back to DEFAULT_SCROLL_START_HOUR so new events
+        // default to 6 AM (matching the grid's visual landing).
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 0,
+            hourHeightPx = 60f
+        )
+        assertEquals(6, result)
+    }
+
+    @Test
+    fun `resolveVisibleStartHour converts saved pixels to hour`() {
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 360,
+            hourHeightPx = 60f,
+            gridStartHour = 0
+        )
+        assertEquals(6, result)  // 360 / 60 + 0 = 6
+    }
+
+    @Test
+    fun `resolveVisibleStartHour converts larger saved pixels to hour`() {
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 720,
+            hourHeightPx = 60f,
+            gridStartHour = 0
+        )
+        assertEquals(12, result)  // 720 / 60 + 0 = 12
+    }
+
+    @Test
+    fun `resolveVisibleStartHour clamps computed hour to upper bound 23`() {
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 1440,
+            hourHeightPx = 60f,
+            gridStartHour = 0
+        )
+        assertEquals(23, result)  // 24 would be out of range, clamped to 23
+    }
+
+    @Test
+    fun `resolveVisibleStartHour treats negative savedPosition as default`() {
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = -1,
+            hourHeightPx = 60f
+        )
+        assertEquals(6, result)  // falls through to default
+    }
+
+    @Test
+    fun `resolveVisibleStartHour honors custom gridStartHour offset`() {
+        // If the grid ever starts past midnight (e.g. 6 AM grid with 60 px/hr),
+        // scrolling 60 px means the visible top is hour 7.
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 60,
+            hourHeightPx = 60f,
+            gridStartHour = 6
+        )
+        assertEquals(7, result)  // 60 / 60 + 6 = 7
+    }
+
+    @Test
+    fun `resolveVisibleStartHour handles fractional hourHeightPx from xxhdpi density`() {
+        // xxhdpi: 60 dp * 2.625 density = 157.5 px/hr. At saved pixel 945, that's hour 6.
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 945,
+            hourHeightPx = 157.5f,
+            gridStartHour = 0
+        )
+        assertEquals(6, result)  // (945 / 157.5).toInt() + 0 = 6
+    }
+
+    @Test
+    fun `resolveVisibleStartHour applies custom defaultHour override`() {
+        val result = WeekViewUtils.resolveVisibleStartHour(
+            savedPosition = 0,
+            hourHeightPx = 60f,
+            defaultHour = 8
+        )
+        assertEquals(8, result)
+    }
 }

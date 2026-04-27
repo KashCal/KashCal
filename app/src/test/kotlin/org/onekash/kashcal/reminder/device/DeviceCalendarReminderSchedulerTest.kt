@@ -80,8 +80,22 @@ class DeviceCalendarReminderSchedulerTest {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         shadowAlarmManager = shadowOf(alarmManager)
 
+        // KashCalApplication.onCreate() runs in Robolectric and schedules the widget
+        // midnight alarm via AlarmManager. Clear it so these tests see a pristine
+        // ShadowAlarmManager state.
+        clearAllAlarms()
+
         // Grant READ_CALENDAR permission by default
         Shadows.shadowOf(context as android.app.Application).grantPermissions(Manifest.permission.READ_CALENDAR)
+    }
+
+    private fun clearAllAlarms() {
+        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        // Bounded to defend against a silent cancel failure (would otherwise infinite-loop).
+        repeat(32) {
+            val op = shadowAlarmManager.nextScheduledAlarm?.operation ?: return
+            am.cancel(op)
+        }
     }
 
     @After

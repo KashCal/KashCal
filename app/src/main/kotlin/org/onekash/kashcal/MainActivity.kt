@@ -334,8 +334,11 @@ class MainActivity : ComponentActivity() {
                             val eventTimestamp = if (uiState.viewMode.isTimeGrid && uiState.weekViewStartDate != 0L) {
                                 val dayIndex = uiState.weekViewPagerPosition
                                 val hourHeightPx = uiState.weekViewHourHeight * resources.displayMetrics.density
-                                val visibleHour = (uiState.weekViewScrollPosition / hourHeightPx).toInt() + gridStartHour
-                                val hour = visibleHour.coerceIn(gridStartHour, 23)
+                                val hour = WeekViewUtils.resolveVisibleStartHour(
+                                    savedPosition = uiState.weekViewScrollPosition,
+                                    hourHeightPx = hourHeightPx,
+                                    gridStartHour = gridStartHour
+                                )
 
                                 val eventCal = java.util.Calendar.getInstance().apply {
                                     timeInMillis = uiState.weekViewStartDate

@@ -174,8 +174,13 @@ fun WeekViewContent(
         }
     }
 
-    // Scroll state for time grid
-    val scrollState = rememberScrollState(initial = scrollPosition)
+    val density = LocalDensity.current.density
+    val initialScrollPx = WeekViewUtils.resolveInitialScrollPx(
+        savedPosition = scrollPosition,
+        hourHeightDp = hourHeight,
+        density = density
+    )
+    val scrollState = rememberScrollState(initial = initialScrollPx)
 
     // Group events by date (LocalDate key)
     val timedEventsByDate = remember(timedEvents) {

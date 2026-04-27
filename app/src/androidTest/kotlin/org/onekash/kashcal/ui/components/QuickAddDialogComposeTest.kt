@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.components
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -46,7 +47,7 @@ class QuickAddDialogComposeTest {
             MaterialTheme {
                 QuickAddDialogContent(
                     textFieldState = textFieldState,
-                    focusRequester = FocusRequester(),
+                    focusRequester = remember { FocusRequester() },
                     parseResult = parseResult,
                     isSaveEnabled = isSaveEnabled,
                     isSaving = isSaving,

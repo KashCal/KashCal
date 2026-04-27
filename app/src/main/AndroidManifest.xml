@@ -288,6 +288,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- Midnight widget rollover: triggered by explicit PendingIntent from AlarmManager
+             (setExactAndAllowWhileIdle), so no intent-filter needed. Uses AlarmManager
+             instead of WorkManager so day-rollover fires through Doze. -->
+        <receiver
+            android:name=".widget.MidnightWidgetUpdateReceiver"
+            android:exported="false" />
+
         <!-- Today's Agenda widget receiver -->
         <receiver
             android:name=".widget.AgendaWidgetReceiver"

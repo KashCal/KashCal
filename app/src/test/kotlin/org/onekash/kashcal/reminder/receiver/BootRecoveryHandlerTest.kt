@@ -8,12 +8,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
  * Unit tests for BootRecoveryHandler.
@@ -25,6 +27,7 @@ class BootRecoveryHandlerTest {
 
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
+    private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var handler: BootRecoveryHandler
 
     @Before
@@ -35,7 +38,12 @@ class BootRecoveryHandlerTest {
 
         reminderScheduler = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
-        handler = BootRecoveryHandler(reminderScheduler, deviceCalendarReminderScheduler)
+        widgetUpdateManager = mockk(relaxed = true)
+        handler = BootRecoveryHandler(
+            reminderScheduler,
+            deviceCalendarReminderScheduler,
+            widgetUpdateManager
+        )
     }
 
     @After
@@ -80,5 +88,12 @@ class BootRecoveryHandlerTest {
 
         // cleanupOldReminders should NOT be called if rescheduleAllPending throws
         coVerify(exactly = 0) { reminderScheduler.cleanupOldReminders() }
+    }
+
+    @Test
+    fun `rescheduleReminders reschedules widget midnight alarm`() = runTest {
+        handler.rescheduleReminders()
+
+        verify(exactly = 1) { widgetUpdateManager.scheduleMidnightUpdate() }
     }
 }

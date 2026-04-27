@@ -535,11 +535,13 @@
     <plurals name="restore_confirm_message_with_subs">
         <item quantity="one">%1$d odběr a vaše předvolby budou importovány.</item>
         <item quantity="few">%1$d odběry a vaše předvolby budou importovány.</item>
+        <item quantity="many">%1$d odběrů a vaše předvolby budou importovány.</item>
         <item quantity="other">%1$d odběrů a vaše předvolby budou importovány.</item>
     </plurals>
     <plurals name="restore_success_message_with_subs">
         <item quantity="one">Importován %1$d odběr a vaše předvolby.</item>
         <item quantity="few">Importovány %1$d odběry a vaše předvolby.</item>
+        <item quantity="many">Importováno %1$d odběrů a vaše předvolby.</item>
         <item quantity="other">Importováno %1$d odběrů a vaše předvolby.</item>
     </plurals>
     <plurals name="account_detail_failure">

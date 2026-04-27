@@ -3,6 +3,7 @@ package org.onekash.kashcal.reminder.receiver
 import android.util.Log
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
 /**
@@ -13,18 +14,20 @@ import javax.inject.Inject
  */
 class BootRecoveryHandler @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
-    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
+    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
+    private val widgetUpdateManager: WidgetUpdateManager
 ) {
     companion object {
         private const val TAG = "BootRecoveryHandler"
     }
 
     /**
-     * Reschedule all pending reminders and clean up old ones.
+     * Reschedule all pending reminders and the widget midnight alarm, and clean up old reminders.
      *
      * Called after device boot or app update when Android clears all AlarmManager alarms.
      * Re-registers alarms for ScheduledReminder rows that already exist in the DB.
-     * Also reschedules device calendar reminders (single-alarm model).
+     * Also reschedules device calendar reminders (single-alarm model) and the
+     * widget day-rollover alarm (also cleared by boot/update).
      */
     suspend fun rescheduleReminders() {
         // Room reminders: reschedule from database
@@ -39,5 +42,9 @@ class BootRecoveryHandler @Inject constructor(
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reschedule device calendar reminders", e)
         }
+
+        // Widget midnight alarm: AlarmManager clears all alarms on reboot / package replace
+        widgetUpdateManager.scheduleMidnightUpdate()
+        Log.d(TAG, "Rescheduled widget midnight alarm")
     }
 }

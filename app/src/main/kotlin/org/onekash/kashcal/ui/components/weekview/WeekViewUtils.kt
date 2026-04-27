@@ -31,6 +31,13 @@ object WeekViewUtils {
     const val MINUTES_PER_HOUR = 60
     const val SNAP_INTERVAL_MINUTES = 15
 
+    /**
+     * Hour the week/3-day grid scrolls to on first composition when no in-session
+     * scroll position has been saved. Lands the user near typical wake/work hours
+     * instead of midnight. See [resolveInitialScrollPx] and issue #188.
+     */
+    const val DEFAULT_SCROLL_START_HOUR = 6
+
     // Visual constants
     val HOUR_HEIGHT = 60.dp
     val MIN_EVENT_HEIGHT = 20.dp
@@ -339,6 +346,68 @@ object WeekViewUtils {
     fun formatThreeDayHeader(pagerPosition: Int): String {
         val centerDate = pageToDate(pagerPosition + 1)
         return formatMonthYear(centerDate)
+    }
+
+    // ==================== Scroll Defaults ====================
+
+    /**
+     * Resolve the initial scroll position (in pixels) for the week/3-day time grid.
+     *
+     * First-composition-only default: Compose's [androidx.compose.foundation.rememberScrollState]
+     * uses `rememberSaveable` internally with no keys, so `initial` is read once per
+     * composition lifetime. This function provides a useful starting pixel on cold launch
+     * without overriding any in-session scroll the user has already made.
+     *
+     * @param savedPosition Cached pixel offset from the ViewModel. Values > 0 indicate the
+     *   user has scrolled this session and we honor their position verbatim. Non-positive
+     *   values (0 or unexpected negatives) are treated as "not yet scrolled" and fall into
+     *   the default-hour branch. The gate is `> 0` rather than `>= 0` because a positive
+     *   value is the only unambiguous signal of a user-initiated scroll: after the debounced
+     *   onScrollPositionChange settles, any real scroll has already moved past pixel 0.
+     * @param hourHeightDp Current hour-row height in dp (pinch-zoomable at runtime, clamped
+     *   to [MIN_HOUR_HEIGHT_DP]..[MAX_HOUR_HEIGHT_DP] by the caller).
+     * @param density Display density factor from `LocalDensity.current.density`.
+     * @param defaultHour Target hour (0..23) to scroll to when no saved position exists.
+     */
+    fun resolveInitialScrollPx(
+        savedPosition: Int,
+        hourHeightDp: Float,
+        density: Float,
+        defaultHour: Int = DEFAULT_SCROLL_START_HOUR
+    ): Int {
+        return if (savedPosition > 0) {
+            savedPosition
+        } else {
+            (defaultHour * hourHeightDp * density).toInt()
+        }
+    }
+
+    /**
+     * Resolve the hour currently at the top of the visible grid, for callers that
+     * need to seed a new event's start time (e.g. the "+" FAB).
+     *
+     * Sibling of [resolveInitialScrollPx]: uses the same `savedPosition > 0` sentinel
+     * so that on cold launch — before the user has scrolled and before the debounced
+     * onScrollPositionChange has written back — the FAB picks the same default hour
+     * that the grid is visually landing on.
+     *
+     * @param savedPosition Cached pixel offset from the ViewModel. Values > 0 mean
+     *   the user has scrolled; non-positive values fall into the default-hour branch.
+     * @param hourHeightPx Current hour-row height in pixels (dp * density).
+     * @param gridStartHour First hour rendered by the grid (typically [START_HOUR] 0).
+     * @param defaultHour Hour to use when no saved position exists.
+     */
+    fun resolveVisibleStartHour(
+        savedPosition: Int,
+        hourHeightPx: Float,
+        gridStartHour: Int = START_HOUR,
+        defaultHour: Int = DEFAULT_SCROLL_START_HOUR
+    ): Int {
+        return if (savedPosition > 0) {
+            ((savedPosition / hourHeightPx).toInt() + gridStartHour).coerceIn(gridStartHour, 23)
+        } else {
+            defaultHour
+        }
     }
 
     // ==================== Time Snapping ====================

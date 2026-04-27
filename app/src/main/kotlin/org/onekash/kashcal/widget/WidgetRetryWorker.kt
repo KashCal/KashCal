@@ -15,7 +15,7 @@ private const val MAX_RETRY_ATTEMPTS = 3
  * WorkManager worker for retrying failed widget updates.
  *
  * Uses simple constructor (no @HiltWorker) since no DI needed.
- * Follows pattern of existing WidgetUpdateWorker, MidnightWidgetUpdateWorker.
+ * Follows pattern of existing WidgetUpdateWorker.
  *
  * This worker is only enqueued when the immediate update fails with a
  * transient error (IOException, TimeoutException, RemoteException).

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -112,7 +113,7 @@ fun RestoreSuccessDialog(
 @Composable
 private fun restoreMessage(
     subscriptions: Int,
-    @StringRes withSubsPlural: Int,
+    @PluralsRes withSubsPlural: Int,
     @StringRes prefsOnly: Int,
 ): String = if (subscriptions == 0) {
     stringResource(prefsOnly)
