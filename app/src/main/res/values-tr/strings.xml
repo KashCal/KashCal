@@ -11,9 +11,14 @@
     <string name="month_widget_description">Etkinlik noktaları ile tam aylık takvim ızgarasını gösterir</string>
     <string name="date_widget_name">Tarih</string>
     <string name="date_widget_description">Bugünün tarihini uygulama simgesi gibi gösterir</string>
+    <string name="upcoming_widget_name">Yaklaşan</string>
+    <string name="upcoming_widget_description">Sonraki 10 günün etkinliklerini gösterir, boş günleri atlayarak</string>
+    <string name="widget_loading_upcoming">Yaklaşan etkinlikler yükleniyor…</string>
+    <string name="widget_error_load_events">Etkinlikler yüklenemedi, açmak için dokunun</string>
     <string name="widget_no_events_today">Bugün etkinlik yok</string>
     <string name="widget_add_event">+ Etkinlik ekle</string>
     <string name="widget_no_events">Etkinlik yok</string>
+    <string name="widget_no_upcoming_events">Yaklaşan etkinlik yok</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Yeni Etkinlik</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Etkinlikleri ICS dosyasına kaydet</string>
     <string name="settings_birthday_reminder">Doğum Günü Hatırlatıcısı</string>
     <string name="settings_use_device_timezone">Cihaz saat dilimini kullan</string>
-    <string name="settings_section_my_calendars">Takvimlerim</string>
-    <string name="settings_section_display">Görünüm</string>
+    <string name="settings_section_calendars">Takvimler</string>
+    <string name="settings_section_appearance">Görünüm</string>
+    <string name="settings_section_creating_events">Etkinlik oluşturma</string>
     <string name="settings_section_notifications">Bildirimler</string>
     <string name="settings_section_sync">Eşitleme</string>
     <string name="settings_section_data">Yedekle ve Geri Yükle</string>
@@ -572,6 +578,11 @@
         <item quantity="one">%1$d etkinlik</item>
         <item quantity="other">%1$d etkinlik</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Takvimi aç</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d gün daha</item>
+        <item quantity="other">%1$d gün daha</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d doğum günü</item>
         <item quantity="other">%1$d doğum günü</item>
@@ -990,7 +1001,7 @@
     <string name="label_device_timezone">Cihaz saat dilimi</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Domates</string>    <string name="color_darkorange">Koyu turuncu</string>
+    <string name="color_saddlebrown">Eyer kahverengisi</string>    <string name="color_tomato">Domates</string>    <string name="color_darkorange">Koyu turuncu</string>
     <string name="color_gold">Altın</string>
     <string name="color_yellowgreen">Sarı yeşil</string>
     <string name="color_limegreen">Limon yeşili</string>    <string name="color_lightseagreen">Açık deniz yeşili</string>

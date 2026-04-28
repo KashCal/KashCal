@@ -12,9 +12,14 @@
     <string name="month_widget_description">Viser et månedsoversigt med begivenhedsprikker</string>
     <string name="date_widget_name">Dato</string>
     <string name="date_widget_description">Viser dagens dato som et app-ikon</string>
+    <string name="upcoming_widget_name">Kommende</string>
+    <string name="upcoming_widget_description">Viser de næste 10 dages begivenheder og springer tomme dage over</string>
+    <string name="widget_loading_upcoming">Indlæser kommende begivenheder…</string>
+    <string name="widget_error_load_events">Kunne ikke indlæse begivenheder, tryk for at åbne</string>
     <string name="widget_no_events_today">Ingen begivenheder i dag</string>
     <string name="widget_add_event">+ Tilføj begivenhed</string>
     <string name="widget_no_events">Ingen begivenheder</string>
+    <string name="widget_no_upcoming_events">Ingen kommende begivenheder</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Ny begivenhed</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Gem begivenheder i en ICS-fil</string>
     <string name="settings_birthday_reminder">Fødselsdagspåmindelse</string>
     <string name="settings_use_device_timezone">Brug enhedens tidszone</string>
-    <string name="settings_section_my_calendars">Mine kalendere</string>
-    <string name="settings_section_display">Visning</string>
+    <string name="settings_section_calendars">Kalendere</string>
+    <string name="settings_section_appearance">Udseende</string>
+    <string name="settings_section_creating_events">Oprettelse af begivenheder</string>
     <string name="settings_section_notifications">Notifikationer</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Sikkerhedskopi &amp; gendannelse</string>
@@ -576,6 +582,11 @@
         <item quantity="one">%1$d begivenhed</item>
         <item quantity="other">%1$d begivenheder</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Åbn kalender</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d dag mere</item>
+        <item quantity="other">%1$d dage mere</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d fødselsdag</item>
         <item quantity="other">%1$d fødselsdage</item>
@@ -977,6 +988,7 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Brugerdefineret</string>
     <string name="cd_event_color">Begivenhedsfarve</string>
+    <string name="color_saddlebrown">Saddelbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mørkeorange</string>
     <string name="color_gold">Guld</string>
     <string name="color_yellowgreen">Gulgrøn</string>

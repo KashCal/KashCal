@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.RemoteException
 import android.util.Log
-import androidx.glance.appwidget.updateAll
+import kotlinx.coroutines.CancellationException
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -55,10 +55,9 @@ class WidgetUpdateManager @Inject constructor(
     suspend fun updateAllWidgets(reason: String = "unknown") {
         Log.d(TAG, "Updating all widgets (reason: $reason)")
         try {
-            AgendaWidget().updateAll(context)
-            WeekWidget().updateAll(context)
-            DateWidget().updateAll(context)
-            MonthWidget().updateAll(context)
+            refreshAllWidgets(context)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Immediate widget update failed", e)
             if (isTransientError(e)) {
@@ -187,15 +186,14 @@ class WidgetUpdateWorker(
 
     override suspend fun doWork(): Result {
         Log.d(TAG, "WidgetUpdateWorker running")
-        try {
-            AgendaWidget().updateAll(applicationContext)
-            WeekWidget().updateAll(applicationContext)
-            DateWidget().updateAll(applicationContext)
-            MonthWidget().updateAll(applicationContext)
-            return Result.success()
+        return try {
+            refreshAllWidgets(applicationContext)
+            Result.success()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e(TAG, "Widget update failed", e)
-            return Result.retry()
+            Result.retry()
         }
     }
 }

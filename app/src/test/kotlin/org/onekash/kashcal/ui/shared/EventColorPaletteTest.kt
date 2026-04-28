@@ -12,12 +12,12 @@ class EventColorPaletteTest {
     // ========== Grid palette (11 hue-distinct entries) ==========
 
     @Test
-    fun `entries list has 11 hue-distinct colors in documented order`() {
-        assertEquals(11, EventColorPalette.entries.size)
+    fun `entries list has 12 hue-distinct colors in documented order`() {
+        assertEquals(12, EventColorPalette.entries.size)
         val expectedOrder = listOf(
-            "tomato", "darkorange", "gold", "yellowgreen", "limegreen",
-            "lightseagreen", "dodgerblue", "royalblue", "mediumorchid",
-            "hotpink", "dimgray"
+            "saddlebrown", "tomato", "darkorange", "gold", "yellowgreen",
+            "limegreen", "lightseagreen", "dodgerblue", "royalblue",
+            "mediumorchid", "hotpink", "dimgray"
         )
         assertEquals(expectedOrder, EventColorPalette.entries.map { it.name })
     }
@@ -211,6 +211,7 @@ class EventColorPaletteTest {
 
     @Test
     fun `stringResIdForColor returns color_name for grid palette hex`() {
+        assertEquals(R.string.color_saddlebrown, EventColorPalette.stringResIdForColor(0xFF8B4513.toInt()))
         assertEquals(R.string.color_tomato, EventColorPalette.stringResIdForColor(0xFFFF6347.toInt()))
         assertEquals(R.string.color_mediumorchid, EventColorPalette.stringResIdForColor(0xFFBA55D3.toInt()))
         assertEquals(R.string.color_dimgray, EventColorPalette.stringResIdForColor(0xFF696969.toInt()))

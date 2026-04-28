@@ -12,9 +12,14 @@
     <string name="month_widget_description">แสดงตารางปฏิทินเดือนพร้อมจุดแสดงกิจกรรม</string>
     <string name="date_widget_name">วันที่</string>
     <string name="date_widget_description">แสดงวันที่ของวันนี้เหมือนไอคอนแอป</string>
+    <string name="upcoming_widget_name">กิจกรรมถัดไป</string>
+    <string name="upcoming_widget_description">แสดงกิจกรรมใน 10 วันข้างหน้า โดยข้ามวันที่ไม่มีกิจกรรม</string>
+    <string name="widget_loading_upcoming">กำลังโหลดกิจกรรมถัดไป…</string>
+    <string name="widget_error_load_events">โหลดกิจกรรมไม่สำเร็จ แตะเพื่อเปิด</string>
     <string name="widget_no_events_today">วันนี้ไม่มีกิจกรรม</string>
     <string name="widget_add_event">+ เพิ่มกิจกรรม</string>
     <string name="widget_no_events">ไม่มีกิจกรรม</string>
+    <string name="widget_no_upcoming_events">ไม่มีกิจกรรมที่จะมาถึง</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">กิจกรรมใหม่</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">บันทึกกิจกรรมเป็นไฟล์ ICS</string>
     <string name="settings_birthday_reminder">แจ้งเตือนวันเกิด</string>
     <string name="settings_use_device_timezone">ใช้เขตเวลาของอุปกรณ์</string>
-    <string name="settings_section_my_calendars">ปฏิทินของฉัน</string>
-    <string name="settings_section_display">การแสดงผล</string>
+    <string name="settings_section_calendars">ปฏิทิน</string>
+    <string name="settings_section_appearance">รูปลักษณ์</string>
+    <string name="settings_section_creating_events">การสร้างกิจกรรม</string>
     <string name="settings_section_notifications">การแจ้งเตือน</string>
     <string name="settings_section_sync">ซิงค์</string>
     <string name="settings_section_data">สำรองและกู้คืน</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d กิจกรรม</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">เปิดปฏิทิน</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">อีก %1$d วัน</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">%1$d วันเกิด</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">สีกิจกรรม</string>
     <string name="cd_checkmark">เลือกแล้ว</string>
     <string name="label_device_timezone">เขตเวลาของอุปกรณ์</string>
-    <string name="color_tomato">มะเขือเทศ</string>    <string name="color_darkorange">ส้มเข้ม</string>
+    <string name="color_saddlebrown">น้ำตาลอานม้า</string>    <string name="color_tomato">มะเขือเทศ</string>    <string name="color_darkorange">ส้มเข้ม</string>
     <string name="color_gold">ทอง</string>
     <string name="color_yellowgreen">เหลืองอมเขียว</string>
     <string name="color_limegreen">เขียวมะนาว</string>    <string name="color_lightseagreen">เขียวทะเลอ่อน</string>

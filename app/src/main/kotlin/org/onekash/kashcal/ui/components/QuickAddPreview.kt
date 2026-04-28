@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.components
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,25 +12,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.quickadd.QuickAddResult
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import java.util.Locale
 
-private val timeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
 private val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
 
 @Composable
 fun QuickAddPreview(
     result: QuickAddResult,
+    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val is24HourDevice = remember(context) { DateFormat.is24HourFormat(context) }
+    val timeFormatter = remember(timeFormat, is24HourDevice) {
+        val pattern = DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
+        DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
+    }
     val hasContent = result.title.isNotBlank() || result.startTime != null || result.location != null
 
     if (!hasContent) return

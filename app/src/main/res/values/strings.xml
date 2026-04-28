@@ -13,10 +13,15 @@
     <string name="month_widget_description">Shows a full month calendar grid with event indicator dots</string>
     <string name="date_widget_name">Date</string>
     <string name="date_widget_description">Shows today\'s date like an app icon</string>
+    <string name="upcoming_widget_name">Upcoming</string>
+    <string name="upcoming_widget_description">Shows the next 10 days of events, skipping empty days</string>
+    <string name="widget_loading_upcoming">Loading upcoming events…</string>
+    <string name="widget_error_load_events">Couldn\'t load events, tap to open</string>
     <!-- Widget content -->
     <string name="widget_no_events_today">No events today</string>
     <string name="widget_add_event">+ Add event</string>
     <string name="widget_no_events">No events</string>
+    <string name="widget_no_upcoming_events">No upcoming events</string>
     <!-- Widget content descriptions (accessibility) -->
     <string name="cd_widget_calendar">Calendar</string>
     <string name="cd_widget_add_event">Add event</string>
@@ -168,8 +173,9 @@
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
     <!-- Section headers in Settings screen -->
-    <string name="settings_section_my_calendars">My Calendars</string>
-    <string name="settings_section_display">Display</string>
+    <string name="settings_section_calendars">Calendars</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_creating_events">Creating events</string>
     <string name="settings_section_notifications">Notifications</string>
     <!-- "Sync" = synchronize calendar data. Use your platform's standard sync term. -->
     <string name="settings_section_sync">Sync</string>
@@ -790,6 +796,11 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
     </plurals>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d more day</item>
+        <item quantity="other">%1$d more days</item>
+    </plurals>
+    <string name="upcoming_widget_open_calendar">Open calendar</string>
 
     <!-- Birthday/Anniversary Plurals -->
     <plurals name="birthday_count">
@@ -1225,6 +1236,7 @@
     <string name="cd_checkmark">Selected</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Saddle Brown</string>
     <string name="color_tomato">Tomato</string>
     <string name="color_darkorange">Dark Orange</string>
     <string name="color_gold">Gold</string>

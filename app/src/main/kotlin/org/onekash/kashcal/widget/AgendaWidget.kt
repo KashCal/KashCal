@@ -1,18 +1,21 @@
 package org.onekash.kashcal.widget
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
+import androidx.glance.currentState
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Today's Agenda widget showing events for the current day.
@@ -29,19 +32,18 @@ import org.onekash.kashcal.util.DateTimeUtils
  * - On sync completion
  * - At midnight (new day)
  * - Periodically (every 30 minutes)
+ *
+ * State management:
+ * - [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
+ * - Data fetch lives inside [provideContent] via [fetchAgendaData] so Glance 1.1's
+ *   session-scoped recomposition actually re-runs the fetch (see MonthWidget KDoc)
  */
 class AgendaWidget : GlanceAppWidget() {
 
-    /**
-     * Use exact size mode for consistent rendering.
-     */
     override val sizeMode = SizeMode.Exact
 
-    /**
-     * Provide widget content.
-     *
-     * This runs in a coroutine context, so database queries are safe.
-     */
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface AgendaWidgetEntryPoint {
@@ -49,46 +51,35 @@ class AgendaWidget : GlanceAppWidget() {
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Get data via Hilt EntryPoint (Glance widgets can't use standard @Inject)
         val entryPoint = EntryPointAccessors.fromApplication(context, AgendaWidgetEntryPoint::class.java)
         val repository = entryPoint.widgetDataRepository()
-        val events = repository.getTodayEvents()
-
-        // Get display preferences
         val dataStore = KashCalDataStore(context)
-        val showEventEmojis = dataStore.showEventEmojis.first()
-        val maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first()
-
-        // Get time format preference
-        val timeFormatPref = dataStore.getTimeFormat()
-        val is24HourDevice = android.text.format.DateFormat.is24HourFormat(context)
-        val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24HourDevice)
-
-        // Format current date
-        val currentDate = formatCurrentDate()
 
         provideContent {
+            val stamp = currentState<Preferences>()[WIDGET_REFRESH_STAMP] ?: 0L
+            // Empty-events seed: "No events today" may flash briefly on cold start
+            // before fetchAgendaData resolves — accepted trade-off, no dedicated loading UI.
+            val data by produceState(
+                initialValue = AgendaData(
+                    events = emptyList(),
+                    showEventEmojis = true,
+                    maxEventsPerDay = 5,
+                    timePattern = "h:mm a",
+                    currentDate = ""
+                ),
+                key1 = stamp
+            ) {
+                value = fetchAgendaData(repository, dataStore, context)
+            }
             GlanceTheme {
                 AgendaWidgetContent(
-                    events = events,
-                    currentDate = currentDate,
-                    showEventEmojis = showEventEmojis,
-                    timePattern = timePattern,
-                    maxEventsPerDay = maxEventsPerDay
+                    events = data.events,
+                    currentDate = data.currentDate,
+                    showEventEmojis = data.showEventEmojis,
+                    timePattern = data.timePattern,
+                    maxEventsPerDay = data.maxEventsPerDay
                 )
             }
         }
-    }
-
-    /**
-     * Format the current date for display in the widget header.
-     * Example: "Thursday, Jan 2"
-     */
-    private fun formatCurrentDate(): String {
-        return DateTimeUtils.formatEventDate(
-            timestampMs = System.currentTimeMillis(),
-            isAllDay = false,
-            pattern = DateTimeUtils.localizedPattern("EEEEMMMd")
-        )
     }
 }

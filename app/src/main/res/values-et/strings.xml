@@ -12,9 +12,14 @@
     <string name="month_widget_description">Kuvab täiskuu kalendrivõrku sündmuste täppidega</string>
     <string name="date_widget_name">Kuupäev</string>
     <string name="date_widget_description">Kuvab tänast kuupäeva rakenduseikoonina</string>
+    <string name="upcoming_widget_name">Eelseisvad</string>
+    <string name="upcoming_widget_description">Kuvab järgmise 10 päeva sündmusi, jättes tühjad päevad vahele</string>
+    <string name="widget_loading_upcoming">Sündmuste laadimine…</string>
+    <string name="widget_error_load_events">Sündmuste laadimine ebaõnnestus, puuduta avamiseks</string>
     <string name="widget_no_events_today">Täna sündmusi pole</string>
     <string name="widget_add_event">+ Lisa sündmus</string>
     <string name="widget_no_events">Sündmusi pole</string>
+    <string name="widget_no_upcoming_events">Eelseisvaid sündmusi pole</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Uus sündmus</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Salvesta sündmused ICS-faili</string>
     <string name="settings_birthday_reminder">Sünnipäeva meeldetuletus</string>
     <string name="settings_use_device_timezone">Kasuta seadme ajavööndit</string>
-    <string name="settings_section_my_calendars">Minu kalendrid</string>
-    <string name="settings_section_display">Kuva</string>
+    <string name="settings_section_calendars">Kalendrid</string>
+    <string name="settings_section_appearance">Välimus</string>
+    <string name="settings_section_creating_events">Sündmuste loomine</string>
     <string name="settings_section_notifications">Teavitused</string>
     <string name="settings_section_sync">Sünkroonimine</string>
     <string name="settings_section_data">Varundus ja taastamine</string>
@@ -555,6 +561,11 @@
         <item quantity="one">%1$d sündmus</item>
         <item quantity="other">%1$d sündmust</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Ava kalender</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">veel %1$d päev</item>
+        <item quantity="other">veel %1$d päeva</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d sünnipäev</item>
         <item quantity="other">%1$d sünnipäeva</item>
@@ -804,6 +815,7 @@
     <string name="color_cyan">Tsüaan</string>
     <string name="color_blue">Sinine</string>
     <string name="color_purple">Lilla</string>
+    <string name="color_saddlebrown">Sadulapruun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Tumeoranž</string>
     <string name="color_gold">Kuldne</string>
     <string name="color_yellowgreen">Kollakasroheline</string>

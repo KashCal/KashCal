@@ -11,9 +11,14 @@
     <string name="month_widget_description">Ibonisa igridi yekhalenda yenyanga ephelele namachashazi akhombisa imicimbi</string>
     <string name="date_widget_name">Usuku</string>
     <string name="date_widget_description">Ibonisa usuku lwanamuhla njengesithonjana se-app</string>
+    <string name="upcoming_widget_name">Okuzayo</string>
+    <string name="upcoming_widget_description">Ibonisa imicimbi yezinsuku eziyi-10 ezilandelayo, iyeqa izinsuku ezingenalutho</string>
+    <string name="widget_loading_upcoming">Ilayisha imicimbi ezayo…</string>
+    <string name="widget_error_load_events">Ayikwazanga ukulayisha imicimbi, thepha ukuze uvule</string>
     <string name="widget_no_events_today">Ayikho imicimbi namuhla</string>
     <string name="widget_add_event">+ Engeza umcimbi</string>
     <string name="widget_no_events">Ayikho imicimbi</string>
+    <string name="widget_no_upcoming_events">Ayikho imicimbi ezayo</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Umcimbi Omusha</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Gcina imicimbi efayeleni le-ICS</string>
     <string name="settings_birthday_reminder">Isikhumbuzi Sosuku Lokuzalwa</string>
     <string name="settings_use_device_timezone">Sebenzisa indawo yesikhathi yedivayisi</string>
-    <string name="settings_section_my_calendars">Amakhalenda Ami</string>
-    <string name="settings_section_display">Ukubonisa</string>
+    <string name="settings_section_calendars">Amakhalenda</string>
+    <string name="settings_section_appearance">Ukubonakala</string>
+    <string name="settings_section_creating_events">Ukudala izehlakalo</string>
     <string name="settings_section_notifications">Izaziso</string>
     <string name="settings_section_sync">Vumelanisa</string>
     <string name="settings_section_data">Isipele &amp; Ukubuyisela</string>
@@ -571,6 +577,11 @@
         <item quantity="one">%1$d umcimbi</item>
         <item quantity="other">%1$d imicimbi</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Vula ikhalenda</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d usuku olungeziwe</item>
+        <item quantity="other">%1$d izinsuku ezingeziwe</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d usuku lokuzalwa</item>
         <item quantity="other">%1$d izinsuku zokuzalwa</item>
@@ -989,6 +1000,7 @@
     <string name="cd_checkmark">Kukhethiwe</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Insundu Yesihlalo</string>
     <string name="color_tomato">Utamatisi</string>    <string name="color_darkorange">Orenji Omnyama</string>
     <string name="color_gold">Igolide</string>
     <string name="color_yellowgreen">Phuzi Luhlaza</string>

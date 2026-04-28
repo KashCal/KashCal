@@ -11,9 +11,14 @@
     <string name="month_widget_description">ఈవెంట్ సూచిక బిందువులతో పూర్తి నెల క్యాలెండర్ గ్రిడ్ చూపిస్తుంది</string>
     <string name="date_widget_name">తేదీ</string>
     <string name="date_widget_description">నేటి తేదీని యాప్ ఐకాన్ లాగా చూపిస్తుంది</string>
+    <string name="upcoming_widget_name">రాబోయే</string>
+    <string name="upcoming_widget_description">ఖాళీ రోజులను దాటవేస్తూ, రాబోయే 10 రోజుల ఈవెంట్‌లను చూపిస్తుంది</string>
+    <string name="widget_loading_upcoming">రాబోయే ఈవెంట్‌లు లోడ్ అవుతున్నాయి…</string>
+    <string name="widget_error_load_events">ఈవెంట్‌లను లోడ్ చేయలేకపోయింది, తెరవడానికి నొక్కండి</string>
     <string name="widget_no_events_today">నేడు ఈవెంట్‌లు లేవు</string>
     <string name="widget_add_event">+ ఈవెంట్ జోడించు</string>
     <string name="widget_no_events">ఈవెంట్‌లు లేవు</string>
+    <string name="widget_no_upcoming_events">రాబోయే ఈవెంట్‌లు లేవు</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">కొత్త ఈవెంట్</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ఈవెంట్‌లను ICS ఫైల్‌లో సేవ్ చేయి</string>
     <string name="settings_birthday_reminder">పుట్టినరోజు రిమైండర్</string>
     <string name="settings_use_device_timezone">పరికర టైమ్‌జోన్ ఉపయోగించు</string>
-    <string name="settings_section_my_calendars">నా క్యాలెండర్లు</string>
-    <string name="settings_section_display">ప్రదర్శన</string>
+    <string name="settings_section_calendars">క్యాలెండర్లు</string>
+    <string name="settings_section_appearance">రూపం</string>
+    <string name="settings_section_creating_events">ఈవెంట్‌లను సృష్టించడం</string>
     <string name="settings_section_notifications">నోటిఫికేషన్‌లు</string>
     <string name="settings_section_sync">సింక్</string>
     <string name="settings_section_data">బ్యాకప్ &amp; రీస్టోర్</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d ఈవెంట్</item>
         <item quantity="other">%1$d ఈవెంట్‌లు</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">క్యాలెండర్ తెరవండి</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">మరో %1$d రోజు</item>
+        <item quantity="other">మరో %1$d రోజులు</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d పుట్టినరోజు</item>
         <item quantity="other">%1$d పుట్టినరోజులు</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">సియాన్</string>
     <string name="color_blue">నీలం</string>
     <string name="color_purple">ఊదా</string>
+    <string name="color_saddlebrown">సాడిల్ బ్రౌన్</string>
     <string name="color_tomato">టొమాటో</string>    <string name="color_darkorange">ముదురు నారింజ</string>
     <string name="color_gold">బంగారు</string>
     <string name="color_yellowgreen">పసుపు ఆకుపచ్చ</string>

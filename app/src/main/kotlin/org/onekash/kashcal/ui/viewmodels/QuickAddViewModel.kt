@@ -22,6 +22,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 
@@ -64,7 +65,7 @@ class QuickAddViewModel @Inject constructor(
 
     fun onInputChanged(text: String) {
         _inputText.value = text
-        val result = QuickAddParser.parse(text, referenceTime)
+        val result = QuickAddParser.parse(text, referenceTime, Locale.getDefault())
         _parseResult.value = result
         _isSaveEnabled.value = result.title.isNotBlank()
     }
@@ -86,20 +87,14 @@ class QuickAddViewModel @Inject constructor(
                 if (isAllDay) {
                     startTs = result.startDate
                         .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-                    endTs = DateTimeUtils.utcMidnightToEndOfDay(startTs)
+                    endTs = utcEndOfDayFor(result.endDate ?: result.startDate)
                     timezone = null
                 } else {
                     val startTime = result.startTime ?: LocalTime.of(referenceTime.hour, referenceTime.minute)
                     startTs = result.startDate
                         .atTime(startTime)
                         .atZone(zone).toInstant().toEpochMilli()
-
-                    endTs = if (result.endTime != null) {
-                        resolveEndTimeMillis(result.startDate, startTime, result.endTime, zone)
-                    } else {
-                        val durationMinutes = dataStore.defaultEventDuration.first()
-                        startTs + durationMinutes * 60 * 1000L
-                    }
+                    endTs = resolveTimedEndMillis(result, startTs, startTime, zone)
                     timezone = zone.id
                 }
 
@@ -162,13 +157,11 @@ class QuickAddViewModel @Inject constructor(
             null
         }
 
-        val endTimeMillis = if (result.endTime != null && result.startTime != null) {
-            resolveEndTimeMillis(result.startDate, result.startTime, result.endTime, zone)
-        } else if (startTimeMillis != null && result.startTime != null) {
-            val durationMinutes = dataStore.defaultEventDuration.first()
-            startTimeMillis + durationMinutes * 60 * 1000L
-        } else {
-            null
+        val endTimeMillis = when {
+            result.isAllDay -> utcEndOfDayFor(result.endDate ?: result.startDate)
+            startTimeMillis != null && result.startTime != null ->
+                resolveTimedEndMillis(result, startTimeMillis, result.startTime, zone)
+            else -> null
         }
 
         return CalendarIntentData(
@@ -189,6 +182,28 @@ class QuickAddViewModel @Inject constructor(
     ): Long {
         val endDate = if (endTime < startTime) startDate.plusDays(1) else startDate
         return endDate.atTime(endTime).atZone(zone).toInstant().toEpochMilli()
+    }
+
+    private fun utcEndOfDayFor(date: LocalDate): Long {
+        val utcMidnight = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        return DateTimeUtils.utcMidnightToEndOfDay(utcMidnight)
+    }
+
+    private suspend fun resolveTimedEndMillis(
+        result: QuickAddResult,
+        startMillis: Long,
+        startTime: LocalTime,
+        zone: ZoneId
+    ): Long = when {
+        result.endDate != null && result.endTime != null ->
+            result.endDate.atTime(result.endTime).atZone(zone).toInstant().toEpochMilli()
+        result.endDate != null ->
+            result.endDate.atTime(startTime).atZone(zone).toInstant().toEpochMilli() +
+                dataStore.defaultEventDuration.first() * 60 * 1000L
+        result.endTime != null ->
+            resolveEndTimeMillis(result.startDate, startTime, result.endTime, zone)
+        else ->
+            startMillis + dataStore.defaultEventDuration.first() * 60 * 1000L
     }
 }
 

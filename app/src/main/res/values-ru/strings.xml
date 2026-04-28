@@ -12,9 +12,14 @@
     <string name="month_widget_description">Показывает сетку месяца с точками событий</string>
     <string name="date_widget_name">Дата</string>
     <string name="date_widget_description">Показывает сегодняшнюю дату как значок</string>
+    <string name="upcoming_widget_name">Предстоящие</string>
+    <string name="upcoming_widget_description">Показывает события на ближайшие 10 дней, пропуская пустые</string>
+    <string name="widget_loading_upcoming">Загрузка событий…</string>
+    <string name="widget_error_load_events">Не удалось загрузить события, нажми, чтобы открыть</string>
     <string name="widget_no_events_today">Нет событий на сегодня</string>
     <string name="widget_add_event">+ Добавить событие</string>
     <string name="widget_no_events">Нет событий</string>
+    <string name="widget_no_upcoming_events">Нет предстоящих событий</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Новое событие</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Сохранить события в файл ICS</string>
     <string name="settings_birthday_reminder">Напоминание о дне рождения</string>
     <string name="settings_use_device_timezone">Часовой пояс устройства</string>
-    <string name="settings_section_my_calendars">Мои календари</string>
-    <string name="settings_section_display">Оформление</string>
+    <string name="settings_section_calendars">Календари</string>
+    <string name="settings_section_appearance">Оформление</string>
+    <string name="settings_section_creating_events">Создание событий</string>
     <string name="settings_section_notifications">Уведомления</string>
     <string name="settings_section_sync">Синхронизация</string>
     <string name="settings_section_data">Резервное копирование и восстановление</string>
@@ -572,6 +578,13 @@
         <item quantity="many">%1$d событий</item>
         <item quantity="other">%1$d событий</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Открыть календарь</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">ещё %1$d день</item>
+        <item quantity="few">ещё %1$d дня</item>
+        <item quantity="many">ещё %1$d дней</item>
+        <item quantity="other">ещё %1$d дней</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d день рождения</item>
         <item quantity="few">%1$d дня рождения</item>
@@ -877,6 +890,7 @@
     <string name="color_cyan">Голубой</string>
     <string name="color_blue">Синий</string>
     <string name="color_purple">Фиолетовый</string>
+    <string name="color_saddlebrown">Шоколадный</string>
     <string name="color_tomato">Томатный</string>    <string name="color_darkorange">Тёмно-оранжевый</string>
     <string name="color_gold">Золотой</string>
     <string name="color_yellowgreen">Жёлто-зелёный</string>

@@ -11,9 +11,14 @@
     <string name="month_widget_description">ଇଭେଣ୍ଟ ସୂଚକ ବିନ୍ଦୁ ସହ ସମ୍ପୂର୍ଣ୍ଣ ମାସ କ୍ୟାଲେଣ୍ଡର ଗ୍ରିଡ ଦେଖାଏ</string>
     <string name="date_widget_name">ତାରିଖ</string>
     <string name="date_widget_description">ଆଜିର ତାରିଖକୁ ଆପ ଆଇକନ ପରି ଦେଖାଏ</string>
+    <string name="upcoming_widget_name">ଆଗାମୀ</string>
+    <string name="upcoming_widget_description">ଖାଲି ଦିନଗୁଡ଼ିକୁ ଛାଡ଼ି, ଆଗାମୀ 10 ଦିନର ଇଭେଣ୍ଟଗୁଡ଼ିକ ଦେଖାଏ</string>
+    <string name="widget_loading_upcoming">ଆସୁଥିବା ଇଭେଣ୍ଟଗୁଡ଼ିକ ଲୋଡ୍ ହେଉଛି…</string>
+    <string name="widget_error_load_events">ଇଭେଣ୍ଟଗୁଡ଼ିକ ଲୋଡ୍ କରାଯାଇପାରିଲା ନାହିଁ, ଖୋଲିବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ</string>
     <string name="widget_no_events_today">ଆଜି କୌଣସି ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="widget_add_event">+ ଇଭେଣ୍ଟ ଯୋଡ଼ନ୍ତୁ</string>
     <string name="widget_no_events">ଇଭେଣ୍ଟ ନାହିଁ</string>
+    <string name="widget_no_upcoming_events">କୌଣସି ଆଗାମୀ ଇଭେଣ୍ଟ ନାହିଁ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ନୂଆ ଇଭେଣ୍ଟ</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ICS ଫାଇଲରେ ସଞ୍ଚୟ କରନ୍ତୁ</string>
     <string name="settings_birthday_reminder">ଜନ୍ମଦିନ ରିମାଇଣ୍ଡର</string>
     <string name="settings_use_device_timezone">ଡିଭାଇସ ଟାଇମଜୋନ ବ୍ୟବହାର କରନ୍ତୁ</string>
-    <string name="settings_section_my_calendars">ମୋ କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ</string>
-    <string name="settings_section_display">ଡିସପ୍ଲେ</string>
+    <string name="settings_section_calendars">କ୍ୟାଲେଣ୍ଡରଗୁଡ଼ିକ</string>
+    <string name="settings_section_appearance">ଚେହେରା</string>
+    <string name="settings_section_creating_events">ଇଭେଣ୍ଟ ସୃଷ୍ଟି</string>
     <string name="settings_section_notifications">ବିଜ୍ଞପ୍ତି</string>
     <string name="settings_section_sync">ସିଙ୍କ</string>
     <string name="settings_section_data">ବ୍ୟାକଅପ ଏବଂ ପୁନରୁଦ୍ଧାର</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d ଇଭେଣ୍ଟ</item>
         <item quantity="other">%1$d ଇଭେଣ୍ଟ</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">କ୍ୟାଲେଣ୍ଡର ଖୋଲନ୍ତୁ</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">ଆଉ %1$d ଦିନ</item>
+        <item quantity="other">ଆଉ %1$d ଦିନ</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ଜନ୍ମଦିନ</item>
         <item quantity="other">%1$d ଜନ୍ମଦିନ</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">ସିଆନ</string>
     <string name="color_blue">ନୀଳ</string>
     <string name="color_purple">ବାଇଗଣୀ</string>
+    <string name="color_saddlebrown">ସାଡଲ ବ୍ରାଉନ</string>
     <string name="color_tomato">ଟମାଟୋ</string>    <string name="color_darkorange">ଗାଢ଼ କମଳା</string>
     <string name="color_gold">ସୁନେଲି</string>
     <string name="color_yellowgreen">ହଳଦିଆ ସବୁଜ</string>

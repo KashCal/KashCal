@@ -10,7 +10,10 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.time.chrono.IsoChronology
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatterBuilder
+import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
 import java.util.Calendar
@@ -34,6 +37,28 @@ object DateTimeUtils {
 
     fun localizedPattern(skeleton: String): String =
         DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
+
+    /**
+     * Returns true if the given locale orders day before month in its short-form date pattern.
+     * Consults [DateTimeFormatterBuilder.getLocalizedDateTimePattern] (e.g., "dd/MM/yyyy" → DMY,
+     * "M/d/yyyy" → MDY, "y/MM/dd" → MDY).
+     *
+     * Returns false (MDY) when neither 'd' nor 'M' appears — unrecognized pattern falls back
+     * to the safer MDY interpretation rather than failing.
+     */
+    fun isDayFirstLocale(locale: Locale = Locale.getDefault()): Boolean {
+        val pattern = try {
+            DateTimeFormatterBuilder.getLocalizedDateTimePattern(
+                FormatStyle.SHORT, null, IsoChronology.INSTANCE, locale
+            )
+        } catch (_: IllegalArgumentException) {
+            return false
+        }
+        val dIdx = pattern.indexOf('d')
+        val mIdx = pattern.indexOf('M')
+        if (dIdx < 0 || mIdx < 0) return false
+        return dIdx < mIdx
+    }
 
     // ==================== Time Format Preference ====================
 
@@ -607,8 +632,19 @@ object DateTimeUtils {
      */
     fun formatSyncInterval(intervalMs: Long, resources: Resources): String {
         if (intervalMs == Long.MAX_VALUE) return resources.getString(R.string.sync_manual_only)
-        val hours = (intervalMs / (60 * 60 * 1000)).toInt()
-        return resources.getQuantityString(R.plurals.time_hours, hours, hours)
+        val minutes = (intervalMs / (60 * 1000)).toInt()
+        return when {
+            minutes < 60 -> resources.getQuantityString(R.plurals.time_minutes, minutes, minutes)
+            minutes % 60 == 0 -> {
+                val hours = minutes / 60
+                resources.getQuantityString(R.plurals.time_hours, hours, hours)
+            }
+            else -> {
+                val hours = minutes / 60
+                val mins = minutes % 60
+                resources.getString(R.string.duration_compact, hours, mins)
+            }
+        }
     }
 
     /**

@@ -11,9 +11,14 @@
     <string name="month_widget_description">Mostra uma grelha de calendário mensal com indicadores de eventos</string>
     <string name="date_widget_name">Data</string>
     <string name="date_widget_description">Mostra a data de hoje como um ícone de aplicação</string>
+    <string name="upcoming_widget_name">Próximos</string>
+    <string name="upcoming_widget_description">Mostra os eventos dos próximos 10 dias, ignorando dias vazios</string>
+    <string name="widget_loading_upcoming">A carregar próximos eventos…</string>
+    <string name="widget_error_load_events">Não foi possível carregar eventos, toque para abrir</string>
     <string name="widget_no_events_today">Sem eventos hoje</string>
     <string name="widget_add_event">+ Adicionar evento</string>
     <string name="widget_no_events">Sem eventos</string>
+    <string name="widget_no_upcoming_events">Sem próximos eventos</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Novo evento</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Guardar eventos num ficheiro ICS</string>
     <string name="settings_birthday_reminder">Lembrete de aniversário</string>
     <string name="settings_use_device_timezone">Usar fuso horário do dispositivo</string>
-    <string name="settings_section_my_calendars">Os meus calendários</string>
-    <string name="settings_section_display">Apresentação</string>
+    <string name="settings_section_calendars">Calendários</string>
+    <string name="settings_section_appearance">Aparência</string>
+    <string name="settings_section_creating_events">Criação de eventos</string>
     <string name="settings_section_notifications">Notificações</string>
     <string name="settings_section_sync">Sincronização</string>
     <string name="settings_section_data">Cópia de segurança e restauro</string>
@@ -561,6 +567,11 @@
         <item quantity="many">%1$d eventos</item>
         <item quantity="other">%1$d eventos</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Abrir calendário</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">mais %1$d dia</item>
+        <item quantity="other">mais %1$d dias</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d aniversário</item>
         <item quantity="many">%1$d aniversários</item>
@@ -1005,6 +1016,7 @@
     <string name="cd_checkmark">Selecionado</string>
 
     <!-- Event color palette (CSS3 color names) -->
+    <string name="color_saddlebrown">Castanho sela</string>
     <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranja escuro</string>
     <string name="color_gold">Dourado</string>
     <string name="color_yellowgreen">Verde-amarelado</string>

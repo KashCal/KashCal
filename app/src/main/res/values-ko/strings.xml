@@ -12,9 +12,14 @@
     <string name="month_widget_description">일정 표시 점이 있는 월간 캘린더 그리드를 표시해요</string>
     <string name="date_widget_name">날짜</string>
     <string name="date_widget_description">앱 아이콘처럼 오늘 날짜를 표시해요</string>
+    <string name="upcoming_widget_name">예정된 일정</string>
+    <string name="upcoming_widget_description">앞으로 10일의 일정을 표시하고, 일정이 없는 날은 건너뛰어요</string>
+    <string name="widget_loading_upcoming">다가오는 일정 불러오는 중…</string>
+    <string name="widget_error_load_events">일정을 불러오지 못했어요. 탭해서 열기</string>
     <string name="widget_no_events_today">오늘 일정이 없어요</string>
     <string name="widget_add_event">+ 일정 추가</string>
     <string name="widget_no_events">일정 없음</string>
+    <string name="widget_no_upcoming_events">예정된 일정 없음</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">새 일정</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">일정을 ICS 파일로 저장해요</string>
     <string name="settings_birthday_reminder">생일 알림</string>
     <string name="settings_use_device_timezone">기기 시간대 사용</string>
-    <string name="settings_section_my_calendars">내 캘린더</string>
-    <string name="settings_section_display">디스플레이</string>
+    <string name="settings_section_calendars">캘린더</string>
+    <string name="settings_section_appearance">표시</string>
+    <string name="settings_section_creating_events">이벤트 만들기</string>
     <string name="settings_section_notifications">알림</string>
     <string name="settings_section_sync">동기화</string>
     <string name="settings_section_data">백업 &amp; 복원</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">일정 %1$d개</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">캘린더 열기</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">%1$d일 더</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">생일 %1$d개</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">일정 색상</string>
     <string name="cd_checkmark">선택됨</string>
     <string name="label_device_timezone">기기 시간대</string>
-    <string name="color_tomato">토마토</string>    <string name="color_darkorange">다크 오렌지</string>
+    <string name="color_saddlebrown">새들 브라운</string>    <string name="color_tomato">토마토</string>    <string name="color_darkorange">다크 오렌지</string>
     <string name="color_gold">골드</string>
     <string name="color_yellowgreen">옐로 그린</string>
     <string name="color_limegreen">라임 그린</string>    <string name="color_lightseagreen">라이트 시 그린</string>

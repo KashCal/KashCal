@@ -11,9 +11,14 @@
     <string name="month_widget_description">A\' sealltainn griod mìosachain slàn le dotagan tachartasan</string>
     <string name="date_widget_name">Ceann-là</string>
     <string name="date_widget_description">A\' sealltainn ceann-là an-diugh mar ìomhaigheag aip</string>
+    <string name="upcoming_widget_name">Ri thighinn</string>
+    <string name="upcoming_widget_description">A\' sealltainn tachartasan nan ath 10 làithean, a\' leum thairis air làithean falamh</string>
+    <string name="widget_loading_upcoming">A\' luchdadh tachartasan ri thighinn…</string>
+    <string name="widget_error_load_events">Cha b\' urrainnear tachartasan a luchdadh, thoir gnogag airson fosgladh</string>
     <string name="widget_no_events_today">Gun tachartasan an-diugh</string>
     <string name="widget_add_event">+ Cuir tachartas ris</string>
     <string name="widget_no_events">Gun tachartasan</string>
+    <string name="widget_no_upcoming_events">Gun tachartasan ri thighinn</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Tachartas Ùr</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Sàbhail tachartasan gu faidhle ICS</string>
     <string name="settings_birthday_reminder">Cuimhneachan Co-là Breith</string>
     <string name="settings_use_device_timezone">Cleachd roinn-tìde an uidheim</string>
-    <string name="settings_section_my_calendars">Mo Mhìosachain</string>
-    <string name="settings_section_display">Taisbeanadh</string>
+    <string name="settings_section_calendars">Mìosachain</string>
+    <string name="settings_section_appearance">Coltas</string>
+    <string name="settings_section_creating_events">A\' cruthachadh thachartasan</string>
     <string name="settings_section_notifications">Brathan</string>
     <string name="settings_section_sync">Sioncronachadh</string>
     <string name="settings_section_data">Lethbhreac-glèidhidh is aiseag</string>
@@ -582,6 +588,13 @@
         <item quantity="few">%1$d tachartasan</item>
         <item quantity="other">%1$d tachartas</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Fosgail am mìosachan</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d latha eile</item>
+        <item quantity="two">%1$d latha eile</item>
+        <item quantity="few">%1$d làithean eile</item>
+        <item quantity="other">%1$d latha eile</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d cho-là breith</item>
         <item quantity="two">%1$d cho-là breith</item>
@@ -1044,6 +1057,7 @@
     <string name="label_device_timezone">Roinn-tìde an uidheim</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Donn dìollaid</string>
     <string name="color_tomato">Tomàto</string>    <string name="color_darkorange">Oròiste dorcha</string>
     <string name="color_gold">Òr</string>
     <string name="color_yellowgreen">Uaine bhuî</string>

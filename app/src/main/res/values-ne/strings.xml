@@ -11,9 +11,14 @@
     <string name="month_widget_description">कार्यक्रम सूचक बिन्दुहरूसहित पूर्ण महिना क्यालेन्डर ग्रिड देखाउँछ</string>
     <string name="date_widget_name">मिति</string>
     <string name="date_widget_description">आजको मिति एप आइकन जस्तो देखाउँछ</string>
+    <string name="upcoming_widget_name">आगामी</string>
+    <string name="upcoming_widget_description">आगामी १० दिनका कार्यक्रमहरू देखाउँछ, खाली दिनहरू छाड्छ</string>
+    <string name="widget_loading_upcoming">आगामी कार्यक्रमहरू लोड गर्दै…</string>
+    <string name="widget_error_load_events">कार्यक्रमहरू लोड गर्न सकिएन, खोल्न ट्याप गर्नुहोस्</string>
     <string name="widget_no_events_today">आज कुनै कार्यक्रम छैन</string>
     <string name="widget_add_event">+ कार्यक्रम थप्नुहोस्</string>
     <string name="widget_no_events">कुनै कार्यक्रम छैन</string>
+    <string name="widget_no_upcoming_events">कुनै आगामी कार्यक्रम छैन</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">नयाँ कार्यक्रम</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">कार्यक्रमहरू ICS फाइलमा सुरक्षित गर्नुहोस्</string>
     <string name="settings_birthday_reminder">जन्मदिन सम्झना</string>
     <string name="settings_use_device_timezone">उपकरणको समय क्षेत्र प्रयोग गर्नुहोस्</string>
-    <string name="settings_section_my_calendars">मेरा क्यालेन्डरहरू</string>
-    <string name="settings_section_display">प्रदर्शन</string>
+    <string name="settings_section_calendars">पात्राहरू</string>
+    <string name="settings_section_appearance">रूप</string>
+    <string name="settings_section_creating_events">घटनाहरू सिर्जना गर्ने</string>
     <string name="settings_section_notifications">सूचनाहरू</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">ब्याकअप &amp; रिस्टोर</string>
@@ -547,6 +553,11 @@
         <item quantity="one">%1$d कार्यक्रम</item>
         <item quantity="other">%1$d कार्यक्रम</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">क्यालेन्डर खोल्नुहोस्</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d थप दिन</item>
+        <item quantity="other">%1$d थप दिन</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d जन्मदिन</item>
         <item quantity="other">%1$d जन्मदिनहरू</item>
@@ -961,6 +972,7 @@
     <string name="cd_event_color">कार्यक्रम रंग</string>
     <string name="cd_checkmark">चयन गरिएको</string>
     <string name="label_device_timezone">उपकरणको समय क्षेत्र</string>
+    <string name="color_saddlebrown">काठी खैरो</string>
     <string name="color_tomato">गोलभेडा</string>    <string name="color_darkorange">गाढा सुन्तला</string>
     <string name="color_gold">सुन</string>
     <string name="color_yellowgreen">पहेँलो-हरियो</string>

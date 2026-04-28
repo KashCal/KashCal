@@ -43,8 +43,11 @@ object TimeRule : ParseRule {
                             val adjusted = resolveWithMeridiem(time.hour, time.minute, meridiem)
                             if (adjusted != null) {
                                 time = adjusted
-                                context.consume(nextIdx)
                             }
+                            // Consume the MERIDIEM either way — an adjacent am/pm after a time
+                            // belongs to the time, not the title, even when the conversion
+                            // couldn't apply (e.g. "15:00 pm" — already 24h).
+                            context.consume(nextIdx)
                         }
                     }
 

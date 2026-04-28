@@ -12,9 +12,14 @@
     <string name="month_widget_description">Visar ett månadsrutnät med händelseprickar</string>
     <string name="date_widget_name">Datum</string>
     <string name="date_widget_description">Visar dagens datum som en appikon</string>
+    <string name="upcoming_widget_name">Kommande</string>
+    <string name="upcoming_widget_description">Visar de kommande 10 dagarnas händelser och hoppar över tomma dagar</string>
+    <string name="widget_loading_upcoming">Läser in kommande händelser…</string>
+    <string name="widget_error_load_events">Kunde inte läsa in händelser, tryck för att öppna</string>
     <string name="widget_no_events_today">Inga händelser idag</string>
     <string name="widget_add_event">+ Lägg till händelse</string>
     <string name="widget_no_events">Inga händelser</string>
+    <string name="widget_no_upcoming_events">Inga kommande händelser</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Ny händelse</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Spara händelser i en ICS-fil</string>
     <string name="settings_birthday_reminder">Födelsedagspåminnelse</string>
     <string name="settings_use_device_timezone">Använd enhetens tidszon</string>
-    <string name="settings_section_my_calendars">Mina kalendrar</string>
-    <string name="settings_section_display">Visning</string>
+    <string name="settings_section_calendars">Kalendrar</string>
+    <string name="settings_section_appearance">Utseende</string>
+    <string name="settings_section_creating_events">Skapa händelser</string>
     <string name="settings_section_notifications">Aviseringar</string>
     <string name="settings_section_sync">Synkronisering</string>
     <string name="settings_section_data">Säkerhetskopiering &amp; återställning</string>
@@ -576,6 +582,11 @@
         <item quantity="one">%1$d händelse</item>
         <item quantity="other">%1$d händelser</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Öppna kalender</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d dag till</item>
+        <item quantity="other">%1$d dagar till</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d födelsedag</item>
         <item quantity="other">%1$d födelsedagar</item>
@@ -977,6 +988,7 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Anpassad</string>
     <string name="cd_event_color">Händelsefärg</string>
+    <string name="color_saddlebrown">Sadelbrun</string>
     <string name="color_tomato">Tomat</string>    <string name="color_darkorange">Mörkorange</string>
     <string name="color_gold">Guld</string>
     <string name="color_yellowgreen">Gulgrön</string>

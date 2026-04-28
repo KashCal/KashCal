@@ -11,9 +11,14 @@
     <string name="month_widget_description">Hilabeteko egutegi-sareta bat erakusten du gertaera-adierazleekin</string>
     <string name="date_widget_name">Data</string>
     <string name="date_widget_description">Gaurko data erakusten du aplikazio-ikono gisa</string>
+    <string name="upcoming_widget_name">Datozenak</string>
+    <string name="upcoming_widget_description">Hurrengo 10 egunetako gertaerak erakusten ditu, egun hutsak saltatuz</string>
+    <string name="widget_loading_upcoming">Datozen gertaerak kargatzen…</string>
+    <string name="widget_error_load_events">Ezin izan dira gertaerak kargatu, ukitu irekitzeko</string>
     <string name="widget_no_events_today">Gertaerarik ez gaur</string>
     <string name="widget_add_event">+ Gertaera gehitu</string>
     <string name="widget_no_events">Gertaerarik ez</string>
+    <string name="widget_no_upcoming_events">Datozen gertaerarik ez</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Gertaera berria</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Gorde ekitaldiak ICS fitxategi batean</string>
     <string name="settings_birthday_reminder">Urtebetetze-gogorarazlea</string>
     <string name="settings_use_device_timezone">Gailuaren ordu-zona erabili</string>
-    <string name="settings_section_my_calendars">Nire egutegiak</string>
-    <string name="settings_section_display">Bistaratzea</string>
+    <string name="settings_section_calendars">Egutegiak</string>
+    <string name="settings_section_appearance">Itxura</string>
+    <string name="settings_section_creating_events">Gertaerak sortzea</string>
     <string name="settings_section_notifications">Jakinarazpenak</string>
     <string name="settings_section_sync">Sinkronizazioa</string>
     <string name="settings_section_data">Babeskopia eta leheneratzea</string>
@@ -551,6 +557,11 @@
         <item quantity="one">gertaera %1$d</item>
         <item quantity="other">%1$d gertaera</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Ireki egutegia</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">egun %1$d gehiago</item>
+        <item quantity="other">%1$d egun gehiago</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">urtebetetze %1$d</item>
         <item quantity="other">%1$d urtebetetze</item>
@@ -953,6 +964,7 @@
     <string name="label_device_timezone">Gailuaren ordu-zona</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Larru-marroia</string>
     <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Laranja iluna</string>
     <string name="color_gold">Urre-kolorea</string>
     <string name="color_yellowgreen">Berde horixka</string>

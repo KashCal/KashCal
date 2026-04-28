@@ -1,7 +1,6 @@
 package org.onekash.kashcal.widget
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -40,10 +39,13 @@ import java.time.YearMonth
  * - Periodically (every 30 minutes)
  *
  * State management:
- * - Month offset stored in Glance PreferencesGlanceStateDefinition
+ * - Month offset + [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
  * - State read inside provideContent via currentState<Preferences>() for reactive updates
  * - Glance 1.1+ session management means update() recomposes provideContent without
  *   re-calling provideGlance(), so state MUST be read inside provideContent
+ * - [WIDGET_REFRESH_STAMP] is bumped by [WidgetUpdateManager] on event CRUD/sync so
+ *   [produceState] re-keys and re-fetches events. Without it, month-nav arrows triggered
+ *   refetches via the `monthGrid` key, but event CRUD would leave stale dots on the grid.
  */
 class MonthWidget : GlanceAppWidget() {
 
@@ -66,10 +68,11 @@ class MonthWidget : GlanceAppWidget() {
         val firstDayOfWeek = dataStore.getFirstDayOfWeek()
 
         provideContent {
-            // Read month offset reactively — currentState updates on recomposition
-            // triggered by ActionCallback → updateAppWidgetState → update()
+            // Read month offset + refresh stamp reactively — currentState updates on
+            // recomposition triggered by ActionCallback / updateAppWidgetState / update()
             val prefs = currentState<Preferences>()
             val monthOffset = prefs[MonthWidgetStateKeys.MONTH_OFFSET] ?: 0
+            val refreshStamp = prefs[WIDGET_REFRESH_STAMP] ?: 0L
 
             // Compute target month and grid (pure computation, no suspend needed)
             val targetMonth = remember(monthOffset) {
@@ -79,18 +82,16 @@ class MonthWidget : GlanceAppWidget() {
                 MonthGrid.compute(targetMonth.year, targetMonth.monthValue - 1, firstDayOfWeek)
             }
 
-            // Fetch events asynchronously — grid renders immediately, dots appear when ready
+            // Fetch events asynchronously — grid renders immediately, dots appear when ready.
+            // Re-fetches when either the grid changes (month-nav arrows, day-of-week pref) OR
+            // the refresh stamp changes (event CRUD, sync completion, midnight, periodic).
             val monthEvents by produceState(
                 initialValue = emptyMap<Int, List<WidgetDataRepository.WidgetEvent>>(),
-                key1 = monthGrid
+                key1 = monthGrid,
+                key2 = refreshStamp
             ) {
                 val (startDayCode, endDayCode) = monthGrid.toDayCodeRange()
-                value = try {
-                    repository.getEventsInRange(startDayCode, endDayCode)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to fetch month events, showing grid without dots", e)
-                    emptyMap()
-                }
+                value = fetchMonthEvents(repository, startDayCode, endDayCode)
             }
 
             GlanceTheme {
@@ -104,9 +105,5 @@ class MonthWidget : GlanceAppWidget() {
                 )
             }
         }
-    }
-
-    companion object {
-        private const val TAG = "MonthWidget"
     }
 }

@@ -11,9 +11,14 @@
     <string name="month_widget_description">Pokazuje pełną siatkę kalendarza z kropkami wydarzeń</string>
     <string name="date_widget_name">Data</string>
     <string name="date_widget_description">Pokazuje dzisiejszą datę jak ikona aplikacji</string>
+    <string name="upcoming_widget_name">Nadchodzące</string>
+    <string name="upcoming_widget_description">Pokazuje wydarzenia z najbliższych 10 dni, pomijając dni bez wydarzeń</string>
+    <string name="widget_loading_upcoming">Ładowanie nadchodzących wydarzeń…</string>
+    <string name="widget_error_load_events">Nie udało się załadować wydarzeń, dotknij, aby otworzyć</string>
     <string name="widget_no_events_today">Brak wydarzeń na dziś</string>
     <string name="widget_add_event">+ Dodaj wydarzenie</string>
     <string name="widget_no_events">Brak wydarzeń</string>
+    <string name="widget_no_upcoming_events">Brak nadchodzących wydarzeń</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nowe wydarzenie</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Zapisz wydarzenia do pliku ICS</string>
     <string name="settings_birthday_reminder">Przypomnienie o urodzinach</string>
     <string name="settings_use_device_timezone">Użyj strefy czasowej urządzenia</string>
-    <string name="settings_section_my_calendars">Moje kalendarze</string>
-    <string name="settings_section_display">Wyświetlanie</string>
+    <string name="settings_section_calendars">Kalendarze</string>
+    <string name="settings_section_appearance">Wygląd</string>
+    <string name="settings_section_creating_events">Tworzenie wydarzeń</string>
     <string name="settings_section_notifications">Powiadomienia</string>
     <string name="settings_section_sync">Synchronizacja</string>
     <string name="settings_section_data">Kopia zapasowa i przywracanie</string>
@@ -596,6 +602,13 @@
         <item quantity="many">%1$d wydarzeń</item>
         <item quantity="other">%1$d wydarzenia</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Otwórz kalendarz</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">jeszcze %1$d dzień</item>
+        <item quantity="few">jeszcze %1$d dni</item>
+        <item quantity="many">jeszcze %1$d dni</item>
+        <item quantity="other">jeszcze %1$d dnia</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d urodziny</item>
         <item quantity="few">%1$d urodziny</item>
@@ -941,6 +954,7 @@
     <string name="color_blue">Niebieski</string>
     <string name="color_purple">Fioletowy</string>
     <string name="cd_checkmark">Wybrane</string>
+    <string name="color_saddlebrown">Siodłowy brąz</string>
     <string name="color_tomato">Pomidorowy</string>    <string name="color_darkorange">Ciemnopomarańczowy</string>
     <string name="color_gold">Złoty</string>
     <string name="color_yellowgreen">Żółtozielony</string>

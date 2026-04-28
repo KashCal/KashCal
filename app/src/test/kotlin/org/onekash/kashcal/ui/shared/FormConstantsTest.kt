@@ -105,6 +105,49 @@ class FormConstantsTest {
         assertEquals(SYNC_INTERVALS_MS, SYNC_INTERVALS_MS.sorted())
     }
 
+    @Test
+    fun `SYNC_INTERVALS_MS should include 15 minute option`() {
+        assertTrue("Should include 15 minutes", SYNC_INTERVALS_MS.contains(15 * 60 * 1000L))
+    }
+
+    @Test
+    fun `SYNC_INTERVALS_MS should include 30 minute option`() {
+        assertTrue("Should include 30 minutes", SYNC_INTERVALS_MS.contains(30 * 60 * 1000L))
+    }
+
+    @Test
+    fun `getSyncOptions formats 15-minute interval as minutes not zero hours`() {
+        val options = getSyncOptions(resources)
+        val fifteenMin = options.firstOrNull { it.intervalMs == 15 * 60 * 1000L }
+        assertTrue("15-minute option should exist", fifteenMin != null)
+        assertEquals("15 minutes", fifteenMin?.label)
+    }
+
+    @Test
+    fun `getSyncOptions formats 30-minute interval as minutes not zero hours`() {
+        val options = getSyncOptions(resources)
+        val thirtyMin = options.firstOrNull { it.intervalMs == 30 * 60 * 1000L }
+        assertTrue("30-minute option should exist", thirtyMin != null)
+        assertEquals("30 minutes", thirtyMin?.label)
+    }
+
+    @Test
+    fun `getSyncOptions formats 1-hour interval as hour label`() {
+        val options = getSyncOptions(resources)
+        val oneHour = options.firstOrNull { it.intervalMs == 1 * 60 * 60 * 1000L }
+        assertTrue("1-hour option should exist", oneHour != null)
+        assertEquals("1 hour", oneHour?.label)
+    }
+
+    @Test
+    fun `getSyncOptions includes manual-only label`() {
+        val options = getSyncOptions(resources)
+        val manual = options.firstOrNull { it.intervalMs == Long.MAX_VALUE }
+        assertTrue("Manual option should exist", manual != null)
+        // Label comes from R.string.sync_manual_only — just verify it's non-empty
+        assertTrue("Manual label should be non-empty", !manual?.label.isNullOrEmpty())
+    }
+
     // ==================== Email Masking Tests ====================
 
     @Test

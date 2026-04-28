@@ -12,9 +12,14 @@
     <string name="month_widget_description">ပွဲညွှန်ပြအမှတ်အသားများပါသော လပြည့် ပြက္ခဒိန်ဇယားကို ပြသသည်</string>
     <string name="date_widget_name">ရက်စွဲ</string>
     <string name="date_widget_description">ယနေ့ရက်စွဲကို အက်ပ်အိုင်ကွန်ကဲ့သို့ ပြသသည်</string>
+    <string name="upcoming_widget_name">လာမည့်</string>
+    <string name="upcoming_widget_description">လာမည့် ၁၀ ရက်အတွင်း ပွဲများကို ပြသပြီး လွတ်နေသည့်ရက်များကို ကျော်သည်</string>
+    <string name="widget_loading_upcoming">လာမည့်ပွဲများကို ဖွင့်နေသည်…</string>
+    <string name="widget_error_load_events">ပွဲများကို ဖွင့်၍မရပါ၊ ဖွင့်ရန် တို့ပါ</string>
     <string name="widget_no_events_today">ယနေ့ ပွဲများ မရှိပါ</string>
     <string name="widget_add_event">+ ပွဲထည့်ရန်</string>
     <string name="widget_no_events">ပွဲများ မရှိပါ</string>
+    <string name="widget_no_upcoming_events">လာမည့်ပွဲများ မရှိပါ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ပွဲအသစ်</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">ပွဲများကို ICS ဖိုင်သို့ သိမ်းပါ</string>
     <string name="settings_birthday_reminder">မွေးနေ့ သတိပေးချက်</string>
     <string name="settings_use_device_timezone">စက် အချိန်ဇုန် သုံးရန်</string>
-    <string name="settings_section_my_calendars">ကျွန်ုပ်၏ ပြက္ခဒိန်များ</string>
-    <string name="settings_section_display">ပြသမှု</string>
+    <string name="settings_section_calendars">ပြက္ခဒိန်များ</string>
+    <string name="settings_section_appearance">အသွင်အပြင်</string>
+    <string name="settings_section_creating_events">ပွဲများဖန်တီးခြင်း</string>
     <string name="settings_section_notifications">အကြောင်းကြားချက်များ</string>
     <string name="settings_section_sync">ချိန်ကိုက်</string>
     <string name="settings_section_data">အရန်ကူး &amp; ပြန်ယူ</string>
@@ -565,6 +571,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">ပွဲ %1$d ခု</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ပြက္ခဒိန်ဖွင့်ပါ</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">နောက်ထပ် %1$d ရက်</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">မွေးနေ့ %1$d ခု</item>
     </plurals>
@@ -948,6 +958,7 @@
     <string name="cd_event_color">ပွဲအရောင်</string>
     <string name="cd_checkmark">ရွေးချယ်ထားသည်</string>
     <string name="label_device_timezone">စက်၏ အချိန်ဇုန်</string>
+    <string name="color_saddlebrown">ကုန်းနှီးအညိုရောင်</string>
     <string name="color_tomato">ခရမ်းချဉ်သီး</string>    <string name="color_darkorange">လိမ္မော်ရင့်</string>
     <string name="color_gold">ရွှေရောင်</string>
     <string name="color_yellowgreen">အဝါစိမ်း</string>

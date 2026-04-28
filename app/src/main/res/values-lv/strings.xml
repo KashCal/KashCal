@@ -12,9 +12,14 @@
     <string name="month_widget_description">Rāda pilnu mēneša kalendāra režģi ar notikumu punktiem</string>
     <string name="date_widget_name">Datums</string>
     <string name="date_widget_description">Rāda šodienas datumu kā lietotnes ikonu</string>
+    <string name="upcoming_widget_name">Gaidāmie</string>
+    <string name="upcoming_widget_description">Rāda notikumus nākamajām 10 dienām, izlaižot tukšās dienas</string>
+    <string name="widget_loading_upcoming">Notikumu ielāde…</string>
+    <string name="widget_error_load_events">Neizdevās ielādēt notikumus, pieskarieties, lai atvērtu</string>
     <string name="widget_no_events_today">Šodien nav notikumu</string>
     <string name="widget_add_event">+ Pievienot notikumu</string>
     <string name="widget_no_events">Nav notikumu</string>
+    <string name="widget_no_upcoming_events">Nav gaidāmo notikumu</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Jauns notikums</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Saglabāt notikumus ICS failā</string>
     <string name="settings_birthday_reminder">Dzimšanas dienas atgādinājums</string>
     <string name="settings_use_device_timezone">Izmantot ierīces laika joslu</string>
-    <string name="settings_section_my_calendars">Mani kalendāri</string>
-    <string name="settings_section_display">Izskats</string>
+    <string name="settings_section_calendars">Kalendāri</string>
+    <string name="settings_section_appearance">Izskats</string>
+    <string name="settings_section_creating_events">Notikumu izveide</string>
     <string name="settings_section_notifications">Paziņojumi</string>
     <string name="settings_section_sync">Sinhronizācija</string>
     <string name="settings_section_data">Dublēšana un atjaunošana</string>
@@ -564,6 +570,12 @@
         <item quantity="one">%1$d notikums</item>
         <item quantity="other">%1$d notikumi</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Atvērt kalendāru</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="zero">vēl %1$d dienu</item>
+        <item quantity="one">vēl %1$d diena</item>
+        <item quantity="other">vēl %1$d dienas</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="zero">%1$d dzimšanas dienu</item>
         <item quantity="one">%1$d dzimšanas diena</item>
@@ -841,6 +853,7 @@
     <string name="color_cyan">Ciāns</string>
     <string name="color_blue">Zils</string>
     <string name="color_purple">Violets</string>
+    <string name="color_saddlebrown">Seglu brūns</string>
     <string name="color_tomato">Tomātu</string>    <string name="color_darkorange">Tumši oranžs</string>
     <string name="color_gold">Zelta</string>
     <string name="color_yellowgreen">Dzelteni zaļš</string>

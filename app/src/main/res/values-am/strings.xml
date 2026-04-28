@@ -11,9 +11,14 @@
     <string name="month_widget_description">ሙሉ የወር የቀን መቁጠሪያ ፍርግርግ ከክስተት ምልክት ነጥቦች ጋር ያሳያል</string>
     <string name="date_widget_name">ቀን</string>
     <string name="date_widget_description">የዛሬ ቀንን እንደ መተግበሪያ አዶ ያሳያል</string>
+    <string name="upcoming_widget_name">መጪ</string>
+    <string name="upcoming_widget_description">የቀጣዮቹን 10 ቀናት ክስተቶች ያሳያል፣ ባዶ ቀናትን ይዘላል</string>
+    <string name="widget_loading_upcoming">መጪ ክስተቶችን በመጫን ላይ…</string>
+    <string name="widget_error_load_events">ክስተቶችን መጫን አልተቻለም፣ ለመክፈት ይንኩ</string>
     <string name="widget_no_events_today">ዛሬ ምንም ክስተቶች የሉም</string>
     <string name="widget_add_event">+ ክስተት አክል</string>
     <string name="widget_no_events">ምንም ክስተቶች የሉም</string>
+    <string name="widget_no_upcoming_events">ምንም መጪ ክስተቶች የሉም</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">አዲስ ክስተት</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ክስተቶችን ወደ ICS ፋይል አስቀምጥ</string>
     <string name="settings_birthday_reminder">የልደት ቀን ማስታወሻ</string>
     <string name="settings_use_device_timezone">የመሳሪያ ሰዓት ክልል ተጠቀም</string>
-    <string name="settings_section_my_calendars">የኔ ቀን መቁጠሪያዎች</string>
-    <string name="settings_section_display">ማሳያ</string>
+    <string name="settings_section_calendars">የቀን መቁጠሪያዎች</string>
+    <string name="settings_section_appearance">መልክ</string>
+    <string name="settings_section_creating_events">ዝግጅቶችን መፍጠር</string>
     <string name="settings_section_notifications">ማሳወቂያዎች</string>
     <string name="settings_section_sync">ማመሳሰል</string>
     <string name="settings_section_data">ምትኬ እና መልሶ ማስቀመጥ</string>
@@ -571,6 +577,11 @@
         <item quantity="one">%1$d ክስተት</item>
         <item quantity="other">%1$d ክስተቶች</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ቀን መቁጠሪያን ክፈት</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d ተጨማሪ ቀን</item>
+        <item quantity="other">%1$d ተጨማሪ ቀናት</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ልደት</item>
         <item quantity="other">%1$d ልደቶች</item>
@@ -989,6 +1000,7 @@
     <string name="cd_checkmark">ተመርጧል</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">የኮርቻ ቡናማ</string>
     <string name="color_tomato">ቲማቲም</string>    <string name="color_darkorange">ጥቁር ብርቱካናማ</string>
     <string name="color_gold">ወርቃማ</string>
     <string name="color_yellowgreen">ቢጫ አረንጓዴ</string>

@@ -1,13 +1,16 @@
 package org.onekash.kashcal.domain.quickadd
 
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Adversarial and exhaustive testing for QuickAddParser.
@@ -30,6 +33,19 @@ class QuickAddParserAdversarialTest {
 
     // Monday April 13, 2026 10:00 AM
     private val ref = LocalDateTime.of(2026, 4, 13, 10, 0)
+
+    private var originalLocale: Locale? = null
+
+    @Before
+    fun pinLocaleToUS() {
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+    }
+
+    @After
+    fun restoreLocale() {
+        originalLocale?.let { Locale.setDefault(it) }
+    }
 
     private fun parse(input: String, reference: LocalDateTime = ref) =
         QuickAddParser.parse(input, reference)
@@ -734,10 +750,12 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `real-world - PTO next week`() {
-        // "next" is KEYWORD(NEXT), "week" is UNIT — no weekday follows
-        // RelativeOffsetRule sees "in NUMBER UNIT" — no "in" here
+        // "next" is KEYWORD(NEXT), "week" is UNIT — no weekday follows.
+        // No rule handles "next week" as a relative date (would need a RelativeDateRule
+        // entry for NEXT + UNIT). Unclaimed UNIT tokens now appear in the title so the
+        // user sees their intent wasn't fully parsed.
         val result = parse("PTO next week")
-        assertEquals("PTO", result.title)
+        assertEquals("PTO next week", result.title)
     }
 
     @Test

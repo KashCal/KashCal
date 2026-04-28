@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.pickers
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +65,7 @@ fun ColorWheelPicker(
                 .size(80.dp)
                 .clip(CircleShape)
                 .background(Color(selected.argb))
+                .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(

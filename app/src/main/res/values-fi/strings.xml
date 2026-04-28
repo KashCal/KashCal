@@ -12,9 +12,14 @@
     <string name="month_widget_description">Näyttää koko kuukauden kalenteriruudukon tapahtumapisteineen</string>
     <string name="date_widget_name">Päivämäärä</string>
     <string name="date_widget_description">Näyttää tämän päivän päivämäärän sovelluskuvakkeena</string>
+    <string name="upcoming_widget_name">Tulevat</string>
+    <string name="upcoming_widget_description">Näyttää seuraavan 10 päivän tapahtumat ohittaen tyhjät päivät</string>
+    <string name="widget_loading_upcoming">Ladataan tapahtumia…</string>
+    <string name="widget_error_load_events">Tapahtumien lataus epäonnistui, avaa napauttamalla</string>
     <string name="widget_no_events_today">Ei tapahtumia tänään</string>
     <string name="widget_add_event">+ Lisää tapahtuma</string>
     <string name="widget_no_events">Ei tapahtumia</string>
+    <string name="widget_no_upcoming_events">Ei tulevia tapahtumia</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Uusi tapahtuma</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Tallenna tapahtumat ICS-tiedostoon</string>
     <string name="settings_birthday_reminder">Syntymäpäivämuistutus</string>
     <string name="settings_use_device_timezone">Käytä laitteen aikavyöhykettä</string>
-    <string name="settings_section_my_calendars">Omat kalenterit</string>
-    <string name="settings_section_display">Näkymä</string>
+    <string name="settings_section_calendars">Kalenterit</string>
+    <string name="settings_section_appearance">Ulkoasu</string>
+    <string name="settings_section_creating_events">Tapahtumien luominen</string>
     <string name="settings_section_notifications">Ilmoitukset</string>
     <string name="settings_section_sync">Synkronointi</string>
     <string name="settings_section_data">Varmuuskopiointi ja palautus</string>
@@ -555,6 +561,11 @@
         <item quantity="one">%1$d tapahtuma</item>
         <item quantity="other">%1$d tapahtumaa</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Avaa kalenteri</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">vielä %1$d päivä</item>
+        <item quantity="other">vielä %1$d päivää</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d syntymäpäivä</item>
         <item quantity="other">%1$d syntymäpäivää</item>
@@ -804,6 +815,7 @@
     <string name="color_cyan">Syaani</string>
     <string name="color_blue">Sininen</string>
     <string name="color_purple">Violetti</string>
+    <string name="color_saddlebrown">Satulanruskea</string>
     <string name="color_tomato">Tomaatti</string>    <string name="color_darkorange">Tummanoranssi</string>
     <string name="color_gold">Kulta</string>
     <string name="color_yellowgreen">Keltavihreä</string>

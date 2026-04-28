@@ -1,18 +1,21 @@
 package org.onekash.kashcal.widget
 
 import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.datastore.preferences.core.Preferences
 import androidx.glance.GlanceId
 import androidx.glance.GlanceTheme
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.provideContent
+import androidx.glance.currentState
+import androidx.glance.state.PreferencesGlanceStateDefinition
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Week View widget showing events for the next 7 days (today + 6 days).
@@ -30,19 +33,18 @@ import org.onekash.kashcal.util.DateTimeUtils
  * - On sync completion
  * - At midnight (new day)
  * - Periodically (every 30 minutes)
+ *
+ * State management:
+ * - [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
+ * - Data fetch lives inside [provideContent] via [fetchWeekData] so Glance 1.1's
+ *   session-scoped recomposition actually re-runs the fetch (see MonthWidget KDoc)
  */
 class WeekWidget : GlanceAppWidget() {
 
-    /**
-     * Use exact size mode for consistent rendering.
-     */
     override val sizeMode = SizeMode.Exact
 
-    /**
-     * Provide widget content.
-     *
-     * This runs in a coroutine context, so database queries are safe.
-     */
+    override val stateDefinition = PreferencesGlanceStateDefinition
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface WeekWidgetEntryPoint {
@@ -50,28 +52,31 @@ class WeekWidget : GlanceAppWidget() {
     }
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        // Get data via Hilt EntryPoint (Glance widgets can't use standard @Inject)
         val entryPoint = EntryPointAccessors.fromApplication(context, WeekWidgetEntryPoint::class.java)
         val repository = entryPoint.widgetDataRepository()
-        val weekEvents = repository.getWeekEvents()
-
-        // Get display preferences
         val dataStore = KashCalDataStore(context)
-        val showEventEmojis = dataStore.showEventEmojis.first()
-        val maxEventsPerDay = dataStore.widgetMaxEventsPerDay.first()
-
-        // Get time format preference
-        val timeFormatPref = dataStore.getTimeFormat()
-        val is24HourDevice = android.text.format.DateFormat.is24HourFormat(context)
-        val timePattern = DateTimeUtils.getTimePattern(timeFormatPref, is24HourDevice)
 
         provideContent {
+            val stamp = currentState<Preferences>()[WIDGET_REFRESH_STAMP] ?: 0L
+            // Empty-events seed: empty week may flash briefly on cold start before
+            // fetchWeekData resolves — accepted trade-off, no dedicated loading UI.
+            val data by produceState(
+                initialValue = WeekData(
+                    weekEvents = emptyMap(),
+                    showEventEmojis = true,
+                    maxEventsPerDay = 5,
+                    timePattern = "h:mm a"
+                ),
+                key1 = stamp
+            ) {
+                value = fetchWeekData(repository, dataStore, context)
+            }
             GlanceTheme {
                 WeekWidgetContent(
-                    weekEvents = weekEvents,
-                    showEventEmojis = showEventEmojis,
-                    timePattern = timePattern,
-                    maxEventsPerDay = maxEventsPerDay
+                    weekEvents = data.weekEvents,
+                    showEventEmojis = data.showEventEmojis,
+                    timePattern = data.timePattern,
+                    maxEventsPerDay = data.maxEventsPerDay
                 )
             }
         }

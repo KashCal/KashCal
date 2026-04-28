@@ -58,7 +58,7 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
-import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.onekash.kashcal.ui.model.CalendarGroup
 import javax.inject.Inject
@@ -215,7 +215,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val _contactBirthdaysEnabled = MutableStateFlow(false)
     val contactBirthdaysEnabled: StateFlow<Boolean> = _contactBirthdaysEnabled.asStateFlow()
 
-    private val _contactBirthdaysColor = MutableStateFlow(SubscriptionColors.Purple)
+    private val _contactBirthdaysColor = MutableStateFlow(EventColorPalette.randomArgb())
     val contactBirthdaysColor: StateFlow<Int> = _contactBirthdaysColor.asStateFlow()
 
     private val _contactBirthdaysReminder = MutableStateFlow(KashCalDataStore.DEFAULT_BIRTHDAY_REMINDER_MINUTES)
@@ -225,7 +225,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val _contactAnniversariesEnabled = MutableStateFlow(false)
     val contactAnniversariesEnabled: StateFlow<Boolean> = _contactAnniversariesEnabled.asStateFlow()
 
-    private val _contactAnniversariesColor = MutableStateFlow(SubscriptionColors.Pink)
+    private val _contactAnniversariesColor = MutableStateFlow(EventColorPalette.randomArgb())
     val contactAnniversariesColor: StateFlow<Int> = _contactAnniversariesColor.asStateFlow()
 
     private val _contactAnniversariesReminder = MutableStateFlow(KashCalDataStore.DEFAULT_BIRTHDAY_REMINDER_MINUTES)

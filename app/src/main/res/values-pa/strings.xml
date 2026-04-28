@@ -11,9 +11,14 @@
     <string name="month_widget_description">ਘਟਨਾ ਸੰਕੇਤ ਬਿੰਦੂਆਂ ਨਾਲ ਪੂਰਾ ਮਹੀਨਾ ਕੈਲੰਡਰ ਗ੍ਰਿੱਡ ਦਿਖਾਉਂਦਾ ਹੈ</string>
     <string name="date_widget_name">ਮਿਤੀ</string>
     <string name="date_widget_description">ਅੱਜ ਦੀ ਮਿਤੀ ਐਪ ਆਈਕਨ ਵਾਂਗ ਦਿਖਾਉਂਦਾ ਹੈ</string>
+    <string name="upcoming_widget_name">ਆਉਣ ਵਾਲੇ</string>
+    <string name="upcoming_widget_description">ਅਗਲੇ 10 ਦਿਨਾਂ ਦੀਆਂ ਘਟਨਾਵਾਂ ਦਿਖਾਉਂਦਾ ਹੈ, ਖਾਲੀ ਦਿਨ ਛੱਡ ਦਿੰਦਾ ਹੈ</string>
+    <string name="widget_loading_upcoming">ਆਉਣ ਵਾਲੀਆਂ ਘਟਨਾਵਾਂ ਲੋਡ ਹੋ ਰਹੀਆਂ ਹਨ…</string>
+    <string name="widget_error_load_events">ਘਟਨਾਵਾਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ, ਖੋਲ੍ਹਣ ਲਈ ਟੈਪ ਕਰੋ</string>
     <string name="widget_no_events_today">ਅੱਜ ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="widget_add_event">+ ਘਟਨਾ ਜੋੜੋ</string>
     <string name="widget_no_events">ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
+    <string name="widget_no_upcoming_events">ਕੋਈ ਆਉਣ ਵਾਲੀ ਘਟਨਾ ਨਹੀਂ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ਨਵੀਂ ਘਟਨਾ</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ਘਟਨਾਵਾਂ ICS ਫ਼ਾਈਲ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਕਰੋ</string>
     <string name="settings_birthday_reminder">ਜਨਮਦਿਨ ਯਾਦ-ਦਹਾਨੀ</string>
     <string name="settings_use_device_timezone">ਡਿਵਾਈਸ ਟਾਈਮਜ਼ੋਨ ਵਰਤੋ</string>
-    <string name="settings_section_my_calendars">ਮੇਰੇ ਕੈਲੰਡਰ</string>
-    <string name="settings_section_display">ਡਿਸਪਲੇ</string>
+    <string name="settings_section_calendars">ਕੈਲੰਡਰ</string>
+    <string name="settings_section_appearance">ਦਿੱਖ</string>
+    <string name="settings_section_creating_events">ਇਵੈਂਟ ਬਣਾਉਣਾ</string>
     <string name="settings_section_notifications">ਸੂਚਨਾਵਾਂ</string>
     <string name="settings_section_sync">ਸਿੰਕ</string>
     <string name="settings_section_data">ਬੈਕਅੱਪ &amp; ਰੀਸਟੋਰ</string>
@@ -547,6 +553,11 @@
         <item quantity="one">%1$d ਘਟਨਾ</item>
         <item quantity="other">%1$d ਘਟਨਾਵਾਂ</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ਕੈਲੰਡਰ ਖੋਲ੍ਹੋ</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d ਹੋਰ ਦਿਨ</item>
+        <item quantity="other">%1$d ਹੋਰ ਦਿਨ</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ਜਨਮਦਿਨ</item>
         <item quantity="other">%1$d ਜਨਮਦਿਨ</item>
@@ -961,6 +972,7 @@
     <string name="cd_event_color">ਘਟਨਾ ਦਾ ਰੰਗ</string>
     <string name="cd_checkmark">ਚੁਣਿਆ ਹੋਇਆ</string>
     <string name="label_device_timezone">ਡਿਵਾਈਸ ਸਮਾਂ ਖੇਤਰ</string>
+    <string name="color_saddlebrown">ਕਾਠੀ ਭੂਰਾ</string>
     <string name="color_tomato">ਟਮਾਟਰ</string>    <string name="color_darkorange">ਗੂੜ੍ਹਾ ਸੰਤਰੀ</string>
     <string name="color_gold">ਸੁਨਹਿਰੀ</string>
     <string name="color_yellowgreen">ਪੀਲਾ-ਹਰਾ</string>

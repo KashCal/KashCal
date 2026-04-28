@@ -1,9 +1,11 @@
 package org.onekash.kashcal.domain.quickadd.tokenizer
 
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.Month
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 object WordTokenizer {
 
@@ -109,10 +111,10 @@ object WordTokenizer {
 
     // ==================== Regex Patterns ====================
 
-    // Time range: "2-3pm", "10:30-11:30am", "3.15-4.30pm", "11pm-1am"
-    // Must require meridiem on at least one side to disambiguate from structured dates
+    // Time range: "2-3pm", "5pm-6", "10:30-11:30am", "3.15-4.30pm", "11pm-1am"
+    // Meridiem allowed on either side; at least one required (post-match guard).
     private val timeRangeRegex = Regex(
-        """(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)""",
+        """(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?""",
         RegexOption.IGNORE_CASE
     )
 
@@ -138,17 +140,25 @@ object WordTokenizer {
 
     // ==================== Tokenize ====================
 
-    fun tokenize(input: String, originalWords: List<String>? = null): List<Token> {
+    fun tokenize(
+        input: String,
+        originalWords: List<String>? = null,
+        locale: Locale = Locale.getDefault()
+    ): List<Token> {
         if (input.isBlank()) return emptyList()
 
         val words = input.split(whitespaceRegex)
         return words.mapIndexed { index, word ->
             val original = originalWords?.getOrNull(index) ?: word
-            classifyWord(word, original)
+            classifyWord(word, original, locale)
         }
     }
 
-    private fun classifyWord(word: String, originalText: String = word): Token {
+    private fun classifyWord(
+        word: String,
+        originalText: String = word,
+        locale: Locale = Locale.getDefault()
+    ): Token {
         // 0. Time range (must check before structured date to catch "2-3pm")
         timeRangeRegex.matchEntire(word)?.let { match ->
             parseTimeRange(word, match, originalText)?.let { return it }
@@ -156,7 +166,7 @@ object WordTokenizer {
 
         // 1. Structured date (must check before numbers to catch "1/15")
         structuredDateRegex.matchEntire(word)?.let { match ->
-            return parseStructuredDate(word, match, originalText)
+            return parseStructuredDate(word, match, originalText, locale)
         }
 
         // 2. Month names
@@ -236,22 +246,39 @@ object WordTokenizer {
         val startMeridiem = match.groupValues[3].lowercase().replace(".", "").takeIf { it.isNotEmpty() }
         val endHourRaw = match.groupValues[4].toIntOrNull() ?: return null
         val endMinute = match.groupValues[5].takeIf { it.isNotEmpty() }?.toIntOrNull() ?: 0
-        val endMeridiem = match.groupValues[6].lowercase().replace(".", "")
+        val endMeridiem = match.groupValues[6].lowercase().replace(".", "").takeIf { it.isNotEmpty() }
 
         if (startMinute > 59 || endMinute > 59) return null
+        // Guard: at least one meridiem required to disambiguate from structured dates like "2-3"
+        if (startMeridiem == null && endMeridiem == null) return null
 
-        // Resolve end time first (it always has a meridiem)
-        val endHour = resolveMeridiemHour(endHourRaw, endMeridiem) ?: return null
+        val startHour: Int
+        val endHour: Int
 
-        // Resolve start time: use its own meridiem if present, otherwise infer from context
-        val startHour = if (startMeridiem != null) {
-            resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
+        if (startMeridiem != null && endMeridiem != null) {
+            // Both sides explicit
+            startHour = resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
+            endHour = resolveMeridiemHour(endHourRaw, endMeridiem) ?: return null
+        } else if (startMeridiem != null) {
+            // Start has meridiem, end inferred
+            startHour = resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
+            val sameAsStart = resolveMeridiemHour(endHourRaw, startMeridiem) ?: return null
+            val startTime24 = startHour * 60 + startMinute
+            val endSame = sameAsStart * 60 + endMinute
+            endHour = if (endSame < startTime24) {
+                // "10am-2" → 10:00-02:00 doesn't make sense; flip end to PM → 10:00-14:00
+                val oppositeMeridiem = if (startMeridiem.startsWith("p")) "am" else "pm"
+                resolveMeridiemHour(endHourRaw, oppositeMeridiem) ?: sameAsStart
+            } else {
+                sameAsStart
+            }
         } else {
-            // No explicit meridiem on start — try end's meridiem first
+            // End has meridiem, start inferred (endMeridiem != null by guard)
+            endHour = resolveMeridiemHour(endHourRaw, endMeridiem!!) ?: return null
             val sameAsEnd = resolveMeridiemHour(startHourRaw, endMeridiem) ?: return null
             val endTime24 = endHour * 60 + endMinute
             val startSame = sameAsEnd * 60 + startMinute
-            if (startSame > endTime24) {
+            startHour = if (startSame > endTime24) {
                 // "9-5pm" → 21:00-17:00 doesn't make sense; flip to AM → 9:00-17:00
                 val oppositeMeridiem = if (endMeridiem.startsWith("p")) "am" else "pm"
                 resolveMeridiemHour(startHourRaw, oppositeMeridiem) ?: sameAsEnd
@@ -323,7 +350,12 @@ object WordTokenizer {
 
     data class DateParts(val day: Int, val month: Int, val year: Int?)
 
-    private fun parseStructuredDate(word: String, match: MatchResult, originalText: String = word): Token {
+    private fun parseStructuredDate(
+        word: String,
+        match: MatchResult,
+        originalText: String = word,
+        locale: Locale = Locale.getDefault()
+    ): Token {
         val part1 = match.groupValues[1].toInt()
         val part2 = match.groupValues[2].toInt()
         val part3 = match.groupValues[3].takeIf { it.isNotEmpty() }?.toInt()
@@ -349,7 +381,17 @@ object WordTokenizer {
                 month = part2,
                 year = resolveYear(part3)
             )
-            // M/D or M/D/Y (US style, month-first)
+            // Second number > 12 can't be a month, so first must be month
+            part2 > 12 -> DateParts(
+                day = part2,
+                month = part1,
+                year = resolveYear(part3)
+            )
+            DateTimeUtils.isDayFirstLocale(locale) -> DateParts(
+                day = part1,
+                month = part2,
+                year = resolveYear(part3)
+            )
             else -> DateParts(
                 day = part2,
                 month = part1,

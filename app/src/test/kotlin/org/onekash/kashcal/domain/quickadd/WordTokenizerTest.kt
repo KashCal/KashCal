@@ -1,8 +1,10 @@
 package org.onekash.kashcal.domain.quickadd
 
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
@@ -11,8 +13,22 @@ import java.time.DayOfWeek
 import java.time.LocalTime
 import java.time.Month
 import java.time.temporal.ChronoUnit
+import java.util.Locale
 
 class WordTokenizerTest {
+
+    private var originalLocale: Locale? = null
+
+    @Before
+    fun pinLocaleToUS() {
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+    }
+
+    @After
+    fun restoreLocale() {
+        originalLocale?.let { Locale.setDefault(it) }
+    }
 
     // ==================== Date Keywords ====================
 
@@ -395,6 +411,50 @@ class WordTokenizerTest {
         assertEquals(LocalTime.of(1, 0), range.end)
     }
 
+    // ==================== Time range with meridiem on start only (issue #194 follow-up Bug E) ====================
+
+    @Test
+    fun `tokenizes 5pm-6 as TIME_RANGE with inherited pm`() {
+        val tokens = WordTokenizer.tokenize("5pm-6")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(17, 0), range.start)
+        assertEquals(LocalTime.of(18, 0), range.end)
+    }
+
+    @Test
+    fun `tokenizes 9am-10 as TIME_RANGE with inherited am`() {
+        val tokens = WordTokenizer.tokenize("9am-10")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(9, 0), range.start)
+        assertEquals(LocalTime.of(10, 0), range.end)
+    }
+
+    @Test
+    fun `tokenizes 10am-2 as TIME_RANGE with end flipped to pm when same-meridiem inversion`() {
+        // 10am-2am would be inverted (2am before 10am), so flip end to pm → 10:00-14:00
+        // Mirrors the symmetric logic at WordTokenizer parseTimeRange for end-only meridiem
+        val tokens = WordTokenizer.tokenize("10am-2")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(10, 0), range.start)
+        assertEquals(LocalTime.of(14, 0), range.end)
+    }
+
+    @Test
+    fun `tokenizes 5pm-6 with minutes as TIME_RANGE`() {
+        val tokens = WordTokenizer.tokenize("5:30pm-6:45")
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.TIME_RANGE, tokens[0].type)
+        val range = tokens[0].value as WordTokenizer.TimeRange
+        assertEquals(LocalTime.of(17, 30), range.start)
+        assertEquals(LocalTime.of(18, 45), range.end)
+    }
+
     @Test
     fun `2-3 without meridiem stays STRUCTURED_DATE`() {
         val tokens = WordTokenizer.tokenize("2-3")
@@ -535,5 +595,108 @@ class WordTokenizerTest {
         assertEquals(1, tokens.size)
         assertEquals(TokenType.TIMEZONE, tokens[0].type)
         assertEquals("GMT", tokens[0].value)
+    }
+
+    // ==================== Locale-aware structured dates (issue #194) ====================
+
+    @Test
+    fun `tokenize 5 slash 10 under en_US classifies as M-D`() {
+        val tokens = WordTokenizer.tokenize("5/10", locale = Locale.US)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.month)
+        assertEquals(10, parts.day)
+    }
+
+    @Test
+    fun `tokenize 5 slash 10 under en_GB classifies as D-M`() {
+        val tokens = WordTokenizer.tokenize("5/10", locale = Locale.UK)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.day)
+        assertEquals(10, parts.month)
+    }
+
+    @Test
+    fun `tokenize 5 slash 10 slash 2026 under en_GB classifies as D-M-Y`() {
+        val tokens = WordTokenizer.tokenize("5/10/2026", locale = Locale.UK)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.day)
+        assertEquals(10, parts.month)
+        assertEquals(2026, parts.year)
+    }
+
+    @Test
+    fun `tokenize 13 slash 5 under en_US still classifies as D-M because 13 cannot be month`() {
+        val tokens = WordTokenizer.tokenize("13/5", locale = Locale.US)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(13, parts.day)
+        assertEquals(5, parts.month)
+    }
+
+    @Test
+    fun `tokenize 5 slash 13 under en_GB still classifies as M-D because 13 cannot be month`() {
+        val tokens = WordTokenizer.tokenize("5/13", locale = Locale.UK)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.month)
+        assertEquals(13, parts.day)
+    }
+
+    @Test
+    fun `tokenize ISO date under en_GB classifies as Y-M-D`() {
+        val tokens = WordTokenizer.tokenize("2026-10-05", locale = Locale.UK)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(2026, parts.year)
+        assertEquals(10, parts.month)
+        assertEquals(5, parts.day)
+    }
+
+    @Test
+    fun `tokenize dot-separated date stays DMY under any locale`() {
+        val tokens = WordTokenizer.tokenize("5.10.2026", locale = Locale.US)
+        assertEquals(1, tokens.size)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.day)
+        assertEquals(10, parts.month)
+    }
+
+    @Test
+    fun `tokenize 5 slash 10 under Locale_GERMANY classifies as D-M`() {
+        val tokens = WordTokenizer.tokenize("5/10", locale = Locale.GERMANY)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.day)
+        assertEquals(10, parts.month)
+    }
+
+    @Test
+    fun `tokenize 5 slash 10 under Locale_JAPAN classifies as M-D via y-slash-MM-slash-dd pattern`() {
+        // ja_JP's SHORT pattern is "yyyy/MM/dd" — M appears before d → MDY
+        val tokens = WordTokenizer.tokenize("5/10", locale = Locale.JAPAN)
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.month)
+        assertEquals(10, parts.day)
+    }
+
+    @Test
+    fun `tokenize with default locale argument still compiles and classifies as MDY on US-pinned default`() {
+        // Verifies the overload default works; pinLocaleToUS() sets Locale.US as default.
+        val tokens = WordTokenizer.tokenize("5/10")
+        assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
+        val parts = tokens[0].value as WordTokenizer.DateParts
+        assertEquals(5, parts.month)
+        assertEquals(10, parts.day)
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -40,6 +41,7 @@ class QuickAddDialogComposeTest {
         isSaveEnabled: Boolean = false,
         isSaving: Boolean = false,
         placeholder: String = "Coffee tomorrow at 3pm",
+        timeFormat: String = "system",
         onSave: () -> Unit = {},
         onExpand: () -> Unit = {}
     ) {
@@ -52,6 +54,7 @@ class QuickAddDialogComposeTest {
                     isSaveEnabled = isSaveEnabled,
                     isSaving = isSaving,
                     placeholder = placeholder,
+                    timeFormat = timeFormat,
                     onSave = onSave,
                     onExpand = onExpand
                 )
@@ -204,6 +207,61 @@ class QuickAddDialogComposeTest {
             )
         )
         composeTestRule.onNodeWithText("Room 42").assertIsDisplayed()
+    }
+
+    // ==================== Time Format Preference (issue #194) ====================
+
+    @Test
+    fun preview_rendersTimeIn24HourFormat_whenTimeFormatIs24h() {
+        setContent(
+            timeFormat = "24h",
+            parseResult = QuickAddResult(
+                title = "Meeting",
+                startDate = LocalDate.now(),
+                startTime = LocalTime.of(17, 0)
+            )
+        )
+        // Substring match — the preview text is "Today   17:00" (or similar)
+        composeTestRule.onNode(hasText("17:00", substring = true)).assertIsDisplayed()
+        assertTrue(
+            "Preview must not show 12-hour AM/PM marker when timeFormat='24h'",
+            composeTestRule.onAllNodesWithText("PM", substring = true)
+                .fetchSemanticsNodes().isEmpty()
+        )
+    }
+
+    @Test
+    fun preview_rendersTimeIn12HourFormat_whenTimeFormatIs12h() {
+        setContent(
+            timeFormat = "12h",
+            parseResult = QuickAddResult(
+                title = "Meeting",
+                startDate = LocalDate.now(),
+                startTime = LocalTime.of(17, 0)
+            )
+        )
+        // 12h form shows "5:00 PM" (or locale equivalent); must NOT show literal "17:00"
+        composeTestRule.onNode(hasText("5:00", substring = true)).assertIsDisplayed()
+        assertTrue(
+            "Preview must not show 24-hour 17:00 when timeFormat='12h'",
+            composeTestRule.onAllNodesWithText("17:00", substring = true)
+                .fetchSemanticsNodes().isEmpty()
+        )
+    }
+
+    @Test
+    fun preview_rendersEndTimeIn24HourFormat_whenTimeFormatIs24h() {
+        setContent(
+            timeFormat = "24h",
+            parseResult = QuickAddResult(
+                title = "Meeting",
+                startDate = LocalDate.now(),
+                startTime = LocalTime.of(14, 0),
+                endTime = LocalTime.of(16, 30)
+            )
+        )
+        composeTestRule.onNode(hasText("14:00", substring = true)).assertIsDisplayed()
+        composeTestRule.onNode(hasText("16:30", substring = true)).assertIsDisplayed()
     }
 
     // ==================== Callbacks ====================

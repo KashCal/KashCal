@@ -16,6 +16,7 @@ import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
 import java.time.LocalDateTime
+import java.util.Locale
 
 object QuickAddParser {
 
@@ -35,7 +36,11 @@ object QuickAddParser {
         LocationRule
     )
 
-    fun parse(input: String, reference: LocalDateTime = LocalDateTime.now()): QuickAddResult {
+    fun parse(
+        input: String,
+        reference: LocalDateTime = LocalDateTime.now(),
+        locale: Locale = Locale.getDefault()
+    ): QuickAddResult {
         if (input.isBlank()) {
             return QuickAddResult(
                 title = "",
@@ -50,7 +55,7 @@ object QuickAddParser {
         val originalCased = normalizerNoLowercase.normalize(input)
         val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
 
-        val tokens = WordTokenizer.tokenize(normalized, originalWords)
+        val tokens = WordTokenizer.tokenize(normalized, originalWords, locale)
 
         if (tokens.isEmpty()) {
             return QuickAddResult(
@@ -73,7 +78,7 @@ object QuickAddParser {
 
         val confidence = when {
             context.dateSet && context.timeSet -> ParseConfidence.HIGH
-            context.dateSet || context.timeSet -> ParseConfidence.MEDIUM
+            context.dateSet || context.timeSet || context.rrule != null -> ParseConfidence.MEDIUM
             else -> ParseConfidence.LOW
         }
 
@@ -96,7 +101,6 @@ object QuickAddParser {
         val titleTokens = tokens.indices
             .filter { i -> i !in consumed }
             .map { i -> tokens[i] }
-            .filter { t -> t.type == TokenType.UNKNOWN || t.type == TokenType.NUMBER || t.type == TokenType.KEYWORD || t.type == TokenType.TIME_KEYWORD }
             .dropWhile { it.type == TokenType.KEYWORD }
             .dropLastWhile { it.type == TokenType.KEYWORD }
         return titleTokens.joinToString(" ") { it.originalText }.trim()

@@ -47,6 +47,7 @@ import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.util.UUID
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.writer.EventWriter
@@ -269,6 +270,28 @@ class AccountSettingsViewModelTest {
 
         // Should start with Loading state before coroutines complete
         assertTrue(viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `contactBirthdaysColor seeds to a palette entry`() = runTest {
+        val paletteArgbs = EventColorPalette.entries.map { it.argb }.toSet()
+        val viewModel = createViewModel()
+
+        assertTrue(
+            "contactBirthdaysColor seed must be a palette entry",
+            viewModel.contactBirthdaysColor.value in paletteArgbs
+        )
+    }
+
+    @Test
+    fun `contactAnniversariesColor seeds to a palette entry`() = runTest {
+        val paletteArgbs = EventColorPalette.entries.map { it.argb }.toSet()
+        val viewModel = createViewModel()
+
+        assertTrue(
+            "contactAnniversariesColor seed must be a palette entry",
+            viewModel.contactAnniversariesColor.value in paletteArgbs
+        )
     }
 
     @Test

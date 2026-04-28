@@ -1,0 +1,91 @@
+package org.onekash.kashcal.widget
+
+import android.content.Context
+import android.util.Log
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.appwidget.updateAll
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicLong
+
+/**
+ * Shared Glance state keys used by [UpcomingWidget], [AgendaWidget], [WeekWidget],
+ * and [MonthWidget].
+ *
+ * These widgets each declare `override val stateDefinition = PreferencesGlanceStateDefinition`,
+ * which gives every placed widget instance its own Preferences bag (keyed by glanceId).
+ * [WIDGET_REFRESH_STAMP] is written by [WidgetUpdateManager] before calling `updateAll()` so
+ * that the session-scoped `provideContent` recomposes with a new key — re-running the
+ * `produceState` block that drives data fetches. See the MonthWidget file-level KDoc for the
+ * underlying Glance 1.1 session-management rationale.
+ */
+internal val WIDGET_REFRESH_STAMP = longPreferencesKey("widget_refresh_stamp")
+
+/**
+ * Monotonically-increasing counter used by [WidgetUpdateManager] when writing
+ * [WIDGET_REFRESH_STAMP]. Seeded from `System.currentTimeMillis()` at class load so stamps
+ * remain roughly clock-aligned (useful for debugging) but distinct across same-millisecond
+ * bumps that can occur during CalDAV batched sync completion.
+ */
+private val stampCounter = AtomicLong(System.currentTimeMillis())
+
+/**
+ * Returns a strictly monotonic [Long] for use as the next value of [WIDGET_REFRESH_STAMP].
+ * Guaranteed distinct from every prior value returned in this process.
+ */
+internal fun nextRefreshStamp(): Long = stampCounter.incrementAndGet()
+
+private const val TAG_BUMP = "WidgetStateKeys"
+
+/**
+ * Write a new value of [WIDGET_REFRESH_STAMP] to every placed instance of [widgetClass].
+ * Must be called BEFORE `SomeWidget().updateAll(context)` — the stamp write is what triggers
+ * Glance's active `provideContent` session to recompose with a new `produceState` key.
+ *
+ * Errors from [GlanceAppWidgetManager] (e.g. no widgets placed) are swallowed; the caller
+ * already handles downstream update errors.
+ */
+internal suspend fun <T : GlanceAppWidget> bumpRefreshStamp(
+    context: Context,
+    widgetClass: Class<T>
+) {
+    val stamp = nextRefreshStamp()
+    try {
+        val manager = GlanceAppWidgetManager(context)
+        manager.getGlanceIds(widgetClass).forEach { glanceId ->
+            updateAppWidgetState(context, PreferencesGlanceStateDefinition, glanceId) { prefs ->
+                prefs.toMutablePreferences().apply { this[WIDGET_REFRESH_STAMP] = stamp }
+            }
+        }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w(TAG_BUMP, "Failed to bump refresh stamp for ${widgetClass.simpleName}", e)
+    }
+}
+
+/**
+ * Bump refresh stamps and call `updateAll()` on every event-driven widget in parallel.
+ * Used by WidgetUpdateManager, WidgetUpdateWorker, and WidgetRetryWorker — extracted here
+ * so adding a new widget requires one edit, not three.
+ *
+ * Stamp write triggers recomposition of active provideContent sessions; the subsequent
+ * updateAll is belt-and-braces for freshly-cold sessions. DateWidget is omitted: its
+ * content depends only on today's date, refreshed by midnight alarm + periodic worker.
+ */
+internal suspend fun refreshAllWidgets(context: Context): Unit = coroutineScope {
+    listOf(
+        AgendaWidget::class.java to AgendaWidget(),
+        WeekWidget::class.java to WeekWidget(),
+        MonthWidget::class.java to MonthWidget(),
+        UpcomingWidget::class.java to UpcomingWidget()
+    ).forEach { (cls, instance) ->
+        launch { bumpRefreshStamp(context, cls) }
+        launch { instance.updateAll(context) }
+    }
+}

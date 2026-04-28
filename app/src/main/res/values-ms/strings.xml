@@ -12,9 +12,14 @@
     <string name="month_widget_description">Menunjukkan grid kalendar sebulan penuh dengan titik penunjuk acara</string>
     <string name="date_widget_name">Tarikh</string>
     <string name="date_widget_description">Menunjukkan tarikh hari ini seperti ikon aplikasi</string>
+    <string name="upcoming_widget_name">Akan Datang</string>
+    <string name="upcoming_widget_description">Menunjukkan acara untuk 10 hari akan datang, melangkau hari kosong</string>
+    <string name="widget_loading_upcoming">Memuatkan acara akan datang…</string>
+    <string name="widget_error_load_events">Tidak dapat memuatkan acara, ketik untuk buka</string>
     <string name="widget_no_events_today">Tiada acara hari ini</string>
     <string name="widget_add_event">+ Tambah acara</string>
     <string name="widget_no_events">Tiada acara</string>
+    <string name="widget_no_upcoming_events">Tiada acara akan datang</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Acara Baharu</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Simpan acara ke fail ICS</string>
     <string name="settings_birthday_reminder">Peringatan Hari Lahir</string>
     <string name="settings_use_device_timezone">Guna zon masa peranti</string>
-    <string name="settings_section_my_calendars">Kalendar Saya</string>
-    <string name="settings_section_display">Paparan</string>
+    <string name="settings_section_calendars">Kalendar</string>
+    <string name="settings_section_appearance">Penampilan</string>
+    <string name="settings_section_creating_events">Mencipta acara</string>
     <string name="settings_section_notifications">Pemberitahuan</string>
     <string name="settings_section_sync">Segerak</string>
     <string name="settings_section_data">Sandaran &amp; Pemulihan</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d acara</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Buka kalendar</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">%1$d hari lagi</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">%1$d hari lahir</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">Warna acara</string>
     <string name="cd_checkmark">Dipilih</string>
     <string name="label_device_timezone">Zon waktu peranti</string>
-    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
+    <string name="color_saddlebrown">Coklat Pelana</string>    <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Jingga Gelap</string>
     <string name="color_gold">Emas</string>
     <string name="color_yellowgreen">Hijau Kuning</string>
     <string name="color_limegreen">Hijau limau</string>    <string name="color_lightseagreen">Hijau laut cerah</string>

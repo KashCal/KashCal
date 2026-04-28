@@ -11,9 +11,14 @@
     <string name="month_widget_description">Εμφανίζει ένα πλήρες μηνιαίο πλέγμα ημερολογίου με κουκκίδες συμβάντων</string>
     <string name="date_widget_name">Ημερομηνία</string>
     <string name="date_widget_description">Εμφανίζει τη σημερινή ημερομηνία σαν εικονίδιο εφαρμογής</string>
+    <string name="upcoming_widget_name">Προσεχή</string>
+    <string name="upcoming_widget_description">Εμφανίζει τα συμβάντα των επόμενων 10 ημερών, παραλείποντας τις κενές ημέρες</string>
+    <string name="widget_loading_upcoming">Φόρτωση προσεχών συμβάντων…</string>
+    <string name="widget_error_load_events">Δεν ήταν δυνατή η φόρτωση συμβάντων, πατήστε για άνοιγμα</string>
     <string name="widget_no_events_today">Δεν υπάρχουν συμβάντα σήμερα</string>
     <string name="widget_add_event">+ Προσθήκη συμβάντος</string>
     <string name="widget_no_events">Δεν υπάρχουν συμβάντα</string>
+    <string name="widget_no_upcoming_events">Δεν υπάρχουν προσεχή συμβάντα</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Νέο συμβάν</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Αποθήκευση συμβάντων σε αρχείο ICS</string>
     <string name="settings_birthday_reminder">Υπενθύμιση γενεθλίων</string>
     <string name="settings_use_device_timezone">Χρήση ζώνης ώρας συσκευής</string>
-    <string name="settings_section_my_calendars">Τα ημερολόγιά μου</string>
-    <string name="settings_section_display">Εμφάνιση</string>
+    <string name="settings_section_calendars">Ημερολόγια</string>
+    <string name="settings_section_appearance">Εμφάνιση</string>
+    <string name="settings_section_creating_events">Δημιουργία συμβάντων</string>
     <string name="settings_section_notifications">Ειδοποιήσεις</string>
     <string name="settings_section_sync">Συγχρονισμός</string>
     <string name="settings_section_data">Αντίγραφο ασφαλείας &amp; επαναφορά</string>
@@ -572,6 +578,11 @@
         <item quantity="one">%1$d συμβάν</item>
         <item quantity="other">%1$d συμβάντα</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Άνοιγμα ημερολογίου</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d ακόμη ημέρα</item>
+        <item quantity="other">%1$d ακόμη ημέρες</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d γενέθλια</item>
         <item quantity="other">%1$d γενέθλια</item>
@@ -990,7 +1001,7 @@
     <string name="label_device_timezone">Ζώνη ώρας συσκευής</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Ντομάτα</string>    <string name="color_darkorange">Σκούρο πορτοκαλί</string>
+    <string name="color_saddlebrown">Καφέ σέλας</string>    <string name="color_tomato">Ντομάτα</string>    <string name="color_darkorange">Σκούρο πορτοκαλί</string>
     <string name="color_gold">Χρυσό</string>
     <string name="color_yellowgreen">Κιτρινοπράσινο</string>
     <string name="color_limegreen">Λαχανί</string>    <string name="color_lightseagreen">Ανοιχτό θαλασσί πράσινο</string>

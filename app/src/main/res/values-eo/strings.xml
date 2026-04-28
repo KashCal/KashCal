@@ -11,9 +11,14 @@
     <string name="month_widget_description">Montras plenan monatan kalendaran kradon kun eventaj indikaj punktoj</string>
     <string name="date_widget_name">Dato</string>
     <string name="date_widget_description">Montras la hodiaủan daton kiel aplikaĵa ikono</string>
+    <string name="upcoming_widget_name">Venontaj</string>
+    <string name="upcoming_widget_description">Montras eventojn por la venontaj 10 tagoj, preterlasante malplenajn tagojn</string>
+    <string name="widget_loading_upcoming">Ŝargante venontajn eventojn…</string>
+    <string name="widget_error_load_events">Ne eblis ŝargi eventojn, tuŝu por malfermi</string>
     <string name="widget_no_events_today">Neniuj eventoj hodiaŭ</string>
     <string name="widget_add_event">+ Aldoni eventon</string>
     <string name="widget_no_events">Neniuj eventoj</string>
+    <string name="widget_no_upcoming_events">Neniuj venontaj eventoj</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Nova evento</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Konservi eventojn al ICS-dosiero</string>
     <string name="settings_birthday_reminder">Naskig̉taga rememorigo</string>
     <string name="settings_use_device_timezone">Uzi aparatan horzonon</string>
-    <string name="settings_section_my_calendars">Miaj kalendaroj</string>
-    <string name="settings_section_display">Vidigo</string>
+    <string name="settings_section_calendars">Kalendaroj</string>
+    <string name="settings_section_appearance">Aspekto</string>
+    <string name="settings_section_creating_events">Krei eventojn</string>
     <string name="settings_section_notifications">Sciigoj</string>
     <string name="settings_section_sync">Sinkronigo</string>
     <string name="settings_section_data">Sekurkopio kaj restarigo</string>
@@ -551,6 +557,11 @@
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventoj</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Malfermi kalendaron</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d plia tago</item>
+        <item quantity="other">%1$d pliaj tagoj</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d naskig̉tago</item>
         <item quantity="other">%1$d naskig̉tagoj</item>
@@ -953,6 +964,7 @@
     <string name="label_device_timezone">Horzono de aparato</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Seltela bruna</string>
     <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Malhela oranĝa</string>
     <string name="color_gold">Ora</string>
     <string name="color_yellowgreen">Flavverda</string>

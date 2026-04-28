@@ -11,9 +11,14 @@
     <string name="month_widget_description">Inaonyesha gridi kamili ya kalenda ya mwezi na vitone vya matukio</string>
     <string name="date_widget_name">Tarehe</string>
     <string name="date_widget_description">Inaonyesha tarehe ya leo kama ikoni ya programu</string>
+    <string name="upcoming_widget_name">Yajayo</string>
+    <string name="upcoming_widget_description">Inaonyesha matukio ya siku 10 zijazo, ikiruka siku zisizo na matukio</string>
+    <string name="widget_loading_upcoming">Inapakia matukio yajayo…</string>
+    <string name="widget_error_load_events">Imeshindwa kupakia matukio, gusa ili kufungua</string>
     <string name="widget_no_events_today">Hakuna matukio leo</string>
     <string name="widget_add_event">+ Ongeza tukio</string>
     <string name="widget_no_events">Hakuna matukio</string>
+    <string name="widget_no_upcoming_events">Hakuna matukio yajayo</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Tukio Jipya</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Hifadhi matukio kwenye faili ya ICS</string>
     <string name="settings_birthday_reminder">Ukumbusho wa Siku ya Kuzaliwa</string>
     <string name="settings_use_device_timezone">Tumia eneo la saa la kifaa</string>
-    <string name="settings_section_my_calendars">Kalenda Zangu</string>
-    <string name="settings_section_display">Onyesho</string>
+    <string name="settings_section_calendars">Kalenda</string>
+    <string name="settings_section_appearance">Mwonekano</string>
+    <string name="settings_section_creating_events">Kuunda matukio</string>
     <string name="settings_section_notifications">Arifa</string>
     <string name="settings_section_sync">Kusawazisha</string>
     <string name="settings_section_data">Nakala Rudufu &amp; Rejesha</string>
@@ -547,6 +553,11 @@
         <item quantity="one">Tukio %1$d</item>
         <item quantity="other">Matukio %1$d</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Fungua kalenda</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">Siku %1$d zaidi</item>
+        <item quantity="other">Siku %1$d zaidi</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">Siku ya kuzaliwa %1$d</item>
         <item quantity="other">Siku za kuzaliwa %1$d</item>
@@ -959,6 +970,7 @@
     <string name="cd_event_color">Rangi ya tukio</string>
     <string name="cd_checkmark">Imechaguliwa</string>
     <string name="label_device_timezone">Saa za kifaa</string>
+    <string name="color_saddlebrown">Kahawia ya tandiko</string>
     <string name="color_tomato">Nyanya</string>    <string name="color_darkorange">Machungwa iliyokolea</string>
     <string name="color_gold">Dhahabu</string>
     <string name="color_yellowgreen">Njano-kijani</string>

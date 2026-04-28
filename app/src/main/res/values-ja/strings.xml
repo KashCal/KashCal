@@ -12,9 +12,14 @@
     <string name="month_widget_description">イベントドット付きの月カレンダーグリッドを表示します</string>
     <string name="date_widget_name">日付</string>
     <string name="date_widget_description">アプリアイコンのように今日の日付を表示します</string>
+    <string name="upcoming_widget_name">予定</string>
+    <string name="upcoming_widget_description">今後10日間の予定を、空の日を省いて表示します</string>
+    <string name="widget_loading_upcoming">今後の予定を読み込み中…</string>
+    <string name="widget_error_load_events">予定を読み込めませんでした。タップして開く</string>
     <string name="widget_no_events_today">今日の予定はありません</string>
     <string name="widget_add_event">+ イベントを追加</string>
     <string name="widget_no_events">予定なし</string>
+    <string name="widget_no_upcoming_events">今後の予定なし</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">新しいイベント</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">ICSファイルにイベントを保存します</string>
     <string name="settings_birthday_reminder">誕生日リマインダー</string>
     <string name="settings_use_device_timezone">デバイスのタイムゾーンを使用</string>
-    <string name="settings_section_my_calendars">マイカレンダー</string>
-    <string name="settings_section_display">表示</string>
+    <string name="settings_section_calendars">カレンダー</string>
+    <string name="settings_section_appearance">外観</string>
+    <string name="settings_section_creating_events">イベントの作成</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同期</string>
     <string name="settings_section_data">バックアップと復元</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d件のイベント</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">カレンダーを開く</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">他%1$d日</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">%1$d件の誕生日</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">予定の色</string>
     <string name="cd_checkmark">選択済み</string>
     <string name="label_device_timezone">デバイスのタイムゾーン</string>
-    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
+    <string name="color_saddlebrown">サドルブラウン</string>    <string name="color_tomato">トマト</string>    <string name="color_darkorange">ダークオレンジ</string>
     <string name="color_gold">ゴールド</string>
     <string name="color_yellowgreen">イエローグリーン</string>
     <string name="color_limegreen">ライムグリーン</string>    <string name="color_lightseagreen">ライトシーグリーン</string>

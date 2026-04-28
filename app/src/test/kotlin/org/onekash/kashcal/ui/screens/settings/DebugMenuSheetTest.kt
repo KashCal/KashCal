@@ -33,7 +33,10 @@ class DebugMenuSheetTest {
     @Test
     fun `sync frequency options are available`() {
         assertTrue(SYNC_INTERVALS_MS.isNotEmpty())
-        assertEquals(5, SYNC_INTERVALS_MS.size)
+        // Ship-required options: 15-min floor, 1-hour default, manual-only
+        assertTrue("Must include 15-min (WorkManager floor)", SYNC_INTERVALS_MS.contains(15 * 60 * 1000L))
+        assertTrue("Must include 1-hour (default)", SYNC_INTERVALS_MS.contains(1 * 60 * 60 * 1000L))
+        assertTrue("Must include Long.MAX_VALUE (manual only)", SYNC_INTERVALS_MS.contains(Long.MAX_VALUE))
     }
 
     @Test

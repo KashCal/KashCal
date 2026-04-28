@@ -11,9 +11,14 @@
     <string name="month_widget_description">Afișează grila lunară completă cu indicatoare de evenimente</string>
     <string name="date_widget_name">Dată</string>
     <string name="date_widget_description">Afișează data de azi ca o pictogramă de aplicație</string>
+    <string name="upcoming_widget_name">Viitoare</string>
+    <string name="upcoming_widget_description">Afișează evenimentele din următoarele 10 zile, omițând zilele goale</string>
+    <string name="widget_loading_upcoming">Se încarcă evenimentele viitoare…</string>
+    <string name="widget_error_load_events">Nu s-au putut încărca evenimentele, atinge pentru a deschide</string>
     <string name="widget_no_events_today">Niciun eveniment azi</string>
     <string name="widget_add_event">+ Adaugă eveniment</string>
     <string name="widget_no_events">Niciun eveniment</string>
+    <string name="widget_no_upcoming_events">Niciun eveniment viitor</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Eveniment nou</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Salvează evenimentele într-un fișier ICS</string>
     <string name="settings_birthday_reminder">Memento zi de naștere</string>
     <string name="settings_use_device_timezone">Folosește fusul orar al dispozitivului</string>
-    <string name="settings_section_my_calendars">Calendarele mele</string>
-    <string name="settings_section_display">Afișare</string>
+    <string name="settings_section_calendars">Calendare</string>
+    <string name="settings_section_appearance">Aspect</string>
+    <string name="settings_section_creating_events">Crearea evenimentelor</string>
     <string name="settings_section_notifications">Notificări</string>
     <string name="settings_section_sync">Sincronizare</string>
     <string name="settings_section_data">Copie de rezervă &amp; restaurare</string>
@@ -582,6 +588,12 @@
         <item quantity="few">%1$d evenimente</item>
         <item quantity="other">%1$d de evenimente</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Deschide calendarul</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">încă %1$d zi</item>
+        <item quantity="few">încă %1$d zile</item>
+        <item quantity="other">încă %1$d de zile</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d zi de naștere</item>
         <item quantity="few">%1$d zile de naștere</item>
@@ -1028,7 +1040,7 @@
     <string name="label_device_timezone">Fus orar dispozitiv</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Roșu tomate</string>    <string name="color_darkorange">Portocaliu închis</string>
+    <string name="color_saddlebrown">Maro șa</string>    <string name="color_tomato">Roșu tomate</string>    <string name="color_darkorange">Portocaliu închis</string>
     <string name="color_gold">Auriu</string>
     <string name="color_yellowgreen">Galben-verzui</string>
     <string name="color_limegreen">Verde lime</string>    <string name="color_lightseagreen">Verde marin deschis</string>

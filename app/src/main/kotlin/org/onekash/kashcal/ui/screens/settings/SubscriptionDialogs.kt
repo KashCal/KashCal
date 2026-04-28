@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
-import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
-import org.onekash.kashcal.ui.components.pickers.argbToHex
+import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
+import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
  * Bottom sheet for adding a new ICS calendar subscription.
@@ -80,11 +80,10 @@ fun AddSubscriptionDialog(
     val initialUrlValue = initialUrl.orEmpty()
     var url by remember { mutableStateOf(initialUrlValue) }
     var name by remember { mutableStateOf("") }
-    var selectedColor by remember { mutableStateOf(SubscriptionColors.default) }
+    var selectedColor by remember { mutableStateOf(EventColorPalette.randomArgb()) }
     var fetchState by remember { mutableStateOf<FetchCalendarState>(FetchCalendarState.Idle) }
     var showColorPicker by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Dismiss protection state
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -194,7 +193,7 @@ fun AddSubscriptionDialog(
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
                 Text(
-                    "#${argbToHex(selectedColor)}",
+                    stringResource(EventColorPalette.stringResIdForColor(selectedColor)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -239,9 +238,8 @@ fun AddSubscriptionDialog(
 
     // Color Picker Sheet
     if (showColorPicker) {
-        ColorPickerSheet(
-            sheetState = colorPickerSheetState,
-            currentColor = selectedColor,
+        ColorPaletteSheet(
+            selectedArgb = selectedColor,
             onColorSelected = { color ->
                 selectedColor = color
                 showColorPicker = false
@@ -275,7 +273,6 @@ fun EditSubscriptionDialog(
     var selectedInterval by remember { mutableStateOf(subscription.syncIntervalHours) }
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
-    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     // Dismiss protection state
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -344,7 +341,7 @@ fun EditSubscriptionDialog(
                         .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                 )
                 Text(
-                    "#${argbToHex(selectedColor)}",
+                    stringResource(EventColorPalette.stringResIdForColor(selectedColor)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -400,9 +397,8 @@ fun EditSubscriptionDialog(
 
     // Color Picker Sheet
     if (showColorPicker) {
-        ColorPickerSheet(
-            sheetState = colorPickerSheetState,
-            currentColor = selectedColor,
+        ColorPaletteSheet(
+            selectedArgb = selectedColor,
             onColorSelected = { color ->
                 selectedColor = color
                 showColorPicker = false

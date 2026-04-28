@@ -11,9 +11,14 @@
     <string name="month_widget_description">நிகழ்வு குறிப்பான் புள்ளிகளுடன் முழு மாத நாட்காட்டி கட்டத்தைக் காட்டுகிறது</string>
     <string name="date_widget_name">தேதி</string>
     <string name="date_widget_description">ஆப்ப் ஐகான் போல் இன்றைய தேதியைக் காட்டுகிறது</string>
+    <string name="upcoming_widget_name">வரவிருக்கும்</string>
+    <string name="upcoming_widget_description">காலியான நாட்களைத் தவிர்த்து, அடுத்த 10 நாட்களின் நிகழ்வுகளைக் காட்டுகிறது</string>
+    <string name="widget_loading_upcoming">வரவிருக்கும் நிகழ்வுகள் ஏற்றப்படுகின்றன…</string>
+    <string name="widget_error_load_events">நிகழ்வுகளை ஏற்ற முடியவில்லை, திறக்கத் தட்டவும்</string>
     <string name="widget_no_events_today">இன்று நிகழ்வுகள் இல்லை</string>
     <string name="widget_add_event">+ நிகழ்வு சேர்</string>
     <string name="widget_no_events">நிகழ்வுகள் இல்லை</string>
+    <string name="widget_no_upcoming_events">வரவிருக்கும் நிகழ்வுகள் இல்லை</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">புதிய நிகழ்வு</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">நிகழ்வுகளை ICS கோப்பில் சேமி</string>
     <string name="settings_birthday_reminder">பிறந்தநாள் நினைவூட்டல்</string>
     <string name="settings_use_device_timezone">சாதன நேரமண்டலத்தைப் பயன்படுத்து</string>
-    <string name="settings_section_my_calendars">எனது நாட்காட்டிகள்</string>
-    <string name="settings_section_display">காட்சி</string>
+    <string name="settings_section_calendars">நாள்காட்டிகள்</string>
+    <string name="settings_section_appearance">தோற்றம்</string>
+    <string name="settings_section_creating_events">நிகழ்வுகளை உருவாக்குதல்</string>
     <string name="settings_section_notifications">அறிவிப்புகள்</string>
     <string name="settings_section_sync">ஒத்திசைவு</string>
     <string name="settings_section_data">காப்புப்பிரதி மற்றும் மீட்டெடுப்பு</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d நிகழ்வு</item>
         <item quantity="other">%1$d நிகழ்வுகள்</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">நாட்காட்டியைத் திற</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">மேலும் %1$d நாள்</item>
+        <item quantity="other">மேலும் %1$d நாட்கள்</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d பிறந்தநாள்</item>
         <item quantity="other">%1$d பிறந்தநாட்கள்</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">சியான்</string>
     <string name="color_blue">நீலம்</string>
     <string name="color_purple">ஊதா</string>
+    <string name="color_saddlebrown">சேடில் பிரவுன்</string>
     <string name="color_tomato">தக்காளி</string>    <string name="color_darkorange">அடர் ஆரஞ்சு</string>
     <string name="color_gold">தங்கம்</string>
     <string name="color_yellowgreen">மஞ்சள் பச்சை</string>

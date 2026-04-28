@@ -849,6 +849,16 @@ class DateTimeUtilsTest {
         assertEquals("48 hours", DateTimeUtils.formatSyncInterval(48 * 60 * 60 * 1000L, resources))
     }
 
+    @Test
+    fun `formatSyncInterval formats 15-minute interval as minutes`() {
+        assertEquals("15 minutes", DateTimeUtils.formatSyncInterval(15 * 60 * 1000L, resources))
+    }
+
+    @Test
+    fun `formatSyncInterval formats 30-minute interval as minutes`() {
+        assertEquals("30 minutes", DateTimeUtils.formatSyncInterval(30 * 60 * 1000L, resources))
+    }
+
     // ==================== Format Event Date Time Tests ====================
 
     @Test

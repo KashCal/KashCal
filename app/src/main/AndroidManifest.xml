@@ -347,6 +347,19 @@
                 android:resource="@xml/date_widget_info" />
         </receiver>
 
+        <!-- Upcoming Events widget receiver (10-day rolling horizon) -->
+        <receiver
+            android:name=".widget.UpcomingWidgetReceiver"
+            android:exported="true"
+            android:label="@string/upcoming_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/upcoming_widget_info" />
+        </receiver>
+
         <!-- Account authenticator for CalendarProvider registration.
              Registers org.onekash.kashcal account type with Android.
              exported="false" — only the system account framework binds to this. -->

@@ -11,9 +11,14 @@
     <string name="month_widget_description">ഇവന്റ് സൂചനാ ഡോട്ടുകളോടെ പൂർണ്ണ മാസ കലണ്ടർ ഗ്രിഡ് കാണിക്കുന്നു</string>
     <string name="date_widget_name">തീയതി</string>
     <string name="date_widget_description">ഇന്നത്തെ തീയതി ആപ്പ് ഐക്കൺ പോലെ കാണിക്കുന്നു</string>
+    <string name="upcoming_widget_name">വരാനിരിക്കുന്നവ</string>
+    <string name="upcoming_widget_description">ശൂന്യമായ ദിവസങ്ങൾ ഒഴിവാക്കി, അടുത്ത 10 ദിവസത്തെ ഇവന്റുകൾ കാണിക്കുന്നു</string>
+    <string name="widget_loading_upcoming">വരാനിരിക്കുന്ന ഇവന്റുകൾ ലോഡ് ചെയ്യുന്നു…</string>
+    <string name="widget_error_load_events">ഇവന്റുകൾ ലോഡ് ചെയ്യാനായില്ല, തുറക്കാൻ ടാപ്പ് ചെയ്യുക</string>
     <string name="widget_no_events_today">ഇന്ന് ഇവന്റുകൾ ഇല്ല</string>
     <string name="widget_add_event">+ ഇവന്റ് ചേർക്കുക</string>
     <string name="widget_no_events">ഇവന്റുകൾ ഇല്ല</string>
+    <string name="widget_no_upcoming_events">വരാനിരിക്കുന്ന ഇവന്റുകൾ ഇല്ല</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">പുതിയ ഇവന്റ്</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ഇവന്റുകൾ ICS ഫയലിലേക്ക് സേവ് ചെയ്യുക</string>
     <string name="settings_birthday_reminder">ജന്മദിന റിമൈൻഡർ</string>
     <string name="settings_use_device_timezone">ഉപകരണ ടൈംസോൺ ഉപയോഗിക്കുക</string>
-    <string name="settings_section_my_calendars">എന്റെ കലണ്ടറുകൾ</string>
-    <string name="settings_section_display">ഡിസ്പ്ലേ</string>
+    <string name="settings_section_calendars">കലണ്ടറുകൾ</string>
+    <string name="settings_section_appearance">രൂപഭാവം</string>
+    <string name="settings_section_creating_events">ഇവന്റുകൾ സൃഷ്ടിക്കൽ</string>
     <string name="settings_section_notifications">അറിയിപ്പുകൾ</string>
     <string name="settings_section_sync">സിങ്ക്</string>
     <string name="settings_section_data">ബാക്കപ്പും പുനഃസ്ഥാപനവും</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d ഇവന്റ്</item>
         <item quantity="other">%1$d ഇവന്റുകൾ</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">കലണ്ടർ തുറക്കുക</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d ദിവസം കൂടി</item>
+        <item quantity="other">%1$d ദിവസങ്ങൾ കൂടി</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ജന്മദിനം</item>
         <item quantity="other">%1$d ജന്മദിനങ്ങൾ</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">സയാൻ</string>
     <string name="color_blue">നീല</string>
     <string name="color_purple">പർപ്പിൾ</string>
+    <string name="color_saddlebrown">സാഡിൽ ബ്രൗൺ</string>
     <string name="color_tomato">തക്കാളി</string>    <string name="color_darkorange">കടുംഓറഞ്ച്</string>
     <string name="color_gold">സ്വർണം</string>
     <string name="color_yellowgreen">മഞ്ഞപ്പച്ച</string>

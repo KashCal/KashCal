@@ -33,7 +33,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,8 +46,8 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
-import org.onekash.kashcal.ui.components.pickers.ColorPickerSheet
-import org.onekash.kashcal.ui.components.pickers.argbToHex
+import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
+import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.formatReminderOption
 import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
 import org.onekash.kashcal.util.DateTimeUtils
@@ -204,10 +203,8 @@ private fun ContactEventSection(
     onColorChange: (Int) -> Unit,
     onReminderChange: (Int) -> Unit
 ) {
-    var selectedColor by remember(calendarColor) { mutableIntStateOf(calendarColor) }
     var showReminderPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
-    val colorPickerSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     Column(
         modifier = Modifier
@@ -279,11 +276,11 @@ private fun ContactEventSection(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(Color(selectedColor))
+                            .background(Color(calendarColor))
                             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                     )
                     Text(
-                        "#${argbToHex(selectedColor)}",
+                        stringResource(EventColorPalette.stringResIdForColor(calendarColor)),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Spacer(modifier = Modifier.weight(1f))
@@ -342,12 +339,10 @@ private fun ContactEventSection(
 
     // Color picker sheet
     if (showColorPicker) {
-        ColorPickerSheet(
-            sheetState = colorPickerSheetState,
-            currentColor = selectedColor,
+        ColorPaletteSheet(
+            selectedArgb = calendarColor,
             onColorSelected = { color ->
-                selectedColor = color
-                onColorChange(color)
+                if (color != calendarColor) onColorChange(color)
                 showColorPicker = false
             },
             onDismiss = { showColorPicker = false }

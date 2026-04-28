@@ -11,9 +11,14 @@
     <string name="month_widget_description">ইভেন্ট সূচক বিন্দুসহ পূর্ণ মাসের ক্যালেন্ডার গ্রিড দেখায়</string>
     <string name="date_widget_name">তারিখ</string>
     <string name="date_widget_description">অ্যাপ আইকনের মতো আজকের তারিখ দেখায়</string>
+    <string name="upcoming_widget_name">আসন্ন</string>
+    <string name="upcoming_widget_description">পরবর্তী ১০ দিনের ইভেন্ট দেখায়, খালি দিন বাদ দিয়ে</string>
+    <string name="widget_loading_upcoming">আসন্ন ইভেন্ট লোড হচ্ছে…</string>
+    <string name="widget_error_load_events">ইভেন্ট লোড করা যায়নি, খুলতে ট্যাপ করুন</string>
     <string name="widget_no_events_today">আজ কোনো ইভেন্ট নেই</string>
     <string name="widget_add_event">+ ইভেন্ট যোগ করুন</string>
     <string name="widget_no_events">কোনো ইভেন্ট নেই</string>
+    <string name="widget_no_upcoming_events">কোনো আসন্ন ইভেন্ট নেই</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">নতুন ইভেন্ট</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ইভেন্ট ICS ফাইলে সংরক্ষণ করুন</string>
     <string name="settings_birthday_reminder">জন্মদিনের রিমাইন্ডার</string>
     <string name="settings_use_device_timezone">ডিভাইসের টাইমজোন ব্যবহার করুন</string>
-    <string name="settings_section_my_calendars">আমার ক্যালেন্ডার</string>
-    <string name="settings_section_display">প্রদর্শন</string>
+    <string name="settings_section_calendars">ক্যালেন্ডার</string>
+    <string name="settings_section_appearance">চেহারা</string>
+    <string name="settings_section_creating_events">ইভেন্ট তৈরি</string>
     <string name="settings_section_notifications">বিজ্ঞপ্তি</string>
     <string name="settings_section_sync">সিংক</string>
     <string name="settings_section_data">ব্যাকআপ ও রিস্টোর</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d ইভেন্ট</item>
         <item quantity="other">%1$d ইভেন্ট</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ক্যালেন্ডার খুলুন</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">আরও %1$d দিন</item>
+        <item quantity="other">আরও %1$d দিন</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d জন্মদিন</item>
         <item quantity="other">%1$d জন্মদিন</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">সায়ান</string>
     <string name="color_blue">নীল</string>
     <string name="color_purple">বেগুনি</string>
+    <string name="color_saddlebrown">স্যাডল ব্রাউন</string>
     <string name="color_tomato">টমেটো</string>    <string name="color_darkorange">গাঢ় কমলা</string>
     <string name="color_gold">সোনালি</string>
     <string name="color_yellowgreen">হলুদ সবুজ</string>

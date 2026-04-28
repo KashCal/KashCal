@@ -11,9 +11,14 @@
     <string name="month_widget_description">ಈವೆಂಟ್ ಸೂಚಕ ಚುಕ್ಕಿಗಳೊಂದಿಗೆ ಪೂರ್ಣ ತಿಂಗಳ ಕ್ಯಾಲೆಂಡರ್ ಗ್ರಿಡ್ ತೋರಿಸುತ್ತದೆ</string>
     <string name="date_widget_name">ದಿನಾಂಕ</string>
     <string name="date_widget_description">ಇಂದಿನ ದಿನಾಂಕವನ್ನು ಆ್ಯಪ್ ಐಕಾನ್‌ನಂತೆ ತೋರಿಸುತ್ತದೆ</string>
+    <string name="upcoming_widget_name">ಮುಂಬರುವ</string>
+    <string name="upcoming_widget_description">ಖಾಲಿ ದಿನಗಳನ್ನು ಬಿಟ್ಟು, ಮುಂದಿನ 10 ದಿನಗಳ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸುತ್ತದೆ</string>
+    <string name="widget_loading_upcoming">ಮುಂಬರುವ ಈವೆಂಟ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ…</string>
+    <string name="widget_error_load_events">ಈವೆಂಟ್‌ಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗಲಿಲ್ಲ, ತೆರೆಯಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
     <string name="widget_no_events_today">ಇಂದು ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="widget_add_event">+ ಈವೆಂಟ್ ಸೇರಿಸಿ</string>
     <string name="widget_no_events">ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
+    <string name="widget_no_upcoming_events">ಮುಂಬರುವ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">ಹೊಸ ಈವೆಂಟ್</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">ಈವೆಂಟ್‌ಗಳನ್ನು ICS ಫೈಲ್‌ಗೆ ಉಳಿಸಿ</string>
     <string name="settings_birthday_reminder">ಹುಟ್ಟುಹಬ್ಬ ರಿಮೈಂಡರ್</string>
     <string name="settings_use_device_timezone">ಸಾಧನದ ಟೈಮ್‌ಜೋನ್ ಬಳಸಿ</string>
-    <string name="settings_section_my_calendars">ನನ್ನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
-    <string name="settings_section_display">ಪ್ರದರ್ಶನ</string>
+    <string name="settings_section_calendars">ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
+    <string name="settings_section_appearance">ಗೋಚರಿಕೆ</string>
+    <string name="settings_section_creating_events">ಈವೆಂಟ್‌ಗಳನ್ನು ರಚಿಸುವುದು</string>
     <string name="settings_section_notifications">ಅಧಿಸೂಚನೆಗಳು</string>
     <string name="settings_section_sync">ಸಿಂಕ್</string>
     <string name="settings_section_data">ಬ್ಯಾಕಪ್ ಮತ್ತು ಮರುಸ್ಥಾಪನೆ</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d ಈವೆಂಟ್</item>
         <item quantity="other">%1$d ಈವೆಂಟ್‌ಗಳು</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">ಕ್ಯಾಲೆಂಡರ್ ತೆರೆಯಿರಿ</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">ಇನ್ನೂ %1$d ದಿನ</item>
+        <item quantity="other">ಇನ್ನೂ %1$d ದಿನಗಳು</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d ಹುಟ್ಟುಹಬ್ಬ</item>
         <item quantity="other">%1$d ಹುಟ್ಟುಹಬ್ಬಗಳು</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">ಸಯಾನ್</string>
     <string name="color_blue">ನೀಲಿ</string>
     <string name="color_purple">ನೇರಳೆ</string>
+    <string name="color_saddlebrown">ಸ್ಯಾಡಲ್ ಬ್ರೌನ್</string>
     <string name="color_tomato">ಟೊಮೆಟೊ</string>    <string name="color_darkorange">ಗಾಢ ಕಿತ್ತಳೆ</string>
     <string name="color_gold">ಚಿನ್ನ</string>
     <string name="color_yellowgreen">ಹಳದಿ ಹಸಿರು</string>

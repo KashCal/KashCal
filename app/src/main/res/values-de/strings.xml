@@ -12,9 +12,14 @@
     <string name="month_widget_description">Zeigt ein Monatskalender-Raster mit Terminpunkten</string>
     <string name="date_widget_name">Datum</string>
     <string name="date_widget_description">Zeigt das heutige Datum als App-Symbol</string>
+    <string name="upcoming_widget_name">Anstehend</string>
+    <string name="upcoming_widget_description">Zeigt Termine der nächsten 10 Tage und überspringt leere Tage</string>
+    <string name="widget_loading_upcoming">Termine werden geladen…</string>
+    <string name="widget_error_load_events">Termine konnten nicht geladen werden, tippe zum Öffnen</string>
     <string name="widget_no_events_today">Keine Termine heute</string>
     <string name="widget_add_event">+ Termin hinzufügen</string>
     <string name="widget_no_events">Keine Termine</string>
+    <string name="widget_no_upcoming_events">Keine anstehenden Termine</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Neuer Termin</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Termine in einer ICS-Datei speichern</string>
     <string name="settings_birthday_reminder">Geburtstagserinnerung</string>
     <string name="settings_use_device_timezone">Geräte-Zeitzone verwenden</string>
-    <string name="settings_section_my_calendars">Meine Kalender</string>
-    <string name="settings_section_display">Anzeige</string>
+    <string name="settings_section_calendars">Kalender</string>
+    <string name="settings_section_appearance">Aussehen</string>
+    <string name="settings_section_creating_events">Ereignisse erstellen</string>
     <string name="settings_section_notifications">Benachrichtigungen</string>
     <string name="settings_section_sync">Synchronisierung</string>
     <string name="settings_section_data">Sichern &amp; Wiederherstellen</string>
@@ -576,6 +582,11 @@
         <item quantity="one">%1$d Termin</item>
         <item quantity="other">%1$d Termine</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Kalender öffnen</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d weiterer Tag</item>
+        <item quantity="other">%1$d weitere Tage</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d Geburtstag</item>
         <item quantity="other">%1$d Geburtstage</item>
@@ -977,6 +988,7 @@
     <string name="label_calendar_default">Kalenderstandard</string>
     <string name="label_custom">Benutzerdefiniert</string>
     <string name="cd_event_color">Terminfarbe</string>
+    <string name="color_saddlebrown">Sattelbraun</string>
     <string name="color_tomato">Tomate</string>    <string name="color_darkorange">Dunkelorange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Gelbgrün</string>

@@ -3,9 +3,9 @@ package org.onekash.kashcal.widget
 import android.content.Context
 import android.os.RemoteException
 import android.util.Log
-import androidx.glance.appwidget.updateAll
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CancellationException
 import java.io.IOException
 
 private const val TAG = "WidgetRetryWorker"
@@ -29,12 +29,11 @@ class WidgetRetryWorker(
     override suspend fun doWork(): Result {
         Log.d(TAG, "WidgetRetryWorker running (attempt ${runAttemptCount + 1})")
         return try {
-            AgendaWidget().updateAll(applicationContext)
-            WeekWidget().updateAll(applicationContext)
-            DateWidget().updateAll(applicationContext)
-            MonthWidget().updateAll(applicationContext)
+            refreshAllWidgets(applicationContext)
             Log.d(TAG, "Widget update succeeded on retry")
             Result.success()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             if (isTransientError(e) && runAttemptCount < MAX_RETRY_ATTEMPTS) {
                 Log.w(TAG, "Transient error, retrying (attempt ${runAttemptCount + 1}/$MAX_RETRY_ATTEMPTS)", e)

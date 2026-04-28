@@ -12,9 +12,14 @@
     <string name="month_widget_description">Ipinapakita ang buong buwanang kalendaryo na may mga indicator dot ng event</string>
     <string name="date_widget_name">Petsa</string>
     <string name="date_widget_description">Ipinapakita ang petsa ngayon tulad ng app icon</string>
+    <string name="upcoming_widget_name">Paparating</string>
+    <string name="upcoming_widget_description">Ipinapakita ang mga event sa susunod na 10 araw, nilalaktawan ang walang laman na araw</string>
+    <string name="widget_loading_upcoming">Naglo-load ng mga paparating na event…</string>
+    <string name="widget_error_load_events">Hindi ma-load ang mga event, i-tap upang buksan</string>
     <string name="widget_no_events_today">Walang event ngayon</string>
     <string name="widget_add_event">+ Magdagdag ng event</string>
     <string name="widget_no_events">Walang event</string>
+    <string name="widget_no_upcoming_events">Walang paparating na event</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Bagong Event</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">I-save ang mga event sa ICS file</string>
     <string name="settings_birthday_reminder">Paalala ng Kaarawan</string>
     <string name="settings_use_device_timezone">Gamitin ang timezone ng device</string>
-    <string name="settings_section_my_calendars">Mga Kalendaryo Ko</string>
-    <string name="settings_section_display">Display</string>
+    <string name="settings_section_calendars">Mga Kalendaryo</string>
+    <string name="settings_section_appearance">Hitsura</string>
+    <string name="settings_section_creating_events">Paggawa ng mga kaganapan</string>
     <string name="settings_section_notifications">Mga Notification</string>
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d event</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Buksan ang kalendaryo</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d pang araw</item>
+        <item quantity="other">%1$d pang araw</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d kaarawan</item>
         <item quantity="other">%1$d kaarawan</item>
@@ -987,6 +998,7 @@
     <string name="cd_event_color">Kulay ng event</string>
     <string name="cd_checkmark">Napili</string>
     <string name="label_device_timezone">Time zone ng device</string>
+    <string name="color_saddlebrown">Kayumangging siya</string>
     <string name="color_tomato">Kamatis</string>    <string name="color_darkorange">Madilim na kahel</string>
     <string name="color_gold">Ginto</string>
     <string name="color_yellowgreen">Dilaw-berde</string>

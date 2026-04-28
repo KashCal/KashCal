@@ -1,18 +1,34 @@
 package org.onekash.kashcal.domain.quickadd
 
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Locale
 
 class QuickAddParserTest {
 
     // Reference: Monday April 13, 2026, 10:00 AM
     private val reference = LocalDateTime.of(2026, 4, 13, 10, 0)
+
+    private var originalLocale: Locale? = null
+
+    @Before
+    fun pinLocaleToUS() {
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+    }
+
+    @After
+    fun restoreLocale() {
+        originalLocale?.let { Locale.setDefault(it) }
+    }
 
     private fun parse(input: String) = QuickAddParser.parse(input, reference)
 
@@ -82,6 +98,19 @@ class QuickAddParserTest {
     fun `neither date nor time gives LOW confidence`() {
         val result = parse("coffee with sarah")
         assertEquals(ParseConfidence.LOW, result.confidence)
+    }
+
+    @Test
+    fun `rrule only gives MEDIUM confidence`() {
+        val result = parse("weekly standup")
+        assertEquals(ParseConfidence.MEDIUM, result.confidence)
+        assertNotNull(result.rrule)
+    }
+
+    @Test
+    fun `rrule plus date plus time still gives HIGH confidence`() {
+        val result = parse("Standup every Monday at 10am")
+        assertEquals(ParseConfidence.HIGH, result.confidence)
     }
 
     // ==================== isAllDay ====================
@@ -226,6 +255,109 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(14, 0), result.startTime)
     }
 
+    // ==================== Locale-aware ambiguous dates (issue #194) ====================
+
+    @Test
+    fun `5 slash 10 slash 2026 under en_GB locale resolves to 5 October 2026`() {
+        val result = QuickAddParser.parse("meeting 5/10/2026", reference, Locale.UK)
+        assertEquals("meeting", result.title)
+        assertEquals(LocalDate.of(2026, 10, 5), result.startDate)
+    }
+
+    @Test
+    fun `5 slash 10 slash 2026 under en_US locale resolves to May 10 2026`() {
+        val result = QuickAddParser.parse("meeting 5/10/2026", reference, Locale.US)
+        assertEquals("meeting", result.title)
+        assertEquals(LocalDate.of(2026, 5, 10), result.startDate)
+    }
+
+    @Test
+    fun `13 slash 5 slash 2026 resolves to 13 May 2026 in any locale`() {
+        assertEquals(LocalDate.of(2026, 5, 13),
+            QuickAddParser.parse("meeting 13/5/2026", reference, Locale.US).startDate)
+        assertEquals(LocalDate.of(2026, 5, 13),
+            QuickAddParser.parse("meeting 13/5/2026", reference, Locale.UK).startDate)
+    }
+
+    @Test
+    fun `5 slash 13 slash 2026 resolves to May 13 2026 in any locale`() {
+        assertEquals(LocalDate.of(2026, 5, 13),
+            QuickAddParser.parse("meeting 5/13/2026", reference, Locale.US).startDate)
+        assertEquals(LocalDate.of(2026, 5, 13),
+            QuickAddParser.parse("meeting 5/13/2026", reference, Locale.UK).startDate)
+    }
+
+    @Test
+    fun `ISO 2026 dash 10 dash 05 resolves to 5 October 2026 in any locale`() {
+        assertEquals(LocalDate.of(2026, 10, 5),
+            QuickAddParser.parse("meeting 2026-10-05", reference, Locale.UK).startDate)
+        assertEquals(LocalDate.of(2026, 10, 5),
+            QuickAddParser.parse("meeting 2026-10-05", reference, Locale.US).startDate)
+    }
+
+    @Test
+    fun `dot-separated 5 dot 10 dot 2026 always DMY regardless of locale`() {
+        assertEquals(LocalDate.of(2026, 10, 5),
+            QuickAddParser.parse("meeting 5.10.2026", reference, Locale.US).startDate)
+        assertEquals(LocalDate.of(2026, 10, 5),
+            QuickAddParser.parse("meeting 5.10.2026", reference, Locale.UK).startDate)
+    }
+
+    // ==================== Orphaned tokens preserved in title (issue #194 follow-up Bug D) ====================
+
+    @Test
+    fun `unclaimed MONTH appears in title`() {
+        val result = parse("Discuss February budget tomorrow")
+        assertEquals("Discuss February budget", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `unclaimed UNIT appears in title`() {
+        val result = parse("Year end party tomorrow")
+        assertEquals("Year end party", result.title)
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `unclaimed MERIDIEM at start appears in title`() {
+        val result = parse("AM coffee tomorrow")
+        assertTrue("'AM' should be in title: '${result.title}'", result.title.contains("AM", ignoreCase = true))
+        assertTrue("'coffee' should be in title", result.title.contains("coffee", ignoreCase = true))
+        assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
+    }
+
+    @Test
+    fun `unclaimed TIMEZONE at start appears in title`() {
+        val result = parse("EST specialist meeting Friday")
+        assertTrue("'EST' should be in title: '${result.title}'", result.title.contains("EST", ignoreCase = true))
+        assertTrue("'specialist meeting' should be in title", result.title.contains("specialist meeting", ignoreCase = true))
+    }
+
+    @Test
+    fun `claimed DATE_KEYWORD all day stays out of title`() {
+        val result = parse("Team outing all day")
+        assertEquals("Team outing", result.title)
+        assertTrue(result.isAllDay)
+    }
+
+    @Test
+    fun `claimed WEEKDAY and DATE_KEYWORD stay out of title`() {
+        val result = parse("tomorrow at 3pm Team standup")
+        assertEquals("Team standup", result.title)
+    }
+
+    @Test
+    fun `unclaimed WEEKDAY appears in title`() {
+        // "Friday" in a non-date position — if no other date reference is present,
+        // WeekdayRule will claim it as a date, so it should NOT leak. But for a
+        // construction like "Happy Friday" (typo/name), the WEEKDAY is consumed.
+        // This test documents the consumption invariant.
+        val result = parse("Happy Friday")
+        // WeekdayRule consumes Friday as the bare weekday date
+        assertEquals("Happy", result.title)
+    }
+
     // ==================== Dot-separated time ====================
 
     @Test
@@ -309,6 +441,14 @@ class QuickAddParserTest {
         assertEquals("Meeting", result.title)
         assertEquals(LocalTime.of(10, 30), result.startTime)
         assertEquals(LocalTime.of(11, 30), result.endTime)
+    }
+
+    @Test
+    fun `Meeting 5pm-6 parses as TIME_RANGE with inherited pm`() {
+        val result = parse("Meeting 5pm-6")
+        assertEquals("Meeting", result.title)
+        assertEquals(LocalTime.of(17, 0), result.startTime)
+        assertEquals(LocalTime.of(18, 0), result.endTime)
     }
 
     // ==================== P2: Location (US9) ====================

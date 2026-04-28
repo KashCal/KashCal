@@ -11,9 +11,14 @@
     <string name="month_widget_description">Прикажува целосна месечна мрежа со индикатори за настани</string>
     <string name="date_widget_name">Датум</string>
     <string name="date_widget_description">Го прикажува денешниот датум како икона на апликација</string>
+    <string name="upcoming_widget_name">Претстојни</string>
+    <string name="upcoming_widget_description">Ги прикажува настаните за наредните 10 дена, прескокнувајќи ги празните денови</string>
+    <string name="widget_loading_upcoming">Се вчитуваат претстојни настани…</string>
+    <string name="widget_error_load_events">Настаните не можеа да се вчитаат, допрете за отворање</string>
     <string name="widget_no_events_today">Нема настани денес</string>
     <string name="widget_add_event">+ Додај настан</string>
     <string name="widget_no_events">Нема настани</string>
+    <string name="widget_no_upcoming_events">Нема претстојни настани</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Нов настан</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Зачувај ги настаните во ICS датотека</string>
     <string name="settings_birthday_reminder">Потсетник за роденден</string>
     <string name="settings_use_device_timezone">Користи временска зона на уредот</string>
-    <string name="settings_section_my_calendars">Мои календари</string>
-    <string name="settings_section_display">Приказ</string>
+    <string name="settings_section_calendars">Календари</string>
+    <string name="settings_section_appearance">Изглед</string>
+    <string name="settings_section_creating_events">Создавање настани</string>
     <string name="settings_section_notifications">Известувања</string>
     <string name="settings_section_sync">Синхронизација</string>
     <string name="settings_section_data">Резервна копија и враќање</string>
@@ -572,6 +578,11 @@
         <item quantity="one">%1$d настан</item>
         <item quantity="other">%1$d настани</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Отвори календар</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">уште %1$d ден</item>
+        <item quantity="other">уште %1$d дена</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d роденден</item>
         <item quantity="other">%1$d родендени</item>
@@ -988,7 +999,7 @@
     <string name="label_device_timezone">Временска зона на уредот</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Доматно црвена</string>    <string name="color_darkorange">Темно портокалова</string>
+    <string name="color_saddlebrown">Седлесто кафеава</string>    <string name="color_tomato">Доматно црвена</string>    <string name="color_darkorange">Темно портокалова</string>
     <string name="color_gold">Златна</string>
     <string name="color_yellowgreen">Жолто-зелена</string>
     <string name="color_limegreen">Лимета зелена</string>    <string name="color_lightseagreen">Светло морско зелена</string>

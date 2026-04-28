@@ -31,6 +31,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.util.Locale
 import java.util.TimeZone
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -46,10 +47,14 @@ class QuickAddViewModelTest {
     private val reference = LocalDateTime.of(2026, 4, 13, 10, 0)
     private val zone = ZoneId.of("America/New_York")
 
+    private var originalLocale: Locale? = null
+
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         TimeZone.setDefault(TimeZone.getTimeZone(zone))
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
 
         // Default DataStore stubs — mock the Flow properties
         every { dataStore.defaultEventDuration } returns flowOf(60)
@@ -74,6 +79,7 @@ class QuickAddViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
         TimeZone.setDefault(null)
+        originalLocale?.let { Locale.setDefault(it) }
     }
 
     // ==================== Parsing ====================
@@ -109,6 +115,28 @@ class QuickAddViewModelTest {
 
         val result = viewModel.parseResult.value
         assertEquals(LocalDate.of(2026, 12, 26), result.startDate)
+    }
+
+    @Test
+    fun `onInputChanged uses system locale for ambiguous slash date - UK`() = runTest {
+        Locale.setDefault(Locale.UK)
+        viewModel.onInputChanged("meeting 5/10/2026")
+        advanceUntilIdle()
+
+        val result = viewModel.parseResult.value
+        assertEquals("meeting", result.title)
+        assertEquals(LocalDate.of(2026, 10, 5), result.startDate)
+    }
+
+    @Test
+    fun `onInputChanged uses system locale for ambiguous slash date - US`() = runTest {
+        Locale.setDefault(Locale.US)
+        viewModel.onInputChanged("meeting 5/10/2026")
+        advanceUntilIdle()
+
+        val result = viewModel.parseResult.value
+        assertEquals("meeting", result.title)
+        assertEquals(LocalDate.of(2026, 5, 10), result.startDate)
     }
 
     // ==================== isSaveEnabled ====================
@@ -227,6 +255,83 @@ class QuickAddViewModelTest {
         val event = result.getOrNull()!!
         assertNotNull(event.rrule)
         assertTrue(event.rrule!!.contains("FREQ=WEEKLY"))
+    }
+
+    // ==================== Multi-day events (issue #194 follow-up: Bug A) ====================
+
+    @Test
+    fun `save for all-day multi-day 'Conference Friday to Sunday' sets endTs to end-of-Sunday`() = runTest {
+        viewModel.onInputChanged("Conference Friday to Sunday")
+        advanceUntilIdle()
+
+        val result = viewModel.save()
+        advanceUntilIdle()
+
+        val event = result.getOrNull()!!
+        assertTrue("Multi-day 'Friday to Sunday' with no time is all-day", event.isAllDay)
+        // Friday Apr 17 → Sunday Apr 19. startTs is Fri UTC midnight.
+        val expectedStart = LocalDate.of(2026, 4, 17)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val sundayMidnightUtc = LocalDate.of(2026, 4, 19)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val expectedEnd = sundayMidnightUtc + (24 * 60 * 60 * 1000L) - 1
+        assertEquals(expectedStart, event.startTs)
+        assertEquals(expectedEnd, event.endTs)
+    }
+
+    @Test
+    fun `save for timed multi-day without explicit end time uses default duration on end date`() = runTest {
+        every { dataStore.defaultEventDuration } returns flowOf(60) // 60 minutes
+
+        viewModel.onInputChanged("Trip Monday to Wednesday at 3pm")
+        advanceUntilIdle()
+
+        val result = viewModel.save()
+        advanceUntilIdle()
+
+        val event = result.getOrNull()!!
+        assertFalse(event.isAllDay)
+        // Parser: startDate=Mon Apr 20 (bare "Monday" from ref Mon Apr 13 advances 7),
+        //         endDate=Wed Apr 22, startTime=15:00, endTime=null
+        // VM should produce: startTs = Mon Apr 20 15:00, endTs = Wed Apr 22 15:00 + 60min = Wed Apr 22 16:00
+        val expectedStart = LocalDateTime.of(2026, 4, 20, 15, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        val expectedEnd = LocalDateTime.of(2026, 4, 22, 16, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        assertEquals(expectedStart, event.startTs)
+        assertEquals(expectedEnd, event.endTs)
+    }
+
+    @Test
+    fun `toCalendarIntentData for all-day multi-day sets endTimeMillis to end-of-Sunday`() = runTest {
+        viewModel.onInputChanged("Conference Friday to Sunday")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertTrue(intentData.isAllDay)
+        assertNotNull(intentData.startTimeMillis)
+        assertNotNull(intentData.endTimeMillis)
+        val sundayMidnightUtc = LocalDate.of(2026, 4, 19)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val expectedEnd = sundayMidnightUtc + (24 * 60 * 60 * 1000L) - 1
+        assertEquals(expectedEnd, intentData.endTimeMillis)
+    }
+
+    @Test
+    fun `toCalendarIntentData for timed multi-day with implicit end time preserves endDate`() = runTest {
+        every { dataStore.defaultEventDuration } returns flowOf(60)
+
+        viewModel.onInputChanged("Trip Monday to Wednesday at 3pm")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+
+        assertFalse(intentData.isAllDay)
+        // Wed Apr 22 15:00 + 60min = Wed Apr 22 16:00
+        val expectedEnd = LocalDateTime.of(2026, 4, 22, 16, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        assertEquals(expectedEnd, intentData.endTimeMillis)
     }
 
     @Test

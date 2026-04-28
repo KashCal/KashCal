@@ -241,6 +241,8 @@ dependencies {
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation("net.sf.kxml:kxml2:2.3.0")  // XmlPullParser for JVM tests
+    testImplementation(libs.androidx.glance.testing)
+    testImplementation(libs.androidx.glance.appwidget.testing)
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)

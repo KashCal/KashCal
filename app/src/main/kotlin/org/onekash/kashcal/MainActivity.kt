@@ -760,6 +760,7 @@ class MainActivity : ComponentActivity() {
                         parseResult = parseResult,
                         isSaveEnabled = isSaveEnabled,
                         isSaving = isSaving,
+                        timeFormat = uiState.timeFormat,
                         onDismiss = { showQuickAddDialog = false },
                         onSave = {
                             coroutineScope.launch {

@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Link
@@ -46,7 +44,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -57,8 +54,6 @@ import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.AlertsSheet
-import org.onekash.kashcal.ui.screens.settings.AccentColors
-import org.onekash.kashcal.ui.screens.settings.NewBadge
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
@@ -68,6 +63,7 @@ import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
+import org.onekash.kashcal.ui.screens.settings.BetaBadge
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
@@ -535,8 +531,8 @@ private fun FlatSettingsContent(
             .fillMaxSize()
             .verticalScroll(scrollState)
     ) {
-        // ==================== MY CALENDARS Section ====================
-        SectionHeader(stringResource(R.string.settings_section_my_calendars))
+        // ==================== CALENDARS Section ====================
+        SectionHeader(stringResource(R.string.settings_section_calendars))
         SettingsCard {
             // Accounts row
             val accountCount = (if (isConnected) 1 else 0) + calDavAccounts.size
@@ -583,31 +579,9 @@ private fun FlatSettingsContent(
             )
         }
 
-        // ==================== DISPLAY Section ====================
-        SectionHeader(stringResource(R.string.settings_section_display))
+        // ==================== APPEARANCE Section ====================
+        SectionHeader(stringResource(R.string.settings_section_appearance))
         SettingsCard {
-            if (calendars.isNotEmpty()) {
-                // Default Calendar Row
-                SettingsRow(
-                    icon = Icons.Default.Star,
-                    label = stringResource(R.string.settings_default_calendar),
-                    subtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set),
-                    onClick = { showDefaultCalendarSheet = true }
-                )
-            }
-            SettingsRow(
-                icon = Icons.Default.Edit,
-                label = stringResource(R.string.settings_quick_event_add),
-                subtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                badge = { NewBadge() },
-                onClick = { onQuickAddEnabledChange(!quickAddEnabled) }
-            )
-            SettingsRow(
-                icon = Icons.Default.History,
-                label = stringResource(R.string.settings_suggest_titles),
-                subtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
-                onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) }
-            )
             SettingsRow(
                 icon = Icons.Default.SentimentSatisfied,
                 label = stringResource(R.string.settings_event_emojis),
@@ -642,12 +616,6 @@ private fun FlatSettingsContent(
                 onClick = { onShowWeekNumbersChange(!showWeekNumbers) }
             )
             SettingsRow(
-                icon = Icons.Default.Schedule,
-                label = stringResource(R.string.settings_default_event_length),
-                subtitle = formatDuration(defaultEventDuration, context.resources),
-                onClick = { showEventDurationSheet = true }
-            )
-            SettingsRow(
                 icon = Icons.Default.CalendarMonth,
                 label = stringResource(R.string.settings_widget_event_limit),
                 subtitle = stringResource(R.string.settings_per_day, widgetMaxEventsPerDay),
@@ -656,10 +624,27 @@ private fun FlatSettingsContent(
             )
         }
 
-        // ==================== NOTIFICATIONS Section ====================
-        SectionHeader(stringResource(R.string.settings_section_notifications))
+        // ==================== CREATING EVENTS Section ====================
+        // Default Calendar and Default Alerts require a calendar to target; Default length doesn't.
+        // The two isNotEmpty guards intentionally sandwich the unguarded Default length row so
+        // users without any accounts still see the length setting.
+        SectionHeader(stringResource(R.string.settings_section_creating_events))
         SettingsCard {
-            // Default Alerts Row (only if calendars exist)
+            if (calendars.isNotEmpty()) {
+                // Default Calendar Row
+                SettingsRow(
+                    icon = Icons.Default.Star,
+                    label = stringResource(R.string.settings_default_calendar),
+                    subtitle = defaultCalendarName ?: stringResource(R.string.settings_not_set),
+                    onClick = { showDefaultCalendarSheet = true }
+                )
+            }
+            SettingsRow(
+                icon = Icons.Default.Schedule,
+                label = stringResource(R.string.settings_default_event_length),
+                subtitle = formatDuration(defaultEventDuration, context.resources),
+                onClick = { showEventDurationSheet = true }
+            )
             if (calendars.isNotEmpty()) {
                 SettingsRow(
                     icon = Icons.Default.Notifications,
@@ -668,8 +653,27 @@ private fun FlatSettingsContent(
                     onClick = { showAlertsSheet = true }
                 )
             }
+            SettingsRow(
+                icon = Icons.Default.Edit,
+                label = stringResource(R.string.settings_quick_event_add),
+                subtitle = if (quickAddEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                onClick = { onQuickAddEnabledChange(!quickAddEnabled) },
+                badge = { BetaBadge() }
+            )
+            SettingsRow(
+                icon = Icons.Default.History,
+                label = stringResource(R.string.settings_suggest_titles),
+                subtitle = if (titleSuggestionsEnabled) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                onClick = { onTitleSuggestionsEnabledChange(!titleSuggestionsEnabled) },
+                showDivider = false  // Last item in card
+            )
+        }
 
-            // Notifications Row
+        // ==================== NOTIFICATIONS Row (standalone, no section header) ====================
+        // Single-row card — a SectionHeader whose label matches the only row would be self-reference noise.
+        SettingsCard {
+            // Notifications Row — icon variation (Notifications / NotificationsOff)
+            // and subtitle variation (Enabled / Tap to enable) carry the state.
             SettingsRow(
                 icon = if (notificationsEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
                 label = stringResource(R.string.settings_notifications),
@@ -680,17 +684,7 @@ private fun FlatSettingsContent(
                     }
                 },
                 showChevron = !notificationsEnabled,
-                trailing = if (notificationsEnabled) {
-                    {
-                        Icon(
-                            Icons.Default.Check,
-                            contentDescription = stringResource(R.string.cd_enabled),
-                            tint = AccentColors.Green,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                } else null,
-                showDivider = false  // Last item in card
+                showDivider = false  // Only item in card
             )
         }
 

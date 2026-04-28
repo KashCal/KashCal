@@ -11,9 +11,14 @@
     <string name="month_widget_description">සිදුවීම් දර්ශක ලක්ෂ්‍ය සහිත සම්පූර්ණ මාස දින දර්ශන ජාලකය පෙන්වයි</string>
     <string name="date_widget_name">දිනය</string>
     <string name="date_widget_description">අද දිනය යෙදුම් නිරූපකයක් ලෙස පෙන්වයි</string>
+    <string name="upcoming_widget_name">ඉදිරි</string>
+    <string name="upcoming_widget_description">ඉදිරි දින 10ක සිදුවීම් පෙන්වයි, හිස් දින මඟ හරියි</string>
+    <string name="widget_loading_upcoming">ඉදිරි සිදුවීම් පූරණය වෙමින්…</string>
+    <string name="widget_error_load_events">සිදුවීම් පූරණය කළ නොහැකි විය, විවෘත කිරීමට තට්ටු කරන්න</string>
     <string name="widget_no_events_today">අද සිදුවීම් නැත</string>
     <string name="widget_add_event">+ සිදුවීමක් එකතු කරන්න</string>
     <string name="widget_no_events">සිදුවීම් නැත</string>
+    <string name="widget_no_upcoming_events">ඉදිරි සිදුවීම් නැත</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">නව සිදුවීම</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">සිදුවීම් ICS ගොනුවකට සුරකින්න</string>
     <string name="settings_birthday_reminder">උපන්දින මතක්කිරීම</string>
     <string name="settings_use_device_timezone">උපාංග වේලා කලාපය භාවිත කරන්න</string>
-    <string name="settings_section_my_calendars">මගේ දින දර්ශන</string>
-    <string name="settings_section_display">ප්‍රදර්ශනය</string>
+    <string name="settings_section_calendars">දින දර්ශන</string>
+    <string name="settings_section_appearance">පෙනුම</string>
+    <string name="settings_section_creating_events">සිදුවීම් නිර්මාණය</string>
     <string name="settings_section_notifications">දැනුම්දීම්</string>
     <string name="settings_section_sync">සමමුහුර්තය</string>
     <string name="settings_section_data">උපස්ථ &amp; ප්‍රතිසාධන</string>
@@ -547,6 +553,11 @@
         <item quantity="one">සිදුවීම %1$d</item>
         <item quantity="other">සිදුවීම් %1$d</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">දින දර්ශනය විවෘත කරන්න</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">තවත් දින %1$d</item>
+        <item quantity="other">තවත් දින %1$d</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">උපන්දින %1$d</item>
         <item quantity="other">උපන්දින %1$d</item>
@@ -961,6 +972,7 @@
     <string name="cd_event_color">සිදුවීමේ වර්ණය</string>
     <string name="cd_checkmark">තෝරාගත්</string>
     <string name="label_device_timezone">උපාංගයේ වේලා කලාපය</string>
+    <string name="color_saddlebrown">සෑදල දුඹුරු</string>
     <string name="color_tomato">තක්කාලි</string>    <string name="color_darkorange">තද තැඹිලි</string>
     <string name="color_gold">රන්වන්</string>
     <string name="color_yellowgreen">කහ කොළ</string>

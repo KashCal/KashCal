@@ -53,6 +53,7 @@ enum class HueFamily(@StringRes val labelRes: Int) {
 object EventColorPalette {
 
     val entries: List<PaletteEntry> = listOf(
+        PaletteEntry("saddlebrown", 0xFF8B4513.toInt(), R.string.color_saddlebrown),
         PaletteEntry("tomato", 0xFFFF6347.toInt(), R.string.color_tomato),
         PaletteEntry("darkorange", 0xFFFF8C00.toInt(), R.string.color_darkorange),
         PaletteEntry("gold", 0xFFFFD700.toInt(), R.string.color_gold),
@@ -231,4 +232,7 @@ object EventColorPalette {
      */
     fun entryForArgbOrDefault(argb: Int?): Css3ColorEntry =
         argb?.let { wheelArgbToEntry[it] } ?: colorsInFamily(HueFamily.RED).first()
+
+    /** Random ARGB from the 12-color grid palette. Used to seed new calendars. */
+    fun randomArgb(): Int = entries.random().argb
 }

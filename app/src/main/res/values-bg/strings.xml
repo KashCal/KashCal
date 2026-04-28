@@ -11,9 +11,14 @@
     <string name="month_widget_description">Показва пълна месечна решетка с индикатори за събития</string>
     <string name="date_widget_name">Дата</string>
     <string name="date_widget_description">Показва днешната дата като икона на приложение</string>
+    <string name="upcoming_widget_name">Предстоящи</string>
+    <string name="upcoming_widget_description">Показва събитията за следващите 10 дни, пропускайки празните дни</string>
+    <string name="widget_loading_upcoming">Зареждане на предстоящи събития…</string>
+    <string name="widget_error_load_events">Събитията не можаха да се заредят, докоснете за отваряне</string>
     <string name="widget_no_events_today">Няма събития днес</string>
     <string name="widget_add_event">+ Добави събитие</string>
     <string name="widget_no_events">Няма събития</string>
+    <string name="widget_no_upcoming_events">Няма предстоящи събития</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Ново събитие</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Запази събитията в ICS файл</string>
     <string name="settings_birthday_reminder">Напомняне за рожден ден</string>
     <string name="settings_use_device_timezone">Използвай часовата зона на устройството</string>
-    <string name="settings_section_my_calendars">Моите календари</string>
-    <string name="settings_section_display">Показване</string>
+    <string name="settings_section_calendars">Календари</string>
+    <string name="settings_section_appearance">Облик</string>
+    <string name="settings_section_creating_events">Създаване на събития</string>
     <string name="settings_section_notifications">Известия</string>
     <string name="settings_section_sync">Синхронизиране</string>
     <string name="settings_section_data">Архивиране и възстановяване</string>
@@ -572,6 +578,11 @@
         <item quantity="one">%1$d събитие</item>
         <item quantity="other">%1$d събития</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Отваряне на календара</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">още %1$d ден</item>
+        <item quantity="other">още %1$d дни</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d рожден ден</item>
         <item quantity="other">%1$d рождени дни</item>
@@ -988,7 +999,7 @@
     <string name="label_device_timezone">Часова зона на устройството</string>
 
     <!-- Color names -->
-    <string name="color_tomato">Доматено червено</string>    <string name="color_darkorange">Тъмнооранжево</string>
+    <string name="color_saddlebrown">Седлесто кафяво</string>    <string name="color_tomato">Доматено червено</string>    <string name="color_darkorange">Тъмнооранжево</string>
     <string name="color_gold">Златисто</string>
     <string name="color_yellowgreen">Жълто-зелено</string>
     <string name="color_limegreen">Лаймово зелено</string>    <string name="color_lightseagreen">Светло морско зелено</string>

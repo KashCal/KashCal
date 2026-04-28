@@ -12,9 +12,14 @@
     <string name="month_widget_description">Toont een volledig maandrooster met afspraakpunten</string>
     <string name="date_widget_name">Datum</string>
     <string name="date_widget_description">Toont de datum van vandaag als app-icoon</string>
+    <string name="upcoming_widget_name">Aankomend</string>
+    <string name="upcoming_widget_description">Toont afspraken voor de komende 10 dagen en slaat lege dagen over</string>
+    <string name="widget_loading_upcoming">Aankomende afspraken laden…</string>
+    <string name="widget_error_load_events">Kan afspraken niet laden, tik om te openen</string>
     <string name="widget_no_events_today">Geen afspraken vandaag</string>
     <string name="widget_add_event">+ Afspraak toevoegen</string>
     <string name="widget_no_events">Geen afspraken</string>
+    <string name="widget_no_upcoming_events">Geen aankomende afspraken</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nieuwe afspraak</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Afspraken opslaan in een ICS-bestand</string>
     <string name="settings_birthday_reminder">Verjaardagsherinnering</string>
     <string name="settings_use_device_timezone">Apparaattijdzone gebruiken</string>
-    <string name="settings_section_my_calendars">Mijn agenda\'s</string>
-    <string name="settings_section_display">Weergave</string>
+    <string name="settings_section_calendars">Agenda\'s</string>
+    <string name="settings_section_appearance">Weergave</string>
+    <string name="settings_section_creating_events">Afspraken maken</string>
     <string name="settings_section_notifications">Meldingen</string>
     <string name="settings_section_sync">Synchronisatie</string>
     <string name="settings_section_data">Back-up &amp; herstel</string>
@@ -576,6 +582,11 @@
         <item quantity="one">%1$d afspraak</item>
         <item quantity="other">%1$d afspraken</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Agenda openen</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">Nog %1$d dag</item>
+        <item quantity="other">Nog %1$d dagen</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d verjaardag</item>
         <item quantity="other">%1$d verjaardagen</item>
@@ -977,6 +988,7 @@
     <string name="label_calendar_default">Agendastandaard</string>
     <string name="label_custom">Aangepast</string>
     <string name="cd_event_color">Afspraakkleur</string>
+    <string name="color_saddlebrown">Zadelbruin</string>
     <string name="color_tomato">Tomaat</string>    <string name="color_darkorange">Donkeroranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>

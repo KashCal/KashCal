@@ -12,9 +12,14 @@
     <string name="month_widget_description">顯示帶有事件標記的月曆格線</string>
     <string name="date_widget_name">日期</string>
     <string name="date_widget_description">像應用程式圖示一樣顯示今天的日期</string>
+    <string name="upcoming_widget_name">即將到來</string>
+    <string name="upcoming_widget_description">顯示未來10天的事件，略過沒有事件的日期</string>
+    <string name="widget_loading_upcoming">正在載入即將到來的事件…</string>
+    <string name="widget_error_load_events">無法載入事件，點擊開啟</string>
     <string name="widget_no_events_today">今天沒有事件</string>
     <string name="widget_add_event">+ 新增事件</string>
     <string name="widget_no_events">沒有事件</string>
+    <string name="widget_no_upcoming_events">沒有即將到來的事件</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">新事件</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">將事件儲存為 ICS 檔案</string>
     <string name="settings_birthday_reminder">生日提醒</string>
     <string name="settings_use_device_timezone">使用裝置時區</string>
-    <string name="settings_section_my_calendars">我的行事曆</string>
-    <string name="settings_section_display">顯示</string>
+    <string name="settings_section_calendars">日曆</string>
+    <string name="settings_section_appearance">外觀</string>
+    <string name="settings_section_creating_events">建立活動</string>
     <string name="settings_section_notifications">通知</string>
     <string name="settings_section_sync">同步</string>
     <string name="settings_section_data">備份與還原</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d 個事件</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">開啟行事曆</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">還有 %1$d 天</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">%1$d 個生日</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">行程顏色</string>
     <string name="cd_checkmark">已選取</string>
     <string name="label_device_timezone">裝置時區</string>
-    <string name="color_tomato">番茄紅</string>    <string name="color_darkorange">深橙</string>
+    <string name="color_saddlebrown">馬鞍棕</string>    <string name="color_tomato">番茄紅</string>    <string name="color_darkorange">深橙</string>
     <string name="color_gold">金色</string>
     <string name="color_yellowgreen">黃綠</string>
     <string name="color_limegreen">萊姆綠</string>    <string name="color_lightseagreen">淺海綠</string>

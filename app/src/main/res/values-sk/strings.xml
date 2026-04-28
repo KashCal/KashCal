@@ -11,9 +11,14 @@
     <string name="month_widget_description">Zobrazuje celú mesačnú mriežku kalendára s bodkami udalostí</string>
     <string name="date_widget_name">Dátum</string>
     <string name="date_widget_description">Zobrazuje dnešný dátum ako ikonu aplikácie</string>
+    <string name="upcoming_widget_name">Nadchádzajúce</string>
+    <string name="upcoming_widget_description">Zobrazuje udalosti na najbližších 10 dní, preskakuje prázdne dni</string>
+    <string name="widget_loading_upcoming">Načítavanie nadchádzajúcich udalostí…</string>
+    <string name="widget_error_load_events">Udalosti sa nepodarilo načítať, klepnutím otvoríte</string>
     <string name="widget_no_events_today">Dnes žiadne udalosti</string>
     <string name="widget_add_event">+ Pridať udalosť</string>
     <string name="widget_no_events">Žiadne udalosti</string>
+    <string name="widget_no_upcoming_events">Žiadne nadchádzajúce udalosti</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nová udalosť</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Uložiť udalosti do súboru ICS</string>
     <string name="settings_birthday_reminder">Pripomienka narodenín</string>
     <string name="settings_use_device_timezone">Použiť časové pásmo zariadenia</string>
-    <string name="settings_section_my_calendars">Moje kalendáre</string>
-    <string name="settings_section_display">Zobrazenie</string>
+    <string name="settings_section_calendars">Kalendáre</string>
+    <string name="settings_section_appearance">Vzhľad</string>
+    <string name="settings_section_creating_events">Vytváranie udalostí</string>
     <string name="settings_section_notifications">Oznámenia</string>
     <string name="settings_section_sync">Synchronizácia</string>
     <string name="settings_section_data">Záloha a obnova</string>
@@ -568,6 +574,13 @@
         <item quantity="many">%1$d udalostí</item>
         <item quantity="other">%1$d udalostí</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Otvoriť kalendár</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">ešte %1$d deň</item>
+        <item quantity="few">ešte %1$d dni</item>
+        <item quantity="many">ešte %1$d dňa</item>
+        <item quantity="other">ešte %1$d dní</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d narodeniny</item>
         <item quantity="few">%1$d narodeniny</item>
@@ -910,6 +923,7 @@
     <string name="color_blue">Modrá</string>
     <string name="color_purple">Fialová</string>
     <string name="cd_checkmark">Vybraté</string>
+    <string name="color_saddlebrown">Sedlová hnedá</string>
     <string name="color_tomato">Paradajková</string>    <string name="color_darkorange">Tmavo oranžová</string>
     <string name="color_gold">Zlatá</string>
     <string name="color_yellowgreen">Žltozelená</string>

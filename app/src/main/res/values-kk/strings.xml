@@ -11,9 +11,14 @@
     <string name="month_widget_description">Оқиға индикаторлары бар толық айлық күнтізбе торын көрсетеді</string>
     <string name="date_widget_name">Күн</string>
     <string name="date_widget_description">Бүгінгі күнді қолданба белгішесі ретінде көрсетеді</string>
+    <string name="upcoming_widget_name">Алдағы</string>
+    <string name="upcoming_widget_description">Алдағы 10 күнге арналған оқиғаларды көрсетеді, бос күндерді өткізіп жібереді</string>
+    <string name="widget_loading_upcoming">Алдағы оқиғалар жүктелуде…</string>
+    <string name="widget_error_load_events">Оқиғаларды жүктеу мүмкін болмады, ашу үшін түртіңіз</string>
     <string name="widget_no_events_today">Бүгін оқиғалар жоқ</string>
     <string name="widget_add_event">+ Оқиға қосу</string>
     <string name="widget_no_events">Оқиғалар жоқ</string>
+    <string name="widget_no_upcoming_events">Алдағы оқиғалар жоқ</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Жаңа оқиға</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Оқиғаларды ICS файлына сақтау</string>
     <string name="settings_birthday_reminder">Туған күн еске салғышы</string>
     <string name="settings_use_device_timezone">Құрылғы уақыт белдеуін пайдалану</string>
-    <string name="settings_section_my_calendars">Менің күнтізбелерім</string>
-    <string name="settings_section_display">Көрініс</string>
+    <string name="settings_section_calendars">Күнтізбелер</string>
+    <string name="settings_section_appearance">Безендіру</string>
+    <string name="settings_section_creating_events">Оқиғалар жасау</string>
     <string name="settings_section_notifications">Хабарландырулар</string>
     <string name="settings_section_sync">Синхрондау</string>
     <string name="settings_section_data">Сақтық көшірме &amp; қалпына келтіру</string>
@@ -571,6 +577,11 @@
         <item quantity="one">%1$d оқиға</item>
         <item quantity="other">%1$d оқиға</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Күнтізбені ашу</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">тағы %1$d күн</item>
+        <item quantity="other">тағы %1$d күн</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d туған күн</item>
         <item quantity="other">%1$d туған күн</item>
@@ -989,6 +1000,7 @@
     <string name="cd_checkmark">Таңдалды</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Ер қоңыр</string>
     <string name="color_tomato">Қызанақ</string>    <string name="color_darkorange">Қою қызғылт сары</string>
     <string name="color_gold">Алтын</string>
     <string name="color_yellowgreen">Сарғыш жасыл</string>

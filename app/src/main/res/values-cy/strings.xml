@@ -11,9 +11,14 @@
     <string name="month_widget_description">Yn dangos grid calendr mis llawn gyda dotiau dangos digwyddiadau</string>
     <string name="date_widget_name">Dyddiad</string>
     <string name="date_widget_description">Yn dangos dyddiad heddiw fel eicon ap</string>
+    <string name="upcoming_widget_name">I ddod</string>
+    <string name="upcoming_widget_description">Yn dangos digwyddiadau\'r 10 diwrnod nesaf, gan hepgor diwrnodau gwag</string>
+    <string name="widget_loading_upcoming">Llwytho digwyddiadau i ddod…</string>
+    <string name="widget_error_load_events">Methu llwytho digwyddiadau, tapiwch i agor</string>
     <string name="widget_no_events_today">Dim digwyddiadau heddiw</string>
     <string name="widget_add_event">+ Ychwanegu digwyddiad</string>
     <string name="widget_no_events">Dim digwyddiadau</string>
+    <string name="widget_no_upcoming_events">Dim digwyddiadau i ddod</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Digwyddiad Newydd</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Cadw digwyddiadau i ffeil ICS</string>
     <string name="settings_birthday_reminder">Atgoffa Pen-blwydd</string>
     <string name="settings_use_device_timezone">Defnyddio cylchfa amser y ddyfais</string>
-    <string name="settings_section_my_calendars">Fy Nghalendrau</string>
-    <string name="settings_section_display">Arddangos</string>
+    <string name="settings_section_calendars">Calendrau</string>
+    <string name="settings_section_appearance">Golwg</string>
+    <string name="settings_section_creating_events">Creu digwyddiadau</string>
     <string name="settings_section_notifications">Hysbysiadau</string>
     <string name="settings_section_sync">Cysoni</string>
     <string name="settings_section_data">Copi wrth gefn ac adfer</string>
@@ -599,6 +605,15 @@
         <item quantity="few">%1$d digwyddiad</item>
         <item quantity="many">%1$d digwyddiad</item>
         <item quantity="other">%1$d digwyddiad</item>
+    </plurals>
+    <string name="upcoming_widget_open_calendar">Agor y calendr</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="zero">%1$d diwrnod arall</item>
+        <item quantity="one">%1$d diwrnod arall</item>
+        <item quantity="two">%1$d ddiwrnod arall</item>
+        <item quantity="few">%1$d diwrnod arall</item>
+        <item quantity="many">%1$d diwrnod arall</item>
+        <item quantity="other">%1$d diwrnod arall</item>
     </plurals>
     <plurals name="birthday_count">
         <item quantity="zero">%1$d pen-blwydd</item>
@@ -1122,6 +1137,7 @@
     <string name="label_device_timezone">Cylchfa amser y dyfais</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Brown cyfrwy</string>
     <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Oren tywyll</string>
     <string name="color_gold">Aur</string>
     <string name="color_yellowgreen">Gwyrdd melyn</string>

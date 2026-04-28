@@ -11,9 +11,14 @@
     <string name="month_widget_description">Mostra una graella de calendari mensual amb indicadors d\'esdeveniments</string>
     <string name="date_widget_name">Data</string>
     <string name="date_widget_description">Mostra la data d\'avui com una icona d\'aplicació</string>
+    <string name="upcoming_widget_name">Propers</string>
+    <string name="upcoming_widget_description">Mostra els esdeveniments dels propers 10 dies, ometent els dies buits</string>
+    <string name="widget_loading_upcoming">Carregant propers esdeveniments…</string>
+    <string name="widget_error_load_events">No s\'han pogut carregar els esdeveniments, toca per obrir</string>
     <string name="widget_no_events_today">Cap esdeveniment avui</string>
     <string name="widget_add_event">+ Afegir esdeveniment</string>
     <string name="widget_no_events">Cap esdeveniment</string>
+    <string name="widget_no_upcoming_events">Cap esdeveniment proper</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Nou esdeveniment</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Desa esdeveniments en un fitxer ICS</string>
     <string name="settings_birthday_reminder">Recordatori d\'aniversari</string>
     <string name="settings_use_device_timezone">Usar zona horària del dispositiu</string>
-    <string name="settings_section_my_calendars">Els meus calendaris</string>
-    <string name="settings_section_display">Visualització</string>
+    <string name="settings_section_calendars">Calendaris</string>
+    <string name="settings_section_appearance">Aparença</string>
+    <string name="settings_section_creating_events">Creació d\'esdeveniments</string>
     <string name="settings_section_notifications">Notificacions</string>
     <string name="settings_section_sync">Sincronització</string>
     <string name="settings_section_data">Còpia de seguretat i restauració</string>
@@ -551,6 +557,11 @@
         <item quantity="one">%1$d esdeveniment</item>
         <item quantity="other">%1$d esdeveniments</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Obre el calendari</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d dia més</item>
+        <item quantity="other">%1$d dies més</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d aniversari</item>
         <item quantity="other">%1$d aniversaris</item>
@@ -953,6 +964,7 @@
     <string name="label_device_timezone">Zona horària del dispositiu</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Marró cuir</string>
     <string name="color_tomato">Tomàquet</string>    <string name="color_darkorange">Taronja fosc</string>
     <string name="color_gold">Daurat</string>
     <string name="color_yellowgreen">Verd groguenc</string>

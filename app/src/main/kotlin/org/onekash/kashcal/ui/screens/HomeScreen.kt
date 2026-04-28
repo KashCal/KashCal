@@ -383,11 +383,14 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreateEvent,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_create_event))
+            // Insights is a read-only analytics view; event creation is off-context there.
+            if (uiState.viewMode != ViewMode.INSIGHTS) {
+                FloatingActionButton(
+                    onClick = onCreateEvent,
+                    containerColor = MaterialTheme.colorScheme.primary
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.cd_create_event))
+                }
             }
         },
         // No bottom bar - week view is now in agenda panel

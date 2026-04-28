@@ -1,14 +1,17 @@
 package org.onekash.kashcal.domain.quickadd
 
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Comprehensive stress testing for QuickAddParser — targeting open-source library release.
@@ -31,6 +34,19 @@ class QuickAddParserStressTest {
 
     // Monday April 13, 2026, 10:00 AM
     private val ref = LocalDateTime.of(2026, 4, 13, 10, 0)
+
+    private var originalLocale: Locale? = null
+
+    @Before
+    fun pinLocaleToUS() {
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+    }
+
+    @After
+    fun restoreLocale() {
+        originalLocale?.let { Locale.setDefault(it) }
+    }
 
     private fun parse(input: String, reference: LocalDateTime = ref) =
         QuickAddParser.parse(input, reference)

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import org.onekash.kashcal.R
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.quickadd.QuickAddResult
 
 private val placeholderExamples = listOf(
@@ -56,7 +57,7 @@ private val placeholderExamples = listOf(
     "Team retro Friday at noon",
     "Book club every Tuesday until December",
     "Yoga every Saturday morning",
-    "Flight to NYC Monday 3pm EST",
+    "Flight to Spain Monday 14:00",
     "Meeting at quarter past 10",
     "Walk the dog daily",
     // Witty
@@ -83,7 +84,8 @@ fun QuickAddDialog(
     isSaving: Boolean,
     onDismiss: () -> Unit,
     onSave: () -> Unit,
-    onExpand: () -> Unit
+    onExpand: () -> Unit,
+    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM
 ) {
     val focusRequester = remember { FocusRequester() }
     val placeholder = remember { placeholderExamples.random() }
@@ -114,6 +116,7 @@ fun QuickAddDialog(
                 isSaveEnabled = isSaveEnabled,
                 isSaving = isSaving,
                 placeholder = placeholder,
+                timeFormat = timeFormat,
                 onSave = onSave,
                 onExpand = onExpand
             )
@@ -130,7 +133,8 @@ internal fun QuickAddDialogContent(
     isSaving: Boolean,
     placeholder: String,
     onSave: () -> Unit,
-    onExpand: () -> Unit
+    onExpand: () -> Unit,
+    timeFormat: String = KashCalDataStore.TIME_FORMAT_SYSTEM
 ) {
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -170,7 +174,7 @@ internal fun QuickAddDialogContent(
                 onKeyboardAction = { if (isSaveEnabled && !isSaving) onSave() }
             )
 
-            QuickAddPreview(result = parseResult)
+            QuickAddPreview(result = parseResult, timeFormat = timeFormat)
 
             Row(
                 modifier = Modifier

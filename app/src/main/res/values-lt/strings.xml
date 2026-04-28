@@ -11,9 +11,14 @@
     <string name="month_widget_description">Rodo mėnesio tinklelį su įvykių žymomis</string>
     <string name="date_widget_name">Data</string>
     <string name="date_widget_description">Rodo šiandienos datą kaip piktogramą</string>
+    <string name="upcoming_widget_name">Artėjantys</string>
+    <string name="upcoming_widget_description">Rodo artimiausių 10 dienų įvykius, praleidžiant tuščias dienas</string>
+    <string name="widget_loading_upcoming">Įkeliami įvykiai…</string>
+    <string name="widget_error_load_events">Nepavyko įkelti įvykių, palieskite, kad atidarytumėte</string>
     <string name="widget_no_events_today">Šiandien įvykių nėra</string>
     <string name="widget_add_event">+ Pridėti įvykį</string>
     <string name="widget_no_events">Įvykių nėra</string>
+    <string name="widget_no_upcoming_events">Artėjančių įvykių nėra</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Naujas įvykis</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Išsaugoti įvykius į ICS failą</string>
     <string name="settings_birthday_reminder">Gimtadienio priminimas</string>
     <string name="settings_use_device_timezone">Įrenginio laiko juosta</string>
-    <string name="settings_section_my_calendars">Mano kalendoriai</string>
-    <string name="settings_section_display">Atvaizdavimas</string>
+    <string name="settings_section_calendars">Kalendoriai</string>
+    <string name="settings_section_appearance">Išvaizda</string>
+    <string name="settings_section_creating_events">Įvykių kūrimas</string>
     <string name="settings_section_notifications">Pranešimai</string>
     <string name="settings_section_sync">Sinchronizavimas</string>
     <string name="settings_section_data">Atsarginė kopija ir atkūrimas</string>
@@ -545,6 +551,13 @@
         <item quantity="many">%1$d įvykio</item>
         <item quantity="other">%1$d įvykių</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Atidaryti kalendorių</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">dar %1$d diena</item>
+        <item quantity="few">dar %1$d dienos</item>
+        <item quantity="many">dar %1$d dienos</item>
+        <item quantity="other">dar %1$d dienų</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d gimtadienis</item>
         <item quantity="few">%1$d gimtadieniai</item>
@@ -846,6 +859,7 @@
     <string name="color_cyan">Žydra</string>
     <string name="color_blue">Mėlyna</string>
     <string name="color_purple">Violetinė</string>
+    <string name="color_saddlebrown">Balno ruda</string>
     <string name="color_tomato">Pomidorų</string>    <string name="color_darkorange">Tamsiai oranžinė</string>
     <string name="color_gold">Auksinė</string>
     <string name="color_yellowgreen">Geltonai žalia</string>

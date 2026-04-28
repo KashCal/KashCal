@@ -1,9 +1,12 @@
 package org.onekash.kashcal.domain.quickadd
 
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.Locale
 
 /**
  * Runs all 179 test expressions from the original NaturalDateParserEval.java harness
@@ -19,6 +22,19 @@ import java.time.LocalTime
 class QuickAddParserEvalTest {
 
     private val ref = LocalDateTime.of(2026, 4, 13, 10, 0, 0)
+
+    private var originalLocale: Locale? = null
+
+    @Before
+    fun pinLocaleToUS() {
+        originalLocale = Locale.getDefault()
+        Locale.setDefault(Locale.US)
+    }
+
+    @After
+    fun restoreLocale() {
+        originalLocale?.let { Locale.setDefault(it) }
+    }
 
     data class TestCase(
         val input: String,

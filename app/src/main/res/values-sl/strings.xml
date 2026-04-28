@@ -11,9 +11,14 @@
     <string name="month_widget_description">Prikazuje celotno mrežo mesečnega koledarja s pikami dogodkov</string>
     <string name="date_widget_name">Datum</string>
     <string name="date_widget_description">Prikazuje današnji datum kot ikono aplikacije</string>
+    <string name="upcoming_widget_name">Prihajajoči</string>
+    <string name="upcoming_widget_description">Prikazuje dogodke za naslednjih 10 dni, brez praznih dni</string>
+    <string name="widget_loading_upcoming">Nalaganje prihajajočih dogodkov…</string>
+    <string name="widget_error_load_events">Dogodkov ni bilo mogoče naložiti, tapnite za odpiranje</string>
     <string name="widget_no_events_today">Danes ni dogodkov</string>
     <string name="widget_add_event">+ Dodaj dogodek</string>
     <string name="widget_no_events">Ni dogodkov</string>
+    <string name="widget_no_upcoming_events">Ni prihajajočih dogodkov</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nov dogodek</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Shrani dogodke v datoteko ICS</string>
     <string name="settings_birthday_reminder">Opomnik za rojstni dan</string>
     <string name="settings_use_device_timezone">Uporabi časovni pas naprave</string>
-    <string name="settings_section_my_calendars">Moji koledarji</string>
-    <string name="settings_section_display">Prikaz</string>
+    <string name="settings_section_calendars">Koledarji</string>
+    <string name="settings_section_appearance">Videz</string>
+    <string name="settings_section_creating_events">Ustvarjanje dogodkov</string>
     <string name="settings_section_notifications">Obvestila</string>
     <string name="settings_section_sync">Sinhronizacija</string>
     <string name="settings_section_data">Varnostna kopija in obnovitev</string>
@@ -568,6 +574,13 @@
         <item quantity="few">%1$d dogodki</item>
         <item quantity="other">%1$d dogodkov</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Odpri koledar</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">še %1$d dan</item>
+        <item quantity="two">še %1$d dneva</item>
+        <item quantity="few">še %1$d dni</item>
+        <item quantity="other">še %1$d dni</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d rojstni dan</item>
         <item quantity="two">%1$d rojstna dneva</item>
@@ -910,6 +923,7 @@
     <string name="color_blue">Modra</string>
     <string name="color_purple">Vijolična</string>
     <string name="cd_checkmark">Izbrano</string>
+    <string name="color_saddlebrown">Sedlasto rjava</string>
     <string name="color_tomato">Paradižnikova</string>    <string name="color_darkorange">Temno oranžna</string>
     <string name="color_gold">Zlata</string>
     <string name="color_yellowgreen">Rumenozelena</string>

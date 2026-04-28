@@ -12,9 +12,14 @@
     <string name="month_widget_description">Sýnir mánaðarnet dagatals með viðburðapunktum</string>
     <string name="date_widget_name">Dagsetning</string>
     <string name="date_widget_description">Sýnir daginn í dag eins og forritatákn</string>
+    <string name="upcoming_widget_name">Framundan</string>
+    <string name="upcoming_widget_description">Sýnir viðburði næstu 10 daga og sleppir tómum dögum</string>
+    <string name="widget_loading_upcoming">Hleður komandi viðburðum…</string>
+    <string name="widget_error_load_events">Ekki tókst að hlaða viðburðum, ýttu til að opna</string>
     <string name="widget_no_events_today">Engir viðburðir í dag</string>
     <string name="widget_add_event">+ Bæta við viðburði</string>
     <string name="widget_no_events">Engir viðburðir</string>
+    <string name="widget_no_upcoming_events">Engir væntanlegir viðburðir</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nýr viðburður</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Vista atburði í ICS-skrá</string>
     <string name="settings_birthday_reminder">Afmælisáminning</string>
     <string name="settings_use_device_timezone">Nota tímabelti tækis</string>
-    <string name="settings_section_my_calendars">Dagatölin mín</string>
-    <string name="settings_section_display">Birting</string>
+    <string name="settings_section_calendars">Dagatöl</string>
+    <string name="settings_section_appearance">Útlit</string>
+    <string name="settings_section_creating_events">Búa til viðburði</string>
     <string name="settings_section_notifications">Tilkynningar</string>
     <string name="settings_section_sync">Samstilling</string>
     <string name="settings_section_data">Öryggisafrit &amp; endurheimt</string>
@@ -576,6 +582,11 @@
         <item quantity="one">%1$d viðburður</item>
         <item quantity="other">%1$d viðburðir</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Opna dagatal</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d dagur til viðbótar</item>
+        <item quantity="other">%1$d dagar til viðbótar</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d afmæli</item>
         <item quantity="other">%1$d afmæli</item>
@@ -979,6 +990,7 @@
     <string name="label_calendar_default">Sjálfgefið dagatals</string>
     <string name="label_custom">Sérsniðið</string>
     <string name="cd_event_color">Litur viðburðar</string>
+    <string name="color_saddlebrown">Hnakkbrúnn</string>
     <string name="color_tomato">Tómatur</string>    <string name="color_darkorange">Dökkappelsínugulur</string>
     <string name="color_gold">Gull</string>
     <string name="color_yellowgreen">Gulgrænn</string>

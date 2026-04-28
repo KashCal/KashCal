@@ -11,9 +11,14 @@
     <string name="month_widget_description">Shows a full month calendar grid with event indicator dots</string>
     <string name="date_widget_name">Date</string>
     <string name="date_widget_description">Shows today\'s date like an app icon</string>
+    <string name="upcoming_widget_name">Upcoming</string>
+    <string name="upcoming_widget_description">Shows the next 10 days of events, skipping empty days</string>
+    <string name="widget_loading_upcoming">Loading upcoming events…</string>
+    <string name="widget_error_load_events">Couldn\'t load events, tap to open</string>
     <string name="widget_no_events_today">No events today</string>
     <string name="widget_add_event">+ Add event</string>
     <string name="widget_no_events">No events</string>
+    <string name="widget_no_upcoming_events">No upcoming events</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">New Event</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Save events to an ICS file</string>
     <string name="settings_birthday_reminder">Birthday Reminder</string>
     <string name="settings_use_device_timezone">Use device timezone</string>
-    <string name="settings_section_my_calendars">My Calendars</string>
-    <string name="settings_section_display">Display</string>
+    <string name="settings_section_calendars">Calendars</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_creating_events">Creating events</string>
     <string name="settings_section_notifications">Notifications</string>
     <string name="settings_section_sync">Sync</string>
     <string name="settings_section_data">Backup &amp; Restore</string>
@@ -571,6 +577,11 @@
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Open calendar</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d more day</item>
+        <item quantity="other">%1$d more days</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d birthday</item>
         <item quantity="other">%1$d birthdays</item>
@@ -984,6 +995,7 @@
     <string name="cd_checkmark">Selected</string>
 
     <!-- ==================== Event Colour Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Saddle Brown</string>
     <string name="color_tomato">Tomato</string>    <string name="color_darkorange">Dark Orange</string>
     <string name="color_gold">Gold</string>
     <string name="color_yellowgreen">Yellow Green</string>

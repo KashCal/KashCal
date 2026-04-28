@@ -11,9 +11,14 @@
     <string name="month_widget_description">Wys \'n volle maandkalenderrooster met gebeurtenisaanwyserkolletjies</string>
     <string name="date_widget_name">Datum</string>
     <string name="date_widget_description">Wys vandag se datum soos \'n programikoon</string>
+    <string name="upcoming_widget_name">Kom tans</string>
+    <string name="upcoming_widget_description">Wys die volgende 10 dae se gebeurtenisse en slaan leë dae oor</string>
+    <string name="widget_loading_upcoming">Laai komende gebeurtenisse…</string>
+    <string name="widget_error_load_events">Kon nie gebeurtenisse laai nie, tik om te open</string>
     <string name="widget_no_events_today">Geen gebeurtenisse vandag nie</string>
     <string name="widget_add_event">+ Voeg gebeurtenis by</string>
     <string name="widget_no_events">Geen gebeurtenisse</string>
+    <string name="widget_no_upcoming_events">Geen komende gebeurtenisse nie</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Nuwe Gebeurtenis</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Stoor gebeurtenisse na \'n ICS-lêer</string>
     <string name="settings_birthday_reminder">Verjaarsdagherinnering</string>
     <string name="settings_use_device_timezone">Gebruik toesteltydzone</string>
-    <string name="settings_section_my_calendars">My Kalenders</string>
-    <string name="settings_section_display">Vertoning</string>
+    <string name="settings_section_calendars">Kalenders</string>
+    <string name="settings_section_appearance">Voorkoms</string>
+    <string name="settings_section_creating_events">Gebeurtenisse skep</string>
     <string name="settings_section_notifications">Kennisgewings</string>
     <string name="settings_section_sync">Sinkronisering</string>
     <string name="settings_section_data">Rugsteun &amp; Herstel</string>
@@ -571,6 +577,11 @@
         <item quantity="one">%1$d gebeurtenis</item>
         <item quantity="other">%1$d gebeurtenisse</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Maak kalender oop</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d dag meer</item>
+        <item quantity="other">%1$d dae meer</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d verjaarsdag</item>
         <item quantity="other">%1$d verjaarsdae</item>
@@ -987,6 +998,7 @@
     <string name="cd_checkmark">Gekies</string>
 
     <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">Saalbruin</string>
     <string name="color_tomato">Tamatie</string>    <string name="color_darkorange">Donker oranje</string>
     <string name="color_gold">Goud</string>
     <string name="color_yellowgreen">Geelgroen</string>

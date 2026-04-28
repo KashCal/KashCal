@@ -12,9 +12,14 @@
     <string name="month_widget_description">Hiển thị lưới lịch cả tháng với chấm chỉ báo sự kiện</string>
     <string name="date_widget_name">Ngày</string>
     <string name="date_widget_description">Hiển thị ngày hôm nay như biểu tượng ứng dụng</string>
+    <string name="upcoming_widget_name">Sắp tới</string>
+    <string name="upcoming_widget_description">Hiển thị sự kiện trong 10 ngày tới, bỏ qua ngày trống</string>
+    <string name="widget_loading_upcoming">Đang tải sự kiện sắp tới…</string>
+    <string name="widget_error_load_events">Không tải được sự kiện, nhấn để mở</string>
     <string name="widget_no_events_today">Hôm nay không có sự kiện</string>
     <string name="widget_add_event">+ Thêm sự kiện</string>
     <string name="widget_no_events">Không có sự kiện</string>
+    <string name="widget_no_upcoming_events">Không có sự kiện sắp tới</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">Sự kiện mới</string>
@@ -105,8 +110,9 @@
     <string name="settings_export_subtitle">Lưu sự kiện ra tệp ICS</string>
     <string name="settings_birthday_reminder">Nhắc nhở sinh nhật</string>
     <string name="settings_use_device_timezone">Dùng múi giờ thiết bị</string>
-    <string name="settings_section_my_calendars">Lịch của tôi</string>
-    <string name="settings_section_display">Hiển thị</string>
+    <string name="settings_section_calendars">Lịch</string>
+    <string name="settings_section_appearance">Giao diện</string>
+    <string name="settings_section_creating_events">Tạo sự kiện</string>
     <string name="settings_section_notifications">Thông báo</string>
     <string name="settings_section_sync">Đồng bộ</string>
     <string name="settings_section_data">Sao lưu &amp; khôi phục</string>
@@ -544,6 +550,10 @@
     <plurals name="widget_event_count_plural">
         <item quantity="other">%1$d sự kiện</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">Mở lịch</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="other">Thêm %1$d ngày</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="other">%1$d sinh nhật</item>
     </plurals>
@@ -912,7 +922,7 @@
     <string name="cd_event_color">Màu sự kiện</string>
     <string name="cd_checkmark">Đã chọn</string>
     <string name="label_device_timezone">Múi giờ thiết bị</string>
-    <string name="color_tomato">Đỏ cà chua</string>    <string name="color_darkorange">Cam đậm</string>
+    <string name="color_saddlebrown">Nâu yên ngựa</string>    <string name="color_tomato">Đỏ cà chua</string>    <string name="color_darkorange">Cam đậm</string>
     <string name="color_gold">Vàng kim</string>
     <string name="color_yellowgreen">Vàng lục</string>
     <string name="color_limegreen">Xanh chanh</string>    <string name="color_lightseagreen">Xanh biển nhạt</string>

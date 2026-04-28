@@ -11,9 +11,14 @@
     <string name="month_widget_description">इवेंट संकेत बिंदुओं के साथ पूरे माह का कैलेंडर ग्रिड दिखाता है</string>
     <string name="date_widget_name">तारीख</string>
     <string name="date_widget_description">आज की तारीख ऐप आइकन जैसी दिखाता है</string>
+    <string name="upcoming_widget_name">आगामी</string>
+    <string name="upcoming_widget_description">अगले 10 दिनों के इवेंट दिखाता है, खाली दिन छोड़कर</string>
+    <string name="widget_loading_upcoming">आने वाले इवेंट लोड हो रहे हैं…</string>
+    <string name="widget_error_load_events">इवेंट लोड नहीं हो सके, खोलने के लिए टैप करें</string>
     <string name="widget_no_events_today">आज कोई इवेंट नहीं</string>
     <string name="widget_add_event">+ इवेंट जोड़ें</string>
     <string name="widget_no_events">कोई इवेंट नहीं</string>
+    <string name="widget_no_upcoming_events">कोई आगामी इवेंट नहीं</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">नया इवेंट</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">इवेंट ICS फ़ाइल में सहेजें</string>
     <string name="settings_birthday_reminder">जन्मदिन रिमाइंडर</string>
     <string name="settings_use_device_timezone">डिवाइस टाइमज़ोन का उपयोग करें</string>
-    <string name="settings_section_my_calendars">मेरे कैलेंडर</string>
-    <string name="settings_section_display">प्रदर्शन</string>
+    <string name="settings_section_calendars">कैलेंडर</string>
+    <string name="settings_section_appearance">दिखावट</string>
+    <string name="settings_section_creating_events">इवेंट बनाना</string>
     <string name="settings_section_notifications">सूचनाएँ</string>
     <string name="settings_section_sync">सिंक</string>
     <string name="settings_section_data">बैकअप और रीस्टोर</string>
@@ -574,6 +580,11 @@
         <item quantity="one">%1$d इवेंट</item>
         <item quantity="other">%1$d इवेंट</item>
     </plurals>
+    <string name="upcoming_widget_open_calendar">कैलेंडर खोलें</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d और दिन</item>
+        <item quantity="other">%1$d और दिन</item>
+    </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d जन्मदिन</item>
         <item quantity="other">%1$d जन्मदिन</item>
@@ -862,6 +873,7 @@
     <string name="color_cyan">सियान</string>
     <string name="color_blue">नीला</string>
     <string name="color_purple">बैंगनी</string>
+    <string name="color_saddlebrown">सैडल ब्राउन</string>
     <string name="color_tomato">टमाटर</string>    <string name="color_darkorange">गहरा नारंगी</string>
     <string name="color_gold">सुनहरा</string>
     <string name="color_yellowgreen">पीला हरा</string>

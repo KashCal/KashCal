@@ -11,9 +11,14 @@
     <string name="month_widget_description">Taispeánann sé greille féilire míosa iomláin le poncanna imeachtaí</string>
     <string name="date_widget_name">Dáta</string>
     <string name="date_widget_description">Taispeánann sé dáta an lae inniu mar dheilbhín aipe</string>
+    <string name="upcoming_widget_name">Le teacht</string>
+    <string name="upcoming_widget_description">Taispeánann sé imeachtaí an 10 lá atá romhainn, ag scipeáil laethanta folmha</string>
+    <string name="widget_loading_upcoming">Ag lódáil imeachtaí le teacht…</string>
+    <string name="widget_error_load_events">Níorbh fhéidir imeachtaí a lódáil, tapáil chun oscailt</string>
     <string name="widget_no_events_today">Gan imeachtaí inniu</string>
     <string name="widget_add_event">+ Cuir imeacht leis</string>
     <string name="widget_no_events">Gan imeachtaí</string>
+    <string name="widget_no_upcoming_events">Gan imeachtaí le teacht</string>
 
     <!-- App Shortcuts -->
     <string name="shortcut_new_event">Imeacht Nua</string>
@@ -104,8 +109,9 @@
     <string name="settings_export_subtitle">Sábháil imeachtaí chuig comhad ICS</string>
     <string name="settings_birthday_reminder">Meabhrúchán Lá Breithe</string>
     <string name="settings_use_device_timezone">Úsáid crios ama na gléine</string>
-    <string name="settings_section_my_calendars">Mo Chuid Féilirí</string>
-    <string name="settings_section_display">Taispeáint</string>
+    <string name="settings_section_calendars">Féilirí</string>
+    <string name="settings_section_appearance">Cuma</string>
+    <string name="settings_section_creating_events">Imeachtaí a chruthú</string>
     <string name="settings_section_notifications">Fógraí</string>
     <string name="settings_section_sync">Sioncronú</string>
     <string name="settings_section_data">Cúltaca agus athchóiriú</string>
@@ -590,6 +596,14 @@
         <item quantity="few">%1$d imeacht</item>
         <item quantity="many">%1$d n-imeacht</item>
         <item quantity="other">%1$d imeacht</item>
+    </plurals>
+    <string name="upcoming_widget_open_calendar">Oscail an féilire</string>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d lá eile</item>
+        <item quantity="two">%1$d lá eile</item>
+        <item quantity="few">%1$d lá eile</item>
+        <item quantity="many">%1$d lá eile</item>
+        <item quantity="other">%1$d lá eile</item>
     </plurals>
     <plurals name="birthday_count">
         <item quantity="one">%1$d lá breithe</item>
@@ -1083,6 +1097,7 @@
     <string name="label_device_timezone">Crios ama an ghléis</string>
 
     <!-- Event Color Palette (CSS3) -->
+    <string name="color_saddlebrown">Donn diallaite</string>
     <string name="color_tomato">Trátaí</string>    <string name="color_darkorange">Oráiste dorcha</string>
     <string name="color_gold">Ór</string>
     <string name="color_yellowgreen">Glas buí</string>

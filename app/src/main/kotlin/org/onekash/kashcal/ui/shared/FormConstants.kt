@@ -330,6 +330,8 @@ data class SyncOption(
  * Available sync frequency options for background calendar sync.
  */
 val SYNC_INTERVALS_MS = listOf(
+    15 * 60 * 1000L,
+    30 * 60 * 1000L,
     1 * 60 * 60 * 1000L,
     6 * 60 * 60 * 1000L,
     12 * 60 * 60 * 1000L,
@@ -342,8 +344,8 @@ fun getSyncOptions(resources: Resources): List<SyncOption> =
         val label = if (intervalMs == Long.MAX_VALUE) {
             resources.getString(R.string.sync_manual_only)
         } else {
-            val hours = (intervalMs / (60 * 60 * 1000L)).toInt()
-            resources.getQuantityString(R.plurals.time_hours, hours, hours)
+            val minutes = (intervalMs / (60 * 1000L)).toInt()
+            formatDuration(minutes, resources)
         }
         SyncOption(label, intervalMs)
     }
