@@ -73,6 +73,16 @@ No analytics, no tracking, no KashCal account required. Data is stored locally u
 - **Minimal permissions**: only what's necessary
 - **Fully auditable**: open source codebase
 
+## Community-Made Add-ons
+
+Community-made add-ons that enhance KashCal features.
+
+| Add-on | Description | Author |
+|--------|-------------|--------|
+| [long-reminder-sounds](https://github.com/SchrodingersCpp/long-reminder-sounds) | Notification sound files that keep alerting at intervals until you dismiss. Effectively enables repeat-until-dismissed reminders ([#178](https://github.com/KashCal/KashCal/issues/178)) | [@SchrodingersCpp](https://github.com/SchrodingersCpp) |
+
+Built something that pairs with KashCal? [Open an issue](https://github.com/KashCal/KashCal/issues) and we'll add it here.
+
 ## Tested CalDAV Providers
 
 | Provider | Status | Tested By |
