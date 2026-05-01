@@ -232,19 +232,13 @@
 -dontwarn org.codehaus.groovy.**
 
 # ----------------------------------------------------------------------------
-# icaldav library
+# icaldav-core subproject — keep reflective/Kotlin-metadata surfaces
+# (iCal model classes parsed/generated dynamically; safer to keep until an
+#  R8 shrink-test verifies which members can be optimized away)
 # ----------------------------------------------------------------------------
 
 -keep class org.onekash.icaldav.** { *; }
 -keep interface org.onekash.icaldav.** { *; }
-
-# ----------------------------------------------------------------------------
-# lib-recur (RFC 5545 RRULE expansion)
-# ----------------------------------------------------------------------------
-
--dontwarn org.dmfs.**
--keep class org.dmfs.** { *; }
--keep interface org.dmfs.** { *; }
 
 # ----------------------------------------------------------------------------
 # WorkManager

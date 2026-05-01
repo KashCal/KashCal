@@ -1,5 +1,6 @@
 package org.onekash.kashcal.util
 
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
@@ -72,8 +73,43 @@ class DeviceEventIcsExportTest {
         val device = DisplayEvent.Device(createInstance())
         val ics = buildIcsFromDeviceEvent(device)
 
-        assertTrue(ics.contains("DTSTART:"))
-        assertTrue(ics.contains("DTEND:"))
+        // Timed event with TZID — post-migration, DTSTART/DTEND carry TZID= parameter.
+        assertTrue("DTSTART missing:\n$ics", ics.contains("DTSTART;TZID="))
+        assertTrue("DTEND missing:\n$ics", ics.contains("DTEND;TZID="))
+    }
+
+    @Test
+    fun `buildIcsFromDeviceEvent emits TZID and VTIMEZONE for non-UTC timezone`() {
+        val device = DisplayEvent.Device(createInstance())
+        val ics = buildIcsFromDeviceEvent(device)
+
+        assertTrue("Missing DTSTART with TZID parameter:\n$ics",
+            ics.contains("DTSTART;TZID=America/New_York:"))
+        assertTrue("Missing VTIMEZONE block for America/New_York:\n$ics",
+            ics.contains("BEGIN:VTIMEZONE") && ics.contains("TZID:America/New_York"))
+
+        // VTIMEZONE must appear before the VEVENT (RFC 5545 §3.6 ordering).
+        val iVtimezone = ics.indexOf("BEGIN:VTIMEZONE")
+        val iVevent = ics.indexOf("BEGIN:VEVENT")
+        assertTrue("VTIMEZONE must precede VEVENT (got $iVtimezone vs $iVevent):\n$ics",
+            iVtimezone in 0 until iVevent)
+    }
+
+    @Test
+    fun `buildIcsFromDeviceEvent with non-IANA timezone falls back to UTC without VTIMEZONE`() {
+        // Android CalendarProvider on some devices surfaces Windows TZIDs
+        // (e.g. "Pacific Standard Time") or legacy "GMT+05:00". ZoneId.of() throws,
+        // so we emit DTSTART as UTC (no TZID= parameter) with no VTIMEZONE block.
+        // This is better than the pre-migration behavior (which forced UTC for ALL events).
+        val device = DisplayEvent.Device(createInstance().copy(timezone = "Pacific Standard Time"))
+        val ics = buildIcsFromDeviceEvent(device)
+
+        // UTC form: DTSTART: with no TZID= parameter, ending in Z
+        assertTrue("Expected UTC DTSTART, got:\n$ics",
+            ics.lineSequence().any { it.startsWith("DTSTART:") && it.endsWith("Z") })
+        // No VTIMEZONE emitted for the invalid TZID
+        assertFalse("Should not emit VTIMEZONE for unparseable TZID:\n$ics",
+            ics.contains("BEGIN:VTIMEZONE"))
     }
 
     @Test

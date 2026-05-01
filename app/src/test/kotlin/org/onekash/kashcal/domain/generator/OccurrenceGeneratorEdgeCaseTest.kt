@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -415,32 +414,6 @@ class OccurrenceGeneratorEdgeCaseTest {
 
         // MAX_ITERATIONS is 10000, so should cap at that
         assertTrue("Expected at most 10000 due to MAX_ITERATIONS", count <= 10000)
-    }
-
-    // ==================== parseRule Edge Cases ====================
-
-    @Test
-    fun `parseRule handles RRULE without optional parts`() {
-        val info = occurrenceGenerator.parseRule("FREQ=DAILY")
-
-        assertTrue(info != null)
-        assertEquals("DAILY", info!!.freq)
-        assertEquals(1, info.interval) // Default
-        assertNull(info.count)
-        assertNull(info.until)
-        assertTrue(info.byDay.isEmpty())
-    }
-
-    @Test
-    fun `parseRule returns null for empty string`() {
-        val info = occurrenceGenerator.parseRule("")
-        assertNull(info)
-    }
-
-    @Test
-    fun `parseRule returns null for invalid RRULE`() {
-        val info = occurrenceGenerator.parseRule("NOT_AN_RRULE")
-        assertNull(info)
     }
 
     // ==================== Helper Functions ====================

@@ -7,7 +7,7 @@ import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import io.mockk.verify
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -136,7 +136,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== createEvent Tests ====================
 
     @Test
-    fun `createEvent on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `createEvent on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val event = createTestEvent(calendarId = 1)
         val createdEvent = event.copy(id = 1)
@@ -154,7 +154,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `createEvent on local calendar does NOT trigger sync`() = runTest {
+    fun `createEvent on local calendar does NOT trigger sync`() = runBlocking {
         // Given
         val event = createTestEvent(calendarId = 2)
         val createdEvent = event.copy(id = 1)
@@ -172,7 +172,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `createEvent without calendarId uses local calendar and does NOT trigger sync`() = runTest {
+    fun `createEvent without calendarId uses local calendar and does NOT trigger sync`() = runBlocking {
         // Given
         val event = createTestEvent(calendarId = 0)
         val createdEvent = event.copy(id = 1, calendarId = 2)
@@ -192,7 +192,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== updateEvent Tests ====================
 
     @Test
-    fun `updateEvent on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `updateEvent on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val event = createTestEvent(id = 1, calendarId = 1)
 
@@ -208,7 +208,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `updateEvent on local calendar does NOT trigger sync`() = runTest {
+    fun `updateEvent on local calendar does NOT trigger sync`() = runBlocking {
         // Given
         val event = createTestEvent(id = 1, calendarId = 2)
 
@@ -226,7 +226,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== deleteEvent Tests ====================
 
     @Test
-    fun `deleteEvent on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `deleteEvent on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val event = createTestEvent(id = 1, calendarId = 1)
 
@@ -243,7 +243,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `deleteEvent on local calendar does NOT trigger sync`() = runTest {
+    fun `deleteEvent on local calendar does NOT trigger sync`() = runBlocking {
         // Given
         val event = createTestEvent(id = 1, calendarId = 2)
 
@@ -262,7 +262,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== editSingleOccurrence Tests ====================
 
     @Test
-    fun `editSingleOccurrence on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `editSingleOccurrence on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val masterEvent = createTestEvent(id = 1, calendarId = 1, rrule = "FREQ=DAILY")
         val exceptionEvent = createTestEvent(id = 2, calendarId = 1)
@@ -285,7 +285,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `editSingleOccurrence on local calendar does NOT trigger sync`() = runTest {
+    fun `editSingleOccurrence on local calendar does NOT trigger sync`() = runBlocking {
         // Given
         val masterEvent = createTestEvent(id = 1, calendarId = 2, rrule = "FREQ=DAILY")
         val exceptionEvent = createTestEvent(id = 2, calendarId = 2)
@@ -310,7 +310,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== editThisAndFuture Tests ====================
 
     @Test
-    fun `editThisAndFuture on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `editThisAndFuture on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val masterEvent = createTestEvent(id = 1, calendarId = 1, rrule = "FREQ=DAILY")
         val newSeriesEvent = createTestEvent(id = 2, calendarId = 1, rrule = "FREQ=DAILY")
@@ -335,7 +335,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== deleteSingleOccurrence Tests ====================
 
     @Test
-    fun `deleteSingleOccurrence on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `deleteSingleOccurrence on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val masterEvent = createTestEvent(id = 1, calendarId = 1, rrule = "FREQ=DAILY")
         val occurrenceTimeMs = masterEvent.startTs + 86400000
@@ -358,7 +358,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== deleteThisAndFuture Tests ====================
 
     @Test
-    fun `deleteThisAndFuture on CalDAV calendar triggers expedited sync`() = runTest {
+    fun `deleteThisAndFuture on CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         val masterEvent = createTestEvent(id = 1, calendarId = 1, rrule = "FREQ=DAILY")
         val fromTimeMs = masterEvent.startTs + 86400000
@@ -381,7 +381,7 @@ class EventCoordinatorImmediatePushTest {
     // ==================== moveEventToCalendar Tests ====================
 
     @Test
-    fun `moveEventToCalendar to CalDAV calendar triggers expedited sync`() = runTest {
+    fun `moveEventToCalendar to CalDAV calendar triggers expedited sync`() = runBlocking {
         // Given
         coEvery { eventReader.getCalendarById(1) } returns caldavCalendar
         coEvery { localCalendarInitializer.isLocalCalendar(caldavCalendar) } returns false
@@ -395,7 +395,7 @@ class EventCoordinatorImmediatePushTest {
     }
 
     @Test
-    fun `moveEventToCalendar to local calendar does NOT trigger sync`() = runTest {
+    fun `moveEventToCalendar to local calendar does NOT trigger sync`() = runBlocking {
         // Given
         coEvery { eventReader.getCalendarById(2) } returns localCalendar
         coEvery { localCalendarInitializer.isLocalCalendar(localCalendar) } returns true

@@ -281,16 +281,24 @@ interface PendingOperationsDao {
     suspend fun consolidateOperations(eventId: Long): Int
 
     /**
-     * Get operations in conflict state (412 errors).
-     * These have last_error containing "Conflict" or "412".
+     * Conflict ops (412 / 'Conflict') whose effective calendar matches [calendarId].
+     * Scoping mirrors [PushStrategy.pushForCalendar] — keep the two in sync.
      */
     @Query("""
-        SELECT * FROM pending_operations
-        WHERE status = 'PENDING'
-        AND (last_error LIKE '%Conflict%' OR last_error LIKE '%412%')
-        ORDER BY created_at ASC
+        SELECT po.* FROM pending_operations po
+        LEFT JOIN events e ON po.event_id = e.id
+        WHERE po.status = 'PENDING'
+          AND (po.last_error LIKE '%Conflict%' OR po.last_error LIKE '%412%')
+          AND (
+            (po.operation = 'DELETE'
+               AND COALESCE(po.source_calendar_id, e.calendar_id) = :calendarId)
+            OR (po.operation = 'MOVE' AND po.move_phase = 0 AND po.source_calendar_id = :calendarId)
+            OR (po.operation = 'MOVE' AND po.move_phase = 1 AND po.target_calendar_id = :calendarId)
+            OR (po.operation IN ('CREATE', 'UPDATE') AND e.calendar_id = :calendarId)
+          )
+        ORDER BY po.created_at ASC
     """)
-    suspend fun getConflictOperations(): List<PendingOperation>
+    suspend fun getConflictOperationsForCalendar(calendarId: Long): List<PendingOperation>
 
     // ========== Retry Lifecycle Methods (v21.5.3) ==========
 

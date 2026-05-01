@@ -8,7 +8,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -1152,26 +1151,6 @@ class OccurrenceGeneratorTest {
         // Verify times were updated to exception event's times
         assertEquals(exceptionEvent.startTs, linkedAfter?.startTs)
         assertEquals(exceptionEvent.endTs, linkedAfter?.endTs)
-    }
-
-    // ========== parseRule ==========
-
-    @Test
-    fun `parseRule extracts RRULE components`() {
-        val info = occurrenceGenerator.parseRule("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO,WE,FR;COUNT=10")
-
-        assertNotNull(info)
-        assertEquals("WEEKLY", info!!.freq)
-        assertEquals(2, info.interval)
-        assertEquals(10, info.count)
-        assertNull(info.until)
-        assertTrue(info.byDay.isNotEmpty())
-    }
-
-    @Test
-    fun `parseRule returns null for invalid RRULE`() {
-        val info = occurrenceGenerator.parseRule("INVALID_RRULE")
-        assertNull(info)
     }
 
     // ========== expandForPreview ==========

@@ -1,6 +1,8 @@
 package org.onekash.kashcal.data.contacts
 
 import android.content.ContentResolver
+import android.database.Cursor
+import android.provider.ContactsContract
 import android.util.Log
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
@@ -367,5 +369,65 @@ class ContactBirthdayRepositoryTest {
         } returns null
 
         assertNull(repository.getCalendarColor())
+    }
+
+    // ==================== Reminder preference → None cancels prior alarms ====================
+
+    /**
+     * Regression: when the user switches the birthday reminder preference to "None"
+     * and a sync runs, the existing event's `reminders` field becomes null. Prior
+     * AlarmManager alarms must still be cancelled — the early-return for the
+     * null/empty case must NOT skip the cancellation.
+     */
+    @Test
+    fun `syncEvents cancels reminders when an existing event's reminders become null`() = runTest {
+        val lookupKey = "abc123"
+        val month = 6
+        val day = 15
+        val caldavUrl = ContactEventType.BIRTHDAY.getCaldavUrl(lookupKey, month, day)
+
+        coEvery {
+            accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, ContactEventType.BIRTHDAY.accountEmail)
+        } returns testAccount
+        coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
+        coEvery { calendarsDao.getById(20L) } returns testCalendar
+
+        // User preference: REMINDER_OFF (-1) → repo computes expectedReminders = null
+        coEvery { dataStore.getBirthdayReminder() } returns KashCalDataStore.REMINDER_OFF
+
+        // Existing event still has an old reminder; diff predicate must fire (reminders differ).
+        val existingEvent = Event(
+            id = 100L,
+            uid = "birthday-uid@kashcal.birthday",
+            calendarId = 20L,
+            title = "Alice's Birthday",
+            description = "birthYear:2001",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 86400000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = caldavUrl,
+            reminders = listOf("-PT1D") // 1 day before
+        )
+        coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(existingEvent)
+        coEvery { eventsDao.update(any()) } just Runs
+
+        // Cursor yielding one contact matching the existing event.
+        val mockCursor = mockk<Cursor>(relaxed = true)
+        every { mockCursor.getColumnIndex(ContactsContract.Data.LOOKUP_KEY) } returns 0
+        every { mockCursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME) } returns 1
+        every { mockCursor.getColumnIndex(ContactsContract.CommonDataKinds.Event.START_DATE) } returns 2
+        every { mockCursor.moveToNext() } returnsMany listOf(true, false)
+        every { mockCursor.getString(0) } returns lookupKey
+        every { mockCursor.getString(1) } returns "Alice"
+        every { mockCursor.getString(2) } returns "2001-06-15"
+        every { contentResolver.query(any(), any(), any(), any(), any()) } returns mockCursor
+
+        val result = repository.syncEvents()
+
+        assertTrue(result is ContactEventSyncResult.Success)
+        assertEquals(1, (result as ContactEventSyncResult.Success).updated)
+
+        // Key assertion: the cancel call must fire even though the new reminders are null.
+        coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
     }
 }

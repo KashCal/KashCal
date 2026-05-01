@@ -371,18 +371,17 @@ abstract class BaseContactEventRepository(
         calendarColor: Int,
         isModified: Boolean
     ) {
-        // Skip events without reminders
-        if (event.reminders.isNullOrEmpty()) return
-
         try {
-            // For modified events, cancel existing reminders first (handles time changes)
+            // Cancel first so "reminder turned off" transitions drop stale alarms.
+            // The cancel runs even when the new reminders list is empty — otherwise
+            // an early-return would leak the previously-scheduled AlarmManager alarm.
             if (isModified) {
                 reminderScheduler.cancelRemindersForEvent(event.id)
             }
 
-            // Get occurrences in schedule window
-            val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+            if (event.reminders.isNullOrEmpty()) return
 
+            val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(event.id)
             if (occurrences.isEmpty()) return
 
             reminderScheduler.scheduleRemindersForEvent(

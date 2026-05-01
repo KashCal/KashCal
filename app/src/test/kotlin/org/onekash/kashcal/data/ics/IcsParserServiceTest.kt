@@ -447,6 +447,52 @@ class IcsParserServiceTest {
         assertNull(name)
     }
 
+    @Test
+    fun `getCalendarName returns RFC 7986 NAME when X-WR-CALNAME absent`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//EN
+            NAME:Work Calendar
+            BEGIN:VEVENT
+            UID:test@test.com
+            DTSTART:20231215T140000Z
+            SUMMARY:Test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val name = IcsParserService.getCalendarName(ics)
+        assertEquals("Work Calendar", name)
+    }
+
+    @Test
+    fun `getCalendarName prefers NAME over X-WR-CALNAME when both present (RFC 7986)`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//EN
+            NAME:RFC 7986 Name
+            X-WR-CALNAME:Legacy Name
+            BEGIN:VEVENT
+            UID:test@test.com
+            DTSTART:20231215T140000Z
+            SUMMARY:Test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val name = IcsParserService.getCalendarName(ics)
+        assertEquals("RFC 7986 Name", name)
+    }
+
+    @Test
+    fun `getCalendarName returns null for malformed ICS content`() {
+        val malformed = "this is not an ICS file at all"
+        val name = IcsParserService.getCalendarName(malformed)
+        assertNull(name)
+    }
+
     // ==================== Real-World Format Examples ====================
 
     @Test

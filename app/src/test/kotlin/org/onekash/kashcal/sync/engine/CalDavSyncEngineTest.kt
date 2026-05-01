@@ -173,7 +173,7 @@ class CalDavSyncEngineTest {
             operationsProcessed = 1,
             operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(testCalendar.id) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.ServerVersionKept
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -183,6 +183,7 @@ class CalDavSyncEngineTest {
         val success = result as SyncResult.Success
         assert(success.conflictsResolved == 1)
 
+        coVerify(exactly = 1) { pendingOperationsDao.getConflictOperationsForCalendar(testCalendar.id) }
         coVerify { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) }
     }
 
@@ -262,7 +263,7 @@ class CalDavSyncEngineTest {
             operationsProcessed = 1,
             operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.NEWEST_WINS, client = client) } returns ConflictResult.LocalVersionPushed
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -642,7 +643,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.ServerVersionKept
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -673,7 +674,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -708,7 +709,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
@@ -746,7 +747,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns null  // Event was deleted
         coEvery { calendarRepository.getCalendarById(1L) } returns testCalendar  // No ctag cleared (event null)
@@ -787,7 +788,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 2, operationsFailed = 2
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp1, conflictOp2)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp1, conflictOp2)
         coEvery { conflictResolver.resolve(any(), strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns testEvent1
         coEvery { eventsDao.getById(101L) } returns testEvent2
@@ -822,7 +823,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Parse error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
@@ -861,7 +862,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.Error("Network error")
         coEvery { eventsDao.getById(100L) } returns testEvent
         coEvery { eventsDao.updateSyncStatus(100L, SyncStatus.SYNCED, any()) } just Runs
@@ -898,7 +899,7 @@ class CalDavSyncEngineTest {
             eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
             operationsProcessed = 1, operationsFailed = 1
         )
-        coEvery { pendingOperationsDao.getConflictOperations() } returns listOf(conflictOp)
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(any()) } returns listOf(conflictOp)
         coEvery { conflictResolver.resolve(conflictOp, strategy = ConflictStrategy.SERVER_WINS, client = client) } returns ConflictResult.ServerVersionKept
         coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
 
@@ -953,5 +954,21 @@ class CalDavSyncEngineTest {
         coVerify {
             pullStrategy.pull(testCalendar, false, any(), client, any(), recentlyPushedEventIds = emptySet())
         }
+    }
+
+    @Test
+    fun `syncCalendar conflict resolution skips foreign-calendar conflict ops`() = runTest {
+        coEvery { pushStrategy.pushForCalendar(testCalendar, client) } returns PushResult.Success(
+            eventsCreated = 0, eventsUpdated = 0, eventsDeleted = 0,
+            operationsProcessed = 1, operationsFailed = 1
+        )
+        coEvery { pendingOperationsDao.getConflictOperationsForCalendar(testCalendar.id) } returns emptyList()
+        coEvery { pullStrategy.pull(testCalendar, false, any(), client, any()) } returns PullResult.NoChanges
+
+        syncEngine.syncCalendar(testCalendar, client = client)
+
+        coVerify(exactly = 1) { pendingOperationsDao.getConflictOperationsForCalendar(testCalendar.id) }
+        coVerify(exactly = 0) { conflictResolver.resolve(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { notificationManager.showConflictAbandonedNotification(any(), any()) }
     }
 }

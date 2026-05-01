@@ -145,51 +145,9 @@ class IcsExporterEdgeCaseTest {
         assertTrue("Should still contain VEVENT", ics.contains("BEGIN:VEVENT"))
     }
 
-    // ========== VEVENT Extraction Edge Cases ==========
-
-    @Test
-    fun `extractVEventBlocks handles nested BEGIN tags gracefully`() {
-        val icsContent = """
-BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-UID:test-1
-SUMMARY:Test
-BEGIN:VALARM
-TRIGGER:-PT15M
-END:VALARM
-END:VEVENT
-END:VCALENDAR
-        """.trimIndent()
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-        assertEquals("Should extract 1 VEVENT (including nested VALARM)", 1, blocks.size)
-        assertTrue("Block should contain VALARM", blocks[0].contains("VALARM"))
-    }
-
-    @Test
-    fun `extractVEventBlocks handles unclosed VEVENT`() {
-        val icsContent = """
-BEGIN:VCALENDAR
-BEGIN:VEVENT
-UID:test-orphan
-SUMMARY:Unclosed Event
-END:VCALENDAR
-        """.trimIndent()
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-        assertEquals("Should extract 0 blocks (no END:VEVENT)", 0, blocks.size)
-    }
-
-    @Test
-    fun `extractVEventBlocks handles VEVENT with Windows line endings`() {
-        val icsContent = "BEGIN:VCALENDAR\r\nBEGIN:VEVENT\r\nUID:test\r\nEND:VEVENT\r\nEND:VCALENDAR"
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-        // Lines contain \r, so trim() is needed for matching
-        // The implementation uses line.trim() == "BEGIN:VEVENT"
-        assertEquals("Should handle CRLF", 1, blocks.size)
-    }
+    // VEVENT extraction edge-case tests removed: extractVEventBlocks is deleted —
+    // ICalGenerator.generate(ICalCalendar) handles component emission directly,
+    // so line-scraping is no longer part of the code path.
 
     // ========== Filename Edge Cases ==========
 
@@ -243,26 +201,8 @@ END:VCALENDAR
         assertTrue("Should contain RECURRENCE-ID", ics.contains("RECURRENCE-ID"))
     }
 
-    // ========== ICS Text Escaping Edge Cases ==========
-
-    @Test
-    fun `escapeIcsText with empty string`() {
-        val escaped = invokeEscapeIcsText("")
-        assertEquals("", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText with only special characters`() {
-        val escaped = invokeEscapeIcsText("\\;,\n")
-        assertEquals("\\\\\\;\\,\\n", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText with carriage return (not escaped)`() {
-        // Only \n is escaped, not \r
-        val escaped = invokeEscapeIcsText("Line1\r\nLine2")
-        assertEquals("Line1\r\\nLine2", escaped)
-    }
+    // ICS text escaping edge cases removed: escapeIcsText is deleted —
+    // escaping is handled by icaldav-core's escapeICalText, tested there.
 
     // ========== Helper Methods ==========
 
@@ -270,19 +210,6 @@ END:VCALENDAR
         val method = IcsExporter::class.java.getDeclaredMethod("generateFileName", String::class.java)
         method.isAccessible = true
         return method.invoke(exporter, baseName) as String
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun invokeExtractVEventBlocks(icsContent: String): List<String> {
-        val method = IcsExporter::class.java.getDeclaredMethod("extractVEventBlocks", String::class.java)
-        method.isAccessible = true
-        return method.invoke(exporter, icsContent) as List<String>
-    }
-
-    private fun invokeEscapeIcsText(text: String): String {
-        val method = IcsExporter::class.java.getDeclaredMethod("escapeIcsText", String::class.java)
-        method.isAccessible = true
-        return method.invoke(exporter, text) as String
     }
 
     private fun mockContext(): android.content.Context {

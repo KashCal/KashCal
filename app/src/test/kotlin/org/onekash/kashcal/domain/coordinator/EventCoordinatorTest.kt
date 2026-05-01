@@ -10,7 +10,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -602,26 +601,6 @@ class EventCoordinatorTest {
         assertEquals(30, count)
         coVerify { eventReader.getRecurringEventsNeedingExtension(extendToMs) }
         coVerify { occurrenceGenerator.extendOccurrences(recurringEvent, extendToMs) }
-    }
-
-    @Test
-    fun `parseRRule parses RRULE string`() {
-        val rruleInfo = OccurrenceGenerator.RRuleInfo(
-            freq = "WEEKLY",
-            interval = 1,
-            count = null,
-            until = null,
-            byDay = listOf("MO"),
-            byMonthDay = emptyList(),
-            byMonth = emptyList(),
-            bySetPos = emptyList()
-        )
-        every { occurrenceGenerator.parseRule("FREQ=WEEKLY;BYDAY=MO") } returns rruleInfo
-
-        val result = coordinator.parseRRule("FREQ=WEEKLY;BYDAY=MO")
-
-        assertEquals("WEEKLY", result?.freq)
-        assertEquals(listOf("MO"), result?.byDay)
     }
 
     @Test

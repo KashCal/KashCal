@@ -82,6 +82,9 @@ object ICalEventMapper {
         // Get timezone ID
         val timezone = icalEvent.dtStart.timezone?.id
 
+        // RFC 5545 §3.8.2.2 permits DTEND TZID to differ from DTSTART TZID (e.g., flights).
+        val endTimezone = icalEvent.dtEnd?.timezone?.id?.takeIf { it != timezone }
+
         // Get original instance time for exception events
         val originalInstanceTime = icalEvent.recurrenceId?.timestamp
 
@@ -98,6 +101,7 @@ object ICalEventMapper {
             startTs = icalEvent.dtStart.timestamp,
             endTs = endTs,
             timezone = timezone,
+            endTimezone = endTimezone,
             isAllDay = icalEvent.isAllDay,
             status = icalEvent.status.toICalString(),
             transp = icalEvent.transparency.toICalString(),
@@ -130,8 +134,8 @@ object ICalEventMapper {
             lastSyncError = null,
             syncRetryCount = 0,
             localModifiedAt = null,
-            serverModifiedAt = now,
-            createdAt = now,
+            serverModifiedAt = icalEvent.lastModified?.timestamp ?: now,
+            createdAt = icalEvent.created?.timestamp ?: now,
             updatedAt = now
         )
     }

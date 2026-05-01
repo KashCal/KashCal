@@ -756,13 +756,6 @@ class EventCoordinator @Inject constructor(
     }
 
     /**
-     * Parse RRULE for display.
-     */
-    fun parseRRule(rrule: String): OccurrenceGenerator.RRuleInfo? {
-        return occurrenceGenerator.parseRule(rrule)
-    }
-
-    /**
      * Preview RRULE expansion without storing.
      */
     fun previewOccurrences(

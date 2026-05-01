@@ -249,7 +249,7 @@ fun DateTimeDisplayRow(
                     focusManager.clearFocus()
                     onStartClick()
                 }
-                .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                .padding(start = 52.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val startDisplay = buildString {
@@ -266,7 +266,8 @@ fun DateTimeDisplayRow(
                 color = if (isStartError) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.onSurface,
                 textDecoration = if (isStartError) TextDecoration.LineThrough else TextDecoration.None,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Visible
             )
         }
 
@@ -287,7 +288,7 @@ fun DateTimeDisplayRow(
                     focusManager.clearFocus()
                     onEndClick()
                 }
-                .padding(start = 52.dp, end = 16.dp, top = 12.dp, bottom = 12.dp),
+                .padding(start = 52.dp, end = 16.dp, top = 14.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             val endDisplay = buildString {
@@ -304,7 +305,8 @@ fun DateTimeDisplayRow(
                 color = if (isEndError) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.onSurface,
                 textDecoration = if (isEndError) TextDecoration.LineThrough else TextDecoration.None,
-                maxLines = 1
+                maxLines = 1,
+                overflow = TextOverflow.Visible
             )
         }
 

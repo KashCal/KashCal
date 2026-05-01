@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
     alias(libs.plugins.dokka)
     alias(libs.plugins.kotlin.serialization)
@@ -206,11 +205,8 @@ dependencies {
     // JSON
     implementation(libs.kotlinx.serialization.json)
 
-    // RFC 5545 Recurrence
-    implementation(libs.lib.recur)
-
-    // iCal Parsing (RFC 5545) - icaldav library (includes ical4j 4.2.2)
-    implementation(libs.icaldav.core)
+    // iCal Parsing (RFC 5545) — in-tree subproject that wraps ical4j 4.2.2
+    implementation(project(":icaldav-core"))
 
     // HTTP Client
     implementation(libs.okhttp)
@@ -243,6 +239,10 @@ dependencies {
     testImplementation("net.sf.kxml:kxml2:2.3.0")  // XmlPullParser for JVM tests
     testImplementation(libs.androidx.glance.testing)
     testImplementation(libs.androidx.glance.appwidget.testing)
+    // lib-recur is retained as a test-only RRULE cross-engine oracle
+    // (drives LibRecurParityEngine against ical4j in the parity harness)
+    // after the production migration to icaldav-core in v23.6.20.
+    testImplementation(libs.lib.recur)
 
     // Testing - Instrumented
     androidTestImplementation(libs.androidx.junit)
@@ -253,25 +253,6 @@ dependencies {
     // Debug
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-// Detekt static analysis
-detekt {
-    buildUponDefaultConfig = true
-    config.setFrom("$rootDir/detekt.yml")
-    baseline = file("$rootDir/detekt-baseline.xml")
-    parallel = true
-    // Analyze main sources only (tests have their own conventions)
-    source.setFrom("src/main/kotlin")
-}
-
-tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
-    reports {
-        html.required.set(true)
-        sarif.required.set(true)
-    }
-    // Exclude generated files
-    exclude("**/build/**")
 }
 
 // Kover code coverage configuration

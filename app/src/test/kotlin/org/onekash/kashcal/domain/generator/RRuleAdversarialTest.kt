@@ -8,7 +8,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -566,34 +565,6 @@ class RRuleAdversarialTest {
 
         // Should handle gracefully
         assertTrue(count >= 0)
-    }
-
-    // ==================== parseRule Tests ====================
-
-    @Test
-    fun `parseRule returns null for malformed RRULE`() {
-        val result = occurrenceGenerator.parseRule("GARBAGE")
-        assertNull(result)
-    }
-
-    @Test
-    fun `parseRule returns null for empty string`() {
-        val result = occurrenceGenerator.parseRule("")
-        assertNull(result)
-    }
-
-    @Test
-    fun `parseRule extracts FREQ correctly`() {
-        val result = occurrenceGenerator.parseRule("FREQ=WEEKLY;BYDAY=MO,WE,FR")
-        assertNotNull(result)
-        assertEquals("WEEKLY", result!!.freq)
-    }
-
-    @Test
-    fun `parseRule extracts BYDAY correctly`() {
-        val result = occurrenceGenerator.parseRule("FREQ=WEEKLY;BYDAY=MO,WE,FR")
-        assertNotNull(result)
-        assertTrue(result!!.byDay.isNotEmpty())
     }
 
     // ==================== expandForPreview Tests ====================

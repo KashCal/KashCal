@@ -626,6 +626,66 @@ class IcsPatcherTest {
     }
 
     @Test
+    fun `serializeWithExceptions VTIMEZONE blocks dedupe across master and exceptions for shared TZID`() {
+        val masterStartTs = 1735099200000L
+        val master = createTestEvent(
+            uid = "weekly-ny@kashcal.test",
+            title = "NY Standup",
+            startTs = masterStartTs,
+            endTs = masterStartTs + 3600000,
+            timezone = "America/New_York",
+            rrule = "FREQ=WEEKLY;BYDAY=MO"
+        )
+        val ex1 = createExceptionEvent(
+            masterId = 1L,
+            masterUid = "weekly-ny@kashcal.test",
+            originalInstanceTime = masterStartTs + (7 * 24 * 3600000L),
+            title = "NY Standup - Moved",
+            startTs = masterStartTs + (7 * 24 * 3600000L) + 3600000,
+            endTs = masterStartTs + (7 * 24 * 3600000L) + 7200000,
+            timezone = "America/New_York"
+        )
+
+        val ics = IcsPatcher.serializeWithExceptions(master, listOf(ex1))
+
+        val vtimezoneBlockCount = Regex("BEGIN:VTIMEZONE").findAll(ics).count()
+        assertEquals("Expected exactly 1 VTIMEZONE block (deduped), got:\n$ics", 1, vtimezoneBlockCount)
+    }
+
+    @Test
+    fun `serializeWithExceptions emits VTIMEZONE for zone referenced only by exception`() {
+        // This is the gap the line-scraper leaves: master has no TZID (floating),
+        // an exception uses a non-UTC TZID. The scraper emits master's VCALENDAR
+        // header (no VTIMEZONE) and drops any VTIMEZONE because exceptions are
+        // generated with includeVTimezone=false and then scraped out.
+        val masterStartTs = 1735099200000L
+        val master = createTestEvent(
+            uid = "floating@kashcal.test",
+            title = "Floating Master",
+            startTs = masterStartTs,
+            endTs = masterStartTs + 3600000,
+            timezone = null, // floating — no TZID
+            rrule = "FREQ=WEEKLY"
+        )
+        val exceptionInTokyo = createExceptionEvent(
+            masterId = 1L,
+            masterUid = "floating@kashcal.test",
+            originalInstanceTime = masterStartTs + (7 * 24 * 3600000L),
+            title = "Moved to Tokyo",
+            startTs = masterStartTs + (7 * 24 * 3600000L),
+            endTs = masterStartTs + (7 * 24 * 3600000L) + 3600000,
+            timezone = "Asia/Tokyo"
+        )
+
+        val ics = IcsPatcher.serializeWithExceptions(master, listOf(exceptionInTokyo))
+
+        assertTrue(
+            "Expected BEGIN:VTIMEZONE for Asia/Tokyo but output had none:\n$ics",
+            ics.contains("BEGIN:VTIMEZONE") && ics.contains("TZID:Asia/Tokyo")
+        )
+    }
+
+    @Test
     fun `serializeWithExceptions with mixed cancelled and modified exceptions`() {
         val masterStartTs = 1735099200000L
         val master = createTestEvent(

@@ -479,21 +479,231 @@ class PendingOperationsDaoTest {
 
     // ==================== Conflict Detection Tests ====================
 
+    private suspend fun insertSecondCalendarWithEvent(): Pair<Long, Long> {
+        val accountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.CALDAV, email = "other@example.com")
+        )
+        val calId = database.calendarsDao().insert(
+            Calendar(
+                accountId = accountId,
+                caldavUrl = "https://other.example.com/cal/",
+                displayName = "Other Calendar",
+                color = 0xFF9C27B0.toInt()
+            )
+        )
+        val evtId = database.eventsDao().insert(
+            Event(
+                id = 0,
+                uid = "other-event-uid",
+                calendarId = calId,
+                title = "Other Event",
+                startTs = System.currentTimeMillis(),
+                endTs = System.currentTimeMillis() + 3600000,
+                dtstamp = System.currentTimeMillis()
+            )
+        )
+        return calId to evtId
+    }
+
     @Test
-    fun `getConflictOperations finds 412 errors`() = runTest {
-        val id1 = pendingOpsDao.insert(createOperation())
-        val id2 = pendingOpsDao.insert(createOperation())
-        val id3 = pendingOpsDao.insert(createOperation())
+    fun `getConflictOperationsForCalendar filters CREATE ops by events calendar_id`() = runTest {
+        val (otherCalId, otherEvtId) = insertSecondCalendarWithEvent()
+        val opA = pendingOpsDao.insert(createOperation(eventId = testEventId, operation = PendingOperation.OPERATION_CREATE))
+        val opB = pendingOpsDao.insert(createOperation(eventId = otherEvtId, operation = PendingOperation.OPERATION_CREATE))
         val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(opA, now, "412 Precondition Failed", now)
+        pendingOpsDao.scheduleRetry(opB, now, "412 Precondition Failed", now)
 
-        // Schedule retry with conflict error
-        pendingOpsDao.scheduleRetry(id1, now, "412 Precondition Failed", now)
-        pendingOpsDao.scheduleRetry(id2, now, "Conflict detected", now)
-        pendingOpsDao.scheduleRetry(id3, now, "Network error", now)
+        val scopedToA = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+        val scopedToB = pendingOpsDao.getConflictOperationsForCalendar(otherCalId)
 
-        val conflicts = pendingOpsDao.getConflictOperations()
+        assertEquals(1, scopedToA.size)
+        assertEquals(opA, scopedToA[0].id)
+        assertEquals(1, scopedToB.size)
+        assertEquals(opB, scopedToB[0].id)
+    }
 
-        assertEquals(2, conflicts.size)
+    @Test
+    fun `getConflictOperationsForCalendar filters UPDATE ops by events calendar_id`() = runTest {
+        val (otherCalId, otherEvtId) = insertSecondCalendarWithEvent()
+        val opA = pendingOpsDao.insert(createOperation(eventId = testEventId, operation = PendingOperation.OPERATION_UPDATE))
+        val opB = pendingOpsDao.insert(createOperation(eventId = otherEvtId, operation = PendingOperation.OPERATION_UPDATE))
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(opA, now, "Conflict detected", now)
+        pendingOpsDao.scheduleRetry(opB, now, "Conflict detected", now)
+
+        val scopedToA = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(1, scopedToA.size)
+        assertEquals(opA, scopedToA[0].id)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar DELETE with sourceCalendarId ignores events calendar_id`() = runTest {
+        val (otherCalId, _) = insertSecondCalendarWithEvent()
+        val op = pendingOpsDao.insert(
+            PendingOperation(
+                id = 0,
+                eventId = testEventId,
+                operation = PendingOperation.OPERATION_DELETE,
+                status = PendingOperation.STATUS_PENDING,
+                sourceCalendarId = otherCalId,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "412 Precondition Failed", now)
+
+        val scopedToSource = pendingOpsDao.getConflictOperationsForCalendar(otherCalId)
+        val scopedToEventCalendar = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(1, scopedToSource.size)
+        assertEquals(op, scopedToSource[0].id)
+        assertEquals(0, scopedToEventCalendar.size)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar DELETE without sourceCalendarId uses events calendar_id`() = runTest {
+        val op = pendingOpsDao.insert(
+            PendingOperation(
+                id = 0,
+                eventId = testEventId,
+                operation = PendingOperation.OPERATION_DELETE,
+                status = PendingOperation.STATUS_PENDING,
+                sourceCalendarId = null,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "412 Precondition Failed", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(1, scoped.size)
+        assertEquals(op, scoped[0].id)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar MOVE phase 0 uses sourceCalendarId`() = runTest {
+        val (targetCalId, _) = insertSecondCalendarWithEvent()
+        val op = pendingOpsDao.insert(
+            PendingOperation(
+                id = 0,
+                eventId = testEventId,
+                operation = PendingOperation.OPERATION_MOVE,
+                status = PendingOperation.STATUS_PENDING,
+                movePhase = PendingOperation.MOVE_PHASE_DELETE,
+                sourceCalendarId = testCalendarId,
+                targetCalendarId = targetCalId,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "412 Precondition Failed", now)
+
+        val scopedToSource = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+        val scopedToTarget = pendingOpsDao.getConflictOperationsForCalendar(targetCalId)
+
+        assertEquals(1, scopedToSource.size)
+        assertEquals(op, scopedToSource[0].id)
+        assertEquals(0, scopedToTarget.size)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar MOVE phase 1 uses targetCalendarId`() = runTest {
+        val (targetCalId, _) = insertSecondCalendarWithEvent()
+        val op = pendingOpsDao.insert(
+            PendingOperation(
+                id = 0,
+                eventId = testEventId,
+                operation = PendingOperation.OPERATION_MOVE,
+                status = PendingOperation.STATUS_PENDING,
+                movePhase = PendingOperation.MOVE_PHASE_CREATE,
+                sourceCalendarId = testCalendarId,
+                targetCalendarId = targetCalId,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "412 Precondition Failed", now)
+
+        val scopedToSource = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+        val scopedToTarget = pendingOpsDao.getConflictOperationsForCalendar(targetCalId)
+
+        assertEquals(0, scopedToSource.size)
+        assertEquals(1, scopedToTarget.size)
+        assertEquals(op, scopedToTarget[0].id)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar excludes non-conflict error messages`() = runTest {
+        val op = pendingOpsDao.insert(createOperation(operation = PendingOperation.OPERATION_CREATE))
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "Network error", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(0, scoped.size)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar preserves LIKE-match semantics from the old query`() = runTest {
+        val op = pendingOpsDao.insert(createOperation(operation = PendingOperation.OPERATION_CREATE))
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "precondition failed", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(0, scoped.size)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar excludes FAILED status`() = runTest {
+        val op = pendingOpsDao.insert(createOperation(operation = PendingOperation.OPERATION_CREATE))
+        val now = System.currentTimeMillis()
+        pendingOpsDao.markFailed(op, "412 Precondition Failed", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(0, scoped.size)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar orders by created_at ASC`() = runTest {
+        val now = System.currentTimeMillis()
+        val opLate = pendingOpsDao.insert(
+            createOperation(operation = PendingOperation.OPERATION_CREATE, createdAt = now + 1000)
+        )
+        val opEarly = pendingOpsDao.insert(
+            createOperation(operation = PendingOperation.OPERATION_CREATE, createdAt = now - 1000)
+        )
+        pendingOpsDao.scheduleRetry(opLate, now, "412", now)
+        pendingOpsDao.scheduleRetry(opEarly, now, "412", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(2, scoped.size)
+        assertEquals(opEarly, scoped[0].id)
+        assertEquals(opLate, scoped[1].id)
+    }
+
+    @Test
+    fun `getConflictOperationsForCalendar excludes orphan op with no event and no sourceCalendarId`() = runTest {
+        val op = pendingOpsDao.insert(
+            PendingOperation(
+                id = 0,
+                eventId = 999_999L,
+                operation = PendingOperation.OPERATION_UPDATE,
+                status = PendingOperation.STATUS_PENDING,
+                createdAt = System.currentTimeMillis()
+            )
+        )
+        val now = System.currentTimeMillis()
+        pendingOpsDao.scheduleRetry(op, now, "412 Precondition Failed", now)
+
+        val scoped = pendingOpsDao.getConflictOperationsForCalendar(testCalendarId)
+
+        assertEquals(0, scoped.size)
     }
 
     // ==================== Reset All Failed Tests ====================

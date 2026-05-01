@@ -1538,11 +1538,23 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Update birthday reminder setting.
+     *
+     * Persists the preference and — if the birthdays feature is currently
+     * enabled — triggers a sync so every existing event's reminders and
+     * AlarmManager alarms are rewritten to the new value immediately.
+     * The cancel-previous-job guard mirrors [ContactEventObserver]'s
+     * debounce pattern so rapid picker dismissals converge on the last value.
      */
+    private var birthdayReminderJob: Job? = null
     fun onContactBirthdaysReminderChange(minutes: Int) {
-        viewModelScope.launch {
+        if (_contactBirthdaysReminder.value == minutes) return
+        birthdayReminderJob?.cancel()
+        birthdayReminderJob = viewModelScope.launch {
             Log.i(TAG, "Birthday reminder change: $minutes minutes")
             dataStore.setBirthdayReminder(minutes)
+            if (_contactBirthdaysEnabled.value) {
+                eventCoordinator.syncContactBirthdays()
+            }
         }
     }
 
@@ -1586,11 +1598,19 @@ class AccountSettingsViewModel @Inject constructor(
 
     /**
      * Update anniversary reminder setting.
+     *
+     * See [onContactBirthdaysReminderChange] for the propagation contract.
      */
+    private var anniversaryReminderJob: Job? = null
     fun onContactAnniversariesReminderChange(minutes: Int) {
-        viewModelScope.launch {
+        if (_contactAnniversariesReminder.value == minutes) return
+        anniversaryReminderJob?.cancel()
+        anniversaryReminderJob = viewModelScope.launch {
             Log.i(TAG, "Anniversary reminder change: $minutes minutes")
             dataStore.setAnniversaryReminder(minutes)
+            if (_contactAnniversariesEnabled.value) {
+                eventCoordinator.syncContactAnniversaries()
+            }
         }
     }
 

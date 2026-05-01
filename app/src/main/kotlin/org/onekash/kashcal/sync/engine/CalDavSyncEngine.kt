@@ -126,7 +126,7 @@ class CalDavSyncEngine @Inject constructor(
                     if (pushResult.operationsFailed > 0) {
                         // Some operations failed - try to resolve conflicts
                         Log.d(TAG, "Step 1b: Resolving ${pushResult.operationsFailed} push conflicts")
-                        val conflictOps = getConflictOperationsForCalendar(calendar.id)
+                        val conflictOps = pendingOperationsDao.getConflictOperationsForCalendar(calendar.id)
                         var abandonedCount = 0
                         var lastAbandonedTitle: String? = null
 
@@ -519,14 +519,6 @@ class CalDavSyncEngine @Inject constructor(
         trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL
     ): SyncResult {
         return syncAccount(account, forceFullSync, conflictStrategy, quirks, client, trigger)
-    }
-
-    /**
-     * Get pending operations that are in conflict state for a calendar.
-     */
-    private suspend fun getConflictOperationsForCalendar(calendarId: Long): List<PendingOperation> {
-        val allConflicts = pendingOperationsDao.getConflictOperations()
-        return allConflicts // For now return all - could filter by calendar if needed
     }
 
     /**

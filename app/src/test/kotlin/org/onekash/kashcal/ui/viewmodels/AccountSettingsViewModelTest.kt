@@ -56,6 +56,7 @@ import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.contacts.ContactEventManager
+import org.onekash.kashcal.data.contacts.ContactEventSyncResult
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
@@ -1617,6 +1618,84 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setAnniversaryReminder(1440) }
+    }
+
+    // ==================== Reminder-change immediate-sync propagation ====================
+
+    @Test
+    fun `onContactBirthdaysReminderChange triggers syncContactBirthdays when enabled`() = runTest {
+        contactBirthdaysEnabledFlow.value = true
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactBirthdaysReminderChange(30)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setBirthdayReminder(30) }
+        coVerify { eventCoordinator.syncContactBirthdays() }
+    }
+
+    @Test
+    fun `onContactBirthdaysReminderChange does not sync when feature disabled`() = runTest {
+        contactBirthdaysEnabledFlow.value = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactBirthdaysReminderChange(30)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setBirthdayReminder(30) }
+        coVerify(exactly = 0) { eventCoordinator.syncContactBirthdays() }
+    }
+
+    @Test
+    fun `onContactAnniversariesReminderChange triggers syncContactAnniversaries when enabled`() = runTest {
+        contactAnniversariesEnabledFlow.value = true
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactAnniversariesReminderChange(60)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAnniversaryReminder(60) }
+        coVerify { eventCoordinator.syncContactAnniversaries() }
+    }
+
+    @Test
+    fun `onContactAnniversariesReminderChange does not sync when feature disabled`() = runTest {
+        contactAnniversariesEnabledFlow.value = false
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactAnniversariesReminderChange(60)
+        advanceUntilIdle()
+
+        coVerify { dataStore.setAnniversaryReminder(60) }
+        coVerify(exactly = 0) { eventCoordinator.syncContactAnniversaries() }
+    }
+
+    @Test
+    fun `rapid onContactBirthdaysReminderChange calls cancel prior in-flight sync`() = runTest {
+        contactBirthdaysEnabledFlow.value = true
+        // Make sync slow so the second call cancels the first before it reaches sync
+        coEvery { eventCoordinator.syncContactBirthdays() } coAnswers {
+            delay(1_000L)
+            ContactEventSyncResult.Success(0, 0, 0)
+        }
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onContactBirthdaysReminderChange(30)
+        viewModel.onContactBirthdaysReminderChange(60)
+        advanceUntilIdle()
+
+        // The first coroutine is cancelled before it runs (queued on StandardTestDispatcher,
+        // cancelled by the second call before either reaches its first suspension point).
+        // Only the most recent value is persisted, and only one sync call fires.
+        coVerify(exactly = 0) { dataStore.setBirthdayReminder(30) }
+        coVerify(exactly = 1) { dataStore.setBirthdayReminder(60) }
+        coVerify(exactly = 1) { eventCoordinator.syncContactBirthdays() }
     }
 
     // ==================== UI Sheet State Tests ====================

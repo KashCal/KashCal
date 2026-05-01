@@ -98,6 +98,7 @@ Built something that pairs with KashCal? [Open an issue](https://github.com/Kash
 | FastMail | ✓ | [@mittensicle](https://github.com/mittensicle) |
 | [Davis](https://github.com/tchapi/davis) | ✓ | [@Ivan-Roger](https://github.com/Ivan-Roger) |
 | [Purelymail](https://purelymail.com/) | ✓ | [@babyhuehnchen](https://github.com/babyhuehnchen) |
+| [Posteo](https://posteo.de/) | ✓ | [@4nndee](https://github.com/4nndee) |
 | Zoho | ✓ | [@jopacy](https://github.com/jopacy) |
 | [SOGo](https://github.com/Alinto/sogo) | ✓ | [@mdonz](https://github.com/mdonz) |
 

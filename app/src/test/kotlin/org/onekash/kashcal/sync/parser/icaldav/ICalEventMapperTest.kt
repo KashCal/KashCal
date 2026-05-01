@@ -988,4 +988,207 @@ class ICalEventMapperTest {
         val totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1
         assertEquals("Should be 1 day", 1, totalDays.toInt())
     }
+
+    // ========== Server-supplied CREATED / LAST-MODIFIED Tests ==========
+
+    // 2020-01-15T12:00:00Z as unix ms
+    private val expectedCreatedMs = 1_579_089_600_000L
+    // 2024-06-15T08:30:00Z as unix ms
+    private val expectedLastModifiedMs = 1_718_440_200_000L
+
+    @Test
+    fun `preserves server-supplied CREATED and LAST-MODIFIED when both present`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-both@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            CREATED:20200115T120000Z
+            LAST-MODIFIED:20240615T083000Z
+            SUMMARY:Timestamped Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+
+        assertEquals(
+            "Event.createdAt must match server CREATED",
+            expectedCreatedMs,
+            entity.createdAt
+        )
+        assertEquals(
+            "Event.serverModifiedAt must match server LAST-MODIFIED",
+            expectedLastModifiedMs,
+            entity.serverModifiedAt
+        )
+    }
+
+    @Test
+    fun `preserves timestamps across two successive mappings of the same ICS`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-idempotent@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            CREATED:20200115T120000Z
+            LAST-MODIFIED:20240615T083000Z
+            SUMMARY:Idempotent Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val icalEvent1 = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity1 = ICalEventMapper.toEntity(icalEvent1, ics, 1L, null, null)
+
+        // Simulate a second pull of the same unchanged server event.
+        val icalEvent2 = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity2 = ICalEventMapper.toEntity(icalEvent2, ics, 1L, null, null)
+
+        assertEquals(
+            "createdAt must be identical across two mappings of the same ICS",
+            entity1.createdAt,
+            entity2.createdAt
+        )
+        assertEquals(
+            "serverModifiedAt must be identical across two mappings of the same ICS",
+            entity1.serverModifiedAt,
+            entity2.serverModifiedAt
+        )
+    }
+
+    @Test
+    fun `falls back to now for CREATED when absent but respects LAST-MODIFIED`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-no-created@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            LAST-MODIFIED:20240615T083000Z
+            SUMMARY:No CREATED
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val before = System.currentTimeMillis()
+        val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val after = System.currentTimeMillis()
+
+        assertEquals(
+            "serverModifiedAt must match server LAST-MODIFIED",
+            expectedLastModifiedMs,
+            entity.serverModifiedAt
+        )
+        assertTrue(
+            "createdAt should fall back to sync-time now() when CREATED absent",
+            entity.createdAt in before..after
+        )
+    }
+
+    @Test
+    fun `falls back to now for LAST-MODIFIED when absent but respects CREATED`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-no-lastmod@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            CREATED:20200115T120000Z
+            SUMMARY:No LAST-MODIFIED
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val before = System.currentTimeMillis()
+        val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val after = System.currentTimeMillis()
+
+        assertEquals(
+            "createdAt must match server CREATED",
+            expectedCreatedMs,
+            entity.createdAt
+        )
+        assertTrue(
+            "serverModifiedAt should fall back to sync-time now() when LAST-MODIFIED absent",
+            entity.serverModifiedAt!! in before..after
+        )
+    }
+
+    @Test
+    fun `falls back to now for both when neither present`() {
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-absent@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            SUMMARY:Minimal Event
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val before = System.currentTimeMillis()
+        val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val after = System.currentTimeMillis()
+
+        assertTrue(
+            "createdAt should fall back to sync-time now() when CREATED absent",
+            entity.createdAt in before..after
+        )
+        assertTrue(
+            "serverModifiedAt should fall back to sync-time now() when LAST-MODIFIED absent",
+            entity.serverModifiedAt!! in before..after
+        )
+    }
+
+    @Test
+    fun `server-supplied CREATED from 2020 is not overwritten with sync clock`() {
+        // Regression guard specifically for the A0.1 bug:
+        // pre-fix code stomped CREATED with System.currentTimeMillis().
+        // Any 2020 timestamp is well below 2020-09-13T12:26:40Z (1_600_000_000_000 ms).
+        val ics = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:timestamps-regression@kashcal.test
+            DTSTAMP:20251220T100000Z
+            DTSTART:20251225T140000Z
+            DTEND:20251225T150000Z
+            CREATED:20200115T120000Z
+            SUMMARY:Regression Guard
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+
+        assertTrue(
+            "createdAt must not be stomped by sync clock; got ${entity.createdAt}",
+            entity.createdAt < 1_600_000_000_000L
+        )
+    }
 }

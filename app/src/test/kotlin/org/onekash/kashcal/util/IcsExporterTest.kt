@@ -74,100 +74,9 @@ class IcsExporterTest {
         assertTrue("Should use default name", fileName.contains("event"))
     }
 
-    // ========== VEVENT Extraction Tests ==========
-
-    @Test
-    fun `extractVEventBlocks extracts single VEVENT`() {
-        val icsContent = """
-BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-UID:test-123
-SUMMARY:Test Event
-END:VEVENT
-END:VCALENDAR
-        """.trimIndent()
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-
-        assertEquals("Should extract 1 VEVENT", 1, blocks.size)
-        assertTrue("Block should contain BEGIN:VEVENT", blocks[0].contains("BEGIN:VEVENT"))
-        assertTrue("Block should contain END:VEVENT", blocks[0].contains("END:VEVENT"))
-        assertTrue("Block should contain UID", blocks[0].contains("UID:test-123"))
-    }
-
-    @Test
-    fun `extractVEventBlocks extracts multiple VEVENTs`() {
-        val icsContent = """
-BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-UID:event-1
-SUMMARY:Event 1
-END:VEVENT
-BEGIN:VEVENT
-UID:event-2
-SUMMARY:Event 2
-END:VEVENT
-BEGIN:VEVENT
-UID:event-3
-SUMMARY:Event 3
-END:VEVENT
-END:VCALENDAR
-        """.trimIndent()
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-
-        assertEquals("Should extract 3 VEVENTs", 3, blocks.size)
-        assertTrue("First block should contain event-1", blocks[0].contains("UID:event-1"))
-        assertTrue("Second block should contain event-2", blocks[1].contains("UID:event-2"))
-        assertTrue("Third block should contain event-3", blocks[2].contains("UID:event-3"))
-    }
-
-    @Test
-    fun `extractVEventBlocks handles empty calendar`() {
-        val icsContent = """
-BEGIN:VCALENDAR
-VERSION:2.0
-END:VCALENDAR
-        """.trimIndent()
-
-        val blocks = invokeExtractVEventBlocks(icsContent)
-
-        assertTrue("Should return empty list", blocks.isEmpty())
-    }
-
-    // ========== ICS Text Escaping Tests ==========
-
-    @Test
-    fun `escapeIcsText escapes backslash`() {
-        val escaped = invokeEscapeIcsText("Path\\to\\file")
-        assertEquals("Path\\\\to\\\\file", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText escapes semicolon`() {
-        val escaped = invokeEscapeIcsText("Item1; Item2")
-        assertEquals("Item1\\; Item2", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText escapes comma`() {
-        val escaped = invokeEscapeIcsText("A, B, C")
-        assertEquals("A\\, B\\, C", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText escapes newline`() {
-        val escaped = invokeEscapeIcsText("Line1\nLine2")
-        assertEquals("Line1\\nLine2", escaped)
-    }
-
-    @Test
-    fun `escapeIcsText handles combined escapes`() {
-        val escaped = invokeEscapeIcsText("Path\\file; A, B\nNew line")
-        assertEquals("Path\\\\file\\; A\\, B\\nNew line", escaped)
-    }
+    // VEVENT extraction and escape tests removed: extractVEventBlocks / escapeIcsText
+    // are deleted from IcsExporter — ICalGenerator now handles both. Escape behavior
+    // is covered by icaldav-core's ICalGeneratorCalendarTest.
 
     // ========== Calendar ICS Building Tests ==========
 
@@ -213,6 +122,28 @@ END:VCALENDAR
         assertTrue("Should escape newline", ics.contains("\\n"))
     }
 
+    @Test
+    fun `buildCalendarIcs emits VTIMEZONE blocks for event timezones deduplicated`() {
+        // Two events share America/New_York, one uses Asia/Tokyo.
+        // Expect exactly 1 VTIMEZONE for each distinct TZID.
+        val nyStart = 1735099200000L
+        val event1 = createBasicEvent(uid = "ny-1").copy(timezone = "America/New_York", startTs = nyStart, endTs = nyStart + 3600000)
+        val event2 = createBasicEvent(uid = "ny-2").copy(timezone = "America/New_York", startTs = nyStart + 86400000, endTs = nyStart + 86400000 + 3600000)
+        val event3 = createBasicEvent(uid = "tokyo-1").copy(timezone = "Asia/Tokyo", startTs = nyStart + 2 * 86400000, endTs = nyStart + 2 * 86400000 + 3600000)
+        val events: List<Pair<Event, List<Event>>> = listOf(
+            Pair(event1, emptyList()),
+            Pair(event2, emptyList()),
+            Pair(event3, emptyList())
+        )
+
+        val ics = invokeBuildCalendarIcs(events, "Multi-TZ Calendar")
+
+        val nyCount = ics.split("TZID:America/New_York\n").size - 1  // matches VTIMEZONE TZID line, not parameter
+        val tokyoVtimezoneCount = ics.split("TZID:Asia/Tokyo\n").size - 1
+        val vtimezoneBlockCount = Regex("BEGIN:VTIMEZONE").findAll(ics).count()
+        assertEquals("Expected 2 VTIMEZONE blocks (NY + Tokyo), got:\n$ics", 2, vtimezoneBlockCount)
+    }
+
     // ========== Round-trip Tests ==========
 
     @Test
@@ -239,19 +170,6 @@ END:VCALENDAR
         val method = IcsExporter::class.java.getDeclaredMethod("generateFileName", String::class.java)
         method.isAccessible = true
         return method.invoke(exporter, baseName) as String
-    }
-
-    private fun invokeExtractVEventBlocks(icsContent: String): List<String> {
-        val method = IcsExporter::class.java.getDeclaredMethod("extractVEventBlocks", String::class.java)
-        method.isAccessible = true
-        @Suppress("UNCHECKED_CAST")
-        return method.invoke(exporter, icsContent) as List<String>
-    }
-
-    private fun invokeEscapeIcsText(text: String): String {
-        val method = IcsExporter::class.java.getDeclaredMethod("escapeIcsText", String::class.java)
-        method.isAccessible = true
-        return method.invoke(exporter, text) as String
     }
 
     private fun invokeBuildCalendarIcs(

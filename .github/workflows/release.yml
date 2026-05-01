@@ -36,9 +36,8 @@ jobs:
       run: |
         echo "$KEYSTORE_BASE64" | base64 -d > app/release.keystore
 
-    - name: Build signed release APK from Maven Central
+    - name: Build signed release APK
       env:
-        USE_MAVEN_CENTRAL: "true"
         KEYSTORE_FILE: release.keystore
         KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         KEY_ALIAS: ${{ secrets.KEY_ALIAS }}

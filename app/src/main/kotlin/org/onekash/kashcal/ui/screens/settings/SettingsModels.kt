@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.network.AiaCertificateChainCompleter
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -185,10 +186,14 @@ suspend fun fetchCalendarInfo(url: String): FetchCalendarState = withContext(Dis
             return@withContext FetchCalendarState.Error("Invalid ICS format")
         }
 
-        // Extract calendar name from X-WR-CALNAME property
-        val nameRegex = Regex("""X-WR-CALNAME[^:]*:(.+)""")
-        val nameMatch = nameRegex.find(content)
-        val name = nameMatch?.groupValues?.get(1)?.trim() ?: "Calendar"
+        // Parse only the VCALENDAR preamble (cheap) to get the human-readable
+        // name. Counting VEVENTs via regex avoids a full parse on large feeds
+        // (subscriptions can be tens of MB with tens of thousands of events).
+        val preamble = content.substringBefore("BEGIN:VEVENT")
+            .substringBefore("BEGIN:VTODO")
+            .substringBefore("BEGIN:VJOURNAL") + "END:VCALENDAR"
+        val parsed = ICalParser().parse(preamble).getOrNull()
+        val name = parsed?.effectiveName?.takeIf { it.isNotBlank() } ?: "Calendar"
         val eventCount = Regex("BEGIN:VEVENT").findAll(content).count()
 
         FetchCalendarState.Success(name, eventCount)

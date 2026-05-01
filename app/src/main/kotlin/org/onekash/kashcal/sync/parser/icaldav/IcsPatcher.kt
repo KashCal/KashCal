@@ -4,17 +4,20 @@ import org.onekash.icaldav.model.AlarmAction
 import org.onekash.icaldav.model.Classification
 import org.onekash.icaldav.model.EventStatus
 import org.onekash.icaldav.model.ICalAlarm
+import org.onekash.icaldav.model.ICalCalendar
 import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.icaldav.model.ICalEvent
-import org.onekash.icaldav.model.Organizer
 import org.onekash.icaldav.model.RRule
 import org.onekash.icaldav.model.Transparency
 import org.onekash.icaldav.parser.ICalGenerator
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.ui.shared.EventColorPalette
-import java.time.ZoneId
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.exclusiveEndTs
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.formatGeo
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.iCalColorFor
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.parseTimestampCsv
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.resolveZone
 
 /**
  * Patches existing ICS data with updated Event fields, or generates fresh ICS.
@@ -46,49 +49,49 @@ object IcsPatcher {
      * @return Patched or fresh ICS string
      */
     fun patch(rawIcal: String?, event: Event): String {
-        if (rawIcal == null) {
-            return generateFresh(event)
-        }
+        val icalEvent = patchToICalEvent(rawIcal, event) ?: return generateFresh(event)
+        return generator.generate(icalEvent, method = null, includeVTimezone = true)
+    }
 
-        val original = parser.parseAllEvents(rawIcal)
-            .getOrNull()
-            ?.firstOrNull()
-            ?: return generateFresh(event)
-
-        val zone = event.timezone?.let {
-            try { ZoneId.of(it) } catch (_: Exception) { null }
-        }
-
-        // Merge user's reminder edits with original alarms
+    /**
+     * Produce a patched [ICalEvent] by merging the `event` fields into the
+     * `ICalEvent` parsed from `rawIcal`, preserving attendees, organizer,
+     * and raw X-* properties from the original.
+     *
+     * Returns null when there's no rawIcal or parsing fails, so the caller
+     * can fall back to a fresh generation path.
+     */
+    private fun patchToICalEvent(rawIcal: String?, event: Event): ICalEvent? {
+        if (rawIcal == null) return null
+        val original = parser.parseAllEvents(rawIcal).getOrNull()?.firstOrNull() ?: return null
+        val zone = resolveZone(event.timezone)
+        val endZone = resolveZone(event.endTimezone) ?: zone
         val mergedAlarms = mergeAlarms(original.alarms, event.reminders)
 
-        // Build updated event, preserving original's attendees/rawProperties
-        val updated = original.copy(
+        return original.copy(
             uid = event.uid,
             summary = event.title,
             description = event.description,
             location = event.location,
             dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(event), zone, event.isAllDay),
+            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(event), endZone, event.isAllDay),
             isAllDay = event.isAllDay,
             status = EventStatus.fromString(event.status),
             transparency = Transparency.fromString(event.transp),
             classification = Classification.fromString(event.classification),
             sequence = event.sequence + 1,
             rrule = event.rrule?.let { RRule.parse(it) },
-            exdates = parseExdates(event.exdate, zone, event.isAllDay),
+            exdates = parseTimestampCsv(event.exdate, zone, event.isAllDay),
+            rdates = parseTimestampCsv(event.rdate, zone, event.isAllDay),
             alarms = mergedAlarms,
-            // RFC 5545/7986 extended properties
             priority = event.priority,
             geo = formatGeo(event.geoLat, event.geoLon),
             color = iCalColorFor(event.color),
             url = event.url,
-            categories = event.categories.orEmpty()
-            // The following are PRESERVED from original:
-            // attendees, organizer, rawProperties, rdates
+            categories = event.categories.orEmpty(),
+            lastModified = ICalDateTime.fromTimestamp(event.updatedAt, null, false)
+            // PRESERVED from original: attendees, organizer, rawProperties, created, dtstamp
         )
-
-        return generator.generate(updated, method = null, includeVTimezone = true)
     }
 
     /**
@@ -102,70 +105,11 @@ object IcsPatcher {
      * @return Complete ICS string
      */
     fun generateFresh(event: Event): String {
-        val zone = event.timezone?.let {
-            try { ZoneId.of(it) } catch (_: Exception) { null }
-        }
-
-        // Convert reminder strings to ICalAlarms
-        val alarms = event.reminders?.mapNotNull { reminderStr ->
-            try {
-                val duration = DurationUtils.parse(reminderStr)
-                if (duration != null) {
-                    ICalAlarm(
-                        action = AlarmAction.DISPLAY,
-                        trigger = duration,
-                        triggerAbsolute = null,
-                        description = "Reminder",
-                        summary = null
-                    )
-                } else null
-            } catch (_: Exception) {
-                null
-            }
-        }.orEmpty()
-
-        // Create organizer if email is present
-        val organizer = event.organizerEmail?.let { email ->
-            Organizer(
-                email = email,
-                name = event.organizerName,
-                sentBy = null
-            )
-        }
-
-        val icalEvent = ICalEvent(
-            uid = event.uid,
-            importId = event.importId ?: event.uid, // Use importId if available
-            summary = event.title,
-            description = event.description,
-            location = event.location,
-            dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(event), zone, event.isAllDay),
-            duration = null, // We use dtEnd, not duration
-            isAllDay = event.isAllDay,
-            status = EventStatus.fromString(event.status),
-            sequence = event.sequence,
-            rrule = event.rrule?.let { RRule.parse(it) },
-            exdates = parseExdates(event.exdate, zone, event.isAllDay),
-            rdates = parseExdates(event.rdate, zone, event.isAllDay),
-            classification = Classification.fromString(event.classification),
-            recurrenceId = null,
-            alarms = alarms,
-            categories = event.categories.orEmpty(),
-            organizer = organizer,
-            attendees = emptyList(),
-            color = iCalColorFor(event.color),
-            dtstamp = ICalDateTime.fromTimestamp(event.dtstamp, null, false),
-            lastModified = null,
-            created = null,
-            transparency = Transparency.fromString(event.transp),
-            url = event.url,
-            priority = event.priority,
-            geo = formatGeo(event.geoLat, event.geoLon),
-            rawProperties = event.extraProperties.orEmpty()
+        return generator.generate(
+            EventToICalEventMapper.toICalEvent(event),
+            method = null,
+            includeVTimezone = true
         )
-
-        return generator.generate(icalEvent, method = null, includeVTimezone = true)
     }
 
     /**
@@ -196,127 +140,17 @@ object IcsPatcher {
             return serialize(master)
         }
 
-        // Generate master ICS - we'll extract just the VEVENT portion
-        val masterIcs = serialize(master)
+        val masterICalEvent = patchToICalEvent(master.rawIcal, master)
+            ?: EventToICalEventMapper.toICalEvent(master)
+        val exceptionICalEvents = exceptions.map { EventToICalEventMapper.toICalEvent(master, it) }
 
-        // Build combined VCALENDAR
-        return buildString {
-            // Extract and write header
-            val headerEnd = masterIcs.indexOf("BEGIN:VEVENT")
-            if (headerEnd > 0) {
-                append(masterIcs.substring(0, headerEnd))
-            } else {
-                // Fallback header if extraction fails
-                appendLine("BEGIN:VCALENDAR")
-                appendLine("VERSION:2.0")
-                appendLine("PRODID:-//KashCal//KashCal 2.0//EN")
-                appendLine("CALSCALE:GREGORIAN")
-            }
-
-            // Write master VEVENT
-            val masterVevent = extractVevent(masterIcs)
-            if (masterVevent != null) {
-                append(masterVevent)
-            }
-
-            // Write exception VEVENTs
-            for (exception in exceptions) {
-                val exceptionIcs = generateException(master, exception)
-                val exceptionVevent = extractVevent(exceptionIcs)
-                if (exceptionVevent != null) {
-                    append(exceptionVevent)
-                }
-            }
-
-            // Footer
-            appendLine("END:VCALENDAR")
-        }
-    }
-
-    /**
-     * Generate ICS for an exception event.
-     *
-     * Exception events have:
-     * - Same UID as master
-     * - RECURRENCE-ID indicating which occurrence is modified
-     * - Their own DTSTART/DTEND (the new times)
-     */
-    private fun generateException(master: Event, exception: Event): String {
-        val zone = exception.timezone?.let {
-            try { ZoneId.of(it) } catch (_: Exception) { null }
-        }
-
-        // Convert reminder strings to ICalAlarms
-        val alarms = exception.reminders?.mapNotNull { reminderStr ->
-            try {
-                val duration = DurationUtils.parse(reminderStr)
-                if (duration != null) {
-                    ICalAlarm(
-                        action = AlarmAction.DISPLAY,
-                        trigger = duration,
-                        triggerAbsolute = null,
-                        description = "Reminder",
-                        summary = null
-                    )
-                } else null
-            } catch (_: Exception) {
-                null
-            }
-        }.orEmpty()
-
-        // Build RECURRENCE-ID from originalInstanceTime
-        val recurrenceId = exception.originalInstanceTime?.let { instanceTime ->
-            ICalDateTime.fromTimestamp(instanceTime, zone, exception.isAllDay)
-        }
-
-        val icalEvent = ICalEvent(
-            uid = master.uid, // Same UID as master (RFC 5545 requirement)
-            importId = exception.importId ?: "${master.uid}:RECID:${exception.originalInstanceTime}",
-            summary = exception.title,
-            description = exception.description,
-            location = exception.location,
-            dtStart = ICalDateTime.fromTimestamp(exception.startTs, zone, exception.isAllDay),
-            dtEnd = ICalDateTime.fromTimestamp(exclusiveEndTs(exception), zone, exception.isAllDay),
-            duration = null,
-            isAllDay = exception.isAllDay,
-            status = EventStatus.fromString(exception.status),
-            sequence = exception.sequence,
-            rrule = null, // Exceptions don't have RRULE
-            exdates = emptyList(),
-            rdates = emptyList(),
-            classification = Classification.fromString(exception.classification),
-            recurrenceId = recurrenceId,
-            alarms = alarms,
-            categories = exception.categories.orEmpty(),
-            organizer = exception.organizerEmail?.let { Organizer(it, exception.organizerName, null) },
-            attendees = emptyList(),
-            color = iCalColorFor(exception.color),
-            dtstamp = ICalDateTime.fromTimestamp(exception.dtstamp, null, false),
-            lastModified = null,
-            created = null,
-            transparency = Transparency.fromString(exception.transp),
-            url = exception.url,
-            priority = exception.priority,
-            geo = formatGeo(exception.geoLat, exception.geoLon),
-            rawProperties = exception.extraProperties.orEmpty()
+        return generator.generate(
+            ICalCalendar(
+                prodId = null, // falls back to generator instance prodId
+                events = listOf(masterICalEvent) + exceptionICalEvents
+            ),
+            includeVTimezone = true
         )
-
-        return generator.generate(icalEvent, method = null, includeVTimezone = false)
-    }
-
-    /**
-     * Extract the VEVENT block from an ICS string.
-     *
-     * @param ics Complete ICS string
-     * @return Just the VEVENT block (including BEGIN/END tags), or null if not found
-     */
-    private fun extractVevent(ics: String): String? {
-        val startIdx = ics.indexOf("BEGIN:VEVENT")
-        val endIdx = ics.indexOf("END:VEVENT")
-        if (startIdx < 0 || endIdx < 0) return null
-
-        // Include END:VEVENT and newline
-        return ics.substring(startIdx, endIdx + "END:VEVENT".length) + "\n"
     }
 
     /**
@@ -389,58 +223,4 @@ object IcsPatcher {
         return result
     }
 
-    /**
-     * Parse exdate CSV string to list of ICalDateTime.
-     *
-     * @param csv Comma-separated timestamps in milliseconds
-     * @param zone Timezone for the datetimes
-     * @param isDate True if these are date-only values
-     * @return List of ICalDateTime
-     */
-    private fun parseExdates(csv: String?, zone: ZoneId?, isDate: Boolean): List<ICalDateTime> {
-        if (csv.isNullOrBlank()) return emptyList()
-        return csv.split(",").mapNotNull { ts ->
-            ts.trim().toLongOrNull()?.let {
-                ICalDateTime.fromTimestamp(it, zone, isDate)
-            }
-        }
-    }
-
-    /**
-     * Convert inclusive endTs to exclusive for RFC 5545 serialization.
-     * All-day events are stored with inclusive end (23:59:59.999 UTC).
-     * RFC 5545 requires exclusive DTEND (next day 00:00:00 UTC).
-     */
-    private fun exclusiveEndTs(event: Event): Long {
-        return if (event.isAllDay && event.endTs >= event.startTs) {
-            event.endTs + 1
-        } else {
-            event.endTs
-        }
-    }
-
-    // ========== RFC 5545/7986 Formatting Helpers ==========
-
-    /**
-     * Format latitude/longitude to RFC 5545 GEO "latitude;longitude" format.
-     *
-     * @param lat Latitude in decimal degrees
-     * @param lon Longitude in decimal degrees
-     * @return GEO string (e.g., "37.386013;-122.082932"), or null if either is null
-     */
-    private fun formatGeo(lat: Double?, lon: Double?): String? {
-        if (lat == null || lon == null) return null
-        return "$lat;$lon"
-    }
-
-    /**
-     * Resolve an ARGB color to its RFC 7986 COLOR value: prefer a CSS3 name when
-     * the palette matches, otherwise fall back to a #RRGGBB hex string.
-     * Alpha channel is dropped per RFC 7986 COLOR spec.
-     */
-    private fun iCalColorFor(argb: Int?): String? {
-        if (argb == null) return null
-        return EventColorPalette.nameForHex(argb)
-            ?: String.format(java.util.Locale.ROOT, "#%06X", argb and 0xFFFFFF)
-    }
 }

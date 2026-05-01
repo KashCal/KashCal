@@ -74,16 +74,15 @@ object IcsParserService {
 
     /**
      * Get the calendar name from ICS content.
-     * Looks for X-WR-CALNAME or PRODID properties.
+     *
+     * Prefers RFC 7986 NAME over X-WR-CALNAME (via ICalCalendar.effectiveName),
+     * falling back to PRODID when neither is set.
      *
      * Note: This method is only used in tests, not in production code.
      */
     fun getCalendarName(content: String): String? {
-        // Simple extraction - only used in tests
-        val xwrCalname = Regex("X-WR-CALNAME:([^\r\n]+)").find(content)?.groupValues?.get(1)?.trim()
-        if (xwrCalname != null) return xwrCalname
-
-        val prodid = Regex("PRODID:([^\r\n]+)").find(content)?.groupValues?.get(1)?.trim()
-        return prodid?.takeIf { it.isNotBlank() }
+        val calendar = parser.parse(content).getOrNull() ?: return null
+        calendar.effectiveName?.let { return it }
+        return calendar.prodId?.takeIf { it.isNotBlank() }
     }
 }
