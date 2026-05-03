@@ -94,6 +94,7 @@ import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
+import org.onekash.kashcal.ui.components.cardFillAlpha
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
@@ -931,7 +932,6 @@ private fun HomeTopAppBar(
                     Text(
                         stringResource(R.string.app_name),
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.clickable { onInfoClick() }
                     )
                 },
@@ -1367,12 +1367,10 @@ private fun DayEventsPage(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 events.forEach { displayEvent ->
-                    val eventColor = Color(displayEvent.calendarColor)
                     val isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay)
 
                     EventCard(
                         displayEvent = displayEvent,
-                        eventColor = eventColor,
                         isPast = isPast,
                         selectedDate = dateMs,
                         showEventEmojis = showEventEmojis,
@@ -1400,7 +1398,9 @@ private fun SearchResultCard(
     modifier: Modifier = Modifier
 ) {
     val displayEvent = searchResult.displayEvent
-    val eventColor = Color(displayEvent.calendarColor)
+    val stripeColor = Color(displayEvent.calendarColor)
+    val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
+    val fillAlpha = displayEvent.cardFillAlpha()
 
     // Format date: for Room recurring events, show "Next: date" format using displayTs
     val dateString = remember(searchResult, timePattern) {
@@ -1430,7 +1430,7 @@ private fun SearchResultCard(
             .fillMaxWidth()
             .alpha(if (isPast) 0.5f else 1f)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = eventColor.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -1438,7 +1438,7 @@ private fun SearchResultCard(
                 modifier = Modifier
                     .width(4.dp)
                     .fillMaxHeight()
-                    .background(eventColor)
+                    .background(stripeColor)
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(
@@ -1711,12 +1711,10 @@ private fun AgendaContent(
                     },
                     contentType = { "agenda_card" }
                 ) { item ->
-                    val eventColor = Color(item.displayEvent.calendarColor)
                     val isPast = item.displayDay < todayDayCode
                     Column(modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)) {
                         AgendaCard(
                             item = item,
-                            eventColor = eventColor,
                             isPast = isPast,
                             showEventEmojis = showEventEmojis,
                             timePattern = timePattern,
@@ -1737,13 +1735,15 @@ private fun AgendaContent(
 @Composable
 private fun AgendaCard(
     item: AgendaDisplayItem,
-    eventColor: Color,
     isPast: Boolean,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
     onClick: () -> Unit
 ) {
     val displayEvent = item.displayEvent
+    val stripeColor = Color(displayEvent.calendarColor)
+    val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
+    val fillAlpha = displayEvent.cardFillAlpha()
     val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, timePattern)
 
     // Format title with age for birthday events and optional emoji
@@ -1757,7 +1757,7 @@ private fun AgendaCard(
             .fillMaxWidth()
             .alpha(if (isPast) 0.5f else 1f)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = eventColor.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -1765,7 +1765,7 @@ private fun AgendaCard(
                 modifier = Modifier
                     .width(4.dp)
                     .fillMaxHeight()
-                    .background(eventColor)
+                    .background(stripeColor)
             )
             Column(modifier = Modifier.padding(12.dp).weight(1f)) {
                 Text(

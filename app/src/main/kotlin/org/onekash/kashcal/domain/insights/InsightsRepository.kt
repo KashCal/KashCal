@@ -150,7 +150,7 @@ class InsightsRepository @Inject constructor(
             val occs = instances.map { inst ->
                 // Negate device calendar IDs to avoid collision with Room's positive auto-increment IDs
                 val deviceCalId = -inst.calendarId
-                calMeta.putIfAbsent(deviceCalId, Pair(inst.calendarDisplayName, inst.displayColor))
+                calMeta.putIfAbsent(deviceCalId, Pair(inst.calendarDisplayName, inst.calendarColor))
                 SimpleOccurrence(
                     startTs = inst.startTs,
                     endTs = inst.endTs,

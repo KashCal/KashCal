@@ -38,7 +38,6 @@ import java.util.Locale
 @Composable
 internal fun EventCard(
     displayEvent: DisplayEvent,
-    eventColor: Color,
     isPast: Boolean,
     selectedDate: Long,
     showEventEmojis: Boolean = true,
@@ -51,14 +50,17 @@ internal fun EventCard(
     }
 
     val effectiveAlpha = if (isPast) 0.5f else 1f
-    val leftStripeColor = if (displayEvent.isFree) eventColor.copy(alpha = 0.4f) else eventColor
+    val stripeColor = Color(displayEvent.calendarColor)
+    val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
+    val fillAlpha = displayEvent.cardFillAlpha()
+    val leftStripeColor = if (displayEvent.isFree) stripeColor.copy(alpha = 0.4f) else stripeColor
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .alpha(effectiveAlpha)
             .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = eventColor.copy(alpha = 0.15f)),
+        colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -91,6 +93,13 @@ internal fun EventCard(
         }
     }
 }
+
+/**
+ * Card body tint alpha. Overridden events ride higher (0.35) so the user's chosen
+ * color resists simultaneous-contrast shift from the adjacent calendar stripe;
+ * non-override events stay at 0.15 for a calm baseline.
+ */
+internal fun DisplayEvent.cardFillAlpha(): Float = if (eventColor != null) 0.40f else 0.15f
 
 internal fun formatDisplayEventTitle(displayEvent: DisplayEvent, showEmojis: Boolean, resources: android.content.res.Resources): String {
     return when (displayEvent) {

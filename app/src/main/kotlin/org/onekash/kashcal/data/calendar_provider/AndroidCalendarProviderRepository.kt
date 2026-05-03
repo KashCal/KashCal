@@ -48,16 +48,18 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Instances.ALL_DAY,          // 7
             Instances.RRULE,            // 8
             Instances.CALENDAR_ID,      // 9
-            Instances.DISPLAY_COLOR,    // 10
-            Instances.CALENDAR_DISPLAY_NAME, // 11
-            Instances.STATUS,           // 12
-            Instances.AVAILABILITY,     // 13
-            Instances.HAS_ALARM,        // 14
-            Instances.SELF_ATTENDEE_STATUS,  // 15
-            Instances.CALENDAR_ACCESS_LEVEL, // 16
-            Instances.ORIGINAL_ID,       // 17 - Master event ID for exceptions
-            Instances.ORIGINAL_INSTANCE_TIME, // 18 - Original occurrence time for exceptions
-            Instances.EVENT_TIMEZONE     // 19 - Event timezone (exception's for modified occurrences)
+            Instances.CALENDAR_DISPLAY_NAME, // 10
+            Instances.STATUS,           // 11
+            Instances.AVAILABILITY,     // 12
+            Instances.HAS_ALARM,        // 13
+            Instances.SELF_ATTENDEE_STATUS,  // 14
+            Instances.CALENDAR_ACCESS_LEVEL, // 15
+            Instances.ORIGINAL_ID,       // 16 - Master event ID for exceptions
+            Instances.ORIGINAL_INSTANCE_TIME, // 17 - Original occurrence time for exceptions
+            Instances.EVENT_TIMEZONE,    // 18 - Event timezone (exception's for modified occurrences)
+            // Color channels — read via getColumnIndexOrThrow to decouple from projection order.
+            Instances.CALENDAR_COLOR,    // 19 - raw calendar color (identity)
+            Instances.EVENT_COLOR        // 20 - raw event override (0 = no override)
         )
 
         // Column indices
@@ -71,16 +73,15 @@ class AndroidCalendarProviderRepository @Inject constructor(
         private const val COL_ALL_DAY = 7
         private const val COL_RRULE = 8
         private const val COL_CALENDAR_ID = 9
-        private const val COL_DISPLAY_COLOR = 10
-        private const val COL_CALENDAR_DISPLAY_NAME = 11
-        private const val COL_STATUS = 12
-        private const val COL_AVAILABILITY = 13
-        private const val COL_HAS_ALARM = 14
-        private const val COL_SELF_ATTENDEE_STATUS = 15
-        private const val COL_ACCESS_LEVEL = 16
-        private const val COL_ORIGINAL_ID = 17
-        private const val COL_ORIGINAL_INSTANCE_TIME = 18
-        private const val COL_EVENT_TIMEZONE = 19
+        private const val COL_CALENDAR_DISPLAY_NAME = 10
+        private const val COL_STATUS = 11
+        private const val COL_AVAILABILITY = 12
+        private const val COL_HAS_ALARM = 13
+        private const val COL_SELF_ATTENDEE_STATUS = 14
+        private const val COL_ACCESS_LEVEL = 15
+        private const val COL_ORIGINAL_ID = 16
+        private const val COL_ORIGINAL_INSTANCE_TIME = 17
+        private const val COL_EVENT_TIMEZONE = 18
 
         private const val SELECTION_VISIBLE = "${Calendars.VISIBLE} = 1"
         private const val SELECTION_HIDE_DECLINED = "$SELECTION_VISIBLE AND " +
@@ -163,6 +164,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
         enabledCalendarIds: Set<Long>
     ): List<DeviceCalendarInstance> {
         val results = mutableListOf<DeviceCalendarInstance>()
+        // Resolve new columns by name — defensive against future projection reorders.
+        val colCalendarColor = cursor.getColumnIndexOrThrow(Instances.CALENDAR_COLOR)
+        val colEventColor = cursor.getColumnIndexOrThrow(Instances.EVENT_COLOR)
         while (cursor.moveToNext()) {
             val calendarId = cursor.getLong(COL_CALENDAR_ID)
             if (calendarId !in enabledCalendarIds) continue
@@ -212,7 +216,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     reminders = emptyList(), // Populated by batch query after
                     calendarId = calendarId,
                     calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME).orEmpty(),
-                    displayColor = cursor.getInt(COL_DISPLAY_COLOR),
+                    calendarColor = cursor.getInt(colCalendarColor),
+                    eventColor = cursor.getInt(colEventColor).takeIf { it != 0 },
                     status = status,
                     availability = cursor.getInt(COL_AVAILABILITY),
                     hasAlarm = cursor.getInt(COL_HAS_ALARM) == 1,
@@ -1014,6 +1019,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 null,
                 SORT_ORDER
             )?.use { cursor ->
+                val colCalendarColor = cursor.getColumnIndexOrThrow(Instances.CALENDAR_COLOR)
+                val colEventColor = cursor.getColumnIndexOrThrow(Instances.EVENT_COLOR)
                 while (cursor.moveToNext()) {
                     val calendarId = cursor.getLong(COL_CALENDAR_ID)
                     if (calendarId !in enabledCalendarIds) continue
@@ -1023,7 +1030,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     val isAllDay = cursor.getInt(COL_ALL_DAY) == 1
                     val title = cursor.getString(COL_TITLE).orEmpty()
                     val location = cursor.getString(COL_LOCATION)
-                    val displayColor = cursor.getInt(COL_DISPLAY_COLOR)
+                    val calendarColorValue = cursor.getInt(colCalendarColor)
+                    val eventColorValue = cursor.getInt(colEventColor).takeIf { it != 0 }
 
                     instancesWithAlarms.add(
                         InstanceWithAlarm(
@@ -1032,7 +1040,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                             title = title,
                             location = location,
                             isAllDay = isAllDay,
-                            calendarColor = displayColor,
+                            // Reminder notifications show effective display (override if set, else calendar).
+                            calendarColor = eventColorValue ?: calendarColorValue,
                             calendarId = calendarId
                         )
                     )

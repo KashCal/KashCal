@@ -446,7 +446,7 @@ class MainActivity : ComponentActivity() {
                 if (showQuickViewSheet && quickViewEvent != null) {
                     val event = quickViewEvent!!
                     val calendar = uiState.calendars.find { it.id == event.calendarId }
-                    val calendarColor = event.color ?: calendar?.color ?: 0xFF6200EE.toInt()
+                    val calendarColor = calendar?.color ?: 0xFF6200EE.toInt()
                     val calendarName = calendar?.displayName ?: "Calendar"
 
                     EventQuickViewSheet(

@@ -45,7 +45,7 @@ fun EventBlock(
     onDragCancel: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    val color = displayEvent.calendarColor
+    val color = displayEvent.eventColor ?: displayEvent.calendarColor
     val isFree = displayEvent.isFree
     val calColor = Color(color)
     val surfaceColor = MaterialTheme.colorScheme.surface
@@ -153,7 +153,7 @@ fun CompactEventBlock(
     modifier: Modifier = Modifier
 ) {
     val isFree = displayEvent.isFree
-    val color = displayEvent.calendarColor
+    val color = displayEvent.eventColor ?: displayEvent.calendarColor
     val calColor = Color(color)
     val surfaceColor = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface

@@ -235,7 +235,7 @@ private fun EventSnippet(
                 .width(3.dp)
                 .height(12.dp)
                 .clip(RoundedCornerShape(1.dp))
-                .background(Color(displayEvent.calendarColor))
+                .background(Color(displayEvent.eventColor ?: displayEvent.calendarColor))
         )
         Text(
             text = title,

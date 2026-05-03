@@ -924,7 +924,7 @@ private fun CompactEventChip(
     showEventEmojis: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val color = displayEvent.calendarColor
+    val color = displayEvent.eventColor ?: displayEvent.calendarColor
     val isFree = displayEvent.isFree
     val displayText = EmojiMatcher.formatWithEmoji(displayEvent.title, showEventEmojis)
     val calColor = Color(color)

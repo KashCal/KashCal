@@ -281,7 +281,8 @@ class CalendarProviderEdgeCaseTest {
             reminders = listOf(15, 60),
             calendarId = 5L,
             calendarDisplayName = "Work Calendar",
-            displayColor = -16711936, // Green
+            calendarColor = -16711936, // Green
+            eventColor = null,
             status = 1,
             availability = 0,
             hasAlarm = true,
@@ -307,7 +308,8 @@ class CalendarProviderEdgeCaseTest {
         assertEquals(listOf(15, 60), instance.reminders)
         assertEquals(5L, instance.calendarId)
         assertEquals("Work Calendar", instance.calendarDisplayName)
-        assertEquals(-16711936, instance.displayColor)
+        assertEquals(-16711936, instance.calendarColor)
+        assertNull(instance.eventColor)
         assertEquals(1, instance.status)
         assertEquals(0, instance.availability)
         assertTrue(instance.hasAlarm)
@@ -336,7 +338,8 @@ class CalendarProviderEdgeCaseTest {
             reminders = emptyList(),
             calendarId = 1L,
             calendarDisplayName = "Cal",
-            displayColor = 0,
+            calendarColor = 0,
+            eventColor = null,
             status = 0,
             availability = 0,
             hasAlarm = false,

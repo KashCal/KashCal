@@ -2,6 +2,7 @@ package org.onekash.kashcal.domain.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
@@ -67,7 +68,8 @@ class DisplayEventTest {
         reminders = listOf(15, 60),
         calendarId = 5L,
         calendarDisplayName = "Device Calendar",
-        displayColor = 0xFFFF5722.toInt(),
+        calendarColor = 0xFFFF5722.toInt(),
+        eventColor = null,
         status = 1,
         availability = 0,
         hasAlarm = false,
@@ -142,6 +144,7 @@ class DisplayEventTest {
     fun `Room variant delegates calendarColor to Calendar`() {
         val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar)
         assertEquals(0xFF2196F3.toInt(), display.calendarColor)
+        assertNull(display.eventColor)
     }
 
     @Test
@@ -164,6 +167,7 @@ class DisplayEventTest {
     fun `Room variant with null calendar uses defaults`() {
         val display = DisplayEvent.Room(testEvent, testOccurrence, null)
         assertEquals(0, display.calendarColor)
+        assertNull(display.eventColor)
         assertEquals("", display.calendarName)
         assertFalse(display.isReadOnly)
     }
@@ -220,9 +224,18 @@ class DisplayEventTest {
     }
 
     @Test
-    fun `Device variant calendarColor uses displayColor`() {
+    fun `Device variant calendarColor reads instance calendarColor field`() {
         val display = DisplayEvent.Device(testInstance)
         assertEquals(0xFFFF5722.toInt(), display.calendarColor)
+        assertNull(display.eventColor)
+    }
+
+    @Test
+    fun `Device variant eventColor reflects instance eventColor override`() {
+        val withOverride = testInstance.copy(eventColor = 0xFFFF0000.toInt())
+        val display = DisplayEvent.Device(withOverride)
+        assertEquals(0xFFFF5722.toInt(), display.calendarColor)
+        assertEquals(0xFFFF0000.toInt(), display.eventColor)
     }
 
     @Test
@@ -241,27 +254,38 @@ class DisplayEventTest {
         assertTrue(readOnlyDisplay.isReadOnly)
     }
 
-    // ========== Per-Event Color Precedence (Room) ==========
+    // ========== Color Channel Split (Room) ==========
 
     @Test
-    fun `Room calendarColor returns event color when set`() {
+    fun `Room calendarColor reflects calendar even when event has override`() {
         val eventWithColor = testEvent.copy(color = 0xFF00FF00.toInt())
         val display = DisplayEvent.Room(eventWithColor, testOccurrence, testCalendar)
-        assertEquals(0xFF00FF00.toInt(), display.calendarColor)
+        assertEquals(0xFF2196F3.toInt(), display.calendarColor)   // calendar's color — override ignored
+        assertEquals(0xFF00FF00.toInt(), display.eventColor)      // override surfaced via eventColor
     }
 
     @Test
-    fun `Room calendarColor falls back to calendar color when event color is null`() {
+    fun `Room calendarColor matches calendar when event has no override`() {
         val eventNoColor = testEvent.copy(color = null)
         val display = DisplayEvent.Room(eventNoColor, testOccurrence, testCalendar)
         assertEquals(0xFF2196F3.toInt(), display.calendarColor)
+        assertNull(display.eventColor)
     }
 
     @Test
-    fun `Room calendarColor returns 0 when both event and calendar color are null`() {
+    fun `Room calendarColor returns 0 when calendar is null`() {
         val eventNoColor = testEvent.copy(color = null)
         val display = DisplayEvent.Room(eventNoColor, testOccurrence, null)
         assertEquals(0, display.calendarColor)
+        assertNull(display.eventColor)
+    }
+
+    @Test
+    fun `Room with override and null calendar surfaces override on eventColor`() {
+        val eventWithColor = testEvent.copy(color = 0xFF00FF00.toInt())
+        val display = DisplayEvent.Room(eventWithColor, testOccurrence, null)
+        assertEquals(0, display.calendarColor)
+        assertEquals(0xFF00FF00.toInt(), display.eventColor)
     }
 
     // ========== isFree Property ==========

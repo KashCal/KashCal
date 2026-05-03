@@ -126,7 +126,7 @@ class WidgetDataRepository @Inject constructor(
             startTs = displayEvent.startTs,
             endTs = displayEvent.endTs,
             isAllDay = displayEvent.isAllDay,
-            calendarColor = displayEvent.calendarColor.takeIf { it != 0 } ?: DEFAULT_CALENDAR_COLOR,
+            calendarColor = (displayEvent.eventColor ?: displayEvent.calendarColor).takeIf { it != 0 } ?: DEFAULT_CALENDAR_COLOR,
             isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay),
             isDeviceEvent = displayEvent is DisplayEvent.Device,
             startDay = displayEvent.startDay

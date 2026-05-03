@@ -33,7 +33,10 @@ sealed interface DisplayEvent {
     val endDay: Int
     val isAllDay: Boolean
     val hasRrule: Boolean
+    /** The calendar's own color. Carries calendar identity — not overridden by per-event color. */
     val calendarColor: Int
+    /** User-picked per-event color override. Null if no override set. */
+    val eventColor: Int?
     val calendarName: String
     val isReadOnly: Boolean
     val isFree: Boolean
@@ -54,7 +57,8 @@ sealed interface DisplayEvent {
         override val endDay get() = occurrence.endDay
         override val isAllDay get() = event.isAllDay
         override val hasRrule get() = event.rrule != null
-        override val calendarColor get() = event.color ?: calendar?.color ?: 0
+        override val calendarColor get() = calendar?.color ?: 0
+        override val eventColor get() = event.color
         override val calendarName get() = calendar?.displayName.orEmpty()
         override val isReadOnly get() = calendar?.isReadOnly ?: false
         override val isFree get() = event.transp == "TRANSPARENT"
@@ -72,7 +76,8 @@ sealed interface DisplayEvent {
         override val endDay get() = instance.endDay
         override val isAllDay get() = instance.isAllDay
         override val hasRrule get() = instance.hasRrule
-        override val calendarColor get() = instance.displayColor
+        override val calendarColor get() = instance.calendarColor
+        override val eventColor get() = instance.eventColor
         override val calendarName get() = instance.calendarDisplayName
         override val isReadOnly get() = !instance.isWritable
         override val isFree get() = instance.availability == 1

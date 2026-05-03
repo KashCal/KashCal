@@ -33,7 +33,10 @@ data class DeviceCalendarInstance(
     val reminders: List<Int>,
     val calendarId: Long,
     val calendarDisplayName: String,
-    val displayColor: Int,
+    /** Calendar's own color (from Calendars.CALENDAR_COLOR). Carries calendar identity. */
+    val calendarColor: Int,
+    /** Per-event color override (from Events.EVENT_COLOR). Null if no override. */
+    val eventColor: Int?,
     val status: Int,
     val availability: Int,
     val hasAlarm: Boolean,

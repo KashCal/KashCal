@@ -169,7 +169,7 @@ class DeviceEventMapperTest {
     }
 
     @Test
-    fun `toFormState uses eventColor over calendarColor when present`() {
+    fun `toFormState surfaces eventColor on its own channel, selectedCalendarColor stays calendar identity`() {
         val event = createDeviceEvent(
             calendarColor = 0xFF0000, // Red
             eventColor = 0x00FF00 // Green
@@ -182,8 +182,10 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // The selected calendar color should use event color when present
-        assertEquals(0x00FF00, formState.selectedCalendarColor)
+        // Calendar picker dot labels which calendar the event is on — identity.
+        assertEquals(0xFF0000, formState.selectedCalendarColor)
+        // Override lives on its own field.
+        assertEquals(0x00FF00, formState.eventColor)
     }
 
     @Test
@@ -465,8 +467,8 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // selectedCalendarColor uses eventColor ?? calendarColor for display
-        assertEquals(0x00FF00, formState.selectedCalendarColor)
+        // selectedCalendarColor labels the picker dot — calendar identity only.
+        assertEquals(0xFF0000, formState.selectedCalendarColor)
         // eventColor is the raw per-event override for the form's "More options" section
         assertEquals(0x00FF00, formState.eventColor)
     }

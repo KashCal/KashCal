@@ -862,7 +862,7 @@ class HomeViewModel @Inject constructor(
                     val (_, _, day) = parseDayFormat(dayCode)
                     val dayColors = monthDots.getOrPut(day) { mutableListOf() }
                     for (event in events) {
-                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
+                        val color = (event.eventColor ?: event.calendarColor).takeIf { it != 0 } ?: 0xFF6200EE.toInt()
                         if (!dayColors.contains(color)) {
                             dayColors.add(color)
                         }
@@ -927,7 +927,7 @@ class HomeViewModel @Inject constructor(
                     val monthMap = dots.getOrPut(key) { mutableMapOf() }
                     val dayColors = monthMap.getOrPut(day) { mutableListOf() }
                     for (event in events) {
-                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
+                        val color = (event.eventColor ?: event.calendarColor).takeIf { it != 0 } ?: 0xFF6200EE.toInt()
                         if (!dayColors.contains(color)) {
                             dayColors.add(color)
                         }
@@ -989,7 +989,7 @@ class HomeViewModel @Inject constructor(
                     val monthMap = dots.getOrPut(key) { mutableMapOf() }
                     val dayColors = monthMap.getOrPut(day) { mutableListOf() }
                     for (event in events) {
-                        val color = event.calendarColor.takeIf { it != 0 } ?: 0xFF6200EE.toInt()
+                        val color = (event.eventColor ?: event.calendarColor).takeIf { it != 0 } ?: 0xFF6200EE.toInt()
                         if (!dayColors.contains(color)) {
                             dayColors.add(color)
                         }

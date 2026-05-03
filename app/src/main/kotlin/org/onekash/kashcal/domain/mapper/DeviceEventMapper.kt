@@ -17,7 +17,8 @@ private const val TAG = "DeviceEventMapper"
  * - Duration parsing for recurring events (CalendarProvider stores DURATION, not DTEND)
  * - All-day UTC to local date conversion
  * - Reminder mapping (first 5 only, logs warning if truncated)
- * - Color precedence (eventColor over calendarColor)
+ * - Two color channels: selectedCalendarColor = calendar identity (picker dot),
+ *   eventColor = per-event override (separate field on form state)
  *
  * @param reminders List of reminder minutes from CalendarProvider
  * @param calendarColor Calendar's default color
@@ -58,9 +59,6 @@ fun DeviceEvent.toFormState(
     // Map reminders (take first 5, track truncated count for UI warning)
     val (mappedReminders, truncatedCount) = mapReminders(reminders)
 
-    // Color precedence: eventColor > calendarColor
-    val displayColor = eventColor ?: calendarColor
-
     return EventFormState(
         title = title,
         dateMillis = startDateMillis,
@@ -71,7 +69,7 @@ fun DeviceEvent.toFormState(
         endMinute = endCal.get(Calendar.MINUTE),
         selectedCalendarId = calendarId,
         selectedCalendarName = calendarName,
-        selectedCalendarColor = displayColor,
+        selectedCalendarColor = calendarColor,
         reminders = mappedReminders,
         isAllDay = isAllDay,
         location = location.orEmpty(),
