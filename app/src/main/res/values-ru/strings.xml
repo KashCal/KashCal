@@ -720,7 +720,6 @@
     <string name="recurring_all_events">Все события</string>
     <string name="empty_pick_a_day">Выбери день. Проживи его.</string>
     <string name="empty_no_events_day">Ничего нет — может, прогуляться?</string>
-    <string name="label_upcoming_events">Предстоящие события</string>
     <string name="filter_date">Дата</string>
     <string name="label_select_date">Выбрать дату</string>
     <string name="hint_tap_date_range">Нажмите на ту же дату для одного дня или на другую для диапазона</string>

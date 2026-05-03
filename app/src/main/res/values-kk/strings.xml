@@ -675,7 +675,6 @@
     <string name="recurring_all_events">Барлық оқиғалар</string>
     <string name="empty_pick_a_day">Күн таңда. Пайдалан.</string>
     <string name="empty_no_events_day">Мұнда ештеңе жоқ; далаға шыққыңыз келе ме?</string>
-    <string name="label_upcoming_events">Алдағы оқиғалар</string>
     <string name="filter_date">Күн</string>
     <string name="label_select_date">Күн таңдаңыз</string>
     <string name="hint_tap_date_range">Бір күн үшін сол күнді, ауқым үшін басқа күнді түртіңіз</string>

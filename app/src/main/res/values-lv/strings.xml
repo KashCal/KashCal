@@ -690,7 +690,6 @@
     <string name="recurring_all_events">Visus notikumus</string>
     <string name="empty_pick_a_day">Izvēlies dienu. Izdzīvo to.</string>
     <string name="empty_no_events_day">Nekas te nav; varbūt iziesi ārā?</string>
-    <string name="label_upcoming_events">Gaidāmie notikumi</string>
     <string name="filter_date">Datums</string>
     <string name="label_select_date">Izvēlēties datumu</string>
     <string name="hint_tap_date_range">Pieskarieties tam pašam datumam vienai dienai vai citam datumam diapazonam</string>

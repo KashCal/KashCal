@@ -675,7 +675,6 @@
     <string name="recurring_all_events">Alle gebeurtenisse</string>
     <string name="empty_pick_a_day">Kies \'n dag. Gryp dit.</string>
     <string name="empty_no_events_day">Niks om hier te sien nie; gaan bietjie buite?</string>
-    <string name="label_upcoming_events">Komende Gebeurtenisse</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Kies \'n datum</string>
     <string name="hint_tap_date_range">Tik dieselfde datum vir \'n enkele dag, of \'n ander datum vir reeks</string>

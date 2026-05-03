@@ -678,7 +678,6 @@
     <string name="recurring_all_events">সব ইভেন্ট</string>
     <string name="empty_pick_a_day">একটি দিন বেছে নিন। দখল করুন।</string>
     <string name="empty_no_events_day">এখানে কিছু নেই; বাইরে ঘুরে আসুন?</string>
-    <string name="label_upcoming_events">আসন্ন ইভেন্ট</string>
     <string name="filter_date">তারিখ</string>
     <string name="label_select_date">তারিখ নির্বাচন করুন</string>
     <string name="hint_tap_date_range">একদিনের জন্য একই তারিখ ট্যাপ করুন, বা সীমার জন্য অন্য তারিখ</string>

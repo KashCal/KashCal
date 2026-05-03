@@ -678,7 +678,6 @@
     <string name="recurring_all_events">అన్ని ఈవెంట్‌లు</string>
     <string name="empty_pick_a_day">ఒక రోజు ఎంచుకో. దాన్ని సద్వినియోగం చేసుకో.</string>
     <string name="empty_no_events_day">ఇక్కడ ఏమీ లేదు; బయటకు వెళ్ళి చల్లగాలి పీల్చు?</string>
-    <string name="label_upcoming_events">రాబోయే ఈవెంట్‌లు</string>
     <string name="filter_date">తేదీ</string>
     <string name="label_select_date">తేదీ ఎంచుకో</string>
     <string name="hint_tap_date_range">ఒక రోజు కోసం అదే తేదీ ట్యాప్ చేయి, లేదా పరిధి కోసం మరొక తేదీ</string>

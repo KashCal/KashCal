@@ -676,7 +676,6 @@
     <string name="recurring_all_events">Tüm etkinlikler</string>
     <string name="empty_pick_a_day">Bir gün seç. Yakala.</string>
     <string name="empty_no_events_day">Burada bir şey yok; biraz dışarı çık?</string>
-    <string name="label_upcoming_events">Yaklaşan Etkinlikler</string>
     <string name="filter_date">Tarih</string>
     <string name="label_select_date">Tarih seç</string>
     <string name="hint_tap_date_range">Tek gün için aynı tarihe, aralık için başka tarihe dokun</string>

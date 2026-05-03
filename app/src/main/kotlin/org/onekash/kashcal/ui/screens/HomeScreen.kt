@@ -1003,22 +1003,45 @@ private fun MonthNavHeader(
     val calendar = JavaCalendar.getInstance().apply { set(year, month, 1) }
     val monthFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
 
+    ChevronNavRow(
+        title = monthFormat.format(calendar.time),
+        previousContentDescription = stringResource(R.string.cd_previous),
+        nextContentDescription = stringResource(R.string.cd_next),
+        onPrevious = onPrevious,
+        onNext = onNext,
+        onTitleClick = onMonthClick
+    )
+}
+
+/**
+ * Row with prev/next chevrons around a clickable title. Shared by all calendar
+ * nav headers so top-bar-to-header spacing is uniform.
+ */
+@Composable
+private fun ChevronNavRow(
+    title: String,
+    previousContentDescription: String,
+    nextContentDescription: String,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onTitleClick: () -> Unit
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onPrevious) {
-            Icon(Icons.Default.ChevronLeft, stringResource(R.string.cd_previous))
+            Icon(Icons.Default.ChevronLeft, previousContentDescription)
         }
         Text(
-            text = monthFormat.format(calendar.time),
+            text = title,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable(onClick = onMonthClick)
+            modifier = Modifier.clickable(onClick = onTitleClick)
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Default.ChevronRight, stringResource(R.string.cd_next))
+            Icon(Icons.Default.ChevronRight, nextContentDescription)
         }
     }
 }
@@ -1547,11 +1570,8 @@ private fun SearchContent(
 }
 
 /**
- * Header row for non-month views - shows context-appropriate title.
- * For 3-day view: Month/year with navigation arrows (matches MonthNavHeader style)
- * For agenda view: Centered "Upcoming Events"
- *
- * Today button is in the top bar (always visible), so not duplicated here.
+ * Header row for non-month views.
+ * 3-day / week: month/year with chevron navigation (mirrors MonthNavHeader padding).
  */
 @Composable
 private fun ViewHeaderRow(
@@ -1562,52 +1582,27 @@ private fun ViewHeaderRow(
     onPreviousPage: () -> Unit,
     onNextPage: () -> Unit
 ) {
-    val upcomingLabel = stringResource(R.string.label_upcoming_events)
-    val displayText = remember(viewMode, pagerPosition, firstDayOfWeek, upcomingLabel) {
-        when (viewMode) {
-            ViewMode.AGENDA -> upcomingLabel
-            ViewMode.THREE_DAYS -> org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatThreeDayHeader(pagerPosition)
-            ViewMode.WEEK -> {
-                val weekStart = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
-                org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYearWithWeek(weekStart, firstDayOfWeek)
-            }
-            ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> ""
-        }
-    }
-
     when (viewMode) {
         ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-            val previousLabel = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_previous_week) else stringResource(R.string.cd_previous_3_days)
-            val nextLabel = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_next_week) else stringResource(R.string.cd_next_3_days)
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onPreviousPage) {
-                    Icon(Icons.Default.ChevronLeft, previousLabel)
-                }
-                Text(
-                    text = displayText,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable(onClick = onMonthClick)
-                )
-                IconButton(onClick = onNextPage) {
-                    Icon(Icons.Default.ChevronRight, nextLabel)
+            val title = remember(viewMode, pagerPosition, firstDayOfWeek) {
+                if (viewMode == ViewMode.WEEK) {
+                    val weekStart = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYearWithWeek(weekStart, firstDayOfWeek)
+                } else {
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatThreeDayHeader(pagerPosition)
                 }
             }
-        }
-        ViewMode.AGENDA -> {
-            Text(
-                text = displayText,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
+            ChevronNavRow(
+                title = title,
+                previousContentDescription = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_previous_week) else stringResource(R.string.cd_previous_3_days),
+                nextContentDescription = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_next_week) else stringResource(R.string.cd_next_3_days),
+                onPrevious = onPreviousPage,
+                onNext = onNextPage,
+                onTitleClick = onMonthClick
             )
         }
-        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {} // Month uses MonthNavHeader, Year/Insights have own header
+        ViewMode.AGENDA,
+        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {} // Agenda has no header; Month uses MonthNavHeader; Year/Insights have own header
     }
 }
 

@@ -626,7 +626,6 @@
     <string name="recurring_all_events">所有事件</string>
     <string name="empty_pick_a_day">选一天，抓住它。</string>
     <string name="empty_no_events_day">今天什么也没有，出去走走？</string>
-    <string name="label_upcoming_events">即将到来</string>
     <string name="filter_date">日期</string>
     <string name="label_select_date">选择日期</string>
     <string name="hint_tap_date_range">点击同一日期选择单天，或点击另一日期选择范围</string>

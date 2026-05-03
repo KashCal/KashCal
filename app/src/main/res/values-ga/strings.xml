@@ -761,7 +761,6 @@
     <string name="recurring_all_events">Gach imeacht</string>
     <string name="empty_pick_a_day">Roghnaigh lá. Bain lán-úsáid as.</string>
     <string name="empty_no_events_day">Faic le feiceáil anseo; téigh amach faoin aer?</string>
-    <string name="label_upcoming_events">Imeachtaí atá ag Teacht</string>
     <string name="filter_date">Dáta</string>
     <string name="label_select_date">Roghnaigh dáta</string>
     <string name="hint_tap_date_range">Tapáil an dáta céanna le haghaidh lá amháin, nó dáta eile le haghaidh raon</string>

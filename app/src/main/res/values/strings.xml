@@ -902,7 +902,6 @@
     <string name="empty_pick_a_day">Pick a day. Seize it.</string>
     <!-- Empty state: playful/casual — shown when selected day has no events. Keep informal. -->
     <string name="empty_no_events_day">Nothing to see here; go touch grass?</string>
-    <string name="label_upcoming_events">Upcoming Events</string>
     <!-- Search filter chip: filter by date (noun, not verb) -->
     <string name="filter_date">Date</string>
     <string name="label_select_date">Select a date</string>

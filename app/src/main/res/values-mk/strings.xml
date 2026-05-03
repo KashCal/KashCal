@@ -676,7 +676,6 @@
     <string name="recurring_all_events">Сите настани</string>
     <string name="empty_pick_a_day">Избери ден. Искористи го.</string>
     <string name="empty_no_events_day">Ништо за видување; излези надвор?</string>
-    <string name="label_upcoming_events">Претстојни настани</string>
     <string name="filter_date">Датум</string>
     <string name="label_select_date">Изберете датум</string>
     <string name="hint_tap_date_range">Допрете ист датум за еден ден или друг за период</string>

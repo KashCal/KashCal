@@ -647,7 +647,6 @@
     <string name="recurring_all_events">Semua acara</string>
     <string name="empty_pick_a_day">Pilih hari. Manfaatkan.</string>
     <string name="empty_no_events_day">Tidak ada apa-apa di sini; keluar jalan-jalan?</string>
-    <string name="label_upcoming_events">Acara Mendatang</string>
     <string name="filter_date">Tanggal</string>
     <string name="label_select_date">Pilih tanggal</string>
     <string name="hint_tap_date_range">Ketuk tanggal yang sama untuk satu hari, atau tanggal lain untuk rentang</string>

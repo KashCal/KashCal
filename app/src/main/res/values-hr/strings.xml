@@ -685,7 +685,6 @@
     <string name="recurring_all_events">Sve događaje</string>
     <string name="empty_pick_a_day">Odaberi dan. Iskoristi ga.</string>
     <string name="empty_no_events_day">Ništa za vidjeti; idi na svjež zrak?</string>
-    <string name="label_upcoming_events">Nadolazeći događaji</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Odaberi datum</string>
     <string name="hint_tap_date_range">Dodirni isti datum za jedan dan ili drugi za raspon</string>

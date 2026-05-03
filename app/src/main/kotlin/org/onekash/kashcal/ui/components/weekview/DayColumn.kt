@@ -106,7 +106,6 @@ fun DayColumn(
                 .matchParentSize()
                 .pointerInput(date, startHour, hourHeight) {
                     detectTapGestures(
-                        onDoubleTap = { },
                         onTap = { offset ->
                             val (hour, minute) = WeekViewUtils.offsetToTime(offset.y, hourHeightPx, startHour = startHour)
                             onEmptyTap(date, hour, minute)

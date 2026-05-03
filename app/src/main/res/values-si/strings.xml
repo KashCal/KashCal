@@ -651,7 +651,6 @@
     <string name="recurring_all_events">සියලු සිදුවීම්</string>
     <string name="empty_pick_a_day">දිනයක් තෝරන්න. එය හැමරගන්න.</string>
     <string name="empty_no_events_day">මෙහි බලන්නට කිසිවක් නැත; පිටතට ගිහින් එන්නද?</string>
-    <string name="label_upcoming_events">ඉදිරි සිදුවීම්</string>
     <string name="filter_date">දිනය</string>
     <string name="label_select_date">දිනයක් තෝරන්න</string>
     <string name="hint_tap_date_range">එක් දිනක් සඳහා එකම දිනය තට්ටු කරන්න, හෝ පරාසයක් සඳහා වෙනත් දිනයක්</string>

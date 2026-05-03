@@ -686,7 +686,6 @@
     <string name="recurring_all_events">Todos los eventos</string>
     <string name="empty_pick_a_day">Elige un día. Aprovéchalo.</string>
     <string name="empty_no_events_day">Nada que ver aquí, ¿sales a tomar aire?</string>
-    <string name="label_upcoming_events">Próximos eventos</string>
     <string name="filter_date">Fecha</string>
     <string name="label_select_date">Seleccionar fecha</string>
     <string name="hint_tap_date_range">Toca la misma fecha para un día, u otra para un rango</string>

@@ -2,11 +2,8 @@ package org.onekash.kashcal.ui.components.weekview
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,36 +65,24 @@ fun EventBlock(
     val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
     val titleMaxLines = if (height >= HEIGHT_THRESHOLD_TWO_LINE_TITLE) 2 else 1
 
-    val gestureModifier = if (isDraggable && onDragStart != null) {
-        Modifier.pointerInput(Unit) {
-            awaitEachGesture {
-                val down = awaitFirstDown()
-                val longPress = awaitLongPressOrCancellation(down.id)
-                if (longPress != null) {
-                    onDragStart(longPress.position)
-                    var dragged = false
-                    drag(longPress.id) { change ->
-                        dragged = true
-                        change.consume()
-                        onDrag?.invoke(change.position - change.previousPosition)
-                    }
-                    if (dragged) {
-                        onDragEnd?.invoke()
-                    } else {
-                        onDragCancel?.invoke()
-                    }
-                } else {
-                    onClick()
-                }
-            }
-        }
-    } else {
-        Modifier.pointerInput(Unit) {
-            detectTapGestures(
-                onDoubleTap = { },
-                onTap = { onClick() }
+    // Tap and long-press-drag live in separate pointerInput modifiers so a parent
+    // scrollable (HorizontalPager / verticalScroll) can cancel the tap without racing
+    // the drag detector.
+    val tapModifier = Modifier.pointerInput(Unit) {
+        detectTapGestures(onTap = { onClick() })
+    }
+    val dragStart = onDragStart
+    val gestureModifier = if (isDraggable && dragStart != null) {
+        tapModifier.pointerInput(Unit) {
+            detectDragGesturesAfterLongPress(
+                onDragStart = dragStart,
+                onDrag = { _, dragAmount -> onDrag?.invoke(dragAmount) },
+                onDragEnd = { onDragEnd?.invoke() },
+                onDragCancel = { onDragCancel?.invoke() }
             )
         }
+    } else {
+        tapModifier
     }
 
     Box(

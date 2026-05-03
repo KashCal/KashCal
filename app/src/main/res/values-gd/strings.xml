@@ -730,7 +730,6 @@
     <string name="recurring_all_events">Gach tachartas</string>
     <string name="empty_pick_a_day">Tagh là. Dèan feum dheth.</string>
     <string name="empty_no_events_day">Chan eil dad ri fhaicinn an seo; rach a-mach?</string>
-    <string name="label_upcoming_events">Tachartasan a tha a\' Tighinn</string>
     <string name="filter_date">Ceann-là</string>
     <string name="label_select_date">Tagh ceann-là</string>
     <string name="hint_tap_date_range">Thoir gnogag air an aon cheann-là airson aon là, no ceann-là eile airson raon</string>

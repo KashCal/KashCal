@@ -682,7 +682,6 @@
     <string name="recurring_all_events">Alla händelser</string>
     <string name="empty_pick_a_day">Välj en dag. Ta vara på den.</string>
     <string name="empty_no_events_day">Inget att se här; ta en promenad?</string>
-    <string name="label_upcoming_events">Kommande händelser</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Välj ett datum</string>
     <string name="hint_tap_date_range">Tryck samma datum för en dag, eller ett annat datum för ett intervall</string>

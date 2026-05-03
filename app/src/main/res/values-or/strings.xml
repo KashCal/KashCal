@@ -678,7 +678,6 @@
     <string name="recurring_all_events">ସମସ୍ତ ଇଭେଣ୍ଟ</string>
     <string name="empty_pick_a_day">ଏକ ଦିନ ବାଛନ୍ତୁ। ଏହାକୁ କାମରେ ଲଗାନ୍ତୁ।</string>
     <string name="empty_no_events_day">ଏଠାରେ କିଛି ନାହିଁ; ବାହାରକୁ ଯାଇ ତାଜା ପବନ ଖାଆନ୍ତୁ?</string>
-    <string name="label_upcoming_events">ଆସନ୍ତା ଇଭେଣ୍ଟ</string>
     <string name="filter_date">ତାରିଖ</string>
     <string name="label_select_date">ତାରିଖ ବାଛନ୍ତୁ</string>
     <string name="hint_tap_date_range">ଏକ ଦିନ ପାଇଁ ସେହି ତାରିଖ ଟ୍ୟାପ କରନ୍ତୁ, ବା ପରିସର ପାଇଁ ଅନ୍ୟ ତାରିଖ</string>

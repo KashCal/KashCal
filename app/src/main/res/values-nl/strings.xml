@@ -682,7 +682,6 @@
     <string name="recurring_all_events">Alle afspraken</string>
     <string name="empty_pick_a_day">Kies een dag. Grijp hem.</string>
     <string name="empty_no_events_day">Niets te zien hier; even naar buiten?</string>
-    <string name="label_upcoming_events">Komende afspraken</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Selecteer een datum</string>
     <string name="hint_tap_date_range">Tik dezelfde datum voor één dag, of een andere datum voor een bereik</string>

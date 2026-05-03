@@ -682,7 +682,6 @@
     <string name="recurring_all_events">Alle hendingar</string>
     <string name="empty_pick_a_day">Vel ein dag. Grip han.</string>
     <string name="empty_no_events_day">Ingenting her; ut og nyt vêret?</string>
-    <string name="label_upcoming_events">Komande hendingar</string>
     <string name="filter_date">Dato</string>
     <string name="label_select_date">Vel ein dato</string>
     <string name="hint_tap_date_range">Trykk same dato for ein dag, eller ein annan dato for eit intervall</string>

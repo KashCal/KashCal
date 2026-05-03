@@ -693,7 +693,6 @@
     <string name="recurring_all_events">Visi įvykiai</string>
     <string name="empty_pick_a_day">Pasirink dieną. Pagauk akimirką.</string>
     <string name="empty_no_events_day">Nieko čia nėra — gal pasivaikščioti?</string>
-    <string name="label_upcoming_events">Artėjantys įvykiai</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Pasirinkti datą</string>
     <string name="hint_tap_date_range">Bakstelėkite tą pačią datą vienai dienai arba kitą datą intervalui</string>

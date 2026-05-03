@@ -682,7 +682,6 @@
     <string name="recurring_all_events">Alla viðburði</string>
     <string name="empty_pick_a_day">Veldu dag. Gríptu hann.</string>
     <string name="empty_no_events_day">Ekkert hér; farðu út í gott veður?</string>
-    <string name="label_upcoming_events">Viðburðir framundan</string>
     <string name="filter_date">Dagsetning</string>
     <string name="label_select_date">Velja dagsetningu</string>
     <string name="hint_tap_date_range">Ýttu á sömu dagsetningu fyrir einn dag, eða aðra dagsetningu fyrir tímabil</string>

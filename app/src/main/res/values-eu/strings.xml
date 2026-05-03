@@ -655,7 +655,6 @@
     <string name="recurring_all_events">Gertaera guztiak</string>
     <string name="empty_pick_a_day">Aukeratu egun bat. Aprobetxatu.</string>
     <string name="empty_no_events_day">Hemen ez dago ezer; atera paseatzera?</string>
-    <string name="label_upcoming_events">Hurrengo gertaerak</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Hautatu data bat</string>
     <string name="hint_tap_date_range">Sakatu data berdina egun baterako, edo beste data bat tarte baterako</string>
