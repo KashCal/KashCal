@@ -1,8 +1,8 @@
 package org.onekash.kashcal.sync.integration.multiserver
 
+import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
-import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 
 /**
  * Configuration for a CalDAV server used in parameterized integration tests.

@@ -1,13 +1,16 @@
 package org.onekash.kashcal.sync.provider.icloud
 
+import android.graphics.Color
+import android.util.Log
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -16,10 +19,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.data.repository.AccountRepository
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -27,7 +30,6 @@ import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
-import org.onekash.kashcal.sync.provider.icloud.ICloudAccountDiscoveryService
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
@@ -92,6 +94,23 @@ class ICloudAccountDiscoveryServiceTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
+        mockkStatic(Log::class)
+        every { Log.d(any(), any<String>()) } returns 0
+        every { Log.i(any(), any<String>()) } returns 0
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.e(any(), any<String>()) } returns 0
+        every { Log.e(any(), any<String>(), any()) } returns 0
+
+        mockkStatic(Color::class)
+        every { Color.parseColor(any()) } answers {
+            val clean = firstArg<String>().removePrefix("#")
+            when (clean.length) {
+                6 -> (0xFF000000 or java.lang.Long.parseLong(clean, 16)).toInt()
+                8 -> java.lang.Long.parseLong(clean, 16).toInt()
+                else -> 0
+            }
+        }
+
         clientFactory = mockk(relaxed = true)
         credentialProvider = mockk(relaxed = true)
         calDavClient = mockk(relaxed = true)
@@ -113,6 +132,8 @@ class ICloudAccountDiscoveryServiceTest {
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        unmockkStatic(Color::class)
+        unmockkStatic(Log::class)
     }
 
     private fun createService(): ICloudAccountDiscoveryService {
@@ -415,5 +436,89 @@ class ICloudAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Error)
         val error = result as DiscoveryResult.Error
         assertTrue(error.message.contains("many requests") || error.message.contains("wait"))
+    }
+
+    // ==================== refreshCalendars Color Refresh ====================
+
+    @Test
+    fun `refreshCalendars adopts server color change for existing calendar`() = runTest {
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.icloud.com/123/calendars/personal",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(), // green
+            ctag = "old-ctag",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+
+        coEvery { accountRepository.getAccountById(1L) } returns testDbAccount
+        coEvery { credentialProvider.getCredentials(1L) } returns
+            Credentials(testAppleId, testPassword, "https://caldav.icloud.com")
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns
+            CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl(existingCalendar.caldavUrl) } returns existingCalendar
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal",
+                    url = "https://caldav.icloud.com/123/calendars/personal",
+                    displayName = "Personal",
+                    color = "#FF0000FF", // iCloud #RRGGBBAA: RR=FF GG=00 BB=00 AA=FF — opaque red
+                    ctag = "new-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val service = createService()
+        service.refreshCalendars(1L)
+
+        // iCloud #FF0000FF (RRGGBBAA) → Android #FFFF0000 (AARRGGBB) — opaque red
+        coVerify { calendarRepository.updateCalendar(match { it.color == 0xFFFF0000.toInt() }) }
+    }
+
+    @Test
+    fun `refreshCalendars preserves local color when server returns null color`() = runTest {
+        val existingCalendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.icloud.com/123/calendars/personal",
+            displayName = "Personal",
+            color = 0xFF4CAF50.toInt(),
+            ctag = "old-ctag",
+            isReadOnly = false,
+            isDefault = false,
+            isVisible = true
+        )
+        val localColor = existingCalendar.color
+
+        coEvery { accountRepository.getAccountById(1L) } returns testDbAccount
+        coEvery { credentialProvider.getCredentials(1L) } returns
+            Credentials(testAppleId, testPassword, "https://caldav.icloud.com")
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns
+            CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl(existingCalendar.caldavUrl) } returns existingCalendar
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal",
+                    url = "https://caldav.icloud.com/123/calendars/personal",
+                    displayName = "Personal",
+                    color = null,
+                    ctag = "new-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        val service = createService()
+        service.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
 }

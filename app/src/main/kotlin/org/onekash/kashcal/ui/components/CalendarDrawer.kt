@@ -36,8 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
-import org.onekash.kashcal.R
 import kotlinx.collections.immutable.PersistentSet
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.ui.model.CalendarGroup

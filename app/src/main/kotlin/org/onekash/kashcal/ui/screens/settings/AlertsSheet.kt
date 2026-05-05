@@ -38,7 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -222,7 +222,7 @@ private fun AlertSectionRow(
     isExpanded: Boolean,
     onClick: () -> Unit
 ) {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val displayText = if (currentValue == REMINDER_OFF) {
         stringResource(R.string.alert_none)
     } else {

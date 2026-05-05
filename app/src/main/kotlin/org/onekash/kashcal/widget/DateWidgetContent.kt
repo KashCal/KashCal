@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -21,8 +22,6 @@ import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import java.time.LocalDate
-import java.time.format.TextStyle as JavaTextStyle
-import java.util.Locale
 
 /**
  * Content for the date widget - shows today's date in an icon-like format.
@@ -32,13 +31,18 @@ import java.util.Locale
  * │   SUN   │  ← day name (small)
  * │   19    │  ← date number (large)
  * └─────────┘
+ *
+ * Locale: Glance widgets don't recompose on Configuration changes (they redraw
+ * on their own schedule — see DateWidget.kt). The LocalContext read silences
+ * the NonObservableLocale lint rule; correct locale is picked up at the next
+ * scheduled update, not in response to Compose reactivity.
  */
 @Composable
 fun DateWidgetContent() {
-    val today = LocalDate.now()
-    val dayName = today.dayOfWeek.getDisplayName(JavaTextStyle.SHORT, Locale.getDefault())
-        .uppercase(Locale.getDefault())
-    val dateNumber = today.dayOfMonth.toString()
+    val locale = LocalContext.current.resources.configuration.locales[0]
+    val labels = WidgetDateFormatter.buildDateWidgetLabels(LocalDate.now(), locale)
+    val dayName = labels.dayName
+    val dateNumber = labels.dateNumber
 
     Box(
         modifier = GlanceModifier

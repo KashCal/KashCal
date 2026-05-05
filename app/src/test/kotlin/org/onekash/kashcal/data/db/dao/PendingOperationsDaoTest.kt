@@ -21,8 +21,8 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
-import java.util.concurrent.TimeUnit
 import org.robolectric.annotation.Config
+import java.util.concurrent.TimeUnit
 
 /**
  * Tests for PendingOperationsDao - the sync queue.

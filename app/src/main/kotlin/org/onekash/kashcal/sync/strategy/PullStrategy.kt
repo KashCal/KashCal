@@ -8,26 +8,29 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import org.onekash.icaldav.model.ICalEvent
+import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavEvent
-import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.sync.parser.ServerColorParser
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
-import org.onekash.icaldav.model.ICalEvent
-import org.onekash.icaldav.model.ParseResult
-import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.sync.session.SyncSessionBuilder
+import org.onekash.kashcal.sync.strategy.PullStrategy.Companion.MULTIGET_BATCH_SIZE
 import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.CancellationException
@@ -160,6 +163,30 @@ class PullStrategy @Inject constructor(
     }
 
     /**
+     * Refresh calendar metadata from the server probe. Server non-null-and-
+     * valid wins; null/invalid preserves local. Skips the DB write when no
+     * field changed to avoid churning getVisibleCalendarsFlow consumers.
+     */
+    private suspend fun maybeRefreshMetadata(
+        calendar: Calendar,
+        probe: CalendarMetadataProbe
+    ) {
+        val newColor = ServerColorParser.parseCaldavColorToArgb(probe.color)
+            ?.takeIf { it != calendar.color }
+        val newDisplayName = probe.displayName?.takeIf { it != calendar.displayName }
+        val newIsReadOnly = probe.isReadOnly?.takeIf { it != calendar.isReadOnly }
+
+        if (newColor == null && newDisplayName == null && newIsReadOnly == null) return
+
+        calendarRepository.updateMetadata(
+            calendarId = calendar.id,
+            color = newColor,
+            displayName = newDisplayName,
+            isReadOnly = newIsReadOnly
+        )
+    }
+
+    /**
      * Pull events from server for a calendar.
      *
      * @param calendar The calendar to sync
@@ -181,9 +208,9 @@ class PullStrategy @Inject constructor(
         val effectiveClient = client
 
         return try {
-            // Step 1: Quick ctag check
+            // Step 1: Probe ctag + metadata (displayName, color, isReadOnly)
             val ctagResult = effectiveClient.getCtag(calendar.caldavUrl)
-            val serverCtag: String? = if (ctagResult.isSuccess()) {
+            val probe: CalendarMetadataProbe? = if (ctagResult.isSuccess()) {
                 (ctagResult as CalDavResult.Success).data
             } else {
                 val error = ctagResult as CalDavResult.Error
@@ -193,10 +220,19 @@ class PullStrategy @Inject constructor(
                     return PullResult.Error(code = error.code, message = error.message, isRetryable = error.isRetryable)
                 }
                 // getctag is a CalendarServer extension, not core CalDAV RFC 4791.
-                // Servers like Zoho don't support it. Skip the ctag optimization and proceed.
+                // Servers like Zoho don't support it. Skip the ctag optimization and
+                // metadata refresh, proceed with event sync.
                 Log.w(TAG, "getCtag unavailable (${error.code}: ${error.message}), proceeding without ctag")
                 null
             }
+            val serverCtag: String? = probe?.ctag
+
+            // Refresh calendar metadata before the NoChanges early return because
+            // some servers don't bump ctag on metadata-only changes.
+            if (probe != null) {
+                maybeRefreshMetadata(calendar, probe)
+            }
+
             Log.d(TAG, "ctag check: server=$serverCtag, local=${calendar.ctag}, force=$forceFullSync")
             if (!forceFullSync && serverCtag == calendar.ctag && calendar.ctag != null) {
                 Log.d(TAG, "No changes (ctag unchanged)")

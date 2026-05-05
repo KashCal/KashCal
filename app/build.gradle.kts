@@ -2,7 +2,6 @@ import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     id("kotlin-parcelize")
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
@@ -13,9 +12,15 @@ plugins {
 }
 
 composeCompiler {
-    stabilityConfigurationFile = rootProject.layout.projectDirectory.file("stability_config.conf")
+    stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("stability_config.conf"))
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
+    // Kotlin 2.3's compose compiler plugin attempts to resolve a
+    // `compose-group-mapping` artifact whose version is derived at runtime
+    // from getKotlinPluginVersion(project) — a stale value ends up being
+    // "2.2.10" in our build environment, which isn't published. This mapping
+    // file only improves release-build stack traces; disabling is safe.
+    includeComposeMappingFile = false
 }
 
 // Load version from version.properties
@@ -100,8 +105,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "17"
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+            // Opt into Kotlin 2.4's default annotation target for constructor
+            // params: annotations now apply to both the param and the backing
+            // property/field, not just the param. Matches the intent for
+            // @Inject, @Volatile, @Immutable etc. at ~36 sites in this project.
+            // (Warning KT-73255.)
+            freeCompilerArgs.add("-Xannotation-default-target=param-property")
+        }
     }
 
     buildFeatures {

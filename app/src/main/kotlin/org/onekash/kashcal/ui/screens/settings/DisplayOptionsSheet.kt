@@ -11,11 +11,11 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
-import androidx.compose.ui.platform.LocalContext
 import org.onekash.kashcal.ui.shared.getEventDurationOptions
 
 /**
@@ -103,7 +103,7 @@ fun EventDurationSheet(
     onEventDurationChange: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val durationOptions = getEventDurationOptions(LocalContext.current.resources)
+    val durationOptions = getEventDurationOptions(LocalResources.current)
     val selectedDurationOption = durationOptions.find { it.minutes == defaultEventDuration }
         ?: durationOptions[1]  // Default to 30 minutes
 

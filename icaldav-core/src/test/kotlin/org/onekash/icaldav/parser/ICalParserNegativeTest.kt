@@ -1,8 +1,9 @@
 package org.onekash.icaldav.parser
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.onekash.icaldav.model.ParseResult
 
 /**

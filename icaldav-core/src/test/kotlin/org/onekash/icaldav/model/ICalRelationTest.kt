@@ -1,12 +1,12 @@
 package org.onekash.icaldav.model
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.Duration
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.assertFalse
 
 /**
  * Tests for ICalLink, ICalRelation, LinkRelationType, and RelationType (RFC 9253).

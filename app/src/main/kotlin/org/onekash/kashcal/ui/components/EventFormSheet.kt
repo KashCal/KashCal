@@ -1,7 +1,8 @@
 package org.onekash.kashcal.ui.components
 
+import android.text.format.DateFormat
 import android.util.Log
-import org.onekash.kashcal.domain.mapper.toFormState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,10 +13,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -24,12 +33,12 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -47,64 +56,50 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import org.onekash.kashcal.R
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.onekash.kashcal.util.location.AddressSuggestion
-import org.onekash.kashcal.util.location.LocationSuggestionService
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.DefaultCalendar
-import org.onekash.kashcal.util.CalendarIntentData
-import java.util.Calendar as JavaCalendar
-import org.onekash.kashcal.util.DateTimeUtils
-import android.text.format.DateFormat
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
-import org.onekash.kashcal.ui.shared.EventColorPalette
-import org.onekash.kashcal.ui.shared.contrastForegroundOn
-import org.onekash.kashcal.ui.shared.MAX_REMINDERS
-import org.onekash.kashcal.ui.shared.REMINDER_OFF
-import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.EventAvailable
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.automirrored.filled.Notes
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import org.onekash.kashcal.ui.components.pickers.CalendarPickerCard
-import org.onekash.kashcal.ui.components.pickers.CalendarPickerRow
-import org.onekash.kashcal.ui.components.pickers.EventColorSheet
-import org.onekash.kashcal.ui.components.pickers.DateTimeDisplayRow
-import org.onekash.kashcal.ui.components.pickers.EventFormRow
-import org.onekash.kashcal.ui.components.pickers.ReminderPickerCard
-import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
-import org.onekash.kashcal.ui.components.pickers.RecurrencePickerCard
-import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
-import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
+import org.onekash.kashcal.domain.mapper.toFormState
 import org.onekash.kashcal.ui.components.pickers.ActiveDateTimeSheet
+import org.onekash.kashcal.ui.components.pickers.CalendarPickerRow
+import org.onekash.kashcal.ui.components.pickers.DateTimeDisplayRow
+import org.onekash.kashcal.ui.components.pickers.DateTimeSheet
+import org.onekash.kashcal.ui.components.pickers.EventColorSheet
+import org.onekash.kashcal.ui.components.pickers.EventFormRow
+import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
+import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
 import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
-import org.onekash.kashcal.util.TimezoneUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
+import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.shared.MAX_REMINDERS
+import org.onekash.kashcal.ui.shared.REMINDER_OFF
+import org.onekash.kashcal.ui.shared.contrastForegroundOn
+import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
+import org.onekash.kashcal.util.CalendarIntentData
+import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.TimezoneUtils
+import org.onekash.kashcal.util.location.AddressSuggestion
+import org.onekash.kashcal.util.location.LocationSuggestionService
+import java.util.Calendar as JavaCalendar
 
 private const val TAG = "EventFormSheet"
 
@@ -1431,7 +1426,7 @@ fun EventFormSheet(
 }
 
 // ExpandablePickerCard moved to ui/components/pickers/ExpandablePickerCard.kt
-// CalendarPickerCard moved to ui/components/pickers/CalendarPicker.kt
+// CalendarPickerRow lives in ui/components/pickers/CalendarPicker.kt
 // ReminderPickerCard and formatReminderLabel moved to ui/components/pickers/ReminderPicker.kt
 // Import these components from their respective locations
 

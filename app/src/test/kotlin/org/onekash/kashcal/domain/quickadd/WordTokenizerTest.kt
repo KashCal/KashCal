@@ -3,10 +3,8 @@ package org.onekash.kashcal.domain.quickadd
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import org.onekash.kashcal.domain.quickadd.tokenizer.WordTokenizer
 import java.time.DayOfWeek

@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
@@ -29,7 +30,6 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.format.TextStyle
 import java.util.Calendar
-import java.util.Locale
 
 /**
  * First day of week option with value and label.
@@ -56,10 +56,12 @@ fun FirstDayOfWeekSheet(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Get locale's default first day for "System default" description
-    // NOTE: Not wrapped in remember{} to respond to system locale changes (per CLAUDE.md pattern)
+    // Get locale's default first day for "System default" description.
+    // Reading LocalLocale.current triggers recomposition on locale change, which
+    // re-invokes getLocaleFirstDayOfWeek() and picks up the fresh Locale.getDefault().
+    val locale = LocalLocale.current.platformLocale
     val localeFirstDay = DateTimeUtils.getLocaleFirstDayOfWeek()
-    val localeFirstDayName = localeFirstDay.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val localeFirstDayName = localeFirstDay.getDisplayName(TextStyle.FULL, locale)
 
     // Resolve string resources outside remember block
     val labelSystemDefault = stringResource(R.string.settings_system_default_with_value, localeFirstDayName ?: "")

@@ -2,17 +2,18 @@ package org.onekash.kashcal.reminder.receiver
 
 import android.content.Intent
 import android.util.Log
-import io.mockk.*
-import kotlinx.coroutines.test.runTest
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
-import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
-import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 

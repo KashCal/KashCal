@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import org.onekash.kashcal.MainActivity
+import org.onekash.kashcal.sync.adapter.KashCalAuthenticator.Companion.ACCOUNT_TYPE
 
 /**
  * Stub AccountAuthenticator for CalendarProvider registration.

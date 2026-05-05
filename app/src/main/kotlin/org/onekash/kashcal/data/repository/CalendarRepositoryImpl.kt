@@ -96,4 +96,13 @@ class CalendarRepositoryImpl @Inject constructor(
     override suspend fun updateCtag(calendarId: Long, ctag: String?) {
         calendarsDao.updateCtag(calendarId, ctag)
     }
+
+    override suspend fun updateMetadata(
+        calendarId: Long,
+        color: Int?,
+        displayName: String?,
+        isReadOnly: Boolean?
+    ) {
+        calendarsDao.updateMetadata(calendarId, color, displayName, isReadOnly)
+    }
 }

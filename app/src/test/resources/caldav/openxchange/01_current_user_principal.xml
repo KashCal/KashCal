@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Open-Xchange (mailbox.org) principal discovery response -->
 <!-- Note: OX uses different namespace prefixes than SabreDAV -->
-<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav">
+<D:multistatus xmlns:D="DAV:">
     <D:response>
         <D:href>/caldav/</D:href>
         <D:propstat>

@@ -5,7 +5,6 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.sync.auth.Credentials
-import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
@@ -91,7 +90,7 @@ class NextcloudDiagnosticTest {
         // Step 4: getCtag
         println("\n=== Step 4: getCtag ===")
         val ctagResult = client.getCtag(calUrl)
-        println("Ctag: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()}")
+        println("Ctag: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()?.ctag}")
         if (ctagResult.isError()) {
             val err = ctagResult as CalDavResult.Error
             println("ERROR: code=${err.code}, message=${err.message}")

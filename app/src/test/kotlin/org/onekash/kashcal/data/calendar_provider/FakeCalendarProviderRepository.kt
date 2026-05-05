@@ -314,9 +314,26 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return deviceEvents[eventId]
     }
 
+    override suspend fun getDeviceEventWithExceptions(
+        masterEventId: Long
+    ): Pair<DeviceEvent, List<DeviceEvent>>? {
+        if (shouldThrowSecurityException) return null
+        val master = deviceEvents[masterEventId] ?: return null
+        val exceptions = deviceEvents.values
+            .filter { it.originalId == masterEventId }
+            .sortedBy { it.originalInstanceTime ?: Long.MAX_VALUE }
+        return master to exceptions
+    }
+
     override suspend fun getReminders(eventId: Long): List<Int> {
         if (shouldThrowSecurityException) return emptyList()
         return eventReminders[eventId] ?: emptyList()
+    }
+
+    override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> {
+        if (shouldThrowSecurityException) return emptyMap()
+        return eventIds.associateWith { eventReminders[it] ?: emptyList() }
+            .filterValues { it.isNotEmpty() }
     }
 
     // Exception event lookup data

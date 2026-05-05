@@ -1,9 +1,15 @@
 package org.onekash.kashcal.sync.strategy
 
-import io.mockk.*
+import io.mockk.Runs
+import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.coVerifyOrder
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.EventsDao

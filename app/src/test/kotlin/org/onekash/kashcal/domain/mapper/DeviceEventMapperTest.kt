@@ -1,10 +1,15 @@
 package org.onekash.kashcal.domain.mapper
 
+import android.provider.CalendarContract
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
  * Tests for DeviceEventMapper.toFormState().
@@ -473,6 +478,337 @@ class DeviceEventMapperTest {
         assertEquals(0x00FF00, formState.eventColor)
     }
 
+    // ==================== toExportEvent() — synthetic Event bridge for ICS export ====================
+
+    @Test
+    fun `toExportEvent non-recurring event produces minimal synthetic Event`() {
+        val start = 1735729200000L // 2025-01-01 10:00:00 UTC
+        val end = start + 3600_000L
+        val event = createDeviceEvent(
+            id = 42L,
+            title = "Coffee",
+            description = "Catch up",
+            location = "Cafe",
+            startTs = start,
+            endTs = end,
+            timezone = "America/New_York",
+            isAllDay = false,
+            rrule = null,
+            originalId = null
+        )
+
+        val synthetic = event.toExportEvent()
+
+        assertEquals("device-42@kashcal", synthetic.uid)
+        assertEquals("Coffee", synthetic.title)
+        assertEquals("Catch up", synthetic.description)
+        assertEquals("Cafe", synthetic.location)
+        assertEquals(start, synthetic.startTs)
+        assertEquals(end, synthetic.endTs)
+        assertEquals("America/New_York", synthetic.timezone)
+        assertNull(synthetic.rrule)
+        assertNull(synthetic.originalEventId)
+        assertNull(synthetic.originalInstanceTime)
+        assertEquals(0L, synthetic.calendarId) // never persisted
+        assertEquals(0, synthetic.sequence)
+        assertEquals("PUBLIC", synthetic.classification)
+    }
+
+    @Test
+    fun `toExportEvent recurring master preserves RRULE and uses own id for UID`() {
+        val event = createDeviceEvent(
+            id = 100L,
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            originalId = null
+        )
+
+        val synthetic = event.toExportEvent()
+
+        assertEquals("FREQ=WEEKLY;BYDAY=MO", synthetic.rrule)
+        assertNull(synthetic.originalEventId)
+        assertEquals("device-100@kashcal", synthetic.uid)
+    }
+
+    @Test
+    fun `toExportEvent exception nulls RRULE and shares master UID`() {
+        val masterId = 100L
+        val exceptionId = 200L
+        val origInstanceTime = 1735729200000L
+
+        val exception = createDeviceEvent(
+            id = exceptionId,
+            rrule = "FREQ=WEEKLY;BYDAY=MO", // Exception rows may carry this — must be nulled
+            originalId = masterId,
+            originalInstanceTime = origInstanceTime
+        )
+
+        val synthetic = exception.toExportEvent()
+
+        // UID must reference MASTER's id (RFC 5545: shared UID for master + all exceptions)
+        assertEquals("device-$masterId@kashcal", synthetic.uid)
+        // Exception must not carry RRULE
+        assertNull(synthetic.rrule)
+        // originalEventId signals "this is an exception" to EventToICalEventMapper
+        assertEquals(masterId, synthetic.originalEventId)
+        // originalInstanceTime preserved for RECURRENCE-ID emission
+        assertEquals(origInstanceTime, synthetic.originalInstanceTime)
+    }
+
+    @Test
+    fun `toExportEvent UID-shared invariant - master and exception resolve to same UID`() {
+        val masterId = 555L
+        val master = createDeviceEvent(
+            id = masterId,
+            rrule = "FREQ=DAILY",
+            originalId = null
+        )
+        val exception = createDeviceEvent(
+            id = 999L, // different row id
+            rrule = null,
+            originalId = masterId,
+            originalInstanceTime = 1700000000000L
+        )
+
+        val masterSynthetic = master.toExportEvent()
+        val exceptionSynthetic = exception.toExportEvent()
+
+        // The UID-shared invariant: this equality is what makes EventToICalEventMapper
+        // emit both VEVENTs with the same UID in the output VCALENDAR.
+        assertEquals(masterSynthetic.uid, exceptionSynthetic.uid)
+        assertEquals("device-$masterId@kashcal", masterSynthetic.uid)
+    }
+
+    @Test
+    fun `toExportEvent maps STATUS TENTATIVE to string TENTATIVE`() {
+        val event = createDeviceEvent(status = CalendarContract.Events.STATUS_TENTATIVE)
+        assertEquals("TENTATIVE", event.toExportEvent().status)
+    }
+
+    @Test
+    fun `toExportEvent maps STATUS CONFIRMED to string CONFIRMED`() {
+        val event = createDeviceEvent(status = CalendarContract.Events.STATUS_CONFIRMED)
+        assertEquals("CONFIRMED", event.toExportEvent().status)
+    }
+
+    @Test
+    fun `toExportEvent maps STATUS CANCELED to string CANCELLED`() {
+        val event = createDeviceEvent(status = CalendarContract.Events.STATUS_CANCELED)
+        assertEquals("CANCELLED", event.toExportEvent().status)
+    }
+
+    @Test
+    fun `toExportEvent maps AVAILABILITY BUSY to transp OPAQUE`() {
+        val event = createDeviceEvent(availability = CalendarContract.Events.AVAILABILITY_BUSY)
+        assertEquals("OPAQUE", event.toExportEvent().transp)
+    }
+
+    @Test
+    fun `toExportEvent maps AVAILABILITY FREE to transp TRANSPARENT`() {
+        val event = createDeviceEvent(availability = CalendarContract.Events.AVAILABILITY_FREE)
+        assertEquals("TRANSPARENT", event.toExportEvent().transp)
+    }
+
+    @Test
+    fun `toExportEvent maps AVAILABILITY TENTATIVE to transp OPAQUE`() {
+        val event = createDeviceEvent(availability = CalendarContract.Events.AVAILABILITY_TENTATIVE)
+        assertEquals("OPAQUE", event.toExportEvent().transp)
+    }
+
+    @Test
+    fun `toExportEvent converts empty reminders to null`() {
+        val event = createDeviceEvent()
+        assertNull(event.toExportEvent(reminderMinutes = emptyList()).reminders)
+    }
+
+    @Test
+    fun `toExportEvent converts single reminder minute to ISO duration`() {
+        val event = createDeviceEvent()
+        val synthetic = event.toExportEvent(reminderMinutes = listOf(15))
+        assertEquals(listOf("-PT15M"), synthetic.reminders)
+    }
+
+    @Test
+    fun `toExportEvent converts multiple reminder minutes to ISO durations`() {
+        val event = createDeviceEvent()
+        val synthetic = event.toExportEvent(reminderMinutes = listOf(15, 60, 1440))
+        assertEquals(listOf("-PT15M", "-PT1H", "-P1D"), synthetic.reminders)
+    }
+
+    @Test
+    fun `toExportEvent default reminder parameter is empty list`() {
+        val event = createDeviceEvent()
+        // Calling without reminders arg should work and produce null reminders
+        assertNull(event.toExportEvent().reminders)
+    }
+
+    @Test
+    fun `toExportEvent respects all-day endTs (DeviceEvent convention matches Room)`() {
+        val start = 1735689600000L // 2025-01-01 00:00:00 UTC
+        val inclusiveEnd = start + 24L * 3600_000L - 1L // last ms of the day
+        val event = createDeviceEvent(
+            startTs = start,
+            endTs = inclusiveEnd,
+            isAllDay = true,
+            timezone = "UTC"
+        )
+
+        val synthetic = event.toExportEvent()
+        assertEquals(start, synthetic.startTs)
+        assertEquals(inclusiveEnd, synthetic.endTs)
+        assertTrue(synthetic.isAllDay)
+    }
+
+    @Test
+    fun `toExportEvent preserves non-UTC IANA timezone`() {
+        val event = createDeviceEvent(timezone = "Europe/London")
+        assertEquals("Europe/London", event.toExportEvent().timezone)
+    }
+
+    @Test
+    fun `toExportEvent passes eventColor through to Event color`() {
+        val event = createDeviceEvent(eventColor = 0xFF00FF00.toInt())
+        assertEquals(0xFF00FF00.toInt(), event.toExportEvent().color)
+    }
+
+    @Test
+    fun `toExportEvent leaves color null when eventColor is null`() {
+        val event = createDeviceEvent(eventColor = null)
+        assertNull(event.toExportEvent().color)
+    }
+
+    @Test
+    fun `toExportEvent populates required timestamp fields with current time`() {
+        val before = System.currentTimeMillis()
+        val synthetic = createDeviceEvent().toExportEvent()
+        val after = System.currentTimeMillis()
+
+        assertTrue("dtstamp in range", synthetic.dtstamp in before..after)
+        assertTrue("createdAt in range", synthetic.createdAt in before..after)
+        assertTrue("updatedAt in range", synthetic.updatedAt in before..after)
+    }
+
+    @Test
+    fun `toExportEvent round-trips through IcsPatcher serialize without throwing`() {
+        val event = createDeviceEvent(
+            id = 77L,
+            title = "Round Trip Test",
+            startTs = 1735729200000L,
+            endTs = 1735729200000L + 3600_000L,
+            timezone = "America/New_York"
+        )
+        val synthetic = event.toExportEvent(reminderMinutes = listOf(15))
+        val ics = IcsPatcher.serialize(synthetic)
+
+        assertTrue("ICS should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
+        assertTrue("ICS should contain VEVENT", ics.contains("BEGIN:VEVENT"))
+        assertTrue("ICS should reference the synthetic UID", ics.contains("device-77@kashcal"))
+        assertTrue("ICS should include VTIMEZONE for non-UTC TZID", ics.contains("BEGIN:VTIMEZONE"))
+        assertTrue("ICS should include VALARM for the reminder", ics.contains("BEGIN:VALARM"))
+    }
+
+    @Test
+    fun `toExportEvent round-trips exception with master through IcsPatcher serializeWithExceptions`() {
+        val masterId = 555L
+        val start = 1735729200000L
+        val master = createDeviceEvent(
+            id = masterId,
+            title = "Weekly Sync",
+            startTs = start,
+            endTs = start + 3600_000L,
+            rrule = "FREQ=WEEKLY;BYDAY=MO",
+            timezone = "America/Los_Angeles"
+        )
+        val exception = createDeviceEvent(
+            id = 999L,
+            title = "Weekly Sync (moved)",
+            startTs = start + 7L * 86400_000L + 3600_000L, // One week later + 1 hour
+            endTs = start + 7L * 86400_000L + 2L * 3600_000L,
+            rrule = null,
+            originalId = masterId,
+            originalInstanceTime = start + 7L * 86400_000L,
+            timezone = "America/Los_Angeles"
+        )
+
+        val masterSynthetic = master.toExportEvent()
+        val exceptionSynthetic = exception.toExportEvent()
+
+        val ics = IcsPatcher.serializeWithExceptions(masterSynthetic, listOf(exceptionSynthetic))
+
+        // Shared UID appears at least twice (once per VEVENT)
+        val uidOccurrences = Regex("UID:device-$masterId@kashcal").findAll(ics).count()
+        assertTrue("Shared UID should appear at least twice (master + exception): $uidOccurrences", uidOccurrences >= 2)
+
+        // RRULE for the event's own recurrence should only appear once (on the master,
+        // never the exception). Filter by FREQ=WEEKLY to exclude VTIMEZONE's DST RRULEs
+        // (those use FREQ=YEARLY and are part of every America/Los_Angeles VTIMEZONE block).
+        val eventRruleOccurrences = Regex("RRULE:FREQ=WEEKLY").findAll(ics).count()
+        assertEquals("Event RRULE should appear exactly once (on master, not on exception)", 1, eventRruleOccurrences)
+
+        // Exception's VEVENT must not reopen any event-level RRULE
+        // (we already verify total count == 1; this makes the intent explicit)
+        val masterVEventEnd = ics.indexOf("END:VEVENT")
+        val exceptionVEventStart = ics.indexOf("BEGIN:VEVENT", masterVEventEnd)
+        assertTrue("Both VEVENTs must be present", exceptionVEventStart > 0)
+        val exceptionBlock = ics.substring(exceptionVEventStart)
+        assertFalse("Exception VEVENT must not contain RRULE", exceptionBlock.contains("RRULE:FREQ=WEEKLY"))
+
+        // RECURRENCE-ID must appear for the exception
+        assertTrue("RECURRENCE-ID must be present for the exception", ics.contains("RECURRENCE-ID"))
+    }
+
+    @Test
+    fun `toExportEvent round-trips STATUS_CANCELED exception preserving cancellation`() {
+        val masterId = 555L
+        val start = 1735729200000L
+        val canceledException = createDeviceEvent(
+            id = 999L,
+            title = "Weekly Sync",
+            startTs = start + 7L * 86400_000L,
+            endTs = start + 7L * 86400_000L + 3600_000L,
+            rrule = null,
+            originalId = masterId,
+            originalInstanceTime = start + 7L * 86400_000L,
+            status = CalendarContract.Events.STATUS_CANCELED
+        )
+
+        val synthetic = canceledException.toExportEvent()
+        assertEquals("CANCELLED", synthetic.status)
+
+        val ics = IcsPatcher.serialize(synthetic)
+        assertTrue("STATUS:CANCELLED must appear in ICS", ics.contains("STATUS:CANCELLED"))
+    }
+
+    @Test
+    fun `toExportEvent exception uses master id for UID even when instance id differs`() {
+        val masterId = 42L
+        val exception = createDeviceEvent(
+            id = 9_999_999L, // Very different row id — UID must still use masterId
+            rrule = null,
+            originalId = masterId,
+            originalInstanceTime = 1700000000000L
+        )
+
+        val synthetic = exception.toExportEvent()
+        assertFalse("UID must not use the exception's own id", synthetic.uid.contains("9999999"))
+        assertTrue("UID must use masterId", synthetic.uid == "device-$masterId@kashcal")
+    }
+
+    @Test
+    fun `toExportEvent originalEventId is non-null for exceptions (signals to mapper)`() {
+        // EventToICalEventMapper keys exception handling on originalEventId nullness.
+        // The value itself isn't dereferenced as a Room FK — only the nullness matters.
+        val exception = createDeviceEvent(
+            id = 200L,
+            rrule = null,
+            originalId = 100L,
+            originalInstanceTime = 1700000000000L
+        )
+
+        val synthetic = exception.toExportEvent()
+        assertNotNull(synthetic.originalEventId)
+        assertNotEquals(0L, synthetic.originalEventId)
+    }
+
     // ==================== Helper ====================
 
     private fun createDeviceEvent(
@@ -489,7 +825,10 @@ class DeviceEventMapperTest {
         calendarColor: Int? = null,
         eventColor: Int? = null,
         originalId: Long? = null,
-        availability: Int = 0
+        originalInstanceTime: Long? = null,
+        availability: Int = 0,
+        status: Int = 1,
+        timezone: String = "America/New_York"
     ): DeviceEvent = DeviceEvent(
         id = id,
         calendarId = calendarId,
@@ -504,10 +843,10 @@ class DeviceEventMapperTest {
         rdate = null,
         exdate = null,
         exrule = null,
-        timezone = "America/New_York",
+        timezone = timezone,
         originalId = originalId,
-        originalInstanceTime = null,
-        status = 1,
+        originalInstanceTime = originalInstanceTime,
+        status = status,
         availability = availability,
         accessLevel = 700,
         calendarColor = calendarColor,

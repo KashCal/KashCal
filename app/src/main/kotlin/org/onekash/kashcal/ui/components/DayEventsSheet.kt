@@ -22,6 +22,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,6 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.util.Locale
 
 /**
  * Bottom sheet showing all events for a selected day.
@@ -64,7 +64,8 @@ internal fun DayEventsSheet(
                 .padding(bottom = 16.dp)
         ) {
             // Date header
-            val dateLabel = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEEMMMMd"), Locale.getDefault())
+            val locale = LocalLocale.current.platformLocale
+            val dateLabel = SimpleDateFormat(DateTimeUtils.localizedPattern("yEEEEMMMMd"), locale)
                 .format(Date(dateMs))
             Text(
                 text = dateLabel,

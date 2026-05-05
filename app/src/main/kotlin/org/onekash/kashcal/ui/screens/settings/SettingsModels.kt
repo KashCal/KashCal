@@ -2,13 +2,13 @@ package org.onekash.kashcal.ui.screens.settings
 
 import android.util.Log
 import androidx.compose.runtime.Immutable
-import org.onekash.kashcal.ui.util.UiMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.network.AiaCertificateChainCompleter
+import org.onekash.kashcal.ui.util.UiMessage
 import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLHandshakeException

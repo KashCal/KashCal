@@ -1,14 +1,20 @@
 package org.onekash.kashcal.sync.integration
 
 import android.util.Log
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
-import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory

@@ -38,13 +38,13 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.Year
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Bottom sheet displaying sync changes with details.

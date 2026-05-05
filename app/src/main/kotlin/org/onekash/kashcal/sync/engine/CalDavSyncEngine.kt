@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.engine
 
 import android.util.Log
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
@@ -10,20 +9,21 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.model.SyncChange
+import org.onekash.kashcal.sync.notification.SyncNotificationManager
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
-import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.strategy.ConflictResolver
 import org.onekash.kashcal.sync.strategy.ConflictStrategy
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.PushStrategy
-import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.util.maskEmail
 import javax.inject.Inject
 import javax.inject.Singleton

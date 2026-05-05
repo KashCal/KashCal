@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.generator
 
+import androidx.room.withTransaction
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
@@ -9,7 +10,6 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import javax.inject.Inject
 import javax.inject.Singleton
-import androidx.room.withTransaction
 
 /**
  * Generates and manages materialized occurrences for recurring events.

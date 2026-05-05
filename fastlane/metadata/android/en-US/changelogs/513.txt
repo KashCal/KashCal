@@ -1,2 +1,0 @@
-• Week view: swipes now feel instant — less tap latency, smoother page changes
-• Consistent spacing between the top bar and the day-of-week headers across calendar views

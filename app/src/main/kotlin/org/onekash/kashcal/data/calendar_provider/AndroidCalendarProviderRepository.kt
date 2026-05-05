@@ -869,6 +869,36 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
+    override suspend fun getDeviceEventWithExceptions(
+        masterEventId: Long
+    ): Pair<DeviceEvent, List<DeviceEvent>>? = withContext(Dispatchers.IO) {
+        val master = getDeviceEvent(masterEventId) ?: return@withContext null
+
+        val exceptions = try {
+            contentResolver.query(
+                CalendarContract.Events.CONTENT_URI,
+                eventsProjection,
+                "${CalendarContract.Events.ORIGINAL_ID} = ?",
+                arrayOf(masterEventId.toString()),
+                "${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} ASC"
+            )?.use { cursor ->
+                val results = mutableListOf<DeviceEvent>()
+                while (cursor.moveToNext()) {
+                    results.add(mapToDeviceEvent(cursor))
+                }
+                results
+            }.orEmpty()
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied reading exceptions for master $masterEventId", e)
+            return@withContext null
+        } catch (e: Exception) {
+            Log.e(TAG, "Error reading exceptions for master $masterEventId", e)
+            return@withContext null
+        }
+
+        master to exceptions
+    }
+
     override suspend fun getReminders(eventId: Long): List<Int> = withContext(Dispatchers.IO) {
         try {
             contentResolver.query(
@@ -897,7 +927,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
      * @param eventIds Set of event IDs to fetch reminders for
      * @return Map of eventId to sorted list of reminder minutes
      */
-    suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = withContext(Dispatchers.IO) {
+    override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = withContext(Dispatchers.IO) {
         if (eventIds.isEmpty()) return@withContext emptyMap()
 
         try {

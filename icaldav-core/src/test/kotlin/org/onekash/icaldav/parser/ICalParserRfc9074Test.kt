@@ -1,14 +1,13 @@
 package org.onekash.icaldav.parser
 
-import org.onekash.icaldav.parser.ICalGenerator
-import org.onekash.icaldav.model.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.onekash.icaldav.model.AlarmProximity
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
-import kotlin.test.assertNull
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Tests for RFC 9074 VALARM extensions parsing and roundtrip.

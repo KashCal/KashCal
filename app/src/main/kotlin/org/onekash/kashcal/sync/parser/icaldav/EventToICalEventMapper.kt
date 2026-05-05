@@ -11,6 +11,7 @@ import org.onekash.icaldav.model.RRule
 import org.onekash.icaldav.model.Transparency
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.toICalEvent
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.Duration
 import java.time.ZoneId

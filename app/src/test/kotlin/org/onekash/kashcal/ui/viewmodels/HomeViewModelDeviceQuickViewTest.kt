@@ -32,8 +32,6 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.util.TimeZone
 
 /**

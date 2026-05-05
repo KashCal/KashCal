@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Edge case: resourcetype in 404 propstat should NOT be detected as calendar -->
 <!-- This can happen when querying a non-existent collection or permission denied -->
-<D:multistatus xmlns:D="DAV:" xmlns:A="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/" xmlns:C="urn:ietf:params:xml:ns:caldav">
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
     <D:response>
         <D:href>/dav/cal/admin/nonexistent-calendar/</D:href>
         <!-- Resourcetype in 404 propstat - this is NOT a valid calendar -->

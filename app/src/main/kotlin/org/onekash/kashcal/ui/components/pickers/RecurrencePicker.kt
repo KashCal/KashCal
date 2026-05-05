@@ -7,6 +7,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +21,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.selectAll
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -36,19 +43,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.input.InputTransformation
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
-import androidx.compose.foundation.text.input.selectAll
-import androidx.compose.foundation.border
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.rrule.EndCondition
 import org.onekash.kashcal.domain.rrule.FrequencyOption
@@ -62,7 +63,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.TextStyle
 import java.util.Calendar as JavaCalendar
-import java.util.Locale
 
 @Composable
 fun rememberRruleDisplayStrings(): RruleDisplayStrings {
@@ -89,7 +89,7 @@ fun rememberRruleDisplayStrings(): RruleDisplayStrings {
     val ordinalLast = stringResource(R.string.rrule_ordinal_last)
     val ordinalNth = stringResource(R.string.ordinal_nth)
     val untilSuffix = stringResource(R.string.rrule_until_suffix)
-    val resources = androidx.compose.ui.platform.LocalContext.current.resources
+    val resources = androidx.compose.ui.platform.LocalResources.current
     return remember {
         RruleDisplayStrings(
             doesNotRepeat = doesNotRepeat,
@@ -611,7 +611,7 @@ fun WeekdaySelector(
     ) {
         daysOrder.forEach { day ->
             val isSelected = day in selectedDays
-            val label = day.getDisplayName(TextStyle.NARROW, Locale.getDefault())
+            val label = day.getDisplayName(TextStyle.NARROW, LocalLocale.current.platformLocale)
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -667,7 +667,7 @@ fun MonthlyPatternSelector(
         4 -> stringResource(R.string.ordinal_4th)
         else -> stringResource(R.string.ordinal_nth, ordinalInMonth)
     }
-    val weekdayLabel = weekday.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    val weekdayLabel = weekday.getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // Option 1: Same day of month

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.provider.icloud
 
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import java.util.Calendar
@@ -54,6 +55,10 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
 
     override fun extractCtag(responseBody: String): String? {
         return xmlParser.extractCtag(responseBody)
+    }
+
+    override fun extractCalendarMetadata(responseBody: String): CalendarMetadataProbe? {
+        return xmlParser.extractCalendarMetadata(responseBody)
     }
 
     override fun buildCalendarUrl(href: String, baseHost: String): String {

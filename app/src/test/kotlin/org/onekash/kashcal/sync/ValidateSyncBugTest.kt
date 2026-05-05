@@ -3,7 +3,6 @@ package org.onekash.kashcal.sync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials as OkHttpCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -17,6 +16,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
 import java.util.concurrent.TimeUnit
+import okhttp3.Credentials as OkHttpCredentials
 
 /**
  * Test to validate the incremental sync bug AND verify the fix works.

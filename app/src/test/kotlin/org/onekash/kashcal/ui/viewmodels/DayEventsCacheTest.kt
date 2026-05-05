@@ -1,6 +1,5 @@
 package org.onekash.kashcal.ui.viewmodels
 
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import org.junit.Assert.assertEquals

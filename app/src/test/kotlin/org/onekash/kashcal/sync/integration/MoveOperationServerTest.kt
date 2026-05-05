@@ -7,17 +7,19 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.auth.Credentials as CalDavCredentials
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import org.onekash.kashcal.sync.auth.Credentials as CalDavCredentials
 
 /**
  * Integration test to verify WebDAV MOVE operation support on CalDAV servers.

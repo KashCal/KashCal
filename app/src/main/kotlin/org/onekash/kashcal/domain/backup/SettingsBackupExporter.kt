@@ -1,12 +1,12 @@
 package org.onekash.kashcal.domain.backup
 
-import java.time.Instant
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import java.time.Instant
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Produces a KashCal settings backup JSON.

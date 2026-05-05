@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.rrule
 
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -8,7 +9,6 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Localized strings for [RruleBuilder.formatForDisplay].

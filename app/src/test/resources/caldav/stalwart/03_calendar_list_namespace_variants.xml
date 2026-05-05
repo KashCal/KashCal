@@ -37,7 +37,7 @@
         <D:href>/dav/cal/admin/bare-calendar/</D:href>
         <D:propstat>
             <D:prop>
-                <D:resourcetype xmlns:cal="urn:ietf:params:xml:ns:caldav">
+                <D:resourcetype>
                     <D:collection/>
                     <calendar xmlns="urn:ietf:params:xml:ns:caldav"/>
                 </D:resourcetype>

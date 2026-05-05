@@ -4,9 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
+import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**

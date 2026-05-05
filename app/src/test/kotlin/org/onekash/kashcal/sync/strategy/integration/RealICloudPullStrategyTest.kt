@@ -242,7 +242,7 @@ class RealICloudPullStrategyTest {
         // Get current ctag
         val ctagResult = client.getCtag(caldavCalendar!!.url)
         assumeTrue("Should get ctag", ctagResult.isSuccess())
-        val currentCtag = ctagResult.getOrNull()!!
+        val currentCtag = ctagResult.getOrNull()!!.ctag
 
         val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
         // Update ctag in DB to match server — simulates "already synced"
@@ -452,5 +452,83 @@ class RealICloudPullStrategyTest {
             }
             is PullResult.NoChanges -> println("No changes (ctag matched unexpectedly)")
         }
+    }
+
+    // ========== Calendar Metadata Refresh ==========
+
+    @Test
+    fun `getCtag probe returns color and displayName for real iCloud calendar`() = runBlocking {
+        assumeCredentialsAvailable()
+
+        val caldavCalendar = discoverTestCalendar()
+        assumeTrue("Should discover a calendar", caldavCalendar != null)
+
+        val result = client.getCtag(caldavCalendar!!.url)
+        assumeTrue("Should get ctag probe from real iCloud", result.isSuccess())
+
+        val probe = result.getOrNull()!!
+        println("=== iCloud metadata probe ===")
+        println("ctag: ${probe.ctag}")
+        println("displayName: ${probe.displayName}")
+        println("color: ${probe.color}")
+        println("isReadOnly: ${probe.isReadOnly}")
+
+        assertNotNull(
+            "Real iCloud always returns ic:calendar-color (#RRGGBBAA) — probe must surface it",
+            probe.color
+        )
+        assertNotNull(
+            "Real iCloud always returns displayname — probe must surface it",
+            probe.displayName
+        )
+    }
+
+    @Test
+    fun `pull updates Calendar color and displayName from real iCloud probe`() = runBlocking {
+        assumeCredentialsAvailable()
+
+        val caldavCalendar = discoverTestCalendar()
+        assumeTrue("Should discover a calendar", caldavCalendar != null)
+
+        // Insert a deliberately-wrong color and displayName so the refresh
+        // has something to overwrite on the next pull.
+        testAccountId = database.accountsDao().insert(
+            Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
+        )
+        testCalendarId = database.calendarsDao().insert(
+            Calendar(
+                accountId = testAccountId,
+                caldavUrl = caldavCalendar!!.url,
+                displayName = "STALE_NAME",
+                color = 0xFF000000.toInt()
+            )
+        )
+        val staleCalendar = database.calendarsDao().getById(testCalendarId)!!
+
+        // Fetch the server probe so we know what to assert against.
+        val probeResult = client.getCtag(caldavCalendar.url)
+        assumeTrue("Should get probe", probeResult.isSuccess())
+        val probe = probeResult.getOrNull()!!
+        val expectedColor = org.onekash.kashcal.sync.parser.ServerColorParser
+            .parseCaldavColorToArgb(probe.color)
+        val expectedDisplayName = probe.displayName
+        assumeTrue("Probe must carry color+name for this assertion", expectedColor != null && expectedDisplayName != null)
+
+        pullStrategy.pull(staleCalendar, forceFullSync = true, client = client)
+
+        val refreshed = database.calendarsDao().getById(testCalendarId)!!
+        println("Before: color=${staleCalendar.color.toString(16)}, name=${staleCalendar.displayName}")
+        println("After:  color=${refreshed.color.toString(16)}, name=${refreshed.displayName}")
+
+        assertEquals(
+            "Calendar.color should match server's parsed calendar-color after pull",
+            expectedColor,
+            refreshed.color
+        )
+        assertEquals(
+            "Calendar.displayName should match server's after pull",
+            expectedDisplayName,
+            refreshed.displayName
+        )
     }
 }

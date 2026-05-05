@@ -1,15 +1,16 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.icaldav.model.*
 import org.onekash.icaldav.parser.ICalParser
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.Duration
-import java.time.ZoneId
 
 /**
  * Tests for ICalEventMapper: verifies correct mapping from icaldav ICalEvent

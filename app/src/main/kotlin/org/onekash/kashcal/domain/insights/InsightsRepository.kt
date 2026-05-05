@@ -1,6 +1,8 @@
 package org.onekash.kashcal.domain.insights
 
 import android.util.Log
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
@@ -8,8 +10,6 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.insights.generators.localDateToDayCode
 import org.onekash.kashcal.util.DateTimeUtils
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate

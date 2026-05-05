@@ -1,2 +1,0 @@
-• Per-event colors render more faithfully and stand apart from calendar colors
-• Top bar: lighter app-name weight to match Material 3 default

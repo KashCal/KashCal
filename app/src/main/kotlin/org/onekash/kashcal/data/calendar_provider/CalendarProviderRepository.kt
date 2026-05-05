@@ -302,12 +302,42 @@ interface CalendarProviderRepository {
     suspend fun getDeviceEvent(eventId: Long): DeviceEvent?
 
     /**
+     * Get a master event together with all its exception rows, read directly from
+     * the Events table (NOT the Instances view).
+     *
+     * Why Events and not Instances: STATUS_CANCELED exception rows represent
+     * deleted occurrences of a recurring series. The Instances view filters them
+     * out; exporting must preserve them as cancelled VEVENTs for RFC 5545
+     * round-trip fidelity. Reading Events directly surfaces every ORIGINAL_ID
+     * row regardless of status.
+     *
+     * Exceptions are returned sorted by ORIGINAL_INSTANCE_TIME ascending.
+     *
+     * @param masterEventId Master event ID
+     * @return (master, exceptions) pair, or null if master not found /
+     *         permission revoked / provider error
+     */
+    suspend fun getDeviceEventWithExceptions(masterEventId: Long): Pair<DeviceEvent, List<DeviceEvent>>?
+
+    /**
      * Get reminders for an event.
      *
      * @param eventId Event ID
      * @return List of reminder minutes before event
      */
     suspend fun getReminders(eventId: Long): List<Int>
+
+    /**
+     * Get reminders for a batch of events in a single query.
+     *
+     * Used to avoid N+1 cursors when an operation needs reminders across a set
+     * of events (e.g. series export fetching both master + every exception).
+     * Impl must chunk to respect SQLite variable limits.
+     *
+     * @param eventIds Set of event IDs to fetch reminders for
+     * @return Map of eventId to list of reminder minutes before event
+     */
+    suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>>
 
     /**
      * Find an existing exception event by master event ID and original instance time.

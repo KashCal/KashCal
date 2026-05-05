@@ -1,6 +1,10 @@
 package org.onekash.kashcal.sync.client
 
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavCalendar
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+import org.onekash.kashcal.sync.client.model.SyncReport
 
 /**
  * CalDAV client interface for server communication.
@@ -54,13 +58,11 @@ interface CalDavClient {
     // ========== Change Detection ==========
 
     /**
-     * Get the current ctag (collection tag) for a calendar.
-     * Used to detect if any changes have occurred since last sync.
-     *
-     * @param calendarUrl Full calendar URL
-     * @return Current ctag value
+     * Get per-calendar metadata via an extended PROPFIND: ctag plus
+     * displayName, color, and isReadOnly when the server provides them.
+     * Error when ctag is missing (callers fall back to the ctag-less path).
      */
-    suspend fun getCtag(calendarUrl: String): CalDavResult<String>
+    suspend fun getCtag(calendarUrl: String): CalDavResult<CalendarMetadataProbe>
 
     /**
      * Get the current sync-token for incremental sync.

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.RemoteException
 import android.util.Log
-import kotlinx.coroutines.CancellationException
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -18,6 +17,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import java.io.IOException
 import java.time.LocalDate
 import java.time.ZoneId

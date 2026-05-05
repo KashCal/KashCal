@@ -37,7 +37,6 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.engine.CalDavSyncEngine
 import org.onekash.kashcal.sync.engine.SyncResult
-import org.onekash.kashcal.sync.notification.SyncNotificationManager
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.ConflictResolver
@@ -532,7 +531,7 @@ class RealICloudSyncEngineTest {
         // Get current ctag
         val ctagResult = client.getCtag(caldavCalendar!!.url)
         assumeTrue("Should get ctag", ctagResult.isSuccess())
-        val ctag = ctagResult.getOrNull()!!
+        val ctag = ctagResult.getOrNull()!!.ctag
 
         val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
         database.calendarsDao().updateCtag(testCalendarId, ctag)

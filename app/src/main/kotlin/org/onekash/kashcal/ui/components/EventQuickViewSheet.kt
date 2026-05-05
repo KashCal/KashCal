@@ -51,29 +51,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import org.onekash.kashcal.R
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.contacts.ContactEventType
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
-import java.time.LocalDate
-import java.time.ZoneId
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
 import org.onekash.kashcal.util.text.formatRemindersForDisplay
 import org.onekash.kashcal.util.text.isValidUrl
 import org.onekash.kashcal.util.text.shouldOpenExternally
+import java.time.LocalDate
+import java.time.ZoneId
 
 /**
  * Lightweight preview sheet for quick event viewing.
@@ -131,6 +132,7 @@ fun EventQuickViewSheet(
 
     // Compute time pattern from preference
     val context = LocalContext.current
+    val resources = LocalResources.current
     val is24HourDevice = DateFormat.is24HourFormat(context)
     val timePattern = remember(timeFormat, is24HourDevice) {
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
@@ -141,7 +143,7 @@ fun EventQuickViewSheet(
 
     // Format title with age for birthday events and optional emoji
     val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
-        formatEventTitle(event, occurrenceTs, showEventEmojis, context.resources)
+        formatEventTitle(event, occurrenceTs, showEventEmojis, resources)
     }
 
     // Cache URL validation
@@ -149,7 +151,7 @@ fun EventQuickViewSheet(
         event.url?.takeIf { isValidUrl(it) }
     }
     val formattedReminders = remember(event.reminders) {
-        formatRemindersForDisplay(event.reminders, context.resources)
+        formatRemindersForDisplay(event.reminders, resources)
     }
 
     ModalBottomSheet(
@@ -204,7 +206,7 @@ fun EventQuickViewSheet(
                         val duration = event.endTs - event.startTs
                         val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
                         Text(
-                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, context.resources, timePattern),
+                            text = formatEventDateTime(displayStartTs, displayEndTs, event.isAllDay, resources, timePattern),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

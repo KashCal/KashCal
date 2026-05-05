@@ -1,0 +1,3 @@
+• Server-side calendar color, name, and read-only changes reach KashCal on the next sync
+• "Discover new calendars" refreshes color for existing calendars too
+• Device calendar events can be exported as .ics files

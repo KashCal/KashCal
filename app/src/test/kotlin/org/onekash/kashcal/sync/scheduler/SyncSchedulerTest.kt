@@ -2,22 +2,28 @@ package org.onekash.kashcal.sync.scheduler
 
 import android.content.Context
 import android.util.Log
-import androidx.work.*
+import androidx.work.Configuration
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.testing.WorkManagerTestInitHelper
-import io.mockk.*
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.sync.worker.CalDavSyncWorker
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 
 /**
  * Unit tests for SyncScheduler.

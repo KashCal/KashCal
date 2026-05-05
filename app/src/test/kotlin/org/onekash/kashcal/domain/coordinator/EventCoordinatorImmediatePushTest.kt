@@ -3,7 +3,6 @@ package org.onekash.kashcal.domain.coordinator
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coJustRun
-import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import io.mockk.verify
@@ -15,10 +14,10 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.db.entity.Calendar
-import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.reader.EventReader

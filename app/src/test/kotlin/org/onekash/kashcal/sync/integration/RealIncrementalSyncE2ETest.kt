@@ -1,26 +1,29 @@
 package org.onekash.kashcal.sync.integration
 
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials as OkHttpCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventsDao
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -33,6 +36,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import java.io.File
 import java.util.concurrent.TimeUnit
+import okhttp3.Credentials as OkHttpCredentials
 
 /**
  * End-to-end integration test for incremental sync with real iCloud.
@@ -202,7 +206,7 @@ class RealIncrementalSyncE2ETest {
 
         // Step 2: Get initial ctag and sync token
         println("\nStep 2: Getting initial ctag and sync token...")
-        val initialCtag = client.getCtag(caldavCalendar.url).getOrNull()
+        val initialCtag = client.getCtag(caldavCalendar.url).getOrNull()?.ctag
         val initialSyncToken = client.getSyncToken(caldavCalendar.url).getOrNull()
         println("  Initial ctag: $initialCtag")
         println("  Initial syncToken: ${initialSyncToken?.take(50) ?: "NULL"}...")
@@ -255,7 +259,7 @@ class RealIncrementalSyncE2ETest {
 
         // Step 5: Get NEW ctag (should be different now)
         println("\nStep 5: Checking if ctag changed...")
-        val newCtag = client.getCtag(caldavCalendar.url).getOrNull()
+        val newCtag = client.getCtag(caldavCalendar.url).getOrNull()?.ctag
         println("  Old ctag: $initialCtag")
         println("  New ctag: $newCtag")
         println("  Ctag changed: ${newCtag != initialCtag}")

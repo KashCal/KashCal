@@ -1,24 +1,44 @@
 package org.onekash.kashcal.sync.strategy
 
-import io.mockk.*
+import io.mockk.MockKAnnotations
+import io.mockk.Ordering
+import io.mockk.Runs
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.just
+import io.mockk.mockkConstructor
+import io.mockk.slot
+import io.mockk.spyk
+import io.mockk.unmockkAll
+import io.mockk.unmockkConstructor
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EtagEntry
 import org.onekash.kashcal.data.db.dao.EventsDao
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+import org.onekash.kashcal.sync.client.model.SyncItem
+import org.onekash.kashcal.sync.client.model.SyncItemStatus
+import org.onekash.kashcal.sync.client.model.SyncReport
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionBuilder
 import org.onekash.kashcal.sync.session.SyncSessionStore
@@ -103,7 +123,7 @@ class PullStrategyTest {
     @Test
     fun `pull returns NoChanges when ctag is unchanged`() = runTest {
         val calendar = createCalendar(ctag = "ctag-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-123")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-123", displayName = null, color = null, isReadOnly = null))
 
         val result = pullStrategy.pull(calendar, client = client)
 
@@ -115,7 +135,7 @@ class PullStrategyTest {
     @Test
     fun `pull proceeds when ctag is different`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -129,7 +149,7 @@ class PullStrategyTest {
     @Test
     fun `pull proceeds when local ctag is null (first sync)`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -144,7 +164,7 @@ class PullStrategyTest {
     @Test
     fun `pull uses incremental sync when syncToken exists`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -161,7 +181,7 @@ class PullStrategyTest {
     @Test
     fun `pull falls back to full sync when sync token expired`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(410, "Sync token expired")
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
@@ -180,7 +200,7 @@ class PullStrategyTest {
         val deletedHref = "/calendars/home/deleted-event.ics"
         val deletedUrl = "https://caldav.example.com$deletedHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -201,7 +221,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val changedHref = "/calendars/home/event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -236,7 +256,7 @@ class PullStrategyTest {
         val href1 = "/calendars/home/event1.ics"
         val href2 = "/calendars/home/event2.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         // sync-collection returns duplicate href1
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
@@ -287,7 +307,7 @@ class PullStrategyTest {
     @Test
     fun `full sync fetches events in time range`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-sync-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -304,7 +324,7 @@ class PullStrategyTest {
             caldavUrl = "https://caldav.example.com/calendars/home/orphan.ics"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(orphanEvent)
@@ -321,7 +341,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}new-event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "new-event.ics",
@@ -353,7 +373,7 @@ class PullStrategyTest {
             title = "Old Title"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "existing-event.ics",
@@ -383,7 +403,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Step 1: etags
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
@@ -414,7 +434,7 @@ class PullStrategyTest {
         // Empty etag list → skip multiget entirely
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -432,7 +452,7 @@ class PullStrategyTest {
     fun `pullFull returns error when etag fetch fails`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.error(503, "Service Unavailable", true)
 
@@ -457,7 +477,7 @@ class PullStrategyTest {
             caldavUrl = "https://caldav.example.com/calendars/home/orphan.ics"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Server has one event (href format) — orphan event is NOT on server
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
@@ -484,7 +504,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair("event.ics", "etag-1"),
@@ -522,7 +542,7 @@ class PullStrategyTest {
         // If individual fetches also fail, events are skipped (not the entire sync).
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
         // All fetches fail (batch and individual)
@@ -545,7 +565,7 @@ class PullStrategyTest {
     @Test
     fun `forceFullSync ignores sync token`() = runTest {
         val calendar = createCalendar(ctag = "ctag-123", syncToken = "sync-token-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-123")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-123", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -560,7 +580,7 @@ class PullStrategyTest {
     @Test
     fun `forceFullSync ignores matching ctag`() = runTest {
         val calendar = createCalendar(ctag = "same-ctag", syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("same-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "same-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -582,7 +602,7 @@ class PullStrategyTest {
             caldavUrl = "https://caldav.example.com/calendars/home/existing.ics"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         // Server returns empty — event not in response (but still exists on server)
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -607,7 +627,7 @@ class PullStrategyTest {
             caldavUrl = "https://caldav.example.com/calendars/home/orphan.ics"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         // Sync token expired → 403
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
@@ -643,7 +663,7 @@ class PullStrategyTest {
     @Test
     fun `pull returns error when fetch events fails`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.error(500, "Server error", true)
 
@@ -703,7 +723,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "recurring.ics",
@@ -728,7 +748,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}single.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "single.ics",
@@ -777,7 +797,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "master-with-exception.ics",
@@ -809,7 +829,7 @@ class PullStrategyTest {
     @Test
     fun `pull updates sync token after success`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "new-token",
@@ -831,7 +851,7 @@ class PullStrategyTest {
     @Test
     fun `pull does not update metadata on error`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(any(), any(), any()) } returns
             CalDavResult.error(500, "Server error")
 
@@ -852,7 +872,7 @@ class PullStrategyTest {
             title = "Local New Event"
         ).copy(syncStatus = SyncStatus.PENDING_CREATE)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "pending-event.ics",
@@ -886,7 +906,7 @@ class PullStrategyTest {
             title = "Local Modified Title"
         ).copy(syncStatus = SyncStatus.PENDING_UPDATE)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "modified-event.ics",
@@ -917,7 +937,7 @@ class PullStrategyTest {
             title = "Pending Delete Event"
         ).copy(syncStatus = SyncStatus.PENDING_DELETE)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList()) // Server doesn't have this event
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(pendingDeleteEvent)
@@ -941,7 +961,7 @@ class PullStrategyTest {
             title = "Has Local Changes"
         ).copy(syncStatus = SyncStatus.PENDING_UPDATE)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -997,7 +1017,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "master-with-exception.ics",
@@ -1042,7 +1062,7 @@ class PullStrategyTest {
             reminders = listOf("-PT30M")  // User just changed reminder to 30 mins
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "event.ics",
@@ -1076,7 +1096,7 @@ class PullStrategyTest {
             title = "Old Title"
         ).copy(etag = "old-etag")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "event.ics",
@@ -1105,7 +1125,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}new-event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "new-event.ics",
@@ -1167,7 +1187,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "master-with-exception.ics",
@@ -1216,7 +1236,7 @@ class PullStrategyTest {
     @Test
     fun `pullFull calls deleteDuplicateMasterEvents at start`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -1231,7 +1251,7 @@ class PullStrategyTest {
     @Test
     fun `pullFull logs when duplicates are cleaned up`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -1247,7 +1267,7 @@ class PullStrategyTest {
     fun `pullIncremental calls deleteDuplicateMasterEvents after processing`() = runTest {
         // C2 fix: Incremental sync should also clean up duplicates from hostname changes
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -1274,7 +1294,7 @@ class PullStrategyTest {
     fun `pullIncremental logs when duplicates are cleaned during incremental sync`() = runTest {
         // C2 fix: Verify logging for incremental sync dedup
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
@@ -1301,7 +1321,7 @@ class PullStrategyTest {
             title = "Existing Event"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "event.ics",
@@ -1337,7 +1357,7 @@ class PullStrategyTest {
             title = "Existing Event"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "event.ics",
@@ -1370,7 +1390,7 @@ class PullStrategyTest {
     fun `pull result contains correct statistics`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("e1.ics", "${calendar.caldavUrl}e1.ics", "etag1", createSimpleIcal("uid1", "Event 1")),
             CalDavEvent("e2.ics", "${calendar.caldavUrl}e2.ics", "etag2", createSimpleIcal("uid2", "Event 2")),
@@ -1402,7 +1422,7 @@ class PullStrategyTest {
         val eventUrl = "${calendar.caldavUrl}no-alarm.ics"
         val ical = createSimpleIcal("uid-no-alarm", "No Alarm Event")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent("no-alarm.ics", eventUrl, "etag-1", ical)
         ))
@@ -1443,7 +1463,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent("with-alarm.ics", eventUrl, "etag-1", ical)
         ))
@@ -1480,7 +1500,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent("allday-no-alarm.ics", eventUrl, "etag-1", ical)
         ))
@@ -1543,7 +1563,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "ac-maintenance.ics",
@@ -1652,7 +1672,7 @@ class PullStrategyTest {
             uid = "uid-1"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event-1.ics", null)))
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
@@ -1688,7 +1708,7 @@ class PullStrategyTest {
             uid = "uid-1"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event-1.ics", "new-etag")))
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
@@ -1755,7 +1775,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "master-with-exception.ics",
@@ -1807,7 +1827,7 @@ class PullStrategyTest {
             uid = "uid-1"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event-1.ics", null)))
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
@@ -1868,7 +1888,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent(
                 href = "master-with-exception.ics",
@@ -1904,7 +1924,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-1", "Event 1"))
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, events)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -1928,7 +1948,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-1", "Event 1"))
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         // syncToken non-null → incremental path, but let's force to pullFull via forceFullSync
         // Actually, non-null syncToken goes to pullIncremental, not pullFull.
         // To test non-null syncToken in pullFull, use forceFullSync=true (which overrides).
@@ -1955,7 +1975,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-1", "Event 1"))
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, events)
         // Probe returns a token — server supports sync-token
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("probe-token")
@@ -1977,7 +1997,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
 
-        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Probe returns null — server does NOT support sync-token
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
         // PROPFIND returns etags
@@ -2015,7 +2035,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-1", "Event 1"))
         )
 
-        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Probe returns null → PROPFIND path
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
         // PROPFIND fails
@@ -2056,7 +2076,7 @@ class PullStrategyTest {
             etag = "old-etag", uid = "uid-existing"
         )
 
-        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Probe → no token
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
         // PROPFIND returns 2 events: one with changed etag, one new
@@ -2098,7 +2118,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
 
-        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Probe returns error (network failure)
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.error(0, "Network error")
         // PROPFIND succeeds
@@ -2194,7 +2214,7 @@ class PullStrategyTest {
         val event2Url = "${calendar.caldavUrl}event2.ics"
         val event3Url = "${calendar.caldavUrl}event3.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("event1.ics", event1Url, "etag1", createSimpleIcal("uid-1", "Event 1")),
             CalDavEvent("event2.ics", event2Url, "etag2", createSimpleIcal("uid-2", "Event 2")),
@@ -2234,7 +2254,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}problem-event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("problem-event.ics", eventUrl, "etag-1",
                 createSimpleIcal("uid-problem", "Problem Event"))
@@ -2267,7 +2287,7 @@ class PullStrategyTest {
         val event1Url = "${calendar.caldavUrl}event1.ics"
         val event2Url = "${calendar.caldavUrl}event2.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("event1.ics", event1Url, "etag1", createSimpleIcal("uid-1", "Event 1")),
             CalDavEvent("event2.ics", event2Url, "etag2", createSimpleIcal("uid-2", "Event 2"))
@@ -2327,7 +2347,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("master-with-exception.ics", eventUrl, "etag-1", masterWithExceptionIcal)
         )
@@ -2365,7 +2385,7 @@ class PullStrategyTest {
         // Events that succeed should still be processed.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("e1.ics", "${calendar.caldavUrl}e1.ics", "etag1", createSimpleIcal("uid-1", "Event 1")),
             CalDavEvent("e2.ics", "${calendar.caldavUrl}e2.ics", "etag2", createSimpleIcal("uid-2", "Event 2")),
@@ -2405,7 +2425,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}problem-event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("problem-event.ics", eventUrl, "etag-1",
                 createSimpleIcal("uid-problem", "Problem Event"))
@@ -2436,7 +2456,7 @@ class PullStrategyTest {
         // for each constraint skip, so the counter appears in Sync History UI.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("e1.ics", "${calendar.caldavUrl}e1.ics", "etag1", createSimpleIcal("uid-1", "Event 1")),
             CalDavEvent("e2.ics", "${calendar.caldavUrl}e2.ics", "etag2", createSimpleIcal("uid-2", "Event 2"))
@@ -2480,7 +2500,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
@@ -2508,7 +2528,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
@@ -2535,7 +2555,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
@@ -2566,7 +2586,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
         // All fetches fail (batch and individual)
@@ -2587,7 +2607,7 @@ class PullStrategyTest {
         // 0 hrefs → fetchEventsByHref should not be called
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -2609,7 +2629,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
@@ -2638,7 +2658,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair("event1.ics", "etag-1"),
@@ -2676,7 +2696,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$href", "Event $href"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(hrefs.map { Pair(it, "etag-$it") })
         // Multi-href batch returns empty (Zoho quirk)
@@ -2715,7 +2735,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$href", "Event $href"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(hrefs.map { Pair(it, "etag-$it") })
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
@@ -2755,7 +2775,7 @@ class PullStrategyTest {
         val url1 = "${calendar.caldavUrl}event1.ics"
         val url2 = "${calendar.caldavUrl}event2.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
         // Batch (multi-href) fails
@@ -2790,7 +2810,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventHref = "${calendar.caldavUrl}event1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
         // sync-collection returns changed items (incremental path)
         val syncReport = SyncReport(
@@ -2840,7 +2860,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventHref = "${calendar.caldavUrl}event1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
         val syncReport = SyncReport(
             changed = listOf(SyncItem(eventHref, "etag-1", SyncItemStatus.OK)),
@@ -2892,7 +2912,7 @@ class PullStrategyTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventUrl = "${calendar.caldavUrl}event1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
         val syncReport = SyncReport(
             changed = listOf(SyncItem(eventUrl, "etag-1", SyncItemStatus.OK)),
@@ -2964,7 +2984,7 @@ class PullStrategyTest {
             etag = "etag-after-push"
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("pushed-event.ics", eventUrl, "etag-stale-from-cdn",
                 createSimpleIcal("uid-pushed", "Server Version (stale CDN)"))
@@ -3013,7 +3033,7 @@ class PullStrategyTest {
             syncStatus = SyncStatus.SYNCED
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Server returns empty etag list — event not indexed yet
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
@@ -3036,7 +3056,7 @@ class PullStrategyTest {
         val staleUrl = "${calendar.caldavUrl}stale.ics"
         val staleEvent = createEvent(id = 99, caldavUrl = staleUrl, title = "Stale Event")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(staleEvent)
@@ -3248,7 +3268,7 @@ class PullStrategyTest {
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("event-1.ics", eventUrl, "etag-event", createSimpleIcal("vevent-uid-1", "Real Event")),
             CalDavEvent("todo-1.ics", vtodoUrl, "etag-todo", createVtodoIcal("vtodo-uid-1", "Task Item"))
@@ -3290,7 +3310,7 @@ class PullStrategyTest {
             val badUrl = "${calendar.caldavUrl}bad.ics"
             val goodUrl = "${calendar.caldavUrl}good.ics"
 
-            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
             val badIcal = "CRASH-TRIGGER-DATA"
             val goodIcal = createSimpleIcal("uid-good", "Good Event")
             val serverEvents = listOf(
@@ -3342,7 +3362,7 @@ class PullStrategyTest {
         val url1 = "${calendar.caldavUrl}event1.ics"
         val url2 = "${calendar.caldavUrl}event2.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         // Step 1: fetchEtagsInRange returns two hrefs
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
@@ -3381,7 +3401,7 @@ class PullStrategyTest {
         val href2 = "bad-event.ics"
         val url1 = "${calendar.caldavUrl}event1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
 
@@ -3427,7 +3447,7 @@ class PullStrategyTest {
         try {
             val calendar = createCalendar(ctag = null, syncToken = null)
 
-            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
             val serverEvents = (1..3).map { i ->
                 CalDavEvent("bad-$i.ics", "${calendar.caldavUrl}bad-$i.ics", "etag-$i", "BAD-DATA-$i")
             }
@@ -3465,7 +3485,7 @@ class PullStrategyTest {
         try {
             val calendar = createCalendar(ctag = null, syncToken = null)
 
-            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
             val goodIcal = createSimpleIcal("uid-good", "Good Event")
             val serverEvents = listOf(
                 CalDavEvent("bad-1.ics", "${calendar.caldavUrl}bad-1.ics", "etag-1", "BAD-1"),
@@ -3517,7 +3537,7 @@ class PullStrategyTest {
             val badUrl = "${calendar.caldavUrl}bad-event.ics"
             val goodUrl = "${calendar.caldavUrl}good-event.ics"
 
-            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+            coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
             coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
                 CalDavResult.success(SyncReport(
                     syncToken = "new-token",
@@ -3580,7 +3600,7 @@ class PullStrategyTest {
                 createSimpleIcal("uid-$i", "Event $i"))
         }
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
 
@@ -3628,7 +3648,7 @@ class PullStrategyTest {
         val url1 = "${calendar.caldavUrl}event1.ics"
         val url2 = "${calendar.caldavUrl}event2.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "new-token",
@@ -3670,7 +3690,7 @@ class PullStrategyTest {
         // Sync should still complete with Success(eventsAdded=0).
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair("event1.ics", "etag-1"),
@@ -3706,7 +3726,7 @@ class PullStrategyTest {
         every { dataStore.syncPastDays } returns flowOf(730)
 
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
@@ -3741,7 +3761,7 @@ class PullStrategyTest {
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         val calendar = createCalendar(ctag = null, syncToken = null)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
@@ -3762,7 +3782,7 @@ class PullStrategyTest {
 
         // Calendar WITH syncToken — would normally go incremental, but forceFullSync overrides
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-sync-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
@@ -3817,7 +3837,7 @@ class PullStrategyTest {
             // event3 is NOT in local DB
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEtags)
         coEvery { eventsDao.getByCalendarIdInRange(any<Long>(), any<Long>(), any<Long>()) } returns emptyList()
@@ -3866,7 +3886,7 @@ class PullStrategyTest {
             EtagEntry(caldavUrl = url2, etag = "etag-2")       // Matches server
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEtags)
         coEvery { eventsDao.getByCalendarIdInRange(any<Long>(), any<Long>(), any<Long>()) } returns emptyList()
@@ -3908,7 +3928,7 @@ class PullStrategyTest {
         )
 
         // Local DB is empty (no etag entries)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEtags)
         coEvery { eventsDao.getByCalendarIdInRange(any<Long>(), any<Long>(), any<Long>()) } returns emptyList()
@@ -3956,7 +3976,7 @@ class PullStrategyTest {
             EtagEntry(caldavUrl = url2, etag = "etag-2")
         )
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEtags)
         coEvery { eventsDao.getByCalendarIdInRange(any<Long>(), any<Long>(), any<Long>()) } returns emptyList()
@@ -3979,7 +3999,7 @@ class PullStrategyTest {
         val changedHref = "changed-event.ics"
         val changedUrl = "${calendar.caldavUrl}changed-event.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "new-token",
@@ -4057,7 +4077,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("historical.ics", eventUrl, "etag-1", historicalIcal)
         )
@@ -4094,7 +4114,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("milestone.ics", eventUrl, "etag-1", zeroDurationIcal)
         )
@@ -4129,7 +4149,7 @@ class PullStrategyTest {
             title = "Original Title"
         ).copy(syncStatus = SyncStatus.SYNCED, uid = "race-uid", etag = "old-etag")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("race-event.ics", eventUrl, "new-etag",
                 createSimpleIcal("race-uid", "Server Title"))
@@ -4175,7 +4195,7 @@ class PullStrategyTest {
             title = "Original Title"
         ).copy(syncStatus = SyncStatus.SYNCED, uid = "normal-uid", etag = "old-etag")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("server-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         val serverEvents = listOf(
             CalDavEvent("normal-event.ics", eventUrl, "new-etag",
                 createSimpleIcal("normal-uid", "Server Title"))
@@ -4317,7 +4337,7 @@ class PullStrategyTest {
         """.trimIndent()
 
         // --- First sync: capture the mapped event ---
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-1")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-1", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-1", serverIcal)
         ))
@@ -4337,7 +4357,7 @@ class PullStrategyTest {
         val existingMaster = upsertSlot.captured.copy(id = 100L)
 
         // --- Second sync: same content, new etag ---
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("ctag-2")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-2", serverIcal)
         ))

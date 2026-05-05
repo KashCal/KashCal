@@ -1,6 +1,5 @@
 package org.onekash.kashcal.data.calendar_provider
 
-import android.content.ContentValues
 import android.provider.CalendarContract.Events
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

@@ -1,14 +1,14 @@
 package org.onekash.icaldav.compat
 
 import net.fortuna.ical4j.model.Calendar
-import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.Parameter
-import net.fortuna.ical4j.model.component.VEvent
-import net.fortuna.ical4j.model.component.VAlarm
-import net.fortuna.ical4j.model.component.VFreeBusy
-import net.fortuna.ical4j.model.component.VToDo
-import net.fortuna.ical4j.model.component.VJournal
+import net.fortuna.ical4j.model.Property
 import net.fortuna.ical4j.model.WeekDay
+import net.fortuna.ical4j.model.component.VAlarm
+import net.fortuna.ical4j.model.component.VEvent
+import net.fortuna.ical4j.model.component.VFreeBusy
+import net.fortuna.ical4j.model.component.VJournal
+import net.fortuna.ical4j.model.component.VToDo
 import java.time.DayOfWeek
 
 /**

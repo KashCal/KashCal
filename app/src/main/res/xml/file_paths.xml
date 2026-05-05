@@ -5,7 +5,7 @@
 
     Security: Only expose necessary directories with minimal scope.
 -->
-<paths xmlns:android="http://schemas.android.com/apk/res/android">
+<paths>
     <!--
         Cache directory for temporary ICS exports.
         Files here are auto-cleaned by system when storage is low.

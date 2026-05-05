@@ -1,14 +1,18 @@
 package org.onekash.kashcal.sync.integration
-import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,16 +21,20 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.client.CalDavClient
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+import org.onekash.kashcal.sync.client.model.SyncReport
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
-import org.onekash.kashcal.data.repository.CalendarRepositoryImpl
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
@@ -224,7 +232,7 @@ class LocalFirstSyncIntegrationTest {
         )
 
         // Server says this event was deleted
-        coEvery { client.getCtag(any()) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(any()) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(any(), "sync-token-123") } returns CalDavResult.success(
             SyncReport(
                 syncToken = "sync-token-456",
@@ -491,7 +499,7 @@ class LocalFirstSyncIntegrationTest {
     }
 
     private fun mockFullSyncResponse(ctag: String, events: List<CalDavEvent>) {
-        coEvery { client.getCtag(any()) } returns CalDavResult.success(ctag)
+        coEvery { client.getCtag(any()) } returns CalDavResult.success(CalendarMetadataProbe(ctag = ctag, displayName = null, color = null, isReadOnly = null))
         // Two-step: etags via calendar-query, then data via calendar-multiget.
         // Derive absolute-path hrefs from event URLs to match real server behavior
         // (servers return "/12345/calendars/home/event.ics", not "event.ics").

@@ -2,8 +2,6 @@ package org.onekash.kashcal.sync.session
 
 import android.content.Context
 import android.util.Log
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -14,13 +12,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
+import org.onekash.kashcal.util.DateTimeUtils
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Persistent store for sync session history.

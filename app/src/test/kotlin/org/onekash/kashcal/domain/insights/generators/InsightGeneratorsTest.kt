@@ -7,12 +7,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.kashcal.domain.insights.InsightOccurrence
-import org.onekash.kashcal.domain.insights.SimpleOccurrence
 import org.onekash.kashcal.domain.insights.CalendarHours
 import org.onekash.kashcal.domain.insights.DayHours
 import org.onekash.kashcal.domain.insights.InsightId
+import org.onekash.kashcal.domain.insights.InsightOccurrence
 import org.onekash.kashcal.domain.insights.PeriodStats
+import org.onekash.kashcal.domain.insights.SimpleOccurrence
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate

@@ -8,8 +8,8 @@ import org.onekash.kashcal.data.ics.IcsFetcher
 import org.onekash.kashcal.data.ics.OkHttpIcsFetcher
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
-import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
+import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import javax.inject.Singleton
 
 /**

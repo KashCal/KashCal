@@ -1,7 +1,10 @@
 package org.onekash.kashcal.domain.mapper
 
+import android.provider.CalendarContract
 import android.util.Log
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
+import org.onekash.kashcal.data.contacts.ContactEventUtils
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
@@ -76,10 +79,7 @@ fun DeviceEvent.toFormState(
         description = description.orEmpty(),
         rrule = rrule,
         timezone = timezone,
-        transp = when (availability) {
-            1 -> "TRANSPARENT"
-            else -> "OPAQUE"
-        },
+        transp = availabilityIntToTransp(availability),
         eventColor = this.eventColor,
         deviceCalendarGroups = deviceCalendarGroups,
         isLoading = false,
@@ -119,4 +119,75 @@ private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
     }
 
     return Pair(reminders.take(MAX_REMINDERS), truncatedCount)
+}
+
+/**
+ * Convert a device calendar event to a synthetic Room [Event] for ICS export.
+ *
+ * The returned [Event] is never persisted — it's a transport object that
+ * feeds [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize] /
+ * [serializeWithExceptions], so device-event export reuses the same serialization
+ * pipeline Room events go through.
+ *
+ * Key mappings:
+ * - UID: always `device-{masterId}@kashcal` where `masterId = originalId ?: id`.
+ *   For an exception row this uses the master's id, giving master + exception
+ *   the shared UID that RFC 5545 requires.
+ * - RRULE: nulled for exceptions (CalendarProvider's Events-table exception rows
+ *   have RRULE=NULL, but defensive null-out protects against Instances-derived
+ *   inputs and future refactors).
+ * - STATUS: CalendarProvider int → RFC 5545 string. STATUS_CANCELED preserves
+ *   cancelled occurrences on export.
+ * - AVAILABILITY: CalendarProvider int → TRANSP string. BUSY/TENTATIVE → OPAQUE,
+ *   FREE → TRANSPARENT.
+ * - Reminders: caller passes minutes-before-start (fetched separately via
+ *   [org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository.getReminders]);
+ *   mapped to ISO durations via [ContactEventUtils.minutesToIsoDuration].
+ */
+fun DeviceEvent.toExportEvent(reminderMinutes: List<Int> = emptyList()): Event {
+    val masterId = originalId ?: id
+    val now = System.currentTimeMillis()
+    return Event(
+        uid = "device-$masterId@kashcal",
+        calendarId = 0,
+        title = title,
+        description = description,
+        location = location,
+        startTs = startTs,
+        endTs = endTs ?: startTs,
+        timezone = timezone,
+        isAllDay = isAllDay,
+        status = statusIntToString(status),
+        transp = availabilityIntToTransp(availability),
+        classification = "PUBLIC",
+        rrule = if (originalId != null) null else rrule,
+        rdate = rdate,
+        exdate = exdate,
+        originalEventId = originalId,
+        originalInstanceTime = originalInstanceTime,
+        reminders = reminderMinutes.takeIf { it.isNotEmpty() }
+            ?.map { ContactEventUtils.minutesToIsoDuration(it) },
+        color = eventColor,
+        dtstamp = now,
+        sequence = 0,
+        createdAt = now,
+        updatedAt = now
+    )
+}
+
+/** CalendarProvider STATUS int → RFC 5545 status string. */
+private fun statusIntToString(status: Int): String = when (status) {
+    CalendarContract.Events.STATUS_TENTATIVE -> "TENTATIVE"
+    CalendarContract.Events.STATUS_CANCELED -> "CANCELLED"
+    else -> "CONFIRMED"
+}
+
+/**
+ * CalendarProvider AVAILABILITY int → RFC 5545 TRANSP string.
+ * BUSY/TENTATIVE → OPAQUE, FREE → TRANSPARENT. Shared across [toFormState],
+ * [toExportEvent], and [DisplayEvent.Device.toEventForDuplicate].
+ */
+internal fun availabilityIntToTransp(availability: Int): String = when (availability) {
+    CalendarContract.Events.AVAILABILITY_FREE -> "TRANSPARENT"
+    else -> "OPAQUE"
 }

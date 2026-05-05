@@ -172,6 +172,27 @@ interface CalendarsDao {
     suspend fun updateDisplayName(id: Long, displayName: String)
 
     /**
+     * Refresh calendar metadata from a server probe. Null means "leave
+     * unchanged" — preserves local values for fields the server did not
+     * return.
+     */
+    @Query(
+        """
+        UPDATE calendars SET
+            color = COALESCE(:color, color),
+            display_name = COALESCE(:displayName, display_name),
+            is_read_only = COALESCE(:isReadOnly, is_read_only)
+        WHERE id = :id
+        """
+    )
+    suspend fun updateMetadata(
+        id: Long,
+        color: Int?,
+        displayName: String?,
+        isReadOnly: Boolean?
+    )
+
+    /**
      * Update sort order.
      */
     @Query("UPDATE calendars SET sort_order = :sortOrder WHERE id = :id")

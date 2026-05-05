@@ -1,6 +1,11 @@
 package org.onekash.icaldav.scheduling
 
-import org.onekash.icaldav.model.*
+import org.onekash.icaldav.model.Attendee
+import org.onekash.icaldav.model.EventStatus
+import org.onekash.icaldav.model.ICalDateTime
+import org.onekash.icaldav.model.ICalEvent
+import org.onekash.icaldav.model.ITipMethod
+import org.onekash.icaldav.model.PartStat
 import org.onekash.icaldav.parser.ICalGenerator
 
 /**

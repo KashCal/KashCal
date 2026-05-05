@@ -2,17 +2,26 @@ package org.onekash.kashcal.sync.provider.caldav
 
 import android.graphics.Color
 import android.util.Log
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
+import io.mockk.verify
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.credential.AccountCredentials
-import org.onekash.kashcal.data.repository.AccountRepository
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
@@ -20,7 +29,6 @@ import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
-import org.onekash.kashcal.sync.quirks.CalDavQuirks
 
 /**
  * Unit tests for CalDavAccountDiscoveryService.
@@ -733,6 +741,70 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
         coVerify { calendarRepository.updateCalendar(match { it.displayName == "Updated Name" }) }
+    }
+
+    @Test
+    fun `refreshCalendars adopts server color change for existing calendar`() = runTest {
+        val account = createAccount(1L)
+        val existingCalendar = createCalendar(1L, account.id, "https://server/cal1/")
+        // existingCalendar.color is 0xFF4CAF50 (green) from the helper
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl("https://server/cal1/") } returns existingCalendar
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal1/",
+                    url = "https://server/cal1/",
+                    displayName = "Cal 1",
+                    color = "#FF0000", // red
+                    ctag = "new-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.color == 0xFFFF0000.toInt() }) }
+    }
+
+    @Test
+    fun `refreshCalendars preserves local color when server returns null color`() = runTest {
+        val account = createAccount(1L)
+        val existingCalendar = createCalendar(1L, account.id, "https://server/cal1/")
+        val localColor = existingCalendar.color
+
+        coEvery { accountRepository.getAccountById(1L) } returns account
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
+        coEvery { calendarRepository.getCalendarByUrl("https://server/cal1/") } returns existingCalendar
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
+            listOf(
+                CalDavCalendar(
+                    href = "/cal1/",
+                    url = "https://server/cal1/",
+                    displayName = "Cal 1",
+                    color = null, // server doesn't support RFC 7986
+                    ctag = "new-ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
 
     @Test

@@ -1,9 +1,11 @@
 package org.onekash.kashcal.sync.provider.icloud
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 
 /**
  * Tests for ICloudQuirks - iCloud-specific CalDAV parsing.

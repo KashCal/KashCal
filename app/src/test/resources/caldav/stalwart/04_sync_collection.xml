@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Stalwart sync-collection response (RFC 6578) -->
 <!-- Request: REPORT with sync-collection on calendar URL -->
-<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+<D:multistatus xmlns:D="DAV:">
     <!-- Changed event -->
     <D:response>
         <D:href>/dav/cal/admin/test-calendar/event-changed.ics</D:href>

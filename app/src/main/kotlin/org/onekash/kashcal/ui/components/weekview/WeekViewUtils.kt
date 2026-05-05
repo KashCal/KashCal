@@ -3,6 +3,13 @@ package org.onekash.kashcal.ui.components.weekview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.MAX_HOUR_HEIGHT_DP
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.MIN_HOUR_HEIGHT_DP
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.START_HOUR
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.positionEventsForDay
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.resolveInitialScrollPx
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -11,7 +18,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Calendar
 import java.util.Locale
-import org.onekash.kashcal.util.DateTimeUtils
 
 /**
  * Utility functions for the week view component.

@@ -1,7 +1,7 @@
 package org.onekash.kashcal.domain.quickadd
 
-import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
 import org.onekash.kashcal.domain.EmojiMatcher
+import org.onekash.kashcal.domain.quickadd.normalizer.NormalizerChain
 import org.onekash.kashcal.domain.quickadd.rule.AbsoluteDateRule
 import org.onekash.kashcal.domain.quickadd.rule.DurationRule
 import org.onekash.kashcal.domain.quickadd.rule.LocationRule

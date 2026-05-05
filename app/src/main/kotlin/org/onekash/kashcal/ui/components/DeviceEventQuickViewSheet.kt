@@ -48,21 +48,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import org.onekash.kashcal.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.ui.components.pickers.rememberRruleDisplayStrings
 import org.onekash.kashcal.util.DateTimeUtils
-import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.location.openInMaps
 import org.onekash.kashcal.util.text.containsUrl
 import org.onekash.kashcal.util.text.extractUrls
+import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
@@ -114,6 +115,7 @@ fun DeviceEventQuickViewSheet(
     )
 
     val context = LocalContext.current
+    val resources = LocalResources.current
     val is24HourDevice = DateFormat.is24HourFormat(context)
     val timePattern = remember(timeFormat, is24HourDevice) {
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
@@ -175,7 +177,7 @@ fun DeviceEventQuickViewSheet(
                                 displayEvent.startTs,
                                 displayEvent.endTs,
                                 displayEvent.isAllDay,
-                                context.resources,
+                                resources,
                                 timePattern
                             ),
                             style = MaterialTheme.typography.bodyLarge,
@@ -609,7 +611,7 @@ private fun DeviceEventDescriptionSection(
             }
 
             // Reminders section
-            val resources = LocalContext.current.resources
+            val resources = LocalResources.current
             val formattedReminders = remember(reminders, resources) {
                 formatRemindersFromMinutes(reminders, resources)
             }

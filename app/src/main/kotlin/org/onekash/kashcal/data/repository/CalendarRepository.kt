@@ -111,4 +111,21 @@ interface CalendarRepository {
      * Update ctag only.
      */
     suspend fun updateCtag(calendarId: Long, ctag: String?)
+
+    /**
+     * Update calendar metadata (color, displayName, isReadOnly) atomically.
+     *
+     * Used by [PullStrategy.maybeRefreshMetadata] to refresh server-side
+     * changes on every pull. Null means "leave unchanged" — preserves local
+     * values for servers that don't return RFC 7986 color or that omit the
+     * privilege-set element.
+     *
+     * Never touches [Calendar.localColorOverride].
+     */
+    suspend fun updateMetadata(
+        calendarId: Long,
+        color: Int?,
+        displayName: String?,
+        isReadOnly: Boolean?
+    )
 }

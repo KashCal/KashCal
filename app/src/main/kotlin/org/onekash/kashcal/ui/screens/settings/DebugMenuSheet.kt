@@ -39,7 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -151,7 +151,7 @@ fun DebugMenuSheet(
                                 style = MaterialTheme.typography.bodyLarge
                             )
                             Text(
-                                formatSyncInterval(syncIntervalMs, LocalContext.current.resources),
+                                formatSyncInterval(syncIntervalMs, LocalResources.current),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -176,7 +176,7 @@ fun DebugMenuSheet(
                             .fillMaxWidth()
                             .padding(start = 52.dp, end = 16.dp)
                     ) {
-                        getSyncOptions(LocalContext.current.resources).forEach { option ->
+                        getSyncOptions(LocalResources.current).forEach { option ->
                             SyncOptionRow(
                                 label = option.label,
                                 isSelected = option.intervalMs == syncIntervalMs,

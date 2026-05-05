@@ -476,7 +476,7 @@ END:VCALENDAR
             "${config.name} getCtag failed: ${(ctagResult1 as? CalDavResult.Error)?.message}",
             ctagResult1.isSuccess()
         )
-        val ctag1 = ctagResult1.getOrNull()
+        val ctag1 = ctagResult1.getOrNull()?.ctag
 
         // Create an event to change the ctag
         val uid = "test-ctag-${config.name.lowercase()}-${UUID.randomUUID()}"
@@ -490,7 +490,7 @@ END:VCALENDAR
         // Get new ctag
         val ctagResult2 = client!!.getCtag(calendarUrl!!)
         assert(ctagResult2.isSuccess()) { "Failed to get ctag after create on ${config.name}" }
-        val ctag2 = ctagResult2.getOrNull()
+        val ctag2 = ctagResult2.getOrNull()?.ctag
 
         // Ctag should have changed (or at least be non-null)
         assert(ctag2 != null) { "Ctag should not be null after event creation on ${config.name}" }

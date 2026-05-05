@@ -8,11 +8,14 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.sync.auth.Credentials
-import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.time.Instant
 
@@ -262,7 +265,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         val result = client.getCtag(calendarUrl)
 
         assertTrue("Result should be success", result.isSuccess())
-        assertEquals("my-ctag-abc", result.getOrNull())
+        assertEquals("my-ctag-abc", result.getOrNull()?.ctag)
     }
 
     @Test

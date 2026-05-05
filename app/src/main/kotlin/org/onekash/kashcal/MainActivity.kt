@@ -11,6 +11,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,33 +23,32 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.data.ics.IcsParserService
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
-import org.onekash.kashcal.data.ics.IcsParserService
-import org.onekash.kashcal.ui.components.AppInfoSheet
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.rememberDrawerState
-import org.onekash.kashcal.ui.components.EventFormSheet
+import org.onekash.kashcal.domain.mapper.toExportEvent
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.buildShareText
 import org.onekash.kashcal.domain.model.toEventForDuplicate
+import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
+import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
+import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.DeviceEventQuickViewSheet
+import org.onekash.kashcal.ui.components.EventFormSheet
 import org.onekash.kashcal.ui.components.EventQuickViewSheet
 import org.onekash.kashcal.ui.components.IcsImportSheet
-import org.onekash.kashcal.ui.components.QuickAddDialog
-import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.components.NotificationPermissionDialog
 import org.onekash.kashcal.ui.components.OnboardingBanner
+import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
-import org.onekash.kashcal.util.IcsExporter
-import org.onekash.kashcal.util.IcsFileReader
-import org.onekash.kashcal.util.location.LocationSuggestionService
+import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.onekash.kashcal.ui.screens.HomeScreen
@@ -56,13 +57,13 @@ import org.onekash.kashcal.ui.viewmodels.DeviceCalendarException
 import org.onekash.kashcal.ui.viewmodels.HomeViewModel
 import org.onekash.kashcal.ui.viewmodels.PendingAction
 import org.onekash.kashcal.ui.viewmodels.QuickAddViewModel
-import org.onekash.kashcal.reminder.device.DeviceCalendarReminderNotificationManager
-import org.onekash.kashcal.reminder.notification.ReminderNotificationManager
 import org.onekash.kashcal.util.CalendarContractAction
 import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.CalendarIntentParser
-import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.IcsExporter
+import org.onekash.kashcal.util.IcsFileReader
+import org.onekash.kashcal.util.location.LocationSuggestionService
 import javax.inject.Inject
 
 private const val TAG = "MainActivity"
@@ -84,6 +85,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var icsExporter: IcsExporter
+
+    @Inject
+    lateinit var calendarProviderRepository: CalendarProviderRepository
 
     @Inject
     lateinit var locationSuggestionService: LocationSuggestionService
@@ -735,6 +739,50 @@ class MainActivity : ComponentActivity() {
 
                             showDeviceQuickViewSheet = false
                             deviceQuickViewEvent = null
+                        },
+                        onExportIcs = {
+                            // Device event export: mirrors the Room handler above.
+                            // Fetches master + exceptions directly from Events (preserving
+                            // STATUS_CANCELED), maps each to a synthetic Room Event, then
+                            // routes through the same icsExporter.exportEvent as Room events.
+                            val event = deviceQuickViewEvent!!
+                            val masterEventId = event.instance.originalId ?: event.instance.eventId
+                            coroutineScope.launch {
+                                val pair = calendarProviderRepository.getDeviceEventWithExceptions(masterEventId)
+                                if (pair == null) {
+                                    Log.w(TAG, "Device event $masterEventId not found for export")
+                                    homeViewModel.showSnackbar("Event not found")
+                                    showDeviceQuickViewSheet = false
+                                    deviceQuickViewEvent = null
+                                    return@launch
+                                }
+                                val (master, exceptions) = pair
+                                val allIds = (listOf(master.id) + exceptions.map { it.id }).toSet()
+                                val remindersById = calendarProviderRepository.getRemindersForEvents(allIds)
+                                val masterSynthetic = master.toExportEvent(remindersById[master.id].orEmpty())
+                                val exceptionsSynthetic = exceptions.map { ex ->
+                                    ex.toExportEvent(remindersById[ex.id].orEmpty())
+                                }
+
+                                icsExporter.exportEvent(
+                                    context = this@MainActivity,
+                                    event = masterSynthetic,
+                                    exceptions = exceptionsSynthetic
+                                ).onSuccess { uri ->
+                                    val intent = Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/calendar"
+                                        putExtra(Intent.EXTRA_STREAM, uri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+                                    startActivity(Intent.createChooser(intent, "Export Event"))
+                                }.onFailure { e ->
+                                    Log.e(TAG, "Failed to export device event", e)
+                                    homeViewModel.showSnackbar("Export failed: ${e.message}")
+                                }
+
+                                showDeviceQuickViewSheet = false
+                                deviceQuickViewEvent = null
+                            }
                         },
                         timeFormat = uiState.timeFormat
                     )

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Open-Xchange (mailbox.org) sync-collection response -->
-<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav">
+<D:multistatus xmlns:D="DAV:">
     <D:response>
         <D:href>/caldav/testuser@mailbox.org/Kalender/event-123.ics</D:href>
         <D:propstat>

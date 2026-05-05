@@ -1,24 +1,31 @@
 package org.onekash.kashcal.sync.strategy
 
-import io.mockk.*
+import io.mockk.MockKAnnotations
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EtagEntry
 import org.onekash.kashcal.data.db.dao.EventsDao
-import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 
@@ -107,7 +114,7 @@ class PullStrategyEtagFallbackTest {
         val eventUrl = "https://caldav.example.com$eventHref"
 
         // ctag changed (triggers sync)
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
         // sync-collection returns 403 (token expired)
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
@@ -142,7 +149,7 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "gone-token") } returns
             CalDavResult.error(410, "Sync token gone")
 
@@ -165,7 +172,7 @@ class PullStrategyEtagFallbackTest {
     fun `falls through to pullFull when no local events`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -193,7 +200,7 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -226,7 +233,7 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -272,7 +279,7 @@ class PullStrategyEtagFallbackTest {
         val existingUrl = "https://caldav.example.com$existingHref"
         val newUrl = "https://caldav.example.com$newHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -318,7 +325,7 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -350,7 +357,7 @@ class PullStrategyEtagFallbackTest {
         val deletedHref = "/calendars/home/deleted.ics"
         val deletedUrl = "https://caldav.example.com$deletedHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -380,7 +387,7 @@ class PullStrategyEtagFallbackTest {
         val pendingHref = "/calendars/home/pending.ics"
         val pendingUrl = "https://caldav.example.com$pendingHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -416,7 +423,7 @@ class PullStrategyEtagFallbackTest {
         // Configure "All" lookback (Int.MAX_VALUE)
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -451,7 +458,7 @@ class PullStrategyEtagFallbackTest {
         // Configure 180-day lookback
         every { dataStore.syncPastDays } returns flowOf(180)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -491,7 +498,7 @@ class PullStrategyEtagFallbackTest {
         // Configure 180-day lookback
         every { dataStore.syncPastDays } returns flowOf(180)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -526,7 +533,7 @@ class PullStrategyEtagFallbackTest {
         // Configure 180-day lookback
         every { dataStore.syncPastDays } returns flowOf(180)
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -568,7 +575,7 @@ class PullStrategyEtagFallbackTest {
         val pushedHref = "/calendars/home/pushed.ics"
         val pushedUrl = "https://caldav.example.com$pushedHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -604,7 +611,7 @@ class PullStrategyEtagFallbackTest {
         val staleHref = "/calendars/home/stale.ics"
         val staleUrl = "https://caldav.example.com$staleHref"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
@@ -645,7 +652,7 @@ class PullStrategyEtagFallbackTest {
         // Local event stored with canonical URL (after migration)
         val localUrl = "https://caldav.icloud.com/123/calendars/home/event1.ics"
 
-        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success("new-ctag")
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 

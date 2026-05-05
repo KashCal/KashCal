@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.credential.CredentialMigration
@@ -23,7 +24,6 @@ import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
 import org.onekash.kashcal.sync.notification.SyncNotificationChannels
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
-import org.onekash.icaldav.model.ICalDateTime
 import java.time.ZoneId
 import javax.inject.Inject
 

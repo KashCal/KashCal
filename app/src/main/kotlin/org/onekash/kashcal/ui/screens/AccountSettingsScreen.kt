@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -8,13 +9,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.FileDownload
-import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsOff
@@ -38,47 +39,47 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import android.text.format.DateFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
+import org.onekash.kashcal.ui.model.CalendarGroup
+import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
 import org.onekash.kashcal.ui.screens.settings.AddSubscriptionDialog
+import org.onekash.kashcal.ui.screens.settings.AlertsSheet
+import org.onekash.kashcal.ui.screens.settings.BetaBadge
 import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
-import org.onekash.kashcal.ui.screens.settings.AlertsSheet
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
 import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
-import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
-import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
-import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
-import org.onekash.kashcal.ui.screens.settings.AccountDetailUiModel
-import org.onekash.kashcal.ui.screens.settings.BetaBadge
+import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
 import org.onekash.kashcal.ui.screens.settings.SectionHeader
 import org.onekash.kashcal.ui.screens.settings.SettingsCard
 import org.onekash.kashcal.ui.screens.settings.SettingsRow
-import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
-import org.onekash.kashcal.ui.model.CalendarGroup
-import org.onekash.kashcal.data.preferences.DefaultCalendar
-import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
 import org.onekash.kashcal.ui.shared.formatDuration
-import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.ui.shared.formatReminderShort
+import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
@@ -492,6 +493,7 @@ private fun FlatSettingsContent(
     // Derived values
     val isConnected = iCloudState is ICloudConnectionState.Connected
     val context = LocalContext.current
+    val resources = LocalResources.current
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
 
     // Memoized: resolve default calendar name (supports both Room and Device)
@@ -642,14 +644,14 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Default.Schedule,
                 label = stringResource(R.string.settings_default_event_length),
-                subtitle = formatDuration(defaultEventDuration, context.resources),
+                subtitle = formatDuration(defaultEventDuration, resources),
                 onClick = { showEventDurationSheet = true }
             )
             if (calendars.isNotEmpty()) {
                 SettingsRow(
                     icon = Icons.Default.Notifications,
                     label = stringResource(R.string.settings_default_alerts),
-                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, LocalContext.current.resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, LocalContext.current.resources)}",
+                    subtitle = "${formatReminderShort(defaultReminderTimed, use24Hour, resources)} · ${formatReminderShort(defaultReminderAllDay, use24Hour, resources)}",
                     onClick = { showAlertsSheet = true }
                 )
             }
@@ -694,7 +696,7 @@ private fun FlatSettingsContent(
             SettingsRow(
                 icon = Icons.Default.Refresh,
                 label = stringResource(R.string.settings_sync_lookback),
-                subtitle = formatSyncLookback(syncLookbackDays, context.resources),
+                subtitle = formatSyncLookback(syncLookbackDays, resources),
                 onClick = { showSyncLookbackSheet = true },
                 showDivider = false  // Only item in card
             )

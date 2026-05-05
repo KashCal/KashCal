@@ -1,12 +1,8 @@
 package org.onekash.kashcal.regression
-import org.onekash.kashcal.testutil.TestDataStoreFactory
 
 import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
-import io.mockk.coEvery
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -23,13 +19,14 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.error.ErrorMapper
 import org.onekash.kashcal.error.ErrorPresentation
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.net.SocketTimeoutException

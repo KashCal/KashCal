@@ -1,7 +1,6 @@
 package org.onekash.kashcal.domain.rrule
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.DayOfWeek

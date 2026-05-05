@@ -1,11 +1,12 @@
 package org.onekash.kashcal.ui.components.weekview
 
+import androidx.compose.ui.unit.dp
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.Assert.*
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.SyncStatus
-import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 import java.time.LocalTime

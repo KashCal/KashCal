@@ -1,9 +1,9 @@
 package org.onekash.kashcal.ui.screens
 
-import org.onekash.kashcal.data.db.entity.Calendar
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
  * Unit tests for AccountSettingsScreen derived state calculations.

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.quirks
 
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import java.util.Calendar
 import java.util.TimeZone
@@ -59,6 +60,10 @@ class DefaultQuirks(
 
     override fun extractCtag(responseBody: String): String? {
         return xmlParser.extractCtag(responseBody)
+    }
+
+    override fun extractCalendarMetadata(responseBody: String): CalendarMetadataProbe? {
+        return xmlParser.extractCalendarMetadata(responseBody)
     }
 
     override fun buildCalendarUrl(href: String, baseHost: String): String {

@@ -1,8 +1,16 @@
 package org.onekash.kashcal.sync.client
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavCalendar
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.SyncItem
+import org.onekash.kashcal.sync.client.model.SyncItemStatus
+import org.onekash.kashcal.sync.client.model.SyncReport
 
 /**
  * Tests for CalDAV model classes.

@@ -5,9 +5,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceModifier
-import androidx.glance.LocalContext
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -37,8 +37,8 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle as JavaTextStyle
 import java.util.Locale
+import java.time.format.TextStyle as JavaTextStyle
 
 internal sealed class WeekWidgetItem(val itemId: Long) {
     data class Header(val dayCode: Int, val eventCount: Int) :

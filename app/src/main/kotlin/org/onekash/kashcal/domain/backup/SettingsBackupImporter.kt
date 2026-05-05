@@ -1,7 +1,5 @@
 package org.onekash.kashcal.domain.backup
 
-import javax.inject.Inject
-import javax.inject.Singleton
 import kotlinx.serialization.SerializationException
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
@@ -13,6 +11,8 @@ import org.onekash.kashcal.data.preferences.PreferencesKeys
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val ICS_ACCOUNT_EMAIL = "subscriptions"
 

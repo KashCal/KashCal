@@ -1,8 +1,6 @@
 package org.onekash.kashcal.sync.quirks
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks

@@ -2,11 +2,9 @@ package org.onekash.kashcal.sync.client
 
 import android.util.Log
 import okhttp3.ConnectionPool
-import okhttp3.Credentials as OkHttpCredentials
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
-import org.onekash.kashcal.sync.auth.Credentials as AccountCredentials
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -16,6 +14,8 @@ import javax.inject.Singleton
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import okhttp3.Credentials as OkHttpCredentials
+import org.onekash.kashcal.sync.auth.Credentials as AccountCredentials
 
 /**
  * Factory for creating isolated CalDavClient instances.

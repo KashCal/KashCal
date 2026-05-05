@@ -1,23 +1,25 @@
 package org.onekash.kashcal.data.credential
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
-import io.mockk.*
+import io.mockk.coVerify
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.AccountsDao
-import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.preferences.KashCalDataStore
-import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
  * Unit tests for CredentialMigration.

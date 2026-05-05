@@ -11,7 +11,6 @@ import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
-import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks

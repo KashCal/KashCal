@@ -4,13 +4,13 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
-import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
@@ -25,8 +25,6 @@ import org.onekash.kashcal.data.preferences.UserPreferencesRepository
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 
 /**
  * Unit tests for NotificationPermissionManager.

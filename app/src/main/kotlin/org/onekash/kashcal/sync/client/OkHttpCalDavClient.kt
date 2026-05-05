@@ -13,7 +13,13 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
-import org.onekash.kashcal.sync.client.model.*
+import org.onekash.kashcal.sync.client.model.CalDavCalendar
+import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+import org.onekash.kashcal.sync.client.model.SyncItem
+import org.onekash.kashcal.sync.client.model.SyncItemStatus
+import org.onekash.kashcal.sync.client.model.SyncReport
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.util.EtagUtils
 import java.io.IOException
@@ -421,13 +427,17 @@ class OkHttpCalDavClient : CalDavClient {
 
     // ========== Change Detection ==========
 
-    override suspend fun getCtag(calendarUrl: String): CalDavResult<String> =
+    override suspend fun getCtag(calendarUrl: String): CalDavResult<CalendarMetadataProbe> =
         withContext(Dispatchers.IO) {
             val body = """
                 <?xml version="1.0" encoding="utf-8"?>
-                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/">
+                <d:propfind xmlns:d="DAV:" xmlns:cs="http://calendarserver.org/ns/"
+                            xmlns:ic="http://apple.com/ns/ical/">
                     <d:prop>
                         <cs:getctag/>
+                        <d:displayname/>
+                        <ic:calendar-color/>
+                        <d:current-user-privilege-set/>
                     </d:prop>
                 </d:propfind>
             """.trimIndent()
@@ -439,11 +449,11 @@ class OkHttpCalDavClient : CalDavClient {
                 .build()
 
             executeRequest(request) { responseBody ->
-                val ctag = quirks.extractCtag(responseBody)
+                val probe = quirks.extractCalendarMetadata(responseBody)
                     ?: return@executeRequest CalDavResult.error(
                         500, "Ctag not found in response"
                     )
-                CalDavResult.success(ctag)
+                CalDavResult.success(probe)
             }
         }
 

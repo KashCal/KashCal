@@ -3,7 +3,12 @@ package org.onekash.icaldav.parser
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.onekash.icaldav.model.*
+import org.onekash.icaldav.model.CUType
+import org.onekash.icaldav.model.FreeBusyType
+import org.onekash.icaldav.model.ITipMethod
+import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.model.ScheduleAgent
+import org.onekash.icaldav.model.ScheduleForceSend
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

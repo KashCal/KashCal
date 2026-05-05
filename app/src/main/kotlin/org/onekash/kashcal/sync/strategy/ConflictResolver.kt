@@ -1,18 +1,18 @@
 package org.onekash.kashcal.sync.strategy
 
 import android.util.Log
-import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
-import org.onekash.icaldav.parser.ICalParser
-import org.onekash.icaldav.model.ParseResult
 import javax.inject.Inject
 
 /**

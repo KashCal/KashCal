@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.screens.settings
 
+import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -36,12 +37,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import android.text.format.DateFormat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -100,6 +101,7 @@ fun BirthdaysAndAnniversariesScreen(
 ) {
     // Compute use24Hour from timeFormat
     val context = LocalContext.current
+    val resources = LocalResources.current
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
     Scaffold(
         topBar = {
@@ -205,6 +207,7 @@ private fun ContactEventSection(
 ) {
     var showReminderPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
+    val resources = LocalResources.current
 
     Column(
         modifier = Modifier
@@ -308,7 +311,7 @@ private fun ContactEventSection(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour, resources = LocalContext.current.resources),
+                        formatReminderOption(reminderMinutes, isAllDay = true, use24Hour = use24Hour, resources = resources),
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
@@ -327,7 +330,7 @@ private fun ContactEventSection(
         SingleAlertPickerSheet(
             sheetState = reminderSheetState,
             title = reminderTitle,
-            options = getAllDayReminderOptions(use24Hour, LocalContext.current.resources),
+            options = getAllDayReminderOptions(use24Hour, resources),
             currentValue = reminderMinutes,
             onSelect = { minutes ->
                 onReminderChange(minutes)

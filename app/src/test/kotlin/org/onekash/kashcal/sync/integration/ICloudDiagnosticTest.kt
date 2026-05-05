@@ -92,7 +92,7 @@ class ICloudDiagnosticTest {
         // Step 4: getCtag
         println("\n=== Step 4: getCtag ===")
         val ctagResult = client.getCtag(calUrl)
-        println("Ctag: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()}")
+        println("Ctag: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()?.ctag}")
         if (ctagResult.isError()) {
             val err = ctagResult as CalDavResult.Error
             println("ERROR: code=${err.code}, message=${err.message}")

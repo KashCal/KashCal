@@ -556,7 +556,7 @@ END:VCALENDAR
             // Try ctag as fallback
             val ctagResult = client.getCtag(calendarUrl!!)
             if (ctagResult.isSuccess()) {
-                println("SOGo ctag: ${ctagResult.getOrNull()}")
+                println("SOGo ctag: ${ctagResult.getOrNull()?.ctag}")
             } else {
                 println("SOGo doesn't support ctag either: ${(ctagResult as? CalDavResult.Error)?.message}")
             }

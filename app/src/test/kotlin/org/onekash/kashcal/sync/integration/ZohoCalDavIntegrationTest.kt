@@ -1,13 +1,16 @@
 package org.onekash.kashcal.sync.integration
 
 import kotlinx.coroutines.runBlocking
-import okhttp3.Credentials as OkCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.FixMethodOrder
@@ -24,6 +27,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import okhttp3.Credentials as OkCredentials
 
 /**
  * Exhaustive live integration test for Zoho CalDAV.
@@ -183,7 +187,7 @@ class ZohoCalDavIntegrationTest {
         val result = client.getCtag(calendarUrl!!)
         // Zoho may or may not support ctag — log either way
         if (result.isSuccess()) {
-            val ctag = result.getOrNull()
+            val ctag = result.getOrNull()?.ctag
             println("Ctag: $ctag")
             assertNotNull("Ctag should be non-null on success", ctag)
         } else {
@@ -1019,7 +1023,7 @@ END:VCALENDAR
 
         val result = client.getCtag(calendarUrl!!)
         if (result.isSuccess()) {
-            val newCtag = result.getOrNull()
+            val newCtag = result.getOrNull()?.ctag
             println("Ctag after batch create: $newCtag")
             assertNotNull("Ctag should be non-null", newCtag)
         } else {

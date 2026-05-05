@@ -3,12 +3,11 @@ package org.onekash.kashcal.ui.viewmodels
 import android.net.Uri
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.onekash.kashcal.util.CalendarIntentData
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.onekash.kashcal.util.CalendarIntentData
 
 /**
  * Unit tests for PendingAction sealed class and its variants.

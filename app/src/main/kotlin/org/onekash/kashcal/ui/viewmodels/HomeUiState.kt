@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import android.net.Uri
 import androidx.compose.runtime.Immutable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -13,12 +14,11 @@ import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.error.ErrorPresentation
+import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.model.CalendarGroup
-import android.net.Uri
-import java.time.LocalDate
-import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.util.CalendarIntentData
+import java.time.LocalDate
 
 /**
  * Immutable UI state for the HomeScreen (main calendar view).

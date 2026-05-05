@@ -22,13 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.VerticalWheelPicker
 import org.onekash.kashcal.ui.shared.PresetChip
@@ -66,7 +66,7 @@ fun WheelDurationPicker(
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
 
     // Decompose total minutes into wheel components
     // Round minutes to nearest 5 for wheel display (preserves original until user edits)

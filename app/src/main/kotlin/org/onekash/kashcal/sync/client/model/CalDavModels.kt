@@ -14,6 +14,19 @@ data class CalDavCalendar(
 )
 
 /**
+ * Per-calendar metadata returned from the extended getCtag PROPFIND.
+ *
+ * Nullable fields mean "server did not provide this property" — the caller
+ * preserves the locally-stored value.
+ */
+data class CalendarMetadataProbe(
+    val ctag: String,
+    val displayName: String?,
+    val color: String?,
+    val isReadOnly: Boolean?
+)
+
+/**
  * Represents an event fetched from CalDAV server.
  */
 data class CalDavEvent(

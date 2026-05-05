@@ -1,6 +1,7 @@
 package org.onekash.kashcal.widget
 
 import android.content.Context
+import android.content.res.Resources
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
@@ -8,9 +9,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
-import androidx.glance.LocalContext
 import androidx.glance.Image
 import androidx.glance.ImageProvider
+import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
@@ -40,13 +41,12 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
-import android.content.res.Resources
 import org.onekash.kashcal.ui.model.MonthGrid
 import java.time.LocalDate
 import java.time.Month
-import java.time.format.TextStyle as JavaTextStyle
 import java.util.Calendar
 import java.util.Locale
+import java.time.format.TextStyle as JavaTextStyle
 
 /**
  * Format month header text for the widget.

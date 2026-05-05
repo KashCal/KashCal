@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.parser
 
 import android.util.Log
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.util.EtagUtils
 import org.xmlpull.v1.XmlPullParser
@@ -160,6 +161,81 @@ class CalDavXmlParser {
             null
         } catch (e: Exception) {
             Log.w(TAG, "Failed to parse sync token: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Extract per-calendar metadata from a Depth:0 PROPFIND response.
+     *
+     * Returns null when ctag is absent. Nullable fields preserve local state
+     * for servers that omit the property. `isReadOnly` returns null when no
+     * privilege-set element appears — which is the deliberate divergence from
+     * [extractCalendars]'s "assume read-only" fallback (discovery-time safety
+     * vs. refresh-time preservation).
+     */
+    fun extractCalendarMetadata(xml: String): CalendarMetadataProbe? {
+        if (xml.isBlank()) return null
+        return try {
+            val parser = createParser(xml)
+
+            var ctag: String? = null
+            var displayName: String? = null
+            var color: String? = null
+            var inPrivilegeSet = false
+            var sawPrivilegeSet = false
+            var hasWritePrivilege = false
+            var hasReadOnlyElement = false
+
+            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+                when (parser.eventType) {
+                    XmlPullParser.START_TAG -> {
+                        when (parser.name) {
+                            "getctag" -> {
+                                ctag = readText(parser)?.takeIf { it.isNotBlank() }
+                            }
+                            "displayname" -> {
+                                displayName = readText(parser)?.takeIf { it.isNotBlank() }
+                                    ?.let { decodeXmlEntities(it) }
+                            }
+                            "calendar-color" -> {
+                                color = readText(parser)?.takeIf { it.isNotBlank() }
+                            }
+                            "current-user-privilege-set" -> {
+                                inPrivilegeSet = true
+                                sawPrivilegeSet = true
+                            }
+                            "write", "write-content" -> {
+                                if (inPrivilegeSet) hasWritePrivilege = true
+                            }
+                            "read-only" -> hasReadOnlyElement = true
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "current-user-privilege-set") {
+                            inPrivilegeSet = false
+                        }
+                    }
+                }
+                parser.next()
+            }
+
+            if (ctag == null) return null
+
+            val isReadOnly: Boolean? = if (sawPrivilegeSet) {
+                hasReadOnlyElement || !hasWritePrivilege
+            } else {
+                null
+            }
+
+            CalendarMetadataProbe(
+                ctag = ctag,
+                displayName = displayName,
+                color = color,
+                isReadOnly = isReadOnly
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse calendar metadata: ${e.message}")
             null
         }
     }

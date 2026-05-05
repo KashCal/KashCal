@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.mutablePreferencesOf
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import java.time.Instant
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -20,6 +19,7 @@ import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.preferences.PreferencesKeys
+import java.time.Instant
 
 class SettingsBackupExporterTest {
 

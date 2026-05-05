@@ -17,7 +17,6 @@ import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
-import org.onekash.kashcal.ui.viewmodels.DeviceEventEditData
 
 /**
  * Tests for HomeViewModel device calendar edit methods.

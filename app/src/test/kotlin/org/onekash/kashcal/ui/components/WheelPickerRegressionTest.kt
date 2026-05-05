@@ -1,7 +1,6 @@
 package org.onekash.kashcal.ui.components
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Test
 import kotlin.math.abs
 

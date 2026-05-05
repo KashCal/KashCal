@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/">
+<d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
     <d:response>
         <d:href>/remote.php/dav/principals/users/testuser/</d:href>
         <d:propstat>

@@ -1,5 +1,7 @@
 package org.onekash.kashcal.sync.quirks
 
+import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
+
 /**
  * Abstraction for CalDAV provider-specific behaviors.
  *
@@ -58,6 +60,13 @@ interface CalDavQuirks {
      * Extract ctag (collection tag) for change detection.
      */
     fun extractCtag(responseBody: String): String?
+
+    /**
+     * Extract per-calendar metadata (ctag + displayName + color + isReadOnly)
+     * from the extended getCtag PROPFIND response. Used by the per-pull
+     * metadata refresh path in PullStrategy. Returns null when ctag is absent.
+     */
+    fun extractCalendarMetadata(responseBody: String): CalendarMetadataProbe?
 
     /**
      * Build the full URL for a calendar given its href.

@@ -1,20 +1,24 @@
 package org.onekash.kashcal.ui.components
 
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.util.text.DetectedUrl
 import org.onekash.kashcal.util.text.UrlType
@@ -55,7 +59,7 @@ fun LinkifiedText(
     // If no URLs, render simple text
     if (detectedUrls.isEmpty()) {
         SelectionContainer {
-            androidx.compose.material3.Text(
+            Text(
                 text = cleanedText,
                 modifier = modifier,
                 style = style,
@@ -67,6 +71,9 @@ fun LinkifiedText(
     }
 
     val uriHandler = LocalUriHandler.current
+    // Hold the latest caller-supplied callback so the AnnotatedString's
+    // LinkInteractionListeners don't pin a stale reference across recompositions.
+    val currentOnLinkClick by rememberUpdatedState(onLinkClick)
 
     // Cache colors to prevent unnecessary recomposition
     val linkColor = MaterialTheme.colorScheme.primary
@@ -76,8 +83,15 @@ fun LinkifiedText(
             ?: defaultTextColor
     }
 
-    // Build annotated string with link spans
-    val annotatedString = remember(cleanedText, detectedUrls, linkColor, textColor) {
+    // Build annotated string with embedded LinkAnnotation.Url for each detected URL.
+    // LinkAnnotation routes clicks via the embedded listener — no offset lookup needed.
+    val annotatedString = remember(cleanedText, detectedUrls, linkColor) {
+        val linkStyles = TextLinkStyles(
+            style = SpanStyle(
+                color = linkColor,
+                textDecoration = TextDecoration.Underline
+            )
+        )
         buildAnnotatedString {
             var lastIndex = 0
 
@@ -87,25 +101,27 @@ fun LinkifiedText(
                     append(cleanedText.substring(lastIndex, detected.startIndex))
                 }
 
-                // Add the URL with link styling and annotation
-                val linkStart = length
-                pushStyle(
-                    SpanStyle(
-                        color = linkColor,
-                        textDecoration = TextDecoration.Underline
-                    )
+                // Supplying linkInteractionListener overrides Compose's default
+                // URL-open behavior, so we must call uriHandler ourselves to keep
+                // the shouldOpenExternally safety gate.
+                val link = LinkAnnotation.Url(
+                    url = detected.url,
+                    styles = linkStyles,
+                    linkInteractionListener = {
+                        currentOnLinkClick?.invoke(detected)
+                        if (shouldOpenExternally(detected.url)) {
+                            try {
+                                uriHandler.openUri(detected.url)
+                            } catch (_: Exception) {
+                                // System will show "No app found" toast
+                            }
+                        }
+                    }
                 )
+                pushLink(link)
                 // Display the original text (not the normalized URL)
                 append(cleanedText.substring(detected.startIndex, detected.endIndex))
                 pop()
-
-                // Add URL annotation for click handling
-                addStringAnnotation(
-                    tag = "URL",
-                    annotation = detected.url,
-                    start = linkStart,
-                    end = length
-                )
 
                 lastIndex = detected.endIndex
             }
@@ -133,7 +149,7 @@ fun LinkifiedText(
     }
 
     SelectionContainer {
-        ClickableText(
+        Text(
             text = annotatedString,
             modifier = modifier.then(
                 if (accessibilityDescription != null) {
@@ -142,26 +158,7 @@ fun LinkifiedText(
             ),
             style = style.copy(color = textColor),
             maxLines = maxLines,
-            overflow = overflow,
-            onClick = { offset ->
-                annotatedString.getStringAnnotations(tag = "URL", start = offset, end = offset)
-                    .firstOrNull()?.let { annotation ->
-                        val url = annotation.item
-                        // Find the corresponding DetectedUrl for callback
-                        val detected = detectedUrls.find { it.url == url }
-                        detected?.let { onLinkClick?.invoke(it) }
-
-                        // Open URL if safe
-                        if (shouldOpenExternally(url)) {
-                            try {
-                                uriHandler.openUri(url)
-                            } catch (_: Exception) {
-                                // System will show "No app found" toast
-                            }
-                        }
-                    }
-            }
+            overflow = overflow
         )
     }
 }
-

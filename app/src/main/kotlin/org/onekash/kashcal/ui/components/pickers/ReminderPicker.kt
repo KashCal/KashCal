@@ -35,10 +35,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.ALL_DAY_PRESET_CHIPS
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
@@ -76,7 +76,7 @@ fun ReminderPickerCard(
     val presets = if (isAllDay) ALL_DAY_PRESET_CHIPS else TIMED_PRESET_CHIPS
 
     // Build summary text
-    val summaryText = formatReminderSummary(reminders, use24Hour, LocalContext.current.resources)
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current)
 
     OutlinedCard(
         modifier = modifier.fillMaxWidth(),
@@ -335,7 +335,7 @@ fun ReminderPickerRow(
     truncatedReminderCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val summaryText = formatReminderSummary(reminders, use24Hour, LocalContext.current.resources)
+    val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current)
 
     EventFormRow(
         icon = Icons.Default.Notifications,
@@ -391,7 +391,7 @@ private fun ReminderItemRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                formatReminderDuration(minutes, isAllDay, use24Hour, LocalContext.current.resources),
+                formatReminderDuration(minutes, isAllDay, use24Hour, LocalResources.current),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.weight(1f),

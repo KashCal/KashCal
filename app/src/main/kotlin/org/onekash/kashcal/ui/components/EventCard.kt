@@ -19,9 +19,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.contacts.ContactEventTitleFormatter
@@ -44,7 +44,7 @@ internal fun EventCard(
     timePattern: String = "h:mm a",
     onClick: () -> Unit
 ) {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val displayTitle = remember(displayEvent, showEventEmojis) {
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }

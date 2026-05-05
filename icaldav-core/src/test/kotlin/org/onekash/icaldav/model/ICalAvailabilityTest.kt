@@ -1,7 +1,7 @@
 package org.onekash.icaldav.model
 
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import java.time.Duration
 import java.time.ZoneId
 import kotlin.test.assertEquals

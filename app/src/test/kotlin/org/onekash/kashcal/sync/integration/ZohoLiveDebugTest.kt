@@ -1,7 +1,6 @@
 package org.onekash.kashcal.sync.integration
 
 import kotlinx.coroutines.runBlocking
-import okhttp3.Credentials as OkCredentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,6 +14,7 @@ import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
 import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.io.File
+import okhttp3.Credentials as OkCredentials
 
 /**
  * Diagnostic test against live Zoho CalDAV to trace the two-step fetch flow.
@@ -90,7 +90,7 @@ class ZohoLiveDebugTest {
 
         println("\n=== Step 4: Get ctag ===")
         val ctagResult = client.getCtag(calendarUrl)
-        println("Ctag result: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()}")
+        println("Ctag result: success=${ctagResult.isSuccess()}, value=${ctagResult.getOrNull()?.ctag}")
         if (ctagResult.isError()) {
             val err = ctagResult as org.onekash.kashcal.sync.client.model.CalDavResult.Error
             println("Ctag ERROR (code=${err.code}): ${err.message}")

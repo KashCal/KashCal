@@ -1,9 +1,11 @@
 package org.onekash.icaldav.parser
 
-import org.onekash.icaldav.model.ParseResult
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.onekash.icaldav.model.ParseResult
 
 /**
  * Adversarial tests for ICS parser - ported from KashCal.

@@ -1,14 +1,17 @@
 package org.onekash.icaldav.parser
 
-import org.onekash.icaldav.parser.ICalGenerator
-import org.onekash.icaldav.model.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
+import org.onekash.icaldav.model.ICalLink
+import org.onekash.icaldav.model.ICalRelation
+import org.onekash.icaldav.model.LinkRelationType
+import org.onekash.icaldav.model.ParseResult
+import org.onekash.icaldav.model.RelationType
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Tests for RFC 9253 property parsing and roundtrip.

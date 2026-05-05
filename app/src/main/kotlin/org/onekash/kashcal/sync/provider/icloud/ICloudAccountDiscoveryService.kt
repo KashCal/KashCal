@@ -5,22 +5,23 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.credential.AccountCredentials
-import org.onekash.kashcal.data.repository.AccountRepository
-import org.onekash.kashcal.data.repository.CalendarRepository
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
-import javax.net.ssl.SSLHandshakeException
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.repository.AccountRepository
+import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
-import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.parser.ServerColorParser
+import java.net.SocketTimeoutException
+import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.net.ssl.SSLHandshakeException
 
 /**
  * iCloud-specific implementation of AccountDiscoveryService.
@@ -384,6 +385,8 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 val calendar = if (existingCalendar != null) {
                     val updated = existingCalendar.copy(
                         displayName = calDavCalendar.displayName,
+                        color = ServerColorParser.parseCaldavColorToArgb(calDavCalendar.color)
+                            ?: existingCalendar.color,
                         ctag = calDavCalendar.ctag,
                         isReadOnly = calDavCalendar.isReadOnly
                     )

@@ -10,7 +10,10 @@ import org.junit.Ignore
 import org.junit.Test
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
+import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 /**

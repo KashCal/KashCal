@@ -4,16 +4,9 @@ import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.core.content.FileProvider
-import org.onekash.icaldav.model.Classification
-import org.onekash.icaldav.model.EventStatus
 import org.onekash.icaldav.model.ICalCalendar
-import org.onekash.icaldav.model.ICalDateTime
-import org.onekash.icaldav.model.ICalEvent
-import org.onekash.icaldav.model.RRule
-import org.onekash.icaldav.model.Transparency
 import org.onekash.icaldav.parser.ICalGenerator
 import org.onekash.kashcal.data.db.entity.Event
-import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import java.io.File
@@ -24,62 +17,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "IcsExporter"
-
-private val deviceExportGenerator = ICalGenerator(
-    prodId = "-//KashCal//Device Export//EN",
-    includeAppleExtensions = false
-)
-
-/**
- * Build ICS content string for a device calendar event.
- *
- * Honors the device event's stored timezone by emitting `DTSTART;TZID=...` +
- * VTIMEZONE block. Falls back to floating time when the timezone string is
- * not a valid IANA zone ID (e.g., Windows TZID surfaced by older Android
- * devices).
- */
-fun buildIcsFromDeviceEvent(event: DisplayEvent.Device): String {
-    val instance = event.instance
-    val zone = EventToICalEventMapper.resolveZone(instance.timezone)
-    val dtStart = ICalDateTime.fromTimestamp(event.startTs, zone, event.isAllDay)
-    // All-day inclusive -> exclusive per RFC 5545.
-    val endTs = if (event.isAllDay) event.endTs + 1 else event.endTs
-    val dtEnd = ICalDateTime.fromTimestamp(endTs, zone, event.isAllDay)
-
-    val icalEvent = ICalEvent(
-        uid = "device-${instance.eventId}@kashcal",
-        importId = "device-${instance.eventId}",
-        summary = event.title,
-        description = event.description.ifBlank { null },
-        location = event.location.ifBlank { null },
-        dtStart = dtStart,
-        dtEnd = dtEnd,
-        duration = null,
-        isAllDay = event.isAllDay,
-        status = EventStatus.CONFIRMED,
-        sequence = 0,
-        rrule = EventToICalEventMapper.parseRruleOrNull(event.rrule),
-        exdates = emptyList(),
-        recurrenceId = null,
-        alarms = emptyList(),
-        categories = emptyList(),
-        organizer = null,
-        attendees = emptyList(),
-        color = null,
-        dtstamp = null,
-        lastModified = null,
-        created = null,
-        transparency = Transparency.OPAQUE,
-        url = null,
-        classification = Classification.PUBLIC,
-        rawProperties = emptyMap()
-    )
-
-    return deviceExportGenerator.generate(
-        ICalCalendar(prodId = null, events = listOf(icalEvent)),
-        includeVTimezone = true
-    )
-}
 
 /**
  * Utility for exporting events to ICS files.

@@ -2,8 +2,8 @@ package org.onekash.kashcal.ui.components
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.onekash.kashcal.ui.components.pickers.to24Hour
 import org.onekash.kashcal.ui.components.pickers.to12Hour
+import org.onekash.kashcal.ui.components.pickers.to24Hour
 
 /**
  * Unit tests for 12-hour <-> 24-hour time conversion functions.

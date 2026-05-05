@@ -17,17 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
-import androidx.compose.ui.res.stringResource
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
@@ -221,7 +221,7 @@ private fun EventSnippet(
     showEventEmojis: Boolean,
     isSelected: Boolean = false
 ) {
-    val resources = LocalContext.current.resources
+    val resources = LocalResources.current
     val title = remember(displayEvent, showEventEmojis) {
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }

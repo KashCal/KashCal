@@ -5,6 +5,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -107,10 +108,7 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     endTs = endTs,
     isAllDay = isAllDay,
     dtstamp = System.currentTimeMillis(),
-    transp = when (instance.availability) {
-        1 -> "TRANSPARENT"
-        else -> "OPAQUE"
-    }
+    transp = availabilityIntToTransp(instance.availability)
 )
 
 /**

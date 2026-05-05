@@ -1103,7 +1103,7 @@ END:VCALENDAR
         printSubsection("Step 1: Get Initial Ctag")
         val ctag1Result = client.getCtag(calendarUrl!!)
         assert(ctag1Result.isSuccess()) { "Failed to get ctag" }
-        val ctag1 = ctag1Result.getOrNull()!!
+        val ctag1 = ctag1Result.getOrNull()!!.ctag
         println("Initial ctag: $ctag1")
 
         // Step 2: Create event
@@ -1138,7 +1138,7 @@ END:VCALENDAR
         // Step 3: Get new ctag
         printSubsection("Step 3: Get New Ctag")
         val ctag2Result = client.getCtag(calendarUrl!!)
-        val ctag2 = ctag2Result.getOrNull()!!
+        val ctag2 = ctag2Result.getOrNull()!!.ctag
         println("New ctag: $ctag2")
 
         // Step 4: Observations

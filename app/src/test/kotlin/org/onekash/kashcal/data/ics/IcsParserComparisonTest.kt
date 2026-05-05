@@ -1,15 +1,15 @@
 package org.onekash.kashcal.data.ics
 
-import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
-import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import org.robolectric.RobolectricTestRunner

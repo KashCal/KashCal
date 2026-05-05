@@ -1,6 +1,9 @@
 package org.onekash.kashcal.data.calendar_provider
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate

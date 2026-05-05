@@ -191,7 +191,7 @@ class RealICloudClientTest {
         println("Ctag result: $result")
         assert(result.isSuccess()) { "Should get ctag: ${(result as? CalDavResult.Error)?.message}" }
 
-        val ctag = result.getOrNull()!!
+        val ctag = result.getOrNull()!!.ctag
         println("Ctag: $ctag")
         assert(ctag.isNotBlank()) { "Ctag should not be blank" }
     }
@@ -367,7 +367,7 @@ class RealICloudClientTest {
             // Get ctag
             val ctagResult = client.getCtag(cal.url)
             if (ctagResult.isSuccess()) {
-                println("  ctag: ${ctagResult.getOrNull()}")
+                println("  ctag: ${ctagResult.getOrNull()?.ctag}")
             }
 
             // Fetch events

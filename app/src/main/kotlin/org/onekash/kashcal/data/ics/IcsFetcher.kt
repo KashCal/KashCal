@@ -6,9 +6,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.onekash.kashcal.data.db.entity.IcsSubscription
+import org.onekash.kashcal.network.AiaCertificateChainCompleter
 import java.io.EOFException
 import java.io.IOException
-import org.onekash.kashcal.network.AiaCertificateChainCompleter
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException

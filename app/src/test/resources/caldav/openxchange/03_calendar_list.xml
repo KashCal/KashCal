@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Open-Xchange (mailbox.org) calendar list response -->
 <!-- Note: OX uses uppercase namespace prefixes and may include task calendars -->
-<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CARD="urn:ietf:params:xml:ns:carddav" xmlns:CS="http://calendarserver.org/ns/" xmlns:APPLE="http://apple.com/ns/ical/">
+<D:multistatus xmlns:D="DAV:" xmlns:CAL="urn:ietf:params:xml:ns:caldav" xmlns:CS="http://calendarserver.org/ns/" xmlns:APPLE="http://apple.com/ns/ical/">
     <!-- Calendar home (parent) - should NOT be detected as calendar -->
     <D:response>
         <D:href>/caldav/testuser@mailbox.org/</D:href>

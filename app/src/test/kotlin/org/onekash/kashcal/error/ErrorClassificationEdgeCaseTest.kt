@@ -1,13 +1,16 @@
 package org.onekash.kashcal.error
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.onekash.kashcal.sync.engine.SyncError
 import org.onekash.kashcal.sync.engine.SyncPhase
 import org.onekash.kashcal.sync.engine.SyncResult
 import org.onekash.kashcal.sync.error.SyncErrorBridge
 import org.onekash.kashcal.sync.strategy.PullResult
-import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.SinglePushResult
 
 /**

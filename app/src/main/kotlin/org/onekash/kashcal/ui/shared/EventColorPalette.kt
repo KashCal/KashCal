@@ -2,6 +2,10 @@ package org.onekash.kashcal.ui.shared
 
 import androidx.annotation.StringRes
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.shared.EventColorPalette.allCss3Colors
+import org.onekash.kashcal.ui.shared.EventColorPalette.entries
+import org.onekash.kashcal.ui.shared.EventColorPalette.hexForName
+import org.onekash.kashcal.ui.shared.EventColorPalette.nameForHex
 
 data class PaletteEntry(
     val name: String,

@@ -1,6 +1,8 @@
 package org.onekash.kashcal.sync.parser.icaldav
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.icaldav.model.ICalDateTime
@@ -10,7 +12,6 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.time.ZoneId
 
 /**
  * Tests for ICalDateTime boundary conversions in the icaldav integration.

@@ -75,7 +75,9 @@ class DeviceCalendarImporterTest {
         override suspend fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long, isAllDay: Boolean): Result<Unit> = Result.success(Unit)
         override suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit> = Result.success(Unit)
         override suspend fun getDeviceEvent(eventId: Long) = null
+        override suspend fun getDeviceEventWithExceptions(masterEventId: Long) = null
         override suspend fun getReminders(eventId: Long): List<Int> = emptyList()
+        override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = emptyMap()
         override suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Long? = null
         override suspend fun getMaxReminders(calendarId: Long): Int = 5
         override suspend fun getNextUpcomingReminder(enabledCalendarIds: Set<Long>, afterMs: Long) = null
