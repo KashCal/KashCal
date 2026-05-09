@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -48,6 +49,11 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
 class DeviceCalendarReminderSchedulerTest {
+
+    private companion object {
+        const val HEALTHY_EVENT_ID = 42L
+        const val HEALTHY_CALENDAR_ID = 1L
+    }
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var context: Context
@@ -271,6 +277,89 @@ class DeviceCalendarReminderSchedulerTest {
         assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
     }
 
+    // ========== Cancel on early-return paths (D1) ==========
+
+    @Test
+    fun `scheduleNextReminder cancels existing alarm when feature is disabled`() = runTest {
+        // Prime: schedule an alarm with feature enabled
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+        scheduler.scheduleNextReminder()
+        assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
+
+        // Flip: disable feature and re-invoke
+        dataStore.setDeviceCalendarRemindersEnabled(false)
+        scheduler.scheduleNextReminder()
+
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
+    @Test
+    fun `scheduleNextReminder cancels existing alarm when device calendars are disabled`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+        scheduler.scheduleNextReminder()
+        assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
+
+        dataStore.setDeviceCalendarsEnabled(false)
+        scheduler.scheduleNextReminder()
+
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
+    @Test
+    fun `scheduleNextReminder cancels existing alarm when READ_CALENDAR revoked`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+        scheduler.scheduleNextReminder()
+        assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
+
+        Shadows.shadowOf(context as android.app.Application)
+            .denyPermissions(Manifest.permission.READ_CALENDAR)
+        scheduler.scheduleNextReminder()
+
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
+    @Test
+    fun `scheduleNextReminder cancels existing alarm when no enabled calendars`() = runTest {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+        scheduler.scheduleNextReminder()
+        assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
+
+        dataStore.setEnabledDeviceCalendarIds(emptySet())
+        scheduler.scheduleNextReminder()
+
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
+    @Test
+    fun `scheduleNextReminder cancels existing alarm when no upcoming reminder`() = runTest {
+        // This is the user's reported bug path: user deletes the only event,
+        // observer fires, getNextUpcomingReminder returns null — previously the
+        // existing alarm survived and fired with stale extras.
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(1L))
+        fakeRepository.nextUpcomingReminder = createTestReminder()
+        scheduler.scheduleNextReminder()
+        assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
+
+        fakeRepository.nextUpcomingReminder = null
+        scheduler.scheduleNextReminder()
+
+        assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
+    }
+
     // ========== Reschedule ==========
 
     @Test
@@ -297,6 +386,60 @@ class DeviceCalendarReminderSchedulerTest {
         val alarm = shadowAlarmManager.nextScheduledAlarm
         assertNotNull(alarm)
         assertEquals(secondTrigger, alarm!!.triggerAtTime)
+    }
+
+    // ========== shouldFireReminder (D2) ==========
+
+    @Test
+    fun `shouldFireReminder returns false when feature disabled`() = runTest {
+        primeHealthyEvent()
+        dataStore.setDeviceCalendarRemindersEnabled(false)
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns false when device calendars disabled`() = runTest {
+        primeHealthyEvent()
+        dataStore.setDeviceCalendarsEnabled(false)
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns false when READ_CALENDAR revoked`() = runTest {
+        primeHealthyEvent()
+        Shadows.shadowOf(context as android.app.Application)
+            .denyPermissions(Manifest.permission.READ_CALENDAR)
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns false when no enabled calendars`() = runTest {
+        primeHealthyEvent()
+        dataStore.setEnabledDeviceCalendarIds(emptySet())
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns false when isEventActive returns false`() = runTest {
+        // User's reported bug: event soft-deleted (DELETED=1) after alarm
+        // was scheduled. Fake models this by omitting eventId from
+        // activeEventIds while still populating it in deviceEvents.
+        primeHealthyEvent()
+        fakeRepository.activeEventIds.remove(HEALTHY_EVENT_ID)
+        assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    @Test
+    fun `shouldFireReminder returns true for healthy active event`() = runTest {
+        primeHealthyEvent()
+        assertTrue(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
+    }
+
+    private suspend fun primeHealthyEvent() {
+        dataStore.setDeviceCalendarRemindersEnabled(true)
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(HEALTHY_CALENDAR_ID))
+        fakeRepository.activeEventIds.add(HEALTHY_EVENT_ID)
     }
 
     // ========== Snooze Request Code Collision ==========

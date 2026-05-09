@@ -37,6 +37,15 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     var eventReminders: MutableMap<Long, List<Int>> = mutableMapOf()
     var maxReminders: Int = 5
 
+    /**
+     * Event IDs that are present in CalendarProvider AND not soft-deleted
+     * (i.e. `DELETED = 0`). Kept as a positive set, independent of
+     * [deviceEvents], so tests can express the "Events row exists but
+     * DELETED = 1" state by populating [deviceEvents] without adding the id
+     * here.
+     */
+    var activeEventIds: MutableSet<Long> = mutableSetOf()
+
     data class CreatedEvent(
         val calendarId: Long,
         val title: String,
@@ -314,6 +323,11 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         return deviceEvents[eventId]
     }
 
+    override suspend fun isEventActive(eventId: Long): Boolean {
+        if (shouldThrowSecurityException) return false
+        return eventId in activeEventIds
+    }
+
     override suspend fun getDeviceEventWithExceptions(
         masterEventId: Long
     ): Pair<DeviceEvent, List<DeviceEvent>>? {
@@ -388,6 +402,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         movedEvents.clear()
         deviceEvents.clear()
         eventReminders.clear()
+        activeEventIds.clear()
         exceptionEvents.clear()
         nextUpcomingReminder = null
         maxReminders = 5

@@ -3,7 +3,12 @@ package org.onekash.kashcal.reminder.device
 import android.content.Context
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.coEvery
+import io.mockk.coJustRun
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -96,6 +101,94 @@ class DeviceCalendarAlarmReceiverTest {
 
         receiver.onReceive(context, intent)
         assertTrue("Missing optional extras should not crash", true)
+    }
+
+    // ========== handleAlarm (D2) ==========
+
+    @Test
+    fun `handleAlarm shows notification when shouldFireReminder is true`() = runTest {
+        val scheduler = mockk<DeviceCalendarReminderScheduler>()
+        val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
+        coEvery { scheduler.shouldFireReminder(any()) } returns true
+        coJustRun { scheduler.rescheduleAfterFire() }
+        coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 20001
+
+        receiver.handleAlarm(
+            scheduler = scheduler,
+            notificationManager = notificationManager,
+            eventId = 123L,
+            occurrenceTs = 1709251200000L,
+            title = "Test Event",
+            location = "Office",
+            isAllDay = false,
+            calendarColor = 0xFF0000,
+            calendarId = 1L,
+            triggerTime = 1709250300000L,
+        )
+
+        coVerify(exactly = 1) {
+            notificationManager.showNotification(
+                eventId = 123L,
+                occurrenceTs = 1709251200000L,
+                title = "Test Event",
+                location = "Office",
+                isAllDay = false,
+                calendarColor = 0xFF0000,
+                calendarId = 1L,
+                triggerTime = 1709250300000L,
+            )
+        }
+    }
+
+    @Test
+    fun `handleAlarm does NOT show notification when shouldFireReminder is false`() = runTest {
+        // User's bug: event was deleted after alarm was scheduled. scheduler
+        // returns false → receiver must NOT show the stale notification.
+        val scheduler = mockk<DeviceCalendarReminderScheduler>()
+        val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
+        coEvery { scheduler.shouldFireReminder(any()) } returns false
+        coJustRun { scheduler.rescheduleAfterFire() }
+
+        receiver.handleAlarm(
+            scheduler = scheduler,
+            notificationManager = notificationManager,
+            eventId = 123L,
+            occurrenceTs = 1709251200000L,
+            title = "Deleted Event",
+            location = null,
+            isAllDay = false,
+            calendarColor = 0xFF0000,
+            calendarId = 1L,
+            triggerTime = 1709250300000L,
+        )
+
+        coVerify(exactly = 0) {
+            notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `handleAlarm always calls rescheduleAfterFire in both branches`() = runTest {
+        val scheduler = mockk<DeviceCalendarReminderScheduler>()
+        val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
+        coJustRun { scheduler.rescheduleAfterFire() }
+        coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 20001
+
+        // Branch A: shouldFire=true
+        coEvery { scheduler.shouldFireReminder(any()) } returns true
+        receiver.handleAlarm(
+            scheduler, notificationManager, 123L, 1709251200000L, "A", null,
+            false, 0, 1L, 1709250300000L,
+        )
+
+        // Branch B: shouldFire=false
+        coEvery { scheduler.shouldFireReminder(any()) } returns false
+        receiver.handleAlarm(
+            scheduler, notificationManager, 124L, 1709251300000L, "B", null,
+            false, 0, 1L, 1709250400000L,
+        )
+
+        coVerify(exactly = 2) { scheduler.rescheduleAfterFire() }
     }
 
     // ========== Test Helpers ==========

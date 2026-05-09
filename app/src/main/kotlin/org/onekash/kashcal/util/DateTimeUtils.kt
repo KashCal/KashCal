@@ -7,6 +7,7 @@ import org.onekash.kashcal.R
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -289,15 +290,41 @@ object DateTimeUtils {
     }
 
     /**
-     * Check if two timestamps represent different calendar days.
+     * Derive the day code of the last calendar day an event *occupies*, per RFC 5545 §3.6.1.
      *
-     * Correctly handles all-day events by using UTC.
+     * DTSTART is inclusive; DTEND is non-inclusive. A timed event [startTs, endTs) whose
+     * endTs lands at exactly 00:00:00.000 local-zone belongs on the prior calendar day —
+     * the midnight boundary is excluded. Without this helper, a 20:00→00:00 event would
+     * appear to span two days (issue #209).
      *
-     * @param startTs Start timestamp in milliseconds
-     * @param endTs End timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
-     * @return true if end date is after start date
+     * All-day events are unchanged: ingestion already subtracts 1 ms to convert the
+     * RFC-exclusive DTEND into an inclusive last-instant before storage.
+     */
+    fun eventTsToEndDayCode(
+        endTs: Long,
+        startTs: Long,
+        isAllDay: Boolean,
+        localZone: ZoneId = ZoneId.systemDefault()
+    ): Int {
+        if (isAllDay || endTs <= startTs) {
+            return eventTsToDayCode(endTs, isAllDay, localZone)
+        }
+        val zdt = Instant.ofEpochMilli(endTs).atZone(localZone)
+        val date = if (zdt.toLocalTime() == LocalTime.MIDNIGHT) {
+            zdt.toLocalDate().minusDays(1)
+        } else {
+            zdt.toLocalDate()
+        }
+        return date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
+    }
+
+    /**
+     * Does the event occupy more than one calendar day per RFC 5545 §3.6.1?
+     *
+     * DTEND is non-inclusive, so a timed event whose endTs lands exactly at
+     * local midnight belongs on the prior day only (09:00 → next-day 00:00 is
+     * single-day). Delegates to [eventTsToEndDayCode] so this matches every
+     * other endDay derivation in the codebase.
      */
     fun spansMultipleDays(
         startTs: Long,
@@ -305,20 +332,15 @@ object DateTimeUtils {
         isAllDay: Boolean,
         localZone: ZoneId = ZoneId.systemDefault()
     ): Boolean {
-        val startDate = eventTsToLocalDate(startTs, isAllDay, localZone)
-        val endDate = eventTsToLocalDate(endTs, isAllDay, localZone)
-        return endDate.isAfter(startDate)
+        val startDay = eventTsToDayCode(startTs, isAllDay, localZone)
+        val endDay = eventTsToEndDayCode(endTs, startTs, isAllDay, localZone)
+        return endDay > startDay
     }
 
     /**
-     * Calculate total days an event spans.
-     * Returns 1 for single-day events.
-     *
-     * @param startTs Start timestamp in milliseconds
-     * @param endTs End timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
-     * @return Number of days the event spans (minimum 1)
+     * How many calendar days the event occupies per RFC 5545 §3.6.1.
+     * Returns 1 for single-day events, including 09:00 → next-day 00:00.
+     * Delegates to [eventTsToEndDayCode] for the non-inclusive DTEND rule.
      */
     fun calculateTotalDays(
         startTs: Long,
@@ -327,9 +349,12 @@ object DateTimeUtils {
         localZone: ZoneId = ZoneId.systemDefault()
     ): Int {
         val startDate = eventTsToLocalDate(startTs, isAllDay, localZone)
-        val endDate = eventTsToLocalDate(endTs, isAllDay, localZone)
+        val endDate = dayCodeToLocalDate(eventTsToEndDayCode(endTs, startTs, isAllDay, localZone))
         return ChronoUnit.DAYS.between(startDate, endDate).toInt() + 1
     }
+
+    private fun dayCodeToLocalDate(dayCode: Int): LocalDate =
+        LocalDate.of(dayCode / 10000, (dayCode % 10000) / 100, dayCode % 100)
 
     /**
      * Calculate which day number the selected date is within a multi-day event.

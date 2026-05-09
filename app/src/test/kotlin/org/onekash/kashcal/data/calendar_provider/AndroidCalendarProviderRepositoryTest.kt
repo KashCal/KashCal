@@ -146,6 +146,73 @@ class AndroidCalendarProviderRepositoryTest {
         assertEquals(20260217, endDay) // Inclusive: Feb 17, not Feb 18
     }
 
+    // ========== Timed Exclusive-End Adjustment (Issue #209, RFC 5545 §3.6.1) ==========
+
+    @Test
+    fun `issue 209 timed event ending at midnight derives single-day endDay`() {
+        val savedTz = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
+            val beginMs = LocalDate.of(2026, 5, 4).atTime(20, 0).atZone(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+            val endMs = LocalDate.of(2026, 5, 5).atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+
+            // Timed events do NOT get -1ms in inclusiveEndMs; endDay adjustment is via helper.
+            val inclusiveEndMs = endMs
+            val endDay = org.onekash.kashcal.util.DateTimeUtils.eventTsToEndDayCode(
+                endTs = inclusiveEndMs,
+                startTs = beginMs,
+                isAllDay = false
+            )
+            assertEquals(20260504, endDay)
+        } finally {
+            java.util.TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 control timed event crossing midnight derives multi-day endDay`() {
+        val savedTz = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
+            val beginMs = LocalDate.of(2026, 5, 4).atTime(22, 0).atZone(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+            val endMs = LocalDate.of(2026, 5, 5).atTime(2, 0).atZone(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+
+            val endDay = org.onekash.kashcal.util.DateTimeUtils.eventTsToEndDayCode(
+                endTs = endMs,
+                startTs = beginMs,
+                isAllDay = false
+            )
+            assertEquals(20260505, endDay)
+        } finally {
+            java.util.TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 multi-day timed device event ending at midnight drops trailing day`() {
+        val savedTz = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"))
+            val beginMs = LocalDate.of(2026, 5, 4).atTime(9, 0).atZone(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+            val endMs = LocalDate.of(2026, 5, 6).atStartOfDay(java.time.ZoneOffset.UTC)
+                .toInstant().toEpochMilli()
+
+            val endDay = org.onekash.kashcal.util.DateTimeUtils.eventTsToEndDayCode(
+                endTs = endMs,
+                startTs = beginMs,
+                isAllDay = false
+            )
+            assertEquals(20260505, endDay)
+        } finally {
+            java.util.TimeZone.setDefault(savedTz)
+        }
+    }
+
     // ========== Duration Parsing ==========
 
     @Test

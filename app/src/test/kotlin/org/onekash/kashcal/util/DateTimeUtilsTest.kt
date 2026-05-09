@@ -1180,4 +1180,179 @@ class DateTimeUtilsTest {
         assertEquals("HH:mm", DateTimeUtils.getTimePattern("system", is24HourDevice = true))
         assertEquals("h:mm a", DateTimeUtils.getTimePattern("system", is24HourDevice = false))
     }
+
+    // ==================== eventTsToEndDayCode (RFC 5545 §3.6.1) ====================
+    //
+    // RFC 5545 §3.6.1: DTSTART is the inclusive start, DTEND is the non-inclusive end.
+    // A timed event [startTs, endTs) whose endTs lands exactly at 00:00:00.000 local
+    // occupies only the prior calendar day. See issue #209.
+
+    private fun utcMs(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =
+        java.time.LocalDateTime.of(year, month, day, hour, minute)
+            .atZone(ZoneId.of("UTC"))
+            .toInstant()
+            .toEpochMilli()
+
+    @Test
+    fun `eventTsToEndDayCode T1 timed midnight-to-midnight maps to start day`() {
+        // Bug exact: 00:00 May 4 → 00:00 May 5 UTC. Should be May 4 only.
+        val startTs = utcMs(2026, 5, 4, 0, 0)
+        val endTs = utcMs(2026, 5, 5, 0, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T2 timed evening-to-midnight maps to start day`() {
+        // 20:00 May 4 → 00:00 May 5 UTC. Should be May 4 only.
+        val startTs = utcMs(2026, 5, 4, 20, 0)
+        val endTs = utcMs(2026, 5, 5, 0, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T3 timed crossing midnight still spans two days`() {
+        // 22:00 May 4 → 02:00 May 5 UTC. Regression control: must span May 5.
+        val startTs = utcMs(2026, 5, 4, 22, 0)
+        val endTs = utcMs(2026, 5, 5, 2, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260505, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T4 timed intra-day event maps to same day`() {
+        val startTs = utcMs(2026, 5, 4, 9, 0)
+        val endTs = utcMs(2026, 5, 4, 10, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T5 all-day multi-day event unchanged`() {
+        // All-day path is already correct (ingestion subtracts 1ms). Helper delegates.
+        val startTs = utcMs(2026, 5, 4, 0, 0)
+        val endTs = utcMs(2026, 5, 7, 0, 0) - 1L // May 6 23:59:59.999 UTC (inclusive)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = true)
+        assertEquals(20260506, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T6 zero-duration event uses start day`() {
+        val ts = utcMs(2026, 5, 4, 0, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(ts, ts, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T7 non-UTC zone midnight at local boundary`() {
+        // America/New_York EDT (UTC-4) on May 5, 2026.
+        // endTs = May 5 04:00 UTC = May 5 00:00 EDT. Should resolve to May 4 (prior day).
+        val startTs = utcMs(2026, 5, 4, 13, 0) // May 4 09:00 EDT
+        val endTs = utcMs(2026, 5, 5, 4, 0)    // May 5 00:00 EDT
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("America/New_York"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T8 midnight UTC but non-midnight local stays on start day`() {
+        // endTs = May 5 00:00 UTC = May 4 20:00 EDT. Not local midnight; no adjustment
+        // needed because day math already resolves to May 4.
+        val startTs = utcMs(2026, 5, 4, 14, 0) // May 4 10:00 EDT
+        val endTs = utcMs(2026, 5, 5, 0, 0)    // May 4 20:00 EDT
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("America/New_York"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T9 negative-duration event preserves endTs day`() {
+        // Invalid data: endTs < startTs. Guard: no adjustment.
+        val startTs = utcMs(2026, 5, 4, 10, 0)
+        val endTs = utcMs(2026, 5, 4, 9, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260504, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T10 multi-day timed ending at midnight drops trailing day`() {
+        // Conference Mon May 4 09:00 → Wed May 6 00:00 UTC. Occupies Mon/Tue only.
+        val startTs = utcMs(2026, 5, 4, 9, 0)
+        val endTs = utcMs(2026, 5, 6, 0, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260505, result)
+    }
+
+    @Test
+    fun `eventTsToEndDayCode T11 multi-day timed ending mid-day preserves span`() {
+        // Conference Mon 09:00 → Wed 15:00 UTC. Regression control.
+        val startTs = utcMs(2026, 5, 4, 9, 0)
+        val endTs = utcMs(2026, 5, 6, 15, 0)
+        val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        assertEquals(20260506, result)
+    }
+
+    // ==================== spansMultipleDays (RFC 5545 §3.6.1 follow-up) ====================
+    //
+    // These lock the helper to the same midnight-exclusion rule as eventTsToEndDayCode
+    // so the seven UI callers (EventCard, HomeScreen, quick-view sheets) stop showing
+    // "Day 1 of 2" for 09:00 → next-day 00:00 events.
+
+    @Test
+    fun `spansMultipleDays bug-exact 09_00 to next-day 00_00 is single-day`() {
+        val startTs = utcMs(2026, 5, 4, 9, 0)
+        val endTs = utcMs(2026, 5, 5, 0, 0)
+        assertFalse(
+            DateTimeUtils.spansMultipleDays(startTs, endTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        )
+    }
+
+    @Test
+    fun `spansMultipleDays regression control 22_00 to next-day 02_00 is multi-day`() {
+        val startTs = utcMs(2026, 5, 4, 22, 0)
+        val endTs = utcMs(2026, 5, 5, 2, 0)
+        assertTrue(
+            DateTimeUtils.spansMultipleDays(startTs, endTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        )
+    }
+
+    @Test
+    fun `spansMultipleDays all-day multi-day unchanged`() {
+        val startTs = utcMs(2026, 5, 4, 0, 0)
+        val endTs = utcMs(2026, 5, 7, 0, 0) - 1L // May 6 23:59:59.999 UTC (inclusive)
+        assertTrue(
+            DateTimeUtils.spansMultipleDays(startTs, endTs, isAllDay = true)
+        )
+    }
+
+    // ==================== calculateTotalDays (RFC 5545 §3.6.1 follow-up) ====================
+
+    @Test
+    fun `calculateTotalDays bug-exact 09_00 to next-day 00_00 returns 1`() {
+        val startTs = utcMs(2026, 5, 4, 9, 0)
+        val endTs = utcMs(2026, 5, 5, 0, 0)
+        assertEquals(
+            1,
+            DateTimeUtils.calculateTotalDays(startTs, endTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        )
+    }
+
+    @Test
+    fun `calculateTotalDays regression control 22_00 to next-day 02_00 returns 2`() {
+        val startTs = utcMs(2026, 5, 4, 22, 0)
+        val endTs = utcMs(2026, 5, 5, 2, 0)
+        assertEquals(
+            2,
+            DateTimeUtils.calculateTotalDays(startTs, endTs, isAllDay = false, localZone = ZoneId.of("UTC"))
+        )
+    }
+
+    @Test
+    fun `calculateTotalDays all-day 3-day event unchanged`() {
+        val startTs = utcMs(2026, 5, 4, 0, 0)
+        val endTs = utcMs(2026, 5, 7, 0, 0) - 1L // May 6 23:59:59.999 UTC (inclusive)
+        assertEquals(
+            3,
+            DateTimeUtils.calculateTotalDays(startTs, endTs, isAllDay = true)
+        )
+    }
 }

@@ -369,4 +369,19 @@ interface CalendarProviderRepository {
         enabledCalendarIds: Set<Long>,
         afterMs: Long = System.currentTimeMillis()
     ): UpcomingDeviceReminder?
+
+    /**
+     * Is the event present and not soft-deleted?
+     *
+     * CalendarProvider marks a user-deleted event as `DELETED = 1` and leaves
+     * the row in place until the sync adapter purges it. Queries by primary
+     * key (e.g. [getDeviceEvent]) do NOT filter on deletion state, so the
+     * reminder-fire path — which must not notify for events the user has
+     * already deleted — needs this dedicated predicate.
+     *
+     * @param eventId Event ID
+     * @return true iff the Events row exists with DELETED = 0 and the caller
+     *         holds READ_CALENDAR; false on any provider error or missing row
+     */
+    suspend fun isEventActive(eventId: Long): Boolean
 }

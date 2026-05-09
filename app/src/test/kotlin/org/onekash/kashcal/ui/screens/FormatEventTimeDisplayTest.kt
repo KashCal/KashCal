@@ -178,6 +178,32 @@ class FormatEventTimeDisplayTest {
         assertEquals("Day 3 of 4", result)
     }
 
+    // ========== RFC 5545 §3.6.1 midnight-end (issue #209 follow-up) ==========
+    //
+    // Timed event whose DTEND lands at local midnight occupies only the prior
+    // day. Previously rendered as "Day 1 of 2"; the fix must produce a single-
+    // day time range with no "Day" prefix.
+
+    @Test
+    fun `timed event ending at local midnight renders as single-day time range`() {
+        val event = createEvent(
+            startTs = getTimestamp(2023, 12, 24, 9, 0),   // Dec 24 09:00 EST
+            endTs = getTimestamp(2023, 12, 25, 0, 0)       // Dec 25 00:00 EST (local midnight)
+        )
+        val result = formatEventTimeDisplay(event, event.startTs, fixedZone)
+        assertEquals("9:00 AM - 12:00 AM", result)
+    }
+
+    @Test
+    fun `timed event crossing midnight still renders Day 1 of 2`() {
+        val event = createEvent(
+            startTs = getTimestamp(2023, 12, 24, 22, 0),  // Dec 24 22:00 EST
+            endTs = getTimestamp(2023, 12, 25, 2, 0)       // Dec 25 02:00 EST (past midnight)
+        )
+        val result = formatEventTimeDisplay(event, event.startTs, fixedZone)
+        assertEquals("Day 1 of 2 · starts 10:00 PM", result)
+    }
+
     // ========== Recurring Indicator ==========
 
     @Test

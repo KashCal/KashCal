@@ -209,7 +209,11 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     startTs = beginMs,
                     endTs = inclusiveEndMs,
                     startDay = DateTimeUtils.eventTsToDayCode(beginMs, isAllDay),
-                    endDay = DateTimeUtils.eventTsToDayCode(inclusiveEndMs, isAllDay),
+                    endDay = DateTimeUtils.eventTsToEndDayCode(
+                        endTs = inclusiveEndMs,
+                        startTs = beginMs,
+                        isAllDay = isAllDay
+                    ),
                     isAllDay = isAllDay,
                     hasRrule = !rruleString.isNullOrEmpty(),
                     rrule = rruleString,
@@ -846,6 +850,24 @@ class AndroidCalendarProviderRepository @Inject constructor(
         } catch (e: Exception) {
             Log.w(TAG, "Error getting max reminders", e)
             5 // Default fallback
+        }
+    }
+
+    override suspend fun isEventActive(eventId: Long): Boolean = withContext(Dispatchers.IO) {
+        try {
+            contentResolver.query(
+                CalendarContract.Events.CONTENT_URI,
+                arrayOf(CalendarContract.Events._ID),
+                "${CalendarContract.Events._ID} = ? AND ${CalendarContract.Events.DELETED} = 0",
+                arrayOf(eventId.toString()),
+                null
+            )?.use { cursor -> cursor.moveToFirst() } ?: false
+        } catch (e: SecurityException) {
+            Log.w(TAG, "Permission denied checking event active state", e)
+            false
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking event active state", e)
+            false
         }
     }
 

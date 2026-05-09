@@ -290,6 +290,8 @@ fun isValidUrl(url: String): Boolean {
     }
 }
 
+private val SAFE_OPEN_SCHEMES = setOf("http", "https", "tel", "mailto")
+
 /**
  * Check if URL should be opened externally (not a deep link to own app).
  *
@@ -298,7 +300,7 @@ fun isValidUrl(url: String): Boolean {
 fun shouldOpenExternally(url: String): Boolean {
     return try {
         val scheme = URI(url).scheme?.lowercase()
-        scheme in listOf("http", "https", "tel", "mailto")
+        scheme in SAFE_OPEN_SCHEMES
     } catch (_: Exception) {
         false
     }
@@ -319,7 +321,7 @@ fun formatPhoneUri(phone: String): String {
 /**
  * Get display text for URL (domain or platform name).
  */
-private fun getUrlDisplayText(url: String): String {
+internal fun getUrlDisplayText(url: String): String {
     return try {
         val host = URI(url).host?.lowercase() ?: return url
         when {
@@ -342,6 +344,44 @@ private fun getUrlDisplayText(url: String): String {
  */
 private fun overlaps(start1: Int, end1: Int, start2: Int, end2: Int): Boolean {
     return start1 < end2 && start2 < end1
+}
+
+// ========== HTML Detection ==========
+
+// Allow-list of tag names that mark a description as HTML.
+// Must be narrow: plain text like "see you <3" or "a < b" must NOT match.
+private const val HTML_TAG_NAMES =
+    "a|br|p|div|span|b|strong|i|em|u|s|strike|del|" +
+        "ul|ol|li|h[1-6]|html|html-blob|head|body|meta|font|img|" +
+        "table|tr|td|th|thead|tbody|blockquote|pre|code|hr"
+
+// Matches a well-formed-looking tag: `<name>`, `<name/>`, `<name attr=…>`,
+// `<name attr/>`, or `</name>` — always terminated by `>`. Also matches
+// `<!--` for comments.
+//
+// Requires `>` in the same tag so that stray `<a lot of options` or
+// `<i am busy` (single-letter tag name followed by a word but no closing
+// `>`) are NOT treated as HTML. This prevents HtmlCompat.fromHtml from
+// silently dropping text after an innocent `<`.
+private val HTML_TAG_REGEX = Regex(
+    "<(?:/?(?:$HTML_TAG_NAMES)(?:\\s+[^<>]*)?/?>|!--)",
+    RegexOption.IGNORE_CASE
+)
+
+/**
+ * Heuristic check: does this text contain structural HTML that should be
+ * rendered via `AnnotatedString.fromHtml`?
+ *
+ * Returns `false` for plain text that merely contains `<` (e.g. "see you <3",
+ * "a < b"), because passing such text through an HTML parser would silently
+ * drop those characters.
+ *
+ * Returns `true` when a recognizable tag name (anchor, paragraph, list item,
+ * bold, italic, etc.) or an HTML comment is present.
+ */
+fun looksLikeHtml(text: String): Boolean {
+    if (text.isEmpty()) return false
+    return HTML_TAG_REGEX.containsMatchIn(text)
 }
 
 // ========== HTML Entity Handling ==========

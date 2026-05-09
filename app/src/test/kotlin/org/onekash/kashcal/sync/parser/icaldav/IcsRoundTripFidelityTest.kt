@@ -284,6 +284,36 @@ class IcsRoundTripFidelityTest {
         )
     }
 
+    // ========== Issue #209: RFC 5545 §3.6.1 — DTEND midnight boundary is byte-identical on wire ==========
+    //
+    // The display-side fix for issue #209 must not leak into the wire format. The exclusive
+    // DTEND boundary (e.g., 20260505T000000Z for an event that occupies only May 4) is the
+    // canonical server representation and must survive round-trips unchanged.
+
+    @Test
+    fun `issue 209 DTEND at midnight round-trips byte-identical for 00 to 00 timed event`() {
+        val startTs = ZonedDateTime.of(2026, 5, 4, 0, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val endTs = ZonedDateTime.of(2026, 5, 5, 0, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val event = createEvent(startTs = startTs, endTs = endTs)
+        val ics = IcsPatcher.generateFresh(event)
+        val reparsed = parseToEntity(ics)
+
+        assertEquals(startTs, reparsed.startTs)
+        assertEquals("DTEND at midnight preserved byte-identical", endTs, reparsed.endTs)
+    }
+
+    @Test
+    fun `issue 209 DTEND at midnight round-trips byte-identical for 20 to 00 timed event`() {
+        val startTs = ZonedDateTime.of(2026, 5, 4, 20, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val endTs = ZonedDateTime.of(2026, 5, 5, 0, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
+        val event = createEvent(startTs = startTs, endTs = endTs)
+        val ics = IcsPatcher.generateFresh(event)
+        val reparsed = parseToEntity(ics)
+
+        assertEquals(startTs, reparsed.startTs)
+        assertEquals("DTEND at midnight preserved byte-identical", endTs, reparsed.endTs)
+    }
+
     // ========== Helpers ==========
 
     private fun parseToEntity(ics: String): Event {

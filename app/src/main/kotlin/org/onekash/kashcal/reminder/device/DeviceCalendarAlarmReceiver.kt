@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 
 /**
@@ -39,6 +40,40 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
     @Inject
     lateinit var notificationManager: DeviceCalendarReminderNotificationManager
 
+    /**
+     * Extracted for test access: `@AndroidEntryPoint`'s generated `onReceive`
+     * re-runs field injection on every dispatch, clobbering any values set
+     * manually by a test. Callers must pass the dependencies explicitly.
+     */
+    internal suspend fun handleAlarm(
+        scheduler: DeviceCalendarReminderScheduler,
+        notificationManager: DeviceCalendarReminderNotificationManager,
+        eventId: Long,
+        occurrenceTs: Long,
+        title: String,
+        location: String?,
+        isAllDay: Boolean,
+        calendarColor: Int,
+        calendarId: Long,
+        triggerTime: Long,
+    ) {
+        if (scheduler.shouldFireReminder(eventId)) {
+            notificationManager.showNotification(
+                eventId = eventId,
+                occurrenceTs = occurrenceTs,
+                title = title,
+                location = location,
+                isAllDay = isAllDay,
+                calendarColor = calendarColor,
+                calendarId = calendarId,
+                triggerTime = triggerTime,
+            )
+        } else {
+            Log.d(TAG, "Suppressed stale reminder for event ${eventId.maskEventId()}")
+        }
+        scheduler.rescheduleAfterFire()
+    }
+
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action != DeviceCalendarReminderScheduler.ACTION_DEVICE_REMINDER_ALARM) {
             Log.d(TAG, "Ignoring intent with action: ${intent?.action}")
@@ -59,8 +94,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        // Mask eventId in logs for privacy (show first 4 digits only)
-        val maskedEventId = eventId.toString().take(4) + "***"
+        val maskedEventId = eventId.maskEventId()
         Log.d(TAG, "Received alarm for event $maskedEventId at occurrence $occurrenceTs")
 
         // Use goAsync() for background work (10 second limit)
@@ -72,10 +106,11 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
 
         scope.launch {
             try {
+                val triggerTime = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_TRIGGER_TIME, System.currentTimeMillis())
                 val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
-                    // Show notification
-                    val triggerTime = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_TRIGGER_TIME, System.currentTimeMillis())
-                    notificationManager.showNotification(
+                    handleAlarm(
+                        scheduler = scheduler,
+                        notificationManager = notificationManager,
                         eventId = eventId,
                         occurrenceTs = occurrenceTs,
                         title = title,
@@ -83,14 +118,8 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
                         isAllDay = isAllDay,
                         calendarColor = calendarColor,
                         calendarId = calendarId,
-                        triggerTime = triggerTime
+                        triggerTime = triggerTime,
                     )
-
-                    Log.d(TAG, "Showed notification for event $maskedEventId")
-
-                    // Reschedule for next reminder
-                    scheduler.rescheduleAfterFire()
-                    Log.d(TAG, "Rescheduled for next device calendar reminder")
                 }
                 if (completed == null) {
                     Log.w(TAG, "Device calendar reminder handling timed out for event $maskedEventId")

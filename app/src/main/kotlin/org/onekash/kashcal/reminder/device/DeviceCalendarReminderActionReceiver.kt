@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
+import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 
 /**
@@ -64,9 +65,7 @@ class DeviceCalendarReminderActionReceiver : BroadcastReceiver() {
             return
         }
 
-        // Mask eventId in logs for privacy
-        val maskedEventId = eventId.toString().take(4) + "***"
-        Log.d(TAG, "Snoozing device calendar reminder for event $maskedEventId")
+        Log.d(TAG, "Snoozing device calendar reminder for event ${eventId.maskEventId()}")
 
         // Cancel current notification
         notificationManager.cancelNotification(notificationId)

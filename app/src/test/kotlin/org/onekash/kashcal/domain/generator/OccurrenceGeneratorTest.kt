@@ -1802,6 +1802,198 @@ class OccurrenceGeneratorTest {
         )
     }
 
+    // ========== Issue #209: RFC 5545 DTEND midnight-boundary tests ==========
+    //
+    // RFC 5545 §3.6.1: DTSTART is the inclusive start, DTEND is the non-inclusive end.
+    // A timed event [startTs, endTs) ending exactly at local 00:00:00.000 occupies only
+    // the prior calendar day. Expectation: the derived endDay matches that rule, and the
+    // raw endTs ms value is preserved unchanged (fix is display-derivation only).
+
+    @Test
+    fun `issue 209 timed event ending at midnight generates single-day occurrence`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 00:00")
+            val endTs = parseDate("2026-05-05 00:00")
+            val event = createAndInsertEvent(startTs, endTs)
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-01-01 00:00"),
+                parseDate("2026-12-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id)
+            assertEquals(1, occurrences.size)
+            assertEquals(20260504, occurrences[0].startDay)
+            assertEquals(20260504, occurrences[0].endDay)
+            assertEquals("endTs must be preserved unchanged", endTs, occurrences[0].endTs)
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 timed event 20 to 00 generates single-day occurrence`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 20:00")
+            val endTs = parseDate("2026-05-05 00:00")
+            val event = createAndInsertEvent(startTs, endTs)
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-01-01 00:00"),
+                parseDate("2026-12-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id)
+            assertEquals(1, occurrences.size)
+            assertEquals(20260504, occurrences[0].endDay)
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 control timed event crossing midnight still spans two days`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 22:00")
+            val endTs = parseDate("2026-05-05 02:00")
+            val event = createAndInsertEvent(startTs, endTs)
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-01-01 00:00"),
+                parseDate("2026-12-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id)
+            assertEquals(1, occurrences.size)
+            assertEquals(20260504, occurrences[0].startDay)
+            assertEquals(20260505, occurrences[0].endDay)
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 multi-day timed event ending at midnight drops trailing day`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 09:00") // Mon
+            val endTs = parseDate("2026-05-06 00:00")   // Wed midnight
+            val event = createAndInsertEvent(startTs, endTs)
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-01-01 00:00"),
+                parseDate("2026-12-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id)
+            assertEquals(1, occurrences.size)
+            assertEquals(20260504, occurrences[0].startDay)
+            assertEquals(20260505, occurrences[0].endDay) // Tue, not Wed
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 control multi-day timed ending mid-day preserves span`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 09:00")
+            val endTs = parseDate("2026-05-06 15:00")
+            val event = createAndInsertEvent(startTs, endTs)
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-01-01 00:00"),
+                parseDate("2026-12-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id)
+            assertEquals(1, occurrences.size)
+            assertEquals(20260506, occurrences[0].endDay)
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 RRULE daily with each instance ending at midnight has endDay equals startDay`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val startTs = parseDate("2026-05-04 00:00")
+            val endTs = parseDate("2026-05-05 00:00")
+            val event = createAndInsertEvent(startTs, endTs, rrule = "FREQ=DAILY;COUNT=3")
+
+            occurrenceGenerator.generateOccurrences(
+                event,
+                parseDate("2026-05-01 00:00"),
+                parseDate("2026-05-31 23:59")
+            )
+
+            val occurrences = database.occurrencesDao().getForEvent(event.id).sortedBy { it.startTs }
+            assertEquals(3, occurrences.size)
+            for (occ in occurrences) {
+                assertEquals(
+                    "each instance should be single-day (endDay == startDay), got start=${occ.startDay} end=${occ.endDay}",
+                    occ.startDay,
+                    occ.endDay
+                )
+            }
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
+    @Test
+    fun `issue 209 linkException with exception ending at midnight yields single-day linked occurrence`() = runTest {
+        val savedTz = TimeZone.getDefault()
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
+            val masterStart = parseDate("2026-05-04 10:00")
+            val masterEvent = createAndInsertEvent(
+                startTs = masterStart,
+                endTs = masterStart + 3600000,
+                rrule = "FREQ=DAILY;COUNT=5"
+            )
+            occurrenceGenerator.regenerateOccurrences(masterEvent)
+
+            val occurrences = database.occurrencesDao().getForEvent(masterEvent.id).sortedBy { it.startTs }
+            val targetOccurrence = occurrences[1] // May 5 master instance
+
+            // Exception reshapes to 20:00→00:00 on the same day (endTs lands at next-day midnight UTC)
+            val exceptionStart = parseDate("2026-05-05 20:00")
+            val exceptionEnd = parseDate("2026-05-06 00:00")
+            val exceptionEvent = createAndInsertEvent(
+                startTs = exceptionStart,
+                endTs = exceptionEnd,
+                title = "Moved to 20:00"
+            )
+
+            occurrenceGenerator.linkException(masterEvent.id, targetOccurrence.startTs, exceptionEvent)
+
+            val linked = database.occurrencesDao().getByExceptionEventId(exceptionEvent.id)
+            assertNotNull(linked)
+            assertEquals(20260505, linked?.startDay)
+            assertEquals("endDay should equal startDay (midnight-ending)", 20260505, linked?.endDay)
+            assertEquals("endTs ms value must be preserved unchanged", exceptionEnd, linked?.endTs)
+        } finally {
+            TimeZone.setDefault(savedTz)
+        }
+    }
+
     // ========== Helper Functions ==========
 
     /**

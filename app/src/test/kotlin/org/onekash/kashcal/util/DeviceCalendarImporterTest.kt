@@ -81,6 +81,7 @@ class DeviceCalendarImporterTest {
         override suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean): Long? = null
         override suspend fun getMaxReminders(calendarId: Long): Int = 5
         override suspend fun getNextUpcomingReminder(enabledCalendarIds: Set<Long>, afterMs: Long) = null
+        override suspend fun isEventActive(eventId: Long): Boolean = false
     }
 
     @Before

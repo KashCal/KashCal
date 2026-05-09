@@ -123,9 +123,7 @@ internal fun formatDisplayEventTimeDisplay(
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
     val recurringIndicator = if (displayEvent.hasRrule) " \uD83D\uDD01" else ""
 
-    val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
-    val isMultiDay = endDate.isAfter(startDate)
+    val isMultiDay = DateTimeUtils.spansMultipleDays(displayEvent.startTs, displayEvent.endTs, displayEvent.isAllDay, zoneId)
 
     if (!isMultiDay) {
         return if (displayEvent.isAllDay) resources.getString(R.string.label_all_day) + recurringIndicator

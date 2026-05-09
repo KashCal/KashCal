@@ -1882,16 +1882,7 @@ internal fun formatEventTimeDisplay(
 ): String {
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
-    // Use DateTimeUtils for correct timezone handling:
-    // - All-day events use UTC to preserve calendar date
-    // - Timed events use local timezone
-    val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
-    // Selected date from calendar picker is ALWAYS local time, regardless of event type
-    val selectedDate = DateTimeUtils.eventTsToLocalDate(selectedDateMillis, isAllDay = false, zoneId)
-
-    // Check if multi-day (endDate > startDate)
-    val isMultiDay = endDate.isAfter(startDate)
+    val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
 
     if (!isMultiDay) {
         // Single day event - include recurring indicator for recurring/exception events
@@ -1934,11 +1925,7 @@ internal fun formatEventTimeDisplay(
 ): String {
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
-    val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
-    val selectedDate = DateTimeUtils.eventTsToLocalDate(selectedDateMillis, isAllDay = false, zoneId)
-
-    val isMultiDay = endDate.isAfter(startDate)
+    val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
 
     if (!isMultiDay) {
         val recurringIndicator = if (event.isRecurring || event.isException) " \uD83D\uDD01" else ""
@@ -2025,13 +2012,9 @@ internal fun formatSearchResultDate(
     val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
-    // Convert timestamps to LocalDate with correct timezone handling
     val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
-    val endDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
-    // endTs is already inclusive (parsers subtract 1 sec from exclusive DTEND)
-    // No need to subtract another day here
-    val displayEndDate = endDate
-    val isMultiDay = displayEndDate.isAfter(startDate)
+    val displayEndDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
+    val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
     // Exception events have originalEventId but no rrule
     val isRecurring = event.isRecurring || event.isException
 
@@ -2064,7 +2047,7 @@ private fun formatSearchResultDate(
 
     val startDate = DateTimeUtils.eventTsToLocalDate(displayEvent.startTs, displayEvent.isAllDay, zoneId)
     val endDate = DateTimeUtils.eventTsToLocalDate(displayEvent.endTs, displayEvent.isAllDay, zoneId)
-    val isMultiDay = endDate.isAfter(startDate)
+    val isMultiDay = DateTimeUtils.spansMultipleDays(displayEvent.startTs, displayEvent.endTs, displayEvent.isAllDay, zoneId)
 
     return buildString {
         append(startDate.format(dateFormatter))

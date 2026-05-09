@@ -1839,7 +1839,11 @@ class HomeViewModel @Inject constructor(
                             startTs = event.startTs,
                             endTs = event.endTs,
                             startDay = DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay),
-                            endDay = DateTimeUtils.eventTsToDayCode(event.endTs, event.isAllDay),
+                            endDay = DateTimeUtils.eventTsToEndDayCode(
+                                endTs = event.endTs,
+                                startTs = event.startTs,
+                                isAllDay = event.isAllDay
+                            ),
                             isCancelled = false,
                             exceptionEventId = null
                         )

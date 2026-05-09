@@ -18,3 +18,6 @@ fun String.maskEmail(): String {
     val maskedDomain = if (domainDot > 0) "***${domainPart.substring(domainDot)}" else "***"
     return "$maskedLocal@$maskedDomain"
 }
+
+/** Mask a device calendar event id for logging. Example: 1234567 → "1234***". */
+fun Long.maskEventId(): String = "${toString().take(4)}***"

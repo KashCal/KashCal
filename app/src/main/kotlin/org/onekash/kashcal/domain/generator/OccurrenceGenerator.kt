@@ -8,6 +8,7 @@ import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.util.DateTimeUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -320,7 +321,11 @@ class OccurrenceGenerator @Inject constructor(
             occurrencesDao.deleteForEvent(exceptionEvent.id)
 
             val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)
-            val newEndDay = Occurrence.toDayFormat(exceptionEvent.endTs, exceptionEvent.isAllDay)
+            val newEndDay = DateTimeUtils.eventTsToEndDayCode(
+                endTs = exceptionEvent.endTs,
+                startTs = exceptionEvent.startTs,
+                isAllDay = exceptionEvent.isAllDay
+            )
 
             // Step 2: Check if exception's new time conflicts with another occurrence
             // (e.g., user moves Jan 6 occurrence to Jan 13, but Jan 13 already exists)
@@ -393,7 +398,11 @@ class OccurrenceGenerator @Inject constructor(
                 startTs = ts,
                 endTs = ts + eventDurationMs,
                 startDay = Occurrence.toDayFormat(ts, event.isAllDay),
-                endDay = Occurrence.toDayFormat(ts + eventDurationMs, event.isAllDay)
+                endDay = DateTimeUtils.eventTsToEndDayCode(
+                    endTs = ts + eventDurationMs,
+                    startTs = ts,
+                    isAllDay = event.isAllDay
+                )
             )
         }
     }
@@ -403,7 +412,11 @@ class OccurrenceGenerator @Inject constructor(
      */
     private fun createSingleOccurrence(event: Event): Occurrence {
         val startDay = Occurrence.toDayFormat(event.startTs, event.isAllDay)
-        val endDay = Occurrence.toDayFormat(event.endTs, event.isAllDay)
+        val endDay = DateTimeUtils.eventTsToEndDayCode(
+            endTs = event.endTs,
+            startTs = event.startTs,
+            isAllDay = event.isAllDay
+        )
 
         return Occurrence(
             eventId = event.id,

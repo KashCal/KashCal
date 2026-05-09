@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
@@ -90,33 +91,38 @@ class DeviceCalendarReminderScheduler @Inject constructor(
     suspend fun scheduleNextReminder() {
         // Check if feature is enabled
         if (!dataStore.getDeviceCalendarRemindersEnabled()) {
-            Log.d(TAG, "Device calendar reminders disabled, skipping")
+            Log.d(TAG, "Device calendar reminders disabled, cancelling any pending alarm")
+            cancelPendingAlarm()
             return
         }
 
         // Check if device calendars are enabled
         if (!dataStore.getDeviceCalendarsEnabled()) {
-            Log.d(TAG, "Device calendars disabled, skipping")
+            Log.d(TAG, "Device calendars disabled, cancelling any pending alarm")
+            cancelPendingAlarm()
             return
         }
 
         // Check READ_CALENDAR permission
         if (!hasReadCalendarPermission()) {
-            Log.w(TAG, "READ_CALENDAR permission not granted, skipping")
+            Log.w(TAG, "READ_CALENDAR permission not granted, cancelling any pending alarm")
+            cancelPendingAlarm()
             return
         }
 
         // Get enabled calendar IDs
         val enabledCalendarIds = dataStore.getEnabledDeviceCalendarIds()
         if (enabledCalendarIds.isEmpty()) {
-            Log.d(TAG, "No enabled device calendars, skipping")
+            Log.d(TAG, "No enabled device calendars, cancelling any pending alarm")
+            cancelPendingAlarm()
             return
         }
 
         // Query for next upcoming reminder
         val nextReminder = calendarProviderRepository.getNextUpcomingReminder(enabledCalendarIds)
         if (nextReminder == null) {
-            Log.d(TAG, "No upcoming device calendar reminders found")
+            Log.d(TAG, "No upcoming device calendar reminders found, cancelling any pending alarm")
+            cancelPendingAlarm()
             return
         }
 
@@ -129,6 +135,20 @@ class DeviceCalendarReminderScheduler @Inject constructor(
      */
     suspend fun rescheduleAfterFire() {
         scheduleNextReminder()
+    }
+
+    /**
+     * Gate for [DeviceCalendarAlarmReceiver] before showing a notification:
+     * intent extras are baked in at schedule time, so the user may have
+     * deleted the event (soft-delete — `DELETED = 1`), disabled the feature,
+     * or revoked permission between then and when the alarm fires.
+     */
+    suspend fun shouldFireReminder(eventId: Long): Boolean {
+        if (!dataStore.getDeviceCalendarRemindersEnabled()) return false
+        if (!dataStore.getDeviceCalendarsEnabled()) return false
+        if (!hasReadCalendarPermission()) return false
+        if (dataStore.getEnabledDeviceCalendarIds().isEmpty()) return false
+        return calendarProviderRepository.isEventActive(eventId)
     }
 
     /**
@@ -184,7 +204,7 @@ class DeviceCalendarReminderScheduler @Inject constructor(
                     pendingIntent
                 )
             }
-            Log.d(TAG, "Scheduled snooze for event ${eventId.toString().take(4)}*** in $snoozeDurationMinutes minutes")
+            Log.d(TAG, "Scheduled snooze for event ${eventId.maskEventId()} in $snoozeDurationMinutes minutes")
         } catch (e: SecurityException) {
             Log.e(TAG, "Cannot schedule snooze alarm", e)
         }
@@ -212,7 +232,7 @@ class DeviceCalendarReminderScheduler @Inject constructor(
                     reminder.triggerTime,
                     pendingIntent
                 )
-                Log.d(TAG, "Scheduled exact device reminder for event ${reminder.eventId.toString().take(4)}*** at ${reminder.triggerTime}")
+                Log.d(TAG, "Scheduled exact device reminder for event ${reminder.eventId.maskEventId()} at ${reminder.triggerTime}")
             } else {
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP,
