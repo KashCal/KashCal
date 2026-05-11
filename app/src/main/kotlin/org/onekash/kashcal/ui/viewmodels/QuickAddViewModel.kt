@@ -1,11 +1,14 @@
 package org.onekash.kashcal.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
@@ -51,6 +54,10 @@ class QuickAddViewModel @Inject constructor(
 
     private var referenceTime: LocalDateTime = LocalDateTime.now()
 
+    // Cached for synchronous reads in onInputChanged (parser WKST routing).
+    private val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.FIRST_DAY_SYSTEM)
+
     fun setReferenceTime(reference: LocalDateTime) {
         referenceTime = reference
     }
@@ -65,7 +72,12 @@ class QuickAddViewModel @Inject constructor(
 
     fun onInputChanged(text: String) {
         _inputText.value = text
-        val result = QuickAddParser.parse(text, referenceTime, Locale.getDefault())
+        val result = QuickAddParser.parse(
+            input = text,
+            reference = referenceTime,
+            locale = Locale.getDefault(),
+            firstDayOfWeek = firstDayOfWeek.value,
+        )
         _parseResult.value = result
         _isSaveEnabled.value = result.title.isNotBlank()
     }

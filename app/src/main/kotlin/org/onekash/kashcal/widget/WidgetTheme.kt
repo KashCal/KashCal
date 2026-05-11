@@ -43,6 +43,19 @@ object WidgetTheme {
     val accentColor: ColorProvider
         @Composable get() = GlanceTheme.colors.primary
 
+    /**
+     * Subtle row tint for non-today day headers and footer rows.
+     * Pairs with [rowTintText] to satisfy WCAG AA in both light and dark dynamic-color
+     * themes. Replaces the previous use of `outline` as a background, which fails
+     * contrast in dark mode (`onSurface` on `outline` ≈ 3.5:1).
+     */
+    val rowTintBackground: ColorProvider
+        @Composable get() = GlanceTheme.colors.surfaceVariant
+
+    /** Text color paired with [rowTintBackground] — Material You onSurfaceVariant. */
+    val rowTintText: ColorProvider
+        @Composable get() = GlanceTheme.colors.onSurfaceVariant
+
     /** Today highlight background (accent with alpha) — static, no opaque M3 equivalent */
     val todayHighlightBackground = ColorProvider(
         day = Color(0x332196F3),   // Blue 500, 20% alpha
@@ -54,8 +67,47 @@ object WidgetTheme {
         day = Color(0xFFD0D0D0),   // Very light gray
         night = Color(0xFF505050)  // Very dark gray
     )
+}
 
-    /** Divider color — Material You outline */
-    val dividerColor: ColorProvider
-        @Composable get() = GlanceTheme.colors.outline
+/**
+ * Token-name enum for widget colors.
+ *
+ * Returned by pure selectors so the contrast contract (which token a row uses)
+ * can be unit-tested without a Compose render harness. The composable
+ * [provider] extension below is the only place enum -> ColorProvider mapping
+ * lives, and is mechanically inspectable.
+ */
+internal enum class WidgetThemeColor {
+    HeaderBackground,
+    RowTintBackground,
+    PrimaryText,
+    RowTintText
+}
+
+/** Background + text token pair for a day-header row. */
+internal data class DayHeaderColors(
+    val background: WidgetThemeColor,
+    val text: WidgetThemeColor
+)
+
+/**
+ * Pure selector for day-header row colors.
+ *
+ * Today rows pop with the primary-container header background; other-day rows
+ * use the surfaceVariant tint to keep contrast in both light and dark themes.
+ */
+internal fun dayHeaderColors(isToday: Boolean): DayHeaderColors =
+    if (isToday) {
+        DayHeaderColors(WidgetThemeColor.HeaderBackground, WidgetThemeColor.PrimaryText)
+    } else {
+        DayHeaderColors(WidgetThemeColor.RowTintBackground, WidgetThemeColor.RowTintText)
+    }
+
+/** Composable mapping from a [WidgetThemeColor] token name to its concrete provider. */
+@Composable
+internal fun WidgetThemeColor.provider(): ColorProvider = when (this) {
+    WidgetThemeColor.HeaderBackground -> WidgetTheme.headerBackground
+    WidgetThemeColor.RowTintBackground -> WidgetTheme.rowTintBackground
+    WidgetThemeColor.PrimaryText -> WidgetTheme.primaryText
+    WidgetThemeColor.RowTintText -> WidgetTheme.rowTintText
 }

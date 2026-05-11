@@ -699,13 +699,6 @@ fun InlineDatePickerContent(
 // ==================== Helper Functions ====================
 
 /**
- * Check if event spans multiple days.
- */
-fun isMultiDay(startDateMillis: Long, endDateMillis: Long): Boolean {
-    return DateTimeUtils.spansMultipleDays(startDateMillis, endDateMillis, isAllDay = false)
-}
-
-/**
  * Check if time range crosses midnight (requires +1 badge on end date).
  */
 fun isMidnightCrossing(
@@ -717,60 +710,4 @@ fun isMidnightCrossing(
     val startMinutes = startHour * 60 + startMinute
     val endMinutes = endHour * 60 + endMinute
     return endMinutes < startMinutes
-}
-
-/**
- * Determine if start and end should be shown in separate pickers.
- */
-fun shouldShowSeparatePickers(
-    startDateMillis: Long,
-    endDateMillis: Long,
-    startHour: Int,
-    startMinute: Int,
-    endHour: Int,
-    endMinute: Int,
-    isAllDay: Boolean
-): Boolean {
-    // Always separate for multi-day
-    if (isMultiDay(startDateMillis, endDateMillis)) return true
-
-    // Separate if different dates selected
-    val startCal = JavaCalendar.getInstance().apply { timeInMillis = startDateMillis }
-    val endCal = JavaCalendar.getInstance().apply { timeInMillis = endDateMillis }
-
-    return startCal.get(JavaCalendar.YEAR) != endCal.get(JavaCalendar.YEAR) ||
-        startCal.get(JavaCalendar.DAY_OF_YEAR) != endCal.get(JavaCalendar.DAY_OF_YEAR)
-}
-
-// ==================== Time Conversion Utilities ====================
-
-/**
- * Convert 12-hour format to 24-hour format.
- *
- * @param hour12 Hour in 12-hour format (1-12)
- * @param isAm True if AM, false if PM
- * @return Hour in 24-hour format (0-23)
- */
-fun to24Hour(hour12: Int, isAm: Boolean): Int {
-    return when {
-        hour12 == 12 && isAm -> 0      // 12 AM = 00:00
-        hour12 == 12 && !isAm -> 12    // 12 PM = 12:00
-        isAm -> hour12                  // 1-11 AM = 01:00-11:00
-        else -> hour12 + 12             // 1-11 PM = 13:00-23:00
-    }
-}
-
-/**
- * Convert 24-hour format to 12-hour format.
- *
- * @param hour24 Hour in 24-hour format (0-23)
- * @return Pair of (hour12, isAm) where hour12 is 1-12
- */
-fun to12Hour(hour24: Int): Pair<Int, Boolean> {
-    return when {
-        hour24 == 0 -> Pair(12, true)   // 00:00 = 12 AM
-        hour24 < 12 -> Pair(hour24, true)  // 01:00-11:00 = 1-11 AM
-        hour24 == 12 -> Pair(12, false) // 12:00 = 12 PM
-        else -> Pair(hour24 - 12, false) // 13:00-23:00 = 1-11 PM
-    }
 }

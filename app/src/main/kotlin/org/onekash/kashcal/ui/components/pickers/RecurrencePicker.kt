@@ -204,6 +204,10 @@ fun RecurrencePickerCard(
         mutableStateOf(parsed.endCondition)
     }
 
+    val wkstDow = remember(firstDayOfWeek) {
+        DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)
+    }
+
     // Build RRULE from current state
     fun buildRrule(): String? {
         if (selectedFreqOption == FrequencyOption.NEVER) return null
@@ -212,7 +216,7 @@ fun RecurrencePickerCard(
             FrequencyOption.NEVER -> return null
             FrequencyOption.DAILY -> RruleBuilder.daily()
             FrequencyOption.WEEKLY -> RruleBuilder.weekly(days = selectedWeekdays)
-            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays)
+            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays, wkst = wkstDow)
             FrequencyOption.MONTHLY -> when (val pattern = monthlyPattern) {
                 is MonthlyPattern.SameDay -> RruleBuilder.monthly(dayOfMonth = pattern.dayOfMonth)
                 is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay()
@@ -429,13 +433,17 @@ fun RecurrencePickerRow(
         mutableStateOf(parsed.endCondition)
     }
 
+    val wkstDow = remember(firstDayOfWeek) {
+        DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)
+    }
+
     fun buildRrule(): String? {
         if (selectedFreqOption == FrequencyOption.NEVER) return null
         val base = when (selectedFreqOption) {
             FrequencyOption.NEVER -> return null
             FrequencyOption.DAILY -> RruleBuilder.daily()
             FrequencyOption.WEEKLY -> RruleBuilder.weekly(days = selectedWeekdays)
-            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays)
+            FrequencyOption.BIWEEKLY -> RruleBuilder.weekly(interval = 2, days = selectedWeekdays, wkst = wkstDow)
             FrequencyOption.MONTHLY -> when (val pattern = monthlyPattern) {
                 is MonthlyPattern.SameDay -> RruleBuilder.monthly(dayOfMonth = pattern.dayOfMonth)
                 is MonthlyPattern.LastDay -> RruleBuilder.monthlyLastDay()

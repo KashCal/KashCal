@@ -21,6 +21,12 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
+// RFC 5545 §3.1: content lines are delimited by CRLF, not the platform line separator.
+// Kotlin's StringBuilder.appendLine uses System.lineSeparator() (LF on Linux/Android),
+// which is non-conformant. Use these helpers for every emitted iCalendar line.
+internal fun StringBuilder.crlfLine(line: String): StringBuilder = append(line).append("\r\n")
+internal fun StringBuilder.crlfLine(): StringBuilder = append("\r\n")
+
 /**
  * Generates RFC 5545 compliant iCalendar strings.
  *
@@ -141,20 +147,20 @@ class ICalGenerator(
         includeVTimezone: Boolean = true
     ): String {
         return buildString {
-            appendLine("BEGIN:VCALENDAR")
-            appendLine("VERSION:${calendar.version.ifBlank { "2.0" }}")
-            appendLine("PRODID:${calendar.prodId ?: prodId}")
-            appendLine("CALSCALE:${calendar.calscale.ifBlank { "GREGORIAN" }}")
-            calendar.method?.let { appendLine("METHOD:$it") }
+            crlfLine("BEGIN:VCALENDAR")
+            crlfLine("VERSION:${calendar.version.ifBlank { "2.0" }}")
+            crlfLine("PRODID:${calendar.prodId ?: prodId}")
+            crlfLine("CALSCALE:${calendar.calscale.ifBlank { "GREGORIAN" }}")
+            calendar.method?.let { crlfLine("METHOD:$it") }
 
             calendar.name?.let { appendFoldedLine("NAME:${escapeICalText(it)}") }
-            calendar.source?.let { appendLine("SOURCE:$it") }
-            calendar.color?.let { appendLine("COLOR:$it") }
+            calendar.source?.let { crlfLine("SOURCE:$it") }
+            calendar.color?.let { crlfLine("COLOR:$it") }
             calendar.refreshInterval?.let {
-                appendLine("REFRESH-INTERVAL;VALUE=DURATION:${DurationUtils.format(it)}")
+                crlfLine("REFRESH-INTERVAL;VALUE=DURATION:${DurationUtils.format(it)}")
             }
             calendar.xWrCalname?.let { appendFoldedLine("X-WR-CALNAME:${escapeICalText(it)}") }
-            calendar.xAppleCalendarColor?.let { appendLine("X-APPLE-CALENDAR-COLOR:$it") }
+            calendar.xAppleCalendarColor?.let { crlfLine("X-APPLE-CALENDAR-COLOR:$it") }
             calendar.image?.let { appendImageProperty(it) }
 
             if (includeVTimezone) {
@@ -167,21 +173,21 @@ class ICalGenerator(
             calendar.todos.forEach { appendVTodo(it, preserveDtstamp) }
             calendar.journals.forEach { appendVJournal(it, preserveDtstamp) }
 
-            appendLine("END:VCALENDAR")
+            crlfLine("END:VCALENDAR")
         }
     }
 
     private fun StringBuilder.appendVEvent(event: ICalEvent, preserveDtstamp: Boolean = false) {
-        appendLine("BEGIN:VEVENT")
+        crlfLine("BEGIN:VEVENT")
 
         // Required properties
-        appendLine("UID:${event.uid}")
+        crlfLine("UID:${event.uid}")
 
         // DTSTAMP handling: preserve for iTIP messages, regenerate otherwise
         if (preserveDtstamp && event.dtstamp != null) {
-            appendLine("DTSTAMP:${event.dtstamp.toICalString()}")
+            crlfLine("DTSTAMP:${event.dtstamp.toICalString()}")
         } else {
-            appendLine("DTSTAMP:${formatDtStamp()}")
+            crlfLine("DTSTAMP:${formatDtStamp()}")
         }
 
         // DTSTART with timezone
@@ -191,7 +197,7 @@ class ICalGenerator(
         event.dtEnd?.let { dtend ->
             appendDateTimeProperty("DTEND", dtend)
         } ?: event.duration?.let { dur ->
-            appendLine("DURATION:${ICalAlarm.formatDuration(dur)}")
+            crlfLine("DURATION:${ICalAlarm.formatDuration(dur)}")
         }
 
         // RECURRENCE-ID for modified instances
@@ -202,7 +208,7 @@ class ICalGenerator(
         // RRULE (only for master events, NOT modified instances)
         if (event.recurrenceId == null) {
             event.rrule?.let { rrule ->
-                appendLine("RRULE:${rrule.toICalString()}")
+                crlfLine("RRULE:${rrule.toICalString()}")
             }
         }
 
@@ -232,29 +238,29 @@ class ICalGenerator(
         }
 
         // Status (required for iCloud)
-        appendLine("STATUS:${event.status.toICalString()}")
+        crlfLine("STATUS:${event.status.toICalString()}")
 
         // Sequence (required for iCloud, increment on updates)
-        appendLine("SEQUENCE:${event.sequence}")
+        crlfLine("SEQUENCE:${event.sequence}")
 
         // Priority (RFC 5545) - only output if non-zero (0 = undefined)
         if (event.priority > 0) {
-            appendLine("PRIORITY:${event.priority}")
+            crlfLine("PRIORITY:${event.priority}")
         }
 
         // Transparency
         if (event.transparency != Transparency.OPAQUE) {
-            appendLine("TRANSP:${event.transparency.toICalString()}")
+            crlfLine("TRANSP:${event.transparency.toICalString()}")
         }
 
         // Categories
         if (event.categories.isNotEmpty()) {
-            appendLine("CATEGORIES:${event.categories.joinToString(",") { escapeICalText(it) }}")
+            crlfLine("CATEGORIES:${event.categories.joinToString(",") { escapeICalText(it) }}")
         }
 
         // Color (RFC 7986)
         event.color?.let {
-            appendLine("COLOR:$it")
+            crlfLine("COLOR:$it")
         }
 
         // IMAGE properties (RFC 7986)
@@ -269,37 +275,37 @@ class ICalGenerator(
 
         // LINK properties (RFC 9253)
         event.links.forEach { link ->
-            appendLine(link.toICalString())
+            crlfLine(link.toICalString())
         }
 
         // RELATED-TO properties (RFC 9253)
         event.relations.forEach { relation ->
-            appendLine(relation.toICalString())
+            crlfLine(relation.toICalString())
         }
 
         // URL
         event.url?.let {
-            appendLine("URL:$it")
+            crlfLine("URL:$it")
         }
 
         // GEO (RFC 5545) - geographic coordinates "lat;lon"
         event.geo?.let {
-            appendLine("GEO:$it")
+            crlfLine("GEO:$it")
         }
 
         // CLASS (RFC 5545 Section 3.8.1.3)
         event.classification?.let {
-            appendLine("CLASS:${it.toICalString()}")
+            crlfLine("CLASS:${it.toICalString()}")
         }
 
         // Organizer (for scheduling)
         event.organizer?.let { org ->
-            appendLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org))
         }
 
         // Attendees (for scheduling)
         event.attendees.forEach { att ->
-            appendLine(formatAttendee(att))
+            crlfLine(formatAttendee(att))
         }
 
         // VALARMs
@@ -309,10 +315,10 @@ class ICalGenerator(
 
         // Created/Last-Modified
         event.created?.let {
-            appendLine("CREATED:${it.toICalString()}")
+            crlfLine("CREATED:${it.toICalString()}")
         }
         event.lastModified?.let {
-            appendLine("LAST-MODIFIED:${it.toICalString()}")
+            crlfLine("LAST-MODIFIED:${it.toICalString()}")
         }
 
         // Raw properties (X-*, CLASS, and other unhandled properties for round-trip)
@@ -322,75 +328,75 @@ class ICalGenerator(
             appendFoldedLine("$key:$value")
         }
 
-        appendLine("END:VEVENT")
+        crlfLine("END:VEVENT")
     }
 
     private fun StringBuilder.appendVAlarm(alarm: ICalAlarm) {
-        appendLine("BEGIN:VALARM")
+        crlfLine("BEGIN:VALARM")
 
         // RFC 9074: UID for alarm identification
         // Generate a UID if not provided (needed for Apple extensions)
         val alarmUid = alarm.uid ?: java.util.UUID.randomUUID().toString().uppercase()
-        appendLine("UID:$alarmUid")
+        crlfLine("UID:$alarmUid")
 
         // Apple-specific extensions for better iCloud compatibility
         if (includeAppleExtensions) {
             // X-WR-ALARMUID: iCloud alarm identifier (same as UID)
-            appendLine("X-WR-ALARMUID:$alarmUid")
+            crlfLine("X-WR-ALARMUID:$alarmUid")
             // X-APPLE-DEFAULT-ALARM: Prevents iPhone from treating this as a
             // "default" alarm that can be merged with calendar defaults
             if (!alarm.defaultAlarm) {
-                appendLine("X-APPLE-DEFAULT-ALARM:FALSE")
+                crlfLine("X-APPLE-DEFAULT-ALARM:FALSE")
             }
         }
 
-        appendLine("ACTION:${alarm.action.name}")
+        crlfLine("ACTION:${alarm.action.name}")
 
         // Trigger
         alarm.trigger?.let { dur ->
             val related = if (alarm.triggerRelatedToEnd) ";RELATED=END" else ""
-            appendLine("TRIGGER${related}:${ICalAlarm.formatDuration(dur)}")
+            crlfLine("TRIGGER${related}:${ICalAlarm.formatDuration(dur)}")
         } ?: alarm.triggerAbsolute?.let { dt ->
-            appendLine("TRIGGER;VALUE=DATE-TIME:${dt.toICalString()}")
+            crlfLine("TRIGGER;VALUE=DATE-TIME:${dt.toICalString()}")
         }
 
         // Description (required for DISPLAY)
         if (alarm.action == AlarmAction.DISPLAY) {
-            appendLine("DESCRIPTION:${alarm.description ?: "Reminder"}")
+            crlfLine("DESCRIPTION:${alarm.description ?: "Reminder"}")
         }
 
         // Summary (for EMAIL action)
         alarm.summary?.let {
-            appendLine("SUMMARY:$it")
+            crlfLine("SUMMARY:$it")
         }
 
         // Repeat
         if (alarm.repeatCount > 0) {
-            appendLine("REPEAT:${alarm.repeatCount}")
+            crlfLine("REPEAT:${alarm.repeatCount}")
             alarm.repeatDuration?.let { dur ->
-                appendLine("DURATION:${ICalAlarm.formatDuration(dur)}")
+                crlfLine("DURATION:${ICalAlarm.formatDuration(dur)}")
             }
         }
 
         // RFC 9074 extensions
         alarm.acknowledged?.let {
-            appendLine("ACKNOWLEDGED:${it.toICalString()}")
+            crlfLine("ACKNOWLEDGED:${it.toICalString()}")
         }
 
         alarm.relatedTo?.let {
-            appendLine("RELATED-TO:$it")
+            crlfLine("RELATED-TO:$it")
         }
 
         // RFC 9074: DEFAULT-ALARM
         if (alarm.defaultAlarm) {
-            appendLine("DEFAULT-ALARM:TRUE")
+            crlfLine("DEFAULT-ALARM:TRUE")
         }
 
         alarm.proximity?.let {
-            appendLine("PROXIMITY:${it.toICalString()}")
+            crlfLine("PROXIMITY:${it.toICalString()}")
         }
 
-        appendLine("END:VALARM")
+        crlfLine("END:VALARM")
     }
 
     /**
@@ -399,17 +405,17 @@ class ICalGenerator(
     private fun StringBuilder.appendDateTimeProperty(name: String, dt: ICalDateTime) {
         if (dt.isDate) {
             // DATE format for all-day
-            appendLine("$name;VALUE=DATE:${dt.toICalString()}")
+            crlfLine("$name;VALUE=DATE:${dt.toICalString()}")
         } else if (dt.isUtc) {
             // UTC format
-            appendLine("$name:${dt.toICalString()}")
+            crlfLine("$name:${dt.toICalString()}")
         } else if (dt.timezone != null) {
             // Local with TZID
             val tzid = dt.timezone.id
-            appendLine("$name;TZID=$tzid:${dt.toICalString()}")
+            crlfLine("$name;TZID=$tzid:${dt.toICalString()}")
         } else {
             // Floating (no timezone)
-            appendLine("$name:${dt.toICalString()}")
+            crlfLine("$name:${dt.toICalString()}")
         }
     }
 
@@ -427,7 +433,7 @@ class ICalGenerator(
         val bytes = line.toByteArray(Charsets.UTF_8)
 
         if (bytes.size <= 75) {
-            appendLine(line)
+            crlfLine(line)
             return
         }
 
@@ -469,7 +475,7 @@ class ICalGenerator(
                 .map { Character.toString(it) }
                 .joinToString("")
             append(segment)
-            appendLine()
+            crlfLine()
 
             isFirst = false
         }
@@ -582,7 +588,7 @@ class ICalGenerator(
         image.mediaType?.let { params.add("FMTTYPE=$it") }
         image.altText?.let { params.add("ALTREP=\"${escapeICalText(it)}\"") }
 
-        appendLine("IMAGE;${params.joinToString(";")}:${image.uri}")
+        crlfLine("IMAGE;${params.joinToString(";")}:${image.uri}")
     }
 
     /**
@@ -600,7 +606,7 @@ class ICalGenerator(
         conference.label?.let { params.add("LABEL=${escapeParamValue(it)}") }
         conference.language?.let { params.add("LANGUAGE=$it") }
 
-        appendLine("CONFERENCE;${params.joinToString(";")}:${conference.uri}")
+        crlfLine("CONFERENCE;${params.joinToString(";")}:${conference.uri}")
     }
 
     // ============ VTODO Generation ============
@@ -630,16 +636,16 @@ class ICalGenerator(
     )
 
     private fun StringBuilder.appendVTodo(todo: ICalTodo, preserveDtstamp: Boolean = false) {
-        appendLine("BEGIN:VTODO")
+        crlfLine("BEGIN:VTODO")
 
         // Required properties
-        appendLine("UID:${todo.uid}")
+        crlfLine("UID:${todo.uid}")
 
         // DTSTAMP handling
         if (preserveDtstamp && todo.dtstamp != null) {
-            appendLine("DTSTAMP:${todo.dtstamp.toICalString()}")
+            crlfLine("DTSTAMP:${todo.dtstamp.toICalString()}")
         } else {
-            appendLine("DTSTAMP:${formatDtStamp()}")
+            crlfLine("DTSTAMP:${formatDtStamp()}")
         }
 
         // DTSTART
@@ -655,7 +661,7 @@ class ICalGenerator(
         // COMPLETED
         todo.completed?.let { completed ->
             // COMPLETED must be in UTC per RFC 5545
-            appendLine("COMPLETED:${completed.toICalString()}")
+            crlfLine("COMPLETED:${completed.toICalString()}")
         }
 
         // RECURRENCE-ID for modified instances
@@ -666,7 +672,7 @@ class ICalGenerator(
         // RRULE (only for master todos, NOT modified instances)
         if (todo.recurrenceId == null) {
             todo.rrule?.let { rrule ->
-                appendLine("RRULE:${rrule.toICalString()}")
+                crlfLine("RRULE:${rrule.toICalString()}")
             }
         }
 
@@ -686,49 +692,49 @@ class ICalGenerator(
         }
 
         // Status (required for proper sync)
-        appendLine("STATUS:${todo.status.toICalString()}")
+        crlfLine("STATUS:${todo.status.toICalString()}")
 
         // Sequence
-        appendLine("SEQUENCE:${todo.sequence}")
+        crlfLine("SEQUENCE:${todo.sequence}")
 
         // Priority
         if (todo.priority != 0) {
-            appendLine("PRIORITY:${todo.priority}")
+            crlfLine("PRIORITY:${todo.priority}")
         }
 
         // Percent complete
         if (todo.percentComplete != 0) {
-            appendLine("PERCENT-COMPLETE:${todo.percentComplete}")
+            crlfLine("PERCENT-COMPLETE:${todo.percentComplete}")
         }
 
         // Categories
         if (todo.categories.isNotEmpty()) {
-            appendLine("CATEGORIES:${todo.categories.joinToString(",") { escapeICalText(it) }}")
+            crlfLine("CATEGORIES:${todo.categories.joinToString(",") { escapeICalText(it) }}")
         }
 
         // URL
         todo.url?.let {
-            appendLine("URL:$it")
+            crlfLine("URL:$it")
         }
 
         // GEO
         todo.geo?.let {
-            appendLine("GEO:$it")
+            crlfLine("GEO:$it")
         }
 
         // CLASS
         todo.classification?.let {
-            appendLine("CLASS:$it")
+            crlfLine("CLASS:$it")
         }
 
         // Organizer (for task assignment)
         todo.organizer?.let { org ->
-            appendLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org))
         }
 
         // Attendees (assignees)
         todo.attendees.forEach { att ->
-            appendLine(formatAttendee(att))
+            crlfLine(formatAttendee(att))
         }
 
         // VALARMs
@@ -738,10 +744,10 @@ class ICalGenerator(
 
         // Created/Last-Modified
         todo.created?.let {
-            appendLine("CREATED:${it.toICalString()}")
+            crlfLine("CREATED:${it.toICalString()}")
         }
         todo.lastModified?.let {
-            appendLine("LAST-MODIFIED:${it.toICalString()}")
+            crlfLine("LAST-MODIFIED:${it.toICalString()}")
         }
 
         // Raw properties for round-trip
@@ -749,7 +755,7 @@ class ICalGenerator(
             appendFoldedLine("$key:$value")
         }
 
-        appendLine("END:VTODO")
+        crlfLine("END:VTODO")
     }
 
     // ============ VJOURNAL Generation ============
@@ -779,16 +785,16 @@ class ICalGenerator(
     )
 
     private fun StringBuilder.appendVJournal(journal: ICalJournal, preserveDtstamp: Boolean = false) {
-        appendLine("BEGIN:VJOURNAL")
+        crlfLine("BEGIN:VJOURNAL")
 
         // Required properties
-        appendLine("UID:${journal.uid}")
+        crlfLine("UID:${journal.uid}")
 
         // DTSTAMP handling
         if (preserveDtstamp && journal.dtstamp != null) {
-            appendLine("DTSTAMP:${journal.dtstamp.toICalString()}")
+            crlfLine("DTSTAMP:${journal.dtstamp.toICalString()}")
         } else {
-            appendLine("DTSTAMP:${formatDtStamp()}")
+            crlfLine("DTSTAMP:${formatDtStamp()}")
         }
 
         // DTSTART
@@ -804,7 +810,7 @@ class ICalGenerator(
         // RRULE (only for master journals, NOT modified instances)
         if (journal.recurrenceId == null) {
             journal.rrule?.let { rrule ->
-                appendLine("RRULE:${rrule.toICalString()}")
+                crlfLine("RRULE:${rrule.toICalString()}")
             }
         }
 
@@ -819,47 +825,47 @@ class ICalGenerator(
         }
 
         // Status
-        appendLine("STATUS:${journal.status.toICalString()}")
+        crlfLine("STATUS:${journal.status.toICalString()}")
 
         // Sequence
-        appendLine("SEQUENCE:${journal.sequence}")
+        crlfLine("SEQUENCE:${journal.sequence}")
 
         // Categories
         if (journal.categories.isNotEmpty()) {
-            appendLine("CATEGORIES:${journal.categories.joinToString(",") { escapeICalText(it) }}")
+            crlfLine("CATEGORIES:${journal.categories.joinToString(",") { escapeICalText(it) }}")
         }
 
         // Attachments
         journal.attachments.forEach { attach ->
-            appendLine("ATTACH:$attach")
+            crlfLine("ATTACH:$attach")
         }
 
         // URL
         journal.url?.let {
-            appendLine("URL:$it")
+            crlfLine("URL:$it")
         }
 
         // CLASS
         journal.classification?.let {
-            appendLine("CLASS:$it")
+            crlfLine("CLASS:$it")
         }
 
         // Organizer
         journal.organizer?.let { org ->
-            appendLine(formatOrganizer(org))
+            crlfLine(formatOrganizer(org))
         }
 
         // Attendees
         journal.attendees.forEach { att ->
-            appendLine(formatAttendee(att))
+            crlfLine(formatAttendee(att))
         }
 
         // Created/Last-Modified
         journal.created?.let {
-            appendLine("CREATED:${it.toICalString()}")
+            crlfLine("CREATED:${it.toICalString()}")
         }
         journal.lastModified?.let {
-            appendLine("LAST-MODIFIED:${it.toICalString()}")
+            crlfLine("LAST-MODIFIED:${it.toICalString()}")
         }
 
         // Raw properties for round-trip
@@ -867,7 +873,7 @@ class ICalGenerator(
             appendFoldedLine("$key:$value")
         }
 
-        appendLine("END:VJOURNAL")
+        crlfLine("END:VJOURNAL")
     }
 
     companion object {
@@ -890,22 +896,22 @@ class ICalGenerator(
             uid: String = java.util.UUID.randomUUID().toString().uppercase()
         ): String {
             return buildString {
-                appendLine("BEGIN:VCALENDAR")
-                appendLine("VERSION:2.0")
-                appendLine("PRODID:-//iCalDAV//EN")
-                appendLine("METHOD:REQUEST")
-                appendLine("BEGIN:VFREEBUSY")
-                appendLine("UID:$uid")
-                appendLine("DTSTAMP:${ICalDateTime.now().toICalString()}")
-                appendLine("DTSTART:${dtstart.toICalString()}")
-                appendLine("DTEND:${dtend.toICalString()}")
+                crlfLine("BEGIN:VCALENDAR")
+                crlfLine("VERSION:2.0")
+                crlfLine("PRODID:-//iCalDAV//EN")
+                crlfLine("METHOD:REQUEST")
+                crlfLine("BEGIN:VFREEBUSY")
+                crlfLine("UID:$uid")
+                crlfLine("DTSTAMP:${ICalDateTime.now().toICalString()}")
+                crlfLine("DTSTART:${dtstart.toICalString()}")
+                crlfLine("DTEND:${dtend.toICalString()}")
 
                 // Organizer
                 val orgParams = mutableListOf<String>()
                 organizer.name?.let { orgParams.add("CN=$it") }
                 organizer.sentBy?.let { orgParams.add("SENT-BY=\"mailto:$it\"") }
                 val orgParamStr = if (orgParams.isNotEmpty()) ";${orgParams.joinToString(";")}" else ""
-                appendLine("ORGANIZER$orgParamStr:mailto:${organizer.email}")
+                crlfLine("ORGANIZER$orgParamStr:mailto:${organizer.email}")
 
                 // Attendees
                 attendees.forEach { att ->
@@ -913,11 +919,11 @@ class ICalGenerator(
                     att.name?.let { attParams.add("CN=$it") }
                     attParams.add("PARTSTAT=${att.partStat.toICalString()}")
                     val attParamStr = if (attParams.isNotEmpty()) ";${attParams.joinToString(";")}" else ""
-                    appendLine("ATTENDEE$attParamStr:mailto:${att.email}")
+                    crlfLine("ATTENDEE$attParamStr:mailto:${att.email}")
                 }
 
-                appendLine("END:VFREEBUSY")
-                appendLine("END:VCALENDAR")
+                crlfLine("END:VFREEBUSY")
+                crlfLine("END:VCALENDAR")
             }
         }
     }

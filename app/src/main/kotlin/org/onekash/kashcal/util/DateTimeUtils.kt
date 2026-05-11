@@ -174,14 +174,28 @@ object DateTimeUtils {
      */
     fun getLocaleWeekFields(firstDayOfWeek: Int): WeekFields {
         val resolved = resolveFirstDayOfWeek(firstDayOfWeek)
-        val dow = when (resolved) {
-            Calendar.SUNDAY -> DayOfWeek.SUNDAY
-            Calendar.MONDAY -> DayOfWeek.MONDAY
-            Calendar.SATURDAY -> DayOfWeek.SATURDAY
-            else -> DayOfWeek.MONDAY
-        }
+        val dow = calendarConstantToDayOfWeek(resolved)
         return WeekFields.of(dow, WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek)
     }
+
+    /**
+     * Maps a Calendar weekday constant to DayOfWeek. Unknown values fall back
+     * to SUNDAY (consistent with [resolveFirstDayOfWeek] for Friday-first locales).
+     */
+    fun calendarConstantToDayOfWeek(calendarConstant: Int): DayOfWeek = when (calendarConstant) {
+        Calendar.SUNDAY -> DayOfWeek.SUNDAY
+        Calendar.MONDAY -> DayOfWeek.MONDAY
+        Calendar.SATURDAY -> DayOfWeek.SATURDAY
+        else -> DayOfWeek.SUNDAY
+    }
+
+    /**
+     * Resolve the user's first-day-of-week preference to a DayOfWeek, snapping
+     * unsupported locales via [calendarConstantToDayOfWeek]. Used as the WKST
+     * source for biweekly RRULEs (issue #214).
+     */
+    fun resolveFirstDayOfWeekAsDow(preference: Int): DayOfWeek =
+        calendarConstantToDayOfWeek(resolveFirstDayOfWeek(preference))
 
     /**
      * Get the locale's default first day of week.

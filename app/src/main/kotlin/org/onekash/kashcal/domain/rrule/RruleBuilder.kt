@@ -122,16 +122,24 @@ object RruleBuilder {
     /**
      * Build a weekly recurrence rule.
      *
-     * @param interval Weeks between occurrences (default 1)
-     * @param days Specific days of week (empty = same day as start)
-     * @return RRULE string like "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+     * @param wkst Week-start day. Emitted only when `interval >= 2 && days.size >= 2`
+     *   per RFC 5545 §3.3.10 (WKST has no effect on interval=1 or single-day weekly
+     *   rules). Issue #214.
+     * @return RRULE string like "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SU"
      */
-    fun weekly(interval: Int = 1, days: Set<DayOfWeek> = emptySet()): String {
+    fun weekly(
+        interval: Int = 1,
+        days: Set<DayOfWeek> = emptySet(),
+        wkst: DayOfWeek? = null,
+    ): String {
         val parts = mutableListOf("FREQ=WEEKLY")
         if (interval > 1) parts.add("INTERVAL=$interval")
         if (days.isNotEmpty()) {
             val sortedDays = DAY_ORDER.filter { it in days }
             parts.add("BYDAY=${sortedDays.joinToString(",") { toDayAbbrev(it) }}")
+        }
+        if (wkst != null && interval > 1 && days.size >= 2) {
+            parts.add("WKST=${toDayAbbrev(wkst)}")
         }
         return parts.joinToString(";")
     }

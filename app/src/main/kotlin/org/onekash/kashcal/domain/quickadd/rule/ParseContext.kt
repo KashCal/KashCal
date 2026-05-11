@@ -7,7 +7,14 @@ import java.time.LocalTime
 internal fun isDotOnly(text: String): Boolean =
     text.contains('.') && !text.contains('/') && !text.contains('-')
 
-class ParseContext(val reference: LocalDateTime) {
+/**
+ * @param firstDayOfWeek `java.util.Calendar` constant or 0 (system default);
+ *   used by RecurrenceRule for biweekly WKST emission.
+ */
+class ParseContext(
+    val reference: LocalDateTime,
+    val firstDayOfWeek: Int = 0,
+) {
 
     // Date components (priority: absoluteDate > relativeDate > weekdayDate > dateKeywordDate)
     var absoluteDate: LocalDate? = null

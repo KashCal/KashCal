@@ -103,6 +103,35 @@ object RfcExamplesCorpus {
             },
         ),
 
+        // Example 3 — Every other day forever (RFC text truncated; bounded here).
+        // DTSTART;TZID=America/New_York:19970902T090000
+        // RRULE:FREQ=DAILY;INTERVAL=2
+        // ==> (EDT) Sep 2,4,6,8,10,12,14,16,18,20,22,24,26,28,30;
+        //           Oct 2,4,6,8,10,12,14,16,18,20,22,24
+        //     (EST) Oct 26,28,30; Nov 1,3,5,...,29; Dec 1,3,...
+        // Bounded to <Dec 2 1997> so the explicit RFC-listed dates through Dec 1 are covered.
+        // DST end: Oct 26 1997 (pre-2007 rule).
+        rfcCase(
+            number = "3",
+            description = "every other day forever (bounded to Dec 1 1997)",
+            rrule = "FREQ=DAILY;INTERVAL=2",
+            dtstartMs = et9(1997, 9, 2),
+            rangeStartMs = et9(1997, 9, 1),
+            rangeEndMs = et9(1997, 12, 2),
+            rfcExpected = buildList {
+                // Sep 2,4,..,30 (EDT)
+                for (d in 2..30 step 2) add(et9(1997, 9, d))
+                // Oct 2,4,..,24 (EDT)
+                for (d in 2..24 step 2) add(et9(1997, 10, d))
+                // Oct 26,28,30 (EST — DST ended Oct 26)
+                for (d in 26..30 step 2) add(et9(1997, 10, d))
+                // Nov 1,3,..,29 (EST)
+                for (d in 1..29 step 2) add(et9(1997, 11, d))
+                // Dec 1 (EST)
+                add(et9(1997, 12, 1))
+            },
+        ),
+
         // Example 4 — Every 10 days, 5 occurrences.
         // RRULE:FREQ=DAILY;INTERVAL=10;COUNT=5
         // ==> September 2,12,22; October 2,12
@@ -331,6 +360,24 @@ object RfcExamplesCorpus {
             ),
         ),
 
+        // Example 16 — Monthly on the third-to-the-last day of the month, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970928T090000
+        // RRULE:FREQ=MONTHLY;BYMONTHDAY=-3
+        // ==> Sep 28 (EDT); Oct 29, Nov 28, Dec 29 (EST); Jan 29, Feb 26 (1998 EST)
+        rfcCase(
+            number = "16",
+            description = "monthly third-to-last day forever (bounded to Feb 1998)",
+            rrule = "FREQ=MONTHLY;BYMONTHDAY=-3",
+            dtstartMs = et9(1997, 9, 28),
+            rangeStartMs = et9(1997, 9, 1),
+            rangeEndMs = et9(1998, 3, 1),
+            rfcExpected = listOf(
+                et9(1997, 9, 28),
+                et9(1997, 10, 29), et9(1997, 11, 28), et9(1997, 12, 29),
+                et9(1998, 1, 29), et9(1998, 2, 26),
+            ),
+        ),
+
         // Example 17 — Monthly on the 2nd and 15th for 10 occurrences.
         // RRULE:FREQ=MONTHLY;COUNT=10;BYMONTHDAY=2,15
         // ==> Sep 2,15; Oct 2,15 (EDT); Nov 2,15; Dec 2,15 (EST); Jan 2,15 (1998 EST)
@@ -388,6 +435,28 @@ object RfcExamplesCorpus {
                 et9(1997, 9, 13), et9(1997, 9, 14), et9(1997, 9, 15),
                 et9(1999, 3, 10), et9(1999, 3, 11),
                 et9(1999, 3, 12), et9(1999, 3, 13),
+            ),
+        ),
+
+        // Example 20 — Every Tuesday, every other month, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970902T090000  (Tuesday)
+        // RRULE:FREQ=MONTHLY;INTERVAL=2;BYDAY=TU
+        // ==> Sep 2,9,16,23,30 (1997 EDT);
+        //     Nov 4,11,18,25 (1997 EST);
+        //     Jan 6,13,20,27 (1998 EST);
+        //     Mar 3,10,17,24,31 (1998 EST)
+        rfcCase(
+            number = "20",
+            description = "every Tuesday every other month forever (bounded to Mar 1998)",
+            rrule = "FREQ=MONTHLY;INTERVAL=2;BYDAY=TU",
+            dtstartMs = et9(1997, 9, 2),
+            rangeStartMs = et9(1997, 9, 1),
+            rangeEndMs = et9(1998, 4, 1),
+            rfcExpected = listOf(
+                et9(1997, 9, 2), et9(1997, 9, 9), et9(1997, 9, 16), et9(1997, 9, 23), et9(1997, 9, 30),
+                et9(1997, 11, 4), et9(1997, 11, 11), et9(1997, 11, 18), et9(1997, 11, 25),
+                et9(1998, 1, 6), et9(1998, 1, 13), et9(1998, 1, 20), et9(1998, 1, 27),
+                et9(1998, 3, 3), et9(1998, 3, 10), et9(1998, 3, 17), et9(1998, 3, 24), et9(1998, 3, 31),
             ),
         ),
 
@@ -454,6 +523,91 @@ object RfcExamplesCorpus {
             ),
         ),
 
+        // Example 24 — Every 20th Monday of the year, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970519T090000  (Monday)
+        // RRULE:FREQ=YEARLY;BYDAY=20MO
+        // ==> May 19 (1997 EDT); May 18 (1998 EDT); May 17 (1999 EDT)
+        rfcCase(
+            number = "24",
+            description = "every 20th Monday of the year forever (bounded to 1999)",
+            rrule = "FREQ=YEARLY;BYDAY=20MO",
+            dtstartMs = et9(1997, 5, 19),
+            rangeStartMs = et9(1997, 5, 1),
+            rangeEndMs = et9(1999, 6, 1),
+            rfcExpected = listOf(
+                et9(1997, 5, 19),
+                et9(1998, 5, 18),
+                et9(1999, 5, 17),
+            ),
+        ),
+
+        // Example 25 — Monday of week number 20 (default WKST=MO), forever (bounded).
+        // DTSTART;TZID=America/New_York:19970512T090000  (ISO week-20 Monday for 1997)
+        // RRULE:FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO
+        // ==> May 12 (1997 EDT); May 11 (1998 EDT); May 17 (1999 EDT)
+        // Note: 1999 has Jan 1 on a Friday → ISO week 1 starts Jan 4, so week 20 Monday is May 17.
+        rfcCase(
+            number = "25",
+            description = "Monday of ISO week 20 forever (bounded to 1999)",
+            rrule = "FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO",
+            dtstartMs = et9(1997, 5, 12),
+            rangeStartMs = et9(1997, 5, 1),
+            rangeEndMs = et9(1999, 6, 1),
+            rfcExpected = listOf(
+                et9(1997, 5, 12),
+                et9(1998, 5, 11),
+                et9(1999, 5, 17),
+            ),
+        ),
+
+        // Example 26 — Every Thursday in March, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970313T090000  (Thursday)
+        // RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=TH
+        // ==> Mar 13,20,27 (1997 EST); Mar 5,12,19,26 (1998 EST); Mar 4,11,18,25 (1999 EST)
+        // DST begins first Sunday of April (pre-2007 rule) — all March dates are EST.
+        rfcCase(
+            number = "26",
+            description = "every Thursday in March forever (bounded to 1999)",
+            rrule = "FREQ=YEARLY;BYMONTH=3;BYDAY=TH",
+            dtstartMs = et9(1997, 3, 13),
+            rangeStartMs = et9(1997, 3, 1),
+            rangeEndMs = et9(1999, 4, 1),
+            rfcExpected = listOf(
+                et9(1997, 3, 13), et9(1997, 3, 20), et9(1997, 3, 27),
+                et9(1998, 3, 5), et9(1998, 3, 12), et9(1998, 3, 19), et9(1998, 3, 26),
+                et9(1999, 3, 4), et9(1999, 3, 11), et9(1999, 3, 18), et9(1999, 3, 25),
+            ),
+        ),
+
+        // Example 27 — Every Thursday in June/July/August, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970605T090000  (Thursday)
+        // RRULE:FREQ=YEARLY;BYDAY=TH;BYMONTH=6,7,8
+        // ==> Jun 5,12,19,26; Jul 3,10,17,24,31; Aug 7,14,21,28 (1997 EDT)
+        //     Jun 4,11,18,25; Jul 2,9,16,23,30; Aug 6,13,20,27 (1998 EDT)
+        //     Jun 3,10,17,24; Jul 1,8,15,22,29; Aug 5,12,19,26 (1999 EDT)
+        rfcCase(
+            number = "27",
+            description = "every Thursday in Jun_Jul_Aug forever (bounded to 1999)",
+            rrule = "FREQ=YEARLY;BYDAY=TH;BYMONTH=6,7,8",
+            dtstartMs = et9(1997, 6, 5),
+            rangeStartMs = et9(1997, 6, 1),
+            rangeEndMs = et9(1999, 9, 1),
+            rfcExpected = listOf(
+                // 1997
+                et9(1997, 6, 5), et9(1997, 6, 12), et9(1997, 6, 19), et9(1997, 6, 26),
+                et9(1997, 7, 3), et9(1997, 7, 10), et9(1997, 7, 17), et9(1997, 7, 24), et9(1997, 7, 31),
+                et9(1997, 8, 7), et9(1997, 8, 14), et9(1997, 8, 21), et9(1997, 8, 28),
+                // 1998
+                et9(1998, 6, 4), et9(1998, 6, 11), et9(1998, 6, 18), et9(1998, 6, 25),
+                et9(1998, 7, 2), et9(1998, 7, 9), et9(1998, 7, 16), et9(1998, 7, 23), et9(1998, 7, 30),
+                et9(1998, 8, 6), et9(1998, 8, 13), et9(1998, 8, 20), et9(1998, 8, 27),
+                // 1999
+                et9(1999, 6, 3), et9(1999, 6, 10), et9(1999, 6, 17), et9(1999, 6, 24),
+                et9(1999, 7, 1), et9(1999, 7, 8), et9(1999, 7, 15), et9(1999, 7, 22), et9(1999, 7, 29),
+                et9(1999, 8, 5), et9(1999, 8, 12), et9(1999, 8, 19), et9(1999, 8, 26),
+            ),
+        ),
+
         // Example 28 — Every Friday the 13th forever.
         // DTSTART;TZID=America/New_York:19970902T090000
         // EXDATE;TZID=America/New_York:19970902T090000  (excludes DTSTART itself)
@@ -476,6 +630,47 @@ object RfcExamplesCorpus {
             ),
         ),
 
+        // Example 29 — First Saturday that follows the first Sunday of the month, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970913T090000  (Saturday)
+        // RRULE:FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13
+        // ==> Sep 13, Oct 11 (1997 EDT); Nov 8, Dec 13 (1997 EST);
+        //     Jan 10, Feb 7, Mar 7 (1998 EST); Apr 11, May 9, Jun 13 (1998 EDT)
+        // DST: 1997 EDT ends Oct 26; 1998 EDT begins Apr 5 (pre-2007 rule).
+        rfcCase(
+            number = "29",
+            description = "first Saturday after first Sunday forever (bounded to Jun 1998)",
+            rrule = "FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13",
+            dtstartMs = et9(1997, 9, 13),
+            rangeStartMs = et9(1997, 9, 1),
+            rangeEndMs = et9(1998, 7, 1),
+            rfcExpected = listOf(
+                et9(1997, 9, 13), et9(1997, 10, 11),
+                et9(1997, 11, 8), et9(1997, 12, 13),
+                et9(1998, 1, 10), et9(1998, 2, 7), et9(1998, 3, 7),
+                et9(1998, 4, 11), et9(1998, 5, 9), et9(1998, 6, 13),
+            ),
+        ),
+
+        // Example 30 — Every 4 years, the first Tuesday after a Monday in November
+        //              (U.S. Presidential Election day), forever (bounded).
+        // DTSTART;TZID=America/New_York:19961105T090000  (Tuesday)
+        // RRULE:FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8
+        // ==> Nov 5 (1996 EST); Nov 7 (2000 EST); Nov 2 (2004 EST)
+        // DST end: pre-2007 rule = last Sunday of October — all listed dates are EST.
+        rfcCase(
+            number = "30",
+            description = "every 4 years US Election Day forever (bounded to 2004)",
+            rrule = "FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8",
+            dtstartMs = et9(1996, 11, 5),
+            rangeStartMs = et9(1996, 11, 1),
+            rangeEndMs = et9(2004, 12, 1),
+            rfcExpected = listOf(
+                et9(1996, 11, 5),
+                et9(2000, 11, 7),
+                et9(2004, 11, 2),
+            ),
+        ),
+
         // Example 31 — Third instance of Tu/We/Th for next 3 months.
         // DTSTART;TZID=America/New_York:19970904T090000
         // RRULE:FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3
@@ -489,6 +684,32 @@ object RfcExamplesCorpus {
             rangeEndMs = et9(1997, 12, 1),
             rfcExpected = listOf(
                 et9(1997, 9, 4), et9(1997, 10, 7), et9(1997, 11, 6),
+            ),
+        ),
+
+        // Example 32 — Second-to-last weekday of the month, forever (bounded).
+        // DTSTART;TZID=America/New_York:19970929T090000  (Monday)
+        // RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2
+        // ==> Sep 29 (1997 EDT); Oct 30, Nov 27, Dec 30 (1997 EST);
+        //     Jan 29, Feb 26, Mar 30 (1998 EST)
+        // Sep 1997: weekdays end Mon Sep 29, Tue Sep 30 → -2 = Sep 29.
+        // Oct 1997: ends Thu Oct 30, Fri Oct 31 → -2 = Oct 30 (DST ended Oct 26).
+        // Nov 1997: ends Thu Nov 27, Fri Nov 28 → -2 = Nov 27.
+        // Dec 1997: ends Tue Dec 30, Wed Dec 31 → -2 = Dec 30.
+        // Jan 1998: ends Thu Jan 29, Fri Jan 30 → -2 = Jan 29.
+        // Feb 1998: ends Thu Feb 26, Fri Feb 27 → -2 = Feb 26.
+        // Mar 1998: ends Mon Mar 30, Tue Mar 31 → -2 = Mar 30.
+        rfcCase(
+            number = "32",
+            description = "second-to-last weekday of month forever (bounded to Mar 1998)",
+            rrule = "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2",
+            dtstartMs = et9(1997, 9, 29),
+            rangeStartMs = et9(1997, 9, 1),
+            rangeEndMs = et9(1998, 4, 1),
+            rfcExpected = listOf(
+                et9(1997, 9, 29),
+                et9(1997, 10, 30), et9(1997, 11, 27), et9(1997, 12, 30),
+                et9(1998, 1, 29), et9(1998, 2, 26), et9(1998, 3, 30),
             ),
         ),
 

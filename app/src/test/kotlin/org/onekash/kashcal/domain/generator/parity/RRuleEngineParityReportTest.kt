@@ -5,6 +5,7 @@ import org.onekash.kashcal.domain.generator.parity.fixtures.AdversarialCorpus
 import org.onekash.kashcal.domain.generator.parity.fixtures.CriticalBugCorpus
 import org.onekash.kashcal.domain.generator.parity.fixtures.ExistingTestsCorpus
 import org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus
+import org.onekash.kashcal.testutil.resolveProjectRoot
 import java.io.File
 
 /**
@@ -194,19 +195,4 @@ class RRuleEngineParityReportTest {
         }
     }
 
-    private fun resolveProjectRoot(): File {
-        // Gradle runs tests from the module dir (`app/`) by default. The project
-        // root is its parent. Fall back to walking up until we find a directory
-        // containing both `app/` and `docs/`.
-        val userDir = File(System.getProperty("user.dir") ?: ".")
-        var candidate: File? = userDir
-        while (candidate != null) {
-            if (File(candidate, "app").isDirectory && File(candidate, "docs").isDirectory) {
-                return candidate
-            }
-            candidate = candidate.parentFile
-        }
-        // Last-resort: assume user.dir's parent is the repo root.
-        return userDir.parentFile ?: userDir
-    }
 }

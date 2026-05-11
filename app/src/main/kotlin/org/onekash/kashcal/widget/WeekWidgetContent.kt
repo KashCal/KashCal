@@ -184,16 +184,12 @@ private fun WeekWidgetHeader(dayCodes: List<Int>) {
 
 @Composable
 private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
-    val backgroundColor = if (isToday) {
-        WidgetTheme.headerBackground
-    } else {
-        WidgetTheme.dividerColor
-    }
+    val colors = dayHeaderColors(isToday)
 
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .background(colors.background.provider())
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -208,7 +204,7 @@ private fun DayHeader(dayCode: Int, eventCount: Int, isToday: Boolean) {
         Text(
             text = formatDayHeaderText(dayCode),
             style = TextStyle(
-                color = WidgetTheme.primaryText,
+                color = colors.text.provider(),
                 fontSize = 13.sp,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium
             )

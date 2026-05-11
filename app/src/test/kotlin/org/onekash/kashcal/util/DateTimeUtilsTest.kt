@@ -1016,6 +1016,66 @@ class DateTimeUtilsTest {
         assertTrue(wf.firstDayOfWeek in java.time.DayOfWeek.values())
     }
 
+    // ==================== calendarConstantToDayOfWeek (Issue 214) ====================
+
+    @Test
+    fun `calendarConstantToDayOfWeek SUNDAY maps to DayOfWeek_SUNDAY`() {
+        assertEquals(
+            java.time.DayOfWeek.SUNDAY,
+            DateTimeUtils.calendarConstantToDayOfWeek(java.util.Calendar.SUNDAY)
+        )
+    }
+
+    @Test
+    fun `calendarConstantToDayOfWeek MONDAY maps to DayOfWeek_MONDAY`() {
+        assertEquals(
+            java.time.DayOfWeek.MONDAY,
+            DateTimeUtils.calendarConstantToDayOfWeek(java.util.Calendar.MONDAY)
+        )
+    }
+
+    @Test
+    fun `calendarConstantToDayOfWeek SATURDAY maps to DayOfWeek_SATURDAY`() {
+        assertEquals(
+            java.time.DayOfWeek.SATURDAY,
+            DateTimeUtils.calendarConstantToDayOfWeek(java.util.Calendar.SATURDAY)
+        )
+    }
+
+    @Test
+    fun `calendarConstantToDayOfWeek unsupported value falls back to SUNDAY`() {
+        // Aligns with resolveFirstDayOfWeek's snap for Friday-first locales.
+        assertEquals(
+            java.time.DayOfWeek.SUNDAY,
+            DateTimeUtils.calendarConstantToDayOfWeek(java.util.Calendar.FRIDAY)
+        )
+    }
+
+    // ==================== resolveFirstDayOfWeekAsDow ====================
+
+    @Test
+    fun `resolveFirstDayOfWeekAsDow MONDAY returns DayOfWeek_MONDAY`() {
+        assertEquals(
+            java.time.DayOfWeek.MONDAY,
+            DateTimeUtils.resolveFirstDayOfWeekAsDow(java.util.Calendar.MONDAY)
+        )
+    }
+
+    @Test
+    fun `resolveFirstDayOfWeekAsDow system default returns a supported day`() {
+        // 0 = FIRST_DAY_SYSTEM routes through resolveFirstDayOfWeek's locale lookup,
+        // which always snaps to SUNDAY/MONDAY/SATURDAY.
+        val result = DateTimeUtils.resolveFirstDayOfWeekAsDow(0)
+        assertTrue(
+            "system default must snap to SUNDAY/MONDAY/SATURDAY, was $result",
+            result in setOf(
+                java.time.DayOfWeek.SUNDAY,
+                java.time.DayOfWeek.MONDAY,
+                java.time.DayOfWeek.SATURDAY,
+            )
+        )
+    }
+
     @Test
     fun `getLocaleWeekFields_minimalDays matches locale`() {
         val wf = DateTimeUtils.getLocaleWeekFields(java.util.Calendar.MONDAY)

@@ -100,6 +100,21 @@ internal const val MAX_UPCOMING_ITEMS = 100
 internal const val UPCOMING_HORIZON_DAYS = 10
 
 /**
+ * Vertical padding (top and bottom) for the upcoming widget's header strip.
+ * Tighter than the agenda/week widgets because this header has no nav arrows;
+ * a smaller header gives more rows to event content at the same widget size.
+ */
+internal const val UPCOMING_HEADER_VERTICAL_PADDING_DP = 6
+
+/**
+ * Size of the upcoming widget's "+" button. Below Material's 48dp guidance —
+ * a deliberate density trade for this widget. The header's title row and
+ * the "+" button are disjoint clickables, so a mistarget on the button
+ * does not get absorbed by an adjacent action.
+ */
+internal const val UPCOMING_HEADER_BUTTON_SIZE_DP = 32
+
+/**
  * Collapse an events-by-day map into a flat list for LazyColumn rendering.
  *
  * - Days whose events are all past are skipped entirely (no Header).
@@ -262,7 +277,12 @@ private fun UpcomingWidgetHeader() {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            .padding(start = 12.dp, top = 10.dp, bottom = 10.dp, end = 0.dp),
+            .padding(
+                start = 12.dp,
+                top = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
+                bottom = UPCOMING_HEADER_VERTICAL_PADDING_DP.dp,
+                end = 0.dp
+            ),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
@@ -294,7 +314,7 @@ private fun UpcomingWidgetHeader() {
         }
         Box(
             modifier = GlanceModifier
-                .size(40.dp)
+                .size(UPCOMING_HEADER_BUTTON_SIZE_DP.dp)
                 .clickable(
                     actionStartActivity<MainActivity>(
                         parameters = actionParametersOf(
@@ -368,7 +388,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(WidgetTheme.dividerColor)
+            .background(WidgetTheme.rowTintBackground)
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .clickable(actionStartActivity<MainActivity>(parameters = footerActionParameters())),
         verticalAlignment = Alignment.CenterVertically
@@ -376,7 +396,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
         Text(
             text = moreDaysText,
             style = TextStyle(
-                color = WidgetTheme.primaryText,
+                color = WidgetTheme.rowTintText,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -385,7 +405,7 @@ private fun UpcomingMoreDaysFooter(daysDropped: Int) {
         Text(
             text = openLabel,
             style = TextStyle(
-                color = WidgetTheme.secondaryText,
+                color = WidgetTheme.rowTintText,
                 fontSize = 12.sp
             )
         )
@@ -403,12 +423,12 @@ private fun UpcomingDayHeader(
 ) {
     val context = LocalContext.current
     val isToday = dayCode == todayDayCode
-    val background = if (isToday) WidgetTheme.headerBackground else WidgetTheme.dividerColor
+    val colors = dayHeaderColors(isToday)
 
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
-            .background(background)
+            .background(colors.background.provider())
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clickable(
                 actionStartActivity<MainActivity>(
@@ -423,7 +443,7 @@ private fun UpcomingDayHeader(
         Text(
             text = formatUpcomingDayHeader(dayCode, todayDayCode, tomorrowDayCode, todayLabel, tomorrowLabel),
             style = TextStyle(
-                color = WidgetTheme.primaryText,
+                color = colors.text.provider(),
                 fontSize = 13.sp,
                 fontWeight = if (isToday) FontWeight.Bold else FontWeight.Medium
             )

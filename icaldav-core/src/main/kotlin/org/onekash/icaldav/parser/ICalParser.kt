@@ -1109,19 +1109,19 @@ class ICalParser(
     }
 
     /**
-     * Unescape iCalendar text values per RFC 5545 Section 3.3.11.
+     * Decode the residual TEXT escape that ical4j's PropertyCodec misses.
      *
-     * Important: Order matters!
-     * Must unescape backslash BEFORE other escapes.
+     * RFC 5545 §3.3.11 defines `\N` (uppercase) as equivalent to `\n` for
+     * encoding a newline. ical4j 4.2.2's PropertyCodec regex only matches
+     * lowercase `\n`, so values arriving via `Property.value` for Encodable
+     * properties (Description/Summary/Location/...) have already had `\\`,
+     * `\;`, `\,`, and lowercase `\n` decoded — but not `\N`. We finish the job.
+     *
+     * Doing more here would double-decode and lose backslashes (e.g. `\\\\`
+     * would become `\` instead of `\\`).
      */
     private fun unescapeICalText(text: String): String {
-        return text
-            .replace("\\\\", "\u0000")  // Temp placeholder for literal backslash
-            .replace("\\n", "\n")
-            .replace("\\N", "\n")
-            .replace("\\,", ",")
-            .replace("\\;", ";")
-            .replace("\u0000", "\\")     // Restore literal backslash
+        return text.replace("\\N", "\n")
     }
 
     /**

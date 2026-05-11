@@ -280,6 +280,14 @@ fun HomeScreen(
     val todayYear = todayCal.get(JavaCalendar.YEAR)
     val todayMonth = todayCal.get(JavaCalendar.MONTH)
 
+    // Wall-clock snapshot for past-event dimming in the day-events pager.
+    // Re-read on resume so an event that ended while the app was backgrounded
+    // dims as soon as the user returns, without needing a sync write or swipe.
+    val (nowMs, todayDayCode) = remember(refreshKey) {
+        val now = System.currentTimeMillis()
+        now to DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
+    }
+
     // Focus requester for search field
     val searchFocusRequester = remember { FocusRequester() }
 
@@ -754,6 +762,8 @@ fun HomeScreen(
                                             todayYear = todayYear,
                                             todayMonth = todayMonth,
                                             timePattern = timePattern,
+                                            nowMs = nowMs,
+                                            todayDayCode = todayDayCode,
                                             onEventClick = onEventClick,
                                             onDeviceEventClick = onDeviceEventClick,
                                             onDateSelected = onDateSelected,
@@ -792,6 +802,8 @@ fun HomeScreen(
                                         todayYear = todayYear,
                                         todayMonth = todayMonth,
                                         timePattern = timePattern,
+                                        nowMs = nowMs,
+                                        todayDayCode = todayDayCode,
                                         onEventClick = onEventClick,
                                         onDeviceEventClick = onDeviceEventClick,
                                         onDateSelected = onDateSelected,
@@ -1254,6 +1266,8 @@ private fun ColumnScope.DayEventsPager(
     todayYear: Int,
     todayMonth: Int,
     timePattern: String = "h:mm a",
+    nowMs: Long,
+    todayDayCode: Int,
     onEventClick: (Event, Long?) -> Unit,
     onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
     onDateSelected: (Long) -> Unit,
@@ -1348,6 +1362,8 @@ private fun ColumnScope.DayEventsPager(
                 showEventEmojis = uiState.showEventEmojis,
                 timePattern = timePattern,
                 isLoading = !isLoaded && uiState.cacheRangeCenter != 0L,
+                nowMs = nowMs,
+                todayDayCode = todayDayCode,
                 onEventClick = onEventClick,
                 onDeviceEventClick = onDeviceEventClick
             )
@@ -1365,6 +1381,8 @@ private fun DayEventsPage(
     showEventEmojis: Boolean,
     timePattern: String = "h:mm a",
     isLoading: Boolean,
+    nowMs: Long,
+    todayDayCode: Int,
     onEventClick: (Event, Long?) -> Unit,
     onDeviceEventClick: (DisplayEvent.Device) -> Unit = {}
 ) {
@@ -1402,7 +1420,13 @@ private fun DayEventsPage(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 events.forEach { displayEvent ->
-                    val isPast = DateTimeUtils.isEventPast(displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay)
+                    val isPast = DateTimeUtils.isEventPast(
+                        endTs = displayEvent.endTs,
+                        endDay = displayEvent.endDay,
+                        isAllDay = displayEvent.isAllDay,
+                        nowMs = nowMs,
+                        todayDayCode = todayDayCode,
+                    )
 
                     EventCard(
                         displayEvent = displayEvent,

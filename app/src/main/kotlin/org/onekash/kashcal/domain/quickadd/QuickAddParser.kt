@@ -39,7 +39,8 @@ object QuickAddParser {
     fun parse(
         input: String,
         reference: LocalDateTime = LocalDateTime.now(),
-        locale: Locale = Locale.getDefault()
+        locale: Locale = Locale.getDefault(),
+        firstDayOfWeek: Int = 0,
     ): QuickAddResult {
         if (input.isBlank()) {
             return QuickAddResult(
@@ -66,7 +67,7 @@ object QuickAddParser {
             )
         }
 
-        val context = ParseContext(reference)
+        val context = ParseContext(reference, firstDayOfWeek = firstDayOfWeek)
         for (rule in rules) {
             rule.apply(tokens, context)
         }

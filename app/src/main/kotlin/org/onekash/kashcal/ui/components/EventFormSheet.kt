@@ -1552,14 +1552,3 @@ private fun convertTimezone(
     return Triple(midnightCal.timeInMillis, newCal.get(JavaCalendar.HOUR_OF_DAY), newCal.get(JavaCalendar.MINUTE))
 }
 
-// DateTimePickerCard, DateTimeSheet, and InlineDatePickerContent moved to ui/components/pickers/DateTimePicker.kt
-// Import DateTimePickerCard, DateTimeSheet, ActiveDateTimeSheet from there
-
-// RecurrencePickerCard and helper components moved to ui/components/pickers/RecurrencePicker.kt
-// Import RecurrencePickerCard from there
-
-// Duration presets and time conversion utilities moved to ui/components/pickers/DateTimePicker.kt
-// Import isMultiDay, shouldShowSeparatePickers, to24Hour, to12Hour from there
-
-// Recurrence utilities moved to domain/rrule/RruleBuilder.kt and domain/rrule/RruleModels.kt
-// Import RruleBuilder, RecurrenceFrequency, FrequencyOption, MonthlyPattern, EndCondition from there

@@ -325,4 +325,16 @@ class UpcomingWidgetContentTest {
         assertEquals(20260428, utcStart)
         assertEquals(20260507, utcEnd)
     }
+
+    // ==================== Header dimensions ====================
+
+    @Test
+    fun `header vertical padding is 6dp`() {
+        assertEquals(6, UPCOMING_HEADER_VERTICAL_PADDING_DP)
+    }
+
+    @Test
+    fun `header plus button is 32dp`() {
+        assertEquals(32, UPCOMING_HEADER_BUTTON_SIZE_DP)
+    }
 }

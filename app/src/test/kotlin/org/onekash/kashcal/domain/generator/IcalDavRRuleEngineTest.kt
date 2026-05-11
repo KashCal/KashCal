@@ -198,6 +198,100 @@ class IcalDavRRuleEngineTest {
         assertEquals(listOf(9, 12, 15, 9, 12, 15), hours)
     }
 
+    // -------------------------------------------------------------
+    // Issue #214 — fortnightly Sun/Tue/Thu starting on Sunday
+    // https://github.com/KashCal/KashCal/issues/214
+    //
+    // User intent: bi-weekly recurring event on Sun/Tue/Thu, starting on
+    // Sunday. Expected pattern is Sun/Tue/Thu in week N, skip week N+1,
+    // Sun/Tue/Thu in week N+2.
+    //
+    // Bug surface: when RruleBuilder emits no WKST (current behavior), ical4j
+    // defaults to WKST=MO per RFC 5545 §3.3.10. With INTERVAL=2 and DTSTART
+    // on Sunday, the Sunday's MO-anchored week ends on that Sunday, so week 1
+    // yields only Sun (Tue/Thu fall before DTSTART). Then INTERVAL=2 skips
+    // week 2 entirely. Week 3 yields Tue/Thu/Sun together — overlapping the
+    // user's second (Mon/Wed) fortnight on the same iso week.
+    //
+    // Test pair: lock both behaviors in.
+    //   (a) WKST omitted → currently produces the buggy pattern. Asserting
+    //       the buggy timestamps documents the engine's contract; the
+    //       follow-up fix lives upstream in RruleBuilder/RecurrenceRule.
+    //   (b) WKST=SU explicit → produces the user's expected pattern. This
+    //       is the ground truth the fix should match.
+    //
+    // Anchor: Sun May 4 2025, America/New_York. EDT throughout the window.
+    // -------------------------------------------------------------
+
+    @Test
+    fun `issue 214 — biweekly SuTuTh on Sunday with WKST=SU yields user's expected pattern`() {
+        // Ground truth: with WKST=SU, week 1 = Sun May 4 .. Sat May 10.
+        // BYDAY hits Sun 4, Tue 6, Thu 8. Skip week 2. Week 3 = Sun May 18 ..
+        // Sat May 24: Sun 18, Tue 20, Thu 22.
+        val sunMay4 = et(2025, 5, 4, 9)
+        val result = IcalDavRRuleEngine.expandToTimestamps(
+            rrule = "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SU;COUNT=6",
+            dtstartMs = sunMay4,
+            rangeStartMs = et(2025, 5, 1),
+            rangeEndMs = et(2025, 6, 1),
+            timezone = "America/New_York",
+            isAllDay = false,
+            rdateStrings = null,
+            exdateStrings = null,
+        )
+        assertEquals(
+            listOf(
+                et(2025, 5, 4, 9),  // Sun
+                et(2025, 5, 6, 9),  // Tue
+                et(2025, 5, 8, 9),  // Thu
+                et(2025, 5, 18, 9), // Sun
+                et(2025, 5, 20, 9), // Tue
+                et(2025, 5, 22, 9), // Thu
+            ),
+            result,
+        )
+    }
+
+    @Test
+    fun `issue 214 — biweekly SuTuTh on Sunday with WKST default (MO) skips same-week TuTh — buggy contract`() {
+        // Documents the buggy ical4j behavior when WKST is omitted (defaults
+        // to MO). With WKST=MO, week 1 = Mon Apr 28 .. Sun May 4. BYDAY
+        // candidates Tue Apr 29 + Thu May 1 + Sun May 4, but Apr 29 / May 1
+        // are < DTSTART so they're filtered out. Skip week 2. Week 3 = Mon
+        // May 12 .. Sun May 18: Tue May 13, Thu May 15, Sun May 18. Skip
+        // week 4. Week 5 = Mon May 26 .. Sun Jun 1: Tue May 27, Thu May 29,
+        // Sun Jun 1.
+        //
+        // This is what the user sees in production today. The fix is to make
+        // RruleBuilder emit WKST=SU (or first-day-of-week from locale) so
+        // SU groups with the surrounding TU/TH/etc. — NOT to change this
+        // engine. If this test starts failing because the engine default
+        // changed, the upstream fix needs to land alongside it.
+        val sunMay4 = et(2025, 5, 4, 9)
+        val result = IcalDavRRuleEngine.expandToTimestamps(
+            rrule = "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;COUNT=7",
+            dtstartMs = sunMay4,
+            rangeStartMs = et(2025, 5, 1),
+            rangeEndMs = et(2025, 6, 5),
+            timezone = "America/New_York",
+            isAllDay = false,
+            rdateStrings = null,
+            exdateStrings = null,
+        )
+        assertEquals(
+            listOf(
+                et(2025, 5, 4, 9),  // Sun (week 1 — alone, Tue/Thu fell before DTSTART)
+                et(2025, 5, 13, 9), // Tue (week 3)
+                et(2025, 5, 15, 9), // Thu (week 3)
+                et(2025, 5, 18, 9), // Sun (week 3)
+                et(2025, 5, 27, 9), // Tue (week 5)
+                et(2025, 5, 29, 9), // Thu (week 5)
+                et(2025, 6, 1, 9),  // Sun (week 5)
+            ),
+            result,
+        )
+    }
+
     @Test
     fun `all-day WEEKLY BYDAY=MO stays on Monday regardless of timezone`() {
         // Validates quirk (a) handling — all-day forces UTC.

@@ -51,6 +51,63 @@ class RruleBuilderTest {
         assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH", result)
     }
 
+    // ==================== WKST Emission (Issue 214) ====================
+    // RFC 5545 §3.3.10: WKST is "only useful when a WEEKLY RECUR is set to
+    // repeat on multiple weekdays." We emit only when interval>=2 AND
+    // days.size>=2 — the surface where WKST actually changes occurrences.
+
+    @Test
+    fun `weekly with biweekly multi-day BYDAY and WKST=SU emits WKST`() {
+        // BYDAY order follows the builder's Monday-first DAY_ORDER (existing
+        // convention; RFC says BYDAY order doesn't affect expansion).
+        val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+        val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.SUNDAY)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH,SU;WKST=SU", result)
+    }
+
+    @Test
+    fun `weekly with biweekly multi-day BYDAY and WKST=MO emits WKST`() {
+        val days = setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+        val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.MONDAY)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH;WKST=MO", result)
+    }
+
+    @Test
+    fun `weekly with biweekly multi-day BYDAY and WKST=SA emits WKST`() {
+        val days = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+        val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.SATURDAY)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=SA,SU;WKST=SA", result)
+    }
+
+    @Test
+    fun `weekly interval=1 does not emit WKST even with wkst arg`() {
+        val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+        val result = RruleBuilder.weekly(1, days, wkst = DayOfWeek.SUNDAY)
+        assertEquals("FREQ=WEEKLY;BYDAY=TU,TH,SU", result)
+    }
+
+    @Test
+    fun `weekly empty days does not emit WKST even with wkst arg`() {
+        val result = RruleBuilder.weekly(2, emptySet(), wkst = DayOfWeek.SUNDAY)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2", result)
+    }
+
+    @Test
+    fun `weekly single-day BYDAY does not emit WKST even with wkst arg`() {
+        // RFC: WKST has no effect when only one day matches per week. Gate is
+        // safe for KashCal because all callers keep DTSTART's day in BYDAY.
+        val days = setOf(DayOfWeek.MONDAY)
+        val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.SUNDAY)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO", result)
+    }
+
+    @Test
+    fun `weekly with wkst=null preserves pre-WKST output (back-compat)`() {
+        val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
+        val result = RruleBuilder.weekly(2, days, wkst = null)
+        assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH,SU", result)
+    }
+
     @Test
     fun `monthly returns simple FREQ MONTHLY`() {
         assertEquals("FREQ=MONTHLY", RruleBuilder.monthly())

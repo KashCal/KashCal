@@ -113,10 +113,10 @@ class VTimezoneGenerator(
             try {
                 ZoneId.of(tzid) // Validate tzid exists
 
-                appendLine("BEGIN:VTIMEZONE")
-                appendLine("TZID:$tzid")
-                appendLine("TZURL:$tzurl")
-                appendLine("END:VTIMEZONE")
+                crlfLine("BEGIN:VTIMEZONE")
+                crlfLine("TZID:$tzid")
+                crlfLine("TZURL:$tzurl")
+                crlfLine("END:VTIMEZONE")
             } catch (e: Exception) {
                 // Skip invalid timezone IDs
             }
@@ -244,12 +244,12 @@ class VTimezoneGenerator(
             val zoneId = ZoneId.of(tzid)
             val rules = zoneId.rules
 
-            builder.appendLine("BEGIN:VTIMEZONE")
-            builder.appendLine("TZID:$tzid")
+            builder.crlfLine("BEGIN:VTIMEZONE")
+            builder.crlfLine("TZID:$tzid")
 
             // Add TZURL if requested
             if (includeTzurl) {
-                builder.appendLine("TZURL:${getTzurl(tzid)}")
+                builder.crlfLine("TZURL:${getTzurl(tzid)}")
             }
 
             // Get transition rules for repeating DST patterns
@@ -266,7 +266,7 @@ class VTimezoneGenerator(
                 }
             }
 
-            builder.appendLine("END:VTIMEZONE")
+            builder.crlfLine("END:VTIMEZONE")
         } catch (e: Exception) {
             // Skip invalid timezone IDs - return empty content
         }
@@ -279,12 +279,12 @@ class VTimezoneGenerator(
         val offsetStr = formatOffset(offset)
         val abbrev = tzid.substringAfterLast("/").take(4).uppercase()
 
-        builder.appendLine("BEGIN:STANDARD")
-        builder.appendLine("DTSTART:19700101T000000")
-        builder.appendLine("TZOFFSETFROM:$offsetStr")
-        builder.appendLine("TZOFFSETTO:$offsetStr")
-        builder.appendLine("TZNAME:$abbrev")
-        builder.appendLine("END:STANDARD")
+        builder.crlfLine("BEGIN:STANDARD")
+        builder.crlfLine("DTSTART:19700101T000000")
+        builder.crlfLine("TZOFFSETFROM:$offsetStr")
+        builder.crlfLine("TZOFFSETTO:$offsetStr")
+        builder.crlfLine("TZNAME:$abbrev")
+        builder.crlfLine("END:STANDARD")
     }
 
     /**
@@ -296,7 +296,7 @@ class VTimezoneGenerator(
         val isDst = rule.offsetAfter.totalSeconds > rule.offsetBefore.totalSeconds
         val componentType = if (isDst) "DAYLIGHT" else "STANDARD"
 
-        builder.appendLine("BEGIN:$componentType")
+        builder.crlfLine("BEGIN:$componentType")
 
         // DTSTART: Use 1970 as base year per common practice
         val month = rule.month.value
@@ -311,21 +311,21 @@ class VTimezoneGenerator(
             time.minute,
             time.second
         )
-        builder.appendLine("DTSTART:$dtstart")
+        builder.crlfLine("DTSTART:$dtstart")
 
         // RRULE for recurring transition
         val rrule = buildRrule(rule)
-        builder.appendLine("RRULE:$rrule")
+        builder.crlfLine("RRULE:$rrule")
 
         // Offsets
-        builder.appendLine("TZOFFSETFROM:${formatOffset(rule.offsetBefore)}")
-        builder.appendLine("TZOFFSETTO:${formatOffset(rule.offsetAfter)}")
+        builder.crlfLine("TZOFFSETFROM:${formatOffset(rule.offsetBefore)}")
+        builder.crlfLine("TZOFFSETTO:${formatOffset(rule.offsetAfter)}")
 
         // Timezone abbreviation - use standard Java API to get proper name
         val abbrev = getTimezoneAbbreviation(zoneId, rule.offsetAfter, isDst)
-        builder.appendLine("TZNAME:$abbrev")
+        builder.crlfLine("TZNAME:$abbrev")
 
-        builder.appendLine("END:$componentType")
+        builder.crlfLine("END:$componentType")
     }
 
     /**

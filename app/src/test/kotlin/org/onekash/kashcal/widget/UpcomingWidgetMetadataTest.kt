@@ -1,0 +1,87 @@
+package org.onekash.kashcal.widget
+
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import org.onekash.kashcal.testutil.resolveProjectRoot
+import java.io.File
+
+/**
+ * Locks the declared dimensions in `upcoming_widget_info.xml`.
+ *
+ * Reads the source XML directly (not via Android resources) so the assertions
+ * match the literal text developers see in the file — Robolectric returns
+ * formatted dimension strings ("180.0dip") which would make these tests
+ * brittle. Plain JUnit, no Android runtime needed.
+ *
+ * The test asserts both the changed values (resize floor + minWidth/Height)
+ * and the unchanged ones (targetCellWidth/Height, etc.) so accidental
+ * regression of either is caught.
+ */
+class UpcomingWidgetMetadataTest {
+
+    private val xmlText: String =
+        File(resolveProjectRoot(), "app/src/main/res/xml/upcoming_widget_info.xml").readText()
+
+    @Test
+    fun `minWidth is 180dp`() {
+        assertContainsAttr("minWidth", "180dp")
+    }
+
+    @Test
+    fun `minHeight is 130dp`() {
+        assertContainsAttr("minHeight", "130dp")
+    }
+
+    @Test
+    fun `minResizeWidth is 160dp`() {
+        assertContainsAttr("minResizeWidth", "160dp")
+    }
+
+    @Test
+    fun `minResizeHeight is 130dp`() {
+        assertContainsAttr("minResizeHeight", "130dp")
+    }
+
+    @Test
+    fun `targetCellWidth stays 4`() {
+        assertContainsAttr("targetCellWidth", "4")
+    }
+
+    @Test
+    fun `targetCellHeight stays 4`() {
+        assertContainsAttr("targetCellHeight", "4")
+    }
+
+    @Test
+    fun `maxResizeWidth stays 400dp`() {
+        assertContainsAttr("maxResizeWidth", "400dp")
+    }
+
+    @Test
+    fun `maxResizeHeight stays 500dp`() {
+        assertContainsAttr("maxResizeHeight", "500dp")
+    }
+
+    @Test
+    fun `resizeMode stays horizontal vertical`() {
+        assertContainsAttr("resizeMode", "horizontal|vertical")
+    }
+
+    @Test
+    fun `widgetCategory stays home_screen`() {
+        assertContainsAttr("widgetCategory", "home_screen")
+    }
+
+    @Test
+    fun `updatePeriodMillis stays 1800000`() {
+        assertContainsAttr("updatePeriodMillis", "1800000")
+    }
+
+    private fun assertContainsAttr(name: String, value: String) {
+        val needle = "android:$name=\"$value\""
+        assertTrue(
+            "Expected $needle in upcoming_widget_info.xml",
+            xmlText.contains(needle)
+        )
+    }
+}

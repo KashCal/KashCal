@@ -3,6 +3,7 @@ package org.onekash.kashcal.domain.quickadd.rule
 import org.onekash.kashcal.domain.quickadd.tokenizer.Token
 import org.onekash.kashcal.domain.quickadd.tokenizer.TokenType
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
@@ -118,7 +119,8 @@ object RecurrenceRule : ParseRule {
                                 // Rebuild rrule with BYDAY for weekly
                                 val unit = unitToken.value as ChronoUnit
                                 val rruleWithDay = if (unit == ChronoUnit.WEEKS) {
-                                    RruleBuilder.weekly(interval = interval, days = setOf(day))
+                                    val wkstDow = DateTimeUtils.resolveFirstDayOfWeekAsDow(context.firstDayOfWeek)
+                                    RruleBuilder.weekly(interval = interval, days = setOf(day), wkst = wkstDow)
                                 } else {
                                     rrule
                                 }
