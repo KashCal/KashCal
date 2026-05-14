@@ -5,18 +5,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.R
+import org.onekash.kashcal.di.ApplicationScope
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
@@ -131,6 +135,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val backupImporter: SettingsBackupImporter,
     private val permissionChecker: PermissionChecker,
     private val icsScheduler: IcsScheduler,
+    @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
     // Account connection state
@@ -178,9 +183,18 @@ class AccountSettingsViewModel @Inject constructor(
     private val _writableDeviceCalendarGroups = MutableStateFlow<List<CalendarGroup>>(emptyList())
     val writableDeviceCalendarGroups: StateFlow<List<CalendarGroup>> = _writableDeviceCalendarGroups.asStateFlow()
 
-    // ICS Subscriptions
-    private val _subscriptions = MutableStateFlow<List<IcsSubscriptionUiModel>>(emptyList())
-    val subscriptions: StateFlow<List<IcsSubscriptionUiModel>> = _subscriptions.asStateFlow()
+    // ICS Subscriptions — exposed [subscriptions] filters out the row in the
+    // delete-with-undo window so it disappears immediately on swipe (issue #133).
+    private val _subscriptionsRaw = MutableStateFlow<List<IcsSubscriptionUiModel>>(emptyList())
+    private val _pendingSubscriptionDeletionId = MutableStateFlow<Long?>(null)
+    val subscriptions: StateFlow<List<IcsSubscriptionUiModel>> =
+        combine(_subscriptionsRaw, _pendingSubscriptionDeletionId) { raw, pending ->
+            if (pending == null) raw else raw.filter { it.id != pending }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
 
     private val _subscriptionSyncing = MutableStateFlow(false)
     val subscriptionSyncing: StateFlow<Boolean> = _subscriptionSyncing.asStateFlow()
@@ -430,7 +444,7 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             eventCoordinator.getAllIcsSubscriptions().collect { entities ->
                 // Map entity to UI model
-                _subscriptions.value = entities.map { entity ->
+                val mapped = entities.map { entity ->
                     IcsSubscriptionUiModel(
                         id = entity.id,
                         name = entity.name,
@@ -442,6 +456,17 @@ class AccountSettingsViewModel @Inject constructor(
                         syncIntervalHours = entity.syncIntervalHours,
                         eventTypeId = entity.calendarId
                     )
+                }
+                _subscriptionsRaw.value = mapped
+
+                // If the pending row vanished externally (server-side delete
+                // arrived during the undo window), clear pending so a stray
+                // settle doesn't try to re-delete a non-existent row.
+                val pending = _pendingSubscriptionDeletionId.value
+                if (pending != null && mapped.none { it.id == pending }) {
+                    _pendingSubscriptionDeletionId.value = null
+                    _uiState.update { it.copy(pendingSubscriptionDeletionId = null) }
+                    clearSnackbar()
                 }
             }
         }
@@ -1415,7 +1440,12 @@ class AccountSettingsViewModel @Inject constructor(
      * @param name Display name for the subscription
      * @param color Calendar color (ARGB integer)
      */
-    fun onAddSubscription(url: String, name: String, color: Int) {
+    fun onAddSubscription(
+        url: String,
+        name: String,
+        color: Int,
+        duplicateUrlMessage: String? = null,
+    ) {
         viewModelScope.launch {
             Log.i(TAG, "Adding subscription: $url, $name")
 
@@ -1428,20 +1458,116 @@ class AccountSettingsViewModel @Inject constructor(
 
                 is IcsSubscriptionRepository.SubscriptionResult.Error -> {
                     Log.e(TAG, "Failed to add subscription: ${result.message}")
-                    // Could show error to user via separate error state
+                    if (result.isDuplicate && duplicateUrlMessage != null) {
+                        showSnackbar(duplicateUrlMessage)
+                    }
                 }
             }
         }
     }
 
     /**
-     * Delete an ICS subscription and all its events.
+     * Stage an ICS subscription for deletion behind a snackbar with an Undo action.
+     *
+     * Behavior (issue #133):
+     * - The row is filtered out of [subscriptions] immediately.
+     * - The deletion is *not* committed yet — [eventCoordinator.removeIcsSubscription]
+     *   only fires when [onSubscriptionDeletionSettled] is called (snackbar timeout
+     *   or dismissal).
+     * - If a prior pending deletion exists, it is committed before the new one
+     *   is staged (eager-replace semantics; matches Material's "snackbar replaces
+     *   snackbar" UX).
+     *
+     * @param subscriptionId The subscription to remove.
+     * @param removedMessage Pre-localized snackbar message (e.g. "Subscription removed").
+     *   Resolved at the call site so the ViewModel can stay [Context]-free.
+     * @param undoActionLabel Pre-localized action label (e.g. "Undo").
      */
-    fun onDeleteSubscription(subscriptionId: Long) {
-        viewModelScope.launch {
-            Log.i(TAG, "Deleting subscription: $subscriptionId")
-            eventCoordinator.removeIcsSubscription(subscriptionId)
+    fun onDeleteSubscription(
+        subscriptionId: Long,
+        removedMessage: String,
+        undoActionLabel: String
+    ) {
+        // Eager-replace: settle any prior pending deletion before staging the
+        // new one so the user can never undo the wrong row.
+        val prior = _pendingSubscriptionDeletionId.value
+        if (prior != null && prior != subscriptionId) {
+            Log.i(TAG, "Settling prior pending deletion before staging new: $prior")
+            commitSubscriptionDeletion(prior)
         }
+
+        Log.i(TAG, "Staging subscription deletion (with undo): $subscriptionId")
+        _pendingSubscriptionDeletionId.value = subscriptionId
+        _uiState.update { it.copy(pendingSubscriptionDeletionId = subscriptionId) }
+        showSnackbar(
+            message = removedMessage,
+            actionLabel = undoActionLabel,
+            action = { onUndoSubscriptionDeletion() }
+        )
+    }
+
+    /**
+     * Cancel a pending ICS subscription deletion. No persistent state is changed.
+     * Idempotent: safe to call when no deletion is pending.
+     */
+    fun onUndoSubscriptionDeletion() {
+        val pending = _pendingSubscriptionDeletionId.value ?: return
+        Log.i(TAG, "Undo pending subscription deletion: $pending")
+        _pendingSubscriptionDeletionId.value = null
+        _uiState.update { it.copy(pendingSubscriptionDeletionId = null) }
+        clearSnackbar()
+    }
+
+    /**
+     * Commit a pending ICS subscription deletion via the coordinator.
+     * Called by the snackbar host on `Dismissed` (timeout, navigate-away,
+     * snackbar replaced).
+     *
+     * Idempotent: a no-op if no deletion is pending. Material 3 may fire
+     * `Dismissed` after `ActionPerformed`; this guard ensures we never commit
+     * after the user undid.
+     */
+    fun onSubscriptionDeletionSettled() {
+        val pending = _pendingSubscriptionDeletionId.value ?: return
+        Log.i(TAG, "Committing pending subscription deletion: $pending")
+        _pendingSubscriptionDeletionId.value = null
+        _uiState.update { it.copy(pendingSubscriptionDeletionId = null) }
+        clearSnackbar()
+        commitSubscriptionDeletion(pending)
+    }
+
+    /**
+     * Commit any pending subscription deletion on ViewModel destruction.
+     *
+     * The snackbar's `Dismissed` callback is the normal trigger for
+     * [onSubscriptionDeletionSettled], but when the Activity finish()es
+     * mid-undo-window the LaunchedEffect coroutine throws
+     * CancellationException and `Dismissed` is never delivered. This is
+     * the fallback so the deletion still commits (issue #133, v23.7.9).
+     */
+    override fun onCleared() {
+        val pending = _pendingSubscriptionDeletionId.value
+        if (pending != null) {
+            Log.i(TAG, "Committing pending deletion on ViewModel destruction: $pending")
+            commitSubscriptionDeletion(pending)
+        }
+        super.onCleared()
+    }
+
+    /**
+     * Test-only hook for [onCleared]. Kotlin's [ViewModel.onCleared] is
+     * `protected`, so tests can't call it directly without subclassing.
+     */
+    @androidx.annotation.VisibleForTesting
+    internal fun onClearedForTest() = onCleared()
+
+    /**
+     * Run the subscription delete on [applicationScope] so it survives
+     * Activity destroy mid-undo-window (issue #133). All commit paths
+     * funnel through here so the scope choice can't drift.
+     */
+    private fun commitSubscriptionDeletion(subscriptionId: Long) {
+        applicationScope.launch { eventCoordinator.removeIcsSubscription(subscriptionId) }
     }
 
     /**
@@ -1880,17 +2006,36 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Snackbar ====================
 
     /**
-     * Show a snackbar message to the user.
+     * Show a snackbar message to the user. Optional action turns the snackbar
+     * into a Material "snackbar with action" (used by the subscription
+     * delete-with-undo flow, issue #133).
      */
-    fun showSnackbar(message: String) {
-        _uiState.update { it.copy(pendingSnackbarMessage = message) }
+    fun showSnackbar(
+        message: String,
+        actionLabel: String? = null,
+        action: (() -> Unit)? = null
+    ) {
+        _uiState.update {
+            it.copy(
+                pendingSnackbarMessage = message,
+                pendingSnackbarActionLabel = actionLabel,
+                pendingSnackbarAction = action
+            )
+        }
     }
 
     /**
-     * Clear the pending snackbar message after it's shown.
+     * Clear the pending snackbar after it's shown — including any action label
+     * and callback set via [showSnackbar].
      */
     fun clearSnackbar() {
-        _uiState.update { it.copy(pendingSnackbarMessage = null) }
+        _uiState.update {
+            it.copy(
+                pendingSnackbarMessage = null,
+                pendingSnackbarActionLabel = null,
+                pendingSnackbarAction = null
+            )
+        }
     }
 
     // ==================== Backup & Restore ====================

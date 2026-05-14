@@ -104,6 +104,17 @@ data class AccountSettingsUiState(
     val prefillSubscriptionUrl: String? = null,
     /** Pending snackbar message to display */
     val pendingSnackbarMessage: String? = null,
+    /** Action label for the pending snackbar (null = no action button shown) */
+    val pendingSnackbarActionLabel: String? = null,
+    /** Action callback invoked when the user taps the snackbar action */
+    val pendingSnackbarAction: (() -> Unit)? = null,
+    /**
+     * ID of the ICS subscription currently in the undo window.
+     * Set by [AccountSettingsViewModel.onDeleteSubscription], cleared by
+     * undo or settle. Filtered out of [AccountSettingsViewModel.subscriptions]
+     * so the row hides immediately while the snackbar is displayed.
+     */
+    val pendingSubscriptionDeletionId: Long? = null,
     /** Signal to finish Activity after successful initial iCloud setup */
     val pendingFinishActivity: Boolean = false,
     /** Show success sheet after account connection */

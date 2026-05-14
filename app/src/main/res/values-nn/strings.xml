@@ -398,6 +398,9 @@
     <string name="settings_contacts_permission_required">Kontaktløyve krevst</string>
     <string name="subscriptions_cd_back">Tilbake</string>
     <string name="subscriptions_cd_add">Legg til abonnement</string>
+    <string name="snackbar_subscription_removed">Abonnement fjerna</string>
+    <string name="snackbar_subscription_already_exists">Allereie abonnert på denne URL-en</string>
+    <string name="snackbar_action_undo">Angre</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNK</string>

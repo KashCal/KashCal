@@ -374,6 +374,9 @@
     <string name="settings_contacts_permission_required">Permissão de contatos necessária</string>
     <string name="subscriptions_cd_back">Voltar</string>
     <string name="subscriptions_cd_add">Adicionar assinatura</string>
+    <string name="snackbar_subscription_removed">Assinatura removida</string>
+    <string name="snackbar_action_undo">Desfazer</string>
+    <string name="snackbar_subscription_already_exists">Você já assina esta URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINCRONIZAÇÃO</string>

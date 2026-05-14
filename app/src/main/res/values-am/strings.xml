@@ -393,6 +393,9 @@
     <string name="settings_contacts_permission_required">የእውቂያዎች ፈቃድ ያስፈልጋል</string>
     <string name="subscriptions_cd_back">ተመለስ</string>
     <string name="subscriptions_cd_add">ምዝገባ አክል</string>
+    <string name="snackbar_subscription_removed">ምዝገባ ተወግዷል</string>
+    <string name="snackbar_action_undo">ቀልብስ</string>
+    <string name="snackbar_subscription_already_exists">ይህ URL ቀደም ሲል ተመዝግቧል</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ማመሳሰል</string>

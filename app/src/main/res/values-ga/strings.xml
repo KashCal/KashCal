@@ -386,6 +386,9 @@
     <string name="settings_contacts_permission_required">Tá cead Teagmhálaí ag teastáil</string>
     <string name="subscriptions_cd_back">Stiúir ar ais</string>
     <string name="subscriptions_cd_add">Cuir síntiús leis</string>
+    <string name="snackbar_subscription_removed">Síntiús bainte</string>
+    <string name="snackbar_subscription_already_exists">Síntiús cheana ar an URL seo</string>
+    <string name="snackbar_action_undo">Cealaigh</string>
 
     <!-- Account Detail Sheet -->
     <string name="account_detail_section_sync">SIONCRONÚ</string>

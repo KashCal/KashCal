@@ -362,6 +362,9 @@
     <string name="settings_contacts_permission_required">Reikalingas kontaktų leidimas</string>
     <string name="subscriptions_cd_back">Atgal</string>
     <string name="subscriptions_cd_add">Pridėti prenumeratą</string>
+    <string name="snackbar_subscription_removed">Prenumerata pašalinta</string>
+    <string name="snackbar_subscription_already_exists">Šis URL jau prenumeruojamas</string>
+    <string name="snackbar_action_undo">Atšaukti</string>
 
     <string name="account_detail_section_sync">SINCHRONIZAVIMAS</string>
     <string name="account_detail_section_calendars">KALENDORIAI</string>

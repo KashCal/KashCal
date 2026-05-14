@@ -4,8 +4,10 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -155,6 +157,7 @@ class BackupRestoreViewModelStateTest {
         backupImporter = backupImporter,
         permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker(),
         icsScheduler = org.onekash.kashcal.sync.scheduler.FakeIcsScheduler(),
+        applicationScope = CoroutineScope(SupervisorJob() + testDispatcher),
     )
 
     private fun envelope(

@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">Wymagane uprawnienie do kontaktów</string>
     <string name="subscriptions_cd_back">Wstecz</string>
     <string name="subscriptions_cd_add">Dodaj subskrypcję</string>
+    <string name="snackbar_subscription_removed">Subskrypcja usunięta</string>
+    <string name="snackbar_subscription_already_exists">Już zasubskrybowano ten URL</string>
+    <string name="snackbar_action_undo">Cofnij</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNCHRONIZACJA</string>

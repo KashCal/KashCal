@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">ସମ୍ପର୍କ ଅନୁମତି ଆବଶ୍ୟକ</string>
     <string name="subscriptions_cd_back">ପଛକୁ ନେଭିଗେଟ</string>
     <string name="subscriptions_cd_add">ସବସ୍କ୍ରିପସନ ଯୋଡ଼ନ୍ତୁ</string>
+    <string name="snackbar_subscription_removed">ସବସ୍କ୍ରିପସନ ହଟାଇ ଦିଆଗଲା</string>
+    <string name="snackbar_subscription_already_exists">ଏହି URLକୁ ଆଗରୁ ସବସ୍କ୍ରାଇବ କରାଯାଇଛି</string>
+    <string name="snackbar_action_undo">ପୂର୍ବାବସ୍ଥାକୁ ଫେରନ୍ତୁ</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ସିଙ୍କ</string>

@@ -374,6 +374,9 @@
     <string name="settings_contacts_permission_required">Kontakta permeso bezonata</string>
     <string name="subscriptions_cd_back">Navigu reen</string>
     <string name="subscriptions_cd_add">Aldoni abonon</string>
+    <string name="snackbar_subscription_removed">Abono forigita</string>
+    <string name="snackbar_subscription_already_exists">Jam abonita al ĉi tiu URL</string>
+    <string name="snackbar_action_undo">Malfari</string>
 
     <!-- Account Detail Sheet -->
     <string name="account_detail_section_sync">SINKRONIGO</string>

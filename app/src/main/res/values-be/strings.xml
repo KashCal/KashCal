@@ -362,6 +362,9 @@
     <string name="settings_contacts_permission_required">Патрэбен дазвол на доступ да кантактаў</string>
     <string name="subscriptions_cd_back">Назад</string>
     <string name="subscriptions_cd_add">Дадаць падпіску</string>
+    <string name="snackbar_subscription_removed">Падпіска выдалена</string>
+    <string name="snackbar_subscription_already_exists">Падпіска на гэты URL ужо існуе</string>
+    <string name="snackbar_action_undo">Адмяніць</string>
 
     <string name="account_detail_section_sync">СІНХРАНІЗАЦЫЯ</string>
     <string name="account_detail_section_calendars">КАЛЕНДАРЫ</string>

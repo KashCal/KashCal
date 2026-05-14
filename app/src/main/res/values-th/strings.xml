@@ -375,6 +375,9 @@
     <string name="settings_contacts_permission_required">ต้องการสิทธิ์ผู้ติดต่อ</string>
     <string name="subscriptions_cd_back">ย้อนกลับ</string>
     <string name="subscriptions_cd_add">เพิ่มการสมัครรับ</string>
+    <string name="snackbar_subscription_removed">ลบการสมัครรับแล้ว</string>
+    <string name="snackbar_subscription_already_exists">สมัครรับ URL นี้แล้ว</string>
+    <string name="snackbar_action_undo">เลิกทำ</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ซิงค์</string>

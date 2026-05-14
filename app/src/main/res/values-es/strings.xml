@@ -374,6 +374,9 @@
     <string name="settings_contacts_permission_required">Se requiere permiso de contactos</string>
     <string name="subscriptions_cd_back">Volver</string>
     <string name="subscriptions_cd_add">Añadir suscripción</string>
+    <string name="snackbar_subscription_removed">Suscripción eliminada</string>
+    <string name="snackbar_action_undo">Deshacer</string>
+    <string name="snackbar_subscription_already_exists">Ya estás suscrito a esta URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINCRONIZACIÓN</string>

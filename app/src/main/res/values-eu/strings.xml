@@ -374,6 +374,9 @@
     <string name="settings_contacts_permission_required">Kontaktuen baimena behar da</string>
     <string name="subscriptions_cd_back">Atzera joan</string>
     <string name="subscriptions_cd_add">Harpidetza gehitu</string>
+    <string name="snackbar_subscription_removed">Harpidetza kenduta</string>
+    <string name="snackbar_subscription_already_exists">Dagoeneko URL honetara harpidetuta</string>
+    <string name="snackbar_action_undo">Desegin</string>
 
     <!-- Account Detail Sheet -->
     <string name="account_detail_section_sync">SINKRONIZAZIOA</string>

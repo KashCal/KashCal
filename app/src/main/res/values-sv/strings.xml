@@ -398,6 +398,9 @@
     <string name="settings_contacts_permission_required">Kontaktbehörighet krävs</string>
     <string name="subscriptions_cd_back">Tillbaka</string>
     <string name="subscriptions_cd_add">Lägg till prenumeration</string>
+    <string name="snackbar_subscription_removed">Prenumeration borttagen</string>
+    <string name="snackbar_subscription_already_exists">Redan prenumererad på denna URL</string>
+    <string name="snackbar_action_undo">Ångra</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNK</string>

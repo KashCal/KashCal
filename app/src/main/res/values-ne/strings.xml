@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">सम्पर्क अनुमति आवश्यक</string>
     <string name="subscriptions_cd_back">पछाडि</string>
     <string name="subscriptions_cd_add">सदस्यता थप्नुहोस्</string>
+    <string name="snackbar_subscription_removed">सदस्यता हटाइयो</string>
+    <string name="snackbar_subscription_already_exists">यो URL मा पहिले नै सदस्यता लिइएको छ</string>
+    <string name="snackbar_action_undo">पूर्ववत गर्नुहोस्</string>
 
     <string name="account_detail_section_sync">सिंक</string>
     <string name="account_detail_section_calendars">क्यालेन्डरहरू</string>

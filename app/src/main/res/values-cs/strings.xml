@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">Vyžadováno oprávnění ke kontaktům</string>
     <string name="subscriptions_cd_back">Zpět</string>
     <string name="subscriptions_cd_add">Přidat odběr</string>
+    <string name="snackbar_subscription_removed">Odběr odstraněn</string>
+    <string name="snackbar_subscription_already_exists">Tato URL je již přidána jako odběr</string>
+    <string name="snackbar_action_undo">Vrátit zpět</string>
 
     <string name="account_detail_section_sync">SYNCHRONIZACE</string>
     <string name="account_detail_section_calendars">KALENDÁŘE</string>

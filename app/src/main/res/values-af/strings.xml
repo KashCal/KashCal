@@ -393,6 +393,9 @@
     <string name="settings_contacts_permission_required">Kontakte-toestemming benodig</string>
     <string name="subscriptions_cd_back">Navigeer terug</string>
     <string name="subscriptions_cd_add">Voeg intekening by</string>
+    <string name="snackbar_subscription_removed">Intekening verwyder</string>
+    <string name="snackbar_action_undo">Ontdoen</string>
+    <string name="snackbar_subscription_already_exists">Reeds ingeteken op hierdie URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINKRONISERING</string>

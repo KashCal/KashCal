@@ -5,8 +5,11 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import javax.inject.Qualifier
+import javax.inject.Singleton
 
 /**
  * Qualifier for IO dispatcher (disk/network operations).
@@ -28,6 +31,19 @@ annotation class DefaultDispatcher
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
 annotation class MainDispatcher
+
+/**
+ * Qualifier for the process-lifetime CoroutineScope. Use for fire-and-forget
+ * work that must outlive the ViewModel that initiated it (e.g., the deferred
+ * commit of a delete-with-undo flow when the user exits the Activity before
+ * the snackbar times out — see issue #133).
+ *
+ * Unlike viewModelScope, this scope is NOT cancelled when an Activity or
+ * ViewModel is destroyed. It dies only with the process.
+ */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 /**
  * Hilt module providing coroutine dispatchers.
@@ -73,4 +89,17 @@ object DispatcherModule {
     @Provides
     @MainDispatcher
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+
+    /**
+     * Provide the process-lifetime CoroutineScope.
+     *
+     * Used for fire-and-forget startup migrations and for the deferred
+     * commit of delete-with-undo flows that must outlive their Activity
+     * (issue #133).
+     */
+    @Provides
+    @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
 }

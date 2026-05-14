@@ -395,6 +395,12 @@
     <string name="settings_contacts_permission_required">Απαιτείται άδεια Επαφών</string>
     <string name="subscriptions_cd_back">Πίσω</string>
     <string name="subscriptions_cd_add">Προσθήκη συνδρομής</string>
+    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
+    <string name="snackbar_subscription_removed">Η συνδρομή αφαιρέθηκε</string>
+    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
+    <string name="snackbar_action_undo">Αναίρεση</string>
+    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
+    <string name="snackbar_subscription_already_exists">Υπάρχει ήδη συνδρομή σε αυτό το URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ΣΥΓΧΡΟΝΙΣΜΟΣ</string>

@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">Potrebno dovoljenje za stike</string>
     <string name="subscriptions_cd_back">Nazaj</string>
     <string name="subscriptions_cd_add">Dodaj naročnino</string>
+    <string name="snackbar_subscription_removed">Naročnina odstranjena</string>
+    <string name="snackbar_subscription_already_exists">Naročnina na ta URL že obstaja</string>
+    <string name="snackbar_action_undo">Razveljavi</string>
 
     <string name="account_detail_section_sync">SINHRONIZACIJA</string>
     <string name="account_detail_section_calendars">KOLEDARJI</string>

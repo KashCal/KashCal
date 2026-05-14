@@ -376,6 +376,9 @@
     <string name="settings_contacts_permission_required">Потрібен дозвіл на доступ до контактів</string>
     <string name="subscriptions_cd_back">Назад</string>
     <string name="subscriptions_cd_add">Додати підписку</string>
+    <string name="snackbar_subscription_removed">Підписку видалено</string>
+    <string name="snackbar_subscription_already_exists">Підписка на цей URL вже існує</string>
+    <string name="snackbar_action_undo">Скасувати</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">СИНХРОНІЗАЦІЯ</string>

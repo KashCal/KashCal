@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">ಸಂಪರ್ಕಗಳ ಅನುಮತಿ ಅಗತ್ಯ</string>
     <string name="subscriptions_cd_back">ಹಿಂದೆ ನ್ಯಾವಿಗೇಟ್ ಮಾಡಿ</string>
     <string name="subscriptions_cd_add">ಚಂದಾದಾರಿಕೆ ಸೇರಿಸಿ</string>
+    <string name="snackbar_subscription_removed">ಚಂದಾದಾರಿಕೆ ತೆಗೆಯಲಾಗಿದೆ</string>
+    <string name="snackbar_subscription_already_exists">ಈ URL ಗೆ ಈಗಾಗಲೇ ಚಂದಾದಾರರಾಗಿದ್ದೀರಿ</string>
+    <string name="snackbar_action_undo">ರದ್ದುಮಾಡಿ</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ಸಿಂಕ್</string>

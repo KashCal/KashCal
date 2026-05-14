@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">Potrebna dozvola za kontakte</string>
     <string name="subscriptions_cd_back">Nazad</string>
     <string name="subscriptions_cd_add">Dodaj pretplatu</string>
+    <string name="snackbar_subscription_removed">Pretplata uklonjena</string>
+    <string name="snackbar_subscription_already_exists">Već postoji pretplata na ovaj URL</string>
+    <string name="snackbar_action_undo">Poništi</string>
 
     <string name="account_detail_section_sync">SINHRONIZACIJA</string>
     <string name="account_detail_section_calendars">KALENDARI</string>

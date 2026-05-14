@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">ਸੰਪਰਕ ਇਜਾਜ਼ਤ ਲੋੜੀਂਦੀ ਹੈ</string>
     <string name="subscriptions_cd_back">ਪਿੱਛੇ ਜਾਓ</string>
     <string name="subscriptions_cd_add">ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਜੋੜੋ</string>
+    <string name="snackbar_subscription_removed">ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਹਟਾ ਦਿੱਤੀ ਗਈ</string>
+    <string name="snackbar_subscription_already_exists">ਇਸ URL ਦੀ ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਪਹਿਲਾਂ ਹੀ ਹੈ</string>
+    <string name="snackbar_action_undo">ਅਣਕੀਤਾ</string>
 
     <string name="account_detail_section_sync">ਸਿੰਕ</string>
     <string name="account_detail_section_calendars">ਕੈਲੰਡਰ</string>

@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">കോൺടാക്ട്സ് അനുമതി ആവശ്യമാണ്</string>
     <string name="subscriptions_cd_back">പിന്നിലേക്ക് നാവിഗേറ്റ് ചെയ്യുക</string>
     <string name="subscriptions_cd_add">സബ്സ്ക്രിപ്ഷൻ ചേർക്കുക</string>
+    <string name="snackbar_subscription_removed">സബ്സ്ക്രിപ്ഷൻ നീക്കം ചെയ്തു</string>
+    <string name="snackbar_subscription_already_exists">ഈ URL-ന് ഇതിനകം സബ്സ്ക്രൈബ് ചെയ്തിട്ടുണ്ട്</string>
+    <string name="snackbar_action_undo">പഴയപടിയാക്കുക</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">സിങ്ക്</string>

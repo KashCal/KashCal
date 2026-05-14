@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
@@ -215,14 +218,37 @@ class SettingsActivity : ComponentActivity() {
                 var showIcsImportSheet by remember { mutableStateOf(false) }
                 var icsImportEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
 
+                // Subscription snackbar strings (issue #133). Hoisted so both
+                // bind sites resolve them the same way and the ViewModel stays
+                // Context-free.
+                val subscriptionRemovedMessage = stringResource(R.string.snackbar_subscription_removed)
+                val subscriptionUndoLabel = stringResource(R.string.snackbar_action_undo)
+                val subscriptionAlreadyExistsMessage = stringResource(R.string.snackbar_subscription_already_exists)
+                val onDeleteSubscriptionWithUndo: (Long) -> Unit = { id ->
+                    viewModel.onDeleteSubscription(id, subscriptionRemovedMessage, subscriptionUndoLabel)
+                }
+                val onAddSubscriptionWithDuplicateGuard: (String, String, Int) -> Unit = { url, name, color ->
+                    viewModel.onAddSubscription(url, name, color, subscriptionAlreadyExistsMessage)
+                }
+
                 // Account connected success sheet state
                 @OptIn(ExperimentalMaterial3Api::class)
                 val accountConnectedSheetState = rememberModalBottomSheetState()
 
-                // Show snackbar when message is pending
-                LaunchedEffect(uiState.pendingSnackbarMessage) {
+                // Snackbar action (when present) belongs to the subscription
+                // delete-with-undo flow: ActionPerformed → undo, Dismissed → commit.
+                LaunchedEffect(uiState.pendingSnackbarMessage, uiState.pendingSnackbarActionLabel) {
                     uiState.pendingSnackbarMessage?.let { message ->
-                        snackbarHostState.showSnackbar(message)
+                        val action = uiState.pendingSnackbarAction
+                        val result = snackbarHostState.showSnackbar(
+                            message = message,
+                            actionLabel = uiState.pendingSnackbarActionLabel,
+                            duration = SnackbarDuration.Short
+                        )
+                        when (result) {
+                            SnackbarResult.ActionPerformed -> action?.invoke()
+                            SnackbarResult.Dismissed -> viewModel.onSubscriptionDeletionSettled()
+                        }
                         viewModel.clearSnackbar()
                     }
                 }
@@ -368,9 +394,9 @@ class SettingsActivity : ComponentActivity() {
                             SubscriptionsScreen(
                                 subscriptions = subscriptions,
                                 onNavigateBack = { showSubscriptionsScreen = false },
-                                onAddSubscription = viewModel::onAddSubscription,
+                                onAddSubscription = onAddSubscriptionWithDuplicateGuard,
                                 onToggleSubscription = viewModel::onToggleSubscription,
-                                onDeleteSubscription = viewModel::onDeleteSubscription,
+                                onDeleteSubscription = onDeleteSubscriptionWithUndo,
                                 onRefreshSubscription = viewModel::onRefreshSubscription,
                                 onUpdateSubscription = viewModel::onUpdateSubscription
                             )
@@ -415,9 +441,9 @@ class SettingsActivity : ComponentActivity() {
                             // ICS Subscriptions
                             subscriptions = subscriptions,
                             subscriptionSyncing = subscriptionSyncing,
-                            onAddSubscription = viewModel::onAddSubscription,
+                            onAddSubscription = onAddSubscriptionWithDuplicateGuard,
                             onHideAddSubscriptionDialog = viewModel::hideAddSubscriptionDialog,
-                            onDeleteSubscription = viewModel::onDeleteSubscription,
+                            onDeleteSubscription = onDeleteSubscriptionWithUndo,
                             onToggleSubscription = viewModel::onToggleSubscription,
                             onRefreshSubscription = viewModel::onRefreshSubscription,
                             onUpdateSubscription = viewModel::onUpdateSubscription,

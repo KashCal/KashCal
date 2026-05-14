@@ -84,7 +84,10 @@ class IcsSubscriptionRepository @Inject constructor(
         try {
             // Check for duplicate URL
             if (icsSubscriptionsDao.urlExists(normalizeUrl(url))) {
-                return@withContext SubscriptionResult.Error("Subscription already exists for this URL")
+                return@withContext SubscriptionResult.Error(
+                    message = "Subscription already exists for this URL",
+                    isDuplicate = true
+                )
             }
 
             // Ensure ICS account exists (auto-create on first subscription)
@@ -215,8 +218,25 @@ class IcsSubscriptionRepository @Inject constructor(
         Log.d(TAG, "Refreshing subscription: ${subscription.name}")
 
         try {
+            // Self-heal stuck subscriptions (#219 follow-up): if we hold
+            // conditional headers but have zero events stored locally, the
+            // local interpretation must have failed at some point (parser
+            // regression, schema reset, etc.). Drop the conditionals so the
+            // server returns 200 + body and we re-parse from scratch.
+            val hasCachedConditionals = subscription.etag != null || subscription.lastModified != null
+            val isStuckWithStaleConditionals = hasCachedConditionals && !eventsDao.anyByCalendarIdAndCaldavUrlPrefix(
+                calendarId = subscription.calendarId,
+                urlPrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
+            )
+            val effectiveSubscription = if (isStuckWithStaleConditionals) {
+                Log.i(TAG, "Subscription ${subscription.name} has cached conditional headers but 0 events; forcing full fetch")
+                subscription.copy(etag = null, lastModified = null)
+            } else {
+                subscription
+            }
+
             // Fetch ICS content
-            val fetchResult = fetchIcsContent(subscription)
+            val fetchResult = fetchIcsContent(effectiveSubscription)
 
             when (fetchResult) {
                 is FetchResult.NotModified -> {
@@ -237,6 +257,18 @@ class IcsSubscriptionRepository @Inject constructor(
                         calendarId = subscription.calendarId,
                         subscriptionId = subscriptionId
                     )
+
+                    // Don't cache the ETag for a parse failure (#219 follow-up,
+                    // durable fix). If the feed has BEGIN:VEVENT lines but our
+                    // parser returned zero events, we have a parser regression
+                    // — caching the ETag would make the next refresh hit 304
+                    // and never retry. Surface as an error instead.
+                    if (events.isEmpty() && fetchResult.content.contains("BEGIN:VEVENT")) {
+                        val message = "Parsed 0 events from non-empty feed"
+                        Log.w(TAG, "$message: ${subscription.name}")
+                        icsSubscriptionsDao.updateSyncError(subscriptionId, message)
+                        return@withContext SyncResult.Error(message)
+                    }
 
                     // Get calendar for color (needed for reminders)
                     val calendar = calendarsDao.getById(subscription.calendarId)
@@ -368,7 +400,7 @@ class IcsSubscriptionRepository @Inject constructor(
         var deleted = 0
 
         database.runInTransaction {
-            val sourcePrefix = "${IcsSubscription.SOURCE_PREFIX}:${subscriptionId}:"
+            val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
             val existingEvents = eventsDao.getByCalendarIdAndCaldavUrlPrefix(
                 calendarId = calendarId,
                 urlPrefix = sourcePrefix
@@ -535,7 +567,15 @@ class IcsSubscriptionRepository @Inject constructor(
 
     sealed class SubscriptionResult {
         data class Success(val subscription: IcsSubscription) : SubscriptionResult()
-        data class Error(val message: String) : SubscriptionResult()
+        data class Error(
+            val message: String,
+            /**
+             * True when the URL is already subscribed. Lets the UI distinguish
+             * "duplicate" from generic errors and show a localized message
+             * without parsing [message] (which is internal English text).
+             */
+            val isDuplicate: Boolean = false
+        ) : SubscriptionResult()
     }
 
     sealed class SyncResult {

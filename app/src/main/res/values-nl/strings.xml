@@ -398,6 +398,9 @@
     <string name="settings_contacts_permission_required">Contacttoestemming vereist</string>
     <string name="subscriptions_cd_back">Terug</string>
     <string name="subscriptions_cd_add">Abonnement toevoegen</string>
+    <string name="snackbar_subscription_removed">Abonnement verwijderd</string>
+    <string name="snackbar_subscription_already_exists">Al geabonneerd op deze URL</string>
+    <string name="snackbar_action_undo">Ongedaan maken</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNC</string>

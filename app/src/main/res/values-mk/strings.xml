@@ -395,6 +395,12 @@
     <string name="settings_contacts_permission_required">Потребна е дозвола за Контакти</string>
     <string name="subscriptions_cd_back">Назад</string>
     <string name="subscriptions_cd_add">Додај претплата</string>
+    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
+    <string name="snackbar_subscription_removed">Претплатата е отстранета</string>
+    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
+    <string name="snackbar_action_undo">Врати</string>
+    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
+    <string name="snackbar_subscription_already_exists">Веќе има претплата на овој URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">СИНХРОНИЗАЦИЈА</string>

@@ -58,7 +58,7 @@ object IcsParserService {
                             icalEvent = icalEvent,
                             rawIcal = null,
                             calendarId = calendarId,
-                            caldavUrl = "${IcsSubscription.SOURCE_PREFIX}:${subscriptionId}:${icalEvent.importId}",
+                            caldavUrl = "${IcsSubscription.eventSourcePrefix(subscriptionId)}${icalEvent.importId}",
                             etag = null
                         )
                     }

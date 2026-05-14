@@ -393,6 +393,9 @@
     <string name="settings_contacts_permission_required">Контактілер рұқсаты қажет</string>
     <string name="subscriptions_cd_back">Артқа</string>
     <string name="subscriptions_cd_add">Жазылым қосу</string>
+    <string name="snackbar_subscription_removed">Жазылым жойылды</string>
+    <string name="snackbar_action_undo">Болдырмау</string>
+    <string name="snackbar_subscription_already_exists">Бұл URL-ге қазірдің өзінде жазылған</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">СИНХРОНДАУ</string>

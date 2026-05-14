@@ -386,6 +386,9 @@
     <string name="settings_contacts_permission_required">Mae angen caniatâd Cysylltiadau</string>
     <string name="subscriptions_cd_back">Mynd yn ôl</string>
     <string name="subscriptions_cd_add">Ychwanegu tanysgrifiad</string>
+    <string name="snackbar_subscription_removed">Tanysgrifiad wedi\'i dynnu</string>
+    <string name="snackbar_subscription_already_exists">Eisoes wedi tanysgrifio i\'r URL hwn</string>
+    <string name="snackbar_action_undo">Dadwneud</string>
 
     <!-- Account Detail Sheet -->
     <string name="account_detail_section_sync">CYSONI</string>

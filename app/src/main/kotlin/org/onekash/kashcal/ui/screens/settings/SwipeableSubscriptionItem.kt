@@ -26,7 +26,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,15 +60,21 @@ fun SwipeableSubscriptionItem(
     onRefresh: (Long) -> Unit,
     onEdit: (IcsSubscriptionUiModel) -> Unit
 ) {
-    val dismissState = rememberSwipeToDismissBoxState()
-    val hasError = subscription.hasError()
-
-    // Trigger delete when swiped to EndToStart position
-    LaunchedEffect(dismissState.currentValue) {
-        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-            subscription.id?.let { onDelete(it) }
+    // Fire onDelete from confirmValueChange and reject the dismiss transition
+    // (return false). The row stays in Settled state visually; the StateFlow
+    // filter removes it from the LazyColumn, so the user sees a clean removal
+    // animation. Critically, this prevents stale EndToStart state from
+    // surviving an undo (issue #133): when the row reappears, dismissState
+    // is still Settled, not stuck mid-swipe.
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                subscription.id?.let { onDelete(it) }
+            }
+            false
         }
-    }
+    )
+    val hasError = subscription.hasError()
 
     SwipeToDismissBox(
         state = dismissState,

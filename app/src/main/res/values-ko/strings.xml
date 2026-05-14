@@ -375,6 +375,9 @@
     <string name="settings_contacts_permission_required">연락처 권한이 필요해요</string>
     <string name="subscriptions_cd_back">뒤로 가기</string>
     <string name="subscriptions_cd_add">구독 추가</string>
+    <string name="snackbar_subscription_removed">구독을 삭제했어요</string>
+    <string name="snackbar_subscription_already_exists">이미 이 URL을 구독하고 있어요</string>
+    <string name="snackbar_action_undo">실행 취소</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">동기화</string>

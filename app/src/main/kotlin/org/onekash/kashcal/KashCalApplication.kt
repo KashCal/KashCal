@@ -8,8 +8,6 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
@@ -17,6 +15,7 @@ import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.credential.CredentialMigration
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.di.ApplicationScope
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
@@ -80,7 +79,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var credentialMigration: CredentialMigration
 
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Inject
+    @ApplicationScope
+    lateinit var applicationScope: CoroutineScope
 
     override fun onCreate() {
         super.onCreate()

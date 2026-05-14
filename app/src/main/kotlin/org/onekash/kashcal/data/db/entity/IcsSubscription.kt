@@ -176,5 +176,13 @@ data class IcsSubscription(
          * Format: "ics_subscription:{subscriptionId}"
          */
         const val SOURCE_PREFIX = "ics_subscription"
+
+        /**
+         * The `caldav_url` prefix shared by all events imported from a given
+         * subscription. Used by event queries that scope to a subscription
+         * (e.g. orphan deletion, empty-state recovery).
+         */
+        fun eventSourcePrefix(subscriptionId: Long): String =
+            "$SOURCE_PREFIX:$subscriptionId:"
     }
 }

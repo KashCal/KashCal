@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">కాంటాక్ట్‌ల అనుమతి అవసరం</string>
     <string name="subscriptions_cd_back">వెనుకకు నావిగేట్ చేయి</string>
     <string name="subscriptions_cd_add">సబ్‌స్క్రిప్షన్ జోడించు</string>
+    <string name="snackbar_subscription_removed">సబ్‌స్క్రిప్షన్ తీసివేయబడింది</string>
+    <string name="snackbar_subscription_already_exists">ఈ URLకి ఇప్పటికే సబ్‌స్క్రిప్షన్ ఉంది</string>
+    <string name="snackbar_action_undo">చర్యరద్దు</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">సింక్</string>

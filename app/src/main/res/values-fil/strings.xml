@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">Kailangan ang Contacts permission</string>
     <string name="subscriptions_cd_back">Bumalik</string>
     <string name="subscriptions_cd_add">Magdagdag ng subscription</string>
+    <string name="snackbar_subscription_removed">Tinanggal ang subscription</string>
+    <string name="snackbar_subscription_already_exists">Naka-subscribe na sa URL na ito</string>
+    <string name="snackbar_action_undo">I-undo</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNC</string>

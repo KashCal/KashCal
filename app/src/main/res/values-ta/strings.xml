@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">தொடர்பு அனுமதி தேவை</string>
     <string name="subscriptions_cd_back">பின்செல்</string>
     <string name="subscriptions_cd_add">சந்தா சேர்</string>
+    <string name="snackbar_subscription_removed">சந்தா அகற்றப்பட்டது</string>
+    <string name="snackbar_subscription_already_exists">இந்த URL-க்கு ஏற்கனவே சந்தா செலுத்தப்பட்டுள்ளது</string>
+    <string name="snackbar_action_undo">செயல்தவிர்</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ஒத்திசைவு</string>

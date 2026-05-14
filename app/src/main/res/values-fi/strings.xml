@@ -376,6 +376,9 @@
     <string name="settings_contacts_permission_required">Yhteystietolupa vaaditaan</string>
     <string name="subscriptions_cd_back">Siirry takaisin</string>
     <string name="subscriptions_cd_add">Lisää tilaus</string>
+    <string name="snackbar_subscription_removed">Tilaus poistettu</string>
+    <string name="snackbar_subscription_already_exists">Tämä URL on jo tilattu</string>
+    <string name="snackbar_action_undo">Kumoa</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNKRONOINTI</string>

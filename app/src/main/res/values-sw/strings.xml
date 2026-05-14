@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">Ruhusa ya anwani inahitajika</string>
     <string name="subscriptions_cd_back">Rudi nyuma</string>
     <string name="subscriptions_cd_add">Ongeza usajili</string>
+    <string name="snackbar_subscription_removed">Usajili umeondolewa</string>
+    <string name="snackbar_subscription_already_exists">Tayari umejisajili kwa URL hii</string>
+    <string name="snackbar_action_undo">Tendua</string>
 
     <string name="account_detail_section_sync">KUSAWAZISHA</string>
     <string name="account_detail_section_calendars">KALENDA</string>

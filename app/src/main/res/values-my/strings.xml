@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">အဆက်အသွယ် ခွင့်ပြုချက် လိုအပ်</string>
     <string name="subscriptions_cd_back">နောက်သို့</string>
     <string name="subscriptions_cd_add">စာရင်းသွင်းမှု ထည့်</string>
+    <string name="snackbar_subscription_removed">စာရင်းသွင်းမှု ဖယ်ရှားပြီးပါပြီ</string>
+    <string name="snackbar_subscription_already_exists">ဤ URL ကို စာရင်းသွင်းပြီးပြီ</string>
+    <string name="snackbar_action_undo">ပြန်ပြင်ရန်</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ချိန်ကိုက်</string>

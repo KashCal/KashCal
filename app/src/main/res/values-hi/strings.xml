@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">संपर्क अनुमति आवश्यक</string>
     <string name="subscriptions_cd_back">वापस जाएँ</string>
     <string name="subscriptions_cd_add">सदस्यता जोड़ें</string>
+    <string name="snackbar_subscription_removed">सदस्यता हटा दी गई</string>
+    <string name="snackbar_subscription_already_exists">इस URL की सदस्यता पहले से है</string>
+    <string name="snackbar_action_undo">पूर्ववत करें</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">सिंक</string>

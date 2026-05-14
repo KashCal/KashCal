@@ -375,6 +375,9 @@
     <string name="settings_contacts_permission_required">Cần quyền truy cập danh bạ</string>
     <string name="subscriptions_cd_back">Quay lại</string>
     <string name="subscriptions_cd_add">Thêm đăng ký</string>
+    <string name="snackbar_subscription_removed">Đã xóa đăng ký</string>
+    <string name="snackbar_subscription_already_exists">Đã đăng ký URL này</string>
+    <string name="snackbar_action_undo">Hoàn tác</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">ĐỒNG BỘ</string>

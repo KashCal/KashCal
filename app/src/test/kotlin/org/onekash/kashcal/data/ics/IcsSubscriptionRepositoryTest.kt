@@ -8,6 +8,8 @@ import io.mockk.slot
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -414,15 +416,140 @@ class IcsSubscriptionRepositoryTest {
 
     // ==================== refreshSubscription Tests ====================
 
+    /** Stub the EXISTS check for events from this subscription. */
+    private fun stubLocalEventsExist(present: Boolean) {
+        coEvery {
+            eventsDao.anyByCalendarIdAndCaldavUrlPrefix(any(), any())
+        } returns present
+    }
+
     @Test
     fun `refreshSubscription returns NotModified when ETag matches`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(etag = "\"etag-123\"")
+        stubLocalEventsExist(true)
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.NotModified
 
         val result = repository.refreshSubscription(1L)
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.NotModified)
         coVerify { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `refreshSubscription drops conditional headers when local has 0 events but cached ETag`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(
+            etag = "\"stale-etag\"",
+            lastModified = "Mon, 01 Jan 2024 00:00:00 GMT"
+        )
+        stubLocalEventsExist(false)
+        val captured = slot<IcsSubscription>()
+        coEvery { icsFetcher.fetch(capture(captured)) } returns IcsFetcher.FetchResult.Success(
+            content = icsContent,
+            etag = "\"new-etag\"",
+            lastModified = "Tue, 13 May 2026 00:00:00 GMT"
+        )
+        coEvery { eventsDao.insert(any()) } returns 1L
+
+        repository.refreshSubscription(1L)
+
+        assertNull("etag must be dropped to force full fetch", captured.captured.etag)
+        assertNull("lastModified must be dropped", captured.captured.lastModified)
+    }
+
+    @Test
+    fun `refreshSubscription preserves conditional headers when events are stored`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription.copy(
+            etag = "\"healthy-etag\"",
+            lastModified = "Mon, 01 Jan 2024 00:00:00 GMT"
+        )
+        stubLocalEventsExist(true)
+        val captured = slot<IcsSubscription>()
+        coEvery { icsFetcher.fetch(capture(captured)) } returns IcsFetcher.FetchResult.NotModified
+
+        repository.refreshSubscription(1L)
+
+        assertEquals("\"healthy-etag\"", captured.captured.etag)
+        assertEquals("Mon, 01 Jan 2024 00:00:00 GMT", captured.captured.lastModified)
+    }
+
+    @Test
+    fun `refreshSubscription refuses to cache ETag when parser returns 0 from a feed containing VEVENT`() = runTest {
+        // Feed has BEGIN:VEVENT lines but parser returned no events. This is
+        // the parser-regression class of bug — don't cache the ETag, surface
+        // an error so a future refresh re-attempts from a clean conditional
+        // state. (#219 follow-up; durable fix.)
+        val brokenContent = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:event-1@test.com
+            DTSTAMP;VALUE=NONSENSE:malformed
+            DTSTART:20260115T100000Z
+            SUMMARY:Test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        // Synthetic content: VEVENT with missing required DTSTART so the
+        // real parser skips it. IcsParserService is an `object` and can't
+        // be mocked.
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Test//Test//EN\nBEGIN:VEVENT\nUID:bad\nEND:VEVENT\nEND:VCALENDAR",
+            etag = "\"new-etag\"",
+            lastModified = null
+        )
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(
+            "expected SyncResult.Error, got $result",
+            result is IcsSubscriptionRepository.SyncResult.Error
+        )
+        val errorMessage = (result as IcsSubscriptionRepository.SyncResult.Error).message
+        assertTrue(
+            "error message must mention 'Parsed 0 events': was '$errorMessage'",
+            errorMessage.contains("Parsed 0 events")
+        )
+        // Critically: ETag must NOT have been cached.
+        coVerify(exactly = 0) {
+            icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any())
+        }
+        coVerify { icsSubscriptionsDao.updateSyncError(eq(1L), any()) }
+    }
+
+    @Test
+    fun `refreshSubscription accepts 0 events when feed contains no VEVENT (legitimately empty)`() = runTest {
+        // Some servers serve an empty VCALENDAR (no VEVENT). Parser correctly
+        // returns 0; we must NOT treat this as a parse failure — cache the
+        // ETag and report Success so subsequent NotModified responses work.
+        val emptyContent = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VTODO
+            UID:todo-1@test.com
+            SUMMARY:Buy milk
+            END:VTODO
+            END:VCALENDAR
+        """.trimIndent()
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = emptyContent,
+            etag = "\"empty-feed-etag\"",
+            lastModified = null
+        )
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(
+            "expected Success(0 added) for legitimately empty feed, got $result",
+            result is IcsSubscriptionRepository.SyncResult.Success
+        )
+        coVerify { icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any()) }
+        coVerify(exactly = 0) {
+            icsSubscriptionsDao.updateSyncError(any(), any())
+        }
     }
 
     @Test

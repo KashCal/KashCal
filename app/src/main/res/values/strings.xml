@@ -553,6 +553,12 @@
     <!-- Content descriptions -->
     <string name="subscriptions_cd_back">Navigate back</string>
     <string name="subscriptions_cd_add">Add subscription</string>
+    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
+    <string name="snackbar_subscription_removed">Subscription removed</string>
+    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
+    <string name="snackbar_action_undo">Undo</string>
+    <!-- Snackbar shown when the user tries to add an ICS subscription whose URL is already subscribed. -->
+    <string name="snackbar_subscription_already_exists">Already subscribed to this URL</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <!-- Section headers (uppercase convention — translate word, keep uppercase if locale uses it) -->

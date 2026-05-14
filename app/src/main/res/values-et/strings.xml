@@ -376,6 +376,9 @@
     <string name="settings_contacts_permission_required">Kontaktide luba on vajalik</string>
     <string name="subscriptions_cd_back">Mine tagasi</string>
     <string name="subscriptions_cd_add">Lisa tellimus</string>
+    <string name="snackbar_subscription_removed">Tellimus eemaldatud</string>
+    <string name="snackbar_subscription_already_exists">See URL on juba tellitud</string>
+    <string name="snackbar_action_undo">Võta tagasi</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SÜNKROONIMINE</string>

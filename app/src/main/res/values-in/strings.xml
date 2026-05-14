@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">Izin kontak diperlukan</string>
     <string name="subscriptions_cd_back">Kembali</string>
     <string name="subscriptions_cd_add">Tambah langganan</string>
+    <string name="snackbar_subscription_removed">Langganan dihapus</string>
+    <string name="snackbar_subscription_already_exists">URL ini sudah dilanggan</string>
+    <string name="snackbar_action_undo">Urungkan</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SINKRONISASI</string>

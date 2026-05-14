@@ -79,6 +79,14 @@ class AccountSettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    // Independent scheduler so tests can advance viewModelScope and
+    // applicationScope separately (issue #133 — proves the deferred commit
+    // is queued on a process-lifetime scope, not viewModelScope).
+    private val appDispatcher = StandardTestDispatcher()
+    private val applicationScope = kotlinx.coroutines.CoroutineScope(
+        kotlinx.coroutines.SupervisorJob() + appDispatcher
+    )
+
     // Mocks
     private lateinit var accountRepository: AccountRepository
     private lateinit var userPreferences: UserPreferencesRepository
@@ -254,6 +262,7 @@ class AccountSettingsViewModelTest {
             backupImporter = backupImporter,
             permissionChecker = permissionChecker,
             icsScheduler = icsScheduler,
+            applicationScope = applicationScope,
         )
     }
 
@@ -1005,16 +1014,420 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
-    fun `onDeleteSubscription calls eventCoordinator`() = runTest {
+    fun `onAddSubscription duplicate URL surfaces the localized message via snackbar`() = runTest {
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error(
+                message = "Subscription already exists for this URL",
+                isDuplicate = true
+            )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription(
+            url = "https://example.com/holidays.ics",
+            name = "Holidays",
+            color = 0xFFFF5722.toInt(),
+            duplicateUrlMessage = "Already subscribed to this URL"
+        )
+        advanceUntilIdle()
+
+        assertEquals(
+            "Already subscribed to this URL",
+            viewModel.uiState.value.pendingSnackbarMessage
+        )
+    }
+
+    @Test
+    fun `onAddSubscription generic error does not surface duplicate message`() = runTest {
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error(
+                message = "Some other failure",
+                isDuplicate = false
+            )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription(
+            url = "https://example.com/holidays.ics",
+            name = "Holidays",
+            color = 0xFFFF5722.toInt(),
+            duplicateUrlMessage = "Already subscribed to this URL"
+        )
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        assertTrue(
+            "scheduler must not be invoked on error path",
+            icsScheduler.scheduleCalls.isEmpty()
+        )
+    }
+
+    @Test
+    fun `onAddSubscription duplicate with null message stays silent (no snackbar, no scheduler)`() = runTest {
+        // Locks in the contract: if the caller forgets to pass
+        // duplicateUrlMessage, a duplicate is logged but does NOT
+        // surface a snackbar (won't crash, won't show wrong text)
+        // and the periodic refresh scheduler is NOT invoked.
+        coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
+            IcsSubscriptionRepository.SubscriptionResult.Error(
+                message = "Subscription already exists for this URL",
+                isDuplicate = true
+            )
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onAddSubscription(
+            url = "https://example.com/holidays.ics",
+            name = "Holidays",
+            color = 0xFFFF5722.toInt(),
+            // duplicateUrlMessage omitted — exercises the null default
+        )
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+        assertTrue(
+            "scheduler must not be invoked on error path",
+            icsScheduler.scheduleCalls.isEmpty()
+        )
+    }
+
+    // ==================== ICS Subscription delete-with-undo (issue #133) ====================
+
+    /**
+     * Build the underlying-flow MutableStateFlow used to drive the
+     * eventCoordinator.getAllIcsSubscriptions() mock for this group of tests.
+     * Each test calls this once before createViewModel() so the VM observes it.
+     */
+    private fun buildSubscriptionFlow(
+        initial: List<IcsSubscription> = emptyList()
+    ): MutableStateFlow<List<IcsSubscription>> {
+        val flow = MutableStateFlow(initial)
+        every { eventCoordinator.getAllIcsSubscriptions() } returns flow
+        return flow
+    }
+
+    private fun sampleSubscription(id: Long, name: String = "sub-$id"): IcsSubscription =
+        IcsSubscription(
+            id = id,
+            url = "https://example.com/$id.ics",
+            name = name,
+            color = 0xFF2196F3.toInt(),
+            calendarId = 100L + id
+        )
+
+    @Test
+    fun `onDeleteSubscription stages pending and does not commit`() = runTest {
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
         coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onDeleteSubscription(subscriptionId = 42L)
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
         advanceUntilIdle()
 
-        coVerify { eventCoordinator.removeIcsSubscription(42L) }
+        // Pending state set; coordinator NOT called yet.
+        assertEquals(42L, viewModel.uiState.value.pendingSubscriptionDeletionId)
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+    }
+
+    @Test
+    fun `onDeleteSubscription emits snackbar with action and label`() = runTest {
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.pendingSnackbarMessage)
+        assertNotNull(state.pendingSnackbarActionLabel)
+        assertNotNull(state.pendingSnackbarAction)
+    }
+
+    @Test
+    fun `onDeleteSubscription filters pending id from subscriptions flow`() = runTest {
+        val raw = buildSubscriptionFlow(
+            listOf(sampleSubscription(42L), sampleSubscription(43L))
+        )
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        // Both visible before swipe
+        assertEquals(2, viewModel.subscriptions.value.size)
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+
+        val ids = viewModel.subscriptions.value.map { it.id }
+        assertFalse("pending id 42 must be filtered", ids.contains(42L))
+        assertTrue("non-pending id 43 must remain", ids.contains(43L))
+        // Sanity: keep raw flow as untouched evidence
+        assertEquals(2, raw.value.size)
+    }
+
+    @Test
+    fun `onUndoSubscriptionDeletion clears pending and does not commit`() = runTest {
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        viewModel.onUndoSubscriptionDeletion()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+        // Subscription is back in the displayed list
+        assertTrue(viewModel.subscriptions.value.any { it.id == 42L })
+        // Coordinator NEVER called
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+    }
+
+    @Test
+    fun `onSubscriptionDeletionSettled commits pending via coordinator and clears state`() = runTest {
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        viewModel.onSubscriptionDeletionSettled()
+        advanceUntilIdle()
+        // Commit runs on applicationScope; drain its scheduler to observe it.
+        appDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+    }
+
+    @Test
+    fun `commit runs on applicationScope so it survives ViewModel destruction`() = runTest {
+        // Proves the deferred commit is launched on a scope that outlives the
+        // ViewModel — required for the scenario where the user swipes and
+        // immediately exits the Activity (issue #133, v23.7.8).
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        viewModel.onSubscriptionDeletionSettled()
+        // Drain ONLY the viewModelScope's scheduler. If the commit were on
+        // viewModelScope, it would run here.
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+
+        // Now drain the applicationScope's scheduler. The commit must fire here.
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
+    }
+
+    @Test
+    fun `eager-replace commit also runs on applicationScope`() = runTest {
+        // The "swipe B while A is still pending" path must also commit A on
+        // applicationScope, not viewModelScope (issue #133, v23.7.8).
+        buildSubscriptionFlow(
+            listOf(sampleSubscription(42L), sampleSubscription(43L))
+        )
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(42L, "Removed", "Undo")
+        advanceUntilIdle()
+        viewModel.onDeleteSubscription(43L, "Removed", "Undo")
+        // Drain viewModelScope. The eager-replace commit for 42 must be queued
+        // on applicationScope, not fired here.
+        advanceUntilIdle()
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(42L) }
+
+        appDispatcher.scheduler.advanceUntilIdle()
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
+    }
+
+    @Test
+    fun `settle after undo is a no-op`() = runTest {
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        viewModel.onUndoSubscriptionDeletion()
+        advanceUntilIdle()
+        // Material may fire Dismissed after ActionPerformed; settle must no-op.
+        viewModel.onSubscriptionDeletionSettled()
+        advanceUntilIdle()
+
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+    }
+
+    @Test
+    fun `ViewModel destruction commits any pending subscription deletion`() = runTest {
+        // Reproduces the v23.7.8 user report: swipe a subscription, then exit
+        // the Activity (back twice → finish() → ViewModel.onCleared) before
+        // the snackbar times out. The deferred commit must still fire.
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+
+        // Snackbar's LaunchedEffect coroutine throws CancellationException
+        // when the Activity is destroyed; SnackbarResult.Dismissed never
+        // fires. The commit must come from onCleared instead.
+        viewModel.onClearedForTest()
+        advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
+    }
+
+    @Test
+    fun `ViewModel destruction with no pending deletion is a no-op`() = runTest {
+        buildSubscriptionFlow(emptyList())
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onClearedForTest()
+        advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+    }
+
+    @Test
+    fun `ViewModel destruction after undo does not commit`() = runTest {
+        // After undo, pending state is cleared; ViewModel destruction must
+        // NOT commit a stale value.
+        buildSubscriptionFlow(listOf(sampleSubscription(42L)))
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(42L, "Removed", "Undo")
+        advanceUntilIdle()
+        viewModel.onUndoSubscriptionDeletion()
+        advanceUntilIdle()
+        viewModel.onClearedForTest()
+        advanceUntilIdle()
+        appDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
+    }
+
+    @Test
+    fun `second swipe while pending commits first then stages second`() = runTest {
+        buildSubscriptionFlow(
+            listOf(sampleSubscription(42L), sampleSubscription(43L))
+        )
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        viewModel.onDeleteSubscription(
+            subscriptionId = 43L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        // Eager-replace commit runs on applicationScope.
+        appDispatcher.scheduler.advanceUntilIdle()
+
+        // First (42) committed; second (43) staged.
+        coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
+        assertEquals(43L, viewModel.uiState.value.pendingSubscriptionDeletionId)
+    }
+
+    @Test
+    fun `pending clears if underlying flow removes the pending id mid-window`() = runTest {
+        val raw = buildSubscriptionFlow(
+            listOf(sampleSubscription(42L), sampleSubscription(43L))
+        )
+        coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onDeleteSubscription(
+            subscriptionId = 42L,
+            removedMessage = "Subscription removed",
+            undoActionLabel = "Undo"
+        )
+        advanceUntilIdle()
+        // External actor (server-side delete) removes id=42 from underlying flow.
+        raw.value = listOf(sampleSubscription(43L))
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
+
+        // A subsequent settle is now a no-op.
+        viewModel.onSubscriptionDeletionSettled()
+        advanceUntilIdle()
+        coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
     }
 
     @Test

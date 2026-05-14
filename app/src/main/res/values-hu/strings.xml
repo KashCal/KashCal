@@ -395,6 +395,12 @@
     <string name="settings_contacts_permission_required">Névjegy engedély szükséges</string>
     <string name="subscriptions_cd_back">Vissza</string>
     <string name="subscriptions_cd_add">Feliratkozás hozzáadása</string>
+    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
+    <string name="snackbar_subscription_removed">Előfizetés eltávolítva</string>
+    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
+    <string name="snackbar_action_undo">Visszavonás</string>
+    <!-- Snackbar shown when the user tries to subscribe to a URL that is already subscribed. -->
+    <string name="snackbar_subscription_already_exists">Már van előfizetés erre az URL-re</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SZINKRONIZÁLÁS</string>

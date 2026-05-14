@@ -398,6 +398,9 @@
     <string name="settings_contacts_permission_required">Tengiliðaheimild nauðsynleg</string>
     <string name="subscriptions_cd_back">Til baka</string>
     <string name="subscriptions_cd_add">Bæta við áskrift</string>
+    <string name="snackbar_subscription_removed">Áskrift fjarlægð</string>
+    <string name="snackbar_subscription_already_exists">Þegar í áskrift að þessari vefslóð</string>
+    <string name="snackbar_action_undo">Afturkalla</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SAMSTILLING</string>

@@ -375,6 +375,9 @@
     <string name="settings_contacts_permission_required">需要联系人权限</string>
     <string name="subscriptions_cd_back">返回</string>
     <string name="subscriptions_cd_add">添加订阅</string>
+    <string name="snackbar_subscription_removed">已删除订阅</string>
+    <string name="snackbar_subscription_already_exists">已订阅此URL</string>
+    <string name="snackbar_action_undo">撤销</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">同步</string>

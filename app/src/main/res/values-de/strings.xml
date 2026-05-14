@@ -398,6 +398,9 @@
     <string name="settings_contacts_permission_required">Kontaktberechtigung erforderlich</string>
     <string name="subscriptions_cd_back">Zurück</string>
     <string name="subscriptions_cd_add">Abonnement hinzufügen</string>
+    <string name="snackbar_subscription_removed">Abonnement entfernt</string>
+    <string name="snackbar_subscription_already_exists">Diese URL ist bereits abonniert</string>
+    <string name="snackbar_action_undo">Rückgängig</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">SYNC</string>

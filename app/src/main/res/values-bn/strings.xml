@@ -396,6 +396,9 @@
     <string name="settings_contacts_permission_required">যোগাযোগ অনুমতি প্রয়োজন</string>
     <string name="subscriptions_cd_back">পিছনে যান</string>
     <string name="subscriptions_cd_add">সাবস্ক্রিপশন যোগ করুন</string>
+    <string name="snackbar_subscription_removed">সাবস্ক্রিপশন সরানো হয়েছে</string>
+    <string name="snackbar_subscription_already_exists">এই URL-এ ইতিমধ্যে সাবস্ক্রিপশন আছে</string>
+    <string name="snackbar_action_undo">পূর্বাবস্থায় ফেরান</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">সিংক</string>

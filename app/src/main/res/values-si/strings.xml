@@ -382,6 +382,9 @@
     <string name="settings_contacts_permission_required">සම්බන්ධතා අවසරය අවශ්‍යයි</string>
     <string name="subscriptions_cd_back">ආපසු යන්න</string>
     <string name="subscriptions_cd_add">දායකත්වය එකතු කරන්න</string>
+    <string name="snackbar_subscription_removed">දායකත්වය ඉවත් කරන ලදී</string>
+    <string name="snackbar_subscription_already_exists">මෙම URL වෙත දැනටමත් දායක වී ඇත</string>
+    <string name="snackbar_action_undo">පෙරසේ කරන්න</string>
 
     <string name="account_detail_section_sync">සමමුහුර්තය</string>
     <string name="account_detail_section_calendars">දින දර්ශන</string>

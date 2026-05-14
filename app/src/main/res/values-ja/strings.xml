@@ -375,6 +375,9 @@
     <string name="settings_contacts_permission_required">連絡先のアクセス許可が必要です</string>
     <string name="subscriptions_cd_back">戻る</string>
     <string name="subscriptions_cd_add">購読を追加</string>
+    <string name="snackbar_subscription_removed">購読を削除しました</string>
+    <string name="snackbar_subscription_already_exists">このURLは既に購読しています</string>
+    <string name="snackbar_action_undo">元に戻す</string>
 
     <!-- ==================== Account Detail Sheet ==================== -->
     <string name="account_detail_section_sync">同期</string>

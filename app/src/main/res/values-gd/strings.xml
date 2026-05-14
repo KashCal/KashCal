@@ -386,6 +386,9 @@
     <string name="settings_contacts_permission_required">Tha cead Luchd-aithne a dhìth</string>
     <string name="subscriptions_cd_back">Stiùir air ais</string>
     <string name="subscriptions_cd_add">Cuir fo-sgrìobhadh ris</string>
+    <string name="snackbar_subscription_removed">Chaidh am fo-sgrìobhadh a thoirt air falbh</string>
+    <string name="snackbar_subscription_already_exists">A\' fo-sgrìobhadh ris an URL seo mu thràth</string>
+    <string name="snackbar_action_undo">Neo-dhèan</string>
 
     <!-- Account Detail Sheet -->
     <string name="account_detail_section_sync">SIONCRONACHADH</string>

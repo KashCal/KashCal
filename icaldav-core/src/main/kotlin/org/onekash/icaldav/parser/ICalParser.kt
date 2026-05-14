@@ -1082,6 +1082,10 @@ class ICalParser(
      *
      * - Short UTC offsets: Synology sends +530 (should be +0530) or +5730 (should be +005730)
      * - Misplaced T in day durations: some servers send -PT2D (should be -P2D)
+     * - DATE-typed timestamp metadata: icalendar-ruby gem and feeds derived from it
+     *   emit DTSTAMP/LAST-MODIFIED/CREATED as VALUE=DATE despite RFC 5545 §3.8.7
+     *   requiring DATE-TIME. ical4j's DateProperty serializer throws
+     *   UnsupportedTemporalTypeException (HourOfDay) when this hits LocalDate.
      */
     private fun preprocessICalData(data: String): String {
         // Fix 1: Short UTC offsets — 3-digit offsets with missing leading zero
@@ -1101,10 +1105,24 @@ class ICalParser(
         // Scoped to TRIGGER and DURATION property lines only — cannot corrupt freetext
         // Note: only fixes pure day durations (PTnD). Mixed day+time like PT2DT3H is not
         // covered — those are rare and can be extended later if reports come in.
-        return offsetFixed.replace(
+        val durationFixed = offsetFixed.replace(
             Regex("""^((?:TRIGGER|DURATION)[^:]*:)(-?)PT(\d+)D\s*$""", RegexOption.MULTILINE)
         ) { match ->
             "${match.groupValues[1]}${match.groupValues[2]}P${match.groupValues[3]}D"
+        }
+
+        // Fix 3: DATE-typed timestamp metadata → upgrade to DATE-TIME at midnight UTC
+        // RFC 5545 §3.8.7 requires DATE-TIME for DTSTAMP / LAST-MODIFIED / CREATED.
+        // Non-compliant generators (e.g. icalendar-ruby) emit `VALUE=DATE:YYYYMMDD`,
+        // which ical4j parses as LocalDate and then throws when serializing
+        // (DateProperty.getValue → TemporalAdapter.toString needs HourOfDay).
+        // Convert preserves the publisher's date instead of falling back to "now".
+        // Anchored start-of-line + exactly three property names; cannot match
+        // freetext, folded continuation lines, or X-props.
+        return durationFixed.replace(
+            Regex("""^(DTSTAMP|LAST-MODIFIED|CREATED);VALUE=DATE:(\d{8})\s*$""", RegexOption.MULTILINE)
+        ) { match ->
+            "${match.groupValues[1]}:${match.groupValues[2]}T000000Z"
         }
     }
 

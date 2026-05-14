@@ -209,6 +209,20 @@ interface EventsDao {
     suspend fun getByCalendarIdAndCaldavUrlPrefix(calendarId: Long, urlPrefix: String): List<Event>
 
     /**
+     * EXISTS check for events matching a caldav_url prefix.
+     * Avoids materializing the full row list when only emptiness matters.
+     */
+    @Query("""
+        SELECT EXISTS(
+            SELECT 1 FROM events
+            WHERE calendar_id = :calendarId
+            AND caldav_url LIKE :urlPrefix || '%'
+            AND sync_status != 'PENDING_DELETE'
+        )
+    """)
+    suspend fun anyByCalendarIdAndCaldavUrlPrefix(calendarId: Long, urlPrefix: String): Boolean
+
+    /**
      * Get all events in time range across all calendars.
      */
     @Query("""
