@@ -1,0 +1,128 @@
+package org.onekash.kashcal.data.db.migration
+
+import android.util.Log
+import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
+import androidx.test.platform.app.InstrumentationRegistry
+import io.mockk.every
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.onekash.kashcal.data.db.KashCalDatabase
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+
+/**
+ * Hash-validation tests for `KashCalDatabase` migrations.
+ *
+ * Where [MigrationTest] verifies what each migration does at the SQL/PRAGMA
+ * level, this class verifies what Room actually checks at runtime: the
+ * `identityHash` of the database after migration must match the hash Room
+ * computes from its compile-time entity model. A mismatch makes Room throw
+ * `IllegalStateException` the first time the app opens the DB — not at
+ * migration time, and not in any of the targeted PRAGMA tests.
+ *
+ * `MigrationTestHelper.runMigrationsAndValidate` is what catches that.
+ *
+ * Conventions:
+ * - Schemas live at `$projectDir/schemas` (per `app/build.gradle.kts:61`).
+ * - We run inside Robolectric so the test is part of the unit-test gate
+ *   (`./gradlew testDebugUnitTest`) — no emulator, no instrumented run.
+ */
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE, sdk = [34])
+class MigrationHashValidationTest {
+
+    private val schemasPath = "${System.getProperty("user.dir")}/schemas"
+
+    @get:Rule
+    val helper: MigrationTestHelper = MigrationTestHelper(
+        InstrumentationRegistry.getInstrumentation(),
+        KashCalDatabase::class.java,
+        emptyList(),
+        FrameworkSQLiteOpenHelperFactory()
+    )
+
+    @Before
+    fun setup() {
+        // Mute Log calls produced by the migration body.
+        mockkStatic(Log::class)
+        every { Log.d(any(), any()) } returns 0
+        every { Log.i(any(), any()) } returns 0
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.e(any(), any(), any()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Log::class)
+    }
+
+    /**
+     * Validates that the post-migration schema after running
+     * `MIGRATION_16_17` against a fresh v16 database matches Room's expected
+     * v17 identityHash exactly. A failure here means the migration's SQL
+     * has diverged (column order, defaults, FK clause, index DDL, etc.)
+     * from `app/schemas/.../17.json` — exactly the failure mode that would
+     * crash the app at first launch.
+     */
+    @Test
+    fun `MIGRATION_16_17 produces a schema whose identityHash matches Room's v17 export`() {
+        // 1. Create a v16 database — `MigrationTestHelper` reads `16.json`
+        //    and runs the corresponding CREATE TABLE statements.
+        helper.createDatabase(TEST_DB, 16).close()
+
+        // 2. Reopen at v17 and run the migration through Room's validator.
+        //    `validateDroppedTables = true` makes Room verify that no
+        //    expected table is missing post-migration.
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            17,
+            true,
+            Migrations.MIGRATION_16_17
+        ).close()
+    }
+
+    /**
+     * Same validation but starting from a `v1` database — verifies the
+     * full migration chain produces a hash-equivalent schema all the way
+     * up to v17. Belt-and-braces against any earlier-migration drift that
+     * only matters once subsequent versions stack on top.
+     */
+    @Test
+    fun `full migration chain v1 to v17 produces schema whose identityHash matches Room's export`() {
+        helper.createDatabase(TEST_DB, 1).close()
+
+        helper.runMigrationsAndValidate(
+            TEST_DB,
+            17,
+            true,
+            Migrations.MIGRATION_1_2,
+            Migrations.MIGRATION_2_3,
+            // 3 -> 4 is an AutoMigration; the helper picks it up from the
+            // database class metadata when no explicit migration is provided.
+            Migrations.MIGRATION_4_5,
+            Migrations.MIGRATION_5_6,
+            Migrations.MIGRATION_6_7,
+            Migrations.MIGRATION_7_8,
+            Migrations.MIGRATION_8_9,
+            Migrations.MIGRATION_9_10,
+            Migrations.MIGRATION_10_11,
+            Migrations.MIGRATION_11_12,
+            Migrations.MIGRATION_12_13,
+            Migrations.MIGRATION_13_14,
+            Migrations.MIGRATION_14_15,
+            Migrations.MIGRATION_15_16,
+            Migrations.MIGRATION_16_17
+        ).close()
+    }
+
+    private companion object {
+        const val TEST_DB = "migration-hash-validation-test"
+    }
+}

@@ -1024,4 +1024,32 @@
     <string name="label_more_colors">ተጨማሪ ቀለማት</string>
     <string name="label_back_to_grid">ተመለስ</string>
     <string name="settings_suggest_titles">የክስተት ርዕሶችን ጠቁም</string>
+    <string name="label_attendees">ተሳታፊዎች</string>
+    <string name="attendee_you_marker">አንተ</string>
+    <string name="attendee_organizer_pill">አደራጅ</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d ተጨማሪ</item>
+        <item quantity="other">+%d ተጨማሪ</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d ተሳታፊ</item>
+        <item quantity="other">%d ተሳታፊዎች</item>
+    </plurals>
+    <string name="attendee_card_going">ይሄዳል</string>
+    <string name="attendee_card_pending">በመጠባበቅ ላይ</string>
+    <string name="attendee_card_declined">ተቀባይነት አላገኘም</string>
+    <string name="attendee_card_tentative">ሊሆን ይችላል</string>
+    <string name="attendee_card_hosting">አስተናጋጅ</string>
+    <string name="attendee_action_copy">ኢሜይል ቅዳ</string>
+    <string name="attendee_action_email">ኢሜይል ላክ</string>
+    <string name="attendee_group_icon_description">ሰዎች</string>
+    <string name="attendee_email_copied">ኢሜይል ተቀድቷል</string>
+    <string name="attendee_no_email_app">ምንም የኢሜይል መተግበሪያ አልተጫነም</string>
+    <string name="attendee_show_less">ያንሳል አሳይ</string>
+    <string name="attendee_show_all">ሁሉንም ተጋባዦች አሳይ</string>
+    <string name="attendee_status_accepted">ተቀብሏል</string>
+    <string name="attendee_status_declined">ተቀባይነት አላገኘም</string>
+    <string name="attendee_status_tentative">ሊሆን ይችላል</string>
+    <string name="attendee_status_delegated">በውክልና ተሰጥቷል</string>
+    <string name="attendee_status_pending">በመጠባበቅ ላይ</string>
 </resources>

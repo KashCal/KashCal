@@ -157,6 +157,17 @@ class MainActivity : ComponentActivity() {
                 var showQuickViewSheet by remember { mutableStateOf(false) }
                 var quickViewEvent by remember { mutableStateOf<Event?>(null) }
                 var quickViewOccurrenceTs by remember { mutableStateOf<Long?>(null) }
+                val quickViewAttendees by homeViewModel.quickViewAttendees.collectAsStateWithLifecycle()
+                val formAttendees by homeViewModel.formAttendees.collectAsStateWithLifecycle()
+                val dayAttendeesMap by homeViewModel.dayAttendees.collectAsStateWithLifecycle()
+                // Drive HomeViewModel's attendee StateFlow whenever the active QuickView event changes.
+                androidx.compose.runtime.LaunchedEffect(quickViewEvent?.id) {
+                    homeViewModel.setQuickViewEventId(quickViewEvent?.id)
+                }
+                // Drive form-side attendee state when the form opens for an existing event.
+                androidx.compose.runtime.LaunchedEffect(showEventFormSheet, editingEventId) {
+                    homeViewModel.setFormEventId(if (showEventFormSheet) editingEventId else null)
+                }
 
                 // Device event quick view sheet state
                 var showDeviceQuickViewSheet by remember { mutableStateOf(false) }
@@ -443,7 +454,9 @@ class MainActivity : ComponentActivity() {
                     // Day pager cache callbacks
                     onLoadEventsForDayPagerRange = { centerDateMs -> homeViewModel.loadEventsForDayPagerRange(centerDateMs) },
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },
-                    onEnsureDotsForYear = { year -> homeViewModel.ensureDotsForYear(year) }
+                    onEnsureDotsForYear = { year -> homeViewModel.ensureDotsForYear(year) },
+                    dayAttendees = dayAttendeesMap,
+                    onSetVisibleEventIds = { ids -> homeViewModel.setVisibleEventIds(ids) }
                 )
 
                 // Event Quick View Sheet
@@ -460,6 +473,8 @@ class MainActivity : ComponentActivity() {
                         occurrenceTs = quickViewOccurrenceTs,
                         showEventEmojis = uiState.showEventEmojis,
                         isReadOnlyCalendar = calendar?.isReadOnly ?: false,
+                        attendees = quickViewAttendees?.models ?: emptyList(),
+                        isCurrentUserOnList = quickViewAttendees?.isCurrentUserOnList ?: false,
                         onDismiss = {
                             showQuickViewSheet = false
                             quickViewEvent = null
@@ -919,7 +934,9 @@ class MainActivity : ComponentActivity() {
                         onDeleteDeviceEvent = { formState ->
                             homeViewModel.handleDeviceEventFormDelete(formState)
                         },
-                        deviceCalendarGroups = uiState.deviceCalendarGroups
+                        deviceCalendarGroups = uiState.deviceCalendarGroups,
+                        attendees = formAttendees?.models ?: emptyList(),
+                        isCurrentUserOnList = formAttendees?.isCurrentUserOnList ?: false
                     )
                 }
 

@@ -132,6 +132,7 @@ class RealICloudSyncEngineTest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore
@@ -146,6 +147,7 @@ class RealICloudSyncEngineTest {
         val conflictResolver = ConflictResolver(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = database.attendeesDao(),
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator
         )

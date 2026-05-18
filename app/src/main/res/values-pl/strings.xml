@@ -1091,4 +1091,36 @@
     <string name="label_more_colors">Więcej kolorów</string>
     <string name="label_back_to_grid">Wróć</string>
     <string name="settings_suggest_titles">Sugeruj tytuły wydarzeń</string>
+    <string name="label_attendees">Uczestnicy</string>
+    <string name="attendee_you_marker">Ty</string>
+    <string name="attendee_organizer_pill">Organizator</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d więcej</item>
+        <item quantity="few">+%d więcej</item>
+        <item quantity="many">+%d więcej</item>
+        <item quantity="other">+%d więcej</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d uczestnik</item>
+        <item quantity="few">%d uczestników</item>
+        <item quantity="many">%d uczestników</item>
+        <item quantity="other">%d uczestnika</item>
+    </plurals>
+    <string name="attendee_card_going">Idzie</string>
+    <string name="attendee_card_pending">Oczekuje</string>
+    <string name="attendee_card_declined">Odrzucony</string>
+    <string name="attendee_card_tentative">Niepewny</string>
+    <string name="attendee_card_hosting">Gospodarz</string>
+    <string name="attendee_action_copy">Kopiuj e-mail</string>
+    <string name="attendee_action_email">Wyślij e-mail</string>
+    <string name="attendee_group_icon_description">Osoby</string>
+    <string name="attendee_email_copied">E-mail skopiowany</string>
+    <string name="attendee_no_email_app">Brak zainstalowanej aplikacji e-mail</string>
+    <string name="attendee_show_less">Pokaż mniej</string>
+    <string name="attendee_show_all">Pokaż wszystkich uczestników</string>
+    <string name="attendee_status_accepted">Zaakceptowane</string>
+    <string name="attendee_status_declined">Odrzucony</string>
+    <string name="attendee_status_tentative">Niepewny</string>
+    <string name="attendee_status_delegated">Delegowane</string>
+    <string name="attendee_status_pending">Oczekuje</string>
 </resources>

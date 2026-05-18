@@ -250,6 +250,6 @@ object ParsedEventComparator {
         caldavUrl: String? = null,
         etag: String? = null
     ): Event {
-        return ICalEventMapper.toEntity(icalEvent, rawIcal, calendarId, caldavUrl, etag)
+        return ICalEventMapper.toEntity(icalEvent, rawIcal, calendarId, caldavUrl, etag).event
     }
 }

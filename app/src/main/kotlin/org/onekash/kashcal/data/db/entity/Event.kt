@@ -172,6 +172,22 @@ data class Event(
     @ColumnInfo(name = "organizer_name")
     val organizerName: String? = null,
 
+    /**
+     * Organizer SENT-BY parameter (RFC 5545 §3.2.18).
+     * Identifies the calendar user that is sending on behalf of the organizer
+     * (e.g., an assistant scheduling for an executive).
+     */
+    @ColumnInfo(name = "organizer_sent_by")
+    val organizerSentBy: String? = null,
+
+    /**
+     * Organizer SCHEDULE-STATUS parameter (RFC 6638 §7.3).
+     * Server-written delivery status code(s) for the organizer's outgoing
+     * scheduling messages, e.g., "1.2;Delivered".
+     */
+    @ColumnInfo(name = "organizer_schedule_status")
+    val organizerScheduleStatus: String? = null,
+
     // ========== Recurrence ==========
 
     /**

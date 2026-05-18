@@ -272,7 +272,7 @@ class RealICloudRfc5545RoundTripTest {
             calendarId = 1L,
             caldavUrl = testEventUrl,
             etag = fetchedEtag
-        )
+        ).event
 
         println("\nMapped Event entity:")
         println("  title: ${event.title}")
@@ -353,7 +353,7 @@ class RealICloudRfc5545RoundTripTest {
             calendarId = 1L,
             caldavUrl = testEventUrl,
             etag = testEventEtag
-        ).copy(
+        ).event.copy(
             // Update RFC 5545/7986 fields
             priority = UPDATED_PRIORITY,
             geoLat = UPDATED_GEO_LAT,
@@ -427,7 +427,7 @@ class RealICloudRfc5545RoundTripTest {
             calendarId = 1L,
             caldavUrl = testEventUrl,
             etag = calDavEvent.etag
-        )
+        ).event
 
         println("\nVerifying updated fields:")
         println("  priority: ${event.priority} (expected $UPDATED_PRIORITY)")

@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">കൂടുതൽ നിറങ്ങൾ</string>
     <string name="label_back_to_grid">തിരികെ</string>
     <string name="settings_suggest_titles">ഇവന്റ് ശീർഷകങ്ങൾ നിർദ്ദേശിക്കുക</string>
+
+    <string name="label_attendees">പങ്കെടുക്കുന്നവർ</string>
+    <string name="attendee_you_marker">നിങ്ങൾ</string>
+    <string name="attendee_organizer_pill">സംഘാടകൻ</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d കൂടുതൽ</item>
+        <item quantity="other">+%d കൂടുതൽ</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d പങ്കാളി</item>
+        <item quantity="other">%d പങ്കാളികൾ</item>
+    </plurals>
+    <string name="attendee_card_going">പോകുന്നു</string>
+    <string name="attendee_card_pending">തീർപ്പാക്കാത്തത്</string>
+    <string name="attendee_card_declined">നിരസിച്ചു</string>
+    <string name="attendee_card_tentative">താൽക്കാലികം</string>
+    <string name="attendee_card_hosting">ആതിഥേയത്വം വഹിക്കുന്നു</string>
+    <string name="attendee_action_copy">ഇമെയിൽ പകർത്തുക</string>
+    <string name="attendee_action_email">ഇമെയിൽ അയയ്ക്കുക</string>
+    <string name="attendee_group_icon_description">ആളുകൾ</string>
+    <string name="attendee_email_copied">ഇമെയിൽ പകർത്തി</string>
+    <string name="attendee_no_email_app">ഇമെയിൽ ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്തിട്ടില്ല</string>
+    <string name="attendee_show_less">കുറച്ച് കാണിക്കുക</string>
+    <string name="attendee_show_all">എല്ലാ പങ്കാളികളെയും കാണിക്കുക</string>
+    <string name="attendee_status_accepted">സ്വീകരിച്ചു</string>
+    <string name="attendee_status_declined">നിരസിച്ചു</string>
+    <string name="attendee_status_tentative">താൽക്കാലികം</string>
+    <string name="attendee_status_delegated">കൈമാറി</string>
+    <string name="attendee_status_pending">തീർപ്പാക്കാത്തത്</string>
 </resources>

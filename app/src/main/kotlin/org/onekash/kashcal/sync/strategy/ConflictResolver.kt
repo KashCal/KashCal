@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.strategy
 import android.util.Log
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.entity.Event
@@ -30,6 +31,7 @@ import javax.inject.Inject
 class ConflictResolver @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
+    private val attendeesDao: AttendeesDao,
     private val pendingOperationsDao: PendingOperationsDao,
     private val occurrenceGenerator: OccurrenceGenerator
 ) {
@@ -158,22 +160,29 @@ class ConflictResolver @Inject constructor(
         }
 
         // Update local event with server data using ICalEventMapper
-        var updatedEvent = ICalEventMapper.toEntity(
+        val mapped = ICalEventMapper.toEntity(
             icalEvent = parsedEvent,
             rawIcal = serverEvent.icalData,
             calendarId = event.calendarId,
             caldavUrl = serverEvent.url,
             etag = serverEvent.etag
         )
-
         // Preserve existing event ID and timestamps
-        updatedEvent = updatedEvent.copy(
+        var updatedEvent = mapped.event.copy(
             id = event.id,
             createdAt = event.createdAt,
             localModifiedAt = event.localModifiedAt
         )
 
+        // Server-authoritative: write event + attendees together.
+        // Sequential (no explicit transaction wrap) — matches the existing
+        // bare-upsert risk profile. B3 may revisit transaction boundaries
+        // when outbound writes need atomicity.
         eventsDao.upsert(updatedEvent)
+        attendeesDao.replaceForEvent(
+            updatedEvent.id,
+            mapped.attendees.map { it.copy(eventId = updatedEvent.id) }
+        )
 
         // Regenerate occurrences if recurring
         if (updatedEvent.rrule != null) {

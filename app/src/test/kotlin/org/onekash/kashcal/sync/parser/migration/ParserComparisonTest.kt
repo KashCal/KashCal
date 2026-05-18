@@ -49,7 +49,7 @@ class ParserComparisonTest {
         assertTrue("Parse should succeed", result is ParseResult.Success)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, "http://example.com/event.ics", "etag123")
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, "http://example.com/event.ics", "etag123").event
 
         assertEquals("simple-event-1", entity.uid)
         assertEquals("Simple Meeting", entity.title)
@@ -84,7 +84,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertTrue("Should be all-day", entity.isAllDay)
         assertEquals("All Day Event", entity.title)
@@ -115,7 +115,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertNotNull("RRULE should be mapped", entity.rrule)
         assertEquals("FREQ=WEEKLY;BYDAY=MO,WE,FR", entity.rrule)
@@ -144,7 +144,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals("FREQ=MONTHLY;BYDAY=TU;BYSETPOS=2", entity.rrule)
     }
@@ -169,7 +169,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         // RECURRENCE-ID → originalInstanceTime
         assertNotNull("originalInstanceTime should be set", entity.originalInstanceTime)
@@ -203,7 +203,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertNotNull("exdate should be mapped", entity.exdate)
         // EXDATEs stored as comma-separated timestamps
@@ -236,7 +236,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         // UTC times have no timezone ID
         assertNull("UTC event should have null timezone", entity.timezone)
@@ -265,7 +265,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals("America/New_York", entity.timezone)
         assertEquals(icalEvent.dtStart.timestamp, entity.startTs)
@@ -291,7 +291,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals(EventStatus.CANCELLED, icalEvent.status)
         assertEquals("CANCELLED", entity.status)
@@ -317,7 +317,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals(EventStatus.TENTATIVE, icalEvent.status)
         assertEquals("TENTATIVE", entity.status)
@@ -367,7 +367,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals(2, icalEvent.alarms.size)
         assertNotNull("reminders should be mapped", entity.reminders)
@@ -399,7 +399,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals("boss@example.com", entity.organizerEmail)
         assertEquals("Boss Person", entity.organizerName)
@@ -424,7 +424,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         // endTs should be startTs + 2 hours
         val expectedEndTs = entity.startTs + 2 * 60 * 60 * 1000
@@ -451,7 +451,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals("TRANSPARENT", entity.transp)
     }
@@ -476,7 +476,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertEquals(3, entity.sequence)
     }
@@ -502,7 +502,7 @@ class ParserComparisonTest {
         val result = parser.parseAllEvents(ical)
         val icalEvent = result.getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertNotNull("extraProperties should not be null", entity.extraProperties)
         assertTrue(entity.extraProperties!!.containsKey("X-CUSTOM-FIELD"))

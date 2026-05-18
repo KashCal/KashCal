@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">আরও রং</string>
     <string name="label_back_to_grid">ফিরে যান</string>
     <string name="settings_suggest_titles">ইভেন্টের শিরোনাম প্রস্তাব করুন</string>
+
+    <string name="label_attendees">অংশগ্রহণকারীরা</string>
+    <string name="attendee_you_marker">আপনি</string>
+    <string name="attendee_organizer_pill">আয়োজক</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d আরও</item>
+        <item quantity="other">+%d আরও</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d অংশগ্রহণকারী</item>
+        <item quantity="other">%d অংশগ্রহণকারী</item>
+    </plurals>
+    <string name="attendee_card_going">যাচ্ছি</string>
+    <string name="attendee_card_pending">অপেক্ষমাণ</string>
+    <string name="attendee_card_declined">প্রত্যাখ্যাত</string>
+    <string name="attendee_card_tentative">অনিশ্চিত</string>
+    <string name="attendee_card_hosting">আয়োজন করছি</string>
+    <string name="attendee_action_copy">ইমেল কপি করুন</string>
+    <string name="attendee_action_email">ইমেল পাঠান</string>
+    <string name="attendee_group_icon_description">মানুষ</string>
+    <string name="attendee_email_copied">ইমেল কপি করা হয়েছে</string>
+    <string name="attendee_no_email_app">কোন ইমেল অ্যাপ ইনস্টল করা নেই</string>
+    <string name="attendee_show_less">কম দেখান</string>
+    <string name="attendee_show_all">সব অংশগ্রহণকারী দেখান</string>
+    <string name="attendee_status_accepted">গৃহীত</string>
+    <string name="attendee_status_declined">প্রত্যাখ্যাত</string>
+    <string name="attendee_status_tentative">অনিশ্চিত</string>
+    <string name="attendee_status_delegated">প্রতিনিধিত্ব করা হয়েছে</string>
+    <string name="attendee_status_pending">অপেক্ষমাণ</string>
 </resources>

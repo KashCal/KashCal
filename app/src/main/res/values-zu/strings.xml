@@ -1024,4 +1024,32 @@
     <string name="label_more_colors">Eminye imibala</string>
     <string name="label_back_to_grid">Emuva</string>
     <string name="settings_suggest_titles">Phakamisa izihloko zemicimbi</string>
+    <string name="label_attendees">Ababaqashe</string>
+    <string name="attendee_you_marker">Wena</string>
+    <string name="attendee_organizer_pill">Umhleli</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d okuningi</item>
+        <item quantity="other">+%d okuningi</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d obekhona</item>
+        <item quantity="other">%d ababekhona</item>
+    </plurals>
+    <string name="attendee_card_going">Uyaya</string>
+    <string name="attendee_card_pending">Kulindile</string>
+    <string name="attendee_card_declined">Kunqatshelwe</string>
+    <string name="attendee_card_tentative">Kungenzeka</string>
+    <string name="attendee_card_hosting">Ubamba iqhaza</string>
+    <string name="attendee_action_copy">Kopisha i-imeyili</string>
+    <string name="attendee_action_email">Thumela i-imeyili</string>
+    <string name="attendee_group_icon_description">Abantu</string>
+    <string name="attendee_email_copied">I-imeyili ikopishelwe</string>
+    <string name="attendee_no_email_app">Akukho uhlelo lokusebenza lwe-imeyili olufakiwe</string>
+    <string name="attendee_show_less">Bonisa okuncane</string>
+    <string name="attendee_show_all">Bonisa bonke ababambe iqhaza</string>
+    <string name="attendee_status_accepted">Kwamukelwe</string>
+    <string name="attendee_status_declined">Kunqatshelwe</string>
+    <string name="attendee_status_tentative">Kungenzeka</string>
+    <string name="attendee_status_delegated">Kuthunyiwe</string>
+    <string name="attendee_status_pending">Kulindile</string>
 </resources>

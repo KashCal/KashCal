@@ -966,4 +966,30 @@
     <string name="backup_error_build_failed">백업에 실패했어요</string>
     <string name="backup_error_write_failed">백업에 실패했어요：파일에 쓸 수 없어요</string>
     <string name="backup_error_read_failed">파일을 읽을 수 없어요</string>
+    <string name="label_attendees">참석자</string>
+    <string name="attendee_you_marker">나</string>
+    <string name="attendee_organizer_pill">주최자</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d명 더보기</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">참석자 %d명</item>
+    </plurals>
+    <string name="attendee_card_going">참석</string>
+    <string name="attendee_card_pending">대기 중</string>
+    <string name="attendee_card_declined">거절</string>
+    <string name="attendee_card_tentative">미정</string>
+    <string name="attendee_card_hosting">주최</string>
+    <string name="attendee_action_copy">이메일 복사</string>
+    <string name="attendee_action_email">이메일 보내기</string>
+    <string name="attendee_group_icon_description">사람</string>
+    <string name="attendee_email_copied">이메일 복사됨</string>
+    <string name="attendee_no_email_app">이메일 앱이 없습니다</string>
+    <string name="attendee_show_less">간략히 보기</string>
+    <string name="attendee_show_all">모든 참석자 표시</string>
+    <string name="attendee_status_accepted">수락</string>
+    <string name="attendee_status_declined">거절</string>
+    <string name="attendee_status_tentative">미정</string>
+    <string name="attendee_status_delegated">위임</string>
+    <string name="attendee_status_pending">대기 중</string>
 </resources>

@@ -29,6 +29,7 @@ __pycache__/
 # Gradle files
 .gradle/
 build/
+build-tmp/
 
 # Local configuration file (sdk path, etc)
 local.properties

@@ -21,3 +21,11 @@ fun String.maskEmail(): String {
 
 /** Mask a device calendar event id for logging. Example: 1234567 → "1234***". */
 fun Long.maskEventId(): String = "${toString().take(4)}***"
+
+/**
+ * Mask an iCalendar UID for logging. Keeps first/last four chars so log
+ * grep'ing across sync sessions still correlates events; everything else
+ * is replaced with "***". Short UIDs (≤8) collapse to "<short>".
+ */
+fun String.maskUid(): String =
+    if (length <= 8) "<short>" else "${take(4)}***${takeLast(4)}"

@@ -966,4 +966,30 @@
     <string name="backup_error_build_failed">Sao lưu không thành công</string>
     <string name="backup_error_write_failed">Sao lưu không thành công — không thể ghi vào tệp</string>
     <string name="backup_error_read_failed">Không thể đọc tệp</string>
+    <string name="label_attendees">Người tham dự</string>
+    <string name="attendee_you_marker">Bạn</string>
+    <string name="attendee_organizer_pill">Người tổ chức</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d nữa</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">%d người tham dự</item>
+    </plurals>
+    <string name="attendee_card_going">Tham dự</string>
+    <string name="attendee_card_pending">Chưa phản hồi</string>
+    <string name="attendee_card_declined">Từ chối</string>
+    <string name="attendee_card_tentative">Có thể</string>
+    <string name="attendee_card_hosting">Chủ trì</string>
+    <string name="attendee_action_copy">Sao chép email</string>
+    <string name="attendee_action_email">Gửi email</string>
+    <string name="attendee_group_icon_description">Mọi người</string>
+    <string name="attendee_email_copied">Đã sao chép email</string>
+    <string name="attendee_no_email_app">Không có ứng dụng email nào được cài đặt</string>
+    <string name="attendee_show_less">Hiển thị ít hơn</string>
+    <string name="attendee_show_all">Hiển thị tất cả người tham dự</string>
+    <string name="attendee_status_accepted">Đã chấp nhận</string>
+    <string name="attendee_status_declined">Từ chối</string>
+    <string name="attendee_status_tentative">Có thể</string>
+    <string name="attendee_status_delegated">Đã ủy quyền</string>
+    <string name="attendee_status_pending">Chưa phản hồi</string>
 </resources>

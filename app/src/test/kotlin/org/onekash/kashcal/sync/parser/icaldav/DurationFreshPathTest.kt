@@ -272,7 +272,7 @@ class DurationFreshPathTest {
 
         val ics = IcsPatcher.generateFresh(event)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
 
         assertNotNull("RRULE must survive round-trip", roundTripped.rrule)
         assertTrue(roundTripped.rrule!!.contains("FREQ=WEEKLY"))
@@ -294,7 +294,7 @@ class DurationFreshPathTest {
 
         val ics = IcsPatcher.generateFresh(event)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
 
         assertEquals(
             "Round-tripped endTs must equal original (reconstructed from DURATION)",

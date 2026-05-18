@@ -4,11 +4,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
@@ -35,6 +37,7 @@ class EventReader @Inject constructor(
     private val occurrencesDao by lazy { database.occurrencesDao() }
     private val calendarsDao by lazy { database.calendarsDao() }
     private val accountsDao by lazy { database.accountsDao() }
+    private val attendeesDao by lazy { database.attendeesDao() }
 
     // ========== Event Lookups ==========
 
@@ -83,6 +86,31 @@ class EventReader @Inject constructor(
     suspend fun getEventsByIds(ids: List<Long>): Map<Long, Event> {
         if (ids.isEmpty()) return emptyMap()
         return eventsDao.getByIds(ids).associateBy { it.id }
+    }
+
+    // ========== Attendee Lookups ==========
+
+    /**
+     * Reactive attendee list for a single event. Empty when the event has no
+     * persisted attendee rows. UI layer combines this with [AttendeeBackfill]
+     * for events whose [Event.rawIcal] contains ATTENDEE lines but whose
+     * `attendees` table rows haven't been persisted (covers the
+     * etag-unchanged-skip path on the inbound persistence layer).
+     */
+    fun getAttendeesForEvent(eventId: Long): Flow<List<Attendee>> =
+        attendeesDao.getForEvent(eventId).distinctUntilChanged()
+
+    /**
+     * Bulk reactive read for day-view-style chip rendering. Returns a map
+     * keyed by `eventId` so callers can slice per-card without a per-event
+     * Flow collection — single Flow per visible-event-set. Empty IDs list
+     * short-circuits to an empty map without touching the DAO.
+     */
+    fun getAttendeesForEvents(eventIds: List<Long>): Flow<Map<Long, List<Attendee>>> {
+        if (eventIds.isEmpty()) return flowOf(emptyMap())
+        return attendeesDao.getForEvents(eventIds)
+            .map { rows -> rows.groupBy { it.eventId } }
+            .distinctUntilChanged()
     }
 
     /**

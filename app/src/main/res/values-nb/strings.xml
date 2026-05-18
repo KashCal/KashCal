@@ -1012,4 +1012,32 @@
     <string name="label_more_colors">Flere farger</string>
     <string name="label_back_to_grid">Tilbake</string>
     <string name="settings_suggest_titles">Foreslå hendelsestitler</string>
+    <string name="label_attendees">Deltakere</string>
+    <string name="attendee_you_marker">Du</string>
+    <string name="attendee_organizer_pill">Arrangør</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d til</item>
+        <item quantity="other">+%d til</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d deltaker</item>
+        <item quantity="other">%d deltakere</item>
+    </plurals>
+    <string name="attendee_card_going">Kommer</string>
+    <string name="attendee_card_pending">Venter</string>
+    <string name="attendee_card_declined">Avslått</string>
+    <string name="attendee_card_tentative">Foreløpig</string>
+    <string name="attendee_card_hosting">Vert</string>
+    <string name="attendee_action_copy">Kopier e-post</string>
+    <string name="attendee_action_email">Send e-post</string>
+    <string name="attendee_group_icon_description">Personer</string>
+    <string name="attendee_email_copied">E-post kopiert</string>
+    <string name="attendee_no_email_app">Ingen e-postapp installert</string>
+    <string name="attendee_show_less">Vis mindre</string>
+    <string name="attendee_show_all">Vis alle deltakere</string>
+    <string name="attendee_status_accepted">Akseptert</string>
+    <string name="attendee_status_declined">Avslått</string>
+    <string name="attendee_status_tentative">Foreløpig</string>
+    <string name="attendee_status_delegated">Delegert</string>
+    <string name="attendee_status_pending">Venter</string>
 </resources>

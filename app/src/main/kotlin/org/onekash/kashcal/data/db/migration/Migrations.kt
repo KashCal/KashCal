@@ -60,6 +60,30 @@ object Migrations {
     }
 
     /**
+     * Check if a table exists.
+     */
+    private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {
+        db.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName)).use { cursor ->
+            return cursor.count > 0
+        }
+    }
+
+    /**
+     * Read the set of column names for a table via PRAGMA table_info.
+     * Returns an empty set if the table doesn't exist.
+     */
+    private fun tableColumns(db: SupportSQLiteDatabase, tableName: String): Set<String> {
+        val result = mutableSetOf<String>()
+        db.query("PRAGMA table_info($tableName)").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            while (cursor.moveToNext()) {
+                result.add(cursor.getString(nameIndex))
+            }
+        }
+        return result
+    }
+
+    /**
      * Drop an index if it exists (more robust than DROP INDEX IF EXISTS).
      */
     private fun dropIndexIfExists(db: SupportSQLiteDatabase, indexName: String) {
@@ -785,6 +809,157 @@ object Migrations {
     }
 
     /**
+     * Expected column-name set for the `attendees` table at v17. Used by
+     * the drop-rogue-on-shape-mismatch check in MIGRATION_16_17.
+     */
+    private val EXPECTED_ATTENDEES_COLUMNS = setOf(
+        "id",
+        "event_id",
+        "address",
+        "display_name",
+        "role",
+        "partstat",
+        "cutype",
+        "rsvp",
+        "delegated_from",
+        "delegated_to",
+        "member",
+        "sent_by",
+        "schedule_agent",
+        "schedule_status",
+        "schedule_force_send",
+        "sort_order"
+    )
+
+    /**
+     * Migration from version 16 to 17 — scheduling schema bundle.
+     *
+     * Schema delta:
+     * - `accounts.calendar_user_addresses` (TEXT NOT NULL DEFAULT '[]') —
+     *   JSON `List<String>` of CAL-ADDRESS forms from RFC 6638 §2.4.1
+     *   `calendar-user-address-set` PROPFIND.
+     * - `events.organizer_sent_by` (TEXT) — RFC 5545 §3.2.18.
+     * - `events.organizer_schedule_status` (TEXT) — RFC 6638 §7.3.
+     * - `attendees` table — child of events with FK CASCADE, 16 columns
+     *   covering RFC 5545 §3.8.4.1 ATTENDEE plus RFC 6638 §7 scheduling
+     *   parameters.
+     *
+     * Robustness guarantees:
+     * 1. Idempotent — `addColumnIfNotExists`, `CREATE TABLE IF NOT EXISTS`,
+     *    `CREATE INDEX IF NOT EXISTS` mean re-runs are safe no-ops.
+     * 2. Explicit transaction wrap — defense in depth even though Room
+     *    provides an implicit wrap; partial failures roll back.
+     * 3. Drop-rogue-on-shape-mismatch — if `attendees` exists with column
+     *    set ≠ expected, drop and recreate. Forward-compatible tables
+     *    (matching shape) are left alone via IF NOT EXISTS.
+     * 4. Post-migration validation — verify all expected columns/tables/
+     *    indexes exist; throw `IllegalStateException` if any are missing.
+     *    Validation runs INSIDE the transaction, BEFORE
+     *    `setTransactionSuccessful()`, so a failed check rolls back rather
+     *    than commits a broken schema.
+     *
+     * SQL strings for the new table and indexes are copied verbatim from
+     * Room's autogen `17.json` schema export (with `${TABLE_NAME}`
+     * substituted) so the migration's identityHash matches Room's
+     * expected hash at startup.
+     */
+    val MIGRATION_16_17 = object : Migration(16, 17) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                // 1. Additive column adds (idempotent via addColumnIfNotExists)
+                addColumnIfNotExists(
+                    db,
+                    "accounts",
+                    "calendar_user_addresses",
+                    "TEXT NOT NULL DEFAULT '[]'"
+                )
+                addColumnIfNotExists(db, "events", "organizer_sent_by", "TEXT")
+                addColumnIfNotExists(db, "events", "organizer_schedule_status", "TEXT")
+
+                // 2. Drop-rogue-on-shape-mismatch: only destroys data on stale
+                //    leftovers, never on a forward-compatible table. Empty set
+                //    means the table doesn't exist — no drop needed.
+                val actualColumns = tableColumns(db, "attendees")
+                if (actualColumns.isNotEmpty() && actualColumns != EXPECTED_ATTENDEES_COLUMNS) {
+                    Log.w(
+                        TAG,
+                        "Dropping rogue attendees table — column set mismatch " +
+                            "(actual=$actualColumns expected=$EXPECTED_ATTENDEES_COLUMNS)"
+                    )
+                    db.execSQL("DROP TABLE attendees")
+                }
+
+                // 3. Create table + indexes (autogen SQL from 17.json,
+                //    wrapped in IF NOT EXISTS for idempotency).
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `attendees` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `event_id` INTEGER NOT NULL,
+                        `address` TEXT NOT NULL,
+                        `display_name` TEXT,
+                        `role` TEXT,
+                        `partstat` TEXT,
+                        `cutype` TEXT,
+                        `rsvp` INTEGER,
+                        `delegated_from` TEXT NOT NULL DEFAULT '[]',
+                        `delegated_to` TEXT NOT NULL DEFAULT '[]',
+                        `member` TEXT NOT NULL DEFAULT '[]',
+                        `sent_by` TEXT,
+                        `schedule_agent` TEXT,
+                        `schedule_status` TEXT,
+                        `schedule_force_send` TEXT,
+                        `sort_order` INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY(`event_id`) REFERENCES `events`(`id`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_attendees_event_id` " +
+                        "ON `attendees` (`event_id`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_attendees_address` " +
+                        "ON `attendees` (`address`)"
+                )
+
+                // 4. Post-migration validation — runs BEFORE
+                //    setTransactionSuccessful() so a thrown exception rolls
+                //    back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!columnExists(db, "accounts", "calendar_user_addresses")) {
+                        add("accounts.calendar_user_addresses")
+                    }
+                    if (!columnExists(db, "events", "organizer_sent_by")) {
+                        add("events.organizer_sent_by")
+                    }
+                    if (!columnExists(db, "events", "organizer_schedule_status")) {
+                        add("events.organizer_schedule_status")
+                    }
+                    if (!tableExists(db, "attendees")) add("attendees table")
+                    if (!indexExists(db, "index_attendees_event_id")) {
+                        add("index_attendees_event_id")
+                    }
+                    if (!indexExists(db, "index_attendees_address")) {
+                        add("index_attendees_address")
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_16_17 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -802,6 +977,7 @@ object Migrations {
         MIGRATION_12_13,
         MIGRATION_13_14,
         MIGRATION_14_15,
-        MIGRATION_15_16
+        MIGRATION_15_16,
+        MIGRATION_16_17
     )
 }

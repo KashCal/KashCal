@@ -1042,4 +1042,37 @@
     <string name="backup_error_build_failed">Не удалось создать резервную копию</string>
     <string name="backup_error_write_failed">Не удалось создать резервную копию — не удалось записать в файл</string>
     <string name="backup_error_read_failed">Не удалось прочитать файл</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Участники</string>
+    <string name="attendee_you_marker">Вы</string>
+    <string name="attendee_organizer_pill">Организатор</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+ещё %d</item>
+        <item quantity="few">+ещё %d</item>
+        <item quantity="many">+ещё %d</item>
+        <item quantity="other">+ещё %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d участник</item>
+        <item quantity="few">%d участника</item>
+        <item quantity="many">%d участников</item>
+        <item quantity="other">%d участника</item>
+    </plurals>
+    <string name="attendee_card_going">Принял</string>
+    <string name="attendee_card_pending">Ожидает</string>
+    <string name="attendee_card_declined">Отклонил</string>
+    <string name="attendee_card_tentative">Возможно</string>
+    <string name="attendee_card_hosting">Организатор</string>
+    <string name="attendee_action_copy">Скопировать e-mail</string>
+    <string name="attendee_action_email">Отправить письмо</string>
+    <string name="attendee_group_icon_description">Люди</string>
+    <string name="attendee_email_copied">E-mail скопирован</string>
+    <string name="attendee_no_email_app">Приложение электронной почты не установлено</string>
+    <string name="attendee_show_less">Показать меньше</string>
+    <string name="attendee_show_all">Показать всех участников</string>
+    <string name="attendee_status_accepted">Принято</string>
+    <string name="attendee_status_declined">Отклонил</string>
+    <string name="attendee_status_tentative">Возможно</string>
+    <string name="attendee_status_delegated">Делегировано</string>
+    <string name="attendee_status_pending">Ожидает</string>
 </resources>

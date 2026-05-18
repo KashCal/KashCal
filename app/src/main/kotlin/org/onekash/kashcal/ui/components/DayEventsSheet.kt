@@ -48,7 +48,8 @@ internal fun DayEventsSheet(
     onEventClick: (Event, Long?) -> Unit,
     onDeviceEventClick: (DisplayEvent.Device) -> Unit,
     onCreateEvent: (Long) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    attendeesByEventId: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
@@ -103,12 +104,16 @@ internal fun DayEventsSheet(
                             displayEvent.endTs, displayEvent.endDay, displayEvent.isAllDay
                         )
 
+                        val rowAttendees = (displayEvent as? DisplayEvent.Room)
+                            ?.let { attendeesByEventId[it.event.id] }
+                            .orEmpty()
                         EventCard(
                             displayEvent = displayEvent,
                             isPast = isPast,
                             selectedDate = dateMs,
                             showEventEmojis = showEventEmojis,
                             timePattern = timePattern,
+                            attendees = rowAttendees,
                             onClick = {
                                 when (displayEvent) {
                                     is DisplayEvent.Room -> onEventClick(

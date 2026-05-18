@@ -12,6 +12,7 @@ import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -59,6 +60,7 @@ class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
     private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
+    private val attendeesDao: AttendeesDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     @Suppress("DEPRECATION") private val defaultQuirks: CalDavQuirks,
     private val dataStore: KashCalDataStore
@@ -944,14 +946,15 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Map ICalEvent to Event entity using ICalEventMapper
-            var event = ICalEventMapper.toEntity(
+            // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper
+            val mapped = ICalEventMapper.toEntity(
                 icalEvent = meta.parsed,
                 rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
                 etag = meta.etag
             )
+            var event = mapped.event
 
             // Reject events with invalid timestamps (RFC 5545 violation)
             if (!hasValidTimestamps(event)) {
@@ -997,6 +1000,13 @@ class PullStrategy @Inject constructor(
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+
+                        // Persist server-authoritative attendee set inside the
+                        // same transaction (replace-not-merge per A2).
+                        attendeesDao.replaceForEvent(
+                            saved.id,
+                            mapped.attendees.map { it.copy(eventId = saved.id) }
+                        )
 
                         // Regenerate occurrences for recurring events
                         if (saved.rrule != null) {
@@ -1111,14 +1121,15 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Map ICalEvent to Event entity using ICalEventMapper
-            var event = ICalEventMapper.toEntity(
+            // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper
+            val mappedException = ICalEventMapper.toEntity(
                 icalEvent = meta.parsed,
                 rawIcal = meta.rawIcal,
                 calendarId = calendar.id,
                 caldavUrl = meta.caldavUrl,
                 etag = meta.etag
             )
+            var event = mappedException.event
 
             // Reject exception events with invalid timestamps (RFC 5545 violation)
             if (!hasValidTimestamps(event)) {
@@ -1165,6 +1176,14 @@ class PullStrategy @Inject constructor(
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+
+                        // Persist attendee rows for the exception event in
+                        // the same transaction. Exception events have their
+                        // own per-instance attendee list (RFC 5545 §3.8.4.1).
+                        attendeesDao.replaceForEvent(
+                            saved.id,
+                            mappedException.attendees.map { it.copy(eventId = saved.id) }
+                        )
 
                         // Link exception to master's occurrence (Model B)
                         // This normalizes any existing Model A to Model B, preventing duplicates

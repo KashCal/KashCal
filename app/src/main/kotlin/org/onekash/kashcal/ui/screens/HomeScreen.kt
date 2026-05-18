@@ -234,6 +234,8 @@ fun HomeScreen(
     shouldRefreshDayPagerCache: (Long) -> Boolean = { true },
     // Year view callbacks
     onEnsureDotsForYear: (Int) -> Unit = {},
+    dayAttendees: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
+    onSetVisibleEventIds: (List<Long>) -> Unit = {},
 ) {
     // Track the last non-INSIGHTS view for BackHandler navigation
     var previousNonInsightsMode by remember { mutableStateOf(ViewMode.MONTH) }
@@ -768,7 +770,9 @@ fun HomeScreen(
                                             onDeviceEventClick = onDeviceEventClick,
                                             onDateSelected = onDateSelected,
                                             onLoadEventsForRange = onLoadEventsForDayPagerRange,
-                                            shouldRefreshCache = shouldRefreshDayPagerCache
+                                            shouldRefreshCache = shouldRefreshDayPagerCache,
+                                            attendeesByEventId = dayAttendees,
+                                            onSetVisibleEventIds = onSetVisibleEventIds
                                         )
                                     }
                                 }
@@ -856,7 +860,8 @@ fun HomeScreen(
             onEventClick = onEventClick,
             onDeviceEventClick = onDeviceEventClick,
             onCreateEvent = onCreateEventWithDateTime,
-            onDismiss = onDismissDayDetail
+            onDismiss = onDismissDayDetail,
+            attendeesByEventId = dayAttendees
         )
     }
 
@@ -1272,7 +1277,9 @@ private fun ColumnScope.DayEventsPager(
     onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
     onDateSelected: (Long) -> Unit,
     onLoadEventsForRange: (Long) -> Unit,
-    shouldRefreshCache: (Long) -> Boolean
+    shouldRefreshCache: (Long) -> Boolean,
+    attendeesByEventId: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
+    onSetVisibleEventIds: (List<Long>) -> Unit = {}
 ) {
     val todayMs = dayPagerTodayMs
 
@@ -1301,6 +1308,20 @@ private fun ColumnScope.DayEventsPager(
             val monthsDiff = (newYear - todayYear) * 12 + (newMonth - todayMonth)
             monthPagerState.scrollToPage(monthPagerInitialPage + monthsDiff)
         }
+    }
+
+    // Push visible event IDs upward only for the settled page. The pager
+    // composes neighbour pages eagerly (beyondViewportPageCount), so doing
+    // this per-page would race — last neighbour wins.
+    val settledDayCode = remember(dayPagerState.settledPage, todayMs) {
+        DayPagerUtils.msToDayCode(DayPagerUtils.pageToDateMs(dayPagerState.settledPage, todayMs))
+    }
+    val visibleEventIds = remember(uiState.dayEventsCache, settledDayCode) {
+        (uiState.dayEventsCache[settledDayCode] ?: persistentListOf())
+            .mapNotNull { (it as? DisplayEvent.Room)?.event?.id }
+    }
+    LaunchedEffect(visibleEventIds) {
+        onSetVisibleEventIds(visibleEventIds)
     }
 
     // SYNC 2: Calendar tap → Scroll day pager (instant to prevent race with SYNC 1)
@@ -1365,7 +1386,8 @@ private fun ColumnScope.DayEventsPager(
                 nowMs = nowMs,
                 todayDayCode = todayDayCode,
                 onEventClick = onEventClick,
-                onDeviceEventClick = onDeviceEventClick
+                onDeviceEventClick = onDeviceEventClick,
+                attendeesByEventId = attendeesByEventId
             )
         }
     }
@@ -1384,7 +1406,8 @@ private fun DayEventsPage(
     nowMs: Long,
     todayDayCode: Int,
     onEventClick: (Event, Long?) -> Unit,
-    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {}
+    onDeviceEventClick: (DisplayEvent.Device) -> Unit = {},
+    attendeesByEventId: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap()
 ) {
     when {
         isLoading -> {
@@ -1428,12 +1451,17 @@ private fun DayEventsPage(
                         todayDayCode = todayDayCode,
                     )
 
+                    val attendeeModels = (displayEvent as? DisplayEvent.Room)
+                        ?.let { attendeesByEventId[it.event.id] }
+                        .orEmpty()
+
                     EventCard(
                         displayEvent = displayEvent,
                         isPast = isPast,
                         selectedDate = dateMs,
                         showEventEmojis = showEventEmojis,
                         timePattern = timePattern,
+                        attendees = attendeeModels,
                         onClick = {
                             when (displayEvent) {
                                 is DisplayEvent.Room -> onEventClick(displayEvent.event, displayEvent.occurrence.startTs)

@@ -966,4 +966,30 @@
     <string name="backup_error_build_failed">バックアップに失敗しました</string>
     <string name="backup_error_write_failed">バックアップに失敗しました：ファイルに書き込めませんでした</string>
     <string name="backup_error_read_failed">ファイルを読み込めませんでした</string>
+    <string name="label_attendees">参加者</string>
+    <string name="attendee_you_marker">あなた</string>
+    <string name="attendee_organizer_pill">主催者</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d 件</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">%d 人の参加者</item>
+    </plurals>
+    <string name="attendee_card_going">参加</string>
+    <string name="attendee_card_pending">保留</string>
+    <string name="attendee_card_declined">辞退</string>
+    <string name="attendee_card_tentative">未定</string>
+    <string name="attendee_card_hosting">主催</string>
+    <string name="attendee_action_copy">メールアドレスをコピー</string>
+    <string name="attendee_action_email">メールを送信</string>
+    <string name="attendee_group_icon_description">人</string>
+    <string name="attendee_email_copied">メールアドレスをコピーしました</string>
+    <string name="attendee_no_email_app">メールアプリが未インストール</string>
+    <string name="attendee_show_less">折りたたむ</string>
+    <string name="attendee_show_all">すべての出席者を表示</string>
+    <string name="attendee_status_accepted">承諾</string>
+    <string name="attendee_status_declined">辞退</string>
+    <string name="attendee_status_tentative">未定</string>
+    <string name="attendee_status_delegated">委任</string>
+    <string name="attendee_status_pending">保留</string>
 </resources>

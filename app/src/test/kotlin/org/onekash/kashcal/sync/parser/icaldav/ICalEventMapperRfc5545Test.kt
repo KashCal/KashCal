@@ -57,7 +57,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         // effectiveEnd() should calculate DTSTART + DURATION
         // 10:00 + 1h30m = 11:30
@@ -87,7 +87,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         val oneDayMs = 24 * 60 * 60 * 1000L
         assertEquals(
@@ -115,7 +115,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Zero-duration: endTs should equal startTs", entity.startTs, entity.endTs)
     }
@@ -140,7 +140,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("TENTATIVE", entity.status)
     }
@@ -163,7 +163,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("CONFIRMED", entity.status)
     }
@@ -186,7 +186,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         // Default should be CONFIRMED (most common for active events)
         assertEquals("Default status should be CONFIRMED", "CONFIRMED", entity.status)
@@ -210,7 +210,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Missing SUMMARY should default to 'Untitled'", "Untitled", entity.title)
     }
@@ -238,7 +238,7 @@ class ICalEventMapperRfc5545Test {
 
         val result = parser.parseAllEvents(ics).getOrNull()
         if (result != null && result.isNotEmpty()) {
-            val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null)
+            val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null).event
             // Empty SUMMARY should become "Untitled", not empty string
             assertEquals(
                 "Empty SUMMARY should become 'Untitled'",
@@ -270,7 +270,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("PRIORITY=0 means undefined", 0, entity.priority)
     }
@@ -293,7 +293,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals(1, entity.priority)
     }
@@ -316,7 +316,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals(9, entity.priority)
     }
@@ -339,7 +339,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals(5, entity.priority)
     }
@@ -364,7 +364,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("PRIVATE", entity.classification)
     }
@@ -387,7 +387,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("CONFIDENTIAL", entity.classification)
     }
@@ -409,7 +409,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Default CLASS should be PUBLIC", "PUBLIC", entity.classification)
     }
@@ -437,7 +437,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertNotNull("Should have exdate", entity.exdate)
         val exdates = entity.exdate!!.split(",")
@@ -470,7 +470,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertNotNull("Should have rdate", entity.rdate)
         val rdates = entity.rdate!!.split(",")
@@ -502,7 +502,7 @@ class ICalEventMapperRfc5545Test {
 
         val result = parser.parseAllEvents(ics).getOrNull()
         if (result != null && result.isNotEmpty()) {
-            val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null)
+            val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null).event
 
             assertTrue("Should be all-day", entity.isAllDay)
             // Should be a 1-day event: endTs should be same day as startTs
@@ -532,7 +532,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertTrue("Should be all-day", entity.isAllDay)
 
@@ -567,7 +567,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         val startDate = java.time.Instant.ofEpochMilli(entity.startTs)
             .atZone(java.time.ZoneOffset.UTC).toLocalDate()
@@ -602,7 +602,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("SEQUENCE should be 7", 7, entity.sequence)
     }
@@ -624,7 +624,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Default SEQUENCE should be 0", 0, entity.sequence)
     }
@@ -648,7 +648,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Default TRANSP should be OPAQUE", "OPAQUE", entity.transp)
     }
@@ -673,7 +673,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals(
             "UID with special chars should be preserved",
@@ -702,7 +702,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertTrue("Should be all-day", entity.isAllDay)
         assertNotNull("Should have originalInstanceTime from RECURRENCE-ID", entity.originalInstanceTime)
@@ -736,7 +736,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         // DTSTAMP should be non-zero and reasonable
         assertTrue("DTSTAMP should be positive", entity.dtstamp > 0)
@@ -766,7 +766,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         // Verify event is not all-day (it has time components)
         assertFalse("Floating time event should not be all-day", entity.isAllDay)
@@ -796,7 +796,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertEquals("Master importId should equal UID", "master-import@kashcal.test", entity.importId)
     }
@@ -819,7 +819,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertTrue(
             "Exception importId should contain :RECID:",
@@ -870,7 +870,7 @@ class ICalEventMapperRfc5545Test {
         """.trimIndent()
 
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         // reminders limited to 5 (all fit within the limit)
         assertEquals("Should store all 5 reminders", 5, entity.reminders?.size ?: 0)

@@ -35,6 +35,10 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         return xmlParser.extractCalendarHomeUrls(responseBody)
     }
 
+    override fun extractCalendarUserAddresses(responseBody: String): List<String> {
+        return xmlParser.extractCalendarUserAddresses(responseBody)
+    }
+
     override fun extractCalendars(responseBody: String, baseHost: String): List<CalDavQuirks.ParsedCalendar> {
         val calendars = xmlParser.extractCalendars(responseBody)
         return calendars.filter { parsed ->

@@ -247,7 +247,7 @@ class ICalExceptionEventTest {
                 calendarId = 1L,
                 caldavUrl = "/calendar/event.ics",
                 etag = "abc123"
-            )
+            ).event
         }
 
         assertEquals("Should have 3 entities", 3, entities.size)
@@ -297,7 +297,7 @@ class ICalExceptionEventTest {
 
         assertEquals("CANCELLED", cancelled.status.name)
 
-        val entity = ICalEventMapper.toEntity(cancelled, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(cancelled, ics, 1L, null, null).event
         assertEquals("CANCELLED", entity.status)
     }
 
@@ -411,8 +411,8 @@ class ICalExceptionEventTest {
         assertEquals("Europe/London", exception.dtStart.timezone?.id)
 
         // Map and verify
-        val masterEntity = ICalEventMapper.toEntity(master, ics, 1L, null, null)
-        val exceptionEntity = ICalEventMapper.toEntity(exception, ics, 1L, null, null)
+        val masterEntity = ICalEventMapper.toEntity(master, ics, 1L, null, null).event
+        val exceptionEntity = ICalEventMapper.toEntity(exception, ics, 1L, null, null).event
 
         assertEquals("America/New_York", masterEntity.timezone)
         assertEquals("Europe/London", exceptionEntity.timezone)
@@ -492,7 +492,7 @@ class ICalExceptionEventTest {
         val master = events.first()
 
         // Create entity with updated title
-        val entity = ICalEventMapper.toEntity(master, originalIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(master, originalIcs, 1L, null, null).event
             .copy(title = "Updated Weekly Event")
 
         // Patch the master

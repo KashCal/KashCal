@@ -1012,4 +1012,32 @@
     <string name="label_more_colors">Weitere Farben</string>
     <string name="label_back_to_grid">Zurück</string>
     <string name="settings_suggest_titles">Ereignistitel vorschlagen</string>
+    <string name="label_attendees">Teilnehmer</string>
+    <string name="attendee_you_marker">Du</string>
+    <string name="attendee_organizer_pill">Organisator</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d weiterer</item>
+        <item quantity="other">+%d weitere</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d Teilnehmer</item>
+        <item quantity="other">%d Teilnehmer</item>
+    </plurals>
+    <string name="attendee_card_going">Nimmt teil</string>
+    <string name="attendee_card_pending">Ausstehend</string>
+    <string name="attendee_card_declined">Abgelehnt</string>
+    <string name="attendee_card_tentative">Vorläufig</string>
+    <string name="attendee_card_hosting">Veranstalter</string>
+    <string name="attendee_action_copy">E-Mail kopieren</string>
+    <string name="attendee_action_email">E-Mail senden</string>
+    <string name="attendee_group_icon_description">Personen</string>
+    <string name="attendee_email_copied">E-Mail kopiert</string>
+    <string name="attendee_no_email_app">Keine E-Mail-App installiert</string>
+    <string name="attendee_show_less">Weniger anzeigen</string>
+    <string name="attendee_show_all">Alle Teilnehmer anzeigen</string>
+    <string name="attendee_status_accepted">Angenommen</string>
+    <string name="attendee_status_declined">Abgelehnt</string>
+    <string name="attendee_status_tentative">Vorläufig</string>
+    <string name="attendee_status_delegated">Delegiert</string>
+    <string name="attendee_status_pending">Ausstehend</string>
 </resources>

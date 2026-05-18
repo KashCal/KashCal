@@ -67,6 +67,7 @@ class ConflictResolverStrategyTest {
         conflictResolver = ConflictResolver(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = mockk(relaxed = true),
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator
         )

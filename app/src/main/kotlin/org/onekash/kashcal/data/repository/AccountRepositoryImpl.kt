@@ -179,6 +179,10 @@ class AccountRepositoryImpl @Inject constructor(
         accountsDao.updateCalDavUrls(accountId, principalUrl, homeSetUrl)
     }
 
+    override suspend fun updateCalendarUserAddresses(accountId: Long, addresses: List<String>) {
+        accountsDao.updateCalendarUserAddresses(accountId, addresses)
+    }
+
     override suspend fun setEnabled(accountId: Long, enabled: Boolean) {
         accountsDao.setEnabled(accountId, enabled)
     }

@@ -1028,4 +1028,32 @@
     <string name="label_more_colors">Daha fazla renk</string>
     <string name="label_back_to_grid">Geri</string>
     <string name="settings_suggest_titles">Etkinlik başlıklarını öner</string>
+    <string name="label_attendees">Katılımcılar</string>
+    <string name="attendee_you_marker">Sen</string>
+    <string name="attendee_organizer_pill">Düzenleyici</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d daha</item>
+        <item quantity="other">+%d daha</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d katılımcı</item>
+        <item quantity="other">%d katılımcı</item>
+    </plurals>
+    <string name="attendee_card_going">Geliyor</string>
+    <string name="attendee_card_pending">Beklemede</string>
+    <string name="attendee_card_declined">Reddedildi</string>
+    <string name="attendee_card_tentative">Belirsiz</string>
+    <string name="attendee_card_hosting">Düzenleyen</string>
+    <string name="attendee_action_copy">E-postayı kopyala</string>
+    <string name="attendee_action_email">E-posta gönder</string>
+    <string name="attendee_group_icon_description">Kişiler</string>
+    <string name="attendee_email_copied">E-posta kopyalandı</string>
+    <string name="attendee_no_email_app">Yüklü e-posta uygulaması yok</string>
+    <string name="attendee_show_less">Daha az göster</string>
+    <string name="attendee_show_all">Tüm katılımcıları göster</string>
+    <string name="attendee_status_accepted">Kabul edildi</string>
+    <string name="attendee_status_declined">Reddedildi</string>
+    <string name="attendee_status_tentative">Belirsiz</string>
+    <string name="attendee_status_delegated">Devredildi</string>
+    <string name="attendee_status_pending">Beklemede</string>
 </resources>

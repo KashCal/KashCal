@@ -1,0 +1,1944 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Mozilla.org/NONSGML Mozilla Calendar V1.1//EN
+BEGIN:VEVENT
+SUMMARY:Jour de l'An 
+DTSTART;VALUE=DATE:20250101
+DTEND;VALUE=DATE:20250102
+DTSTAMP:20250430T135739Z
+UID:be63c3297c2f8f5ca3c014a794a5c1e5-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de l'An est le premier jour de la
+  nouvelle année selon le calendrier grégorien utilisé au Canada et dans
+  de nombreux autres pays.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Vendredi saint 
+DTSTART;VALUE=DATE:20250418
+DTEND;VALUE=DATE:20250419
+DTSTAMP:20250430T135739Z
+UID:c257c788346c4b203ef5c03a8c20c518-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le Vendredi saint\, les chrétiens commé
+ morent la crucifixion de Jésus-Christ et c'est un jour férié dans de no
+ mbreuses régions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (NT\, NU\, QC)
+DTSTART;VALUE=DATE:20250421
+DTEND;VALUE=DATE:20250422
+DTSTAMP:20250430T135739Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2025-nt-nu-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Victoria  (All except NS\, PE\, QC)
+DTSTART;VALUE=DATE:20250519
+DTEND;VALUE=DATE:20250520
+DTSTAMP:20250430T135739Z
+UID:d0252fb6b0272dba508cb21bda408aaf-2025-all-except-ns-pe-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête de Victoria est célébrée en l
+ 'honneur des anniversaires de la reine Victoria et de l'actuel monarque du
+  Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Canada 
+DTSTART;VALUE=DATE:20250701
+DTEND;VALUE=DATE:20250702
+DTSTAMP:20250430T135739Z
+UID:a5371b57012e81e208a9d9a5512fb773-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Canada est un jour férié f
+ édéral le 1er juillet pour marquer l'anniversaire de la date à laquelle
+  le Canada est devenu un pays autonome.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Travail 
+DTSTART;VALUE=DATE:20250901
+DTEND;VALUE=DATE:20250902
+DTSTAMP:20250430T135739Z
+UID:04adc984b42bdb0510e5423d9d1bac0c-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Travail au Canada est un jour
+  férié pour faire campagne en faveur des droits des travailleurs. Il cé
+ lèbre les réalisations en matière de droits.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation 
+DTSTART;VALUE=DATE:20250930
+DTEND;VALUE=DATE:20251001
+DTSTAMP:20250430T135739Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Federal Employees Holiday -  La Journée nationale de la véri
+ té et de la réconciliation est une fête des employés fédéraux au Can
+ ada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (All except NS\, PE)
+DTSTART;VALUE=DATE:20251013
+DTEND;VALUE=DATE:20251014
+DTSTAMP:20250430T135739Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2025-all-except-ns-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de Thanksgiving est une fête où
+  l'on rend grâce pour les bénédictions que l'on reçoit dans la vie\, e
+ n particulier pour les récoltes. C'est un jour de congé pour de nombreux
+  Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (All except MB\, NS\, ON\, QC)
+DTSTART;VALUE=DATE:20251111
+DTEND;VALUE=DATE:20251112
+DTSTAMP:20250430T135739Z
+UID:7b535d10438a9db737b8917209025d38-2025-all-except-mb-ns-on-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour du Souvenir rend hommage aux civi
+ ls et aux militaires qui ont perdu la vie lors de conflits armés.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de Noël 
+DTSTART;VALUE=DATE:20251225
+DTEND;VALUE=DATE:20251226
+DTSTAMP:20250430T135739Z
+UID:e9433ce9730393ac1292592a71223476-2025-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Les chrétiens célèbrent la naissance d
+ e Jésus-Christ le jour de Noël au Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (NL\, NT\, NU\, ON)
+DTSTART;VALUE=DATE:20251226
+DTEND;VALUE=DATE:20251227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2025-nl-nt-nu-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lendemain de Noël est connu sous le n
+ om de Boxing Day et est un jour férié dans de nombreuses régions du Can
+ ada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Louis Riel  (Manitoba)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250218
+DTSTAMP:20250430T135739Z
+UID:d053f0443caa66be8ff4ce6dac6dc989-2025-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée Louis Riel célèbre les réalisa
+ tions et la vie de Louis Riel\, un homme politique canadien qui a été l'
+ un des leaders du peuple métis.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du patrimoine de la Nouvelle-Écosse  (Nova Scotia)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250218
+DTSTAMP:20250430T135739Z
+UID:c59ab684146adaad2c255be2e590ec07-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du patrimoine de la Nouvelle-Éco
+ sse est un jour de congé pour les Canadiens en Nouvelle-Écosse. Il vise 
+ à reconnaître les contributions culturelles ou historiques à la provinc
+ e.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des insulaires  (Prince Edward Island)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250218
+DTSTAMP:20250430T135739Z
+UID:cb8a509b4c86bd48d3715caf14460e76-2025-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des insulaires est un jour de con
+ gé pour de nombreuses personnes dans la province de l'Île-du-Prince-Édo
+ uard au Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (AB\, ON\, SK\, NB)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250218
+DTSTAMP:20250430T135739Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2025-ab-on-sk-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (British Columbia)
+DTSTART;VALUE=DATE:20250217
+DTEND;VALUE=DATE:20250218
+DTSTAMP:20250430T135739Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2025-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée du patrimoine du Yukon  (Yukon)
+DTSTART;VALUE=DATE:20250221
+DTEND;VALUE=DATE:20250222
+DTSTAMP:20250430T135739Z
+UID:a337450dfe4eb11c3a390698e740269c-2025-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local de facto holiday -  La Journée nationale du patrimoine\
+ , également connue sous le nom de Journée du patrimoine\, est générale
+ ment célébrée au Yukon\, au Canada\, le dernier vendredi de février.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Patrick  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250317
+DTEND;VALUE=DATE:20250318
+DTSTAMP:20250430T135739Z
+UID:e6887445e82f994356343ff2f5dce408-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Patrick commémore la vie et l'œuvr
+ e de Saint Patrick\, un missionnaire chrétien qui a vécu aux IVe et Ve s
+ iècles.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250420
+DTEND;VALUE=DATE:20250421
+DTSTAMP:20250430T135739Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Shops Closing Day -  Le dimanche de Pâques est le jour le plu
+ s important du calendrier des églises chrétiennes au Canada. Il célèbr
+ e la résurrection de Jésus-Christ après sa crucifixion\, selon la croya
+ nce chrétienne.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Nova Scotia)
+DTSTART;VALUE=DATE:20250420
+DTEND;VALUE=DATE:20250421
+DTSTAMP:20250430T135739Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le dimanche de Pâques est le
+  jour le plus important du calendrier des églises chrétiennes au Canada.
+  Il célèbre la résurrection de Jésus-Christ après sa crucifixion\, se
+ lon la croyance chrétienne.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (New Brunswick)
+DTSTART;VALUE=DATE:20250421
+DTEND;VALUE=DATE:20250422
+DTSTAMP:20250430T135739Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2025-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Georges  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250421
+DTEND;VALUE=DATE:20250422
+DTSTAMP:20250430T135739Z
+UID:51f229e235897cd1962786b629414698-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Georges est un jour férié dans la 
+ province canadienne de Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des patriotes  (Quebec)
+DTSTART;VALUE=DATE:20250519
+DTEND;VALUE=DATE:20250520
+DTSTAMP:20250430T135739Z
+UID:6276dd06939da6bd55c7c6eebd1a9f3e-2025-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des patriotes est un jo
+ ur férié annuel au Québec\, au Canada\, qui a lieu le lundi précédant
+  le 25 mai.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des peuples autochtones  (NT\, YT)
+DTSTART;VALUE=DATE:20250621
+DTEND;VALUE=DATE:20250622
+DTSTAMP:20250430T135739Z
+UID:f57e30ec5401d7cc83969d1c23cbbce5-2025-nt-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des peuples autochtones
+  célèbre la culture autochtone du Canada et les réalisations des peuple
+ s autochtones du pays.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de juin  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250623
+DTEND;VALUE=DATE:20250624
+DTSTAMP:20250430T135739Z
+UID:590d8d7b477abcce37742e4e6a6203db-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de juin de Terre-Neuve-et-Labrador c
+ ommémore l'arrivée de John Cabot dans la province le 24 juin 1497.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Jean-Baptiste  (Quebec)
+DTSTART;VALUE=DATE:20250624
+DTEND;VALUE=DATE:20250625
+DTSTAMP:20250430T135739Z
+UID:d0ff12b2383c8fdd26663931bf9276ef-2025-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Jean-Baptiste (Fête nationale du Qu
+ ébec\, Fête nationale du Québec\, la Saint-Jean\, Saint-Jean-Baptiste) 
+ est la fête nationale de la province canadienne du Québec.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Memorial Day  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250701
+DTEND;VALUE=DATE:20250702
+DTSTAMP:20250430T135739Z
+UID:09c91bd487033f07c142d4cc874c1bb1-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Memorial Day est célébré à Terre-Neuve
+ -et-Labrador\, au Canada\, le 1er juillet de chaque année.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nunavut  (Nunavut)
+DTSTART;VALUE=DATE:20250709
+DTEND;VALUE=DATE:20250710
+DTSTAMP:20250430T135739Z
+UID:0f8b8baf15d1651a4eac788e4788a74e-2025-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du Nunavut est un jour férié an
+ nuel dans le territoire canadien du Nunavut.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des orangistes  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20250714
+DTEND;VALUE=DATE:20250715
+DTSTAMP:20250430T135739Z
+UID:5d1862e46b6e53d79c9a5b43f834f9f5-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des orangistes est une fête prov
+ inciale à Terre-Neuve-et-Labrador au Canada. Il commémore la bataille de
+  la Boyne\, qui a eu lieu en 1690 près de Drogheda\, aujourd'hui en Répu
+ blique d'Irlande.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (Ontario)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2025-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  De nombreuses provinces et territoires can
+ adiens ont un jour férié pour célébrer un aspect de leur culture ou de
+  leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (NT\, NU)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2025-nt-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  De nombreuses provinces et territoires ca
+ nadiens ont un jour férié pour célébrer un aspect de leur culture ou d
+ e leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saskatchewan  (Saskatchewan)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:d19a6ab8ad76217d38d5f247a8377a88-2025-sk
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de la Saskatchewan est une fête loc
+ ale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Terry Fox  (Manitoba)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:2ca01ecf4957e4505f546cd3384098e0-2025-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée Terry Fox est une célébratio
+ n locale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nouveau-Brunswick  (New Brunswick)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:8f78473714117fd8d026ac2ba908698d-2025-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Prescribed Day of Rest -  La fête du Nouveau-Brunswick est l'
+ occasion pour les Canadiens de la province du Nouveau-Brunswick de céléb
+ rer leur histoire et leur culture. Elle est célébrée le premier lundi d
+ u mois d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Colombie-Britannique  (British Columbia)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:562bd82bcf9327dec49813a6d028ae90-2025-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la Colombie-Britannique est un
+  jour férié dans la province canadienne de la Colombie-Britannique.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Natal  (Nova Scotia)
+DTSTART;VALUE=DATE:20250804
+DTEND;VALUE=DATE:20250805
+DTSTAMP:20250430T135739Z
+UID:d68d0d5d4405ba897fc5e365d0f61ffe-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour du Natal est une fête civique qui c
+ élèbre « l'anniversaire » de la province de la Nouvelle-Écosse. Il 
+ a lieu le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La Royal St John's Regatta (Regatta Day)  (Newfoundland and Labrad
+ or)
+DTSTART;VALUE=DATE:20250806
+DTEND;VALUE=DATE:20250807
+DTSTAMP:20250430T135739Z
+UID:799ca140bc3729f933919f5583e012d8-2025-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour de la régate a lieu le premier mercr
+ edi d'août et c'est un jour férié local dans la province canadienne de 
+ Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Défilé de la Gold Cup  (Prince Edward Island)
+DTSTART;VALUE=DATE:20250815
+DTEND;VALUE=DATE:20250816
+DTSTAMP:20250430T135739Z
+UID:eb221f662cbb9c8e8101606cd0cb830b-2025-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le défilé de la Gold Cup est le plus grand 
+ défilé du Canada atlantique et le plus grand défilé à l'est de Montr
+ éal. Il a lieu chaque année à Charlottetown\, à l'Île-du-Prince-Édou
+ ard\, au Canada\, le troisième vendredi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de la découverte  (Yukon)
+DTSTART;VALUE=DATE:20250818
+DTEND;VALUE=DATE:20250819
+DTSTAMP:20250430T135739Z
+UID:a80bc0f820a44b4dfd902d15e9adbad1-2025-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Jour de la découverte est un jour férié
+  sur le territoire canadien du Yukon qui a lieu le troisième lundi d'aoû
+ t. Elle commémore l'anniversaire de la découverte d'or à Bonanza Creek 
+ au XIXe siècle.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation  (NT\, 
+ YT\, NU\, PE\, BC)
+DTSTART;VALUE=DATE:20250930
+DTEND;VALUE=DATE:20251001
+DTSTAMP:20250430T135739Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2025-nt-yt-nu-pe-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La Journée nationale de la vérité et d
+ e la réconciliation est un jour férié au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (Nova Scotia)
+DTSTART;VALUE=DATE:20251013
+DTEND;VALUE=DATE:20251014
+DTSTAMP:20250430T135739Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour de Thanksgiving est u
+ ne fête où l'on rend grâce pour les bénédictions que l'on reçoit dan
+ s la vie\, en particulier pour les récoltes. C'est un jour de congé pour
+  de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des aides-soignants  (BC\, MB)
+DTSTART;VALUE=DATE:20251018
+DTEND;VALUE=DATE:20251019
+DTSTAMP:20250430T135739Z
+UID:ce9920a2799866d5b34d2882068cca5d-2025-bc-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée des aides-soignants est une c
+ élébration locale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (Nova Scotia)
+DTSTART;VALUE=DATE:20251111
+DTEND;VALUE=DATE:20251112
+DTSTAMP:20250430T135739Z
+UID:7b535d10438a9db737b8917209025d38-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour du Souvenir rend homm
+ age aux civils et aux militaires qui ont perdu la vie lors de conflits arm
+ és.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La veille de Noël  (New Brunswick)
+DTSTART;VALUE=DATE:20251224
+DTEND;VALUE=DATE:20251225
+DTSTAMP:20250430T135739Z
+UID:43a9022013108adbc50ccc852d636a45-2025-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Half Day -  La veille de Noël au Canada est la veil
+ le du jour de Noël et tombe toujours le 24 décembre selon le calendrier 
+ grégorien.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (Nova Scotia)
+DTSTART;VALUE=DATE:20251226
+DTEND;VALUE=DATE:20251227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2025-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le lendemain de Noël est con
+ nu sous le nom de Boxing Day et est un jour férié dans de nombreuses ré
+ gions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (New Brunswick)
+DTSTART;VALUE=DATE:20251226
+DTEND;VALUE=DATE:20251227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2025-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Provincial Public Sector Holiday -  Le lendemain de Noël est 
+ connu sous le nom de Boxing Day et est un jour férié dans de nombreuses 
+ régions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de l'An 
+DTSTART;VALUE=DATE:20260101
+DTEND;VALUE=DATE:20260102
+DTSTAMP:20250430T135739Z
+UID:be63c3297c2f8f5ca3c014a794a5c1e5-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de l'An est le premier jour de la
+  nouvelle année selon le calendrier grégorien utilisé au Canada et dans
+  de nombreux autres pays.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Vendredi saint 
+DTSTART;VALUE=DATE:20260403
+DTEND;VALUE=DATE:20260404
+DTSTAMP:20250430T135739Z
+UID:c257c788346c4b203ef5c03a8c20c518-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le Vendredi saint\, les chrétiens commé
+ morent la crucifixion de Jésus-Christ et c'est un jour férié dans de no
+ mbreuses régions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (NT\, NU\, QC)
+DTSTART;VALUE=DATE:20260406
+DTEND;VALUE=DATE:20260407
+DTSTAMP:20250430T135739Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2026-nt-nu-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Victoria  (All except NS\, PE\, QC)
+DTSTART;VALUE=DATE:20260518
+DTEND;VALUE=DATE:20260519
+DTSTAMP:20250430T135739Z
+UID:d0252fb6b0272dba508cb21bda408aaf-2026-all-except-ns-pe-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête de Victoria est célébrée en l
+ 'honneur des anniversaires de la reine Victoria et de l'actuel monarque du
+  Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Canada 
+DTSTART;VALUE=DATE:20260701
+DTEND;VALUE=DATE:20260702
+DTSTAMP:20250430T135739Z
+UID:a5371b57012e81e208a9d9a5512fb773-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Canada est un jour férié f
+ édéral le 1er juillet pour marquer l'anniversaire de la date à laquelle
+  le Canada est devenu un pays autonome.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Travail 
+DTSTART;VALUE=DATE:20260907
+DTEND;VALUE=DATE:20260908
+DTSTAMP:20250430T135739Z
+UID:04adc984b42bdb0510e5423d9d1bac0c-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Travail au Canada est un jour
+  férié pour faire campagne en faveur des droits des travailleurs. Il cé
+ lèbre les réalisations en matière de droits.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation 
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20261001
+DTSTAMP:20250430T135739Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Federal Employees Holiday -  La Journée nationale de la véri
+ té et de la réconciliation est une fête des employés fédéraux au Can
+ ada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (All except NS\, PE)
+DTSTART;VALUE=DATE:20261012
+DTEND;VALUE=DATE:20261013
+DTSTAMP:20250430T135739Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2026-all-except-ns-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de Thanksgiving est une fête où
+  l'on rend grâce pour les bénédictions que l'on reçoit dans la vie\, e
+ n particulier pour les récoltes. C'est un jour de congé pour de nombreux
+  Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (All except MB\, NS\, ON\, QC)
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+DTSTAMP:20250430T135739Z
+UID:7b535d10438a9db737b8917209025d38-2026-all-except-mb-ns-on-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour du Souvenir rend hommage aux civi
+ ls et aux militaires qui ont perdu la vie lors de conflits armés.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de Noël 
+DTSTART;VALUE=DATE:20261225
+DTEND;VALUE=DATE:20261226
+DTSTAMP:20250430T135739Z
+UID:e9433ce9730393ac1292592a71223476-2026-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Les chrétiens célèbrent la naissance d
+ e Jésus-Christ le jour de Noël au Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (NL\, NT\, NU\, ON)
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2026-nl-nt-nu-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lendemain de Noël est connu sous le n
+ om de Boxing Day et est un jour férié dans de nombreuses régions du Can
+ ada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Louis Riel  (Manitoba)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260217
+DTSTAMP:20250430T135739Z
+UID:d053f0443caa66be8ff4ce6dac6dc989-2026-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée Louis Riel célèbre les réalisa
+ tions et la vie de Louis Riel\, un homme politique canadien qui a été l'
+ un des leaders du peuple métis.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du patrimoine de la Nouvelle-Écosse  (Nova Scotia)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260217
+DTSTAMP:20250430T135739Z
+UID:c59ab684146adaad2c255be2e590ec07-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du patrimoine de la Nouvelle-Éco
+ sse est un jour de congé pour les Canadiens en Nouvelle-Écosse. Il vise 
+ à reconnaître les contributions culturelles ou historiques à la provinc
+ e.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des insulaires  (Prince Edward Island)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260217
+DTSTAMP:20250430T135739Z
+UID:cb8a509b4c86bd48d3715caf14460e76-2026-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des insulaires est un jour de con
+ gé pour de nombreuses personnes dans la province de l'Île-du-Prince-Édo
+ uard au Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (AB\, ON\, SK\, NB)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260217
+DTSTAMP:20250430T135739Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2026-ab-on-sk-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (British Columbia)
+DTSTART;VALUE=DATE:20260216
+DTEND;VALUE=DATE:20260217
+DTSTAMP:20250430T135739Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2026-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée du patrimoine du Yukon  (Yukon)
+DTSTART;VALUE=DATE:20260220
+DTEND;VALUE=DATE:20260221
+DTSTAMP:20250430T135739Z
+UID:a337450dfe4eb11c3a390698e740269c-2026-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local de facto holiday -  La Journée nationale du patrimoine\
+ , également connue sous le nom de Journée du patrimoine\, est générale
+ ment célébrée au Yukon\, au Canada\, le dernier vendredi de février.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Patrick  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260316
+DTEND;VALUE=DATE:20260317
+DTSTAMP:20250430T135739Z
+UID:e6887445e82f994356343ff2f5dce408-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Patrick commémore la vie et l'œuvr
+ e de Saint Patrick\, un missionnaire chrétien qui a vécu aux IVe et Ve s
+ iècles.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Nova Scotia)
+DTSTART;VALUE=DATE:20260405
+DTEND;VALUE=DATE:20260406
+DTSTAMP:20250430T135739Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le dimanche de Pâques est le
+  jour le plus important du calendrier des églises chrétiennes au Canada.
+  Il célèbre la résurrection de Jésus-Christ après sa crucifixion\, se
+ lon la croyance chrétienne.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260405
+DTEND;VALUE=DATE:20260406
+DTSTAMP:20250430T135739Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Shops Closing Day -  Le dimanche de Pâques est le jour le plu
+ s important du calendrier des églises chrétiennes au Canada. Il célèbr
+ e la résurrection de Jésus-Christ après sa crucifixion\, selon la croya
+ nce chrétienne.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (New Brunswick)
+DTSTART;VALUE=DATE:20260406
+DTEND;VALUE=DATE:20260407
+DTSTAMP:20250430T135739Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2026-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Georges  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260420
+DTEND;VALUE=DATE:20260421
+DTSTAMP:20250430T135739Z
+UID:51f229e235897cd1962786b629414698-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Georges est un jour férié dans la 
+ province canadienne de Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des patriotes  (Quebec)
+DTSTART;VALUE=DATE:20260518
+DTEND;VALUE=DATE:20260519
+DTSTAMP:20250430T135739Z
+UID:6276dd06939da6bd55c7c6eebd1a9f3e-2026-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des patriotes est un jo
+ ur férié annuel au Québec\, au Canada\, qui a lieu le lundi précédant
+  le 25 mai.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des peuples autochtones  (NT\, YT)
+DTSTART;VALUE=DATE:20260621
+DTEND;VALUE=DATE:20260622
+DTSTAMP:20250430T135739Z
+UID:f57e30ec5401d7cc83969d1c23cbbce5-2026-nt-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des peuples autochtones
+  célèbre la culture autochtone du Canada et les réalisations des peuple
+ s autochtones du pays.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de juin  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260622
+DTEND;VALUE=DATE:20260623
+DTSTAMP:20250430T135739Z
+UID:590d8d7b477abcce37742e4e6a6203db-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de juin de Terre-Neuve-et-Labrador c
+ ommémore l'arrivée de John Cabot dans la province le 24 juin 1497.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Jean-Baptiste  (Quebec)
+DTSTART;VALUE=DATE:20260624
+DTEND;VALUE=DATE:20260625
+DTSTAMP:20250430T135739Z
+UID:d0ff12b2383c8fdd26663931bf9276ef-2026-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Jean-Baptiste (Fête nationale du Qu
+ ébec\, Fête nationale du Québec\, la Saint-Jean\, Saint-Jean-Baptiste) 
+ est la fête nationale de la province canadienne du Québec.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Memorial Day  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260701
+DTEND;VALUE=DATE:20260702
+DTSTAMP:20250430T135739Z
+UID:09c91bd487033f07c142d4cc874c1bb1-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Memorial Day est célébré à Terre-Neuve
+ -et-Labrador\, au Canada\, le 1er juillet de chaque année.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nunavut  (Nunavut)
+DTSTART;VALUE=DATE:20260709
+DTEND;VALUE=DATE:20260710
+DTSTAMP:20250430T135739Z
+UID:0f8b8baf15d1651a4eac788e4788a74e-2026-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du Nunavut est un jour férié an
+ nuel dans le territoire canadien du Nunavut.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des orangistes  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20260713
+DTEND;VALUE=DATE:20260714
+DTSTAMP:20250430T135739Z
+UID:5d1862e46b6e53d79c9a5b43f834f9f5-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des orangistes est une fête prov
+ inciale à Terre-Neuve-et-Labrador au Canada. Il commémore la bataille de
+  la Boyne\, qui a eu lieu en 1690 près de Drogheda\, aujourd'hui en Répu
+ blique d'Irlande.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (Ontario)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2026-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  De nombreuses provinces et territoires can
+ adiens ont un jour férié pour célébrer un aspect de leur culture ou de
+  leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (NT\, NU)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2026-nt-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  De nombreuses provinces et territoires ca
+ nadiens ont un jour férié pour célébrer un aspect de leur culture ou d
+ e leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saskatchewan  (Saskatchewan)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:d19a6ab8ad76217d38d5f247a8377a88-2026-sk
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de la Saskatchewan est une fête loc
+ ale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Terry Fox  (Manitoba)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:2ca01ecf4957e4505f546cd3384098e0-2026-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée Terry Fox est une célébratio
+ n locale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nouveau-Brunswick  (New Brunswick)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:8f78473714117fd8d026ac2ba908698d-2026-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Prescribed Day of Rest -  La fête du Nouveau-Brunswick est l'
+ occasion pour les Canadiens de la province du Nouveau-Brunswick de céléb
+ rer leur histoire et leur culture. Elle est célébrée le premier lundi d
+ u mois d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Colombie-Britannique  (British Columbia)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:562bd82bcf9327dec49813a6d028ae90-2026-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la Colombie-Britannique est un
+  jour férié dans la province canadienne de la Colombie-Britannique.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Natal  (Nova Scotia)
+DTSTART;VALUE=DATE:20260803
+DTEND;VALUE=DATE:20260804
+DTSTAMP:20250430T135739Z
+UID:d68d0d5d4405ba897fc5e365d0f61ffe-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour du Natal est une fête civique qui c
+ élèbre « l'anniversaire » de la province de la Nouvelle-Écosse. Il 
+ a lieu le premier lundi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La Royal St John's Regatta (Regatta Day)  (Newfoundland and Labrad
+ or)
+DTSTART;VALUE=DATE:20260805
+DTEND;VALUE=DATE:20260806
+DTSTAMP:20250430T135739Z
+UID:799ca140bc3729f933919f5583e012d8-2026-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour de la régate a lieu le premier mercr
+ edi d'août et c'est un jour férié local dans la province canadienne de 
+ Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de la découverte  (Yukon)
+DTSTART;VALUE=DATE:20260817
+DTEND;VALUE=DATE:20260818
+DTSTAMP:20250430T135739Z
+UID:a80bc0f820a44b4dfd902d15e9adbad1-2026-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Jour de la découverte est un jour férié
+  sur le territoire canadien du Yukon qui a lieu le troisième lundi d'aoû
+ t. Elle commémore l'anniversaire de la découverte d'or à Bonanza Creek 
+ au XIXe siècle.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Défilé de la Gold Cup  (Prince Edward Island)
+DTSTART;VALUE=DATE:20260821
+DTEND;VALUE=DATE:20260822
+DTSTAMP:20250430T135739Z
+UID:eb221f662cbb9c8e8101606cd0cb830b-2026-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le défilé de la Gold Cup est le plus grand 
+ défilé du Canada atlantique et le plus grand défilé à l'est de Montr
+ éal. Il a lieu chaque année à Charlottetown\, à l'Île-du-Prince-Édou
+ ard\, au Canada\, le troisième vendredi d'août.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation  (NT\, 
+ YT\, NU\, PE\, BC)
+DTSTART;VALUE=DATE:20260930
+DTEND;VALUE=DATE:20261001
+DTSTAMP:20250430T135739Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2026-nt-yt-nu-pe-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La Journée nationale de la vérité et d
+ e la réconciliation est un jour férié au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (Nova Scotia)
+DTSTART;VALUE=DATE:20261012
+DTEND;VALUE=DATE:20261013
+DTSTAMP:20250430T135739Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour de Thanksgiving est u
+ ne fête où l'on rend grâce pour les bénédictions que l'on reçoit dan
+ s la vie\, en particulier pour les récoltes. C'est un jour de congé pour
+  de nombreux Canadiens.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des aides-soignants  (BC\, MB)
+DTSTART;VALUE=DATE:20261018
+DTEND;VALUE=DATE:20261019
+DTSTAMP:20250430T135739Z
+UID:ce9920a2799866d5b34d2882068cca5d-2026-bc-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée des aides-soignants est une c
+ élébration locale au Canada
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (Nova Scotia)
+DTSTART;VALUE=DATE:20261111
+DTEND;VALUE=DATE:20261112
+DTSTAMP:20250430T135739Z
+UID:7b535d10438a9db737b8917209025d38-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour du Souvenir rend homm
+ age aux civils et aux militaires qui ont perdu la vie lors de conflits arm
+ és.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La veille de Noël  (New Brunswick)
+DTSTART;VALUE=DATE:20261224
+DTEND;VALUE=DATE:20261225
+DTSTAMP:20250430T135739Z
+UID:43a9022013108adbc50ccc852d636a45-2026-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Provincial Public Sector Holiday -  La veille de Noël au Cana
+ da est la veille du jour de Noël et tombe toujours le 24 décembre selon 
+ le calendrier grégorien.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (Nova Scotia)
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2026-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le lendemain de Noël est con
+ nu sous le nom de Boxing Day et est un jour férié dans de nombreuses ré
+ gions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (New Brunswick)
+DTSTART;VALUE=DATE:20261226
+DTEND;VALUE=DATE:20261227
+DTSTAMP:20250430T135739Z
+UID:a1118f7e552dfed35e3dd9711028e615-2026-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Provincial Public Sector Holiday -  Le lendemain de Noël est 
+ connu sous le nom de Boxing Day et est un jour férié dans de nombreuses 
+ régions du Canada.
+LAST-MODIFIED:20250430T135739Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de l'An 
+DTSTART;VALUE=DATE:20270101
+DTEND;VALUE=DATE:20270102
+DTSTAMP:20250430T135740Z
+UID:be63c3297c2f8f5ca3c014a794a5c1e5-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de l'An est le premier jour de la
+  nouvelle année selon le calendrier grégorien utilisé au Canada et dans
+  de nombreux autres pays.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Vendredi saint 
+DTSTART;VALUE=DATE:20270326
+DTEND;VALUE=DATE:20270327
+DTSTAMP:20250430T135740Z
+UID:c257c788346c4b203ef5c03a8c20c518-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le Vendredi saint\, les chrétiens commé
+ morent la crucifixion de Jésus-Christ et c'est un jour férié dans de no
+ mbreuses régions du Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (NT\, NU\, QC)
+DTSTART;VALUE=DATE:20270329
+DTEND;VALUE=DATE:20270330
+DTSTAMP:20250430T135740Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2027-nt-nu-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Victoria  (All except NS\, PE\, QC)
+DTSTART;VALUE=DATE:20270524
+DTEND;VALUE=DATE:20270525
+DTSTAMP:20250430T135740Z
+UID:d0252fb6b0272dba508cb21bda408aaf-2027-all-except-ns-pe-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête de Victoria est célébrée en l
+ 'honneur des anniversaires de la reine Victoria et de l'actuel monarque du
+  Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Canada 
+DTSTART;VALUE=DATE:20270701
+DTEND;VALUE=DATE:20270702
+DTSTAMP:20250430T135740Z
+UID:a5371b57012e81e208a9d9a5512fb773-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Canada est un jour férié f
+ édéral le 1er juillet pour marquer l'anniversaire de la date à laquelle
+  le Canada est devenu un pays autonome.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Travail 
+DTSTART;VALUE=DATE:20270906
+DTEND;VALUE=DATE:20270907
+DTSTAMP:20250430T135740Z
+UID:04adc984b42bdb0510e5423d9d1bac0c-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La fête du Travail au Canada est un jour
+  férié pour faire campagne en faveur des droits des travailleurs. Il cé
+ lèbre les réalisations en matière de droits.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation 
+DTSTART;VALUE=DATE:20270930
+DTEND;VALUE=DATE:20271001
+DTSTAMP:20250430T135740Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Federal Employees Holiday -  La Journée nationale de la véri
+ té et de la réconciliation est une fête des employés fédéraux au Can
+ ada
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (All except NS\, PE)
+DTSTART;VALUE=DATE:20271011
+DTEND;VALUE=DATE:20271012
+DTSTAMP:20250430T135740Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2027-all-except-ns-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour de Thanksgiving est une fête où
+  l'on rend grâce pour les bénédictions que l'on reçoit dans la vie\, e
+ n particulier pour les récoltes. C'est un jour de congé pour de nombreux
+  Canadiens.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (All except MB\, NS\, ON\, QC)
+DTSTART;VALUE=DATE:20271111
+DTEND;VALUE=DATE:20271112
+DTSTAMP:20250430T135740Z
+UID:7b535d10438a9db737b8917209025d38-2027-all-except-mb-ns-on-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le jour du Souvenir rend hommage aux civi
+ ls et aux militaires qui ont perdu la vie lors de conflits armés.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de Noël 
+DTSTART;VALUE=DATE:20271225
+DTEND;VALUE=DATE:20271226
+DTSTAMP:20250430T135740Z
+UID:e9433ce9730393ac1292592a71223476-2027-all
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Les chrétiens célèbrent la naissance d
+ e Jésus-Christ le jour de Noël au Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (NL\, NT\, NU\, ON)
+DTSTART;VALUE=DATE:20271226
+DTEND;VALUE=DATE:20271227
+DTSTAMP:20250430T135740Z
+UID:a1118f7e552dfed35e3dd9711028e615-2027-nl-nt-nu-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lendemain de Noël est connu sous le n
+ om de Boxing Day et est un jour férié dans de nombreuses régions du Can
+ ada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Louis Riel  (Manitoba)
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+DTSTAMP:20250430T135740Z
+UID:d053f0443caa66be8ff4ce6dac6dc989-2027-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée Louis Riel célèbre les réalisa
+ tions et la vie de Louis Riel\, un homme politique canadien qui a été l'
+ un des leaders du peuple métis.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du patrimoine de la Nouvelle-Écosse  (Nova Scotia)
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+DTSTAMP:20250430T135740Z
+UID:c59ab684146adaad2c255be2e590ec07-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du patrimoine de la Nouvelle-Éco
+ sse est un jour de congé pour les Canadiens en Nouvelle-Écosse. Il vise 
+ à reconnaître les contributions culturelles ou historiques à la provinc
+ e.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des insulaires  (Prince Edward Island)
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+DTSTAMP:20250430T135740Z
+UID:cb8a509b4c86bd48d3715caf14460e76-2027-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des insulaires est un jour de con
+ gé pour de nombreuses personnes dans la province de l'Île-du-Prince-Édo
+ uard au Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (AB\, ON\, SK\, NB)
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+DTSTAMP:20250430T135740Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2027-ab-on-sk-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la famille  (British Columbia)
+DTSTART;VALUE=DATE:20270215
+DTEND;VALUE=DATE:20270216
+DTSTAMP:20250430T135740Z
+UID:7645a10eddcaa0d7849cd71e13a8bbb4-2027-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la famille est un jour férié
+  dans les provinces canadiennes de l'Alberta\, de l'Ontario\, de la Saskat
+ chewan\, de la Colombie-Britannique et du Nouveau-Brunswick.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée du patrimoine du Yukon  (Yukon)
+DTSTART;VALUE=DATE:20270226
+DTEND;VALUE=DATE:20270227
+DTSTAMP:20250430T135740Z
+UID:a337450dfe4eb11c3a390698e740269c-2027-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local de facto holiday -  La Journée nationale du patrimoine\
+ , également connue sous le nom de Journée du patrimoine\, est générale
+ ment célébrée au Yukon\, au Canada\, le dernier vendredi de février.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Patrick  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270315
+DTEND;VALUE=DATE:20270316
+DTSTAMP:20250430T135740Z
+UID:e6887445e82f994356343ff2f5dce408-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Patrick commémore la vie et l'œuvr
+ e de Saint Patrick\, un missionnaire chrétien qui a vécu aux IVe et Ve s
+ iècles.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270328
+DTEND;VALUE=DATE:20270329
+DTSTAMP:20250430T135740Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Shops Closing Day -  Le dimanche de Pâques est le jour le plu
+ s important du calendrier des églises chrétiennes au Canada. Il célèbr
+ e la résurrection de Jésus-Christ après sa crucifixion\, selon la croya
+ nce chrétienne.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Dimanche de Pâques  (Nova Scotia)
+DTSTART;VALUE=DATE:20270328
+DTEND;VALUE=DATE:20270329
+DTSTAMP:20250430T135740Z
+UID:fa9840a0b194ec74b1b9bf1a2c014fb1-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le dimanche de Pâques est le
+  jour le plus important du calendrier des églises chrétiennes au Canada.
+  Il célèbre la résurrection de Jésus-Christ après sa crucifixion\, se
+ lon la croyance chrétienne.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Lundi de Pâques  (New Brunswick)
+DTSTART;VALUE=DATE:20270329
+DTEND;VALUE=DATE:20270330
+DTSTAMP:20250430T135740Z
+UID:d9760b8173b3ea5c8c48b9b1a87e67df-2027-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lundi de Pâques est le lendemain du d
+ imanche de Pâques et est un jour férié pour de nombreux Canadiens.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Georges  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270426
+DTEND;VALUE=DATE:20270427
+DTSTAMP:20250430T135740Z
+UID:51f229e235897cd1962786b629414698-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Georges est un jour férié dans la 
+ province canadienne de Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des patriotes  (Quebec)
+DTSTART;VALUE=DATE:20270524
+DTEND;VALUE=DATE:20270525
+DTSTAMP:20250430T135740Z
+UID:6276dd06939da6bd55c7c6eebd1a9f3e-2027-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des patriotes est un jo
+ ur férié annuel au Québec\, au Canada\, qui a lieu le lundi précédant
+  le 25 mai.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale des peuples autochtones  (NT\, YT)
+DTSTART;VALUE=DATE:20270621
+DTEND;VALUE=DATE:20270622
+DTSTAMP:20250430T135740Z
+UID:f57e30ec5401d7cc83969d1c23cbbce5-2027-nt-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée nationale des peuples autochtones
+  célèbre la culture autochtone du Canada et les réalisations des peuple
+ s autochtones du pays.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de juin  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270621
+DTEND;VALUE=DATE:20270622
+DTSTAMP:20250430T135740Z
+UID:590d8d7b477abcce37742e4e6a6203db-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de juin de Terre-Neuve-et-Labrador c
+ ommémore l'arrivée de John Cabot dans la province le 24 juin 1497.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saint-Jean-Baptiste  (Quebec)
+DTSTART;VALUE=DATE:20270624
+DTEND;VALUE=DATE:20270625
+DTSTAMP:20250430T135740Z
+UID:d0ff12b2383c8fdd26663931bf9276ef-2027-qc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Saint-Jean-Baptiste (Fête nationale du Qu
+ ébec\, Fête nationale du Québec\, la Saint-Jean\, Saint-Jean-Baptiste) 
+ est la fête nationale de la province canadienne du Québec.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Memorial Day  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270701
+DTEND;VALUE=DATE:20270702
+DTSTAMP:20250430T135740Z
+UID:09c91bd487033f07c142d4cc874c1bb1-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Memorial Day est célébré à Terre-Neuve
+ -et-Labrador\, au Canada\, le 1er juillet de chaque année.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nunavut  (Nunavut)
+DTSTART;VALUE=DATE:20270709
+DTEND;VALUE=DATE:20270710
+DTSTAMP:20250430T135740Z
+UID:0f8b8baf15d1651a4eac788e4788a74e-2027-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée du Nunavut est un jour férié an
+ nuel dans le territoire canadien du Nunavut.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des orangistes  (Newfoundland and Labrador)
+DTSTART;VALUE=DATE:20270712
+DTEND;VALUE=DATE:20270713
+DTSTAMP:20250430T135740Z
+UID:5d1862e46b6e53d79c9a5b43f834f9f5-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée des orangistes est une fête prov
+ inciale à Terre-Neuve-et-Labrador au Canada. Il commémore la bataille de
+  la Boyne\, qui a eu lieu en 1690 près de Drogheda\, aujourd'hui en Répu
+ blique d'Irlande.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (Ontario)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2027-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  De nombreuses provinces et territoires can
+ adiens ont un jour férié pour célébrer un aspect de leur culture ou de
+  leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête civique/provinciale  (NT\, NU)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:ef3e61a8e5c91b330d096e2b7963b878-2027-nt-nu
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  De nombreuses provinces et territoires ca
+ nadiens ont un jour férié pour célébrer un aspect de leur culture ou d
+ e leur histoire le premier lundi d'août.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Saskatchewan  (Saskatchewan)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:d19a6ab8ad76217d38d5f247a8377a88-2027-sk
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La fête de la Saskatchewan est une fête loc
+ ale au Canada
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée Terry Fox  (Manitoba)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:2ca01ecf4957e4505f546cd3384098e0-2027-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée Terry Fox est une célébratio
+ n locale au Canada
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Nouveau-Brunswick  (New Brunswick)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:8f78473714117fd8d026ac2ba908698d-2027-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Prescribed Day of Rest -  La fête du Nouveau-Brunswick est l'
+ occasion pour les Canadiens de la province du Nouveau-Brunswick de céléb
+ rer leur histoire et leur culture. Elle est célébrée le premier lundi d
+ u mois d'août.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête de la Colombie-Britannique  (British Columbia)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:562bd82bcf9327dec49813a6d028ae90-2027-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  La Journée de la Colombie-Britannique est un
+  jour férié dans la province canadienne de la Colombie-Britannique.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Fête du Natal  (Nova Scotia)
+DTSTART;VALUE=DATE:20270802
+DTEND;VALUE=DATE:20270803
+DTSTAMP:20250430T135740Z
+UID:d68d0d5d4405ba897fc5e365d0f61ffe-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour du Natal est une fête civique qui c
+ élèbre « l'anniversaire » de la province de la Nouvelle-Écosse. Il 
+ a lieu le premier lundi d'août.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La Royal St John's Regatta (Regatta Day)  (Newfoundland and Labrad
+ or)
+DTSTART;VALUE=DATE:20270804
+DTEND;VALUE=DATE:20270805
+DTSTAMP:20250430T135740Z
+UID:799ca140bc3729f933919f5583e012d8-2027-nl
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le jour de la régate a lieu le premier mercr
+ edi d'août et c'est un jour férié local dans la province canadienne de 
+ Terre-Neuve-et-Labrador.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de la découverte  (Yukon)
+DTSTART;VALUE=DATE:20270816
+DTEND;VALUE=DATE:20270817
+DTSTAMP:20250430T135740Z
+UID:a80bc0f820a44b4dfd902d15e9adbad1-2027-yt
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le Jour de la découverte est un jour férié
+  sur le territoire canadien du Yukon qui a lieu le troisième lundi d'aoû
+ t. Elle commémore l'anniversaire de la découverte d'or à Bonanza Creek 
+ au XIXe siècle.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Défilé de la Gold Cup  (Prince Edward Island)
+DTSTART;VALUE=DATE:20270820
+DTEND;VALUE=DATE:20270821
+DTSTAMP:20250430T135740Z
+UID:eb221f662cbb9c8e8101606cd0cb830b-2027-pe
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local holiday -  Le défilé de la Gold Cup est le plus grand 
+ défilé du Canada atlantique et le plus grand défilé à l'est de Montr
+ éal. Il a lieu chaque année à Charlottetown\, à l'Île-du-Prince-Édou
+ ard\, au Canada\, le troisième vendredi d'août.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée nationale de la vérité et de la réconciliation  (NT\, 
+ YT\, NU\, PE\, BC)
+DTSTART;VALUE=DATE:20270930
+DTEND;VALUE=DATE:20271001
+DTSTAMP:20250430T135740Z
+UID:96cf38c3b6ef7f7882ba6adcfe162218-2027-nt-yt-nu-pe-bc
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  La Journée nationale de la vérité et d
+ e la réconciliation est un jour férié au Canada
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Thanksgiving  (Nova Scotia)
+DTSTART;VALUE=DATE:20271011
+DTEND;VALUE=DATE:20271012
+DTSTAMP:20250430T135740Z
+UID:c5828fe27f4b7668a9cd4f5a2f423328-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour de Thanksgiving est u
+ ne fête où l'on rend grâce pour les bénédictions que l'on reçoit dan
+ s la vie\, en particulier pour les récoltes. C'est un jour de congé pour
+  de nombreux Canadiens.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Journée des aides-soignants  (BC\, MB)
+DTSTART;VALUE=DATE:20271018
+DTEND;VALUE=DATE:20271019
+DTSTAMP:20250430T135740Z
+UID:ce9920a2799866d5b34d2882068cca5d-2027-bc-mb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Local observance -  La Journée des aides-soignants est une c
+ élébration locale au Canada
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour du Souvenir  (Nova Scotia)
+DTSTART;VALUE=DATE:20271111
+DTEND;VALUE=DATE:20271112
+DTSTAMP:20250430T135740Z
+UID:7b535d10438a9db737b8917209025d38-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le jour du Souvenir rend homm
+ age aux civils et aux militaires qui ont perdu la vie lors de conflits arm
+ és.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:La veille de Noël  (New Brunswick)
+DTSTART;VALUE=DATE:20271224
+DTEND;VALUE=DATE:20271225
+DTSTAMP:20250430T135740Z
+UID:43a9022013108adbc50ccc852d636a45-2027-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Provincial Public Sector Holiday -  La veille de Noël au Cana
+ da est la veille du jour de Noël et tombe toujours le 24 décembre selon 
+ le calendrier grégorien.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (Nova Scotia)
+DTSTART;VALUE=DATE:20271226
+DTEND;VALUE=DATE:20271227
+DTSTAMP:20250430T135740Z
+UID:a1118f7e552dfed35e3dd9711028e615-2027-ns
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Designated Retail Closing Day -  Le lendemain de Noël est con
+ nu sous le nom de Boxing Day et est un jour férié dans de nombreuses ré
+ gions du Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Boxing Day  (New Brunswick)
+DTSTART;VALUE=DATE:20271226
+DTEND;VALUE=DATE:20271227
+DTSTAMP:20250430T135740Z
+UID:a1118f7e552dfed35e3dd9711028e615-2027-nb
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Provincial Public Sector Holiday -  Le lendemain de Noël est 
+ connu sous le nom de Boxing Day et est un jour férié dans de nombreuses 
+ régions du Canada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:Jour de congé pour le lendemain de Noël  (Ontario)
+DTSTART;VALUE=DATE:20271228
+DTEND;VALUE=DATE:20271229
+DTSTAMP:20250430T135740Z
+UID:a1118f7e552dfed35e3dd9711028e615-2027-on
+CATEGORIES:Holidays
+CLASS:public
+DESCRIPTION:Statutory Holiday -  Le lendemain de Noël est connu sous le n
+ om de Boxing Day et est un jour férié dans de nombreuses régions du Can
+ ada.
+LAST-MODIFIED:20250430T135740Z
+TRANSP:TRANSPARENT
+END:VEVENT
+END:VCALENDAR

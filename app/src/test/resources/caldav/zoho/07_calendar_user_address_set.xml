@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Zoho calendar-user-address-set PROPFIND response shape (RFC 6638 §2.4.1).
+  Anonymized from a real probe. Real personal email replaced with @example.com.
+
+  Shape preserved verbatim:
+  - 2 entries: 1 mailto + 1 path-relative
+  - No preferred="1" attribute
+  - Wire order: mailto first, path-relative second
+-->
+<D:multistatus xmlns:D="DAV:"><D:response><D:href>/caldav/0123456789abcdef0123456789abcdef/user/</D:href><D:propstat><D:prop><B:schedule-outbox-URL xmlns:B="urn:ietf:params:xml:ns:caldav"><D:href>/caldav/0123456789abcdef0123456789abcdef/outbox/</D:href></B:schedule-outbox-URL><B:calendar-user-address-set xmlns:B="urn:ietf:params:xml:ns:caldav"><D:href>mailto:alice@example.com</D:href><D:href>/caldav/0123456789abcdef0123456789abcdef/user</D:href></B:calendar-user-address-set><B:schedule-inbox-URL xmlns:B="urn:ietf:params:xml:ns:caldav"><D:href>/caldav/0123456789abcdef0123456789abcdef/inbox/</D:href></B:schedule-inbox-URL></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response></D:multistatus>

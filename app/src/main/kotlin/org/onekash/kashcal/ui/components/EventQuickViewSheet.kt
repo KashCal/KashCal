@@ -103,6 +103,8 @@ fun EventQuickViewSheet(
     occurrenceTs: Long? = null,
     showEventEmojis: Boolean = true,
     isReadOnlyCalendar: Boolean = false,
+    attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
+    isCurrentUserOnList: Boolean = false,
     onDismiss: () -> Unit,
     onEdit: () -> Unit,
     onEditOccurrence: () -> Unit = {},
@@ -304,6 +306,15 @@ fun EventQuickViewSheet(
                         }
                     }
                 }
+            }
+
+            if (attendees.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
+                    models = attendees,
+                    isCurrentUserOnList = isCurrentUserOnList,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
             }
 
             // Expanded content section - shown immediately when sheet opens expanded

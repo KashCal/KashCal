@@ -16,6 +16,7 @@ import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -193,6 +194,10 @@ class ICloudAccountDiscoveryService @Inject constructor(
                 )
             }
 
+            // Step 4c: Discover and persist calendar-user-address-set
+            // (RFC 6638 §2.4.1). Failures are non-fatal — see A2.0 spec.
+            persistCalendarUserAddresses(client, principalUrl, account.id, accountRepository, TAG)
+
             // Step 5: Create Calendar entities for each discovered calendar
             val createdCalendars = mutableListOf<Calendar>()
             var isFirst = true
@@ -335,6 +340,13 @@ class ICloudAccountDiscoveryService @Inject constructor(
             }
             Log.d(TAG, "Calendar home URLs for refresh: $calendarHomeUrls")
 
+            // Refresh calendar-user-address-set (RFC 6638 §2.4.1) so the user's
+            // identity stays current with any aliases added/removed server-side.
+            // Failures are non-fatal — see A2.0 spec.
+            if (account.principalUrl != null) {
+                persistCalendarUserAddresses(client, account.principalUrl, accountId, accountRepository, TAG)
+            }
+
             // List calendars from all home sets
             val allCalendars = mutableListOf<CalDavCalendar>()
             val seenUrls = mutableSetOf<String>()
@@ -473,4 +485,5 @@ class ICloudAccountDiscoveryService @Inject constructor(
             DEFAULT_COLORS[index % DEFAULT_COLORS.size]
         }
     }
+
 }

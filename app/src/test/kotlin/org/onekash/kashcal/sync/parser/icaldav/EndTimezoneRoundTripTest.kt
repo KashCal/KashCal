@@ -100,7 +100,7 @@ class EndTimezoneRoundTripTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         assertEquals("America/Los_Angeles", entity.timezone)
         assertEquals("America/New_York", entity.endTimezone)
@@ -123,7 +123,7 @@ class EndTimezoneRoundTripTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         assertEquals("America/New_York", entity.timezone)
         assertNull(
@@ -149,7 +149,7 @@ class EndTimezoneRoundTripTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         assertNull(entity.endTimezone)
     }
@@ -171,7 +171,7 @@ class EndTimezoneRoundTripTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         assertTrue(entity.isAllDay)
         assertNull(entity.endTimezone)
@@ -332,7 +332,7 @@ class EndTimezoneRoundTripTest {
 
         val ics = IcsPatcher.generateFresh(original)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+        val roundTripped = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
 
         assertEquals("America/Los_Angeles", roundTripped.timezone)
         assertEquals("America/New_York", roundTripped.endTimezone)
@@ -364,7 +364,7 @@ class EndTimezoneRoundTripTest {
 
         val patchedIcs = IcsPatcher.patch(raw, edited)
         val parsed = parser.parseAllEvents(patchedIcs).getOrNull()!!.first()
-        val roundTripped = ICalEventMapper.toEntity(parsed, patchedIcs, 1L, null, null)
+        val roundTripped = ICalEventMapper.toEntity(parsed, patchedIcs, 1L, null, null).event
 
         assertEquals("America/Los_Angeles", roundTripped.timezone)
         assertEquals("America/New_York", roundTripped.endTimezone)
@@ -392,7 +392,7 @@ class EndTimezoneRoundTripTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         // Parser may normalize floating DTSTART to UTC; don't assert on entity.timezone.
         // What A0.2 guarantees is that a distinct DTEND zone survives regardless.

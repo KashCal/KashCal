@@ -137,6 +137,62 @@ class CalDavXmlParser {
     fun extractCalendarHomeUrl(xml: String): String? = extractCalendarHomeUrls(xml).firstOrNull()
 
     /**
+     * Extract `calendar-user-address-set` entries from PROPFIND response
+     * (RFC 6638 §2.4.1). Looks for:
+     * `<calendar-user-address-set><href>...</href><href>...</href></calendar-user-address-set>`.
+     *
+     * Honors the `preferred="1"` attribute on individual `<href>` elements
+     * (observed on iCloud) by hoisting preferred entries to the front of
+     * the returned list. Otherwise wire order is preserved. The first
+     * preferred entry is the primary address used by `addresses[0]`-by-
+     * convention consumers (e.g., T3 organizer-emit). If multiple
+     * entries are preferred, all preferred ones come first; relative
+     * order among preferred and among non-preferred matches wire order.
+     *
+     * `preferred="0"` and any non-`"1"` value are treated as not preferred.
+     *
+     * Empty body, missing element, malformed XML — all return empty list.
+     */
+    fun extractCalendarUserAddresses(xml: String): List<String> {
+        if (xml.isBlank()) return emptyList()
+        return try {
+            val parser = createParser(xml)
+            var inAddressSet = false
+            val preferred = mutableListOf<String>()
+            val rest = mutableListOf<String>()
+
+            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+                when (parser.eventType) {
+                    XmlPullParser.START_TAG -> {
+                        if (parser.name == "calendar-user-address-set") {
+                            inAddressSet = true
+                        } else if (inAddressSet && parser.name == "href") {
+                            val isPreferred = parser.getAttributeValue(null, "preferred") == "1"
+                            parser.next()
+                            if (parser.eventType == XmlPullParser.TEXT) {
+                                val href = parser.text.trim()
+                                if (href.isNotEmpty()) {
+                                    if (isPreferred) preferred.add(href) else rest.add(href)
+                                }
+                            }
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        if (parser.name == "calendar-user-address-set") {
+                            inAddressSet = false
+                        }
+                    }
+                }
+                parser.next()
+            }
+            preferred + rest
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse calendar-user-address-set: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
      * Extract sync token from multistatus response.
      * Looks for: <sync-token>...</sync-token>
      */

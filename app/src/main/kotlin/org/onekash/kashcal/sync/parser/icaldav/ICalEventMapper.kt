@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.parser.icaldav
 import android.graphics.Color
 import org.onekash.icaldav.model.ICalEvent
 import org.onekash.icaldav.util.DurationUtils
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.ui.shared.EventColorPalette
@@ -20,17 +21,33 @@ import java.time.Duration
  *
  * Note: KashCal Event stores timestamps in MILLISECONDS.
  */
+/**
+ * Inbound mapping result: the [Event] plus any [Attendee] rows extracted
+ * from the same ICalEvent. Attendees carry `eventId = 0L` because the
+ * parent event hasn't been upserted yet; callers must
+ * `attendees.map { it.copy(eventId = savedId) }` after the parent
+ * upsert returns its ID.
+ */
+data class MappedEntity(
+    val event: Event,
+    val attendees: List<Attendee>
+)
+
 object ICalEventMapper {
 
     /**
-     * Convert icaldav ICalEvent to KashCal Event entity.
+     * Convert icaldav ICalEvent to KashCal Event entity plus the parsed
+     * ATTENDEE rows. Returns [MappedEntity] so callers destructure cleanly.
+     *
+     * The Attendee rows carry `eventId = 0L` — callers must rewrite
+     * that after the parent event upsert with
+     * `attendees.map { it.copy(eventId = savedEventId) }`.
      *
      * @param icalEvent The parsed icaldav event
      * @param rawIcal The original ICS data for round-trip preservation
      * @param calendarId The target calendar ID
      * @param caldavUrl The CalDAV URL for this event resource
      * @param etag The HTTP ETag from server
-     * @return KashCal Event entity ready for database insertion
      */
     fun toEntity(
         icalEvent: ICalEvent,
@@ -38,7 +55,7 @@ object ICalEventMapper {
         calendarId: Long,
         caldavUrl: String?,
         etag: String?
-    ): Event {
+    ): MappedEntity {
         val now = System.currentTimeMillis()
 
         // Calculate effective end time
@@ -91,7 +108,7 @@ object ICalEventMapper {
         // Get importId for unique database lookup
         val importId = icalEvent.importId
 
-        return Event(
+        val event = Event(
             uid = icalEvent.uid,
             importId = importId,
             calendarId = calendarId,
@@ -138,7 +155,62 @@ object ICalEventMapper {
             createdAt = icalEvent.created?.timestamp ?: now,
             updatedAt = now
         )
+
+        // Translate icaldav-core attendee model → Room entity. eventId = 0L
+        // here; caller copies in the real ID after upsert.
+        return MappedEntity(event, toAttendeeRows(icalEvent, eventId = 0L))
     }
+
+    /**
+     * Translate the icaldav-core attendee list into Room rows for the
+     * given [eventId]. Callers that already have a parsed [ICalEvent]
+     * but only need the attendee rows (e.g. on-demand backfill from
+     * `Event.rawIcal`) can use this without paying for the full
+     * [toEntity] mapping.
+     */
+    fun toAttendeeRows(icalEvent: ICalEvent, eventId: Long): List<Attendee> =
+        icalEvent.attendees.mapIndexed { index, a ->
+            a.toRoomEntity(eventId = eventId, sortOrder = index)
+        }
+
+    /**
+     * Translate icaldav-core's [org.onekash.icaldav.model.Attendee] into
+     * the Room [Attendee]. Enums map to RFC string forms (TEXT-lenient
+     * column accepts X-extensions); `email` becomes `address`; `member`
+     * and delegation lists pass through; nullable fields map cleanly.
+     *
+     * Asymmetry: the primary `address` field re-prepends `mailto:` because
+     * the icaldav-core parser strips that prefix from `email`. Multi-value
+     * list columns (`member`, `delegatedFrom`, `delegatedTo`) and `sentBy`
+     * stay bare — same convention as how those fields are stored
+     * elsewhere in the codebase. T3's outbound emit re-prepends `mailto:`
+     * for those when serializing back to the wire.
+     *
+     * Lossy mapping: `scheduleStatus: List<ScheduleStatus>?` → first code
+     * only. RFC 5545 §3.8.8.3 permits multi-value SCHEDULE-STATUS but
+     * KashCal collapses to single-TEXT until T4 surfaces a need for
+     * delivery-status arrays.
+     */
+    private fun org.onekash.icaldav.model.Attendee.toRoomEntity(
+        eventId: Long,
+        sortOrder: Int
+    ): Attendee = Attendee(
+        eventId = eventId,
+        address = "mailto:$email",
+        displayName = name,
+        role = role.toICalString(),
+        partstat = partStat.toICalString(),
+        cutype = cutype.name,
+        rsvp = rsvp,
+        delegatedFrom = delegatedFrom,
+        delegatedTo = delegatedTo,
+        member = member,
+        sentBy = sentBy,
+        scheduleAgent = scheduleAgent?.name,
+        scheduleStatus = scheduleStatus?.firstOrNull()?.code,
+        scheduleForceSend = scheduleForceSend?.name,
+        sortOrder = sortOrder
+    )
 
     /**
      * Format Duration as RFC 5545 trigger string (e.g., "-PT15M", "-P1D").

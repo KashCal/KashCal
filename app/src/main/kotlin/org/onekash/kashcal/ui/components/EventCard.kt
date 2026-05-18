@@ -42,6 +42,7 @@ internal fun EventCard(
     selectedDate: Long,
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mm a",
+    attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
     onClick: () -> Unit
 ) {
     val resources = LocalResources.current
@@ -87,6 +88,11 @@ internal fun EventCard(
                         displayEvent.location!!,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                }
+                if (attendees.isNotEmpty()) {
+                    org.onekash.kashcal.ui.components.attendees.EventCardAttendeeBadge(
+                        models = attendees
                     )
                 }
             }

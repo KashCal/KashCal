@@ -1014,4 +1014,32 @@
     <string name="label_more_colors">Fleiri litir</string>
     <string name="label_back_to_grid">Til baka</string>
     <string name="settings_suggest_titles">Stinga upp á heiti atburða</string>
+    <string name="label_attendees">Þátttakendur</string>
+    <string name="attendee_you_marker">Þú</string>
+    <string name="attendee_organizer_pill">Skipuleggjandi</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d í viðbót</item>
+        <item quantity="other">+%d í viðbót</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d þátttakandi</item>
+        <item quantity="other">%d þátttakendur</item>
+    </plurals>
+    <string name="attendee_card_going">Mætir</string>
+    <string name="attendee_card_pending">Bíður</string>
+    <string name="attendee_card_declined">Hafnað</string>
+    <string name="attendee_card_tentative">Til bráðabirgða</string>
+    <string name="attendee_card_hosting">Gestgjafi</string>
+    <string name="attendee_action_copy">Afrita tölvupóst</string>
+    <string name="attendee_action_email">Senda tölvupóst</string>
+    <string name="attendee_group_icon_description">Fólk</string>
+    <string name="attendee_email_copied">Tölvupóstur afritaður</string>
+    <string name="attendee_no_email_app">Ekkert tölvupóstforrit uppsett</string>
+    <string name="attendee_show_less">Sýna minna</string>
+    <string name="attendee_show_all">Sýna alla þátttakendur</string>
+    <string name="attendee_status_accepted">Samþykkt</string>
+    <string name="attendee_status_declined">Hafnað</string>
+    <string name="attendee_status_tentative">Til bráðabirgða</string>
+    <string name="attendee_status_delegated">Framsalið</string>
+    <string name="attendee_status_pending">Bíður</string>
 </resources>

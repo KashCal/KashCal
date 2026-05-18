@@ -1101,4 +1101,36 @@
     <string name="backup_error_build_failed">Dh\'fhairtlich an lethbhreac-glèidhidh</string>
     <string name="backup_error_write_failed">Dh\'fhairtlich an lethbhreac-glèidhidh — cha b\'urrainnear sgrìobhadh dhan fhaidhle</string>
     <string name="backup_error_read_failed">Cha b\'urrainnear am faidhle a leughadh</string>
+    <string name="label_attendees">Luchd-frithealaidh</string>
+    <string name="attendee_you_marker">Thusa</string>
+    <string name="attendee_organizer_pill">Eagraiche</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d eile</item>
+        <item quantity="two">+%d eile</item>
+        <item quantity="few">+%d eile</item>
+        <item quantity="other">+%d eile</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d neach-frithealaidh</item>
+        <item quantity="two">%d neach-frithealaidh</item>
+        <item quantity="few">%d luchd-frithealaidh</item>
+        <item quantity="other">%d luchd-frithealaidh</item>
+    </plurals>
+    <string name="attendee_card_going">A\' frithealadh</string>
+    <string name="attendee_card_pending">Ri làimh</string>
+    <string name="attendee_card_declined">Air a dhiùltadh</string>
+    <string name="attendee_card_tentative">Sealach</string>
+    <string name="attendee_card_hosting">A\' toirt aoigheachd</string>
+    <string name="attendee_action_copy">Dèan lethbhreac dhen phost-d</string>
+    <string name="attendee_action_email">Cuir post-d</string>
+    <string name="attendee_group_icon_description">Daoine</string>
+    <string name="attendee_email_copied">Chaidh am post-d a chur lethbhreac dheth</string>
+    <string name="attendee_no_email_app">Chan eil aplacaid puist-d air a stàladh</string>
+    <string name="attendee_show_less">Seall nas lugha</string>
+    <string name="attendee_show_all">Seall a h-uile neach a tha an làthair</string>
+    <string name="attendee_status_accepted">Air gabhail ris</string>
+    <string name="attendee_status_declined">Air a dhiùltadh</string>
+    <string name="attendee_status_tentative">Sealach</string>
+    <string name="attendee_status_delegated">Air a thiomnadh</string>
+    <string name="attendee_status_pending">Ri làimh</string>
 </resources>

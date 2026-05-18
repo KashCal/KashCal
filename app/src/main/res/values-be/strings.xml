@@ -1010,4 +1010,37 @@
     <string name="backup_error_build_failed">Не ўдалося стварыць рэзервную копію</string>
     <string name="backup_error_write_failed">Не ўдалося стварыць рэзервную копію — не ўдалося запісаць у файл</string>
     <string name="backup_error_read_failed">Не ўдалося прачытаць файл</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Удзельнікі</string>
+    <string name="attendee_you_marker">Ты</string>
+    <string name="attendee_organizer_pill">Арганізатар</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+яшчэ %d</item>
+        <item quantity="few">+яшчэ %d</item>
+        <item quantity="many">+яшчэ %d</item>
+        <item quantity="other">+яшчэ %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d удзельнік</item>
+        <item quantity="few">%d удзельнікі</item>
+        <item quantity="many">%d удзельнікаў</item>
+        <item quantity="other">%d удзельніка</item>
+    </plurals>
+    <string name="attendee_card_going">Прыняў</string>
+    <string name="attendee_card_pending">Чакае</string>
+    <string name="attendee_card_declined">Адхіліў</string>
+    <string name="attendee_card_tentative">Магчыма</string>
+    <string name="attendee_card_hosting">Арганізатар</string>
+    <string name="attendee_action_copy">Скапіяваць e-mail</string>
+    <string name="attendee_action_email">Адправіць ліст</string>
+    <string name="attendee_group_icon_description">Людзі</string>
+    <string name="attendee_email_copied">E-mail скапіяваны</string>
+    <string name="attendee_no_email_app">Праграма для e-mail не ўсталявана</string>
+    <string name="attendee_show_less">Паказаць меней</string>
+    <string name="attendee_show_all">Паказаць усіх удзельнікаў</string>
+    <string name="attendee_status_accepted">Прыняў</string>
+    <string name="attendee_status_declined">Адхіліў</string>
+    <string name="attendee_status_tentative">Магчыма</string>
+    <string name="attendee_status_delegated">Дэлегавана</string>
+    <string name="attendee_status_pending">Чакае</string>
 </resources>

@@ -220,7 +220,7 @@ class IcsPatcherRfc5545Test {
         assertNotNull("Should parse back successfully", parsed)
         assertTrue("Should have 1 event", parsed!!.isNotEmpty())
 
-        val roundTripped = ICalEventMapper.toEntity(parsed.first(), ics, 1L, null, null)
+        val roundTripped = ICalEventMapper.toEntity(parsed.first(), ics, 1L, null, null).event
 
         // Round-trip should preserve the original dates
         assertEquals("startTs should survive round-trip", event.startTs, roundTripped.startTs)

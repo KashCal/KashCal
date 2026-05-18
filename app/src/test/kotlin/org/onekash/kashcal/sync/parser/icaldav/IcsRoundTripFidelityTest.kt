@@ -318,7 +318,7 @@ class IcsRoundTripFidelityTest {
 
     private fun parseToEntity(ics: String): Event {
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        return ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        return ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
     }
 
     private fun createEvent(

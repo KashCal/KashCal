@@ -1014,4 +1014,37 @@
     <string name="backup_error_build_failed">Nepavyko sukurti atsarginės kopijos</string>
     <string name="backup_error_write_failed">Nepavyko sukurti atsarginės kopijos — nepavyko įrašyti į failą</string>
     <string name="backup_error_read_failed">Nepavyko perskaityti failo</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Dalyviai</string>
+    <string name="attendee_you_marker">Jūs</string>
+    <string name="attendee_organizer_pill">Organizatorius</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+dar %d</item>
+        <item quantity="few">+dar %d</item>
+        <item quantity="many">+dar %d</item>
+        <item quantity="other">+dar %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d dalyvis</item>
+        <item quantity="few">%d dalyviai</item>
+        <item quantity="many">%d dalyvio</item>
+        <item quantity="other">%d dalyvių</item>
+    </plurals>
+    <string name="attendee_card_going">Dalyvauja</string>
+    <string name="attendee_card_pending">Laukiama</string>
+    <string name="attendee_card_declined">Atmetė</string>
+    <string name="attendee_card_tentative">Galbūt</string>
+    <string name="attendee_card_hosting">Organizuoja</string>
+    <string name="attendee_action_copy">Kopijuoti el. paštą</string>
+    <string name="attendee_action_email">Siųsti el. laišką</string>
+    <string name="attendee_group_icon_description">Žmonės</string>
+    <string name="attendee_email_copied">El. paštas nukopijuotas</string>
+    <string name="attendee_no_email_app">Nėra įdiegtos el. pašto programos</string>
+    <string name="attendee_show_less">Rodyti mažiau</string>
+    <string name="attendee_show_all">Rodyti visus dalyvius</string>
+    <string name="attendee_status_accepted">Priimta</string>
+    <string name="attendee_status_declined">Atmetė</string>
+    <string name="attendee_status_tentative">Galbūt</string>
+    <string name="attendee_status_delegated">Perduota</string>
+    <string name="attendee_status_pending">Laukiama</string>
 </resources>

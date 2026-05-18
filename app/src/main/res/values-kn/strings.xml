@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">ಹೆಚ್ಚಿನ ಬಣ್ಣಗಳು</string>
     <string name="label_back_to_grid">ಹಿಂತಿರುಗಿ</string>
     <string name="settings_suggest_titles">ಈವೆಂಟ್ ಶೀರ್ಷಿಕೆಗಳನ್ನು ಸೂಚಿಸಿ</string>
+
+    <string name="label_attendees">ಭಾಗವಹಿಸುವವರು</string>
+    <string name="attendee_you_marker">ನೀವು</string>
+    <string name="attendee_organizer_pill">ಆಯೋಜಕ</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d ಹೆಚ್ಚು</item>
+        <item quantity="other">+%d ಹೆಚ್ಚು</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d ಭಾಗವಹಿಸುವವರು</item>
+        <item quantity="other">%d ಭಾಗವಹಿಸುವವರು</item>
+    </plurals>
+    <string name="attendee_card_going">ಬರುತ್ತಿದ್ದೇನೆ</string>
+    <string name="attendee_card_pending">ಬಾಕಿ ಇದೆ</string>
+    <string name="attendee_card_declined">ನಿರಾಕರಿಸಲಾಗಿದೆ</string>
+    <string name="attendee_card_tentative">ತಾತ್ಕಾಲಿಕ</string>
+    <string name="attendee_card_hosting">ಆಯೋಜಿಸುತ್ತಿದ್ದೇನೆ</string>
+    <string name="attendee_action_copy">ಇಮೇಲ್ ನಕಲಿಸಿ</string>
+    <string name="attendee_action_email">ಇಮೇಲ್ ಕಳುಹಿಸಿ</string>
+    <string name="attendee_group_icon_description">ಜನರು</string>
+    <string name="attendee_email_copied">ಇಮೇಲ್ ನಕಲಿಸಲಾಗಿದೆ</string>
+    <string name="attendee_no_email_app">ಯಾವುದೇ ಇಮೇಲ್ ಅಪ್ಲಿಕೇಶನ್ ಸ್ಥಾಪಿಸಿಲ್ಲ</string>
+    <string name="attendee_show_less">ಕಡಿಮೆ ತೋರಿಸು</string>
+    <string name="attendee_show_all">ಎಲ್ಲಾ ಭಾಗವಹಿಸುವವರನ್ನು ತೋರಿಸಿ</string>
+    <string name="attendee_status_accepted">ಸ್ವೀಕರಿಸಲಾಗಿದೆ</string>
+    <string name="attendee_status_declined">ನಿರಾಕರಿಸಲಾಗಿದೆ</string>
+    <string name="attendee_status_tentative">ತಾತ್ಕಾಲಿಕ</string>
+    <string name="attendee_status_delegated">ನಿಯೋಜಿಸಲಾಗಿದೆ</string>
+    <string name="attendee_status_pending">ಬಾಕಿ ಇದೆ</string>
 </resources>

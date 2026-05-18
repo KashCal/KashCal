@@ -884,6 +884,244 @@ class MigrationTest {
         }
     }
 
+    // ==================== Migration 16 to 17: P1.9 scheduling schema bundle ====================
+
+    /**
+     * Walk the v1→v16 migration chain to land us at the v16 starting state for
+     * MIGRATION_16_17 tests. Mirrors the chain executed by `full migration chain
+     * 1 to 16 executes without error` but without the assertions.
+     */
+    private fun migrateUpToV16() {
+        createV1Schema()
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
+                "ON events (original_event_id, original_instance_time)"
+        )
+        Migrations.MIGRATION_1_2.migrate(db)
+        Migrations.MIGRATION_2_3.migrate(db)
+        // 3→4 is AutoMigration (skip in unit tests)
+        Migrations.MIGRATION_4_5.migrate(db)
+        Migrations.MIGRATION_5_6.migrate(db)
+        Migrations.MIGRATION_6_7.migrate(db)
+        Migrations.MIGRATION_7_8.migrate(db)
+        Migrations.MIGRATION_8_9.migrate(db)
+        Migrations.MIGRATION_9_10.migrate(db)
+        Migrations.MIGRATION_10_11.migrate(db)
+        Migrations.MIGRATION_11_12.migrate(db)
+        Migrations.MIGRATION_12_13.migrate(db)
+        Migrations.MIGRATION_13_14.migrate(db)
+        Migrations.MIGRATION_14_15.migrate(db)
+        Migrations.MIGRATION_15_16.migrate(db)
+    }
+
+    @Test
+    fun `migration 16 to 17 adds calendar_user_addresses to accounts with default empty array`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(columnExists("accounts", "calendar_user_addresses"))
+
+        // Insert an account without specifying the new column — verify default fires.
+        db.execSQL("INSERT INTO accounts (provider, email, created_at) VALUES ('CALDAV', 'a@example.com', 0)")
+        db.query("SELECT calendar_user_addresses FROM accounts WHERE email = 'a@example.com'").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("[]", cursor.getString(0))
+        }
+    }
+
+    @Test
+    fun `migration 16 to 17 adds organizer_sent_by and organizer_schedule_status to events`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(columnExists("events", "organizer_sent_by"))
+        assertTrue(columnExists("events", "organizer_schedule_status"))
+    }
+
+    @Test
+    fun `migration 16 to 17 creates attendees table with all 16 columns`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(tableExists("attendees"))
+        val expected = setOf(
+            "id", "event_id", "address", "display_name", "role", "partstat",
+            "cutype", "rsvp", "delegated_from", "delegated_to", "member",
+            "sent_by", "schedule_agent", "schedule_status", "schedule_force_send",
+            "sort_order"
+        )
+        assertEquals(expected, getColumnNames("attendees"))
+    }
+
+    @Test
+    fun `migration 16 to 17 creates index_attendees_event_id`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(indexExists("index_attendees_event_id"))
+    }
+
+    @Test
+    fun `migration 16 to 17 creates index_attendees_address`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(indexExists("index_attendees_address"))
+    }
+
+    @Test
+    fun `migration 16 to 17 enforces FK CASCADE from attendees to events`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+        // Foreign keys must be enabled per-connection in SQLite.
+        db.execSQL("PRAGMA foreign_keys = ON")
+
+        // Need an account+calendar+event chain to satisfy events FKs.
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'fk@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://x/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'fk-uid', 1, 'T', 1000, 2000, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL("INSERT INTO attendees (event_id, address) VALUES (1, 'mailto:a@example.com')")
+        db.query("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(1, cursor.getInt(0))
+        }
+
+        db.execSQL("DELETE FROM events WHERE id = 1")
+
+        db.query("SELECT COUNT(*) FROM attendees WHERE event_id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 16 to 17 preserves existing account data`() {
+        migrateUpToV16()
+        // Insert account at v16 state (no calendar_user_addresses column yet).
+        db.execSQL(
+            "INSERT INTO accounts (id, provider, email, display_name, created_at) " +
+                "VALUES (1, 'ICLOUD', 'preserved@test.com', 'Preserved', 12345)"
+        )
+
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        db.query(
+            "SELECT email, display_name, calendar_user_addresses FROM accounts WHERE id = 1"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("preserved@test.com", cursor.getString(0))
+            assertEquals("Preserved", cursor.getString(1))
+            assertEquals("[]", cursor.getString(2))
+        }
+    }
+
+    @Test
+    fun `migration 16 to 17 preserves existing event data with null organizer extensions`() {
+        migrateUpToV16()
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 't@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://y/', 'Cal', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'preserve-uid', 1, 'Preserved Event', 1000, 2000, 'UTC', 0, 0, 0)"
+        )
+
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        db.query(
+            "SELECT title, organizer_sent_by, organizer_schedule_status FROM events WHERE id = 1"
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("Preserved Event", cursor.getString(0))
+            assertTrue(cursor.isNull(1))
+            assertTrue(cursor.isNull(2))
+        }
+    }
+
+    @Test
+    fun `migration 16 to 17 is idempotent`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+        // Second run must be a no-op — no exception, schema unchanged.
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(columnExists("accounts", "calendar_user_addresses"))
+        assertTrue(columnExists("events", "organizer_sent_by"))
+        assertTrue(columnExists("events", "organizer_schedule_status"))
+        assertTrue(tableExists("attendees"))
+        assertTrue(indexExists("index_attendees_event_id"))
+        assertTrue(indexExists("index_attendees_address"))
+    }
+
+    @Test
+    fun `migration 16 to 17 drops stale rogue attendees table with mismatched shape`() {
+        migrateUpToV16()
+        // Pre-create a 2-column rogue table that doesn't match the expected shape.
+        db.execSQL("CREATE TABLE attendees (id INTEGER PRIMARY KEY, junk TEXT)")
+        db.execSQL("INSERT INTO attendees (junk) VALUES ('rogue-data')")
+
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        assertTrue(tableExists("attendees"))
+        // Verify the table now has the proper 16-column shape.
+        val expected = setOf(
+            "id", "event_id", "address", "display_name", "role", "partstat",
+            "cutype", "rsvp", "delegated_from", "delegated_to", "member",
+            "sent_by", "schedule_agent", "schedule_status", "schedule_force_send",
+            "sort_order"
+        )
+        assertEquals(expected, getColumnNames("attendees"))
+        // And the rogue data was dropped (table is empty).
+        db.query("SELECT COUNT(*) FROM attendees").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals(0, cursor.getInt(0))
+        }
+    }
+
+    @Test
+    fun `migration 16 to 17 leaves matching pre-existing attendees table alone`() {
+        migrateUpToV16()
+        // Pre-create the table with the exact expected shape (mimics a forward-compatible
+        // table left from a partial run). Insert a row.
+        db.execSQL(
+            "CREATE TABLE attendees (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "event_id INTEGER NOT NULL, " +
+                "address TEXT NOT NULL, " +
+                "display_name TEXT, " +
+                "role TEXT, " +
+                "partstat TEXT, " +
+                "cutype TEXT, " +
+                "rsvp INTEGER, " +
+                "delegated_from TEXT NOT NULL DEFAULT '[]', " +
+                "delegated_to TEXT NOT NULL DEFAULT '[]', " +
+                "member TEXT NOT NULL DEFAULT '[]', " +
+                "sent_by TEXT, " +
+                "schedule_agent TEXT, " +
+                "schedule_status TEXT, " +
+                "schedule_force_send TEXT, " +
+                "sort_order INTEGER NOT NULL DEFAULT 0, " +
+                "FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE)"
+        )
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'r@test.com', 0)")
+        db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://r/', 'C', 0)")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (1, 'r-uid', 1, 'T', 1000, 2000, 'UTC', 0, 0, 0)"
+        )
+        db.execSQL("INSERT INTO attendees (event_id, address) VALUES (1, 'mailto:keep@example.com')")
+
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        // Row from before the migration must still be present — table was not dropped.
+        db.query("SELECT address FROM attendees WHERE event_id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("mailto:keep@example.com", cursor.getString(0))
+        }
+    }
+
     // ==================== Full Migration Chain ====================
 
     @Test
@@ -945,11 +1183,25 @@ class MigrationTest {
         assertTrue(columnExists("events", "end_timezone"))
     }
 
+    @Test
+    fun `full migration chain 1 to 17 executes without error`() {
+        migrateUpToV16()
+        Migrations.MIGRATION_16_17.migrate(db)
+
+        // Verify P1.9 schema landed on top of full chain
+        assertTrue(columnExists("accounts", "calendar_user_addresses"))
+        assertTrue(columnExists("events", "organizer_sent_by"))
+        assertTrue(columnExists("events", "organizer_schedule_status"))
+        assertTrue(tableExists("attendees"))
+        assertTrue(indexExists("index_attendees_event_id"))
+        assertTrue(indexExists("index_attendees_address"))
+    }
+
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(14, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(15, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -984,6 +1236,8 @@ class MigrationTest {
         assertEquals(15, migrations[12].endVersion)
         assertEquals(15, migrations[13].startVersion)
         assertEquals(16, migrations[13].endVersion)
+        assertEquals(16, migrations[14].startVersion)
+        assertEquals(17, migrations[14].endVersion)
     }
 
     @Test

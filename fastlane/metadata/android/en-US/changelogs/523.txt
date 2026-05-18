@@ -1,4 +1,0 @@
-• Fix biweekly recurrences with Sunday selected: events on Sun/Tue/Thu starting Sunday now appear in the same week
-• ICS export: stricter RFC 5545 compliance for cross-app calendar imports
-• Monthly view: past-event dimming refreshes when you reopen the app
-• Widgets: improved day-header contrast on light and dark backgrounds

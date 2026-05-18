@@ -47,6 +47,25 @@ interface CalDavClient {
     suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<List<String>>
 
     /**
+     * Discover the user's `calendar-user-address-set` from the principal
+     * (RFC 6638 §2.4.1). Returns the full set of CAL-ADDRESS forms the
+     * server recognizes as this user — `mailto:`, `urn:uuid:`,
+     * principal-relative paths, full HTTP principal URIs, in any
+     * combination. Used by A2.0's identity-discovery flow to populate
+     * `Account.calendarUserAddresses`.
+     *
+     * Failures (HTTP 4xx/5xx, network errors, timeouts) are surfaced as
+     * [CalDavResult.Error]; callers in the discovery flow treat the error
+     * as non-fatal and fall through to an empty address set.
+     *
+     * @param principalUrl Full principal URL
+     * @return List of CAL-ADDRESS strings; preferred entries hoisted to
+     *         the front of the list; empty list when the server returns
+     *         an empty or absent property
+     */
+    suspend fun discoverCalendarUserAddresses(principalUrl: String): CalDavResult<List<String>>
+
+    /**
      * List all calendars from calendar home.
      * Uses PROPFIND with Depth: 1 to enumerate collections.
      *

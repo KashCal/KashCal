@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">और रंग</string>
     <string name="label_back_to_grid">वापस</string>
     <string name="settings_suggest_titles">कार्यक्रम शीर्षक सुझाएँ</string>
+
+    <string name="label_attendees">प्रतिभागी</string>
+    <string name="attendee_you_marker">आप</string>
+    <string name="attendee_organizer_pill">आयोजक</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d और</item>
+        <item quantity="other">+%d और</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d प्रतिभागी</item>
+        <item quantity="other">%d प्रतिभागी</item>
+    </plurals>
+    <string name="attendee_card_going">जा रहा</string>
+    <string name="attendee_card_pending">लंबित</string>
+    <string name="attendee_card_declined">अस्वीकृत</string>
+    <string name="attendee_card_tentative">अनिश्चित</string>
+    <string name="attendee_card_hosting">मेज़बान</string>
+    <string name="attendee_action_copy">ईमेल कॉपी करें</string>
+    <string name="attendee_action_email">ईमेल भेजें</string>
+    <string name="attendee_group_icon_description">लोग</string>
+    <string name="attendee_email_copied">ईमेल कॉपी किया गया</string>
+    <string name="attendee_no_email_app">कोई ईमेल ऐप इंस्टॉल नहीं है</string>
+    <string name="attendee_show_less">कम दिखाएं</string>
+    <string name="attendee_show_all">सभी प्रतिभागी दिखाएं</string>
+    <string name="attendee_status_accepted">स्वीकृत</string>
+    <string name="attendee_status_declined">अस्वीकृत</string>
+    <string name="attendee_status_tentative">अनिश्चित</string>
+    <string name="attendee_status_delegated">सौंपा गया</string>
+    <string name="attendee_status_pending">लंबित</string>
 </resources>

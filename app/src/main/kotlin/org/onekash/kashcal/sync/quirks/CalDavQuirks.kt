@@ -41,6 +41,17 @@ interface CalDavQuirks {
     fun extractCalendarHomeUrl(responseBody: String): String? = extractCalendarHomeUrls(responseBody).firstOrNull()
 
     /**
+     * Extract `calendar-user-address-set` entries from principal
+     * PROPFIND response (RFC 6638 §2.4.1). Returns the user's
+     * CAL-ADDRESS forms (mailto, urn:uuid, principal-relative path,
+     * full HTTP principal URI). iCloud's `preferred="1"` attribute
+     * hoists matching entries to the front of the list. Returns empty
+     * list on any extraction failure — A2.0's discovery flow treats
+     * missing/empty as non-fatal.
+     */
+    fun extractCalendarUserAddresses(responseBody: String): List<String>
+
+    /**
      * Extract calendar list from calendar-home PROPFIND response.
      */
     fun extractCalendars(responseBody: String, baseHost: String): List<ParsedCalendar>

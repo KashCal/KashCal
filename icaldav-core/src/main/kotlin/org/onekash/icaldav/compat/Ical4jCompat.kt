@@ -87,6 +87,17 @@ inline fun <reified T : Parameter> Property.getParameterOrNull(name: String): T?
     return getParameter<T>(name).orElse(null)
 }
 
+/**
+ * Case-insensitive parameter lookup. RFC 5545 §3.2 mandates parameter
+ * names are case-insensitive (`EMAIL=`, `email=`, `Email=` all conform),
+ * but ical4j's `getParameter(name)` is case-sensitive on the lookup
+ * key. This iterates the property's parameter list and matches the
+ * parameter `name` field with `equalsIgnoreCase`.
+ */
+fun Property.getParameterIgnoreCase(name: String): Parameter? {
+    return getParameterList().all.firstOrNull { it.name.equals(name, ignoreCase = true) }
+}
+
 // ============ WeekDay Conversion ============
 
 /**

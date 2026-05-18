@@ -203,6 +203,7 @@ class FlowTestingPatternsTest {
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
             calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
+            attendeeBackfill = io.mockk.mockk(relaxed = true),
             ioDispatcher = testDispatcher
         )
     }

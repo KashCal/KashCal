@@ -9,6 +9,7 @@ import androidx.room.withTransaction
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.onekash.kashcal.data.db.converter.Converters
 import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
@@ -17,6 +18,7 @@ import org.onekash.kashcal.data.db.dao.PendingOperationsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.EventFts
@@ -48,6 +50,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
 @Database(
     entities = [
         Account::class,
+        Attendee::class,
         Calendar::class,
         Event::class,
         EventFts::class,
@@ -57,7 +60,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -85,6 +88,11 @@ abstract class KashCalDatabase : RoomDatabase() {
      * Access to Occurrence operations (materialized RRULE expansions).
      */
     abstract fun occurrencesDao(): OccurrencesDao
+
+    /**
+     * Access to Attendee operations (per-event ATTENDEE rows).
+     */
+    abstract fun attendeesDao(): AttendeesDao
 
     /**
      * Access to PendingOperation operations (sync queue).

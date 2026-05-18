@@ -78,6 +78,7 @@ class PullStrategyMetadataRefreshTest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore

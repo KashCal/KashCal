@@ -86,6 +86,7 @@ class LocalFirstSyncIntegrationTest {
             database = database,
             calendarRepository = CalendarRepositoryImpl(database.calendarsDao()),
             eventsDao = database.eventsDao(),
+            attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!--
+  Baikal (Sabre/dav, sqlite) calendar-user-address-set PROPFIND response
+  shape. Captured live; test user email is synthetic (alice@baikal.test).
+
+  Shape preserved verbatim:
+  - 2 entries: 1 mailto + 1 path-relative
+  - No preferred attribute
+  - Wire order: mailto first, path-relative second
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav"><d:response><d:href>/dav.php/principals/alice/</d:href><d:propstat><d:prop><cal:calendar-user-address-set><d:href>mailto:alice@baikal.test</d:href><d:href>/dav.php/principals/alice/</d:href></cal:calendar-user-address-set><cal:schedule-inbox-URL><d:href>/dav.php/calendars/alice/inbox/</d:href></cal:schedule-inbox-URL><cal:schedule-outbox-URL><d:href>/dav.php/calendars/alice/outbox/</d:href></cal:schedule-outbox-URL></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>

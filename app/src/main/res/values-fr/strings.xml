@@ -1062,4 +1062,32 @@
     <string name="backup_error_build_failed">Échec de la sauvegarde</string>
     <string name="backup_error_write_failed">Échec de la sauvegarde : impossible d\'écrire dans le fichier</string>
     <string name="backup_error_read_failed">Impossible de lire le fichier</string>
+    <string name="label_attendees">Participants</string>
+    <string name="attendee_you_marker">Vous</string>
+    <string name="attendee_organizer_pill">Organisateur</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d de plus</item>
+        <item quantity="other">+%d de plus</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d participant</item>
+        <item quantity="other">%d participants</item>
+    </plurals>
+    <string name="attendee_card_going">Présent</string>
+    <string name="attendee_card_pending">En attente</string>
+    <string name="attendee_card_declined">Refusé</string>
+    <string name="attendee_card_tentative">Provisoire</string>
+    <string name="attendee_card_hosting">Organisateur</string>
+    <string name="attendee_action_copy">Copier l\'e-mail</string>
+    <string name="attendee_action_email">Envoyer un e-mail</string>
+    <string name="attendee_group_icon_description">Personnes</string>
+    <string name="attendee_email_copied">E-mail copié</string>
+    <string name="attendee_no_email_app">Aucune application e-mail installée</string>
+    <string name="attendee_show_less">Afficher moins</string>
+    <string name="attendee_show_all">Afficher tous les participants</string>
+    <string name="attendee_status_accepted">Accepté</string>
+    <string name="attendee_status_declined">Refusé</string>
+    <string name="attendee_status_tentative">Provisoire</string>
+    <string name="attendee_status_delegated">Délégué</string>
+    <string name="attendee_status_pending">En attente</string>
 </resources>

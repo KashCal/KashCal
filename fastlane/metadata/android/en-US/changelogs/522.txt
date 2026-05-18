@@ -1,3 +1,0 @@
-• Multi-day events that end at midnight now show on the correct last day
-• Event descriptions render HTML formatting (links, line breaks)
-• Deleting an event from a device calendar now clears its reminders

@@ -138,6 +138,24 @@ class DefaultQuirksTest {
         assertNull(quirks.extractCalendarHomeUrl(xml))
     }
 
+    // ========== extractCalendarUserAddresses tests ==========
+
+    @Test
+    fun `extractCalendarUserAddresses delegates to xmlParser and forwards result`() {
+        val xml = loadResource("caldav/nextcloud/06_calendar_user_address_set_with_email.xml")
+        val addresses = quirks.extractCalendarUserAddresses(xml)
+        assertEquals(
+            listOf("mailto:admin@example.com", "/remote.php/dav/principals/users/admin/"),
+            addresses
+        )
+    }
+
+    @Test
+    fun `extractCalendarUserAddresses returns empty list for missing property`() {
+        val xml = """<multistatus xmlns="DAV:"><response></response></multistatus>"""
+        assertEquals(emptyList<String>(), quirks.extractCalendarUserAddresses(xml))
+    }
+
     // ========== extractCalendars tests ==========
 
     @Test

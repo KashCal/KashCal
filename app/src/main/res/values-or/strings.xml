@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">ଅଧିକ ରଙ୍ଗ</string>
     <string name="label_back_to_grid">ପଛକୁ</string>
     <string name="settings_suggest_titles">ଇଭେଣ୍ଟ ଶୀର୍ଷକଗୁଡ଼ିକ ପରାମର୍ଶ ଦିଅନ୍ତୁ</string>
+
+    <string name="label_attendees">ଅଂଶଗ୍ରହଣକାରୀ</string>
+    <string name="attendee_you_marker">ଆପଣ</string>
+    <string name="attendee_organizer_pill">ଆୟୋଜକ</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d ଅଧିକ</item>
+        <item quantity="other">+%d ଅଧିକ</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d ଅଂଶଗ୍ରହଣକାରୀ</item>
+        <item quantity="other">%d ଅଂଶଗ୍ରହଣକାରୀ</item>
+    </plurals>
+    <string name="attendee_card_going">ଯାଉଛି</string>
+    <string name="attendee_card_pending">ବିଚାରାଧୀନ</string>
+    <string name="attendee_card_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଛି</string>
+    <string name="attendee_card_tentative">ଅନିଶ୍ଚିତ</string>
+    <string name="attendee_card_hosting">ଆୟୋଜନ କରୁଛି</string>
+    <string name="attendee_action_copy">ଇମେଲ କପି କରନ୍ତୁ</string>
+    <string name="attendee_action_email">ଇମେଲ ପଠାନ୍ତୁ</string>
+    <string name="attendee_group_icon_description">ଲୋକମାନେ</string>
+    <string name="attendee_email_copied">ଇମେଲ କପି କରାଯାଇଛି</string>
+    <string name="attendee_no_email_app">କୌଣସି ଇମେଲ ଆପ ସ୍ଥାପନ କରାଯାଇନାହିଁ</string>
+    <string name="attendee_show_less">କମ୍ ଦେଖାନ୍ତୁ</string>
+    <string name="attendee_show_all">ସମସ୍ତ ଅଂଶଗ୍ରହଣକାରୀ ଦେଖାନ୍ତୁ</string>
+    <string name="attendee_status_accepted">ଗ୍ରହଣ କରାଯାଇଛି</string>
+    <string name="attendee_status_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଛି</string>
+    <string name="attendee_status_tentative">ଅନିଶ୍ଚିତ</string>
+    <string name="attendee_status_delegated">ପ୍ରତିନିଧି ନିଯୁକ୍ତ</string>
+    <string name="attendee_status_pending">ବିଚାରାଧୀନ</string>
 </resources>

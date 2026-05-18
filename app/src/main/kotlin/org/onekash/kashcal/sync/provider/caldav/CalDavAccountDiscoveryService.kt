@@ -17,6 +17,7 @@ import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.net.SocketTimeoutException
@@ -267,6 +268,10 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
+            // Step 5b: Discover and persist calendar-user-address-set
+            // (RFC 6638 §2.4.1). Failures are non-fatal — see A2.0 spec.
+            persistCalendarUserAddresses(client, principalUrl, account.id, accountRepository, TAG)
+
             // Step 6: Create Calendar entities for each discovered calendar
             val createdCalendars = mutableListOf<Calendar>()
             var isFirst = true
@@ -367,6 +372,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 listOf(calendarHomeUrl)
             }
             Log.d(TAG, "Calendar home URLs for refresh: $calendarHomeUrls")
+
+            // Refresh calendar-user-address-set (RFC 6638 §2.4.1) so the
+            // user's identity stays current with any aliases added/
+            // removed server-side. Failures are non-fatal — see A2.0 spec.
+            if (account.principalUrl != null) {
+                persistCalendarUserAddresses(client, account.principalUrl, accountId, accountRepository, TAG)
+            }
 
             // List calendars from all home sets
             val allCalendars = mutableListOf<CalDavCalendar>()
@@ -762,6 +774,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
+            // Step 2b: Discover calendar-user-address-set (RFC 6638 §2.4.1).
+            // Failures non-fatal — see A2.0 spec.
+            val addressClient = calDavClientFactory.createClient(
+                Credentials(username, password, serverUrl, trustInsecure),
+                DefaultQuirks(serverUrl)
+            )
+            persistCalendarUserAddresses(addressClient, principalUrl, account.id, accountRepository, TAG)
+
             // Step 3: Create Calendar entities for selected calendars only
             val createdCalendars = mutableListOf<Calendar>()
             var isFirst = true
@@ -1064,4 +1084,5 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 "Could not $action. Please try again."
         }
     }
+
 }

@@ -1,4 +1,0 @@
-• Month-full view: all-day events as colored boxes; multi-day events as one bar across days
-• Month-full view: today and selected day highlight the date row across the column
-• ICS subscriptions: fixed Apple iCloud holiday feeds and similar sources that previously imported zero events
-• ICS subscriptions: undo deletes; clearer messages for duplicate URLs

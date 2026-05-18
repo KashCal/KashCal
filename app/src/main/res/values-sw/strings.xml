@@ -994,4 +994,32 @@
     <string name="label_more_colors">Rangi zaidi</string>
     <string name="label_back_to_grid">Rudi</string>
     <string name="settings_suggest_titles">Pendekeza vichwa vya matukio</string>
+    <string name="label_attendees">Washiriki</string>
+    <string name="attendee_you_marker">Wewe</string>
+    <string name="attendee_organizer_pill">Mwandalizi</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d zaidi</item>
+        <item quantity="other">+%d zaidi</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">mshiriki %d</item>
+        <item quantity="other">washiriki %d</item>
+    </plurals>
+    <string name="attendee_card_going">Anaenda</string>
+    <string name="attendee_card_pending">Inasubiri</string>
+    <string name="attendee_card_declined">Imekataliwa</string>
+    <string name="attendee_card_tentative">Bado Haijaamuliwa</string>
+    <string name="attendee_card_hosting">Mwenyeji</string>
+    <string name="attendee_action_copy">Nakili barua pepe</string>
+    <string name="attendee_action_email">Tuma barua pepe</string>
+    <string name="attendee_group_icon_description">Watu</string>
+    <string name="attendee_email_copied">Barua pepe imenakiliwa</string>
+    <string name="attendee_no_email_app">Hakuna programu ya barua pepe iliyosakinishwa</string>
+    <string name="attendee_show_less">Onyesha kidogo</string>
+    <string name="attendee_show_all">Onyesha washiriki wote</string>
+    <string name="attendee_status_accepted">Imekubaliwa</string>
+    <string name="attendee_status_declined">Imekataliwa</string>
+    <string name="attendee_status_tentative">Bado Haijaamuliwa</string>
+    <string name="attendee_status_delegated">Imekabidhiwa</string>
+    <string name="attendee_status_pending">Inasubiri</string>
 </resources>

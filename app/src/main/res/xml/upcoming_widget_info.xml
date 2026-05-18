@@ -12,7 +12,7 @@
     android:targetCellHeight="4"
     android:minResizeWidth="160dp"
     android:minResizeHeight="130dp"
-    android:maxResizeWidth="400dp"
+    android:maxResizeWidth="1100dp"
     android:maxResizeHeight="500dp"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"

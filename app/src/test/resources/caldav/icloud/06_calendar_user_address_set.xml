@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  iCloud calendar-user-address-set PROPFIND response shape (RFC 6638 §2.4.1).
+  Anonymized from a real probe. Real personal emails replaced with @example.com.
+
+  Shape preserved verbatim:
+  - 7 href entries
+  - 4 mailto, 1 urn:uuid, 2 path-relative principal hrefs
+  - preferred="1" attribute on the user's primary email-form mailto entry
+    (NOT on the wire-order-first path-relative entry)
+
+  Parser must hoist the preferred entry to position 0 so addresses[0]
+  is the user's email-form, not the path-relative principal href.
+-->
+<multistatus xmlns="DAV:">
+    <response xmlns="DAV:">
+        <href>/123456789/principal/</href>
+        <propstat>
+            <prop>
+                <calendar-user-address-set xmlns="urn:ietf:params:xml:ns:caldav"><href xmlns="DAV:">/123456789/principal</href><href xmlns="DAV:">/aOpaqueAccountToken1234567890abcdefghijk/principal/</href><href xmlns="DAV:">urn:uuid:123456789</href><href xmlns="DAV:" preferred="1">mailto:alice@example.com</href><href xmlns="DAV:">mailto:alice.work@example.com</href><href xmlns="DAV:">mailto:alice@example.me</href><href xmlns="DAV:">mailto:alice.alt@example.com</href></calendar-user-address-set>
+            </prop>
+            <status>HTTP/1.1 200 OK</status>
+        </propstat>
+    </response>
+</multistatus>

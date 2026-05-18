@@ -94,5 +94,22 @@ data class Account(
      * Account creation timestamp.
      */
     @ColumnInfo(name = "created_at")
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    /**
+     * CalDAV `calendar-user-address-set` per RFC 6638 §2.4.1 — the full
+     * set of CAL-ADDRESS forms the server recognizes as this user.
+     * Populated via two-step PROPFIND (current-user-principal then
+     * calendar-user-address-set on the principal).
+     *
+     * Values are stored verbatim. CalDAV servers return mixed forms in
+     * the same set: `mailto:` URIs, `urn:uuid:` URIs, principal-relative
+     * paths, and full HTTP principal URIs may all appear together.
+     * Identity matching canonicalizes at compare time, never at store.
+     *
+     * Convention: `addresses[0]` is the primary address used as ORGANIZER
+     * when the user creates an invite. No `isPrimary` flag.
+     */
+    @ColumnInfo(name = "calendar_user_addresses", defaultValue = "[]")
+    val calendarUserAddresses: List<String> = emptyList()
 )

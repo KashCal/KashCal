@@ -139,6 +139,12 @@ interface AccountRepository {
     suspend fun updateCalDavUrls(accountId: Long, principalUrl: String?, homeSetUrl: String?)
 
     /**
+     * Persist the CalDAV `calendar-user-address-set` (RFC 6638 §2.4.1)
+     * for the given account. Stored verbatim — see [Account.calendarUserAddresses].
+     */
+    suspend fun updateCalendarUserAddresses(accountId: Long, addresses: List<String>)
+
+    /**
      * Set account enabled state.
      */
     suspend fun setEnabled(accountId: Long, enabled: Boolean)

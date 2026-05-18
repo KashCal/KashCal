@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  Nextcloud (Sabre/dav) calendar-user-address-set PROPFIND response with
+  admin email NOT configured. The probe captured this as the default
+  fresh-install state.
+
+  Shape preserved verbatim:
+  - 1 entry: path-relative principal href only
+  - No mailto, no preferred attribute
+  - Helper's email-shape fallback to account.email is the resilience path
+    when this is the only response shape available
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns"><d:response><d:href>/remote.php/dav/principals/users/admin/</d:href><d:propstat><d:prop><cal:calendar-user-address-set><d:href>/remote.php/dav/principals/users/admin/</d:href></cal:calendar-user-address-set><cal:schedule-inbox-URL><d:href>/remote.php/dav/calendars/admin/inbox/</d:href></cal:schedule-inbox-URL><cal:schedule-outbox-URL><d:href>/remote.php/dav/calendars/admin/outbox/</d:href></cal:schedule-outbox-URL></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>

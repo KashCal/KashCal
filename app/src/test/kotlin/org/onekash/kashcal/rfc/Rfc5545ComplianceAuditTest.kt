@@ -300,7 +300,7 @@ END:VCALENDAR
         val parsed = parseFirstEvent(ics)
         assertEquals(Transparency.TRANSPARENT, parsed.transparency)
         // Mapper must preserve TRANSP back into the Event row (free/busy depends on it).
-        val entity = ICalEventMapper.toEntity(parsed, ics, calendarId = 1L, caldavUrl = null, etag = null)
+        val entity = ICalEventMapper.toEntity(parsed, ics, calendarId = 1L, caldavUrl = null, etag = null).event
         assertEquals("TRANSPARENT", entity.transp)
     }
 
@@ -338,7 +338,7 @@ END:VCALENDAR
             val ev = baseEvent(classification = cls)
             val ics = IcsPatcher.serialize(ev)
             val parsed = parseFirstEvent(ics)
-            val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+            val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
             assertEquals("CLASS $cls must round-trip", cls, entity.classification)
         }
     }
@@ -366,7 +366,7 @@ END:VCALENDAR
         val ics = IcsPatcher.serialize(ev)
         assertTrue("GEO must use semicolon separator:\n$ics", ics.contains("GEO:37.386013;-122.082932"))
         val parsed = parseFirstEvent(ics)
-        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
         assertEquals(37.386013, entity.geoLat ?: 0.0, 1e-9)
         assertEquals(-122.082932, entity.geoLon ?: 0.0, 1e-9)
     }

@@ -64,6 +64,22 @@ android {
         }
     }
 
+    // Expose Room's exported schemas as a debug-only asset so
+    // `MigrationTestHelper` can load `<dbClass>/<version>.json` at
+    // runtime and validate identityHash equivalence after each
+    // migration. The Robolectric unit test (`MigrationHashValidationTest`)
+    // reads `mergeDebugAssets`, which AGP sources from the `main` and
+    // `debug` build-type source sets but NOT from `test`. Wiring schemas
+    // into `debug` keeps them out of release APKs.
+    sourceSets {
+        getByName("androidTest") {
+            assets.srcDirs("$projectDir/schemas")
+        }
+        getByName("debug") {
+            assets.srcDirs("$projectDir/schemas")
+        }
+    }
+
     signingConfigs {
         // Release signing config - check env vars (CI) first, then local.properties
         val keystorePath = System.getenv("KEYSTORE_FILE") ?: localProps.getProperty("KEYSTORE_FILE")

@@ -54,13 +54,20 @@ object IcsParserService {
                 val events = result.value
                     .filter { it.status.toICalString() != "CANCELLED" }
                     .map { icalEvent ->
+                        // Extract just the Event from MappedEntity. Attendees on
+                        // ICS-imported events are deferred to a follow-up: this
+                        // service is consumed by ICS subscriptions (read-only
+                        // feeds) and one-shot file imports (SettingsActivity,
+                        // MainActivity). Persistence pipeline accepts Event
+                        // today; attendee wire-up requires changing those
+                        // pipelines too. Tracked as A2 follow-up.
                         ICalEventMapper.toEntity(
                             icalEvent = icalEvent,
                             rawIcal = null,
                             calendarId = calendarId,
                             caldavUrl = "${IcsSubscription.eventSourcePrefix(subscriptionId)}${icalEvent.importId}",
                             etag = null
-                        )
+                        ).event
                     }
                 Log.d(TAG, "Parsed ${events.size} events from ICS (filtered ${result.value.size - events.size} cancelled)")
                 events

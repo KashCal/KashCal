@@ -103,7 +103,7 @@ class IcsExceptionPatternTest {
         }
 
         // Convert and insert master
-        val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null)
+        val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null).event
         val masterId = database.eventsDao().insert(masterEvent)
         val savedMaster = masterEvent.copy(id = masterId)
 
@@ -120,7 +120,7 @@ class IcsExceptionPatternTest {
         }
 
         for (exception in uniqueExceptions) {
-            val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null)
+            val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null).event
                 .copy(originalEventId = masterId)
             val exceptionId = database.eventsDao().insert(exceptionEvent)
             val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)
@@ -159,7 +159,7 @@ class IcsExceptionPatternTest {
         assertNotNull("Should have exception", exception)
 
         // Insert master
-        val masterEvent = ICalEventMapper.toEntity(master!!, icsContent, testCalendarId, null, null)
+        val masterEvent = ICalEventMapper.toEntity(master!!, icsContent, testCalendarId, null, null).event
         val masterId = database.eventsDao().insert(masterEvent)
         val savedMaster = masterEvent.copy(id = masterId)
 
@@ -169,7 +169,7 @@ class IcsExceptionPatternTest {
         val originalCount = occurrencesBefore.size
 
         // Insert and link exception
-        val exceptionEvent = ICalEventMapper.toEntity(exception!!, null, testCalendarId, null, null)
+        val exceptionEvent = ICalEventMapper.toEntity(exception!!, null, testCalendarId, null, null).event
             .copy(originalEventId = masterId)
         val exceptionId = database.eventsDao().insert(exceptionEvent)
         val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)

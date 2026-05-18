@@ -982,4 +982,30 @@
     <string name="label_more_colors">နောက်ထပ်အရောင်များ</string>
     <string name="label_back_to_grid">နောက်သို့</string>
     <string name="settings_suggest_titles">ပွဲစဉ်ခေါင်းစဉ်များကိုအကြံပြုပါ</string>
+    <string name="label_attendees">ပါဝင်သူများ</string>
+    <string name="attendee_you_marker">သင်</string>
+    <string name="attendee_organizer_pill">စီစဉ်သူ</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d ထပ်မံ</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">ပါဝင်သူ %d ဦး</item>
+    </plurals>
+    <string name="attendee_card_going">တက်ရောက်မည်</string>
+    <string name="attendee_card_pending">စောင့်ဆိုင်းနေသည်</string>
+    <string name="attendee_card_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="attendee_card_tentative">မသေချာ</string>
+    <string name="attendee_card_hosting">အိမ်ရှင်</string>
+    <string name="attendee_action_copy">အီးမေးလ်ကူးယူရန်</string>
+    <string name="attendee_action_email">အီးမေးလ်ပို့ရန်</string>
+    <string name="attendee_group_icon_description">လူများ</string>
+    <string name="attendee_email_copied">အီးမေးလ်ကို ကူးယူပြီးပါပြီ</string>
+    <string name="attendee_no_email_app">အီးမေးလ်အက်ပ် မထည့်သွင်းထားပါ</string>
+    <string name="attendee_show_less">ပိုနည်းနည်း ပြပါ</string>
+    <string name="attendee_show_all">တက်ရောက်သူအားလုံးကို ပြရန်</string>
+    <string name="attendee_status_accepted">လက်ခံခဲ့သည်</string>
+    <string name="attendee_status_declined">ငြင်းပယ်ခဲ့သည်</string>
+    <string name="attendee_status_tentative">မသေချာ</string>
+    <string name="attendee_status_delegated">ကိုယ်စားလှယ်အပ်နှင်း</string>
+    <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
 </resources>

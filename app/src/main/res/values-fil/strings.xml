@@ -1022,4 +1022,32 @@
     <string name="label_more_colors">Higit pang kulay</string>
     <string name="label_back_to_grid">Bumalik</string>
     <string name="settings_suggest_titles">Magmungkahi ng mga pamagat ng kaganapan</string>
+    <string name="label_attendees">Mga Dadalo</string>
+    <string name="attendee_you_marker">Ikaw</string>
+    <string name="attendee_organizer_pill">Organisador</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d pa</item>
+        <item quantity="other">+%d pa</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d dadalo</item>
+        <item quantity="other">%d na dadalo</item>
+    </plurals>
+    <string name="attendee_card_going">Pupunta</string>
+    <string name="attendee_card_pending">Naghihintay</string>
+    <string name="attendee_card_declined">Tinanggihan</string>
+    <string name="attendee_card_tentative">Hindi Tiyak</string>
+    <string name="attendee_card_hosting">Naghahanda</string>
+    <string name="attendee_action_copy">Kopyahin ang email</string>
+    <string name="attendee_action_email">Magpadala ng email</string>
+    <string name="attendee_group_icon_description">Mga Tao</string>
+    <string name="attendee_email_copied">Nakopya ang email</string>
+    <string name="attendee_no_email_app">Walang naka-install na email app</string>
+    <string name="attendee_show_less">Ipakita ang mas kaunti</string>
+    <string name="attendee_show_all">Ipakita ang lahat ng dadalo</string>
+    <string name="attendee_status_accepted">Tinanggap</string>
+    <string name="attendee_status_declined">Tinanggihan</string>
+    <string name="attendee_status_tentative">Hindi Tiyak</string>
+    <string name="attendee_status_delegated">Itinalaga</string>
+    <string name="attendee_status_pending">Naghihintay</string>
 </resources>

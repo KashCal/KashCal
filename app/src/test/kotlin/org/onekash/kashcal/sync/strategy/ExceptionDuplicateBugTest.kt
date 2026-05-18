@@ -100,6 +100,7 @@ class ExceptionDuplicateBugTest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = mockk(relaxed = true),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore
@@ -180,8 +181,8 @@ class ExceptionDuplicateBugTest {
         val exception = events.first()
 
         // Map to entity twice
-        val entity1 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag1")
-        val entity2 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag2")
+        val entity1 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag1").event
+        val entity2 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag2").event
 
         assertEquals(
             "originalInstanceTime should be consistent",

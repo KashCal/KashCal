@@ -72,7 +72,7 @@ class SogoParseTest {
         assertNotNull("UNTIL should be parsed", event.rrule!!.until)
 
         // Verify it maps to Entity without error
-        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag1")
+        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag1").event
         assertEquals("Anniversary", entity.title)
         assertTrue(entity.isAllDay)
         assertNotNull(entity.rrule)
@@ -181,7 +181,7 @@ class SogoParseTest {
             "END:VCALENDAR"
 
         val parsed = (parser.parseAllEvents(ics) as ParseResult.Success).value[0]
-        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, "test.ics", "etag")
+        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, "test.ics", "etag").event
 
         // This is the string that OccurrenceGenerator.expandRRule receives
         val storedRrule = entity.rrule!!
@@ -383,7 +383,7 @@ class SogoParseTest {
         assertEquals("Test Location", event.location)
 
         // Verify it maps to Entity without error
-        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag2")
+        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag2").event
         assertEquals("Evening Party", entity.title)
     }
 
@@ -462,7 +462,7 @@ class SogoParseTest {
         assertEquals(1, event.alarms.size)
 
         // Verify it maps to Entity without error
-        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag3")
+        val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag3").event
         assertEquals("Film Night", entity.title)
     }
 }

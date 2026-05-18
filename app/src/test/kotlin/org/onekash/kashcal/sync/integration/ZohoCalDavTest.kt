@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.flow.flowOf
@@ -105,6 +106,7 @@ class ZohoCalDavTest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = mockk(relaxed = true),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore

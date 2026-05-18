@@ -1020,4 +1020,32 @@
     <string name="label_more_colors">More colours</string>
     <string name="label_back_to_grid">Back</string>
     <string name="settings_suggest_titles">Suggest event titles</string>
+    <string name="label_attendees">Attendees</string>
+    <string name="attendee_you_marker">You</string>
+    <string name="attendee_organizer_pill">Organiser</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d more</item>
+        <item quantity="other">+%d more</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d attendee</item>
+        <item quantity="other">%d attendees</item>
+    </plurals>
+    <string name="attendee_card_going">Going</string>
+    <string name="attendee_card_pending">Pending</string>
+    <string name="attendee_card_declined">Declined</string>
+    <string name="attendee_card_tentative">Tentative</string>
+    <string name="attendee_card_hosting">Hosting</string>
+    <string name="attendee_action_copy">Copy email</string>
+    <string name="attendee_action_email">Send email</string>
+    <string name="attendee_group_icon_description">People</string>
+    <string name="attendee_email_copied">Email copied</string>
+    <string name="attendee_no_email_app">No email app installed</string>
+    <string name="attendee_show_less">Show less</string>
+    <string name="attendee_show_all">Show all attendees</string>
+    <string name="attendee_status_accepted">Accepted</string>
+    <string name="attendee_status_declined">Declined</string>
+    <string name="attendee_status_tentative">Tentative</string>
+    <string name="attendee_status_delegated">Delegated</string>
+    <string name="attendee_status_pending">Pending</string>
 </resources>

@@ -966,4 +966,33 @@
     <string name="backup_error_build_failed">Varmuuskopiointi epäonnistui</string>
     <string name="backup_error_write_failed">Varmuuskopiointi epäonnistui — tiedostoon ei voitu kirjoittaa</string>
     <string name="backup_error_read_failed">Tiedostoa ei voitu lukea</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Osallistujat</string>
+    <string name="attendee_you_marker">Sinä</string>
+    <string name="attendee_organizer_pill">Järjestäjä</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d lisää</item>
+        <item quantity="other">+%d lisää</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d osallistuja</item>
+        <item quantity="other">%d osallistujaa</item>
+    </plurals>
+    <string name="attendee_card_going">Tulossa</string>
+    <string name="attendee_card_pending">Odottaa</string>
+    <string name="attendee_card_declined">Kieltäytyi</string>
+    <string name="attendee_card_tentative">Ehkä</string>
+    <string name="attendee_card_hosting">Järjestää</string>
+    <string name="attendee_action_copy">Kopioi sähköposti</string>
+    <string name="attendee_action_email">Lähetä sähköposti</string>
+    <string name="attendee_group_icon_description">Ihmiset</string>
+    <string name="attendee_email_copied">Sähköposti kopioitu</string>
+    <string name="attendee_no_email_app">Sähköpostisovellusta ei ole asennettu</string>
+    <string name="attendee_show_less">Näytä vähemmän</string>
+    <string name="attendee_show_all">Näytä kaikki osallistujat</string>
+    <string name="attendee_status_accepted">Hyväksytty</string>
+    <string name="attendee_status_declined">Kieltäytyi</string>
+    <string name="attendee_status_tentative">Ehkä</string>
+    <string name="attendee_status_delegated">Delegoitu</string>
+    <string name="attendee_status_pending">Odottaa</string>
 </resources>

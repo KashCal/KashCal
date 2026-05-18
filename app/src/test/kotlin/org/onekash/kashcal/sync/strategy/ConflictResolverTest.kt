@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.strategy
 import io.mockk.Runs
 import io.mockk.clearAllMocks
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.coVerifyOrder
 import io.mockk.just
 import io.mockk.mockk
@@ -10,10 +11,13 @@ import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
@@ -29,6 +33,7 @@ class ConflictResolverTest {
     private lateinit var conflictResolver: ConflictResolver
     private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
+    private lateinit var attendeesDao: AttendeesDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var client: CalDavClient
@@ -37,6 +42,7 @@ class ConflictResolverTest {
     fun setup() {
         calendarRepository = mockk()
         eventsDao = mockk()
+        attendeesDao = mockk(relaxed = true)
         pendingOperationsDao = mockk()
         occurrenceGenerator = mockk()
         client = mockk()
@@ -44,6 +50,7 @@ class ConflictResolverTest {
         conflictResolver = ConflictResolver(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = attendeesDao,
             pendingOperationsDao = pendingOperationsDao,
             occurrenceGenerator = occurrenceGenerator
         )
@@ -186,6 +193,91 @@ class ConflictResolverTest {
         assertNull(
             "SERVER_WINS should not apply default reminders when server has no VALARM",
             capturedEvent.captured.reminders
+        )
+    }
+
+    // ========== A2 Attendee Persistence ==========
+
+    @Test
+    fun `resolveServerWins persists server attendees (must not silently drop)`() = runTest {
+        // Review-plan finding #2: SERVER_WINS resolution must not drop attendees.
+        // This test asserts the production write at ConflictResolver fires with the
+        // server's attendee list, locking in the contract for B3+ scheduling work.
+        val event = Event(
+            id = 99L,
+            uid = "with-attendees-uid",
+            calendarId = 1L,
+            title = "Local Version",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600_000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = "https://caldav.example.com/cal/with-attendees.ics",
+            etag = "etag-old",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 30L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        val serverIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:with-attendees-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Server Event With Attendees
+            ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.com
+            ATTENDEE;CN=Bob;PARTSTAT=NEEDS-ACTION:mailto:bob@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val calendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.example.com/cal/",
+            displayName = "Test Calendar",
+            color = 0xFF0000
+        )
+
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { client.fetchEvent(event.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent("with-attendees.ics", event.caldavUrl!!, "etag-server", serverIcal)
+        )
+        coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
+        coEvery { eventsDao.upsert(any()) } returns 1L
+        coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
+        coEvery { pendingOperationsDao.deleteById(operation.id) } returns Unit
+
+        val capturedAttendees = slot<List<Attendee>>()
+
+        val result = conflictResolver.resolve(operation, strategy = ConflictStrategy.SERVER_WINS, client = client)
+
+        assert(result == ConflictResult.ServerVersionKept)
+        coVerify {
+            attendeesDao.replaceForEvent(eventId = event.id, attendees = capture(capturedAttendees))
+        }
+        val written = capturedAttendees.captured
+        assert(written.size == 2) { "Expected 2 server attendees written; got ${written.size}" }
+        assertTrue(
+            "Server attendees must include Alice",
+            written.any { it.address == "mailto:alice@example.com" && it.partstat == "ACCEPTED" }
+        )
+        assertTrue(
+            "Server attendees must include Bob",
+            written.any { it.address == "mailto:bob@example.com" && it.partstat == "NEEDS-ACTION" }
+        )
+        // Each attendee's eventId must be patched with the saved ID
+        assertTrue(
+            "All written attendees must carry the resolved eventId",
+            written.all { it.eventId == event.id }
         )
     }
 }

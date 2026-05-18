@@ -966,4 +966,33 @@
     <string name="backup_error_build_failed">Varukoopia ebaõnnestus</string>
     <string name="backup_error_write_failed">Varukoopia ebaõnnestus — faili ei saanud kirjutada</string>
     <string name="backup_error_read_failed">Faili ei saanud lugeda</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Osalejad</string>
+    <string name="attendee_you_marker">Sina</string>
+    <string name="attendee_organizer_pill">Korraldaja</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+veel %d</item>
+        <item quantity="other">+veel %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d osaleja</item>
+        <item quantity="other">%d osalejat</item>
+    </plurals>
+    <string name="attendee_card_going">Tuleb</string>
+    <string name="attendee_card_pending">Ootel</string>
+    <string name="attendee_card_declined">Keeldus</string>
+    <string name="attendee_card_tentative">Võib-olla</string>
+    <string name="attendee_card_hosting">Korraldab</string>
+    <string name="attendee_action_copy">Kopeeri e-post</string>
+    <string name="attendee_action_email">Saada e-kiri</string>
+    <string name="attendee_group_icon_description">Inimesed</string>
+    <string name="attendee_email_copied">E-post kopeeritud</string>
+    <string name="attendee_no_email_app">E-posti rakendust pole installitud</string>
+    <string name="attendee_show_less">Näita vähem</string>
+    <string name="attendee_show_all">Kuva kõik osalejad</string>
+    <string name="attendee_status_accepted">Vastu võetud</string>
+    <string name="attendee_status_declined">Keeldus</string>
+    <string name="attendee_status_tentative">Võib-olla</string>
+    <string name="attendee_status_delegated">Delegeeritud</string>
+    <string name="attendee_status_pending">Ootel</string>
 </resources>

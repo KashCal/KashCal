@@ -287,13 +287,24 @@ data class Organizer(
 data class Attendee(
     val email: String,
     val name: String?,           // CN parameter
-    val partStat: PartStat,      // PARTSTAT - non-nullable for backward compat
-    val role: AttendeeRole,      // ROLE - enum type for backward compat
-    val rsvp: Boolean,           // RSVP - non-nullable for backward compat
+    val partStat: PartStat,      // PARTSTAT
+    val role: AttendeeRole,      // ROLE
+    /**
+     * RSVP parameter (RFC 5545 §3.2.17). Three states: TRUE, FALSE, absent.
+     * `null` preserves the protocol-correct distinction between "organizer
+     * did not request a response" (absent) and "organizer explicitly opted
+     * out" (FALSE) — required for T2's RSVP affordance gating.
+     */
+    val rsvp: Boolean?,
     // RFC 5545 parameters
     val cutype: CUType = CUType.INDIVIDUAL,          // CUTYPE - calendar user type
     val dir: String? = null,                          // DIR - LDAP directory URI
-    val member: String? = null,                       // MEMBER - group membership
+    /**
+     * MEMBER parameter (RFC 5545 §3.2.11). Multi-value list of CAL-ADDRESS
+     * URIs identifying group/distribution-list memberships. Wire form is
+     * comma-separated quoted URIs: `MEMBER="mailto:a","mailto:b"`.
+     */
+    val member: List<String> = emptyList(),
     val delegatedTo: List<String> = emptyList(),      // DELEGATED-TO - delegation targets
     val delegatedFrom: List<String> = emptyList(),    // DELEGATED-FROM - delegation sources
     // RFC 6638 scheduling parameters

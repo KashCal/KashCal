@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Place
@@ -282,7 +283,9 @@ fun EventFormSheet(
     onLoadDeviceEvent: (suspend (Long) -> org.onekash.kashcal.ui.viewmodels.DeviceEventEditData?)? = null,
     onSaveDeviceEvent: (suspend (EventFormState) -> Result<Long>)? = null,
     onDeleteDeviceEvent: (suspend (EventFormState) -> Result<Unit>)? = null,
-    deviceCalendarGroups: List<CalendarGroup> = emptyList()
+    deviceCalendarGroups: List<CalendarGroup> = emptyList(),
+    attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
+    isCurrentUserOnList: Boolean = false
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -1155,6 +1158,19 @@ fun EventFormSheet(
                                 focusedContainerColor = Color.Transparent
                             )
                         )
+                    }
+
+                    if (attendees.isNotEmpty()) {
+                        EventFormRow(
+                            icon = Icons.Default.Group,
+                            iconContentDescription = stringResource(R.string.label_attendees)
+                        ) {
+                            org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
+                                models = attendees,
+                                isCurrentUserOnList = isCurrentUserOnList,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
 
                     if (showColorPicker) {

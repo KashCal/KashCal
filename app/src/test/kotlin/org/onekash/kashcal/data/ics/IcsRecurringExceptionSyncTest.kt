@@ -676,12 +676,16 @@ class IcsRecurringExceptionSyncTest {
     // ==================== Edge Case Tests ====================
 
     /**
-     * Exception without master in same feed should be skipped with warning.
-     * This is acceptable for ICS subscriptions since feeds are read-only
-     * and typically complete.
+     * Issue #227: orphaned RECURRENCE-ID is imported as a standalone event.
+     *
+     * Google Calendar legitimately emits exception events with no master in
+     * the same feed (master sliced out of export window, or series deleted).
+     * The orphan must appear on the user's calendar at its DTSTART, not be
+     * silently dropped. The :RECID: marker stays in importId so a future
+     * sync can detect this row was a promoted orphan.
      */
     @Test
-    fun `exception without master in same feed should be skipped with warning`() = runTest {
+    fun `orphaned RECURRENCE-ID should be imported as standalone event`() = runTest {
         val exceptionOnlyIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -707,9 +711,172 @@ class IcsRecurringExceptionSyncTest {
 
         val result = repository.refreshSubscription(1L)
 
-        // Should succeed but add 0 events (exception skipped due to missing master)
+        // Promoted to standalone — visible to the user.
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
-        assertEquals(0, (result as IcsSubscriptionRepository.SyncResult.Success).count.added)
+        assertEquals(
+            "Orphan should be imported as 1 standalone event",
+            1,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+
+        assertEquals("Should insert exactly 1 event", 1, insertedEvents.size)
+        val standalone = insertedEvents.first()
+        assertNull(
+            "Standalone must not carry originalEventId — it's not an exception of anything stored",
+            standalone.originalEventId
+        )
+        assertNull(
+            "Standalone must not carry originalInstanceTime — it would mark the row as a phantom exception",
+            standalone.originalInstanceTime
+        )
+        assertEquals("UID is preserved", "orphan@test", standalone.uid)
+
+        // The :RECID: marker stays in importId — that's how a future sync
+        // detects this row was a promoted orphan and sweeps it when the
+        // master arrives.
+        assertNotNull("ImportId should be set", standalone.importId)
+        assertTrue(
+            "ImportId should retain :RECID: marker for re-sync detection (was: ${standalone.importId})",
+            standalone.importId!!.contains(":RECID:")
+        )
+
+        // Single-occurrence path, not exception linking.
+        coVerify(exactly = 1) { occurrenceGenerator.regenerateOccurrences(any()) }
+        coVerify(exactly = 0) {
+            occurrenceGenerator.linkException(any(), any(), any<Event>())
+        }
+    }
+
+    /**
+     * Issue #227 re-sync transition: in sync N, an orphan is promoted to
+     * standalone. In sync N+1, the master arrives. The previously-promoted
+     * standalone row must be swept (deleted, reminders cancelled) and
+     * existingByImportId must be invalidated, so the master inserts cleanly
+     * without tripping the master-uniqueness trigger and the inbound
+     * exception inserts as a fresh exception row linked to the new master.
+     *
+     * The fresh exception's row id will differ from the prior standalone's
+     * id — that's the regression discriminator that prevents a future
+     * "optimization" back to in-place mutation, which is unsolvable against
+     * the trigger ordering (see docs/ISSUE_227_ICS_IMPORT_ANALYSIS.md).
+     */
+    @Test
+    fun `re-sync where master arrives after orphan promotion sweeps standalone and links fresh exception`() = runTest {
+        val orphanOnlyIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//KashCal//EN
+            BEGIN:VEVENT
+            UID:later-master@test
+            DTSTAMP:20250101T000000Z
+            RECURRENCE-ID:20250113T100000Z
+            SUMMARY:Standalone Today, Exception Later
+            DTSTART:20250113T140000Z
+            DTEND:20250113T150000Z
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val orphanPlusMasterIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//KashCal//EN
+            BEGIN:VEVENT
+            UID:later-master@test
+            DTSTAMP:20250101T000000Z
+            SUMMARY:Weekly Series
+            DTSTART:20250106T100000Z
+            DTEND:20250106T110000Z
+            RRULE:FREQ=WEEKLY;COUNT=10
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:later-master@test
+            DTSTAMP:20250101T000000Z
+            RECURRENCE-ID:20250113T100000Z
+            SUMMARY:Standalone Today, Exception Later
+            DTSTART:20250113T140000Z
+            DTEND:20250113T150000Z
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+
+        // Sync N: feed has only the orphan exception.
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = orphanOnlyIcs,
+            etag = null,
+            lastModified = null
+        )
+        // First refresh sees no existing rows for the subscription prefix.
+        // Second refresh (after the orphan was promoted) sees the standalone
+        // row in storage. We answer dynamically from `insertedEvents` so the
+        // second call returns the row we captured during the first refresh.
+        coEvery {
+            eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any())
+        } answers {
+            insertedEvents.toList()
+        }
+
+        val firstResult = repository.refreshSubscription(1L)
+        assertTrue(firstResult is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(
+            "Sync N: orphan promoted to standalone",
+            1,
+            (firstResult as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+        val priorStandaloneId = insertedEvents.single().id
+        // Sanity: the standalone row carries the :RECID: marker, which is
+        // what the sweep predicate keys on.
+        assertTrue(
+            "Sync N's standalone must carry :RECID: in importId so sync N+1 can sweep it",
+            insertedEvents.single().importId?.contains(":RECID:") == true
+        )
+
+        // Sync N+1: feed now contains the master + the same orphan.
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = orphanPlusMasterIcs,
+            etag = null,
+            lastModified = null
+        )
+
+        val secondResult = repository.refreshSubscription(1L)
+
+        assertTrue(secondResult is IcsSubscriptionRepository.SyncResult.Success)
+        val syncCount = (secondResult as IcsSubscriptionRepository.SyncResult.Success).count
+        assertEquals("Standalone row swept", 1, syncCount.deleted)
+        assertEquals("Master + fresh exception inserted", 2, syncCount.added)
+
+        // Reminders cancelled for the swept row before deletion.
+        coVerify { reminderScheduler.cancelRemindersForEvent(priorStandaloneId) }
+        coVerify { eventsDao.deleteById(priorStandaloneId) }
+
+        // End-state verification: 1 master + 1 properly-linked exception
+        // among the rows inserted in sync N+1 (i.e., excluding the swept).
+        val syncTwoInserts = insertedEvents.filter { it.id != priorStandaloneId }
+        assertEquals(2, syncTwoInserts.size)
+        val master = syncTwoInserts.single { it.rrule != null }
+        val freshException = syncTwoInserts.single { it.originalInstanceTime != null }
+        assertNull("Master has no originalEventId", master.originalEventId)
+        assertEquals(
+            "Fresh exception links to the just-inserted master",
+            master.id,
+            freshException.originalEventId
+        )
+        assertNotEquals(
+            "Fresh exception's id must differ from the swept standalone's id — guards against in-place mutation regression",
+            priorStandaloneId,
+            freshException.id
+        )
+
+        // linkException ran for the fresh exception against the new master.
+        coVerify {
+            occurrenceGenerator.linkException(
+                masterEventId = master.id,
+                occurrenceTimeMs = freshException.originalInstanceTime!!,
+                exceptionEvent = any()
+            )
+        }
     }
 
     /**
@@ -744,5 +911,398 @@ class IcsRecurringExceptionSyncTest {
         coVerify(exactly = 2) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }
+    }
+
+    // ==================== Issue #227: Duplicate UID disambiguation ====================
+
+    /**
+     * Alias to the production constant — tests assert against the same key
+     * so a rename in production breaks them rather than silently diverging.
+     */
+    private val originalUidExtraKey = ORIGINAL_UID_EXTRA_KEY
+
+    /**
+     * Issue #227: Google's private ICS export sometimes emits two non-exception
+     * VEVENTs sharing the same UID (RFC 5545 §3.8.4.7 says UID should be
+     * unique, but Google does it). The fix mutates the uid column for both
+     * events in the duplicate group so trigger_master_event_unique_insert
+     * doesn't fire.
+     */
+    @Test
+    fun `duplicate-UID masters in same feed are persisted with distinct disambiguated UIDs`() = runTest {
+        val duplicateUidIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Google Inc//Google Calendar 70.9054//EN
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            SUMMARY:First Busy
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20270226T114500Z
+            DTEND:20270226T120000Z
+            SUMMARY:Second Busy
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = duplicateUidIcs, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(
+            "Both duplicate-UID events must be persisted",
+            2,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+        assertEquals(2, insertedEvents.size)
+
+        val uids = insertedEvents.map { it.uid }.toSet()
+        assertEquals(
+            "Stored UIDs must be distinct after disambiguation (got: $uids)",
+            2,
+            uids.size
+        )
+        insertedEvents.forEach { event ->
+            assertTrue(
+                "Stored UID must use #dup= disambiguator (was: ${event.uid})",
+                event.uid.startsWith("xxx@google.com#dup=")
+            )
+            assertEquals(
+                "Original UID must be preserved in extraProperties",
+                "xxx@google.com",
+                event.extraProperties?.get(originalUidExtraKey)
+            )
+        }
+
+        val importIds = insertedEvents.mapNotNull { it.importId }.toSet()
+        assertEquals("ImportIds must be distinct", 2, importIds.size)
+        val caldavUrls = insertedEvents.mapNotNull { it.caldavUrl }.toSet()
+        assertEquals("CaldavUrls must be distinct", 2, caldavUrls.size)
+    }
+
+    /**
+     * Issue #227: re-syncing the same duplicate-UID feed must produce
+     * `updated=2, added=0` — proving the disambiguator (event.startTs) is
+     * stable across syncs, so existingByImportId matches and the upsert
+     * takes the update path, not the insert path.
+     */
+    @Test
+    fun `duplicate-UID disambiguation is idempotent across re-sync`() = runTest {
+        val duplicateUidIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Google Inc//Google Calendar 70.9054//EN
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            SUMMARY:First Busy
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20270226T114500Z
+            DTEND:20270226T120000Z
+            SUMMARY:Second Busy
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = duplicateUidIcs, etag = null, lastModified = null
+        )
+        // Returns dynamic state: empty on first call, the just-inserted rows
+        // on the second. The mock at insertedEvents captures rows with
+        // assigned ids and sets caldavUrl=null on the captured copy, so we
+        // re-derive caldavUrl from the inbound event's original caldavUrl
+        // which the production code mutates before insert. We approximate
+        // by returning insertedEvents directly.
+        coEvery {
+            eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any())
+        } answers {
+            insertedEvents.toList()
+        }
+
+        val first = repository.refreshSubscription(1L)
+        assertTrue(first is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(2, (first as IcsSubscriptionRepository.SyncResult.Success).count.added)
+
+        val firstUids = insertedEvents.map { it.uid }.sorted()
+        val firstImportIds = insertedEvents.mapNotNull { it.importId }.sorted()
+
+        val second = repository.refreshSubscription(1L)
+        assertTrue(second is IcsSubscriptionRepository.SyncResult.Success)
+        val secondCount = (second as IcsSubscriptionRepository.SyncResult.Success).count
+        assertEquals("Re-sync must update, not add", 0, secondCount.added)
+        assertEquals("Both rows updated on re-sync", 2, secondCount.updated)
+        assertEquals("No deletion on re-sync", 0, secondCount.deleted)
+
+        // Mutated UIDs must be deterministic across syncs (function of startTs).
+        val secondUids = updatedEvents.map { it.uid }.sorted()
+        val secondImportIds = updatedEvents.mapNotNull { it.importId }.sorted()
+        assertEquals("UIDs stable across re-sync", firstUids, secondUids)
+        assertEquals("ImportIds stable across re-sync", firstImportIds, secondImportIds)
+
+        // X-KASHCAL-ORIGINAL-UID survives the upsert overwrite.
+        updatedEvents.forEach { event ->
+            assertEquals(
+                "Original UID marker must survive re-sync",
+                "xxx@google.com",
+                event.extraProperties?.get(originalUidExtraKey)
+            )
+        }
+    }
+
+    /**
+     * Issue #227: a feed with a single VEVENT for a UID must NOT trigger
+     * disambiguation. The healthy single-event-per-UID path is the common
+     * case and must not regress.
+     */
+    @Test
+    fun `single-occurrence UID is not mutated`() = runTest {
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = masterOnlyIcs, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        repository.refreshSubscription(1L)
+
+        assertEquals(1, insertedEvents.size)
+        val event = insertedEvents.single()
+        assertEquals(
+            "Single-occurrence UID must remain unmodified",
+            "master-only@kashcal.test",
+            event.uid
+        )
+        assertNull(
+            "X-KASHCAL-ORIGINAL-UID must not be set when no disambiguation occurred",
+            event.extraProperties?.get(originalUidExtraKey)
+        )
+    }
+
+    /**
+     * Issue #227 degenerate case: two events sharing UID *and* DTSTART. After
+     * the disambiguator (startTs) is appended, the mutated UIDs still
+     * collide. The first persists, the second's INSERT trips the trigger
+     * and is caught at the existing catch site. Sync still returns Success
+     * with count.added==1. No crash.
+     */
+    @Test
+    fun `same-UID same-DTSTART degenerate case persists first event without crash`() = runTest {
+        val degenerateIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//KashCal//EN
+            BEGIN:VEVENT
+            UID:dupe@test
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            SUMMARY:First Copy
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:dupe@test
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            SUMMARY:Second Copy (collides post-mutation)
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = degenerateIcs, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+        // Simulate the master-uniqueness trigger firing on the second insert
+        // — production catches SQLiteConstraintException at the master-loop
+        // catch site (line 441-443). Real DB behavior is verified separately
+        // in IcsSubscriptionRepositoryDuplicateUidIntegrationTest.
+        var insertCallCount = 0
+        coEvery { eventsDao.insert(any()) } answers {
+            insertCallCount++
+            if (insertCallCount == 1) {
+                val event = firstArg<Event>()
+                insertedEvents.add(event.copy(id = 1000L))
+                1000L
+            } else {
+                throw android.database.sqlite.SQLiteConstraintException(
+                    "UNIQUE constraint failed: duplicate master event uid in calendar"
+                )
+            }
+        }
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue("Sync must not crash on degenerate input", result is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(
+            "Only the first event persists; second is swallowed at the catch site",
+            1,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+        assertEquals(1, insertedEvents.size)
+    }
+
+    /**
+     * Issue #227 regression anchor: the literal feed pasted in the bug
+     * report. Combines Bug A (orphaned RECURRENCE-ID, `abc@google.com`)
+     * with Bug B (duplicate UID, `xxx@google.com`) in a single feed. The
+     * user reports "Found 3 events" but only 1 visible today. After the
+     * fix, all 3 must appear.
+     *
+     * The malformed Event 3 (duplicate DTSTART/DTEND/DTSTAMP lines per
+     * RFC 5545 §3.6.1) is tolerated by ical4j's existing parsing.
+     */
+    @Test
+    fun `issue 227 - Google ICS feed with orphaned exception and duplicate UID yields 3 visible events`() = runTest {
+        val issue227Ics = """
+            BEGIN:VCALENDAR
+            PRODID:-//Google Inc//Google Calendar 70.9054//EN
+            VERSION:2.0
+            CALSCALE:GREGORIAN
+            METHOD:PUBLISH
+            X-WR-CALNAME:test@example.com
+            X-WR-TIMEZONE:UTC
+            BEGIN:VEVENT
+            DTSTART:20260409T130000Z
+            DTEND:20260409T133000Z
+            DTSTAMP:20260517T161041Z
+            UID:abc@google.com
+            ATTENDEE;X-NUM-GUESTS=0:mailto:test@example.com
+            RECURRENCE-ID:20260409T130000Z
+            SUMMARY:Busy
+            END:VEVENT
+            BEGIN:VEVENT
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            DTSTAMP:20260517T155628Z
+            UID:xxx@google.com
+            ATTENDEE;X-NUM-GUESTS=0:mailto:test@example.com
+            SUMMARY:Busy
+            END:VEVENT
+            BEGIN:VEVENT
+            DTSTART:20270226T114500Z
+            DTEND:20270226T120000Z
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            DTSTAMP:20260517T155628Z
+            UID:xxx@google.com
+            ATTENDEE;X-NUM-GUESTS=0:mailto:test@example.com
+            SUMMARY:Busy
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = issue227Ics, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(
+            "Sync must succeed without crashing on the malformed feed",
+            result is IcsSubscriptionRepository.SyncResult.Success
+        )
+        assertEquals(
+            "All 3 events from issue #227's feed must be imported",
+            3,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+        assertEquals(3, insertedEvents.size)
+
+        // Event 1: orphaned exception (abc@google.com) → standalone.
+        val orphanStandalone = insertedEvents.singleOrNull { it.uid == "abc@google.com" }
+        assertNotNull("Orphan exception promoted to standalone", orphanStandalone)
+        assertNull(
+            "Standalone must not carry originalEventId",
+            orphanStandalone!!.originalEventId
+        )
+        assertNull(
+            "Standalone must not carry originalInstanceTime",
+            orphanStandalone.originalInstanceTime
+        )
+
+        // Events 2 + 3: duplicate-UID masters (xxx@google.com) → mutated UIDs,
+        // original UID preserved in extraProperties.
+        val mutated = insertedEvents.filter { it.uid.startsWith("xxx@google.com#dup=") }
+        assertEquals("Both xxx@google.com events imported with mutated UIDs", 2, mutated.size)
+        assertEquals(
+            "Mutated UIDs are distinct",
+            2,
+            mutated.map { it.uid }.toSet().size
+        )
+        mutated.forEach { event ->
+            assertEquals(
+                "Original UID preserved in extraProperties",
+                "xxx@google.com",
+                event.extraProperties?.get(originalUidExtraKey)
+            )
+        }
+    }
+
+    /**
+     * Issue #227 invariant: a UID that already contains the literal
+     * `#dup=` substring must not double-mutate to collide with another
+     * such UID. If two such UIDs collide on the original UID, they get
+     * a second `#dup=` segment appended (e.g., `X#dup=T1#dup=T2`) — still
+     * distinct, still valid.
+     */
+    @Test
+    fun `UIDs containing literal hash-dup are not double-mutated to collide`() = runTest {
+        val literalHashDupIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//KashCal//EN
+            BEGIN:VEVENT
+            UID:weird#dup=preexisting@test
+            DTSTAMP:20260101T000000Z
+            DTSTART:20260101T100000Z
+            DTEND:20260101T110000Z
+            SUMMARY:First
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:weird#dup=preexisting@test
+            DTSTAMP:20260101T000000Z
+            DTSTART:20260102T100000Z
+            DTEND:20260102T110000Z
+            SUMMARY:Second
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = literalHashDupIcs, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(
+            "Both events must persist despite original UID containing #dup=",
+            2,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+        val storedUids = insertedEvents.map { it.uid }.toSet()
+        assertEquals("Mutated UIDs must remain distinct", 2, storedUids.size)
     }
 }

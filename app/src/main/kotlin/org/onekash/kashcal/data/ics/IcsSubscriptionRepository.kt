@@ -17,10 +17,20 @@ import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
+import org.onekash.kashcal.util.maskUid
 import javax.inject.Inject
 import javax.inject.Singleton
 
 private const val TAG = "IcsSubscriptionRepo"
+
+/**
+ * extraProperties key used to preserve the original UID of an ICS-subscription
+ * master that was disambiguated due to duplicate-UID input (issue #227). The
+ * stored uid column carries the synthetic `{originalUid}#dup={startTs}`. A
+ * future export-fidelity PR can teach IcsPatcher.serialize to restore the
+ * original UID from this key on outbound ICS.
+ */
+internal const val ORIGINAL_UID_EXTRA_KEY = "X-KASHCAL-ORIGINAL-UID"
 
 /**
  * Repository for managing ICS calendar subscriptions.
@@ -378,9 +388,19 @@ class IcsSubscriptionRepository @Inject constructor(
     /**
      * Sync parsed events to database with atomic transaction.
      *
-     * Uses two-pass processing to properly handle recurring event exceptions:
-     * - Pass 1: Process master events (with RRULE, no RECURRENCE-ID)
-     * - Pass 2: Process exception events (with RECURRENCE-ID), linking to masters
+     * Three-pass processing:
+     * - Pre-pass: disambiguate duplicate-UID master groups (issue #227 —
+     *   Google's private ICS export sometimes emits two non-exception
+     *   VEVENTs sharing a UID, which would trip the master-uniqueness
+     *   trigger). Mutates uid/importId/caldavUrl for affected rows and
+     *   stashes the original UID in extraProperties.
+     * - Pass 1: Process master events. Sweeps previously-promoted
+     *   standalone orphan rows for any incoming master's UID before insert.
+     * - Pass 2: Process exception events, linking to masters. Falls through
+     *   to a standalone insert when no master is found in the feed (issue
+     *   #227 — Google emits exceptions whose master is sliced out of the
+     *   export window). The :RECID: marker in the standalone's importId
+     *   is what the next sync's sweep keys on.
      *
      * Per RFC 5545, exception events share the same UID as their master
      * but differ by RECURRENCE-ID. We use importId (which includes RECURRENCE-ID)
@@ -399,6 +419,12 @@ class IcsSubscriptionRepository @Inject constructor(
         var updated = 0
         var deleted = 0
 
+        // Pre-pass: disambiguate duplicate-UID masters before they enter
+        // the transaction. Google's private ICS export sometimes emits two
+        // non-exception VEVENTs sharing the same UID; without this, the
+        // second master's INSERT would trip trigger_master_event_unique_insert.
+        val disambiguatedEvents = disambiguateDuplicateUidMasters(events, subscriptionId)
+
         database.runInTransaction {
             val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
             val existingEvents = eventsDao.getByCalendarIdAndCaldavUrlPrefix(
@@ -406,9 +432,13 @@ class IcsSubscriptionRepository @Inject constructor(
                 urlPrefix = sourcePrefix
             )
 
-            // Match by importId (unique per event, includes RECURRENCE-ID for exceptions)
-            val existingByImportId = existingEvents.associateBy { extractImportIdFromSource(it.caldavUrl) }
-            val newImportIds = events.map { it.importId }.toSet()
+            // Mutable so the master-pass orphan sweep can invalidate stale
+            // entries; without this Pass 2 would update a deleted row id
+            // (silent no-op) and the new exception would never be written.
+            val existingByImportId = existingEvents
+                .associateBy { extractImportIdFromSource(it.caldavUrl) }
+                .toMutableMap()
+            val newImportIds = disambiguatedEvents.map { it.importId }.toSet()
 
             // Delete orphaned events (cancel reminders first!)
             val orphanedImportIds = existingByImportId.keys - newImportIds
@@ -416,12 +446,13 @@ class IcsSubscriptionRepository @Inject constructor(
                 val existingEvent = existingByImportId[importId] ?: continue
                 reminderScheduler.cancelRemindersForEvent(existingEvent.id)
                 eventsDao.deleteById(existingEvent.id)
+                existingByImportId.remove(importId)
                 deleted++
             }
 
             // Separate masters and exceptions
-            val masters = events.filter { it.originalInstanceTime == null }
-            val exceptions = events.filter { it.originalInstanceTime != null }
+            val masters = disambiguatedEvents.filter { it.originalInstanceTime == null }
+            val exceptions = disambiguatedEvents.filter { it.originalInstanceTime != null }
 
             // Track master IDs for exception linking
             val masterIdByUid = mutableMapOf<String, Long>()
@@ -429,6 +460,31 @@ class IcsSubscriptionRepository @Inject constructor(
             // PASS 1: Process masters
             for (event in masters) {
                 try {
+                    // Sweep previously-promoted standalone orphans with this
+                    // UID before inserting the master — otherwise the master's
+                    // INSERT trips trigger_master_event_unique_insert on the
+                    // (uid, calendar_id, original_event_id IS NULL) collision.
+                    // Sync N's standalone is the row with the same uid AND a
+                    // :RECID: marker in importId. The inbound exception in the
+                    // same feed will be re-inserted as a fresh exception row
+                    // in Pass 2.
+                    val staleOrphanKeys = existingByImportId
+                        .filter { (key, value) ->
+                            key != null &&
+                                key.contains(":RECID:") &&
+                                value.uid == event.uid &&
+                                value.originalEventId == null
+                        }
+                        .keys
+                        .toList()
+                    for (staleKey in staleOrphanKeys) {
+                        val staleRow = existingByImportId[staleKey] ?: continue
+                        reminderScheduler.cancelRemindersForEvent(staleRow.id)
+                        eventsDao.deleteById(staleRow.id)
+                        existingByImportId.remove(staleKey)
+                        deleted++
+                    }
+
                     val existingEvent = existingByImportId[event.importId]
                     val (eventId, isNew) = upsertEvent(event, existingEvent)
                     masterIdByUid[event.uid] = eventId
@@ -439,7 +495,13 @@ class IcsSubscriptionRepository @Inject constructor(
 
                     if (isNew) added++ else updated++
                 } catch (e: Exception) {
-                    Log.e(TAG, "Failed to process master event ${event.uid}: ${e.message}")
+                    // Most often this is the master-uniqueness trigger
+                    // aborting on a degenerate same-UID-same-DTSTART input
+                    // that survived the disambiguation pre-pass (issue #227).
+                    Log.w(
+                        TAG,
+                        "Master insert aborted: uid=${event.uid.maskUid()} startTs=${event.startTs} cause=${e.message}"
+                    )
                 }
             }
 
@@ -455,7 +517,20 @@ class IcsSubscriptionRepository @Inject constructor(
                 try {
                     val masterId = masterIdByUid[event.uid]
                     if (masterId == null) {
-                        Log.w(TAG, "Skipping exception for missing master: uid=${event.uid}, importId=${event.importId}")
+                        // Issue #227: orphaned RECURRENCE-ID — no master in
+                        // this feed. Promote to standalone so the user sees
+                        // the event. Keep :RECID: in importId so a future
+                        // sync can sweep this row when the master arrives.
+                        val standalone = event.copy(
+                            originalEventId = null,
+                            originalInstanceTime = null
+                        )
+                        val existingEvent = existingByImportId[event.importId]
+                        val (eventId, isNew) = upsertEvent(standalone, existingEvent)
+                        val savedEvent = standalone.copy(id = eventId)
+                        occurrenceGenerator.regenerateOccurrences(savedEvent)
+                        scheduleRemindersForEvent(savedEvent, calendarColor, isModified = !isNew)
+                        if (isNew) added++ else updated++
                         continue
                     }
 
@@ -481,6 +556,52 @@ class IcsSubscriptionRepository @Inject constructor(
         }
 
         return SyncCount(added, updated, deleted)
+    }
+
+    /**
+     * Disambiguate duplicate-UID master events from a parsed feed.
+     *
+     * Issue #227: Google's private ICS export sometimes emits two
+     * non-exception VEVENTs sharing the same UID. RFC 5545 §3.8.4.7 says
+     * UID should be unique per calendar; Google's feed violates that, but
+     * `trigger_master_event_unique_insert` enforces it at the DB layer
+     * (added in MIGRATION_8_9 to prevent CalDAV-sync duplicates from issue
+     * #36). Without disambiguation the second master's INSERT would be
+     * caught silently and the user would see only one of the two events.
+     *
+     * The disambiguator is `event.startTs` — event-intrinsic, deterministic
+     * across syncs. The original UID is preserved in extraProperties under
+     * [ORIGINAL_UID_EXTRA_KEY] so a future export-fidelity PR can restore it.
+     */
+    internal fun disambiguateDuplicateUidMasters(
+        events: List<Event>,
+        subscriptionId: Long
+    ): List<Event> {
+        val masterUidCounts = events
+            .filter { it.originalInstanceTime == null }
+            .groupingBy { it.uid }
+            .eachCount()
+        if (masterUidCounts.values.none { it > 1 }) return events
+
+        val sourcePrefix = IcsSubscription.eventSourcePrefix(subscriptionId)
+        return events.map { event ->
+            val needsMutation = event.originalInstanceTime == null &&
+                (masterUidCounts[event.uid] ?: 0) > 1
+            if (!needsMutation) return@map event
+
+            val originalUid = event.uid
+            val mutatedUid = "$originalUid#dup=${event.startTs}"
+            val mutatedImportId = mutatedUid
+            val mutatedCaldavUrl = "$sourcePrefix$mutatedImportId"
+            val updatedExtras = (event.extraProperties ?: emptyMap()) +
+                (ORIGINAL_UID_EXTRA_KEY to originalUid)
+            event.copy(
+                uid = mutatedUid,
+                importId = mutatedImportId,
+                caldavUrl = mutatedCaldavUrl,
+                extraProperties = updatedExtras
+            )
+        }
     }
 
     /**

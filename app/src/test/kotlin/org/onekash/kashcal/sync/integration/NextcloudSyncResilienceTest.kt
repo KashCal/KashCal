@@ -623,7 +623,7 @@ class NextcloudSyncResilienceTest {
     // These test the three hypotheses for "a few events + empty sync log"
 
     /**
-     * THEORY 1: ICalEventMapper.toEntity() crashes on edge-case data.
+     * THEORY 1: ICalEventMapper.toEntity().event crashes on edge-case data.
      *
      * If toEntity() throws for a specific event, it would propagate through
      * processEvents() → pullFull() → pull() → syncCalendar(). The sync
@@ -683,7 +683,7 @@ class NextcloudSyncResilienceTest {
                         calendarId = 1L,
                         caldavUrl = event.url,
                         etag = event.etag
-                    )
+                    ).event
                     mapped++
                     println("  OK: ${entity.title} (uid=${entity.uid}, startTs=${entity.startTs}, " +
                         "isAllDay=${entity.isAllDay}, color=${entity.color}, " +

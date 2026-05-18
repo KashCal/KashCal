@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Stalwart calendar-user-address-set PROPFIND response shape.
+  Hand-crafted (not live-probed) because Stalwart bootstrap setup was
+  out of scope for the P1.9 probe.
+
+  Shape derived from Stalwart's principal href observed in the existing
+  fixture at app/src/test/resources/caldav/stalwart/01_current_user_principal.xml,
+  which uses /dav/principal/admin/. Shape mirrors the universal CalDAV
+  response pattern: mailto + path-relative pair.
+-->
+<D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+    <D:response>
+        <D:href>/dav/principal/admin/</D:href>
+        <D:propstat>
+            <D:prop>
+                <C:calendar-user-address-set>
+                    <D:href>mailto:admin@stalwart.test</D:href>
+                    <D:href>/dav/principal/admin/</D:href>
+                </C:calendar-user-address-set>
+            </D:prop>
+            <D:status>HTTP/1.1 200 OK</D:status>
+        </D:propstat>
+    </D:response>
+</D:multistatus>

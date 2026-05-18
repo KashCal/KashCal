@@ -6,6 +6,7 @@ import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -522,6 +523,144 @@ class IcsRealWorldFeedsTest {
             insertedEvents.size,
             caldavUrls.size
         )
+    }
+
+    // ==================== Issue #219 reproduction: Apple iCloud Holidays ====================
+
+    /**
+     * Issue #219: subscribing to https://calendars.icloud.com/holidays/us_en.ics
+     * resulted in zero events on the calendar. Fixed by the parser update;
+     * this test pins the post-fix behavior so the regression can't return.
+     *
+     * Real Apple-served iCloud holiday feed (PRODID:icalendar-ruby), all-day
+     * recurring events with yearly RRULEs.
+     */
+    @Test
+    fun `regression - Issue 219 Apple iCloud US holidays subscription imports events`() = runTest {
+        val content = loadResource("ics/apple_icloud_us_holidays.ics")
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = content, etag = "\"icloud-etag\"", lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(
+            "Apple iCloud holidays must import successfully (issue #219)",
+            result is IcsSubscriptionRepository.SyncResult.Success
+        )
+        val success = result as IcsSubscriptionRepository.SyncResult.Success
+        assertTrue(
+            "iCloud holidays must contain >50 events (regression guard against silent zero)",
+            success.count.added > 50
+        )
+
+        val caldavUrls = insertedEvents.mapNotNull { it.caldavUrl }.toSet()
+        assertEquals("Each event must have a unique caldavUrl", insertedEvents.size, caldavUrls.size)
+
+        val allDayCount = insertedEvents.count { it.isAllDay }
+        assertTrue("Most iCloud holidays are all-day events", allDayCount > 50)
+    }
+
+    // ==================== Issue #227 reproduction: Google ICS export quirks ====================
+
+    /**
+     * Issue #227: Google's private ICS export emits two adversarial patterns
+     * in a single feed — an orphaned RECURRENCE-ID (master sliced out of the
+     * export window) and two non-exception VEVENTs sharing a UID. Pre-fix,
+     * KashCal imported only 1 of 3 events. This pins the post-fix behavior.
+     */
+    @Test
+    fun `regression - Issue 227 Google ICS feed yields all 3 events`() = runTest {
+        val content = loadResource("ics/issue_227_google_orphan_and_duplicate_uid.ics")
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = content, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(
+            "All 3 events from issue #227's feed must be imported",
+            3,
+            (result as IcsSubscriptionRepository.SyncResult.Success).count.added
+        )
+
+        // Bug A: orphaned RECURRENCE-ID promoted to standalone.
+        val orphan = insertedEvents.singleOrNull { it.uid == "abc@google.com" }
+        assertNotNull("Orphaned exception promoted to standalone", orphan)
+        assertNull(orphan!!.originalEventId)
+        assertNull(orphan.originalInstanceTime)
+
+        // Bug B: duplicate-UID masters disambiguated by startTs.
+        val mutated = insertedEvents.filter { it.uid.startsWith("xxx@google.com#dup=") }
+        assertEquals("Both xxx@google.com events imported with mutated UIDs", 2, mutated.size)
+        assertEquals("Mutated UIDs are distinct", 2, mutated.map { it.uid }.toSet().size)
+        mutated.forEach { event ->
+            assertEquals(
+                "Original UID preserved in extraProperties",
+                "xxx@google.com",
+                event.extraProperties?.get(ORIGINAL_UID_EXTRA_KEY)
+            )
+        }
+    }
+
+    // ==================== Locale/script coverage: Thunderbird non-ASCII calendars ====================
+
+    /**
+     * Thunderbird China holidays — Chinese-script SUMMARY/LOCATION/DESCRIPTION,
+     * RRULE-based recurring all-day events. Regression guard for non-ASCII
+     * content handling on the import path.
+     */
+    @Test
+    fun `regression - Thunderbird China holidays import non-ASCII content`() = runTest {
+        val content = loadResource("ics/thunderbird_chinaholidays.ics")
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = content, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        val success = result as IcsSubscriptionRepository.SyncResult.Success
+        assertTrue("China holidays import multiple events", success.count.added > 0)
+
+        // At least one event has a non-ASCII title (Chinese characters).
+        val hasNonAscii = insertedEvents.any { ev ->
+            ev.title.any { it.code > 127 }
+        }
+        assertTrue("Chinese characters survive import", hasNonAscii)
+    }
+
+    /**
+     * Thunderbird Canadian-French holidays — accented characters (é, à, ç),
+     * higher event count. Regression guard for Latin-script extended characters.
+     */
+    @Test
+    fun `regression - Thunderbird Canadian French holidays import accented content`() = runTest {
+        val content = loadResource("ics/thunderbird_canadaholidaysfrench.ics")
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = content, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        val success = result as IcsSubscriptionRepository.SyncResult.Success
+        assertTrue("Canadian French holidays import multiple events", success.count.added > 0)
+
+        val hasAccented = insertedEvents.any { ev ->
+            ev.title.any { c -> c in 'À'..'ÿ' }
+        }
+        assertTrue("Accented Latin characters survive import", hasAccented)
     }
 
     // ==================== Occurrence Generation Tests ====================

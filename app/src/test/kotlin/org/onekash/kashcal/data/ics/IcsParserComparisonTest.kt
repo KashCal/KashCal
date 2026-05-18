@@ -294,7 +294,7 @@ class IcsParserComparisonTest {
                         calendarId = CALENDAR_ID,
                         caldavUrl = "${IcsSubscription.SOURCE_PREFIX}:${SUBSCRIPTION_ID}:${icalEvent.uid}",
                         etag = null
-                    )
+                    ).event
                 }
 
                 assertTrue("$name: Should have events after mapping", events.isNotEmpty())
@@ -391,7 +391,7 @@ class IcsParserComparisonTest {
                         calendarId = CALENDAR_ID,
                         caldavUrl = null,
                         etag = null
-                    )
+                    ).event
                 }
                 val icalTitles = icalEvents.map { it.uid to it.title }.toMap()
 
@@ -425,7 +425,7 @@ class IcsParserComparisonTest {
                         calendarId = CALENDAR_ID,
                         caldavUrl = null,
                         etag = null
-                    )
+                    ).event
                 }
                 val icalByUid = icalEvents.associateBy { it.uid }
 

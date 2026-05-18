@@ -741,4 +741,67 @@ class IcsSubscriptionRepositoryTest {
 
         assertEquals("https://example.com/cal.ics", urlSlot.captured)
     }
+
+    // ==================== Issue #227: Duplicate-UID disambiguation (mock-level) ====================
+
+    @Test
+    fun `duplicate-UID feed produces two insert calls with distinct mutated UIDs`() = runTest {
+        val duplicateUidIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Google Inc//Google Calendar 70.9054//EN
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20260409T140000Z
+            DTEND:20260409T150000Z
+            SUMMARY:First Busy
+            END:VEVENT
+            BEGIN:VEVENT
+            UID:xxx@google.com
+            DTSTAMP:20260517T155628Z
+            DTSTART:20270226T114500Z
+            DTEND:20270226T120000Z
+            SUMMARY:Second Busy
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        // Existing setUp() uses `coEvery { eventsDao.insert(any()) } returns 1L`
+        // which doesn't capture per-call args. Override here with a list collector.
+        val capturedInserts = mutableListOf<Event>()
+        var nextId = 100L
+        coEvery { eventsDao.insert(any()) } answers {
+            val event = firstArg<Event>()
+            capturedInserts.add(event)
+            nextId++
+        }
+
+        coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
+        coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
+            content = duplicateUidIcs, etag = null, lastModified = null
+        )
+        coEvery { eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any()) } returns emptyList()
+
+        val result = repository.refreshSubscription(1L)
+
+        assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
+        assertEquals(2, capturedInserts.size)
+        assertEquals(
+            "Both inserts must have distinct mutated UIDs",
+            2,
+            capturedInserts.map { it.uid }.toSet().size
+        )
+        capturedInserts.forEach { event ->
+            assertTrue(
+                "Inserted UID must use #dup= disambiguator: ${event.uid}",
+                event.uid.startsWith("xxx@google.com#dup=")
+            )
+            assertEquals(
+                "Original UID preserved in extraProperties",
+                "xxx@google.com",
+                event.extraProperties?.get(ORIGINAL_UID_EXTRA_KEY)
+            )
+        }
+    }
 }

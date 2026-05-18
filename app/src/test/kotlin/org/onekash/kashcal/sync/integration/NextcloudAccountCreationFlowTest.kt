@@ -224,6 +224,20 @@ class NextcloudAccountCreationFlowTest {
             every {
                 runBlocking { saveCredentials(any(), any()) }
             } returns true
+
+            // updateCalendarUserAddresses (A2.0) - record on the mock account row
+            every {
+                runBlocking { updateCalendarUserAddresses(any(), any()) }
+            } answers {
+                val accountId = firstArg<Long>()
+                val addresses = secondArg<List<String>>()
+                val idx = accountsInDb.indexOfFirst { it.id == accountId }
+                if (idx >= 0) {
+                    accountsInDb[idx] = accountsInDb[idx].copy(calendarUserAddresses = addresses)
+                }
+                println("  [DB] updateCalendarUserAddresses(accountId=$accountId, count=${addresses.size})")
+                Unit
+            }
         }
     }
 
@@ -423,8 +437,22 @@ class NextcloudAccountCreationFlowTest {
         assertNotNull("Account 2 should exist with email=$username2", account2)
         assertNotEquals("Account IDs should be different", account1?.id, account2?.id)
 
+        // A2.0: every account created via the picker UI flow must have
+        // calendar-user-address-set discovered and persisted. The
+        // discovery is non-fatal, so size==0 is acceptable when the
+        // server didn't return entries — but the mock would never have
+        // been called at all if the wiring is missing.
+        assertNotNull(
+            "Account 1 should have calendarUserAddresses populated (A2.0 wired into createAccountWithSelectedCalendars)",
+            account1?.calendarUserAddresses
+        )
+        assertNotNull(
+            "Account 2 should have calendarUserAddresses populated",
+            account2?.calendarUserAddresses
+        )
+
         println("\n✓ Both accounts created successfully with different IDs")
-        println("✓ Account 1: id=${account1?.id}, email=${account1?.email}")
-        println("✓ Account 2: id=${account2?.id}, email=${account2?.email}")
+        println("✓ Account 1: id=${account1?.id}, email=${account1?.email}, CUAs=${account1?.calendarUserAddresses?.size}")
+        println("✓ Account 2: id=${account2?.id}, email=${account2?.email}, CUAs=${account2?.calendarUserAddresses?.size}")
     }
 }

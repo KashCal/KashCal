@@ -143,6 +143,7 @@ class RealIncrementalSyncE2ETest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = mockk(relaxed = true),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore

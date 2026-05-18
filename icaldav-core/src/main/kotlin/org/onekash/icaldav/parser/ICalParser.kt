@@ -12,6 +12,7 @@ import net.fortuna.ical4j.model.component.VFreeBusy
 import net.fortuna.ical4j.model.component.VJournal
 import net.fortuna.ical4j.model.component.VToDo
 import org.onekash.icaldav.compat.getAllProperties
+import org.onekash.icaldav.compat.getParameterIgnoreCase
 import org.onekash.icaldav.compat.getParameterOrNull
 import org.onekash.icaldav.compat.getPropertyOrNull
 import org.onekash.icaldav.model.AlarmAction
@@ -339,8 +340,7 @@ class ICalParser(
         val organizerProp = vtodo.getPropertyOrNull<Property>("ORGANIZER")
             ?: return null
 
-        val value = organizerProp.value
-        val email = extractEmailFromCalAddress(value)
+        val email = extractCalAddressEmail(organizerProp)
 
         val cn = organizerProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
         val sentBy = organizerProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("SENT-BY")
@@ -356,8 +356,7 @@ class ICalParser(
         val attendeeProps = vtodo.getProperties<Property>("ATTENDEE")
 
         return attendeeProps.mapNotNull { attendeeProp ->
-            val value = attendeeProp.value
-            val email = extractEmailFromCalAddress(value)
+            val email = extractCalAddressEmail(attendeeProp)
             if (email.isBlank()) return@mapNotNull null
 
             val cn = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
@@ -370,7 +369,7 @@ class ICalParser(
                 name = cn,
                 partStat = PartStat.fromString(partStatValue),
                 role = AttendeeRole.fromString(roleValue),
-                rsvp = rsvpValue?.equals("TRUE", ignoreCase = true) ?: false
+                rsvp = rsvpValue?.equals("TRUE", ignoreCase = true)
             )
         }
     }
@@ -542,8 +541,7 @@ class ICalParser(
         val organizerProp = vjournal.getPropertyOrNull<Property>("ORGANIZER")
             ?: return null
 
-        val value = organizerProp.value
-        val email = extractEmailFromCalAddress(value)
+        val email = extractCalAddressEmail(organizerProp)
 
         val cn = organizerProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
         val sentBy = organizerProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("SENT-BY")
@@ -559,8 +557,7 @@ class ICalParser(
         val attendeeProps = vjournal.getProperties<Property>("ATTENDEE")
 
         return attendeeProps.mapNotNull { attendeeProp ->
-            val value = attendeeProp.value
-            val email = extractEmailFromCalAddress(value)
+            val email = extractCalAddressEmail(attendeeProp)
             if (email.isBlank()) return@mapNotNull null
 
             val cn = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
@@ -573,7 +570,7 @@ class ICalParser(
                 name = cn,
                 partStat = PartStat.fromString(partStatValue),
                 role = AttendeeRole.fromString(roleValue),
-                rsvp = rsvpValue?.equals("TRUE", ignoreCase = true) ?: false
+                rsvp = rsvpValue?.equals("TRUE", ignoreCase = true)
             )
         }
     }
@@ -1152,8 +1149,7 @@ class ICalParser(
         val organizerProp = vevent.getPropertyOrNull<Property>("ORGANIZER")
             ?: return null
 
-        val value = organizerProp.value
-        val email = extractEmailFromCalAddress(value)
+        val email = extractCalAddressEmail(organizerProp)
 
         val cn = organizerProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")
             ?.value
@@ -1201,8 +1197,7 @@ class ICalParser(
         val attendeeProps = vevent.getProperties<Property>("ATTENDEE")
 
         return attendeeProps.mapNotNull { attendeeProp ->
-            val value = attendeeProp.value
-            val email = extractEmailFromCalAddress(value)
+            val email = extractCalAddressEmail(attendeeProp)
             if (email.isBlank()) return@mapNotNull null
 
             val cn = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")
@@ -1218,7 +1213,9 @@ class ICalParser(
 
             val rsvpValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("RSVP")
                 ?.value
-            val rsvp = rsvpValue?.equals("TRUE", ignoreCase = true) ?: false
+            // RFC 5545 §3.2.17: RSVP is optional. Preserve null vs explicit-FALSE
+            // — required for T2 RSVP-affordance gating ("did organizer ask for a response?").
+            val rsvp: Boolean? = rsvpValue?.equals("TRUE", ignoreCase = true)
 
             // RFC 5545 parameters
             val cutypeValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CUTYPE")
@@ -1228,8 +1225,11 @@ class ICalParser(
             val dir = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("DIR")
                 ?.value?.removeSurrounding("\"")
 
-            val member = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("MEMBER")
-                ?.value?.removeSurrounding("\"")
+            // RFC 5545 §3.2.11: MEMBER is multi-value (comma-separated quoted URIs).
+            // Same wire form as DELEGATED-TO/FROM below — reuse parseMailtoList.
+            val memberValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("MEMBER")
+                ?.value
+            val member = parseMailtoList(memberValue)
 
             val delegatedToValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("DELEGATED-TO")
                 ?.value
@@ -1298,6 +1298,52 @@ class ICalParser(
             .removeSuffix("\"")
             .replace(Regex("^mailto:", RegexOption.IGNORE_CASE), "")
             .trim()
+    }
+
+    /**
+     * Mailto-shape detection used by the EMAIL= fallback. Strict enough to
+     * reject principal-hrefs (`/646691839/principal/`), HTTP/HTTPS principal
+     * URIs (`https://caldav.example.com/principals/users/foo/`), `urn:uuid:`
+     * forms, and pathological `@example.com` / `foo@` shapes.
+     */
+    private val mailtoShape =
+        Regex("""^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$""")
+
+    /**
+     * Extract a mailto-shaped email from a CAL-ADDRESS property, falling
+     * back to the property's `EMAIL=` parameter when the primary value
+     * isn't a parseable mailto.
+     *
+     * Apple's iSchedule binding rewrites ORGANIZER and ATTENDEE primary
+     * values to internal principal hrefs (`/.../principal/`) when the
+     * mailto matches the authenticated account; the original mailto is
+     * preserved as an `EMAIL=` parameter. The same shape can appear from
+     * other servers using `urn:uuid:` or HTTP-principal forms (RFC 5545
+     * §3.3.3 permits non-mailto CAL-ADDRESSes).
+     *
+     * RFC 5545 §3.2 mandates parameter names are case-insensitive — the
+     * `EMAIL=` lookup iterates `prop.parameters` instead of using
+     * ical4j's case-sensitive `getParameter(name)` accessor.
+     *
+     * Final fallback: when neither primary nor `EMAIL=` yields a
+     * mailto-shaped string, returns the original primary value (caller
+     * decides what to do — preserves current behavior for non-iCloud
+     * servers).
+     */
+    private fun extractCalAddressEmail(prop: net.fortuna.ical4j.model.Property): String {
+        val primary = extractEmailFromCalAddress(prop.value)
+        if (mailtoShape.matches(primary)) return primary
+
+        // RFC 5545 §3.2 mandates parameter names are case-insensitive — covers
+        // any conformant casing (EMAIL=, email=, Email=, eMaIl=, ...) without
+        // hardcoding a list of variants.
+        val emailParamValue = prop.getParameterIgnoreCase("EMAIL")
+            ?.value
+            ?.takeUnless { it.isBlank() }
+            ?: return primary
+
+        val fromParam = extractEmailFromCalAddress(emailParamValue)
+        return if (mailtoShape.matches(fromParam)) fromParam else primary
     }
 
     // ============ RFC 7986 Property Parsing ============
@@ -1538,7 +1584,7 @@ class ICalParser(
         // Parse ORGANIZER (reuse from VEvent parsing logic)
         val organizerProp = vfb.getPropertyOrNull<Property>("ORGANIZER")
         val organizer = organizerProp?.let { prop ->
-            val email = extractEmailFromCalAddress(prop.value)
+            val email = extractCalAddressEmail(prop)
             val cn = prop.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
             val sentBy = prop.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("SENT-BY")
                 ?.value?.let { extractEmailFromCalAddress(it) }
@@ -1548,7 +1594,7 @@ class ICalParser(
         // Parse ATTENDEEs
         val attendeeProps = vfb.getProperties<Property>("ATTENDEE")
         val attendees = attendeeProps.mapNotNull { attendeeProp ->
-            val email = extractEmailFromCalAddress(attendeeProp.value)
+            val email = extractCalAddressEmail(attendeeProp)
             if (email.isBlank()) return@mapNotNull null
             val cn = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("CN")?.value
             Attendee(

@@ -343,6 +343,28 @@ class OkHttpCalDavClient : CalDavClient {
             }
         }
 
+    override suspend fun discoverCalendarUserAddresses(principalUrl: String): CalDavResult<List<String>> =
+        withContext(Dispatchers.IO) {
+            val body = """
+                <?xml version="1.0" encoding="utf-8"?>
+                <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+                    <d:prop>
+                        <c:calendar-user-address-set/>
+                    </d:prop>
+                </d:propfind>
+            """.trimIndent()
+
+            val request = Request.Builder()
+                .url(principalUrl)
+                .method("PROPFIND", body.toRequestBody(XML_MEDIA_TYPE))
+                .header("Depth", "0")
+                .build()
+
+            executeRequest(request) { responseBody ->
+                CalDavResult.success(quirks.extractCalendarUserAddresses(responseBody))
+            }
+        }
+
     override suspend fun discoverCalendarHome(principalUrl: String): CalDavResult<List<String>> =
         withContext(Dispatchers.IO) {
             val body = """

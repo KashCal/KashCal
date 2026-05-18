@@ -583,7 +583,7 @@ class ValidationTest {
                 rsvp = true,
                 cutype = CUType.ROOM,
                 dir = "ldap://example.com/cn=user",
-                member = "mailto:group@example.com",
+                member = listOf("mailto:group@example.com"),
                 delegatedTo = listOf("mailto:delegate@example.com"),
                 delegatedFrom = listOf("mailto:original@example.com")
             )

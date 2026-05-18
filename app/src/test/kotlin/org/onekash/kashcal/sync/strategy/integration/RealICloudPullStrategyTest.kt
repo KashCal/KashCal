@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -112,6 +113,7 @@ class RealICloudPullStrategyTest {
             database = database,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
             dataStore = dataStore
@@ -530,5 +532,82 @@ class RealICloudPullStrategyTest {
             expectedDisplayName,
             refreshed.displayName
         )
+    }
+
+    /**
+     * Regression guard for the attendee persistence path against real iCloud:
+     *   1. Create an event with 3 synthetic attendees on a real iCloud calendar
+     *   2. Pull the calendar
+     *   3. Assert the `attendees` table has rows for the new event
+     *   4. Re-pull and assert the count is still the same (idempotent)
+     *
+     * iCloud's iTIP scheduling routing may drop NEEDS-ACTION attendees when
+     * the ORGANIZER mailto doesn't match the authenticated account — so we
+     * assert ≥1 attendee survives the roundtrip rather than exactly 3.
+     */
+    @Test
+    fun `attendees persist on real iCloud pull and re-pull idempotently`() = runBlocking {
+        assumeCredentialsAvailable()
+
+        val caldavCalendar = discoverTestCalendar()
+        assumeTrue("Should discover a calendar", caldavCalendar != null)
+        val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
+
+        // Create a synthetic attendee-bearing event on iCloud
+        val uid = "b4read-regression-${java.util.UUID.randomUUID()}"
+        val ics = """
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//KashCal//B4-read regression//EN
+BEGIN:VEVENT
+UID:$uid
+DTSTAMP:20260601T100000Z
+DTSTART:20260601T100000Z
+DTEND:20260601T110000Z
+SUMMARY:B4-read attendee regression test
+ORGANIZER;CN=Test Organizer:mailto:organizer.synthetic@example.test
+ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT:mailto:alice.synthetic@example.test
+ATTENDEE;CN=Bob;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT:mailto:bob.synthetic@example.test
+ATTENDEE;CN=Carol;PARTSTAT=DECLINED;ROLE=OPT-PARTICIPANT:mailto:carol.synthetic@example.test
+END:VEVENT
+END:VCALENDAR
+        """.trimIndent()
+
+        val createResult = client.createEvent(calendar.caldavUrl!!, uid, ics)
+        assumeTrue("createEvent must succeed", createResult.isSuccess())
+        val (eventUrl, createEtag) = createResult.getOrNull()!!
+
+        try {
+            // First pull
+            val first = pullStrategy.pull(calendar, forceFullSync = true, client = client)
+            assumeTrue("first pull should succeed", first is PullResult.Success)
+
+            val event = eventsDao.getByCaldavUrl(eventUrl)
+            assumeTrue("event should be in DB", event != null)
+            val firstAttendees = database.attendeesDao().getForEvent(event!!.id).first()
+            assertTrue(
+                "expected ≥1 attendee persisted; iCloud iTIP routing may drop NEEDS-ACTION attendees " +
+                    "when ORGANIZER mailto doesn't match the authenticated account",
+                firstAttendees.isNotEmpty()
+            )
+            val firstCount = firstAttendees.size
+
+            // Second pull — idempotent at row-set level
+            val second = pullStrategy.pull(calendar, forceFullSync = true, client = client)
+            assumeTrue("second pull should succeed", second is PullResult.Success)
+            val secondAttendees = database.attendeesDao().getForEvent(event.id).first()
+            assertEquals(
+                "re-pull must not duplicate attendee rows",
+                firstCount, secondAttendees.size
+            )
+            assertEquals(
+                "re-pull must produce the same address set",
+                firstAttendees.map { it.address }.toSet(),
+                secondAttendees.map { it.address }.toSet()
+            )
+        } finally {
+            // Cleanup — best-effort
+            try { client.deleteEvent(eventUrl, createEtag) } catch (_: Exception) { /* ignore */ }
+        }
     }
 }

@@ -50,7 +50,7 @@ class RoundTripPreservationTest {
 
         // Parse → Map → Serialize → Parse
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
@@ -89,7 +89,7 @@ class RoundTripPreservationTest {
         )
 
         // Map to entity with rawIcal for preservation
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
 
         // extraProperties should contain X-properties
         assertNotNull("extraProperties should not be null", entity.extraProperties)
@@ -143,7 +143,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals("Should parse 3 alarms", 3, event1.alarms.size)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         // Note: ICalEventMapper.reminders only keeps first 3, but alarmCount tracks total
         assertEquals("alarmCount should be 3", 3, entity.alarmCount)
 
@@ -183,7 +183,7 @@ class RoundTripPreservationTest {
         assertNotNull("Alarm should have uid (RFC 9074)", event1.alarms[0].uid)
         assertEquals("abc123-alarm-uuid", event1.alarms[0].uid)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
@@ -214,7 +214,7 @@ class RoundTripPreservationTest {
         assertEquals("Should have 2 attendees", 2, event1.attendees.size)
         assertNotNull("Should have organizer", event1.organizer)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
@@ -243,7 +243,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals("Should have 3 categories", 3, event1.categories.size)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
@@ -274,7 +274,7 @@ class RoundTripPreservationTest {
         assertNotNull("Should have RRULE", event1.rrule)
         assertEquals("Should have 2 EXDATEs", 2, event1.exdates.size)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("RRULE should be mapped", "FREQ=DAILY;COUNT=10", entity.rrule)
         assertNotNull("EXDATE should be mapped", entity.exdate)
 
@@ -305,7 +305,7 @@ class RoundTripPreservationTest {
         assertTrue("Should be all-day", event1.isAllDay)
         assertTrue("dtStart should be date-only", event1.dtStart.isDate)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertTrue("Entity should be all-day", entity.isAllDay)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
@@ -335,7 +335,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals("America/New_York", event1.dtStart.timezone?.id)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("America/New_York", entity.timezone)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
@@ -369,7 +369,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertNotNull("Should have duration", event1.duration)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         // Entity stores effective end time, not duration
         val expectedEndTs = event1.dtStart.timestamp + 90 * 60 * 1000
         assertEquals(expectedEndTs, entity.endTs)
@@ -405,7 +405,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals(org.onekash.icaldav.model.EventStatus.CANCELLED, event1.status)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("CANCELLED", entity.status)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
@@ -434,7 +434,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals(org.onekash.icaldav.model.EventStatus.TENTATIVE, event1.status)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("TENTATIVE", entity.status)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
@@ -463,7 +463,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals(org.onekash.icaldav.model.Classification.PRIVATE, event1.classification)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals("PRIVATE", entity.classification)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
@@ -492,7 +492,7 @@ class RoundTripPreservationTest {
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         assertEquals(5, event1.sequence)
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals(5, entity.sequence)
 
         // IcsPatcher increments sequence on update
@@ -532,7 +532,7 @@ class RoundTripPreservationTest {
 
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
 
-        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 

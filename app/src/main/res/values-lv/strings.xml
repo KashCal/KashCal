@@ -1006,4 +1006,35 @@
     <string name="backup_error_build_failed">Dublēšana neizdevās</string>
     <string name="backup_error_write_failed">Dublēšana neizdevās — neizdevās ierakstīt failā</string>
     <string name="backup_error_read_failed">Neizdevās nolasīt failu</string>
+    <!-- Attendees (B4) -->
+    <string name="label_attendees">Dalībnieki</string>
+    <string name="attendee_you_marker">Jūs</string>
+    <string name="attendee_organizer_pill">Organizators</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="zero">+vēl %d</item>
+        <item quantity="one">+vēl %d</item>
+        <item quantity="other">+vēl %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="zero">%d dalībnieku</item>
+        <item quantity="one">%d dalībnieks</item>
+        <item quantity="other">%d dalībnieki</item>
+    </plurals>
+    <string name="attendee_card_going">Pieņēma</string>
+    <string name="attendee_card_pending">Gaida</string>
+    <string name="attendee_card_declined">Noraidīja</string>
+    <string name="attendee_card_tentative">Varbūt</string>
+    <string name="attendee_card_hosting">Organizē</string>
+    <string name="attendee_action_copy">Kopēt e-pastu</string>
+    <string name="attendee_action_email">Sūtīt e-pastu</string>
+    <string name="attendee_group_icon_description">Cilvēki</string>
+    <string name="attendee_email_copied">E-pasts nokopēts</string>
+    <string name="attendee_no_email_app">Nav instalēta e-pasta lietotne</string>
+    <string name="attendee_show_less">Rādīt mazāk</string>
+    <string name="attendee_show_all">Rādīt visus dalībniekus</string>
+    <string name="attendee_status_accepted">Pieņemts</string>
+    <string name="attendee_status_declined">Noraidīja</string>
+    <string name="attendee_status_tentative">Varbūt</string>
+    <string name="attendee_status_delegated">Deleģēts</string>
+    <string name="attendee_status_pending">Gaida</string>
 </resources>

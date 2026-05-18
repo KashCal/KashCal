@@ -167,6 +167,7 @@ class ConstraintDiagnosticTest {
             database = db,
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
+            attendeesDao = db.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = ICloudQuirks(),
             dataStore = dataStore

@@ -26,7 +26,7 @@ import java.time.ZonedDateTime
  * - RFC 5545 Section 3.8.4.6: URL property
  *
  * Each test verifies compliance through the public API:
- * - Parsing: ICalParser → ICalEventMapper.toEntity()
+ * - Parsing: ICalParser → ICalEventMapper.toEntity().event
  * - Writing: Event → IcsPatcher.generateFresh()
  * - Round-trip: Parse → Entity → Generate → Re-parse → Verify
  */
@@ -376,7 +376,7 @@ END:VCALENDAR"""
 
     private fun parseToEntity(ics: String): Event {
         val events = parser.parseAllEvents(ics).getOrNull()!!
-        return ICalEventMapper.toEntity(events.first(), ics, 1L, null, null)
+        return ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
     }
 
     private fun createEvent(

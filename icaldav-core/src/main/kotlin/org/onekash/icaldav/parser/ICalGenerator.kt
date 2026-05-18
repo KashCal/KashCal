@@ -549,10 +549,17 @@ class ICalGenerator(
 
         params.add("PARTSTAT=${attendee.partStat.toICalString()}")
 
-        if (attendee.rsvp) params.add("RSVP=TRUE")
+        // Emit RSVP=TRUE only when explicitly true. Per RFC 5545 §3.2.17, the
+        // parameter is omitted when not requested; null and false both omit.
+        if (attendee.rsvp == true) params.add("RSVP=TRUE")
 
         attendee.dir?.let { params.add("DIR=\"$it\"") }
-        attendee.member?.let { params.add("MEMBER=\"$it\"") }
+        // RFC 5545 §3.2.11: MEMBER is multi-value. parseMailtoList strips
+        // "mailto:" on parse, so re-prepend on emit to match delegated-to/from
+        // convention (stored bare, emitted with mailto: prefix).
+        if (attendee.member.isNotEmpty()) {
+            params.add("MEMBER=" + attendee.member.joinToString(",") { "\"mailto:$it\"" })
+        }
 
         if (attendee.delegatedTo.isNotEmpty()) {
             params.add("DELEGATED-TO=${attendee.delegatedTo.joinToString(",") { "\"mailto:$it\"" }}")

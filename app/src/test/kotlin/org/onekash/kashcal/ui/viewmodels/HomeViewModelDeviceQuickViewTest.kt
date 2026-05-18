@@ -112,6 +112,7 @@ class HomeViewModelDeviceQuickViewTest {
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
             calendarProviderRepository = fakeCalendarProviderRepository,
+            attendeeBackfill = io.mockk.mockk(relaxed = true),
             ioDispatcher = testDispatcher
         )
     }

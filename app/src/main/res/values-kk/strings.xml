@@ -1025,4 +1025,32 @@
     <string name="label_more_colors">Басқа түстер</string>
     <string name="label_back_to_grid">Артқа</string>
     <string name="settings_suggest_titles">Оқиға атауларын ұсыну</string>
+    <string name="label_attendees">Қатысушылар</string>
+    <string name="attendee_you_marker">Сіз</string>
+    <string name="attendee_organizer_pill">Ұйымдастырушы</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d тағы</item>
+        <item quantity="other">+%d тағы</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d қатысушы</item>
+        <item quantity="other">%d қатысушы</item>
+    </plurals>
+    <string name="attendee_card_going">Барады</string>
+    <string name="attendee_card_pending">Күтілуде</string>
+    <string name="attendee_card_declined">Бас тартты</string>
+    <string name="attendee_card_tentative">Шамамен</string>
+    <string name="attendee_card_hosting">Өткізуші</string>
+    <string name="attendee_action_copy">Электрондық поштаны көшіру</string>
+    <string name="attendee_action_email">Электрондық пошта жіберу</string>
+    <string name="attendee_group_icon_description">Адамдар</string>
+    <string name="attendee_email_copied">Электрондық пошта көшірілді</string>
+    <string name="attendee_no_email_app">Электрондық пошта қолданбасы орнатылмаған</string>
+    <string name="attendee_show_less">Азырақ көрсету</string>
+    <string name="attendee_show_all">Барлық қатысушыларды көрсету</string>
+    <string name="attendee_status_accepted">Қабылданды</string>
+    <string name="attendee_status_declined">Бас тартты</string>
+    <string name="attendee_status_tentative">Шамамен</string>
+    <string name="attendee_status_delegated">Тапсырылды</string>
+    <string name="attendee_status_pending">Күтілуде</string>
 </resources>

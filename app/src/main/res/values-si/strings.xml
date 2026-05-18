@@ -997,4 +997,32 @@
     <string name="label_more_colors">තවත් වර්ණ</string>
     <string name="label_back_to_grid">ආපසු</string>
     <string name="settings_suggest_titles">සිදුවීම් මාතෘකා යෝජනා කරන්න</string>
+    <string name="label_attendees">සහභාගිවන්නන්</string>
+    <string name="attendee_you_marker">ඔබ</string>
+    <string name="attendee_organizer_pill">සංවිධායක</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+තවත් %d</item>
+        <item quantity="other">+තවත් %d</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">සහභාගිවන්නන් %d</item>
+        <item quantity="other">සහභාගිවන්නන් %d</item>
+    </plurals>
+    <string name="attendee_card_going">පැමිණේ</string>
+    <string name="attendee_card_pending">පොරොත්තුවේ</string>
+    <string name="attendee_card_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="attendee_card_tentative">අවිනිශ්චිතයි</string>
+    <string name="attendee_card_hosting">සත්කාරකත්වය</string>
+    <string name="attendee_action_copy">ඊමේල් පිටපත් කරන්න</string>
+    <string name="attendee_action_email">ඊමේල් යවන්න</string>
+    <string name="attendee_group_icon_description">පුද්ගලයින්</string>
+    <string name="attendee_email_copied">ඊමේල් පිටපත් කළා</string>
+    <string name="attendee_no_email_app">ඊමේල් යෙදුමක් ස්ථාපනය කර නැත</string>
+    <string name="attendee_show_less">අඩුවෙන් පෙන්වන්න</string>
+    <string name="attendee_show_all">සියලු සහභාගිවන්නන් පෙන්වන්න</string>
+    <string name="attendee_status_accepted">පිළිගන්නා ලදී</string>
+    <string name="attendee_status_declined">ප්‍රතික්ෂේප කළා</string>
+    <string name="attendee_status_tentative">අවිනිශ්චිතයි</string>
+    <string name="attendee_status_delegated">පවරන ලදී</string>
+    <string name="attendee_status_pending">පොරොත්තුවේ</string>
 </resources>

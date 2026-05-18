@@ -1270,4 +1270,58 @@
     <!-- Action: return from the wheel picker to the main color grid -->
     <string name="label_back_to_grid">Back</string>
 
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <!-- Section header on EventFormSheet for the read-only attendee list -->
+    <string name="label_attendees">Attendees</string>
+    <!-- Label that replaces the current user's display name on their own attendee chip — i.e., the chip reads "You" instead of their email/CN. Capitalize per locale conventions; do NOT include parentheses. -->
+    <string name="attendee_you_marker">You</string>
+    <!-- Pill shown on the organizer's chip; precedes their name -->
+    <string name="attendee_organizer_pill">Organizer</string>
+    <!-- Disclosure button on a collapsed chip row when there are more attendees than visible -->
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d more</item>
+        <item quantity="other">+%d more</item>
+    </plurals>
+    <!-- Lavender count chip rendered when the user is not on the attendee list -->
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d attendee</item>
+        <item quantity="other">%d attendees</item>
+    </plurals>
+    <!-- Compact day-card status — user accepted the invite -->
+    <string name="attendee_card_going">Going</string>
+    <!-- Compact day-card status — user has not responded yet -->
+    <string name="attendee_card_pending">Pending</string>
+    <!-- Compact day-card status — user declined the invite -->
+    <string name="attendee_card_declined">Declined</string>
+    <!-- Compact day-card status — user marked tentative -->
+    <string name="attendee_card_tentative">Tentative</string>
+    <!-- Compact day-card status — user is the organizer (hosting the event) -->
+    <string name="attendee_card_hosting">Hosting</string>
+    <!-- Inline action revealed when user taps a chip -->
+    <string name="attendee_action_copy">Copy email</string>
+    <!-- Inline action revealed when user taps a chip; opens compose mail intent -->
+    <string name="attendee_action_email">Send email</string>
+    <!-- Spoken description for the attendee chip group icon -->
+    <string name="attendee_group_icon_description">People</string>
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <!-- Toast shown after the user taps Copy on an attendee chip -->
+    <string name="attendee_email_copied">Email copied</string>
+    <!-- Toast shown when the user taps Email but no mail app is installed -->
+    <string name="attendee_no_email_app">No email app installed</string>
+    <!-- "Show less" disclosure that collapses an expanded chip row back to 3 chips -->
+    <string name="attendee_show_less">Show less</string>
+    <!-- Talkback action label spoken when the lavender count chip is focused (e.g., "5 attendees, double-tap to show all attendees"). The visible chip text remains the count; this string only names the action verb. Phrase as a verb action, not a noun phrase. -->
+    <string name="attendee_show_all">Show all attendees</string>
+    <!-- Talkback status label for an attendee who accepted the invite -->
+    <string name="attendee_status_accepted">Accepted</string>
+    <!-- Talkback status label for an attendee who declined the invite -->
+    <string name="attendee_status_declined">Declined</string>
+    <!-- Talkback status label for an attendee who is tentatively attending -->
+    <string name="attendee_status_tentative">Tentative</string>
+    <!-- Talkback status label for an attendee who delegated their seat -->
+    <string name="attendee_status_delegated">Delegated</string>
+    <!-- Talkback status label for an attendee who has not yet responded -->
+    <string name="attendee_status_pending">Pending</string>
+
 </resources>

@@ -55,7 +55,7 @@ class RoundTripRawIcalTest {
             calendarId = 1L,
             caldavUrl = "https://caldav.example.com/event.ics",
             etag = "\"abc123\""
-        )
+        ).event
 
         // Verify rawIcal is stored
         assertNotNull("rawIcal should be stored", entity.rawIcal)
@@ -89,7 +89,7 @@ class RoundTripRawIcalTest {
             calendarId = 1L,
             caldavUrl = null,
             etag = null
-        )
+        ).event
 
         // Verify extraProperties captured X-* properties
         assertNotNull("extraProperties should be present", entity.extraProperties)
@@ -817,7 +817,7 @@ class RoundTripRawIcalTest {
             calendarId = 1L,
             caldavUrl = "https://caldav.icloud.com/event.ics",
             etag = "\"v3\""
-        )
+        ).event
 
         // Step 2: Local edit (change title and add location detail)
         val editedEntity = entityFromServer.copy(

@@ -348,7 +348,7 @@ class ICalDateTimeBoundaryTest {
         """.trimIndent()
 
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
 
         // Verify timestamps are in milliseconds
         assertTrue(
@@ -376,7 +376,7 @@ class ICalDateTimeBoundaryTest {
 
         // Parse → Entity → ICS → Parse
         val event1 = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
-        val entity = ICalEventMapper.toEntity(event1, originalIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event1, originalIcs, 1L, null, null).event
         val regeneratedIcs = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcs).getOrNull()!!.first()
 

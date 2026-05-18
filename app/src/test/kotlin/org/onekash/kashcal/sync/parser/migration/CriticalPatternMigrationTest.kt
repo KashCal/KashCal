@@ -108,7 +108,7 @@ class CriticalPatternMigrationTest {
         )
 
         // Entity mapping preserves this
-        val entity = ICalEventMapper.toEntity(event, exceptionIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(event, exceptionIcs, 1L, null, null).event
         assertTrue(
             "Entity importId must contain RECID",
             entity.importId!!.contains("RECID")
@@ -134,7 +134,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val masterIcalEvent = parser.parseAllEvents(masterIcs).getOrNull()!![0]
-        val masterEntity = ICalEventMapper.toEntity(masterIcalEvent, masterIcs, 1L, null, null)
+        val masterEntity = ICalEventMapper.toEntity(masterIcalEvent, masterIcs, 1L, null, null).event
 
         // Create an exception event with master's UID
         val exceptionEntity = masterEntity.copy(
@@ -188,7 +188,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(exceptionIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null).event
 
         // originalEventId is set by PullStrategy after master lookup
         // ICalEventMapper sets it to null, but originalInstanceTime is populated
@@ -244,7 +244,7 @@ class CriticalPatternMigrationTest {
             1L,
             null,  // No caldavUrl for exception
             null
-        )
+        ).event
 
         assertNull(
             "Exception should not have caldavUrl (bundled with master)",
@@ -274,7 +274,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(exceptionIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null).event
 
         // originalInstanceTime should match RECURRENCE-ID
         assertEquals(
@@ -347,7 +347,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(exceptionIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null).event
 
         // In Model A, the occurrence's eventId points directly to exception
         // This simulates how PullStrategy creates occurrences
@@ -386,7 +386,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(exceptionIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, exceptionIcs, 1L, null, null).event
 
         // Entity can be linked to master via originalEventId (set by caller)
         val linkedEntity = entity.copy(originalEventId = 100L)
@@ -431,8 +431,8 @@ class CriticalPatternMigrationTest {
         val nyEvent = parser.parseAllEvents(nyIcs).getOrNull()!![0]
         val utcEvent = parser.parseAllEvents(utcIcs).getOrNull()!![0]
 
-        val nyEntity = ICalEventMapper.toEntity(nyEvent, nyIcs, 1L, null, null)
-        val utcEntity = ICalEventMapper.toEntity(utcEvent, utcIcs, 1L, null, null)
+        val nyEntity = ICalEventMapper.toEntity(nyEvent, nyIcs, 1L, null, null).event
+        val utcEntity = ICalEventMapper.toEntity(utcEvent, utcIcs, 1L, null, null).event
 
         // Timezone should be preserved
         assertEquals("America/New_York", nyEntity.timezone)
@@ -460,7 +460,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(allDayIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, allDayIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, allDayIcs, 1L, null, null).event
 
         // Both should agree on all-day status
         assertTrue("icaldav event should be all-day", icalEvent.isAllDay)
@@ -491,7 +491,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(rruleIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, rruleIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, rruleIcs, 1L, null, null).event
 
         // RRULE string should be preserved
         assertNotNull("RRULE should be mapped", entity.rrule)
@@ -529,7 +529,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
         // Sequence should be preserved
         assertEquals(7, entity.sequence)
@@ -564,7 +564,7 @@ class CriticalPatternMigrationTest {
         """.trimIndent()
 
         val icalEvent = parser.parseAllEvents(cancelledIcs).getOrNull()!![0]
-        val entity = ICalEventMapper.toEntity(icalEvent, cancelledIcs, 1L, null, null)
+        val entity = ICalEventMapper.toEntity(icalEvent, cancelledIcs, 1L, null, null).event
 
         // Should be recognized as exception
         assertTrue("Should be exception", ICalEventMapper.isException(icalEvent))

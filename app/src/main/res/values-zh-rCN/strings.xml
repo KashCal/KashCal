@@ -966,4 +966,30 @@
     <string name="backup_error_build_failed">备份失败</string>
     <string name="backup_error_write_failed">备份失败：无法写入文件</string>
     <string name="backup_error_read_failed">无法读取文件</string>
+    <string name="label_attendees">参与者</string>
+    <string name="attendee_you_marker">我</string>
+    <string name="attendee_organizer_pill">组织者</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d 个</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">%d 位参与者</item>
+    </plurals>
+    <string name="attendee_card_going">参加</string>
+    <string name="attendee_card_pending">待定</string>
+    <string name="attendee_card_declined">已拒绝</string>
+    <string name="attendee_card_tentative">暂定</string>
+    <string name="attendee_card_hosting">主持</string>
+    <string name="attendee_action_copy">复制电子邮件</string>
+    <string name="attendee_action_email">发送电子邮件</string>
+    <string name="attendee_group_icon_description">人员</string>
+    <string name="attendee_email_copied">已复制邮箱</string>
+    <string name="attendee_no_email_app">未安装邮件应用</string>
+    <string name="attendee_show_less">收起</string>
+    <string name="attendee_show_all">显示所有与会者</string>
+    <string name="attendee_status_accepted">已接受</string>
+    <string name="attendee_status_declined">已拒绝</string>
+    <string name="attendee_status_tentative">暂定</string>
+    <string name="attendee_status_delegated">已委派</string>
+    <string name="attendee_status_pending">待定</string>
 </resources>

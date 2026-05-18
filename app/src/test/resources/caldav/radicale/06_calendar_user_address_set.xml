@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!--
+  Radicale 3.7.x calendar-user-address-set PROPFIND response shape.
+  Captured live (auth=none mode), no PII to redact.
+
+  Shape preserved verbatim:
+  - 1 entry: path-relative principal href only
+  - schedule-inbox-URL and schedule-outbox-URL return 404 — Radicale
+    doesn't implement RFC 6638 server-side scheduling
+-->
+<multistatus xmlns="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav"><response><href>/aliceprobe/</href><propstat><prop><C:calendar-user-address-set><href>/aliceprobe/</href></C:calendar-user-address-set></prop><status>HTTP/1.1 200 OK</status></propstat><propstat><prop><C:schedule-inbox-URL /><C:schedule-outbox-URL /></prop><status>HTTP/1.1 404 Not Found</status></propstat></response></multistatus>

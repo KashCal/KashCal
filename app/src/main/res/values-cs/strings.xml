@@ -1060,4 +1060,36 @@
     <string name="label_more_colors">Více barev</string>
     <string name="label_back_to_grid">Zpět</string>
     <string name="settings_suggest_titles">Navrhovat názvy událostí</string>
+    <string name="label_attendees">Účastníci</string>
+    <string name="attendee_you_marker">Vy</string>
+    <string name="attendee_organizer_pill">Organizátor</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d další</item>
+        <item quantity="few">+%d další</item>
+        <item quantity="many">+%d dalších</item>
+        <item quantity="other">+%d dalších</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d účastník</item>
+        <item quantity="few">%d účastníci</item>
+        <item quantity="many">%d účastníka</item>
+        <item quantity="other">%d účastníků</item>
+    </plurals>
+    <string name="attendee_card_going">Přijde</string>
+    <string name="attendee_card_pending">Čeká</string>
+    <string name="attendee_card_declined">Odmítl</string>
+    <string name="attendee_card_tentative">Možná</string>
+    <string name="attendee_card_hosting">Pořadatel</string>
+    <string name="attendee_action_copy">Kopírovat e-mail</string>
+    <string name="attendee_action_email">Poslat e-mail</string>
+    <string name="attendee_group_icon_description">Lidé</string>
+    <string name="attendee_email_copied">E-mail zkopírován</string>
+    <string name="attendee_no_email_app">Není nainstalována žádná e-mailová aplikace</string>
+    <string name="attendee_show_less">Zobrazit méně</string>
+    <string name="attendee_show_all">Zobrazit všechny účastníky</string>
+    <string name="attendee_status_accepted">Přijato</string>
+    <string name="attendee_status_declined">Odmítl</string>
+    <string name="attendee_status_tentative">Možná</string>
+    <string name="attendee_status_delegated">Delegováno</string>
+    <string name="attendee_status_pending">Čeká</string>
 </resources>

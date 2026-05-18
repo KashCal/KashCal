@@ -53,8 +53,14 @@ class UpcomingWidgetMetadataTest {
     }
 
     @Test
-    fun `maxResizeWidth stays 400dp`() {
-        assertContainsAttr("maxResizeWidth", "400dp")
+    fun `maxResizeWidth is 1100dp`() {
+        // Lawnchair (and other launchers with wide cell grids on tablet
+        // landscape) refused to resize the widget past the previous 400dp
+        // cap. The Glance layout uses fillMaxWidth() and defaultWeight()
+        // throughout, so it renders correctly at much wider sizes; the
+        // limit was purely metadata. 1100dp ≈ tablet-landscape 8-cell
+        // grid using the documented (142n - 15) formula. (issue #225)
+        assertContainsAttr("maxResizeWidth", "1100dp")
     }
 
     @Test

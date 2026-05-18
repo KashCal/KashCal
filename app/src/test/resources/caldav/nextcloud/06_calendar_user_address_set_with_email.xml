@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<!--
+  Nextcloud (Sabre/dav) calendar-user-address-set PROPFIND response with
+  admin email configured (via `occ user:setting <user> settings email <addr>`).
+  Anonymized from a real probe. Email replaced with @example.com.
+
+  Shape preserved verbatim:
+  - 2 entries: 1 mailto + 1 path-relative
+  - No preferred attribute
+  - Wire order: mailto first, path-relative second
+-->
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/" xmlns:card="urn:ietf:params:xml:ns:carddav" xmlns:oc="http://owncloud.org/ns" xmlns:nc="http://nextcloud.org/ns"><d:response><d:href>/remote.php/dav/principals/users/admin/</d:href><d:propstat><d:prop><cal:calendar-user-address-set><d:href>mailto:admin@example.com</d:href><d:href>/remote.php/dav/principals/users/admin/</d:href></cal:calendar-user-address-set><cal:schedule-inbox-URL><d:href>/remote.php/dav/calendars/admin/inbox/</d:href></cal:schedule-inbox-URL><cal:schedule-outbox-URL><d:href>/remote.php/dav/calendars/admin/outbox/</d:href></cal:schedule-outbox-URL></d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>

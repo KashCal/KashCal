@@ -373,7 +373,7 @@ class IcsIterationTest {
             .mapNotNull { (_, excs) -> excs.maxByOrNull { it.sequence } }
 
         // Insert master
-        val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null)
+        val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null).event
         val masterId = database.eventsDao().insert(masterEvent)
         val savedMaster = masterEvent.copy(id = masterId)
 
@@ -382,7 +382,7 @@ class IcsIterationTest {
 
         // Insert and link exceptions
         for (exception in uniqueExceptions) {
-            val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null)
+            val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null).event
                 .copy(originalEventId = masterId)
             val exceptionId = database.eventsDao().insert(exceptionEvent)
             val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)

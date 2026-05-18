@@ -966,4 +966,30 @@
     <string name="backup_error_build_failed">สำรองข้อมูลไม่สำเร็จ</string>
     <string name="backup_error_write_failed">สำรองข้อมูลไม่สำเร็จ — เขียนลงไฟล์ไม่ได้</string>
     <string name="backup_error_read_failed">อ่านไฟล์ไม่ได้</string>
+    <string name="label_attendees">ผู้เข้าร่วม</string>
+    <string name="attendee_you_marker">คุณ</string>
+    <string name="attendee_organizer_pill">ผู้จัด</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="other">+%d เพิ่มเติม</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="other">ผู้เข้าร่วม %d คน</item>
+    </plurals>
+    <string name="attendee_card_going">ไป</string>
+    <string name="attendee_card_pending">รอดำเนินการ</string>
+    <string name="attendee_card_declined">ปฏิเสธ</string>
+    <string name="attendee_card_tentative">ไม่แน่ใจ</string>
+    <string name="attendee_card_hosting">เจ้าภาพ</string>
+    <string name="attendee_action_copy">คัดลอกอีเมล</string>
+    <string name="attendee_action_email">ส่งอีเมล</string>
+    <string name="attendee_group_icon_description">ผู้คน</string>
+    <string name="attendee_email_copied">คัดลอกอีเมลแล้ว</string>
+    <string name="attendee_no_email_app">ไม่ได้ติดตั้งแอปอีเมล</string>
+    <string name="attendee_show_less">แสดงน้อยลง</string>
+    <string name="attendee_show_all">แสดงผู้เข้าร่วมทั้งหมด</string>
+    <string name="attendee_status_accepted">ตอบรับ</string>
+    <string name="attendee_status_declined">ปฏิเสธ</string>
+    <string name="attendee_status_tentative">ไม่แน่ใจ</string>
+    <string name="attendee_status_delegated">มอบหมาย</string>
+    <string name="attendee_status_pending">รอดำเนินการ</string>
 </resources>

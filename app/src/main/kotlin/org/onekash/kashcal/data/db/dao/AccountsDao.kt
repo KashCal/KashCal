@@ -177,6 +177,14 @@ interface AccountsDao {
     suspend fun updateCalDavUrls(id: Long, principalUrl: String?, homeSetUrl: String?)
 
     /**
+     * Update the user's calendar-user-address-set (RFC 6638 §2.4.1) for
+     * this account. Targeted UPDATE so concurrent sync writes to other
+     * columns can't lose this update via read-modify-write races.
+     */
+    @Query("UPDATE accounts SET calendar_user_addresses = :addresses WHERE id = :id")
+    suspend fun updateCalendarUserAddresses(id: Long, addresses: List<String>)
+
+    /**
      * Update account enabled state.
      */
     @Query("UPDATE accounts SET is_enabled = :enabled WHERE id = :id")

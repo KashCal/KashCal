@@ -1012,4 +1012,33 @@
     <string name="label_more_colors">மேலும் வண்ணங்கள்</string>
     <string name="label_back_to_grid">பின்</string>
     <string name="settings_suggest_titles">நிகழ்வு தலைப்புகளை பரிந்துரை</string>
+
+    <string name="label_attendees">பங்கேற்பாளர்கள்</string>
+    <string name="attendee_you_marker">நீங்கள்</string>
+    <string name="attendee_organizer_pill">ஏற்பாட்டாளர்</string>
+    <plurals name="attendee_show_n_more">
+        <item quantity="one">+%d மேலும்</item>
+        <item quantity="other">+%d மேலும்</item>
+    </plurals>
+    <plurals name="attendee_count_off_list">
+        <item quantity="one">%d பங்கேற்பாளர்</item>
+        <item quantity="other">%d பங்கேற்பாளர்கள்</item>
+    </plurals>
+    <string name="attendee_card_going">வருகிறேன்</string>
+    <string name="attendee_card_pending">நிலுவையில்</string>
+    <string name="attendee_card_declined">மறுக்கப்பட்டது</string>
+    <string name="attendee_card_tentative">தற்காலிகம்</string>
+    <string name="attendee_card_hosting">நடத்துகிறேன்</string>
+    <string name="attendee_action_copy">மின்னஞ்சலை நகலெடு</string>
+    <string name="attendee_action_email">மின்னஞ்சல் அனுப்பு</string>
+    <string name="attendee_group_icon_description">மக்கள்</string>
+    <string name="attendee_email_copied">மின்னஞ்சல் நகலெடுக்கப்பட்டது</string>
+    <string name="attendee_no_email_app">மின்னஞ்சல் ஆப் நிறுவப்படவில்லை</string>
+    <string name="attendee_show_less">குறைவாகக் காட்டு</string>
+    <string name="attendee_show_all">அனைத்து கலந்துகொள்வோரையும் காட்டு</string>
+    <string name="attendee_status_accepted">ஏற்றுக்கொள்ளப்பட்டது</string>
+    <string name="attendee_status_declined">மறுக்கப்பட்டது</string>
+    <string name="attendee_status_tentative">தற்காலிகம்</string>
+    <string name="attendee_status_delegated">பிரதிநிதித்துவம் வழங்கப்பட்டது</string>
+    <string name="attendee_status_pending">நிலுவையில்</string>
 </resources>

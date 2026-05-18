@@ -369,6 +369,56 @@ class ICloudCredentialIntegrationTest {
         }
     }
 
+    // ==================== A2.0: calendar-user-address-set discovery ====================
+
+    @Test
+    fun `iCloud returns calendar-user-address-set with mailto and path-relative entries`() = runTest {
+        if (credentials == null) {
+            println("SKIPPED: No credentials available")
+            return@runTest
+        }
+
+        try {
+            // Discover principal first to get the URL we PROPFIND against.
+            val principalResult = calDavClient.discoverPrincipal(credentials!!.serverUrl)
+            if (principalResult !is CalDavResult.Success) {
+                println("SKIPPED: Could not discover principal: $principalResult")
+                return@runTest
+            }
+
+            val result = calDavClient.discoverCalendarUserAddresses(principalResult.data)
+
+            when (result) {
+                is CalDavResult.Success -> {
+                    val addresses = result.data
+                    // iCloud accounts always have at least one mailto (the Apple ID
+                    // login) plus principal-relative paths. Multi-alias accounts
+                    // have more. We assert size >= 2 to allow accounts that haven't
+                    // configured aliases.
+                    assertTrue(
+                        "iCloud should return >= 2 address-set entries (got ${addresses.size})",
+                        addresses.size >= 2
+                    )
+                    assertTrue(
+                        "iCloud should return at least one mailto entry",
+                        addresses.any { it.startsWith("mailto:", ignoreCase = true) }
+                    )
+                    assertTrue(
+                        "iCloud should return at least one principal-relative path entry",
+                        addresses.any { it.startsWith("/") && !it.startsWith("//") }
+                    )
+                    // Pattern-15: do NOT print full addresses to test logs.
+                    println("iCloud returned ${addresses.size} CUA entries (values redacted)")
+                }
+                is CalDavResult.Error -> {
+                    println("calendar-user-address-set error (expected in test env): ${result.code} - ${result.message}")
+                }
+            }
+        } catch (e: Exception) {
+            println("Network test skipped: ${e.message}")
+        }
+    }
+
     // ==================== Calendar Move Integration Test ====================
     // Tests the MOVE pattern: DELETE from old calendar + CREATE in new calendar
 

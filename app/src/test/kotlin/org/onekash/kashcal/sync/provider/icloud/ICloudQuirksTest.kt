@@ -133,6 +133,31 @@ class ICloudQuirksTest {
         assertEquals("/user/calendars/", result)
     }
 
+    // calendar-user-address-set extraction tests
+
+    @Test
+    fun `extractCalendarUserAddresses delegates to xmlParser and hoists preferred entry`() {
+        // iCloud fixture: 7 entries with preferred="1" on the user's mailto.
+        // Tests both delegation correctness and the preferred-hoisting behavior.
+        val response = javaClass.classLoader
+            ?.getResourceAsStream("caldav/icloud/06_calendar_user_address_set.xml")
+            ?.bufferedReader()?.readText()
+            ?: throw IllegalStateException("Fixture not found")
+
+        val addresses = quirks.extractCalendarUserAddresses(response)
+
+        assertEquals(7, addresses.size)
+        // Preferred entry must be at position 0 — not the wire-order-first
+        // path-relative entry that iCloud emits before the mailto entries.
+        assertEquals("mailto:alice@example.com", addresses[0])
+    }
+
+    @Test
+    fun `extractCalendarUserAddresses returns empty list for missing property`() {
+        val response = """<multistatus xmlns="DAV:"><response></response></multistatus>"""
+        assertEquals(emptyList<String>(), quirks.extractCalendarUserAddresses(response))
+    }
+
     // Calendar list extraction tests
 
     @Test

@@ -14,12 +14,18 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -46,6 +52,7 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.SyncBannerState
+import org.onekash.kashcal.ui.components.attendees.AttendeeUiModel
 import org.onekash.kashcal.ui.components.generateSnackbarMessage
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
 import org.onekash.kashcal.ui.model.CalendarGroup
@@ -90,6 +97,7 @@ class HomeViewModel @Inject constructor(
     private val syncScheduler: SyncScheduler,
     private val networkMonitor: NetworkMonitor,
     private val calendarProviderRepository: CalendarProviderRepository,
+    private val attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : ViewModel() {
 
@@ -134,6 +142,122 @@ class HomeViewModel @Inject constructor(
     /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
     val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
+
+    // Attendee chip surfaces.
+
+    private val quickViewEventId = MutableStateFlow<Long?>(null)
+    private val formEventId = MutableStateFlow<Long?>(null)
+    private val dayVisibleEventIds = MutableStateFlow<List<Long>>(emptyList())
+
+    /** UI projection of attendees for the active QuickView event. Null when no event is active. */
+    val quickViewAttendees: StateFlow<EventAttendeeUiState?> =
+        quickViewEventId
+            .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /** UI projection of attendees for the EventFormSheet's read-only chip row. */
+    val formAttendees: StateFlow<EventAttendeeUiState?> =
+        formEventId
+            .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * UI projection map for the day-view chip badges. One Flow per visible-
+     * event-set (no per-card subscription); slice by event ID at render time.
+     * Each slice carries the per-event resolved account so [AttendeeUiModel.isYou]
+     * is correct.
+     */
+    val dayAttendees: StateFlow<Map<Long, List<AttendeeUiModel>>> =
+        dayVisibleEventIds
+            .flatMapLatest { ids -> buildDayAttendeesFlow(ids) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    fun setQuickViewEventId(eventId: Long?) {
+        quickViewEventId.value = eventId
+    }
+
+    fun setFormEventId(eventId: Long?) {
+        formEventId.value = eventId
+    }
+
+    fun setVisibleEventIds(ids: List<Long>) {
+        dayVisibleEventIds.value = ids
+    }
+
+    /**
+     * Resolve the active event → calendar → account, run one-shot
+     * `rawIcal` backfill (closes the etag-unchanged-skip gap from
+     * inbound persistence — when the table is empty but `rawIcal` has
+     * ATTENDEE lines, parse + persist), then subscribe to the attendees
+     * Flow with the resolved account so [AttendeeUiModel.fromRoom] can
+     * mark the current user as `isYou`.
+     */
+    private fun buildAttendeeFlow(eventId: Long): Flow<EventAttendeeUiState?> = flow {
+        val event = eventReader.getEventById(eventId)
+        val calendar = event?.let { e ->
+            uiState.value.calendars.firstOrNull { it.id == e.calendarId }
+        }
+        val account = calendar?.accountId?.let { accountRepository.getAccountById(it) }
+
+        try {
+            attendeeBackfill.backfillIfEmpty(eventId)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.w(TAG, "backfillIfEmpty failed for event $eventId: ${e.javaClass.simpleName}")
+        }
+
+        emitAll(
+            eventReader.getAttendeesForEvent(eventId).map { rows ->
+                EventAttendeeUiState(
+                    models = AttendeeUiModel.fromRoom(
+                        attendees = rows,
+                        currentAccount = account,
+                        organizerAddress = event?.organizerEmail
+                    ),
+                    isCurrentUserOnList = AttendeeUiModel.isCurrentUserOnList(
+                        rows, account, event?.organizerEmail
+                    )
+                )
+            }
+        )
+    }
+
+    /**
+     * Bulk projection for the day pager. Fans out per-event account/organizer
+     * resolution once (synchronous on cached `uiState.calendars` + a small
+     * batched `accountsDao` lookup) and then maps every emission of the
+     * attendees Flow through [AttendeeUiModel.fromRoom] so the day-card
+     * badge can correctly show "Going / Pending / Hosting / off-list" per
+     * event without the consumer re-resolving identity.
+     */
+    private fun buildDayAttendeesFlow(eventIds: List<Long>): Flow<Map<Long, List<AttendeeUiModel>>> = flow {
+        if (eventIds.isEmpty()) {
+            emit(emptyMap())
+            return@flow
+        }
+
+        val events = eventReader.getEventsByIds(eventIds)
+        val calendarsById = uiState.value.calendars.associateBy { it.id }
+        val accountIds = events.values.mapNotNull { calendarsById[it.calendarId]?.accountId }.toSet()
+        val accountsById = accountIds
+            .mapNotNull { id -> accountRepository.getAccountById(id)?.let { id to it } }
+            .toMap()
+
+        emitAll(
+            eventReader.getAttendeesForEvents(eventIds).map { rowsByEventId ->
+                rowsByEventId.mapValues { (eventId, rows) ->
+                    val event = events[eventId]
+                    val calendar = event?.let { calendarsById[it.calendarId] }
+                    val account = calendar?.accountId?.let { accountsById[it] }
+                    AttendeeUiModel.fromRoom(
+                        attendees = rows,
+                        currentAccount = account,
+                        organizerAddress = event?.organizerEmail
+                    )
+                }
+            }
+        )
+    }
 
     // Track if startup sync has been triggered
     private var hasTriggeredStartupSync = false
@@ -3208,3 +3332,14 @@ class HomeViewModel @Inject constructor(
         return Triple(year, month, day)
     }
 }
+
+/**
+ * Attendee state passed from [HomeViewModel] to chip surfaces (QuickView,
+ * EventForm). Held in the ViewModel layer because the type ties the VM's
+ * identity-resolution to the UI projection — no other layer should
+ * construct it.
+ */
+data class EventAttendeeUiState(
+    val models: List<AttendeeUiModel>,
+    val isCurrentUserOnList: Boolean
+)
