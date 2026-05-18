@@ -551,7 +551,7 @@ class HomeScreenComposeTest {
 
         // Day pager shows multiple days, each with empty message - verify at least one exists
         // Using fetchSemanticsNodes for CI reliability (may be outside viewport on slow emulators)
-        assert(composeTestRule.onAllNodesWithText("Nothing to see here; go touch grass?")
+        assert(composeTestRule.onAllNodesWithText("No events")
             .fetchSemanticsNodes().isNotEmpty()) {
             "Expected empty day message to exist in semantic tree"
         }
