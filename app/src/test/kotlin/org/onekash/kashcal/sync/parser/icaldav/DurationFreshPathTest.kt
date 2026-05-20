@@ -17,7 +17,7 @@ import org.robolectric.annotation.Config
 /**
  * A0.3 — DURATION fresh-path preservation for recurring events.
  *
- * Rule (Fossify + Etar + AOSP Calendar convention, aligned with RFC 5545 §3.8.5):
+ * Rule (AOSP Calendar convention, aligned with RFC 5545 §3.8.5):
  * - RRULE present: emit DURATION, null DTEND.
  * - RRULE absent: emit DTEND, null DURATION.
  *
@@ -210,7 +210,7 @@ class DurationFreshPathTest {
     @Test
     fun `fresh path emits DTEND even when non-recurring event has Event duration populated`() {
         // rrule=null but duration column happens to be set (rare inbound case).
-        // Per Fossify/Etar convention, stored column does NOT trigger DURATION
+        // Per AOSP Calendar convention, stored column does NOT trigger DURATION
         // without an RRULE — emit DTEND form.
         val event = createEvent(
             rrule = null,

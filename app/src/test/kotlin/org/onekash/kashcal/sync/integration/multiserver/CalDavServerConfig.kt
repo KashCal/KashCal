@@ -19,7 +19,17 @@ data class CalDavServerConfig(
     val davEndpointSuffix: String? = null,
     val quirksFactory: (String) -> CalDavQuirks,
     val usesWellKnownDiscovery: Boolean = false,
-    val supportsCtag: Boolean = true
+    val supportsCtag: Boolean = true,
+    /**
+     * When the server's iSchedule pipeline strips ATTENDEE rows on PUT
+     * because the supplied ORGANIZER mailto doesn't match the authenticated
+     * account. Documented behavior on iCloud / Stalwart / Radicale / Zoho
+     * (see CALDAV_TEST_SERVERS.md scheduling quirk matrix). Tests that need
+     * a synthetic ORGANIZER (different from auth account) must skip on
+     * these servers — there's nothing to assert against once attendees are
+     * gone.
+     */
+    val stripsAttendeesOnSyntheticOrganizer: Boolean = false
 ) {
     override fun toString(): String = name
 
@@ -32,7 +42,8 @@ data class CalDavServerConfig(
             defaultServerUrl = "https://caldav.icloud.com",
             quirksFactory = { ICloudQuirks() },
             usesWellKnownDiscovery = false,
-            supportsCtag = true
+            supportsCtag = true,
+            stripsAttendeesOnSyntheticOrganizer = true
         )
 
         val STALWART = CalDavServerConfig(
@@ -43,7 +54,8 @@ data class CalDavServerConfig(
             defaultServerUrl = "http://localhost:8080",
             quirksFactory = { url -> DefaultQuirks(url) },
             usesWellKnownDiscovery = true,
-            supportsCtag = true
+            supportsCtag = true,
+            stripsAttendeesOnSyntheticOrganizer = true
         )
 
         val BAIKAL = CalDavServerConfig(
@@ -66,7 +78,8 @@ data class CalDavServerConfig(
             defaultServerUrl = "http://localhost:5232",
             quirksFactory = { url -> DefaultQuirks(url) },
             usesWellKnownDiscovery = false,
-            supportsCtag = true
+            supportsCtag = true,
+            stripsAttendeesOnSyntheticOrganizer = true
         )
 
         val NEXTCLOUD = CalDavServerConfig(
@@ -85,10 +98,16 @@ data class CalDavServerConfig(
             serverKey = "ZOHO_SERVER",
             usernameKey = "ZOHO_USERNAME",
             passwordKey = "ZOHO_PASSWORD",
-            defaultServerUrl = null,
+            defaultServerUrl = "https://calendar.zoho.com",
+            // Zoho's CalDAV endpoint is /caldav (no trailing slash — /caldav/
+            // returns 501). Bare root returns HTTP 400 on OPTIONS, which the
+            // reachability probe rejects; /caldav returns 401 (auth required)
+            // which the probe accepts as "server up."
+            davEndpointSuffix = "/caldav",
             quirksFactory = { url -> DefaultQuirks(url) },
             usesWellKnownDiscovery = false,
-            supportsCtag = false
+            supportsCtag = false,
+            stripsAttendeesOnSyntheticOrganizer = true
         )
 
         val SOGO = CalDavServerConfig(

@@ -13,6 +13,7 @@ import org.onekash.icaldav.parser.ICalGenerator
 import org.onekash.icaldav.parser.ICalParser
 import org.onekash.icaldav.util.DurationUtils
 import org.onekash.kashcal.data.db.entity.Event
+import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.exclusiveEndTs
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.formatGeo
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper.iCalColorFor
@@ -38,6 +39,51 @@ object IcsPatcher {
         prodId = "-//KashCal//KashCal 2.0//EN",
         includeAppleExtensions = true
     )
+
+    /**
+     * Patch only the current user's PARTSTAT in the server's ICS body.
+     *
+     * Every original ATTENDEE row (including ORGANIZER, SUMMARY,
+     * DESCRIPTION, RRULE, X-* extensions, SEQUENCE) is preserved
+     * verbatim; only the attendee whose address matches `account` has
+     * its PARTSTAT replaced.
+     *
+     * SEQUENCE is intentionally NOT bumped — RFC 5546 §2.1.4: attendee
+     * PARTSTAT-only PUT must not bump SEQUENCE. Some servers (iCloud)
+     * auto-bump on the wire; we tolerate that on the next pull, but we
+     * never assert a higher SEQUENCE on the client side.
+     *
+     * @return Patched ICS string, or null if:
+     *   - `rawIcal` is null or fails to parse,
+     *   - the account's address does not appear as an ATTENDEE on the event.
+     *   The caller surfaces an explanatory error rather than fabricating a
+     *   new ATTENDEE row that the server would route through iTIP.
+     */
+    fun patchAttendeeReply(
+        rawIcal: String?,
+        account: org.onekash.kashcal.data.db.entity.Account,
+        partstat: String
+    ): String? {
+        if (rawIcal == null) return null
+        val original = parser.parseAllEvents(rawIcal).getOrNull()?.firstOrNull()
+            ?: return null
+
+        // Find the ATTENDEE row that matches this account's identity.
+        // Account.matchesAttendee canonicalizes both sides via AddressNormalizer.
+        val matchedIndex = original.attendees.indexOfFirst { attendee ->
+            account.matchesAttendee(attendee.email)
+        }
+        if (matchedIndex < 0) return null
+
+        val canonicalPartstat = org.onekash.icaldav.model.PartStat.fromString(partstat)
+        val updatedAttendees = original.attendees.toMutableList().also { list ->
+            list[matchedIndex] = list[matchedIndex].copy(partStat = canonicalPartstat)
+        }
+
+        // SEQUENCE preserved verbatim — see kdoc above.
+        val patched = original.copy(attendees = updatedAttendees)
+        return generator.generate(patched, method = null, includeVTimezone = true)
+    }
 
     /**
      * Patch existing ICS data with Event changes.

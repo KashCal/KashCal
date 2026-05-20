@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.History
@@ -26,13 +27,13 @@ import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -53,6 +54,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
+import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
@@ -64,7 +66,6 @@ import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.DebugMenuSheet
 import org.onekash.kashcal.ui.screens.settings.DefaultCalendarSheet
-import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsSheet
 import org.onekash.kashcal.ui.screens.settings.EventDurationSheet
 import org.onekash.kashcal.ui.screens.settings.EventEmojisSheet
 import org.onekash.kashcal.ui.screens.settings.FirstDayOfWeekSheet
@@ -210,6 +211,7 @@ fun AccountSettingsScreen(
     onNavigateToAccounts: () -> Unit = {},
     onNavigateToSubscriptions: () -> Unit = {},
     onNavigateToBirthdaysAnniversaries: () -> Unit = {},
+    onNavigateToDeviceCalendars: () -> Unit = {},
     // Contact event counts (for B&A row subtitle)
     birthdayCount: Int = 0,
     anniversaryCount: Int = 0,
@@ -247,8 +249,8 @@ fun AccountSettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.settings_title)) },
+            CenterAlignedTopAppBar(
+                title = { KashCalTopAppBarTitle() },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
@@ -305,6 +307,7 @@ fun AccountSettingsScreen(
                     onRestoreSettings = onRestoreSettings,
                     onNavigateToSubscriptions = onNavigateToSubscriptions,
                     onNavigateToBirthdaysAnniversaries = onNavigateToBirthdaysAnniversaries,
+                    onNavigateToDeviceCalendars = onNavigateToDeviceCalendars,
                     birthdayCount = birthdayCount,
                     anniversaryCount = anniversaryCount,
                     deviceCalendarsEnabled = deviceCalendarsEnabled,
@@ -441,6 +444,7 @@ private fun FlatSettingsContent(
     onRestoreSettings: () -> Unit,
     onNavigateToSubscriptions: () -> Unit,
     onNavigateToBirthdaysAnniversaries: () -> Unit,
+    onNavigateToDeviceCalendars: () -> Unit,
     birthdayCount: Int,
     anniversaryCount: Int,
     deviceCalendarsEnabled: Boolean,
@@ -488,7 +492,6 @@ private fun FlatSettingsContent(
     var showDebugMenu by remember { mutableStateOf(false) }
     var showAppInfoSheet by remember { mutableStateOf(false) }
     var showAddSubscriptionDialog by remember { mutableStateOf(false) }
-    var showDeviceCalendarsSheet by remember { mutableStateOf(false) }
     var showSyncLookbackSheet by remember { mutableStateOf(false) }
 
     val defaultCalendarSheetState = rememberModalBottomSheetState()
@@ -587,7 +590,7 @@ private fun FlatSettingsContent(
                 icon = Icons.Default.CalendarMonth,
                 label = stringResource(R.string.settings_device_calendars),
                 subtitle = if (deviceCalendarsEnabled) stringResource(R.string.settings_device_calendars_enabled, enabledDeviceCalendarIds.size) else null,
-                onClick = { showDeviceCalendarsSheet = true },
+                onClick = onNavigateToDeviceCalendars,
                 showDivider = false
             )
         }
@@ -627,6 +630,12 @@ private fun FlatSettingsContent(
                 label = stringResource(R.string.settings_week_numbers),
                 subtitle = if (showWeekNumbers) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
                 onClick = { onShowWeekNumbersChange(!showWeekNumbers) }
+            )
+            SettingsRow(
+                icon = Icons.Default.EventBusy,
+                label = stringResource(R.string.settings_show_declined),
+                subtitle = if (showDeclinedEvents) stringResource(R.string.settings_on) else stringResource(R.string.settings_off),
+                onClick = { onToggleShowDeclinedEvents(!showDeclinedEvents) }
             )
             SettingsRow(
                 icon = Icons.Default.CalendarMonth,
@@ -766,26 +775,6 @@ private fun FlatSettingsContent(
     }
 
     // ==================== Bottom Sheets ====================
-
-    // Device Calendars Sheet
-    if (showDeviceCalendarsSheet) {
-        DeviceCalendarsSheet(
-            isEnabled = deviceCalendarsEnabled,
-            hasReadPermission = hasReadCalendarPermission,
-            hasWritePermission = hasWriteCalendarPermission,
-            deviceCalendars = deviceCalendars,
-            enabledCalendarIds = enabledDeviceCalendarIds,
-            showDeclinedEvents = showDeclinedEvents,
-            deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
-            onDismiss = { showDeviceCalendarsSheet = false },
-            onToggle = onToggleDeviceCalendars,
-            onToggleCalendar = onToggleDeviceCalendar,
-            onToggleShowDeclined = onToggleShowDeclinedEvents,
-            onToggleDeviceCalendarReminders = onToggleDeviceCalendarReminders,
-            onRequestWritePermission = onRequestWriteCalendarPermission,
-            onRefresh = onRefreshDeviceCalendars
-        )
-    }
 
     // Default Calendar Sheet (exclude read-only calendars like ICS subscriptions)
     if (showDefaultCalendarSheet) {

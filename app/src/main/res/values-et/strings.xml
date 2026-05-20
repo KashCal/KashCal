@@ -42,6 +42,7 @@
     <string name="action_hide_password">Peida parool</string>
     <string name="action_sign_out">Logi välja</string>
     <string name="action_learn_more">Lisateave</string>
+    <string name="action_open">Ava</string>
     <string name="action_open_apple_id">Ava Apple ID</string>
     <string name="action_open_settings">Ava seaded</string>
     <string name="action_force_sync">Sundige sünkroonima</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">Ekspordi .ics-failina</string>
     <string name="action_confirm_delete">Kinnita kustutamine</string>
     <string name="action_delete_event">Kustuta sündmus</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Nõustu</string>
+    <string name="rsvp_action_tentative">Võib-olla</string>
+    <string name="rsvp_action_decline">Keeldu</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Vastus kehtib kogu seeriale.</string>
+    <string name="rsvp_modified_snackbar">Vastus sündmusele „%1$s“ ebaõnnestus — sündmust muudeti. Palun vasta uuesti.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Ainult see</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Terve päev</string>
     <string name="label_today">Täna</string>
     <string name="label_go_to_date">Mine kuupäevale</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Nädal</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Seaded</string>
@@ -237,10 +251,7 @@
     <string name="cd_close">Sulge</string>
     <string name="cd_search">Otsi</string>
     <string name="cd_create_event">Loo sündmus</string>
-    <string name="cd_settings">Seaded</string>
     <string name="cd_today">Täna</string>
-    <string name="cd_previous_week">Eelmine nädal</string>
-    <string name="cd_next_week">Järgmine nädal</string>
     <string name="cd_delete">Kustuta</string>
     <string name="cd_refresh">Värskenda</string>
     <string name="cd_more_options">Rohkem valikuid</string>
@@ -417,6 +428,7 @@
     <string name="settings_device_calendars">Seadme kalendrid</string>
     <string name="settings_quick_event_add">Kiire sündmuse lisamine</string>
     <string name="settings_week_numbers">Nädalanumbrid</string>
+    <string name="settings_show_declined">Kuva tagasi lükatud sündmused</string>
     <string name="settings_widget_event_limit">Vidina sündmuste limiit</string>
     <string name="settings_sync_lookback">Sünkroonimise tagasivaade</string>
     <string name="settings_auto_detect_emojis">Tuvasta emotikonid automaatselt</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Anna</string>
     <string name="device_calendars_none_found">Seadme kalendreid ei leitud.</string>
     <string name="device_calendars_local">Kohalik</string>
-    <string name="device_calendars_show_declined">Kuva keeldutud sündmused</string>
     <string name="device_calendars_reminders">Meeldetuletused</string>
     <string name="device_calendars_reminders_desc">Saa teavitusi seadme kalendri sündmuste kohta</string>
     <string name="device_calendars_read_only_no_write">Ainult lugemine (kirjutamisõigus puudub)</string>
@@ -668,16 +679,19 @@
 
     <string name="cd_clear">Tühjenda</string>
     <string name="cd_offline">Võrguühenduseta</string>
-    <string name="cd_previous">Eelmine</string>
-    <string name="cd_next">Järgmine</string>
     <string name="cd_open_drawer">Ava menüü</string>
     <string name="cd_close_drawer">Sulge menüü</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Ava menüü</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Sulge menüü</string>
     <string name="cd_calendar_view">Kalendrivaade</string>
     <string name="cd_active_view">Aktiivne vaade</string>
 
     <string name="view_agenda">Päevakord</string>
     <string name="view_month_full">Kuu (täis)</string>
     <string name="view_three_days">3 päeva</string>
+    <string name="view_day">Päev</string>
     <string name="view_year">Aasta</string>
     <string name="view_insights">Statistika</string>
 
@@ -706,8 +720,6 @@
     <string name="sync_summary_removed">%1$d eemaldatud</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Eelmised 3 päeva</string>
-    <string name="cd_next_3_days">Järgmised 3 päeva</string>
     <string name="cd_circular_scrolling">Ringikujuline kerimine lubatud</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +866,9 @@
     <string name="channel_sync_progress_desc">Näitab kalendrite sünkroonimise edenemist</string>
     <string name="channel_sync_status">Sünkroonimise olek</string>
     <string name="channel_sync_status_desc">Teated sünkroonimise lõpetamise ja vigade kohta</string>
+    <string name="channel_event_invitations">Sündmuste kutsed</string>
+    <string name="channel_event_invitations_desc">Teated uute kalendrikutsete saamise kohta</string>
+    <string name="invite_notification_body">Saatja: %1$s · Puuduta, et vastata</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Ei korda</string>
@@ -995,4 +1010,14 @@
     <string name="attendee_status_tentative">Võib-olla</string>
     <string name="attendee_status_delegated">Delegeeritud</string>
     <string name="attendee_status_pending">Ootel</string>
+    <string name="inbox_empty_caught_up">Kõik vaadatud</string>
+    <string name="inbox_organizer_suffix">(korraldaja)</string>
+    <string name="menu_invites">Kutsed</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Kuupäev</string>
+    <string name="menu_more">Menüü „Veel“</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menüü „Veel“, %d kutse ootel</item>
+        <item quantity="other">Menüü „Veel“, %d kutset ootel</item>
+    </plurals>
 </resources>

@@ -44,6 +44,7 @@
     <string name="action_learn_more">Pelajari Lebih Lanjut</string>
     <string name="action_open_apple_id">Buka Apple ID</string>
     <string name="action_open_settings">Buka Pengaturan</string>
+    <string name="action_open">Buka</string>
     <string name="action_force_sync">Sinkronisasi Paksa</string>
     <string name="action_sync_now">Sinkronkan Sekarang</string>
     <string name="action_details">Detail</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">Ekspor sebagai .ics</string>
     <string name="action_confirm_delete">Konfirmasi Hapus</string>
     <string name="action_delete_event">Hapus Acara</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Terima</string>
+    <string name="rsvp_action_tentative">Tentatif</string>
+    <string name="rsvp_action_decline">Tolak</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Balasan ini berlaku untuk seluruh rangkaian.</string>
+    <string name="rsvp_modified_snackbar">RSVP untuk %1$s gagal — acara telah diubah. Mohon tanggapi ulang.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Hanya yang ini</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Sepanjang hari</string>
     <string name="label_today">Hari Ini</string>
     <string name="label_go_to_date">Ke tanggal</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Minggu</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Pengaturan</string>
@@ -257,10 +271,7 @@
     <string name="cd_close">Tutup</string>
     <string name="cd_search">Cari</string>
     <string name="cd_create_event">Buat acara</string>
-    <string name="cd_settings">Pengaturan</string>
     <string name="cd_today">Hari ini</string>
-    <string name="cd_previous_week">Minggu sebelumnya</string>
-    <string name="cd_next_week">Minggu berikutnya</string>
     <string name="cd_delete">Hapus</string>
     <string name="cd_refresh">Muat ulang</string>
     <string name="cd_more_options">Opsi lainnya</string>
@@ -437,6 +448,7 @@
     <string name="settings_device_calendars">Kalender Perangkat</string>
     <string name="settings_quick_event_add">Tambah Acara Cepat</string>
     <string name="settings_week_numbers">Nomor Minggu</string>
+    <string name="settings_show_declined">Tampilkan acara yang ditolak</string>
     <string name="settings_widget_event_limit">Batas Acara Widget</string>
     <string name="settings_sync_lookback">Rentang Sinkronisasi Mundur</string>
     <string name="settings_auto_detect_emojis">Deteksi Emoji Otomatis</string>
@@ -504,7 +516,6 @@
     <string name="device_calendars_grant">Berikan</string>
     <string name="device_calendars_none_found">Tidak ada kalender perangkat ditemukan.</string>
     <string name="device_calendars_local">Lokal</string>
-    <string name="device_calendars_show_declined">Tampilkan acara yang ditolak</string>
     <string name="device_calendars_reminders">Pengingat</string>
     <string name="device_calendars_reminders_desc">Dapatkan notifikasi untuk acara kalender perangkat</string>
     <string name="device_calendars_read_only_no_write">Hanya-baca (tidak ada izin tulis)</string>
@@ -656,16 +667,17 @@
 
     <string name="cd_clear">Hapus</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Sebelumnya</string>
-    <string name="cd_next">Berikutnya</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
+    <string name="cd_open_rail">Buka menu</string>
+    <string name="cd_close_rail">Tutup menu</string>
     <string name="cd_calendar_view">Tampilan kalender</string>
     <string name="cd_active_view">Tampilan aktif</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Bulan (Penuh)</string>
     <string name="view_three_days">3 Hari</string>
+    <string name="view_day">Hari</string>
     <string name="view_year">Tahun</string>
     <string name="view_insights">Wawasan</string>
 
@@ -694,8 +706,6 @@
     <string name="sync_summary_removed">%1$d dihapus</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">3 hari sebelumnya</string>
-    <string name="cd_next_3_days">3 hari berikutnya</string>
     <string name="cd_circular_scrolling">Gulir melingkar diaktifkan</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -875,6 +885,9 @@
     <string name="channel_sync_progress_desc">Menampilkan kemajuan saat menyinkronkan kalender</string>
     <string name="channel_sync_status">Status Sinkronisasi</string>
     <string name="channel_sync_status_desc">Notifikasi tentang penyelesaian sinkronisasi dan kesalahan</string>
+    <string name="channel_event_invitations">Undangan Acara</string>
+    <string name="channel_event_invitations_desc">Notifikasi saat Anda menerima undangan kalender baru</string>
+    <string name="invite_notification_body">Dari %1$s · Ketuk untuk menanggapi</string>
     <string name="rrule_does_not_repeat">Tidak berulang</string>
     <string name="rrule_freq_daily">Harian</string>
     <string name="rrule_freq_weekly">Mingguan</string>
@@ -1008,4 +1021,13 @@
     <string name="attendee_status_tentative">Tentatif</string>
     <string name="attendee_status_delegated">Didelegasikan</string>
     <string name="attendee_status_pending">Menunggu</string>
+    <string name="inbox_empty_caught_up">Semua sudah ditangani</string>
+    <string name="inbox_organizer_suffix">(penyelenggara)</string>
+    <string name="menu_invites">Undangan</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Tanggal</string>
+    <string name="menu_more">Menu lainnya</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">Menu lainnya, %d undangan menunggu</item>
+    </plurals>
 </resources>

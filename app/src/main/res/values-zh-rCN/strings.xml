@@ -55,6 +55,7 @@
     <string name="action_save">保存</string>
     <string name="action_add">添加</string>
     <string name="action_edit">编辑</string>
+    <string name="action_open">打开</string>
     <string name="action_delete">删除</string>
     <string name="action_confirm">确认</string>
     <string name="action_discard">丢弃</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">全天</string>
     <string name="label_today">今天</string>
     <string name="label_go_to_date">跳转到日期</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">周</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">设置</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">关闭</string>
     <string name="cd_search">搜索</string>
     <string name="cd_create_event">创建事件</string>
-    <string name="cd_settings">设置</string>
     <string name="cd_today">今天</string>
-    <string name="cd_previous_week">上一周</string>
-    <string name="cd_next_week">下一周</string>
     <string name="cd_delete">删除</string>
     <string name="cd_refresh">刷新</string>
     <string name="cd_more_options">更多选项</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">设备日历</string>
     <string name="settings_quick_event_add">快速添加事件</string>
     <string name="settings_week_numbers">周数</string>
+    <string name="settings_show_declined">显示已拒绝的事件</string>
     <string name="settings_widget_event_limit">小部件事件上限</string>
     <string name="settings_sync_lookback">同步回溯范围</string>
     <string name="settings_auto_detect_emojis">自动检测表情</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">授权</string>
     <string name="device_calendars_none_found">未找到设备日历。</string>
     <string name="device_calendars_local">本地</string>
-    <string name="device_calendars_show_declined">显示已拒绝的事件</string>
     <string name="device_calendars_reminders">提醒</string>
     <string name="device_calendars_reminders_desc">接收设备日历事件通知</string>
     <string name="device_calendars_read_only_no_write">只读（无写入权限）</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">清除</string>
     <string name="cd_offline">离线</string>
-    <string name="cd_previous">上一个</string>
-    <string name="cd_next">下一个</string>
     <string name="cd_open_drawer">打开抽屉</string>
     <string name="cd_close_drawer">关闭抽屉</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">打开菜单</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">关闭菜单</string>
     <string name="cd_calendar_view">日历视图</string>
     <string name="cd_active_view">当前视图</string>
 
     <string name="view_agenda">日程</string>
     <string name="view_month_full">月（完整）</string>
+    <string name="view_day">日</string>
     <string name="view_three_days">3天</string>
     <string name="view_year">年</string>
     <string name="view_insights">洞察</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d 个删除</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">前3天</string>
-    <string name="cd_next_3_days">后3天</string>
     <string name="cd_circular_scrolling">循环滚动已启用</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">显示日历同步时的进度</string>
     <string name="channel_sync_status">同步状态</string>
     <string name="channel_sync_status_desc">有关同步完成和错误的通知</string>
+    <string name="channel_event_invitations">活动邀请</string>
+    <string name="channel_event_invitations_desc">收到新日历邀请时的通知</string>
+    <string name="invite_notification_body">来自 %1$s · 点按以回复</string>
     <string name="rrule_does_not_repeat">不重复</string>
     <string name="rrule_freq_daily">每天</string>
     <string name="rrule_freq_weekly">每周</string>
@@ -992,4 +997,18 @@
     <string name="attendee_status_tentative">暂定</string>
     <string name="attendee_status_delegated">已委派</string>
     <string name="attendee_status_pending">待定</string>
+    <string name="rsvp_action_accept">接受</string>
+    <string name="rsvp_action_tentative">暂定</string>
+    <string name="rsvp_action_decline">拒绝</string>
+    <string name="rsvp_series_disclosure">您的回复将应用于整个系列。</string>
+    <string name="rsvp_modified_snackbar">「%1$s」的回复失败,活动已被修改,请重新回复。</string>
+    <string name="inbox_empty_caught_up">已全部处理完毕</string>
+    <string name="inbox_organizer_suffix">(组织者)</string>
+    <string name="menu_invites">邀请</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">日期</string>
+    <string name="menu_more">更多菜单</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">更多菜单,%d 个邀请待处理</item>
+    </plurals>
 </resources>

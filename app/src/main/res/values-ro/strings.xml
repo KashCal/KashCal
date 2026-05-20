@@ -54,6 +54,7 @@
     <string name="action_save">Salvează</string>
     <string name="action_add">Adaugă</string>
     <string name="action_edit">Editează</string>
+    <string name="action_open">Deschide</string>
     <string name="action_delete">Șterge</string>
     <string name="action_confirm">Confirmă</string>
     <string name="action_discard">Renunță</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">Exportă ca .ics</string>
     <string name="action_confirm_delete">Confirmă ștergerea</string>
     <string name="action_delete_event">Șterge eveniment</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Acceptă</string>
+    <string name="rsvp_action_tentative">Provizoriu</string>
+    <string name="rsvp_action_decline">Refuză</string>
+    <string name="rsvp_series_disclosure">Răspunsul se aplică întregii serii.</string>
+    <string name="rsvp_modified_snackbar">Răspunsul pentru %1$s a eșuat — evenimentul a fost modificat. Te rugăm să răspunzi din nou.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Doar acesta</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Toată ziua</string>
     <string name="label_today">Azi</string>
     <string name="label_go_to_date">Mergi la data</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Săptămâna</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Setări</string>
@@ -256,10 +267,7 @@
     <string name="cd_close">Închide</string>
     <string name="cd_search">Caută</string>
     <string name="cd_create_event">Creează eveniment</string>
-    <string name="cd_settings">Setări</string>
     <string name="cd_today">Azi</string>
-    <string name="cd_previous_week">Săptămâna anterioară</string>
-    <string name="cd_next_week">Săptămâna viitoare</string>
     <string name="cd_delete">Șterge</string>
     <string name="cd_refresh">Reîmprospătare</string>
     <string name="cd_more_options">Mai multe opțiuni</string>
@@ -439,6 +447,7 @@
     <string name="settings_device_calendars">Calendare dispozitiv</string>
     <string name="settings_quick_event_add">Adăugare rapidă eveniment</string>
     <string name="settings_week_numbers">Numere săptămâni</string>
+    <string name="settings_show_declined">Afișează evenimentele refuzate</string>
     <string name="settings_widget_event_limit">Limită evenimente widget</string>
     <string name="settings_sync_lookback">Perioada de retrospectivă sincronizare</string>
     <string name="settings_auto_detect_emojis">Detectare automată emoji-uri</string>
@@ -506,7 +515,6 @@
     <string name="device_calendars_grant">Acordă</string>
     <string name="device_calendars_none_found">Niciun calendar de dispozitiv găsit.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_show_declined">Afișează evenimentele refuzate</string>
     <string name="device_calendars_reminders">Mementouri</string>
     <string name="device_calendars_reminders_desc">Primește notificări pentru evenimentele calendarului dispozitivului</string>
     <string name="device_calendars_read_only_no_write">Doar citire (fără permisiune de scriere)</string>
@@ -720,15 +728,18 @@
 
     <string name="cd_clear">Șterge</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Anterior</string>
-    <string name="cd_next">Următor</string>
     <string name="cd_open_drawer">Deschide meniul</string>
     <string name="cd_close_drawer">Închide meniul</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Deschide meniul</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Închide meniul</string>
     <string name="cd_calendar_view">Vizualizare calendar</string>
     <string name="cd_active_view">Vizualizare activă</string>
 
     <string name="view_agenda">Agendă</string>
     <string name="view_month_full">Lună (completă)</string>
+    <string name="view_day">Zi</string>
     <string name="view_three_days">3 zile</string>
     <string name="view_year">An</string>
     <string name="view_insights">Statistici</string>
@@ -758,8 +769,6 @@
     <string name="sync_summary_removed">%1$d eliminate</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">3 zile anterioare</string>
-    <string name="cd_next_3_days">Următoarele 3 zile</string>
     <string name="cd_circular_scrolling">Derulare circulară activată</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -948,6 +957,9 @@
     <string name="channel_sync_progress_desc">Afișează progresul în timpul sincronizării calendarelor</string>
     <string name="channel_sync_status">Stare sincronizare</string>
     <string name="channel_sync_status_desc">Notificări despre finalizarea și erorile de sincronizare</string>
+    <string name="channel_event_invitations">Invitații la evenimente</string>
+    <string name="channel_event_invitations_desc">Notificări la primirea unei noi invitații în calendar</string>
+    <string name="invite_notification_body">De la %1$s · Atinge pentru a răspunde</string>
 
     <!-- Recurrence rule strings -->
     <string name="rrule_does_not_repeat">Nu se repetă</string>
@@ -1097,4 +1109,15 @@
     <string name="attendee_status_tentative">Provizoriu</string>
     <string name="attendee_status_delegated">Delegat</string>
     <string name="attendee_status_pending">În așteptare</string>
+    <string name="inbox_empty_caught_up">Totul la zi</string>
+    <string name="inbox_organizer_suffix">(organizator)</string>
+    <string name="menu_invites">Invitații</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dată</string>
+    <string name="menu_more">Meniu suplimentar</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Meniu suplimentar, %d invitație în așteptare</item>
+        <item quantity="few">Meniu suplimentar, %d invitații în așteptare</item>
+        <item quantity="other">Meniu suplimentar, %d de invitații în așteptare</item>
+    </plurals>
 </resources>

@@ -55,6 +55,7 @@
     <string name="action_save">Gem</string>
     <string name="action_add">Tilføj</string>
     <string name="action_edit">Rediger</string>
+    <string name="action_open">Åbn</string>
     <string name="action_delete">Slet</string>
     <string name="action_confirm">Bekræft</string>
     <string name="action_discard">Kassér</string>
@@ -95,6 +96,10 @@
     <string name="label_all_day">Hele dagen</string>
     <string name="label_today">I dag</string>
     <string name="label_go_to_date">Gå til dato</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Uge</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Indstillinger</string>
@@ -258,10 +263,7 @@
     <string name="cd_close">Luk</string>
     <string name="cd_search">Søg</string>
     <string name="cd_create_event">Opret begivenhed</string>
-    <string name="cd_settings">Indstillinger</string>
     <string name="cd_today">I dag</string>
-    <string name="cd_previous_week">Forrige uge</string>
-    <string name="cd_next_week">Næste uge</string>
     <string name="cd_delete">Slet</string>
     <string name="cd_refresh">Opdater</string>
     <string name="cd_more_options">Flere muligheder</string>
@@ -439,6 +441,7 @@
     <string name="settings_device_calendars">Enhedskalendere</string>
     <string name="settings_quick_event_add">Hurtig tilføjelse</string>
     <string name="settings_week_numbers">Ugenumre</string>
+    <string name="settings_show_declined">Vis afslåede begivenheder</string>
     <string name="settings_widget_event_limit">Widget-begivenhedsgrænse</string>
     <string name="settings_sync_lookback">Synk-tilbageblik</string>
     <string name="settings_auto_detect_emojis">Automatisk genkend emojis</string>
@@ -507,7 +510,6 @@
     <string name="device_calendars_grant">Giv adgang</string>
     <string name="device_calendars_none_found">Ingen enhedskalendere fundet.</string>
     <string name="device_calendars_local">Lokal</string>
-    <string name="device_calendars_show_declined">Vis afviste begivenheder</string>
     <string name="device_calendars_reminders">Påmindelser</string>
     <string name="device_calendars_reminders_desc">Få notifikationer for enhedskalenderbegivenheder</string>
     <string name="device_calendars_read_only_no_write">Skrivebeskyttet (ingen skrivetilladelse)</string>
@@ -691,15 +693,18 @@
 
     <string name="cd_clear">Ryd</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Forrige</string>
-    <string name="cd_next">Næste</string>
     <string name="cd_open_drawer">Åbn menu</string>
     <string name="cd_close_drawer">Luk menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Åbn menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Luk menu</string>
     <string name="cd_calendar_view">Kalendervisning</string>
     <string name="cd_active_view">Aktiv visning</string>
 
     <string name="view_agenda">Dagsorden</string>
     <string name="view_month_full">Måned (Fuld)</string>
+    <string name="view_day">Dag</string>
     <string name="view_three_days">3 dage</string>
     <string name="view_year">År</string>
     <string name="view_insights">Indsigt</string>
@@ -729,8 +734,6 @@
     <string name="sync_summary_removed">%1$d fjernet</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Forrige 3 dage</string>
-    <string name="cd_next_3_days">Næste 3 dage</string>
     <string name="cd_circular_scrolling">Cirkulær rulning aktiveret</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -913,6 +916,17 @@
     <string name="channel_sync_progress_desc">Viser fremskridt under synkronisering af kalendere</string>
     <string name="channel_sync_status">Synkroniseringsstatus</string>
     <string name="channel_sync_status_desc">Notifikationer om synkronisering fuldført og fejl</string>
+    <string name="channel_event_invitations">Begivenhedsinvitationer</string>
+    <string name="channel_event_invitations_desc">Notifikationer når du modtager en ny kalenderinvitation</string>
+    <string name="invite_notification_body">Fra %1$s · Tryk for at svare</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Accepter</string>
+    <string name="rsvp_action_tentative">Måske</string>
+    <string name="rsvp_action_decline">Afvis</string>
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Svaret gælder for hele serien.</string>
+    <string name="rsvp_modified_snackbar">Svar på %1$s mislykkedes – begivenheden blev ændret. Svar venligst igen.</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Gentages ikke</string>
@@ -1040,4 +1054,15 @@
     <string name="attendee_status_tentative">Foreløbig</string>
     <string name="attendee_status_delegated">Delegeret</string>
     <string name="attendee_status_pending">Afventer</string>
+    <!-- Invitation Inbox -->
+    <string name="inbox_empty_caught_up">Alt er ajour</string>
+    <string name="inbox_organizer_suffix">(arrangør)</string>
+    <string name="menu_invites">Invitationer</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dato</string>
+    <string name="menu_more">Mere-menu</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Mere-menu, %d invitation afventer</item>
+        <item quantity="other">Mere-menu, %d invitationer afventer</item>
+    </plurals>
 </resources>

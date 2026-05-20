@@ -102,14 +102,13 @@ interface CalendarProviderRepository {
      * initial state. Our `Instances` query filters on `VISIBLE = 1`, and
      * events are never downloaded unless `SYNC_EVENTS = 1`. The result is a
      * blank view even after the user ticks the calendar in KashCal. See
-     * issue #170. Confirmed by the reporter via Etar, which exposes a
-     * dedicated per-calendar "View Events" toggle that flips `VISIBLE` —
-     * doing so resolves the blank view.
+     * issue #170 — independently verified by toggling the per-calendar
+     * visibility flag through CalendarContract directly, which restores
+     * the events.
      *
      * This method:
-     *  1. Writes `SYNC_EVENTS = 1` and `VISIBLE = 1` on the Calendars row —
-     *     the same action Etar's UI triggers, and the same default-flip the
-     *     stock Google Calendar app does on first open.
+     *  1. Writes `SYNC_EVENTS = 1` and `VISIBLE = 1` on the Calendars row,
+     *     normalizing the Xiaomi/MIUI default-off state.
      *  2. Requests a manual sync on the owning account so events populate
      *     within a minute rather than on the next idle cycle. Honors metered
      *     connection preferences (no expedited flag).

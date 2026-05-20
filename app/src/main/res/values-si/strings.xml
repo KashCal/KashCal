@@ -43,6 +43,7 @@
     <string name="action_learn_more">තව දැනගන්න</string>
     <string name="action_open_apple_id">Apple ID විවෘත කරන්න</string>
     <string name="action_open_settings">සැකසීම් විවෘත කරන්න</string>
+    <string name="action_open">විවෘත කරන්න</string>
     <string name="action_force_sync">බලෙන් සමමුහුර්ත</string>
     <string name="action_sync_now">දැන් සමමුහුර්ත කරන්න</string>
     <string name="action_details">විස්තර</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">.ics ලෙස නිර්යාත</string>
     <string name="action_confirm_delete">මකීම තහවුරු කරන්න</string>
     <string name="action_delete_event">සිදුවීම මකන්න</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">පිළිගන්න</string>
+    <string name="rsvp_action_tentative">කල්පනා කරමින්</string>
+    <string name="rsvp_action_decline">ප්‍රතික්ෂේප කරන්න</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">මෙම ප්‍රතිචාරය මුළු මාලාවටම අදාළ වේ.</string>
+    <string name="rsvp_modified_snackbar">%1$s සඳහා RSVP අසාර්ථක විය — සිදුවීම වෙනස් කර ඇත. කරුණාකර නැවත ප්‍රතිචාර දක්වන්න.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">මෙය පමණයි</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">මුළු දිනය</string>
     <string name="label_today">අද</string>
     <string name="label_go_to_date">දිනය වෙත යන්න</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">සතිය</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">සැකසීම්</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">වසන්න</string>
     <string name="cd_search">සොයන්න</string>
     <string name="cd_create_event">සිදුවීම සාදන්න</string>
-    <string name="cd_settings">සැකසීම්</string>
     <string name="cd_today">අද</string>
-    <string name="cd_previous_week">පෙර සතිය</string>
-    <string name="cd_next_week">මීළඟ සතිය</string>
     <string name="cd_delete">මකන්න</string>
     <string name="cd_refresh">නැවුම් කරන්න</string>
     <string name="cd_more_options">තවත් විකල්ප</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>
     <string name="settings_quick_event_add">ඉක්මන් සිදුවීම් එකතුව</string>
     <string name="settings_week_numbers">සතිය අංක</string>
+    <string name="settings_show_declined">ප්‍රතික්ෂේප කළ සිදුවීම් පෙන්වන්න</string>
     <string name="settings_widget_event_limit">විජට් සිදුවීම් සීමාව</string>
     <string name="settings_sync_lookback">සමමුහුර්ත ආපසු බැලීම</string>
     <string name="settings_auto_detect_emojis">ඉමෝජි ස්වයංක්‍රීය හඳුනාගැනීම</string>
@@ -483,7 +495,6 @@
     <string name="device_calendars_grant">ලබා දෙන්න</string>
     <string name="device_calendars_none_found">උපාංග දින දර්ශන හමු නොවීය.</string>
     <string name="device_calendars_local">දේශීය</string>
-    <string name="device_calendars_show_declined">ප්‍රතික්ෂේපිත සිදුවීම් පෙන්වන්න</string>
     <string name="device_calendars_reminders">මතක්කිරීම්</string>
     <string name="device_calendars_reminders_desc">උපාංග දින දර්ශන සිදුවීම් සඳහා දැනුම්දීම් ලබාගන්න</string>
     <string name="device_calendars_read_only_no_write">කියවීමට පමණයි (ලිවීමේ අවසරය නැත)</string>
@@ -660,16 +671,17 @@
 
     <string name="cd_clear">හිස් කරන්න</string>
     <string name="cd_offline">මාර්ගගත නැත</string>
-    <string name="cd_previous">පෙර</string>
-    <string name="cd_next">මීළඟ</string>
     <string name="cd_open_drawer">ලාච්චුව විවෘත කරන්න</string>
     <string name="cd_close_drawer">ලාච්චුව වසන්න</string>
+    <string name="cd_open_rail">මෙනුව විවෘත කරන්න</string>
+    <string name="cd_close_rail">මෙනුව වසන්න</string>
     <string name="cd_calendar_view">දින දර්ශන දසුන</string>
     <string name="cd_active_view">සක්‍රිය දසුන</string>
 
     <string name="view_agenda">කාර්ය සටහන</string>
     <string name="view_month_full">මාසය (සම්පූර්ණ)</string>
     <string name="view_three_days">දින 3</string>
+    <string name="view_day">දිනය</string>
     <string name="view_year">වසර</string>
     <string name="view_insights">තීක්ෂ්ණ බුද්ධිය</string>
 
@@ -695,8 +707,6 @@
     <string name="sync_summary_updated">%1$d යාවත්කාලීන</string>
     <string name="sync_summary_removed">%1$d ඉවත් කළ</string>
 
-    <string name="cd_previous_3_days">පෙර දින 3</string>
-    <string name="cd_next_3_days">මීළඟ දින 3</string>
     <string name="cd_circular_scrolling">රවුම් අනුචලනය සක්‍රියයි</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -886,6 +896,9 @@
     <string name="channel_sync_progress_desc">දිනදර්ශන සමමුහුර්ත කරන විට ප්‍රගතිය පෙන්වයි</string>
     <string name="channel_sync_status">සමමුහුර්ත තත්ත්වය</string>
     <string name="channel_sync_status_desc">සමමුහුර්ත සම්පූර්ණ කිරීම සහ දෝෂ පිළිබඳ දැනුම්දීම්</string>
+    <string name="channel_event_invitations">සිදුවීම් ආරාධනා</string>
+    <string name="channel_event_invitations_desc">ඔබට නව දිනදර්ශන ආරාධනාවක් ලැබුණු විට දැනුම්දීම්</string>
+    <string name="invite_notification_body">%1$s වෙතින් · ප්‍රතිචාර දැක්වීමට තට්ටු කරන්න</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">නැවත නොකරයි</string>
@@ -1025,4 +1038,14 @@
     <string name="attendee_status_tentative">අවිනිශ්චිතයි</string>
     <string name="attendee_status_delegated">පවරන ලදී</string>
     <string name="attendee_status_pending">පොරොත්තුවේ</string>
+    <string name="inbox_empty_caught_up">සියල්ල අවසන්</string>
+    <string name="inbox_organizer_suffix">(සංවිධායක)</string>
+    <string name="menu_invites">ආරාධනා</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">දිනය</string>
+    <string name="menu_more">තවත් මෙනුව</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
+        <item quantity="other">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>
+    </plurals>
 </resources>

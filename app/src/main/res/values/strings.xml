@@ -36,6 +36,10 @@
     <string name="channel_sync_progress_desc">Shows progress while syncing calendars</string>
     <string name="channel_sync_status">Sync Status</string>
     <string name="channel_sync_status_desc">Notifications about sync completion and errors</string>
+    <string name="channel_event_invitations">Event Invitations</string>
+    <string name="channel_event_invitations_desc">Notifications when you receive a new calendar invitation</string>
+    <!-- Body of the invite notification. %1$s is the organizer's email or name. -->
+    <string name="invite_notification_body">From %1$s · Tap to respond</string>
 
     <!-- ==================== App Shortcuts ==================== -->
     <string name="shortcut_new_event">New Event</string>
@@ -88,6 +92,8 @@
     <!-- Button: add a new item -->
     <string name="action_add">Add</string>
     <string name="action_edit">Edit</string>
+    <!-- Button: open an event in read-only view (used when user is an attendee, not the organizer) -->
+    <string name="action_open">Open</string>
     <string name="action_delete">Delete</string>
     <!-- Button: confirm a destructive action -->
     <string name="action_confirm">Confirm</string>
@@ -103,6 +109,20 @@
     <string name="action_export_ics">Export as .ics</string>
     <string name="action_confirm_delete">Confirm Delete</string>
     <string name="action_delete_event">Delete Event</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <!-- Button: accept a meeting invitation -->
+    <string name="rsvp_action_accept">Accept</string>
+    <!-- Button: tentatively accept a meeting invitation -->
+    <string name="rsvp_action_tentative">Tentative</string>
+    <!-- Button: decline a meeting invitation -->
+    <string name="rsvp_action_decline">Decline</string>
+    <!-- Caption shown under the RSVP buttons on a recurring event. Series-level RSVP is the only
+         supported mode, so this disclosure prevents the surprise of "I declined Friday and now every
+         Friday is gone from my calendar." -->
+    <string name="rsvp_series_disclosure">Your reply applies to the whole series.</string>
+    <!-- Snackbar shown when an RSVP write is rejected because the organizer concurrently edited the event. %1$s is the event title. -->
+    <string name="rsvp_modified_snackbar">RSVP for %1$s failed — event was modified. Please re-respond.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <!-- Dialog options when editing/deleting a recurring (repeating) event -->
@@ -153,6 +173,10 @@
     <!-- Navigation label: today's date -->
     <string name="label_today">Today</string>
     <string name="label_go_to_date">Go to date</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Week</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <!-- Settings screen labels. Match Android system Settings terminology where possible. -->
@@ -373,10 +397,7 @@
     <string name="cd_close">Close</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
-    <string name="cd_settings">Settings</string>
     <string name="cd_today">Today</string>
-    <string name="cd_previous_week">Previous week</string>
-    <string name="cd_next_week">Next week</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_refresh">Refresh</string>
     <string name="cd_more_options">More options</string>
@@ -606,6 +627,9 @@
     <!-- Settings row: enables autocomplete dropdown of prior event titles in the event form -->
     <string name="settings_suggest_titles">Suggest event titles</string>
     <string name="settings_week_numbers">Week Numbers</string>
+    <!-- Display preference: when off, calendar events the user has declined are hidden across all views.
+         When on, declined events appear with a strikethrough title and dimmed appearance. -->
+    <string name="settings_show_declined">Show declined events</string>
     <!-- "Widget" = Android home screen widget. Use platform's standard widget term. -->
     <string name="settings_widget_event_limit">Widget Event Limit</string>
     <!-- "Lookback" = how far back in time to sync -->
@@ -707,7 +731,6 @@
     <string name="device_calendars_grant">Grant</string>
     <string name="device_calendars_none_found">No device calendars found.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_show_declined">Show declined events</string>
     <string name="device_calendars_reminders">Reminders</string>
     <string name="device_calendars_reminders_desc">Get notified for device calendar events</string>
     <string name="device_calendars_read_only_no_write">Read only (no write permission)</string>
@@ -916,16 +939,19 @@
     <!-- Content Descriptions (HomeScreen / ViewPicker / YearOverlay) -->
     <string name="cd_clear">Clear</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Previous</string>
-    <string name="cd_next">Next</string>
     <string name="cd_open_drawer">Open drawer</string>
     <string name="cd_close_drawer">Close drawer</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Open menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Close menu</string>
     <string name="cd_calendar_view">Calendar view</string>
     <string name="cd_active_view">Active view</string>
 
     <!-- View Picker Labels -->
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Month (Full)</string>
+    <string name="view_day">Day</string>
     <string name="view_three_days">3 Days</string>
     <string name="view_year">Year</string>
     <string name="view_insights">Insights</string>
@@ -1004,8 +1030,6 @@
     <string name="sync_summary_removed">%1$d removed</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Previous 3 days</string>
-    <string name="cd_next_3_days">Next 3 days</string>
     <string name="cd_circular_scrolling">Circular scrolling enabled</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -1323,5 +1347,22 @@
     <string name="attendee_status_delegated">Delegated</string>
     <!-- Talkback status label for an attendee who has not yet responded -->
     <string name="attendee_status_pending">Pending</string>
+
+    <!-- Invitation Inbox -->
+    <!-- Empty state message when there are no pending invitations -->
+    <string name="inbox_empty_caught_up">All caught up</string>
+    <!-- Suffix added after the organizer's name on an invitation card -->
+    <string name="inbox_organizer_suffix">(organizer)</string>
+    <!-- Menu item label for the invitation inbox -->
+    <string name="menu_invites">Invites</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Date</string>
+    <!-- Content description for the AppBar rail toggle when there are no pending invites -->
+    <string name="menu_more">More menu</string>
+    <!-- Content description for the AppBar rail toggle when invites are pending -->
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">More menu, %d invite pending</item>
+        <item quantity="other">More menu, %d invites pending</item>
+    </plurals>
 
 </resources>

@@ -44,6 +44,7 @@
     <string name="action_learn_more">ပိုမိုလေ့လာ</string>
     <string name="action_open_apple_id">Apple ID ဖွင့်</string>
     <string name="action_open_settings">ဆက်တင်များ ဖွင့်</string>
+    <string name="action_open">ဖွင့်</string>
     <string name="action_force_sync">အတင်း ချိန်ကိုက်</string>
     <string name="action_sync_now">ယခု ချိန်ကိုက်</string>
     <string name="action_details">အသေးစိတ်</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">.ics အဖြစ် ထုတ်ယူ</string>
     <string name="action_confirm_delete">ဖျက်ရန် အတည်ပြု</string>
     <string name="action_delete_event">ပွဲ ဖျက်</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">လက်ခံ</string>
+    <string name="rsvp_action_tentative">မသေချာသေး</string>
+    <string name="rsvp_action_decline">ငြင်းပယ်</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">ဤတုံ့ပြန်ချက်သည် အစီအစဉ်တစ်ခုလုံးအတွက် သက်ဆိုင်သည်။</string>
+    <string name="rsvp_modified_snackbar">%1$s အတွက် RSVP မအောင်မြင်ပါ — ပွဲကို ပြောင်းလဲထားသည်။ ပြန်လည် တုံ့ပြန်ပါ။</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ဒီတစ်ခုတည်းသာ</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">တစ်နေ့တာ</string>
     <string name="label_today">ယနေ့</string>
     <string name="label_go_to_date">ရက်စွဲသို့ သွားရန်</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ရက်သတ္တပတ်</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ဆက်တင်များ</string>
@@ -257,10 +271,7 @@
     <string name="cd_close">ပိတ်</string>
     <string name="cd_search">ရှာဖွေ</string>
     <string name="cd_create_event">ပွဲ ဖန်တီး</string>
-    <string name="cd_settings">ဆက်တင်များ</string>
     <string name="cd_today">ယနေ့</string>
-    <string name="cd_previous_week">ယခင်အပတ်</string>
-    <string name="cd_next_week">နောက်အပတ်</string>
     <string name="cd_delete">ဖျက်</string>
     <string name="cd_refresh">ပြန်လည်စတင်</string>
     <string name="cd_more_options">ရွေးစရာ အပိုများ</string>
@@ -437,6 +448,7 @@
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="settings_quick_event_add">ပွဲ အမြန်ထည့်</string>
     <string name="settings_week_numbers">အပတ် နံပါတ်များ</string>
+    <string name="settings_show_declined">ငြင်းပယ်ထားသော ပွဲများကို ပြပါ</string>
     <string name="settings_widget_event_limit">ဝစ်ဂျက် ပွဲ ကန့်သတ်ချက်</string>
     <string name="settings_sync_lookback">ချိန်ကိုက် ပြန်ကြည့်ရာကာလ</string>
     <string name="settings_auto_detect_emojis">အီမိုဂျီ အလိုအလျောက် ရှာ</string>
@@ -504,7 +516,6 @@
     <string name="device_calendars_grant">ခွင့်ပြု</string>
     <string name="device_calendars_none_found">စက် ပြက္ခဒိန်များ မတွေ့ရှိပါ။</string>
     <string name="device_calendars_local">ဒေသဆိုင်ရာ</string>
-    <string name="device_calendars_show_declined">ငြင်းပယ်ထားသော ပွဲများ ပြ</string>
     <string name="device_calendars_reminders">သတိပေးချက်များ</string>
     <string name="device_calendars_reminders_desc">စက်ပြက္ခဒိန်ပွဲများအတွက် အကြောင်းကြားချက် ရယူ</string>
     <string name="device_calendars_read_only_no_write">ဖတ်ရုံ (ရေးသားခွင့် မရှိ)</string>
@@ -656,16 +667,17 @@
 
     <string name="cd_clear">ရှင်း</string>
     <string name="cd_offline">အော့ဖ်လိုင်း</string>
-    <string name="cd_previous">ယခင်</string>
-    <string name="cd_next">နောက်</string>
     <string name="cd_open_drawer">အံဆွဲ ဖွင့်</string>
     <string name="cd_close_drawer">အံဆွဲ ပိတ်</string>
+    <string name="cd_open_rail">မီနူး ဖွင့်</string>
+    <string name="cd_close_rail">မီနူး ပိတ်</string>
     <string name="cd_calendar_view">ပြက္ခဒိန် အမြင်</string>
     <string name="cd_active_view">လက်ရှိ အမြင်</string>
 
     <string name="view_agenda">အစီအစဉ်</string>
     <string name="view_month_full">လ (အပြည့်)</string>
     <string name="view_three_days">၃ ရက်</string>
+    <string name="view_day">နေ့</string>
     <string name="view_year">နှစ်</string>
     <string name="view_insights">ထိုးထွင်းသိမြင်မှုများ</string>
 
@@ -694,8 +706,6 @@
     <string name="sync_summary_removed">%1$d ဖယ်ရှားပြီး</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">ယခင် ၃ ရက်</string>
-    <string name="cd_next_3_days">နောက် ၃ ရက်</string>
     <string name="cd_circular_scrolling">စက်ဝိုင်း လှိမ့်ခြင်း ဖွင့်ထား</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -875,6 +885,9 @@
     <string name="channel_sync_progress_desc">ပြက္ခဒိန်များကို ချိန်ကိုက်နေစဉ် တိုးတက်မှုကို ပြသသည်</string>
     <string name="channel_sync_status">ချိန်ကိုက်ခြင်းအခြေအနေ</string>
     <string name="channel_sync_status_desc">ချိန်ကိုက်ခြင်းပြီးစီးမှုနှင့် အမှားများအကြောင်း အကြောင်းကြားချက်များ</string>
+    <string name="channel_event_invitations">ပွဲဖိတ်စာများ</string>
+    <string name="channel_event_invitations_desc">ပြက္ခဒိန် ဖိတ်စာအသစ် လက်ခံရရှိသည့်အခါ အကြောင်းကြားချက်များ</string>
+    <string name="invite_notification_body">%1$s ထံမှ · တုံ့ပြန်ရန် တို့ပါ</string>
     <string name="rrule_does_not_repeat">ထပ်မလုပ်ပါ</string>
     <string name="rrule_freq_daily">နေ့စဉ်</string>
     <string name="rrule_freq_weekly">အပတ်စဉ်</string>
@@ -1008,4 +1021,13 @@
     <string name="attendee_status_tentative">မသေချာ</string>
     <string name="attendee_status_delegated">ကိုယ်စားလှယ်အပ်နှင်း</string>
     <string name="attendee_status_pending">စောင့်ဆိုင်းနေသည်</string>
+    <string name="inbox_empty_caught_up">အားလုံး ပြီးပြီ</string>
+    <string name="inbox_organizer_suffix">(စီစဉ်သူ)</string>
+    <string name="menu_invites">ဖိတ်ကြားချက်များ</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">ရက်စွဲ</string>
+    <string name="menu_more">အခြားမီနူး</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>
+    </plurals>
 </resources>

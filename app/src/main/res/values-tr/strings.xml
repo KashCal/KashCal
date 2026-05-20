@@ -54,6 +54,7 @@
     <string name="action_save">Kaydet</string>
     <string name="action_add">Ekle</string>
     <string name="action_edit">Düzenle</string>
+    <string name="action_open">Aç</string>
     <string name="action_delete">Sil</string>
     <string name="action_confirm">Onayla</string>
     <string name="action_discard">At</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics olarak dışa aktar</string>
     <string name="action_confirm_delete">Silmeyi Onayla</string>
     <string name="action_delete_event">Etkinliği Sil</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Kabul Et</string>
+    <string name="rsvp_action_tentative">Belki</string>
+    <string name="rsvp_action_decline">Reddet</string>
+    <string name="rsvp_series_disclosure">Yanıt, tüm seriye uygulanır.</string>
+    <string name="rsvp_modified_snackbar">%1$s için yanıt başarısız oldu — etkinlik değiştirildi. Lütfen yeniden yanıtlayın.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Sadece bunu</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Tüm gün</string>
     <string name="label_today">Bugün</string>
     <string name="label_go_to_date">Tarihe git</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Hafta</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ayarlar</string>
@@ -256,10 +267,7 @@
     <string name="cd_close">Kapat</string>
     <string name="cd_search">Ara</string>
     <string name="cd_create_event">Etkinlik oluştur</string>
-    <string name="cd_settings">Ayarlar</string>
     <string name="cd_today">Bugün</string>
-    <string name="cd_previous_week">Önceki hafta</string>
-    <string name="cd_next_week">Sonraki hafta</string>
     <string name="cd_delete">Sil</string>
     <string name="cd_refresh">Yenile</string>
     <string name="cd_more_options">Diğer seçenekler</string>
@@ -439,6 +447,7 @@
     <string name="settings_device_calendars">Cihaz Takvimleri</string>
     <string name="settings_quick_event_add">Hızlı Etkinlik Ekleme</string>
     <string name="settings_week_numbers">Hafta Numaraları</string>
+    <string name="settings_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="settings_widget_event_limit">Widget Etkinlik Sınırı</string>
     <string name="settings_sync_lookback">Eşitleme Geçmişi Süresi</string>
     <string name="settings_auto_detect_emojis">Emojileri Otomatik Algıla</string>
@@ -506,7 +515,6 @@
     <string name="device_calendars_grant">İzin Ver</string>
     <string name="device_calendars_none_found">Cihaz takvimi bulunamadı.</string>
     <string name="device_calendars_local">Yerel</string>
-    <string name="device_calendars_show_declined">Reddedilen etkinlikleri göster</string>
     <string name="device_calendars_reminders">Hatırlatıcılar</string>
     <string name="device_calendars_reminders_desc">Cihaz takvimi etkinlikleri için bildirim al</string>
     <string name="device_calendars_read_only_no_write">Salt okunur (yazma izni yok)</string>
@@ -688,15 +696,18 @@
 
     <string name="cd_clear">Temizle</string>
     <string name="cd_offline">Çevrimdışı</string>
-    <string name="cd_previous">Önceki</string>
-    <string name="cd_next">Sonraki</string>
     <string name="cd_open_drawer">Çekmeceyi aç</string>
     <string name="cd_close_drawer">Çekmeceyi kapat</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Menüyü aç</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Menüyü kapat</string>
     <string name="cd_calendar_view">Takvim görünümü</string>
     <string name="cd_active_view">Aktif görünüm</string>
 
     <string name="view_agenda">Gündem</string>
     <string name="view_month_full">Ay (Tam)</string>
+    <string name="view_day">Gün</string>
     <string name="view_three_days">3 Gün</string>
     <string name="view_year">Yıl</string>
     <string name="view_insights">İstatistikler</string>
@@ -726,8 +737,6 @@
     <string name="sync_summary_removed">%1$d kaldırıldı</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Önceki 3 gün</string>
-    <string name="cd_next_3_days">Sonraki 3 gün</string>
     <string name="cd_circular_scrolling">Döngüsel kaydırma etkin</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +919,9 @@
     <string name="channel_sync_progress_desc">Takvimler eşitlenirken ilerlemeyi gösterir</string>
     <string name="channel_sync_status">Eşitleme Durumu</string>
     <string name="channel_sync_status_desc">Eşitleme tamamlanması ve hatalar hakkında bildirimler</string>
+    <string name="channel_event_invitations">Etkinlik Davetleri</string>
+    <string name="channel_event_invitations_desc">Yeni bir takvim daveti aldığınızda bildirimler</string>
+    <string name="invite_notification_body">Gönderen: %1$s · Yanıtlamak için dokunun</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Tekrarlanmaz</string>
@@ -1056,4 +1068,14 @@
     <string name="attendee_status_tentative">Belirsiz</string>
     <string name="attendee_status_delegated">Devredildi</string>
     <string name="attendee_status_pending">Beklemede</string>
+    <string name="inbox_empty_caught_up">Hepsi tamam</string>
+    <string name="inbox_organizer_suffix">(düzenleyen)</string>
+    <string name="menu_invites">Davetler</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Tarih</string>
+    <string name="menu_more">Diğer menüsü</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Diğer menüsü, %d davet bekliyor</item>
+        <item quantity="other">Diğer menüsü, %d davet bekliyor</item>
+    </plurals>
 </resources>

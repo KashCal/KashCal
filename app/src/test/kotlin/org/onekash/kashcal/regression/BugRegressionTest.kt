@@ -377,7 +377,7 @@ class BugRegressionTest {
             created.copy(title = "Exception")
         )
 
-        // Exception MUST have same UID (RFC 5545 Pattern #8)
+        // Exception MUST have same UID (RFC 5545)
         assertEquals(
             "Exception UID must match master UID",
             masterUid,

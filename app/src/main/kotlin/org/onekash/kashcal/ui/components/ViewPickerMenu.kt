@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CalendarViewMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
@@ -40,6 +41,7 @@ internal val viewOptions = listOf(
     ViewOption(ViewMode.MONTH, Icons.Default.CalendarMonth),
     ViewOption(ViewMode.AGENDA, Icons.Default.ViewAgenda),
     ViewOption(ViewMode.MONTH_FULL, Icons.Default.GridView),
+    ViewOption(ViewMode.DAY, Icons.Default.CalendarToday),
     ViewOption(ViewMode.THREE_DAYS, Icons.Default.ViewWeek),
     ViewOption(ViewMode.WEEK, Icons.Default.DateRange),
     ViewOption(ViewMode.YEAR, Icons.Default.CalendarViewMonth)
@@ -53,6 +55,7 @@ internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
     ViewMode.MONTH -> stringResource(R.string.view_month)
     ViewMode.AGENDA -> stringResource(R.string.view_agenda)
     ViewMode.MONTH_FULL -> stringResource(R.string.view_month_full)
+    ViewMode.DAY -> stringResource(R.string.view_day)
     ViewMode.THREE_DAYS -> stringResource(R.string.view_three_days)
     ViewMode.WEEK -> stringResource(R.string.view_week)
     ViewMode.YEAR -> stringResource(R.string.view_year)

@@ -55,6 +55,7 @@
     <string name="action_save">저장</string>
     <string name="action_add">추가</string>
     <string name="action_edit">편집</string>
+    <string name="action_open">열기</string>
     <string name="action_delete">삭제</string>
     <string name="action_confirm">확인</string>
     <string name="action_discard">버리기</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">종일</string>
     <string name="label_today">오늘</string>
     <string name="label_go_to_date">날짜로 이동</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">주</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">설정</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">닫기</string>
     <string name="cd_search">검색</string>
     <string name="cd_create_event">일정 만들기</string>
-    <string name="cd_settings">설정</string>
     <string name="cd_today">오늘</string>
-    <string name="cd_previous_week">이전 주</string>
-    <string name="cd_next_week">다음 주</string>
     <string name="cd_delete">삭제</string>
     <string name="cd_refresh">새로고침</string>
     <string name="cd_more_options">더 보기</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">기기 캘린더</string>
     <string name="settings_quick_event_add">빠른 일정 추가</string>
     <string name="settings_week_numbers">주 번호</string>
+    <string name="settings_show_declined">거절한 이벤트 표시</string>
     <string name="settings_widget_event_limit">위젯 일정 제한</string>
     <string name="settings_sync_lookback">동기화 조회 기간</string>
     <string name="settings_auto_detect_emojis">이모지 자동 감지</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">허용</string>
     <string name="device_calendars_none_found">기기 캘린더를 찾을 수 없어요.</string>
     <string name="device_calendars_local">로컬</string>
-    <string name="device_calendars_show_declined">거절한 일정 표시</string>
     <string name="device_calendars_reminders">알림</string>
     <string name="device_calendars_reminders_desc">기기 캘린더 일정에 대한 알림 받기</string>
     <string name="device_calendars_read_only_no_write">읽기 전용 (쓰기 권한 없음)</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">지우기</string>
     <string name="cd_offline">오프라인</string>
-    <string name="cd_previous">이전</string>
-    <string name="cd_next">다음</string>
     <string name="cd_open_drawer">서랍 열기</string>
     <string name="cd_close_drawer">서랍 닫기</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">메뉴 열기</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">메뉴 닫기</string>
     <string name="cd_calendar_view">캘린더 보기</string>
     <string name="cd_active_view">활성 보기</string>
 
     <string name="view_agenda">일정 목록</string>
     <string name="view_month_full">월 (전체)</string>
+    <string name="view_day">일</string>
     <string name="view_three_days">3일</string>
     <string name="view_year">연</string>
     <string name="view_insights">분석</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d개 삭제</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">이전 3일</string>
-    <string name="cd_next_3_days">다음 3일</string>
     <string name="cd_circular_scrolling">순환 스크롤 활성화됨</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">캘린더 동기화 중 진행률 표시</string>
     <string name="channel_sync_status">동기화 상태</string>
     <string name="channel_sync_status_desc">동기화 완료 및 오류 알림</string>
+    <string name="channel_event_invitations">일정 초대</string>
+    <string name="channel_event_invitations_desc">새 캘린더 초대를 받았을 때의 알림</string>
+    <string name="invite_notification_body">보낸 사람: %1$s · 탭하여 응답하세요</string>
     <string name="rrule_does_not_repeat">반복 안 함</string>
     <string name="rrule_freq_daily">매일</string>
     <string name="rrule_freq_weekly">매주</string>
@@ -992,4 +997,18 @@
     <string name="attendee_status_tentative">미정</string>
     <string name="attendee_status_delegated">위임</string>
     <string name="attendee_status_pending">대기 중</string>
+    <string name="rsvp_action_accept">수락</string>
+    <string name="rsvp_action_tentative">미정</string>
+    <string name="rsvp_action_decline">거절</string>
+    <string name="rsvp_series_disclosure">응답이 반복 일정 전체에 적용돼요.</string>
+    <string name="rsvp_modified_snackbar">%1$s에 대한 응답이 실패했어요. 일정이 변경되었으니 다시 응답해 주세요.</string>
+    <string name="inbox_empty_caught_up">모두 확인했어요</string>
+    <string name="inbox_organizer_suffix">(주최자)</string>
+    <string name="menu_invites">초대</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">날짜</string>
+    <string name="menu_more">더보기 메뉴</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">더보기 메뉴, 대기 중인 초대 %d건</item>
+    </plurals>
 </resources>

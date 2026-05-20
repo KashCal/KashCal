@@ -156,22 +156,21 @@ class QuickAddViewModel @Inject constructor(
         val result = _parseResult.value
         val zone = ZoneId.systemDefault()
 
-        if (result.title.isBlank() && result.startTime == null && result.location == null) {
-            return CalendarIntentData()
-        }
-
-        val startTimeMillis = if (result.startTime != null) {
-            result.startDate.atTime(result.startTime)
-                .atZone(zone).toInstant().toEpochMilli()
-        } else if (result.isAllDay) {
-            result.startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        } else {
-            null
+        val startTimeMillis = when {
+            result.startTime != null ->
+                result.startDate.atTime(result.startTime).atZone(zone).toInstant().toEpochMilli()
+            result.isAllDay ->
+                result.startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+            else -> {
+                val nextHour = (LocalTime.now().hour + 1) % 24
+                result.startDate.atTime(LocalTime.of(nextHour, 0))
+                    .atZone(zone).toInstant().toEpochMilli()
+            }
         }
 
         val endTimeMillis = when {
             result.isAllDay -> utcEndOfDayFor(result.endDate ?: result.startDate)
-            startTimeMillis != null && result.startTime != null ->
+            result.startTime != null ->
                 resolveTimedEndMillis(result, startTimeMillis, result.startTime, zone)
             else -> null
         }

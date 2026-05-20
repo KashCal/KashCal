@@ -41,6 +41,7 @@
     <string name="action_hide_password">Slėpti slaptažodį</string>
     <string name="action_sign_out">Atsijungti</string>
     <string name="action_learn_more">Sužinoti daugiau</string>
+    <string name="action_open">Atidaryti</string>
     <string name="action_open_apple_id">Atidaryti Apple ID</string>
     <string name="action_open_settings">Atidaryti nustatymus</string>
     <string name="action_force_sync">Priverstinis sinchronizavimas</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Eksportuoti kaip .ics</string>
     <string name="action_confirm_delete">Patvirtinti trynimą</string>
     <string name="action_delete_event">Ištrinti įvykį</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Priimti</string>
+    <string name="rsvp_action_tentative">Galbūt</string>
+    <string name="rsvp_action_decline">Atmesti</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Atsakymas taikomas visai serijai.</string>
+    <string name="rsvp_modified_snackbar">Nepavyko atsakyti į „%1$s“ — įvykis buvo pakeistas. Atsakykite iš naujo.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Tik šį</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Visa diena</string>
     <string name="label_today">Šiandien</string>
     <string name="label_go_to_date">Eiti į datą</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Savaitė</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Nustatymai</string>
@@ -236,10 +250,7 @@
     <string name="cd_close">Uždaryti</string>
     <string name="cd_search">Paieška</string>
     <string name="cd_create_event">Sukurti įvykį</string>
-    <string name="cd_settings">Nustatymai</string>
     <string name="cd_today">Šiandien</string>
-    <string name="cd_previous_week">Ankstesnė savaitė</string>
-    <string name="cd_next_week">Kita savaitė</string>
     <string name="cd_delete">Ištrinti</string>
     <string name="cd_refresh">Atnaujinti</string>
     <string name="cd_more_options">Daugiau parinkčių</string>
@@ -398,6 +409,7 @@
     <string name="settings_device_calendars">Įrenginio kalendoriai</string>
     <string name="settings_quick_event_add">Greitas pridėjimas</string>
     <string name="settings_week_numbers">Savaitės numeriai</string>
+    <string name="settings_show_declined">Rodyti atmestus įvykius</string>
     <string name="settings_widget_event_limit">Valdiklio įvykių limitas</string>
     <string name="settings_sync_lookback">Sinchronizavimo gylis</string>
     <string name="settings_auto_detect_emojis">Automatinis jaustukų aptikimas</string>
@@ -464,7 +476,6 @@
     <string name="device_calendars_grant">Suteikti</string>
     <string name="device_calendars_none_found">Įrenginio kalendorių nerasta.</string>
     <string name="device_calendars_local">Vietinis</string>
-    <string name="device_calendars_show_declined">Rodyti atmestus įvykius</string>
     <string name="device_calendars_reminders">Priminimai</string>
     <string name="device_calendars_reminders_desc">Gauti pranešimus apie įrenginio kalendoriaus įvykius</string>
     <string name="device_calendars_read_only_no_write">Tik skaitymas (nėra rašymo leidimo)</string>
@@ -702,16 +713,19 @@
 
     <string name="cd_clear">Išvalyti</string>
     <string name="cd_offline">Nėra ryšio</string>
-    <string name="cd_previous">Ankstesnis</string>
-    <string name="cd_next">Kitas</string>
     <string name="cd_open_drawer">Atidaryti meniu</string>
     <string name="cd_close_drawer">Uždaryti meniu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Atidaryti meniu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Uždaryti meniu</string>
     <string name="cd_calendar_view">Kalendoriaus vaizdas</string>
     <string name="cd_active_view">Aktyvus vaizdas</string>
 
     <string name="view_agenda">Darbotvarkė</string>
     <string name="view_month_full">Mėnuo (pilnas)</string>
     <string name="view_three_days">3 dienos</string>
+    <string name="view_day">Diena</string>
     <string name="view_year">Metai</string>
     <string name="view_insights">Statistika</string>
 
@@ -736,8 +750,6 @@
     <string name="sync_summary_updated">%1$d atnaujinta</string>
     <string name="sync_summary_removed">%1$d pašalinta</string>
 
-    <string name="cd_previous_3_days">Ankstesnės 3 dienos</string>
-    <string name="cd_next_3_days">Kitos 3 dienos</string>
     <string name="cd_circular_scrolling">Ciklinis slinkimas įjungtas</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -898,6 +910,9 @@
     <string name="channel_sync_progress_desc">Rodo eigą sinchronizuojant kalendorius</string>
     <string name="channel_sync_status">Sinchronizavimo būsena</string>
     <string name="channel_sync_status_desc">Pranešimai apie sinchronizavimo užbaigimą ir klaidas</string>
+    <string name="channel_event_invitations">Įvykių kvietimai</string>
+    <string name="channel_event_invitations_desc">Pranešimai, kai gaunate naują kalendoriaus kvietimą</string>
+    <string name="invite_notification_body">Nuo %1$s · Bakstelėkite, kad atsakytumėte</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Nesikartoja</string>
@@ -1047,4 +1062,16 @@
     <string name="attendee_status_tentative">Galbūt</string>
     <string name="attendee_status_delegated">Perduota</string>
     <string name="attendee_status_pending">Laukiama</string>
+    <string name="inbox_empty_caught_up">Viskas peržiūrėta</string>
+    <string name="inbox_organizer_suffix">(organizatorius)</string>
+    <string name="menu_invites">Kvietimai</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Data</string>
+    <string name="menu_more">Meniu „Daugiau“</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Meniu „Daugiau“, laukia %d kvietimas</item>
+        <item quantity="few">Meniu „Daugiau“, laukia %d kvietimai</item>
+        <item quantity="many">Meniu „Daugiau“, laukia %d kvietimo</item>
+        <item quantity="other">Meniu „Daugiau“, laukia %d kvietimų</item>
+    </plurals>
 </resources>

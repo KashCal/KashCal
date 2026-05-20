@@ -152,5 +152,19 @@ data class Attendee(
      * sort first.
      */
     @ColumnInfo(name = "sort_order", defaultValue = "0")
-    val sortOrder: Int = 0
+    val sortOrder: Int = 0,
+
+    /**
+     * Epoch millis when the per-invite system notification fired for this
+     * attendee row. NULL = not yet notified. Internal notification-dedup
+     * state, NOT an RFC wire-protocol field.
+     *
+     * The replace-on-pull semantics in `AttendeesDao.replaceForEvent`
+     * preserve this field across syncs when the prior row was non-NEEDS-
+     * ACTION (i.e., the user already responded), so a server pull that
+     * temporarily returns NEEDS-ACTION before its REPLY queue fires won't
+     * re-fire a duplicate notification.
+     */
+    @ColumnInfo(name = "notified_at")
+    val notifiedAt: Long? = null
 )

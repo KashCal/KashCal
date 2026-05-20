@@ -54,6 +54,7 @@
     <string name="action_save">Αποθήκευση</string>
     <string name="action_add">Προσθήκη</string>
     <string name="action_edit">Επεξεργασία</string>
+    <string name="action_open">Άνοιγμα</string>
     <string name="action_delete">Διαγραφή</string>
     <string name="action_confirm">Επιβεβαίωση</string>
     <string name="action_discard">Απόρριψη</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">Εξαγωγή ως .ics</string>
     <string name="action_confirm_delete">Επιβεβαίωση διαγραφής</string>
     <string name="action_delete_event">Διαγραφή συμβάντος</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Αποδοχή</string>
+    <string name="rsvp_action_tentative">Πιθανώς</string>
+    <string name="rsvp_action_decline">Απόρριψη</string>
+    <string name="rsvp_series_disclosure">Η απάντηση ισχύει για ολόκληρη τη σειρά.</string>
+    <string name="rsvp_modified_snackbar">Η απάντηση για %1$s απέτυχε — το συμβάν τροποποιήθηκε. Παρακαλώ απαντήστε ξανά.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Μόνο αυτό</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Ολοήμερο</string>
     <string name="label_today">Σήμερα</string>
     <string name="label_go_to_date">Μετάβαση σε ημερομηνία</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Εβδομάδα</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ρυθμίσεις</string>
@@ -256,10 +267,7 @@
     <string name="cd_close">Κλείσιμο</string>
     <string name="cd_search">Αναζήτηση</string>
     <string name="cd_create_event">Δημιουργία συμβάντος</string>
-    <string name="cd_settings">Ρυθμίσεις</string>
     <string name="cd_today">Σήμερα</string>
-    <string name="cd_previous_week">Προηγούμενη εβδομάδα</string>
-    <string name="cd_next_week">Επόμενη εβδομάδα</string>
     <string name="cd_delete">Διαγραφή</string>
     <string name="cd_refresh">Ανανέωση</string>
     <string name="cd_more_options">Περισσότερες επιλογές</string>
@@ -439,6 +447,7 @@
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
     <string name="settings_quick_event_add">Γρήγορη προσθήκη συμβάντος</string>
     <string name="settings_week_numbers">Αριθμοί εβδομάδων</string>
+    <string name="settings_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
     <string name="settings_widget_event_limit">Όριο συμβάντων widget</string>
     <string name="settings_sync_lookback">Αναδρομικός συγχρονισμός</string>
     <string name="settings_auto_detect_emojis">Αυτόματη ανίχνευση emoji</string>
@@ -506,7 +515,6 @@
     <string name="device_calendars_grant">Παραχώρηση</string>
     <string name="device_calendars_none_found">Δεν βρέθηκαν ημερολόγια συσκευής.</string>
     <string name="device_calendars_local">Τοπικό</string>
-    <string name="device_calendars_show_declined">Εμφάνιση απορριφθέντων συμβάντων</string>
     <string name="device_calendars_reminders">Υπενθυμίσεις</string>
     <string name="device_calendars_reminders_desc">Λήψη ειδοποιήσεων για συμβάντα ημερολογίου συσκευής</string>
     <string name="device_calendars_read_only_no_write">Μόνο ανάγνωση (χωρίς άδεια εγγραφής)</string>
@@ -688,15 +696,18 @@
 
     <string name="cd_clear">Εκκαθάριση</string>
     <string name="cd_offline">Εκτός σύνδεσης</string>
-    <string name="cd_previous">Προηγούμενο</string>
-    <string name="cd_next">Επόμενο</string>
     <string name="cd_open_drawer">Άνοιγμα συρταριού</string>
     <string name="cd_close_drawer">Κλείσιμο συρταριού</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Άνοιγμα μενού</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Κλείσιμο μενού</string>
     <string name="cd_calendar_view">Προβολή ημερολογίου</string>
     <string name="cd_active_view">Ενεργή προβολή</string>
 
     <string name="view_agenda">Ατζέντα</string>
     <string name="view_month_full">Μήνας (Πλήρης)</string>
+    <string name="view_day">Ημέρα</string>
     <string name="view_three_days">3 Ημέρες</string>
     <string name="view_year">Έτος</string>
     <string name="view_insights">Στατιστικά</string>
@@ -726,8 +737,6 @@
     <string name="sync_summary_removed">%1$d αφαιρέθηκαν</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Προηγούμενες 3 ημέρες</string>
-    <string name="cd_next_3_days">Επόμενες 3 ημέρες</string>
     <string name="cd_circular_scrolling">Κυκλική κύλιση ενεργοποιημένη</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +919,9 @@
     <string name="channel_sync_progress_desc">Εμφανίζει την πρόοδο κατά τον συγχρονισμό ημερολογίων</string>
     <string name="channel_sync_status">Κατάσταση Συγχρονισμού</string>
     <string name="channel_sync_status_desc">Ειδοποιήσεις για την ολοκλήρωση και τα σφάλματα συγχρονισμού</string>
+    <string name="channel_event_invitations">Προσκλήσεις Συμβάντων</string>
+    <string name="channel_event_invitations_desc">Ειδοποιήσεις όταν λαμβάνετε νέα πρόσκληση ημερολογίου</string>
+    <string name="invite_notification_body">Από %1$s · Πατήστε για απάντηση</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Δεν επαναλαμβάνεται</string>
@@ -1056,4 +1068,14 @@
     <string name="attendee_status_tentative">Πιθανώς</string>
     <string name="attendee_status_delegated">Εκχωρήθηκε</string>
     <string name="attendee_status_pending">Εκκρεμές</string>
+    <string name="inbox_empty_caught_up">Όλα ενημερωμένα</string>
+    <string name="inbox_organizer_suffix">(διοργανωτής)</string>
+    <string name="menu_invites">Προσκλήσεις</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Ημερομηνία</string>
+    <string name="menu_more">Μενού «Περισσότερα»</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Μενού «Περισσότερα», %d πρόσκληση σε εκκρεμότητα</item>
+        <item quantity="other">Μενού «Περισσότερα», %d προσκλήσεις σε εκκρεμότητα</item>
+    </plurals>
 </resources>

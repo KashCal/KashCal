@@ -1,5 +1,7 @@
 package org.onekash.kashcal.sync.strategy.integration
 
+import io.mockk.mockk
+
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
@@ -116,7 +118,10 @@ class RealICloudPullStrategyTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
     }
 

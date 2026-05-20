@@ -43,6 +43,7 @@
     <string name="action_learn_more">Dysgu Mwy</string>
     <string name="action_open_apple_id">Agor Apple ID</string>
     <string name="action_open_settings">Agor Gosodiadau</string>
+    <string name="action_open">Agor</string>
     <string name="action_force_sync">Gorfodi Cysoni</string>
     <string name="action_sync_now">Cysoni Nawr</string>
     <string name="action_details">Manylion</string>
@@ -65,6 +66,15 @@
     <string name="action_export_ics">Allforio fel .ics</string>
     <string name="action_confirm_delete">Cadarnhau Dileu</string>
     <string name="action_delete_event">Dileu Digwyddiad</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Derbyn</string>
+    <string name="rsvp_action_tentative">Dros dro</string>
+    <string name="rsvp_action_decline">Gwrthod</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <string name="rsvp_series_disclosure">Mae\'r ymateb yn berthnasol i\'r gyfres gyfan.</string>
+    <string name="rsvp_modified_snackbar">Methodd yr ymateb ar gyfer %1$s: cafodd y digwyddiad ei addasu. Ymateba eto.</string>
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Dim ond hwn</string>
@@ -94,6 +104,9 @@
     <string name="label_all_day">Drwy\'r dydd</string>
     <string name="label_today">Heddiw</string>
     <string name="label_go_to_date">Mynd i ddyddiad</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Wythnos</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
     <string name="settings_title">Gosodiadau</string>
@@ -246,10 +259,7 @@
     <string name="cd_close">Cau</string>
     <string name="cd_search">Chwilio</string>
     <string name="cd_create_event">Creu digwyddiad</string>
-    <string name="cd_settings">Gosodiadau</string>
     <string name="cd_today">Heddiw</string>
-    <string name="cd_previous_week">Wythnos flaenorol</string>
-    <string name="cd_next_week">Wythnos nesaf</string>
     <string name="cd_delete">Dileu</string>
     <string name="cd_refresh">Adnewyddu</string>
     <string name="cd_more_options">Mwy o opsiynau</string>
@@ -428,6 +438,7 @@
     <string name="settings_device_calendars">Calendrau\'r Ddyfais</string>
     <string name="settings_quick_event_add">Ychwanegu Digwyddiad Cyflym</string>
     <string name="settings_week_numbers">Rhifau Wythnosau</string>
+    <string name="settings_show_declined">Dangos digwyddiadau a wrthodwyd</string>
     <string name="settings_widget_event_limit">Terfyn Digwyddiadau Widget</string>
     <string name="settings_sync_lookback">Edrych yn Ôl Cysoni</string>
     <string name="settings_auto_detect_emojis">Canfod Emojis yn Awtomatig</string>
@@ -495,7 +506,6 @@
     <string name="device_calendars_grant">Rhoi</string>
     <string name="device_calendars_none_found">Dim calendrau dyfais wedi\'u canfod.</string>
     <string name="device_calendars_local">Lleol</string>
-    <string name="device_calendars_show_declined">Dangos digwyddiadau wedi\'u gwrthod</string>
     <string name="device_calendars_reminders">Nodiadau Atgoffa</string>
     <string name="device_calendars_reminders_desc">Cael eich hysbysu am ddigwyddiadau calendr y ddyfais</string>
     <string name="device_calendars_read_only_no_write">Darllen yn unig (dim caniatâd ysgrifennu)</string>
@@ -801,14 +811,17 @@
 
     <string name="cd_clear">Clirio</string>
     <string name="cd_offline">All-lein</string>
-    <string name="cd_previous">Blaenorol</string>
-    <string name="cd_next">Nesaf</string>
     <string name="cd_open_drawer">Agor droir</string>
     <string name="cd_close_drawer">Cau droir</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Agor dewislen</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Cau dewislen</string>
     <string name="cd_calendar_view">Golwg calendr</string>
     <string name="cd_active_view">Golwg gweithredol</string>
 
     <string name="view_agenda">Agenda</string>
+    <string name="view_day">Dydd</string>
     <string name="view_month_full">Mis (Llawn)</string>
     <string name="view_three_days">3 Diwrnod</string>
     <string name="view_year">Blwyddyn</string>
@@ -869,8 +882,6 @@
     <string name="sync_summary_removed">%1$d wedi\'u dileu</string>
 
     <!-- Additional Content Descriptions -->
-    <string name="cd_previous_3_days">3 diwrnod blaenorol</string>
-    <string name="cd_next_3_days">3 diwrnod nesaf</string>
     <string name="cd_circular_scrolling">Sgrolio cylchol wedi\'i alluogi</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -1079,6 +1090,9 @@
     <string name="channel_sync_progress_desc">Yn dangos cynnydd wrth gydamseru calendrau</string>
     <string name="channel_sync_status">Statws cydamseru</string>
     <string name="channel_sync_status_desc">Hysbysiadau am gwblhau a gwallau cydamseru</string>
+    <string name="channel_event_invitations">Gwahoddiadau digwyddiadau</string>
+    <string name="channel_event_invitations_desc">Hysbysiadau pan fyddi\'n derbyn gwahoddiad calendr newydd</string>
+    <string name="invite_notification_body">Gan %1$s · Cyffwrdd i ymateb</string>
 
     <!-- Insights -->
     <string name="insights_title">Mewnwelediadau</string>
@@ -1133,7 +1147,6 @@
     <string name="label_calendar_default">Rhagosodiad y calendr</string>
     <string name="label_custom">Personol</string>
     <string name="cd_event_color">Lliw digwyddiad</string>
-
 
     <string name="cd_checkmark">Dewiswyd</string>
     <string name="label_device_timezone">Cylchfa amser y dyfais</string>
@@ -1217,4 +1230,18 @@
     <string name="attendee_status_tentative">Dros dro</string>
     <string name="attendee_status_delegated">Wedi\'i ddirprwyo</string>
     <string name="attendee_status_pending">Yn aros</string>
+    <string name="inbox_empty_caught_up">Popeth wedi\'i ddal</string>
+    <string name="inbox_organizer_suffix">(trefnydd)</string>
+    <string name="menu_invites">Gwahoddiadau</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dyddiad</string>
+    <string name="menu_more">Dewislen Rhagor</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="zero">Dewislen Rhagor, %d gwahoddiad yn aros</item>
+        <item quantity="one">Dewislen Rhagor, %d gwahoddiad yn aros</item>
+        <item quantity="two">Dewislen Rhagor, %d wahoddiad yn aros</item>
+        <item quantity="few">Dewislen Rhagor, %d gwahoddiad yn aros</item>
+        <item quantity="many">Dewislen Rhagor, %d gwahoddiad yn aros</item>
+        <item quantity="other">Dewislen Rhagor, %d gwahoddiad yn aros</item>
+    </plurals>
 </resources>

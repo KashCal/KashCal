@@ -39,6 +39,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -128,6 +129,18 @@ internal fun shouldShowTitleSuggestions(
     if (currentText == initialText) return false
     return true
 }
+
+/**
+ * True when [current] differs from [initial] regardless of input order.
+ * Drives the Save-enabled predicate in the read-only attendee form path
+ * (Save flips on as soon as the user changes their reminder set).
+ *
+ * Sorted-list comparison rather than set comparison: the picker doesn't
+ * dedupe, so `[15, 15]` is intentionally distinct from `[15]`. Only the
+ * order is normalized, not the multiset.
+ */
+internal fun remindersChanged(initial: List<Int>, current: List<Int>): Boolean =
+    initial.sorted() != current.sorted()
 
 /**
  * Migrate reminders when toggling all-day.
@@ -285,7 +298,27 @@ fun EventFormSheet(
     onDeleteDeviceEvent: (suspend (EventFormState) -> Result<Unit>)? = null,
     deviceCalendarGroups: List<CalendarGroup> = emptyList(),
     attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
-    isCurrentUserOnList: Boolean = false
+    isCurrentUserOnList: Boolean = false,
+    /**
+     * When true, the form renders in read-only mode: a banner with
+     * inline RSVP chips appears at the top, and substantive fields are
+     * not editable. Reminders remain editable per RFC 5545 §3.6.6
+     * (per-attendee VALARMs); the user can change their own alarms
+     * even though they can't edit organizer-owned fields.
+     *
+     * Client-enforced — some CalDAV servers silently accept attendee
+     * substantive edits, so server enforcement is unreliable.
+     */
+    isReadOnly: Boolean = false,
+    /** Invoked when the user taps a chip inside the read-only banner. */
+    onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
+    /**
+     * Save callback for the read-only attendee path. Receives the
+     * (possibly empty) reminder set in minutes. The callback writes
+     * locally and reschedules AlarmManager — no server PUT. When null,
+     * the read-only Save button stays disabled.
+     */
+    onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
@@ -309,6 +342,15 @@ fun EventFormSheet(
     // Form state
     var state by remember { mutableStateOf(EventFormState()) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    /**
+     * Snapshot of reminders at form-load time. Used by the read-only
+     * attendee path to gate the Save button: enabled only when the
+     * current set differs from this snapshot. Initialised to the same
+     * value as state.reminders during edit-load so a no-op tap doesn't
+     * show Save as enabled.
+     */
+    var initialReminders by remember { mutableStateOf<List<Int>>(emptyList()) }
 
     var expandedPicker by remember { mutableStateOf<String?>(null) }
     var activeSheet by remember { mutableStateOf(ActiveDateTimeSheet.NONE) }
@@ -334,11 +376,18 @@ fun EventFormSheet(
             coroutineScope.launch {
                 state = state.copy(isSaving = true, error = null)
                 try {
-                    // Route to device event save if applicable
-                    val result: Result<*> = if (state.isDeviceCalendar && onSaveDeviceEvent != null) {
-                        onSaveDeviceEvent(state)
-                    } else {
-                        onSave(state)
+                    // Route by mode:
+                    //  - read-only attendee path: only reminders are
+                    //    persisted, locally; no organizer-owned fields
+                    //    leave the device.
+                    //  - device calendar: existing onSaveDeviceEvent path.
+                    //  - default: existing onSave full-event path.
+                    val result: Result<*> = when {
+                        isReadOnly && onSaveAttendeeReminders != null ->
+                            onSaveAttendeeReminders(state.reminders)
+                        state.isDeviceCalendar && onSaveDeviceEvent != null ->
+                            onSaveDeviceEvent(state)
+                        else -> onSave(state)
                     }
                     result.fold(
                         onSuccess = {
@@ -485,6 +534,9 @@ fun EventFormSheet(
                     transp = event.transp,
                     eventColor = event.color
                 )
+                // Capture the loaded reminder set so the read-only path
+                // can detect "user changed reminders" via remindersChanged.
+                initialReminders = parsedReminders
             }
         } else {
             // Create mode - set default end time based on duration setting
@@ -703,6 +755,19 @@ fun EventFormSheet(
         (configuration.screenHeightDp * 0.95f).dp
     }
 
+    // Save predicate splits by mode. In read-only (attendee) mode the
+    // user can only edit reminders, so Save gates on the reminder-set
+    // having actually changed. In normal mode the existing full-form
+    // validation applies. Hoisted above the Column so both the header
+    // Save button and the sticky bottom Save button share one predicate.
+    val saveEnabled = if (isReadOnly) {
+        onSaveAttendeeReminders != null &&
+            remindersChanged(initialReminders, state.reminders) &&
+            !state.isSaving
+    } else {
+        state.title.isNotBlank() && !state.isSaving && !hasTimeConflict
+    }
+
     ModalBottomSheet(
         onDismissRequest = { if (!state.isSaving) onDismiss() },
         sheetState = sheetState,
@@ -745,7 +810,7 @@ fun EventFormSheet(
                 val contrastColor = remember(calColor) { contrastForegroundOn(calColor) }
                 Button(
                     onClick = { performSave() },
-                    enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict,
+                    enabled = saveEnabled,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = calColor,
                         contentColor = contrastColor
@@ -831,6 +896,7 @@ fun EventFormSheet(
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
                                 .padding(horizontal = 16.dp, vertical = 8.dp),
                             singleLine = true,
+                            enabled = !isReadOnly,
                             textStyle = MaterialTheme.typography.headlineSmall,
                             colors = borderlessFieldColors
                         )
@@ -877,9 +943,9 @@ fun EventFormSheet(
                         endHour = state.endHour,
                         endMinute = state.endMinute,
                         isAllDay = state.isAllDay,
-                        onAllDayToggle = toggleAllDay,
-                        onStartClick = { activeSheet = ActiveDateTimeSheet.START },
-                        onEndClick = { activeSheet = ActiveDateTimeSheet.END },
+                        onAllDayToggle = if (isReadOnly) ({ }) else toggleAllDay,
+                        onStartClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.START },
+                        onEndClick = { if (!isReadOnly) activeSheet = ActiveDateTimeSheet.END },
                         isEndError = hasTimeConflict,
                         endErrorMessage = if (hasTimeConflict) stringResource(R.string.error_end_before_start) else null,
                         timezone = state.timezone,
@@ -901,7 +967,7 @@ fun EventFormSheet(
                             icon = Icons.Default.Public,
                             iconContentDescription = stringResource(R.string.label_timezone),
                             showExpandIcon = true,
-                            onToggle = { showTimezoneSheet = true }
+                            onToggle = { if (!isReadOnly) showTimezoneSheet = true }
                         ) {
                             Text(
                                 timezoneLabel,
@@ -962,7 +1028,7 @@ fun EventFormSheet(
                         },
                         isSelectedDeviceCalendar = state.isDeviceCalendar,
                         isExpanded = expandedPicker == "calendar",
-                        enabled = !(state.isEditMode && state.editingOccurrenceTs != null),
+                        enabled = !isReadOnly && !(state.isEditMode && state.editingOccurrenceTs != null),
                         onToggle = { expandedPicker = if (expandedPicker == "calendar") null else "calendar" },
                         onSelect = { id, name, color, isDevice ->
                             state = state.copy(
@@ -978,7 +1044,7 @@ fun EventFormSheet(
                     EventFormRow(
                         icon = Icons.Default.Palette,
                         iconContentDescription = stringResource(R.string.label_event_color),
-                        onToggle = { showColorPicker = true }
+                        onToggle = { if (!isReadOnly) showColorPicker = true }
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -1028,7 +1094,7 @@ fun EventFormSheet(
                             selectedRrule = state.rrule,
                             startDateMillis = state.dateMillis,
                             isExpanded = expandedPicker == "repeat",
-                            onToggle = { expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
+                            onToggle = { if (!isReadOnly) expandedPicker = if (expandedPicker == "repeat") null else "repeat" },
                             onSelect = { rrule ->
                                 state = state.copy(rrule = rrule)
                             },
@@ -1046,12 +1112,14 @@ fun EventFormSheet(
                         ) {
                             FilterChip(
                                 selected = state.transp == "OPAQUE",
-                                onClick = { state = state.copy(transp = "OPAQUE") },
+                                onClick = { if (!isReadOnly) state = state.copy(transp = "OPAQUE") },
+                                enabled = !isReadOnly,
                                 label = { Text(stringResource(R.string.label_busy)) }
                             )
                             FilterChip(
                                 selected = state.transp == "TRANSPARENT",
-                                onClick = { state = state.copy(transp = "TRANSPARENT") },
+                                onClick = { if (!isReadOnly) state = state.copy(transp = "TRANSPARENT") },
+                                enabled = !isReadOnly,
                                 label = { Text(stringResource(R.string.label_free)) }
                             )
                         }
@@ -1100,6 +1168,7 @@ fun EventFormSheet(
                                     .fillMaxWidth()
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                                 singleLine = true,
+                                enabled = !isReadOnly,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.Transparent,
                                     focusedBorderColor = Color.Transparent,
@@ -1151,6 +1220,7 @@ fun EventFormSheet(
                             modifier = Modifier.fillMaxWidth(),
                             minLines = 2,
                             maxLines = 4,
+                            enabled = !isReadOnly,
                             colors = OutlinedTextFieldDefaults.colors(
                                 unfocusedBorderColor = Color.Transparent,
                                 focusedBorderColor = Color.Transparent,
@@ -1165,11 +1235,46 @@ fun EventFormSheet(
                             icon = Icons.Default.Group,
                             iconContentDescription = stringResource(R.string.label_attendees)
                         ) {
-                            org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
-                                models = attendees,
-                                isCurrentUserOnList = isCurrentUserOnList,
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier.fillMaxWidth()
-                            )
+                            ) {
+                                org.onekash.kashcal.ui.components.attendees.AttendeeChipRow(
+                                    models = attendees,
+                                    isCurrentUserOnList = isCurrentUserOnList,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                val you = attendees.firstOrNull { it.isYou }
+                                if (isReadOnly &&
+                                    org.onekash.kashcal.ui.components.attendees.shouldShowRespondSection(
+                                        currentUserPartstat = you?.status,
+                                        isOrganizer = you?.isOrganizer == true
+                                    )
+                                ) {
+                                    org.onekash.kashcal.ui.components.attendees.RespondSection(
+                                        currentUserPartstat = you?.status,
+                                        onRsvp = onRsvp
+                                    )
+                                    // editingOccurrenceTs is set only when the form was opened
+                                    // for a single occurrence of a recurring event (which clears
+                                    // state.rrule); checking either covers both master-edit and
+                                    // single-occurrence-edit entry paths.
+                                    val isRecurringInForm =
+                                        state.rrule != null || state.editingOccurrenceTs != null
+                                    if (org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                                            currentUserPartstat = you?.status,
+                                            isOrganizer = you?.isOrganizer == true,
+                                            isRecurring = isRecurringInForm
+                                        )
+                                    ) {
+                                        Text(
+                                            text = stringResource(R.string.rsvp_series_disclosure),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -1314,7 +1419,7 @@ fun EventFormSheet(
                     val stickyContrastColor = remember(stickyCalColor) { contrastForegroundOn(stickyCalColor) }
                     Button(
                         onClick = { performSave() },
-                        enabled = state.title.isNotBlank() && !state.isSaving && !hasTimeConflict,
+                        enabled = saveEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(50.dp),

@@ -43,6 +43,7 @@
     <string name="action_learn_more">Pli da informo</string>
     <string name="action_open_apple_id">Malfermi Apple ID</string>
     <string name="action_open_settings">Malfermi Agordojn</string>
+    <string name="action_open">Malfermi</string>
     <string name="action_force_sync">Devigi sinkronigon</string>
     <string name="action_sync_now">Sinkronigi nun</string>
     <string name="action_details">Detaloj</string>
@@ -65,6 +66,15 @@
     <string name="action_export_ics">Eksporti kiel .ics</string>
     <string name="action_confirm_delete">Konfirmi forigon</string>
     <string name="action_delete_event">Forigi eventon</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Akcepti</string>
+    <string name="rsvp_action_tentative">Provizore</string>
+    <string name="rsvp_action_decline">Rifuzi</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <string name="rsvp_series_disclosure">La respondo validas por la tuta serio.</string>
+    <string name="rsvp_modified_snackbar">Respondo por %1$s malsukcesis: la evento estis modifita. Bonvolu respondi denove.</string>
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Nur ĉi tiu</string>
@@ -94,6 +104,9 @@
     <string name="label_all_day">Tuttaga</string>
     <string name="label_today">Hodiaŭ</string>
     <string name="label_go_to_date">Iri al dato</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Semajno</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
     <string name="settings_title">Agordoj</string>
@@ -235,10 +248,7 @@
     <string name="cd_close">Fermi</string>
     <string name="cd_search">Serĉi</string>
     <string name="cd_create_event">Krei eventon</string>
-    <string name="cd_settings">Agordoj</string>
     <string name="cd_today">Hodiaŭ</string>
-    <string name="cd_previous_week">Antaŭa semajno</string>
-    <string name="cd_next_week">Venonta semajno</string>
     <string name="cd_delete">Forigi</string>
     <string name="cd_refresh">Aktualigi</string>
     <string name="cd_more_options">Pliaj elektoj</string>
@@ -415,6 +425,7 @@
     <string name="settings_device_calendars">Aparataj kalendaroj</string>
     <string name="settings_quick_event_add">Rapida eventaldono</string>
     <string name="settings_week_numbers">Semajnaj numeroj</string>
+    <string name="settings_show_declined">Montri malakceptitajn eventojn</string>
     <string name="settings_widget_event_limit">Fenestraĵa eventlimo</string>
     <string name="settings_sync_lookback">Sinkroniga retrorigardo</string>
     <string name="settings_auto_detect_emojis">Aŭtomata emogĝia detekto</string>
@@ -482,7 +493,6 @@
     <string name="device_calendars_grant">Doni</string>
     <string name="device_calendars_none_found">Neniuj aparataj kalendaroj trovitaj.</string>
     <string name="device_calendars_local">Loka</string>
-    <string name="device_calendars_show_declined">Montri rifuzitajn eventojn</string>
     <string name="device_calendars_reminders">Rememoriloj</string>
     <string name="device_calendars_reminders_desc">Ricevi sciigojn por aparataj kalendaraj eventoj</string>
     <string name="device_calendars_read_only_no_write">Nurlega (sen skribpermeso)</string>
@@ -664,14 +674,17 @@
 
     <string name="cd_clear">Forviŝi</string>
     <string name="cd_offline">Eksterrete</string>
-    <string name="cd_previous">Antaŭa</string>
-    <string name="cd_next">Venonta</string>
     <string name="cd_open_drawer">Malfermi tirkeston</string>
     <string name="cd_close_drawer">Fermi tirkeston</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Malfermi menuon</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Fermi menuon</string>
     <string name="cd_calendar_view">Kalendara vido</string>
     <string name="cd_active_view">Aktiva vido</string>
 
     <string name="view_agenda">Tagordo</string>
+    <string name="view_day">Tago</string>
     <string name="view_month_full">Monato (plena)</string>
     <string name="view_three_days">3 tagoj</string>
     <string name="view_year">Jaro</string>
@@ -728,8 +741,6 @@
     <string name="sync_summary_removed">%1$d forigitaj</string>
 
     <!-- Additional Content Descriptions -->
-    <string name="cd_previous_3_days">Antaŭaj 3 tagoj</string>
-    <string name="cd_next_3_days">Venontaj 3 tagoj</string>
     <string name="cd_circular_scrolling">Cirkla rulumado ŝaltita</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +921,9 @@
     <string name="channel_sync_progress_desc">Montras progreson dum sinkronigo de kalendaroj</string>
     <string name="channel_sync_status">Sinkroniga stato</string>
     <string name="channel_sync_status_desc">Sciigoj pri sinkroniga finiĝo kaj eraroj</string>
+    <string name="channel_event_invitations">Eventaj invitoj</string>
+    <string name="channel_event_invitations_desc">Sciigoj kiam vi ricevas novan kalendaran inviton</string>
+    <string name="invite_notification_body">De %1$s · Frapetu por respondi</string>
 
     <!-- Insights -->
     <string name="insights_title">Enrigardoj</string>
@@ -960,7 +974,6 @@
     <string name="label_calendar_default">Kalendara defaŭlto</string>
     <string name="label_custom">Propra</string>
     <string name="cd_event_color">Eventa koloro</string>
-
 
     <string name="cd_checkmark">Elektita</string>
     <string name="label_device_timezone">Horzono de aparato</string>
@@ -1036,4 +1049,14 @@
     <string name="attendee_status_tentative">Provizora</string>
     <string name="attendee_status_delegated">Delegita</string>
     <string name="attendee_status_pending">Atendanta</string>
+    <string name="inbox_empty_caught_up">Ĉio en ordo</string>
+    <string name="inbox_organizer_suffix">(organizanto)</string>
+    <string name="menu_invites">Invitoj</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dato</string>
+    <string name="menu_more">Menuo Pli</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menuo Pli, %d invito atendas</item>
+        <item quantity="other">Menuo Pli, %d invitoj atendas</item>
+    </plurals>
 </resources>

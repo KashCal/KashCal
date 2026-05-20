@@ -69,7 +69,13 @@ class ConflictResolverStrategyTest {
             eventsDao = eventsDao,
             attendeesDao = mockk(relaxed = true),
             pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator
+            occurrenceGenerator = occurrenceGenerator,
+            database = mockk(relaxed = true) {
+                coEvery { runInTransaction(any<suspend () -> Unit>()) } coAnswers {
+                    val block = firstArg<suspend () -> Unit>()
+                    block()
+                }
+            }
         )
     }
 

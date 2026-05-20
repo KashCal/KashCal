@@ -1,9 +1,11 @@
 package org.onekash.kashcal.domain.reader
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
@@ -111,6 +113,51 @@ class EventReader @Inject constructor(
         return attendeesDao.getForEvents(eventIds)
             .map { rows -> rows.groupBy { it.eventId } }
             .distinctUntilChanged()
+    }
+
+    /**
+     * Reactive list of pending CalDAV invitations for the inbox surface.
+     *
+     * Combines:
+     * 1. Master events with at least one future, non-cancelled occurrence
+     *    (SQL-filtered by [org.onekash.kashcal.data.db.dao.EventsDao.getMasterEventsWithFutureOccurrenceFlow]).
+     * 2. NEEDS-ACTION attendee rows for those events (Flow re-emits when
+     *    a row's partstat changes — drives the optimistic empty-state
+     *    transition after the user RSVPs).
+     * 3. Account + calendar snapshots for owning-account scoping.
+     *
+     * `now` is captured at subscription time, NOT a real-time wall clock;
+     * the inbox's expected dwell time (read-and-act-and-dismiss) is short
+     * enough that cards do not auto-expire as wall-clock advances within
+     * a session.
+     *
+     * See [buildPendingInvitations] for the full filter policy
+     * (organizer-self exclusion, per-account address matching, etc.).
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun getPendingInvitations(now: Long = System.currentTimeMillis()): Flow<List<PendingInvitation>> {
+        return combine(
+            eventsDao.getMasterEventsWithFutureOccurrenceFlow(now),
+            accountsDao.getAll(),
+            calendarsDao.getAll()
+        ) { eventsWithNext, accounts, calendars ->
+            Triple(eventsWithNext, accounts, calendars)
+        }.flatMapLatest { (eventsWithNext, accounts, calendars) ->
+            val eventIds = eventsWithNext.map { it.event.id }
+            val attendeesFlow: Flow<List<Attendee>> = if (eventIds.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                attendeesDao.getNeedsActionAttendeesForEventsFlow(eventIds)
+            }
+            attendeesFlow.map { needsActionRows ->
+                buildPendingInvitations(
+                    eventsWithNext = eventsWithNext,
+                    needsActionAttendees = needsActionRows,
+                    accountsById = accounts.associateBy { it.id },
+                    calendarsById = calendars.associateBy { it.id }
+                )
+            }
+        }.distinctUntilChanged()
     }
 
     /**

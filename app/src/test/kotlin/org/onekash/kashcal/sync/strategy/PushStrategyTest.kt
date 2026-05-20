@@ -6,17 +6,24 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
@@ -26,6 +33,7 @@ class PushStrategyTest {
     private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
     private lateinit var pendingOperationsDao: PendingOperationsDao
+    private lateinit var accountRepository: AccountRepository
     private lateinit var pushStrategy: PushStrategy
 
     private val testCalendar = Calendar(
@@ -82,6 +90,7 @@ class PushStrategyTest {
         calendarRepository = mockk()
         eventsDao = mockk()
         pendingOperationsDao = mockk()
+        accountRepository = mockk()
 
         // Default batch query mocks - return empty so fallback to getById is used
         // Individual tests can override these for specific scenarios
@@ -91,7 +100,8 @@ class PushStrategyTest {
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao
+            pendingOperationsDao = pendingOperationsDao,
+            accountRepository = accountRepository
         )
     }
 
@@ -1232,5 +1242,285 @@ class PushStrategyTest {
         val success = result as PushResult.Success
         assert(success.eventsCreated == 2)
         assert(success.operationsProcessed == 2)
+    }
+
+    // ========== B3 — PARTSTAT-only RSVP write path ==========
+
+    private val rsvpRawIcal = """
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Test//RSVP//EN
+        BEGIN:VEVENT
+        UID:rsvp-uid
+        DTSTAMP:20260101T100000Z
+        DTSTART:20260615T100000Z
+        DTEND:20260615T110000Z
+        SUMMARY:Quarterly review
+        SEQUENCE:3
+        ORGANIZER;CN=Boss:mailto:boss@example.test
+        ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test
+        ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test
+        END:VEVENT
+        END:VCALENDAR
+    """.trimIndent()
+
+    private fun rsvpAccount() = Account(
+        id = 1L,
+        provider = AccountProvider.CALDAV,
+        email = "self@example.test",
+        calendarUserAddresses = listOf("mailto:self@example.test")
+    )
+
+    @Test
+    fun `pushAll partstat_only UPDATE uses patchAttendeeReply path with patched body`() = runTest {
+        // The PARTSTAT-only branch must NOT serialize the local event verbatim
+        // (which would lose the server's other attendees). Instead it must
+        // patch only self's PARTSTAT in the rawIcal.
+        val event = testEvent.copy(
+            caldavUrl = "https://caldav.example.com/rsvp.ics",
+            etag = "etag-old",
+            rawIcal = rsvpRawIcal,
+            calendarId = testCalendar.id,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 100L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            partstatOnly = true,
+            partstatTarget = "ACCEPTED",
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { calendarRepository.getCalendarById(testCalendar.id) } returns testCalendar
+        coEvery { accountRepository.getAccountById(testCalendar.accountId) } returns rsvpAccount()
+        val sentBody = slot<String>()
+        coEvery { client.updateEvent(eq(event.caldavUrl!!), capture(sentBody), eq(event.etag!!)) } returns
+            CalDavResult.success("etag-new")
+        coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success)
+        // The body that hit the wire must contain the new PARTSTAT and preserve Alice.
+        val body = sentBody.captured
+        assertTrue("self PARTSTAT must update to ACCEPTED", body.contains("PARTSTAT=ACCEPTED"))
+        assertTrue("Alice must survive", body.contains("alice@example.test"))
+        assertTrue("Self mailto must survive", body.contains("self@example.test"))
+        // SEQUENCE NOT bumped — RFC 5546 §2.1.4
+        assertTrue("SEQUENCE must remain at 3", body.contains("SEQUENCE:3"))
+        // DESCRIPTION not in body, that's fine; SUMMARY must survive
+        assertTrue("SUMMARY must survive", body.contains("Quarterly review"))
+    }
+
+    @Test
+    fun `pushAll partstat_only UPDATE on 412 refetches body and retries`() = runTest {
+        // 412 retry path: fetchEtag refreshes the etag AND fetchEvent
+        // refreshes rawIcal, then re-run patch and retry once.
+        val event = testEvent.copy(
+            caldavUrl = "https://caldav.example.com/rsvp.ics",
+            etag = "etag-old",
+            rawIcal = rsvpRawIcal,
+            calendarId = testCalendar.id,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 101L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            partstatOnly = true,
+            partstatTarget = "TENTATIVE",
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        // Server's fresh body has a NEW attendee (Carol) the local copy didn't know about.
+        val freshIcal = rsvpRawIcal.replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test",
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test\nATTENDEE;CN=Carol;PARTSTAT=ACCEPTED:mailto:carol@example.test"
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { calendarRepository.getCalendarById(testCalendar.id) } returns testCalendar
+        coEvery { accountRepository.getAccountById(testCalendar.accountId) } returns rsvpAccount()
+
+        // First PUT 412.
+        // Then fetchEtag returns "etag-fresh". fetchEvent returns the fresh body.
+        // Retried PUT succeeds.
+        var putCount = 0
+        val putBodies = mutableListOf<String>()
+        coEvery { client.updateEvent(any(), any(), any()) } answers {
+            putCount++
+            putBodies.add(secondArg())
+            if (putCount == 1) CalDavResult.conflictError("Modified on server")
+            else CalDavResult.success("etag-after-retry")
+        }
+        coEvery { client.fetchEtag(any()) } returns CalDavResult.success("etag-fresh")
+        coEvery { client.fetchEvent(any()) } returns CalDavResult.success(
+            CalDavEvent("rsvp.ics", event.caldavUrl!!, "etag-fresh", freshIcal)
+        )
+        coEvery { eventsDao.updateEtag(event.id, "etag-fresh") } just Runs
+        coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+        assert(result is PushResult.Success)
+        assertEquals(2, putCount)
+
+        // Retried body must be against the FRESH ICS — Carol must be present.
+        val retryBody = putBodies[1]
+        assertTrue("retry must include Carol from refreshed body", retryBody.contains("carol@example.test"))
+        assertTrue("retry must reflect TENTATIVE PARTSTAT", retryBody.contains("PARTSTAT=TENTATIVE"))
+    }
+
+    @Test
+    fun `pushAll partstat_only UPDATE on second 412 surfaces snackbar warning`() = runTest {
+        // Two 412s in a row — surface "event was modified" warning, don't retry indefinitely.
+        val event = testEvent.copy(
+            caldavUrl = "https://caldav.example.com/rsvp.ics",
+            etag = "etag-old",
+            rawIcal = rsvpRawIcal,
+            title = "Quarterly review",
+            calendarId = testCalendar.id,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 102L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            partstatOnly = true,
+            partstatTarget = "DECLINED",
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { calendarRepository.getCalendarById(testCalendar.id) } returns testCalendar
+        coEvery { accountRepository.getAccountById(testCalendar.accountId) } returns rsvpAccount()
+        coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified")
+        coEvery { client.fetchEtag(any()) } returns CalDavResult.success("etag-fresh")
+        coEvery { client.fetchEvent(any()) } returns CalDavResult.success(
+            CalDavEvent("rsvp.ics", event.caldavUrl!!, "etag-fresh", rsvpRawIcal)
+        )
+        coEvery { eventsDao.updateEtag(event.id, any()) } just Runs
+        coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
+        coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+        assert(result is PushResult.Success)
+        val success = result as PushResult.Success
+        assertEquals(1, success.operationsFailed)
+
+        // Warning string must mention RSVP and the event title so HomeViewModel can surface it.
+        val warning = success.pushWarnings.firstOrNull { it.contains("RSVP", ignoreCase = true) }
+        assertTrue(
+            "expected an RSVP-modified warning, got warnings: ${success.pushWarnings}",
+            warning != null
+        )
+    }
+
+    @Test
+    fun `pushAll partstat_only UPDATE uses operation targetUrl when event caldavUrl was cleared`() = runTest {
+        // If the queued op captured caldavUrl at queue time, the PUT must succeed
+        // even when Event.caldavUrl is cleared between queue and drain. Without
+        // this, a future code path that nulls caldavUrl without clearing pending
+        // ops would silently turn the queued RSVP into a no-op and other invitees
+        // would still see us as NEEDS-ACTION.
+        val capturedUrl = "https://caldav.example.com/rsvp-captured.ics"
+        val event = testEvent.copy(
+            caldavUrl = null,            // cleared after queue insert
+            etag = "etag-old",
+            rawIcal = rsvpRawIcal,
+            calendarId = testCalendar.id,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 200L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            partstatOnly = true,
+            partstatTarget = "ACCEPTED",
+            targetUrl = capturedUrl,     // captured at queue time
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { calendarRepository.getCalendarById(testCalendar.id) } returns testCalendar
+        coEvery { accountRepository.getAccountById(testCalendar.accountId) } returns rsvpAccount()
+        coEvery { client.updateEvent(eq(capturedUrl), any(), eq(event.etag!!)) } returns
+            CalDavResult.success("etag-new")
+        coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+
+        assert(result is PushResult.Success) {
+            "expected success when targetUrl carries the URL even with null caldavUrl, got $result"
+        }
+        // PUT must have hit the captured URL; the mock above will fail to match
+        // any other URL value (eq matcher) and an unsuccessful result would
+        // surface as a failed operation, not Success.
+        coVerify(exactly = 1) { client.updateEvent(eq(capturedUrl), any(), any()) }
+    }
+
+    @Test
+    fun `pushAll partstat_only UPDATE 412 retry also uses operation targetUrl when caldavUrl is null`() = runTest {
+        // Regression-prevention assertion from plan review R1: the 412 retry
+        // branch reads the same caldavUrl local var as the first PUT, so when
+        // event.caldavUrl is null, BOTH PUTs must hit operation.targetUrl.
+        val capturedUrl = "https://caldav.example.com/rsvp-retry-captured.ics"
+        val event = testEvent.copy(
+            caldavUrl = null,
+            etag = "etag-old",
+            rawIcal = rsvpRawIcal,
+            calendarId = testCalendar.id,
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+        val operation = PendingOperation(
+            id = 201L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            partstatOnly = true,
+            partstatTarget = "TENTATIVE",
+            targetUrl = capturedUrl,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
+        coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { calendarRepository.getCalendarById(testCalendar.id) } returns testCalendar
+        coEvery { accountRepository.getAccountById(testCalendar.accountId) } returns rsvpAccount()
+
+        var putCount = 0
+        coEvery { client.updateEvent(eq(capturedUrl), any(), any()) } answers {
+            putCount++
+            if (putCount == 1) CalDavResult.conflictError("Modified")
+            else CalDavResult.success("etag-after-retry")
+        }
+        coEvery { client.fetchEtag(eq(capturedUrl)) } returns CalDavResult.success("etag-fresh")
+        coEvery { client.fetchEvent(eq(capturedUrl)) } returns CalDavResult.success(
+            CalDavEvent("rsvp.ics", capturedUrl, "etag-fresh", rsvpRawIcal)
+        )
+        coEvery { eventsDao.updateEtag(event.id, any()) } just Runs
+        coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
+
+        val result = pushStrategy.pushAll(client)
+        assert(result is PushResult.Success)
+        assertEquals(2, putCount)
+        // Both PUTs must have used capturedUrl — the eq() matcher above
+        // proves that, since a mismatch would have left putCount=0.
+        coVerify(exactly = 2) { client.updateEvent(eq(capturedUrl), any(), any()) }
+        coVerify(exactly = 1) { client.fetchEtag(eq(capturedUrl)) }
+        coVerify(exactly = 1) { client.fetchEvent(eq(capturedUrl)) }
     }
 }

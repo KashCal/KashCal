@@ -30,14 +30,19 @@ object EventToICalEventMapper {
      *
      * For master events with `rrule`, include the parsed RRULE; exceptions
      * should be emitted separately via [toICalEvent] with master context.
+     *
+     * @param attendees Optional Room rows to emit as ATTENDEE properties.
+     *   Defaulted empty so existing callers continue to compile and emit no
+     *   attendees. Organizer-side push paths pass the real list.
      */
-    fun toICalEvent(event: Event): ICalEvent {
+    fun toICalEvent(event: Event, attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()): ICalEvent {
         val zone = resolveZone(event.timezone)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val endTs = exclusiveEndTs(event)
-        // RFC 5545 §3.8.5 + Fossify/Etar/AOSP convention: recurring events use
-        // DTSTART+DURATION (DST-safe across occurrences), non-recurring use DTSTART+DTEND.
-        // Preserve stored Event.duration when populated; otherwise compute from endTs-startTs.
+        // RFC 5545 §3.8.5: recurring events use DTSTART+DURATION (DST-safe
+        // across occurrences), non-recurring use DTSTART+DTEND. Preserve
+        // stored Event.duration when populated; otherwise compute from
+        // endTs-startTs.
         val duration: Duration? = if (event.isRecurring) {
             DurationUtils.parse(event.duration) ?: Duration.ofMillis(endTs - event.startTs)
         } else null
@@ -61,7 +66,7 @@ object EventToICalEventMapper {
             alarms = remindersToAlarms(event.reminders),
             categories = event.categories.orEmpty(),
             organizer = organizerFor(event.organizerEmail, event.organizerName),
-            attendees = emptyList(),
+            attendees = attendees.map { it.toICalAttendee() },
             color = iCalColorFor(event.color),
             dtstamp = ICalDateTime.fromTimestamp(event.dtstamp, null, false),
             lastModified = ICalDateTime.fromTimestamp(event.updatedAt, null, false),
@@ -83,14 +88,28 @@ object EventToICalEventMapper {
      * When `exception.originalInstanceTime` is null, the importId falls through
      * to "master.uid:RECID:null" — this is documented pre-existing behavior
      * (IcsPatcher.kt:274 before extraction) and is preserved intentionally here.
+     *
+     * @param attendees Optional per-exception ATTENDEE rows. Defaulted
+     *   empty so existing call sites continue to behave as before; the
+     *   push path passes the real list to preserve per-exception
+     *   attendee state on recurring-event push.
      */
-    fun toICalEvent(master: Event, exception: Event): ICalEvent =
-        toICalEvent(masterUid = master.uid, exception = exception)
+    fun toICalEvent(
+        master: Event,
+        exception: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()
+    ): ICalEvent = toICalEvent(masterUid = master.uid, exception = exception, attendees = attendees)
 
     /**
      * Convenience overload for callers that only have the master UID.
+     *
+     * @param attendees Optional per-exception ATTENDEE rows. Defaulted empty.
      */
-    fun toICalEvent(masterUid: String, exception: Event): ICalEvent {
+    fun toICalEvent(
+        masterUid: String,
+        exception: Event,
+        attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()
+    ): ICalEvent {
         val zone = resolveZone(exception.timezone)
         val endZone = resolveZone(exception.endTimezone) ?: zone
         val recurrenceId = exception.originalInstanceTime?.let {
@@ -116,7 +135,7 @@ object EventToICalEventMapper {
             alarms = remindersToAlarms(exception.reminders),
             categories = exception.categories.orEmpty(),
             organizer = organizerFor(exception.organizerEmail, exception.organizerName),
-            attendees = emptyList(),
+            attendees = attendees.map { it.toICalAttendee() },
             color = iCalColorFor(exception.color),
             dtstamp = ICalDateTime.fromTimestamp(exception.dtstamp, null, false),
             lastModified = ICalDateTime.fromTimestamp(exception.updatedAt, null, false),
@@ -182,6 +201,42 @@ object EventToICalEventMapper {
     private fun organizerFor(email: String?, name: String?): Organizer? {
         if (email == null) return null
         return Organizer(email = email, name = name, sentBy = null)
+    }
+
+    /**
+     * Translate a Room [org.onekash.kashcal.data.db.entity.Attendee] into the
+     * icaldav-core [org.onekash.icaldav.model.Attendee]. Inverse of
+     * `ICalEventMapper.toRoomEntity` (the pull-side mapping).
+     *
+     * Asymmetry: the Room `address` field carries the `mailto:` prefix verbatim
+     * (since servers may also emit `urn:uuid:` or principal-relative paths);
+     * icaldav-core's `email` is the bare local-part-plus-domain. Strip
+     * `mailto:` here so the generator re-prefixes it on emit.
+     */
+    private fun org.onekash.kashcal.data.db.entity.Attendee.toICalAttendee():
+        org.onekash.icaldav.model.Attendee {
+        val bareEmail = org.onekash.kashcal.util.AddressNormalizer.stripMailto(address)
+        return org.onekash.icaldav.model.Attendee(
+            email = bareEmail,
+            name = displayName,
+            partStat = org.onekash.icaldav.model.PartStat.fromString(partstat),
+            role = org.onekash.icaldav.model.AttendeeRole.fromString(role),
+            rsvp = rsvp,
+            cutype = org.onekash.icaldav.model.CUType.fromString(cutype),
+            member = member,
+            delegatedTo = delegatedTo,
+            delegatedFrom = delegatedFrom,
+            sentBy = sentBy,
+            scheduleAgent = scheduleAgent?.let {
+                org.onekash.icaldav.model.ScheduleAgent.fromString(it)
+            },
+            scheduleStatus = scheduleStatus?.let {
+                listOf(org.onekash.icaldav.model.ScheduleStatus.fromString(it))
+            },
+            scheduleForceSend = scheduleForceSend?.let {
+                org.onekash.icaldav.model.ScheduleForceSend.fromString(it)
+            }
+        )
     }
 
     private fun remindersToAlarms(reminders: List<String>?): List<ICalAlarm> {

@@ -54,6 +54,7 @@
     <string name="action_save">Сақтау</string>
     <string name="action_add">Қосу</string>
     <string name="action_edit">Өңдеу</string>
+    <string name="action_open">Ашу</string>
     <string name="action_delete">Жою</string>
     <string name="action_confirm">Растау</string>
     <string name="action_discard">Қабылдамау</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics ретінде экспорттау</string>
     <string name="action_confirm_delete">Жоюды растау</string>
     <string name="action_delete_event">Оқиғаны жою</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Қабылдау</string>
+    <string name="rsvp_action_tentative">Шартты түрде</string>
+    <string name="rsvp_action_decline">Бас тарту</string>
+    <string name="rsvp_series_disclosure">Жауабыңыз бүкіл серияға қолданылады.</string>
+    <string name="rsvp_modified_snackbar">%1$s үшін RSVP сәтсіз аяқталды — оқиға өзгертілді. Қайта жауап беріңіз.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Тек мынау</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Күні бойы</string>
     <string name="label_today">Бүгін</string>
     <string name="label_go_to_date">Күнге өту</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Апта</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Параметрлер</string>
@@ -254,10 +265,7 @@
     <string name="cd_close">Жабу</string>
     <string name="cd_search">Іздеу</string>
     <string name="cd_create_event">Оқиға жасау</string>
-    <string name="cd_settings">Параметрлер</string>
     <string name="cd_today">Бүгін</string>
-    <string name="cd_previous_week">Алдыңғы апта</string>
-    <string name="cd_next_week">Келесі апта</string>
     <string name="cd_delete">Жою</string>
     <string name="cd_refresh">Жаңарту</string>
     <string name="cd_more_options">Қосымша параметрлер</string>
@@ -434,6 +442,7 @@
     <string name="settings_device_calendars">Құрылғы күнтізбелері</string>
     <string name="settings_quick_event_add">Жылдам оқиға қосу</string>
     <string name="settings_week_numbers">Апта нөмірлері</string>
+    <string name="settings_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="settings_widget_event_limit">Виджет оқиға шектеуі</string>
     <string name="settings_sync_lookback">Синхрондау кері кезеңі</string>
     <string name="settings_auto_detect_emojis">Эмодзиді автоматты анықтау</string>
@@ -502,7 +511,6 @@
     <string name="device_calendars_grant">Рұқсат беру</string>
     <string name="device_calendars_none_found">Құрылғы күнтізбелері табылмады.</string>
     <string name="device_calendars_local">Жергілікті</string>
-    <string name="device_calendars_show_declined">Қабылданбаған оқиғаларды көрсету</string>
     <string name="device_calendars_reminders">Еске салғыштар</string>
     <string name="device_calendars_reminders_desc">Құрылғы күнтізбесі оқиғалары үшін хабарландыру алу</string>
     <string name="device_calendars_read_only_no_write">Тек оқу (жазу рұқсаты жоқ)</string>
@@ -684,16 +692,19 @@
 
     <string name="cd_clear">Тазалау</string>
     <string name="cd_offline">Желіден тыс</string>
-    <string name="cd_previous">Алдыңғы</string>
-    <string name="cd_next">Келесі</string>
     <string name="cd_open_drawer">Тартпаны ашу</string>
     <string name="cd_close_drawer">Тартпаны жабу</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Мәзірді ашу</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Мәзірді жабу</string>
     <string name="cd_calendar_view">Күнтізбе көрінісі</string>
     <string name="cd_active_view">Белсенді көрініс</string>
 
     <string name="view_agenda">Күн тәртібі</string>
     <string name="view_month_full">Ай (толық)</string>
     <string name="view_three_days">3 күн</string>
+    <string name="view_day">Күн</string>
     <string name="view_year">Жыл</string>
     <string name="view_insights">Статистика</string>
 
@@ -722,8 +733,6 @@
     <string name="sync_summary_removed">%1$d жойылды</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Алдыңғы 3 күн</string>
-    <string name="cd_next_3_days">Келесі 3 күн</string>
     <string name="cd_circular_scrolling">Дөңгелек айналдыру қосулы</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -906,6 +915,9 @@
     <string name="channel_sync_progress_desc">Күнтізбелерді синхрондау кезінде прогрессті көрсетеді</string>
     <string name="channel_sync_status">Синхрондау күйі</string>
     <string name="channel_sync_status_desc">Синхрондаудың аяқталуы және қателері туралы хабарламалар</string>
+    <string name="channel_event_invitations">Оқиға шақырулары</string>
+    <string name="channel_event_invitations_desc">Жаңа күнтізбе шақыруын алған кездегі хабарламалар</string>
+    <string name="invite_notification_body">%1$s жіберген · Жауап беру үшін түртіңіз</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Қайталанбайды</string>
@@ -1053,4 +1065,14 @@
     <string name="attendee_status_tentative">Шамамен</string>
     <string name="attendee_status_delegated">Тапсырылды</string>
     <string name="attendee_status_pending">Күтілуде</string>
+    <string name="inbox_empty_caught_up">Барлығы өңделді</string>
+    <string name="inbox_organizer_suffix">(ұйымдастырушы)</string>
+    <string name="menu_invites">Шақырулар</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Күні</string>
+    <string name="menu_more">Қосымша мәзір</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Қосымша мәзір, %d шақыру күтілуде</item>
+        <item quantity="other">Қосымша мәзір, %d шақыру күтілуде</item>
+    </plurals>
 </resources>

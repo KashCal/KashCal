@@ -15,16 +15,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for critical patterns documented in CLAUDE.md.
+ * Regression tests for critical exception-handling invariants in icaldav integration.
  *
- * These tests ensure that icaldav library integration doesn't break
- * any of the critical patterns that prevent bugs in KashCal.
+ * These tests ensure that icaldav library integration doesn't break the
+ * exception-event invariants that prevent bugs in KashCal.
  *
- * Critical patterns tested:
- * - Pattern 8: Exception Events Share Master UID
- * - Pattern 11: Exception Events Require Special Handling
- * - Pattern 12: Load Exception Events Using exceptionEventId
- * - Pattern 13: Two Exception Occurrence Models Coexist
+ * Areas covered:
+ * - Exception events share master UID
+ * - Exception events require special handling
+ * - Load exception events using exceptionEventId
+ * - Two exception occurrence models coexist
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -34,7 +34,7 @@ class CriticalPatternMigrationTest {
     private val generator = ICalGenerator()
 
     // =============================================================================
-    // Pattern 8: Exception Events Share Master UID
+    // Exception Events Share Master UID
     // =============================================================================
 
     @Test
@@ -167,7 +167,7 @@ class CriticalPatternMigrationTest {
     }
 
     // =============================================================================
-    // Pattern 11: Exception Events Require Special Handling
+    // Exception Events Require Special Handling
     // =============================================================================
 
     @Test
@@ -253,7 +253,7 @@ class CriticalPatternMigrationTest {
     }
 
     // =============================================================================
-    // Pattern 12: Load Exception Events Using exceptionEventId
+    // Load Exception Events Using exceptionEventId
     // =============================================================================
 
     @Test
@@ -324,7 +324,7 @@ class CriticalPatternMigrationTest {
     }
 
     // =============================================================================
-    // Pattern 13: Two Exception Occurrence Models Coexist
+    // Two Exception Occurrence Models Coexist
     // =============================================================================
 
     @Test

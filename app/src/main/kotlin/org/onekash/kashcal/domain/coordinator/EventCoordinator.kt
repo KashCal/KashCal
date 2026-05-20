@@ -1,10 +1,12 @@
 package org.onekash.kashcal.domain.coordinator
 
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.contacts.ContactAnniversaryRepository
 import org.onekash.kashcal.data.contacts.ContactBirthdayRepository
 import org.onekash.kashcal.data.contacts.ContactEventSyncResult
+import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
@@ -63,7 +65,8 @@ class EventCoordinator @Inject constructor(
     private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val reminderScheduler: ReminderScheduler,
-    private val widgetUpdateManager: WidgetUpdateManager
+    private val widgetUpdateManager: WidgetUpdateManager,
+    private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier
 ) {
     // ========== Initialization ==========
 
@@ -1111,6 +1114,88 @@ class EventCoordinator @Inject constructor(
     }
 
     // ========== Contact Event Counts ==========
+
+    // ========== RSVP ==========
+
+    /**
+     * Write the user's RSVP for an event they're attending.
+     *
+     * 1. Updates the local attendee row's PARTSTAT (optimistic UI — chip row
+     *    flips immediately).
+     * 2. Queues a PARTSTAT-only PendingOperation; the next sync turns it into
+     *    a surgical CalDAV PUT that preserves every other ATTENDEE row,
+     *    ORGANIZER, SUMMARY, etc.
+     * 3. Triggers expedited sync so the response reaches the organizer
+     *    promptly (matching the create/update path).
+     *
+     * @param status A PARTSTAT value (RFC 5545 §3.2.12). Canonicalized to
+     *   uppercase by the underlying writer; caller may pass any case.
+     * @return true when the local attendee row matched and was updated.
+     *   false when no attendee row matches the account — caller should
+     *   surface "you're not on this event's attendee list" feedback.
+     */
+    suspend fun replyRsvp(eventId: Long, status: String): Boolean {
+        val event = eventReader.getEventById(eventId) ?: return false
+        val calendar = eventReader.getCalendarById(event.calendarId) ?: return false
+        val account = accountRepository.getAccountById(calendar.accountId) ?: return false
+
+        val ok = eventWriter.replyRsvp(eventId, account, status)
+        if (ok) {
+            if (status.trim().uppercase() == "DECLINED") {
+                try {
+                    reminderScheduler.cancelRemindersForEvent(eventId)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.w(TAG, "Reminder cancel failed for event $eventId, " +
+                        "ReminderRefreshWorker will recover", e)
+                }
+            } else {
+                rescheduleRemindersForEvent(event)
+            }
+
+            try {
+                inviteNotifier.cancelForEvent(eventId)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.w(TAG, "Invite cancel failed for event $eventId: ${e.message}")
+            }
+            triggerImmediatePushIfNeeded(isLocal = false)
+            triggerWidgetUpdate()
+        }
+        return ok
+    }
+
+    /**
+     * Save the user's reminder set on an event they're an attendee of.
+     *
+     * Local-only: per-attendee VALARMs (RFC 5545 §3.6.6) are written to
+     * the local event row; on-device AlarmManager fires from the new
+     * list. No server PUT is queued — see [EventWriter.saveAttendeeReminders]
+     * for the rationale.
+     *
+     * Reminders pass through to [EventWriter] as a `List<Int>` of
+     * minutes-before for ergonomic call-site simplicity; the writer
+     * converts to ISO-8601 list at the storage boundary.
+     *
+     * @return [Result.success] with the updated [Event] for caller-side
+     *   reminder rescheduling, or [Result.failure] when the event
+     *   doesn't exist.
+     */
+    suspend fun saveAttendeeReminders(eventId: Long, reminders: List<Int>): Result<Event> {
+        val event = eventReader.getEventById(eventId)
+            ?: return Result.failure(IllegalStateException("Event not found: $eventId"))
+
+        // Reuse the shared formatter — same one ContactEventUtils,
+        // QuickAddViewModel, and the contact-event repository call.
+        val isoStrings = reminders.map(ContactEventUtils::minutesToIsoDuration)
+        eventWriter.saveAttendeeReminders(eventId, isoStrings)
+
+        // Reschedule alarms so the new set fires from AlarmManager.
+        val updated = event.copy(reminders = isoStrings, alarmCount = isoStrings.size)
+        rescheduleRemindersForEvent(updated)
+        triggerWidgetUpdate()
+        return Result.success(updated)
+    }
 
     /**
      * Get the number of birthday events.

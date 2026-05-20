@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.strategy
 
+import io.mockk.mockk
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -97,7 +98,10 @@ class PullStrategyEtagFallbackTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
     }
 
@@ -490,8 +494,8 @@ class PullStrategyEtagFallbackTest {
 
     @Test
     fun `etag fallback preserves recurring events outside time window`() = runTest {
-        // CLAUDE.md Pattern 5: Recurring events' start_ts/end_ts represent only the
-        // first occurrence. The DAO query includes them via "rrule IS NOT NULL" bypass.
+        // Recurring events' start_ts/end_ts represent only the first occurrence.
+        // The DAO query includes them via "rrule IS NOT NULL" bypass.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val recurringHref = "/calendars/home/weekly.ics"
         val recurringUrl = "https://caldav.example.com$recurringHref"

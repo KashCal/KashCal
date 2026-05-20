@@ -42,7 +42,7 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
  * - Stored in UI state
  * - Cleared after action handling
  *
- * Critical patterns tested (from CLAUDE.md):
+ * Areas covered:
  * - Error handling flows
  * - Action callback handling
  */

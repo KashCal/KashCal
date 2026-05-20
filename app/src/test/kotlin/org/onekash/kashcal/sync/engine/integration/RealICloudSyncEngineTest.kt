@@ -106,6 +106,13 @@ class RealICloudSyncEngineTest {
         val syncLogsDao = database.syncLogsDao()
 
         val calendarRepository = CalendarRepositoryImpl(calendarsDao)
+        // PARTSTAT-only RSVP path resolves the account via this repository.
+        // The integration tests in this file don't exercise that path, so a
+        // relaxed mock is sufficient — full Account resolution comes from
+        // production DI in the live app.
+        val accountRepository = io.mockk.mockk<
+            org.onekash.kashcal.data.repository.AccountRepository
+        >(relaxed = true)
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
         val testPrefsDataStore = PreferenceDataStoreFactory.create(
@@ -135,13 +142,17 @@ class RealICloudSyncEngineTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
 
         val pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao
+            pendingOperationsDao = pendingOperationsDao,
+            accountRepository = accountRepository
         )
 
         val conflictResolver = ConflictResolver(
@@ -149,7 +160,8 @@ class RealICloudSyncEngineTest {
             eventsDao = eventsDao,
             attendeesDao = database.attendeesDao(),
             pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator
+            occurrenceGenerator = occurrenceGenerator,
+            database = database
         )
 
         // Only SyncNotificationManager is mocked — it needs Android notification system

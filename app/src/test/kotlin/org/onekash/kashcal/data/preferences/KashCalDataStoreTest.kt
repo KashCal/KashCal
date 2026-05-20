@@ -19,6 +19,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
@@ -332,6 +333,23 @@ class KashCalDataStoreTest {
             throw AssertionError("Expected IllegalArgumentException")
         } catch (e: IllegalArgumentException) {
             // Expected
+        }
+    }
+
+    /**
+     * Locks the VALID_VIEWS allowlist to the ViewMode enum: every persistable
+     * ViewMode key must round-trip through setDefaultCalendarView. Adding a new
+     * ViewMode without updating VALID_VIEWS will fail this test.
+     *
+     * INSIGHTS is excluded — HomeViewModel.setViewMode() never persists it.
+     */
+    @Test
+    fun `every persistable ViewMode key round-trips through setDefaultCalendarView`() = runTest {
+        val persistableModes = ViewMode.entries.filter { it != ViewMode.INSIGHTS }
+
+        for (mode in persistableModes) {
+            dataStore.setDefaultCalendarView(mode.key)
+            assertEquals(mode.key, dataStore.getDefaultCalendarView())
         }
     }
 }

@@ -3,9 +3,11 @@ package org.onekash.kashcal.sync.strategy
 import android.util.Log
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
@@ -30,7 +32,8 @@ import javax.inject.Inject
 class PushStrategy @Inject constructor(
     private val calendarRepository: CalendarRepository,
     private val eventsDao: EventsDao,
-    private val pendingOperationsDao: PendingOperationsDao
+    private val pendingOperationsDao: PendingOperationsDao,
+    private val accountRepository: AccountRepository
 ) {
     companion object {
         private const val TAG = "PushStrategy"
@@ -126,6 +129,10 @@ class PushStrategy @Inject constructor(
                     scheduleRetry(operation, "Conflict: server has newer version")
                     failed++
                     warnings.add("Push ${operationName(operation.operation)} conflict (412) for ${filenameOf(event?.caldavUrl)}")
+                }
+                is SinglePushResult.RsvpModified -> {
+                    handleRsvpModified(operation, result, warnings)
+                    failed++
                 }
                 is SinglePushResult.Error -> {
                     if (result.isRetryable && operation.shouldRetry) {
@@ -254,6 +261,10 @@ class PushStrategy @Inject constructor(
                     scheduleRetry(operation, "Conflict: server has newer version")
                     failed++
                     warnings.add("Push ${operationName(operation.operation)} conflict (412) for ${filenameOf(event?.caldavUrl)}")
+                }
+                is SinglePushResult.RsvpModified -> {
+                    handleRsvpModified(operation, result, warnings)
+                    failed++
                 }
                 is SinglePushResult.Error -> {
                     if (result.isRetryable && operation.shouldRetry) {
@@ -401,6 +412,14 @@ class PushStrategy @Inject constructor(
             return SinglePushResult.Success() // No-op, master push includes this exception
         }
 
+        // Routed BEFORE the event.caldavUrl null-check below: the queued op
+        // captures caldavUrl at queue time into operation.targetUrl, so an
+        // RSVP must drain even when Event.caldavUrl was cleared between
+        // queue and drain.
+        if (operation.partstatOnly && operation.partstatTarget != null) {
+            return processPartstatOnlyUpdate(operation, event, clientToUse)
+        }
+
         if (event.caldavUrl == null) {
             // Event was never created on server - shouldn't happen
             Log.w(TAG, "Event has no caldavUrl, treating as CREATE")
@@ -513,6 +532,117 @@ class PushStrategy @Inject constructor(
                 val error = (result as? CalDavResult.Error)
                     ?: return SinglePushResult.Error(-1, "Unexpected result type", false)
                 Log.e(TAG, "Failed to update event: ${error.message}")
+                SinglePushResult.Error(error.code, error.message, error.isRetryable)
+            }
+        }
+    }
+
+    /**
+     * Process a PARTSTAT-only RSVP write.
+     *
+     * The body sent to the server is built by patching the original rawIcal
+     * to update only the current user's PARTSTAT — every other ATTENDEE row,
+     * ORGANIZER, SUMMARY, DESCRIPTION, RRULE, and SEQUENCE survives verbatim.
+     * SEQUENCE is intentionally not bumped (RFC 5546 §2.1.4 — attendee
+     * PARTSTAT-only PUT must not bump). Some servers (iCloud) auto-bump on
+     * the wire; we tolerate that on the next pull but never assert higher
+     * SEQUENCE on the client side.
+     *
+     * 412 retry strategy:
+     * 1. First PUT 412 → fetch fresh ETag AND fresh body via fetchEvent,
+     *    re-run the patch against the new body, retry once.
+     * 2. Second 412 → return [SinglePushResult.RsvpModified] so the caller
+     *    surfaces a "this event was modified — please re-respond" snackbar
+     *    rather than auto-retrying indefinitely.
+     */
+    private suspend fun processPartstatOnlyUpdate(
+        operation: PendingOperation,
+        event: Event,
+        clientToUse: CalDavClient
+    ): SinglePushResult {
+        val partstatTarget = operation.partstatTarget
+            ?: return SinglePushResult.Error(-1, "partstat_only without partstat_target", false)
+        // Prefer the URL captured at queue time so the PUT survives any path
+        // that cleared Event.caldavUrl between queue and drain. Falls back to
+        // event.caldavUrl for ops queued by older app versions (pre-targetUrl).
+        val caldavUrl = operation.targetUrl ?: event.caldavUrl
+            ?: return SinglePushResult.Error(-1, "PARTSTAT-only on event with no caldavUrl", false)
+
+        val calendar = calendarRepository.getCalendarById(event.calendarId)
+            ?: return SinglePushResult.Error(-1, "Calendar not found for RSVP push", false)
+        val account = accountRepository.getAccountById(calendar.accountId)
+            ?: return SinglePushResult.Error(-1, "Account not found for RSVP push", false)
+
+        val firstBody = IcsPatcher.patchAttendeeReply(event.rawIcal, account, partstatTarget)
+            ?: return SinglePushResult.Error(
+                -1,
+                "Could not patch RSVP body (rawIcal missing or self attendee absent)",
+                false
+            )
+
+        // Recover etag if missing — same recovery pattern used by full-event
+        // updates above.
+        val effectiveEtag = if (!event.etag.isNullOrEmpty()) {
+            event.etag
+        } else {
+            val fetched = clientToUse.fetchEtag(caldavUrl).getOrNull()
+            if (fetched != null) {
+                eventsDao.updateEtag(event.id, fetched)
+                fetched
+            } else {
+                Log.w(TAG, "RSVP push: missing etag and PROPFIND fallback failed")
+                return SinglePushResult.Error(-1, "No etag for RSVP update", true)
+            }
+        }
+
+        Log.d(TAG, "RSVP PUT: ${event.title} (PARTSTAT=$partstatTarget)")
+        val firstResult = clientToUse.updateEvent(caldavUrl, firstBody, effectiveEtag)
+
+        return when {
+            firstResult.isSuccess() -> {
+                val newEtag = firstResult.getOrNull()
+                    ?: return SinglePushResult.Error(-1, "Null etag from RSVP PUT", false)
+                eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
+                SinglePushResult.Success(newEtag = newEtag)
+            }
+            firstResult.isConflict() -> {
+                // GET-replay-retry: refresh both ETag and rawIcal, re-patch,
+                // try once more. The body refresh is what distinguishes the
+                // RSVP retry from the full-event retry — an organizer edit
+                // may have added/removed attendees we need to preserve.
+                Log.w(TAG, "RSVP 412 for ${event.title}, refreshing body for retry")
+                val freshEtag = clientToUse.fetchEtag(caldavUrl).getOrNull()
+                val freshFetch = clientToUse.fetchEvent(caldavUrl)
+                val freshIcal = (freshFetch as? CalDavResult.Success)?.data?.icalData
+                if (freshEtag == null || freshIcal == null) {
+                    Log.w(TAG, "RSVP retry setup failed for ${event.title}")
+                    return SinglePushResult.RsvpModified(event.title)
+                }
+                eventsDao.updateEtag(event.id, freshEtag)
+                val retryBody = IcsPatcher.patchAttendeeReply(freshIcal, account, partstatTarget)
+                if (retryBody == null) {
+                    Log.w(TAG, "RSVP retry patch failed for ${event.title}")
+                    return SinglePushResult.RsvpModified(event.title)
+                }
+                val retryResult = clientToUse.updateEvent(caldavUrl, retryBody, freshEtag)
+                when {
+                    retryResult.isSuccess() -> {
+                        val newEtag = retryResult.getOrNull()
+                            ?: return SinglePushResult.Error(-1, "Null etag from RSVP retry", false)
+                        eventsDao.markSynced(event.id, newEtag, System.currentTimeMillis())
+                        Log.d(TAG, "RSVP 412 retry succeeded for ${event.title}")
+                        SinglePushResult.Success(newEtag = newEtag)
+                    }
+                    else -> {
+                        Log.w(TAG, "RSVP 412 retry also failed for ${event.title}")
+                        SinglePushResult.RsvpModified(event.title)
+                    }
+                }
+            }
+            else -> {
+                val error = (firstResult as? CalDavResult.Error)
+                    ?: return SinglePushResult.Error(-1, "Unexpected result type", false)
+                Log.e(TAG, "RSVP PUT failed: ${error.message}")
                 SinglePushResult.Error(error.code, error.message, error.isRetryable)
             }
         }
@@ -747,6 +877,25 @@ class PushStrategy @Inject constructor(
     /**
      * Schedule retry for failed operation.
      */
+    /**
+     * Mark an RSVP write that hit a second 412 as failed and append the
+     * user-facing warning. Caller increments the failed counter.
+     */
+    private suspend fun handleRsvpModified(
+        operation: PendingOperation,
+        result: SinglePushResult.RsvpModified,
+        warnings: MutableList<String>
+    ) {
+        pendingOperationsDao.markFailed(
+            operation.id,
+            "RSVP modified — user re-confirmation required",
+            System.currentTimeMillis()
+        )
+        warnings.add(
+            "RSVP for ${result.eventTitle} failed — event was modified. Please re-respond."
+        )
+    }
+
     private suspend fun scheduleRetry(operation: PendingOperation, error: String) {
         val delay = PendingOperation.calculateRetryDelay(operation.retryCount)
         val nextRetryAt = System.currentTimeMillis() + delay

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.model
 
+import android.provider.CalendarContract.Attendees
 import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -41,13 +42,23 @@ sealed interface DisplayEvent {
     val calendarName: String
     val isReadOnly: Boolean
     val isFree: Boolean
+    /**
+     * True when the current user has declined this event. Resolved per-source:
+     * Room reads it from the [Account.matchesAttendee]-matched ATTENDEE row
+     * (PARTSTAT=DECLINED) at composite-repository assembly time; Device
+     * reads it from `instance.selfAttendeeStatus`. Used by the display layer
+     * to dim and strike-through declined events when the "Show declined
+     * events" preference is on, and to filter them out when it's off.
+     */
+    val isDeclinedByMe: Boolean
 
     /** Room event with full Event + Occurrence data */
     @Immutable
     data class Room(
         val event: Event,
         val occurrence: Occurrence,
-        val calendar: Calendar?
+        val calendar: Calendar?,
+        override val isDeclinedByMe: Boolean = false
     ) : DisplayEvent {
         override val title get() = event.title
         override val description get() = event.description
@@ -82,6 +93,7 @@ sealed interface DisplayEvent {
         override val calendarName get() = instance.calendarDisplayName
         override val isReadOnly get() = !instance.isWritable
         override val isFree get() = instance.availability == 1
+        override val isDeclinedByMe get() = instance.selfAttendeeStatus == Attendees.ATTENDEE_STATUS_DECLINED
 
         /** RFC 5545 RRULE string, null for non-recurring events. */
         val rrule: String? get() = instance.rrule

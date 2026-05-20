@@ -43,6 +43,7 @@
     <string name="action_learn_more">ਹੋਰ ਜਾਣੋ</string>
     <string name="action_open_apple_id">Apple ID ਖੋਲ੍ਹੋ</string>
     <string name="action_open_settings">ਸੈਟਿੰਗਾਂ ਖੋਲ੍ਹੋ</string>
+    <string name="action_open">ਖੋਲ੍ਹੋ</string>
     <string name="action_force_sync">ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ</string>
     <string name="action_sync_now">ਹੁਣੇ ਸਿੰਕ ਕਰੋ</string>
     <string name="action_details">ਵੇਰਵੇ</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">.ics ਵਜੋਂ ਐਕਸਪੋਰਟ</string>
     <string name="action_confirm_delete">ਮਿਟਾਉਣ ਦੀ ਪੁਸ਼ਟੀ</string>
     <string name="action_delete_event">ਘਟਨਾ ਮਿਟਾਓ</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">ਸਵੀਕਾਰ</string>
+    <string name="rsvp_action_tentative">ਸੰਭਾਵੀ</string>
+    <string name="rsvp_action_decline">ਇਨਕਾਰ</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">ਇਹ ਜਵਾਬ ਪੂਰੀ ਲੜੀ \'ਤੇ ਲਾਗੂ ਹੁੰਦਾ ਹੈ।</string>
+    <string name="rsvp_modified_snackbar">%1$s ਲਈ RSVP ਅਸਫਲ ਹੋਇਆ — ਘਟਨਾ ਨੂੰ ਸੋਧਿਆ ਗਿਆ ਸੀ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਜਵਾਬ ਦਿਓ।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ਸਿਰਫ਼ ਇਹ ਇੱਕ</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">ਸਾਰਾ ਦਿਨ</string>
     <string name="label_today">ਅੱਜ</string>
     <string name="label_go_to_date">ਮਿਤੀ \'ਤੇ ਜਾਓ</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ਹਫ਼ਤਾ</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ਸੈਟਿੰਗਾਂ</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">ਬੰਦ</string>
     <string name="cd_search">ਖੋਜ</string>
     <string name="cd_create_event">ਘਟਨਾ ਬਣਾਓ</string>
-    <string name="cd_settings">ਸੈਟਿੰਗਾਂ</string>
     <string name="cd_today">ਅੱਜ</string>
-    <string name="cd_previous_week">ਪਿਛਲਾ ਹਫ਼ਤਾ</string>
-    <string name="cd_next_week">ਅਗਲਾ ਹਫ਼ਤਾ</string>
     <string name="cd_delete">ਮਿਟਾਓ</string>
     <string name="cd_refresh">ਰਿਫ਼ਰੈਸ਼</string>
     <string name="cd_more_options">ਹੋਰ ਵਿਕਲਪ</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">ਡਿਵਾਈਸ ਕੈਲੰਡਰ</string>
     <string name="settings_quick_event_add">ਤੁਰੰਤ ਘਟਨਾ ਜੋੜੋ</string>
     <string name="settings_week_numbers">ਹਫ਼ਤਾ ਨੰਬਰ</string>
+    <string name="settings_show_declined">ਨਾਮਨਜ਼ੂਰ ਕੀਤੇ ਸਮਾਗਮ ਦਿਖਾਓ</string>
     <string name="settings_widget_event_limit">ਵਿਜੇਟ ਘਟਨਾ ਸੀਮਾ</string>
     <string name="settings_sync_lookback">ਸਿੰਕ ਲੁੱਕਬੈਕ</string>
     <string name="settings_auto_detect_emojis">ਇਮੋਜੀ ਆਟੋ-ਖੋਜ</string>
@@ -483,7 +495,6 @@
     <string name="device_calendars_grant">ਦਿਓ</string>
     <string name="device_calendars_none_found">ਕੋਈ ਡਿਵਾਈਸ ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲੇ।</string>
     <string name="device_calendars_local">ਸਥਾਨਕ</string>
-    <string name="device_calendars_show_declined">ਅਸਵੀਕਾਰ ਘਟਨਾਵਾਂ ਦਿਖਾਓ</string>
     <string name="device_calendars_reminders">ਯਾਦ-ਦਹਾਨੀਆਂ</string>
     <string name="device_calendars_reminders_desc">ਡਿਵਾਈਸ ਕੈਲੰਡਰ ਘਟਨਾਵਾਂ ਲਈ ਸੂਚਿਤ ਕੀਤਾ ਜਾਓ</string>
     <string name="device_calendars_read_only_no_write">ਸਿਰਫ਼ ਪੜ੍ਹਨ (ਲਿਖਣ ਇਜਾਜ਼ਤ ਨਹੀਂ)</string>
@@ -660,16 +671,17 @@
 
     <string name="cd_clear">ਸਾਫ਼</string>
     <string name="cd_offline">ਆਫ਼ਲਾਈਨ</string>
-    <string name="cd_previous">ਪਿਛਲਾ</string>
-    <string name="cd_next">ਅਗਲਾ</string>
     <string name="cd_open_drawer">ਡ੍ਰਾਅਰ ਖੋਲ੍ਹੋ</string>
     <string name="cd_close_drawer">ਡ੍ਰਾਅਰ ਬੰਦ ਕਰੋ</string>
+    <string name="cd_open_rail">ਮੀਨੂ ਖੋਲ੍ਹੋ</string>
+    <string name="cd_close_rail">ਮੀਨੂ ਬੰਦ ਕਰੋ</string>
     <string name="cd_calendar_view">ਕੈਲੰਡਰ ਦ੍ਰਿਸ਼</string>
     <string name="cd_active_view">ਸਰਗਰਮ ਦ੍ਰਿਸ਼</string>
 
     <string name="view_agenda">ਏਜੰਡਾ</string>
     <string name="view_month_full">ਮਹੀਨਾ (ਪੂਰਾ)</string>
     <string name="view_three_days">3 ਦਿਨ</string>
+    <string name="view_day">ਦਿਨ</string>
     <string name="view_year">ਸਾਲ</string>
     <string name="view_insights">ਸੂਝ</string>
 
@@ -695,8 +707,6 @@
     <string name="sync_summary_updated">%1$d ਅੱਪਡੇਟ ਹੋਇਆ</string>
     <string name="sync_summary_removed">%1$d ਹਟਾਇਆ ਗਿਆ</string>
 
-    <string name="cd_previous_3_days">ਪਿਛਲੇ 3 ਦਿਨ</string>
-    <string name="cd_next_3_days">ਅਗਲੇ 3 ਦਿਨ</string>
     <string name="cd_circular_scrolling">ਗੋਲ ਸਕ੍ਰੋਲਿੰਗ ਸਮਰੱਥ</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -886,6 +896,9 @@
     <string name="channel_sync_progress_desc">ਕੈਲੰਡਰ ਸਿੰਕ ਕਰਦੇ ਸਮੇਂ ਪ੍ਰਗਤੀ ਦਿਖਾਉਂਦਾ ਹੈ</string>
     <string name="channel_sync_status">ਸਿੰਕ ਸਥਿਤੀ</string>
     <string name="channel_sync_status_desc">ਸਿੰਕ ਪੂਰਾ ਹੋਣ ਅਤੇ ਗਲਤੀਆਂ ਬਾਰੇ ਸੂਚਨਾਵਾਂ</string>
+    <string name="channel_event_invitations">ਘਟਨਾ ਸੱਦੇ</string>
+    <string name="channel_event_invitations_desc">ਜਦੋਂ ਤੁਹਾਨੂੰ ਨਵਾਂ ਕੈਲੰਡਰ ਸੱਦਾ ਮਿਲਦਾ ਹੈ ਤਾਂ ਸੂਚਨਾਵਾਂ</string>
+    <string name="invite_notification_body">%1$s ਤੋਂ · ਜਵਾਬ ਦੇਣ ਲਈ ਟੈਪ ਕਰੋ</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">ਦੁਹਰਾਉਂਦਾ ਨਹੀਂ</string>
@@ -1025,4 +1038,14 @@
     <string name="attendee_status_tentative">ਅਨਿਸ਼ਚਿਤ</string>
     <string name="attendee_status_delegated">ਸੌਂਪਿਆ ਗਿਆ</string>
     <string name="attendee_status_pending">ਉਡੀਕ ਵਿੱਚ</string>
+    <string name="inbox_empty_caught_up">ਸਭ ਨਿਪਟਾ ਲਿਆ</string>
+    <string name="inbox_organizer_suffix">(ਪ੍ਰਬੰਧਕ)</string>
+    <string name="menu_invites">ਸੱਦੇ</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">ਮਿਤੀ</string>
+    <string name="menu_more">ਹੋਰ ਮੀਨੂ</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">ਹੋਰ ਮੀਨੂ, %d ਸੱਦਾ ਬਕਾਇਆ</item>
+        <item quantity="other">ਹੋਰ ਮੀਨੂ, %d ਸੱਦੇ ਬਕਾਇਆ</item>
+    </plurals>
 </resources>

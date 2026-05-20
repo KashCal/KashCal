@@ -126,7 +126,8 @@ class PushStrategyExceptionRaceTest {
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao
+            pendingOperationsDao = pendingOperationsDao,
+            accountRepository = mockk(relaxed = true)
         )
     }
 

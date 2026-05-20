@@ -43,6 +43,7 @@
     <string name="action_learn_more">Més informació</string>
     <string name="action_open_apple_id">Obrir Apple ID</string>
     <string name="action_open_settings">Obrir Configuració</string>
+    <string name="action_open">Obrir</string>
     <string name="action_force_sync">Forçar sincronització</string>
     <string name="action_sync_now">Sincronitzar ara</string>
     <string name="action_details">Detalls</string>
@@ -65,6 +66,15 @@
     <string name="action_export_ics">Exportar com a .ics</string>
     <string name="action_confirm_delete">Confirmar eliminació</string>
     <string name="action_delete_event">Eliminar esdeveniment</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Acceptar</string>
+    <string name="rsvp_action_tentative">Provisional</string>
+    <string name="rsvp_action_decline">Rebutjar</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <string name="rsvp_series_disclosure">La resposta s\'aplica a tota la sèrie.</string>
+    <string name="rsvp_modified_snackbar">La resposta per a %1$s ha fallat: l\'esdeveniment s\'ha modificat. Torna a respondre.</string>
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Només aquest</string>
@@ -94,6 +104,9 @@
     <string name="label_all_day">Tot el dia</string>
     <string name="label_today">Avui</string>
     <string name="label_go_to_date">Anar a la data</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Setmana</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
     <string name="settings_title">Configuració</string>
@@ -235,10 +248,7 @@
     <string name="cd_close">Tancar</string>
     <string name="cd_search">Cercar</string>
     <string name="cd_create_event">Crear esdeveniment</string>
-    <string name="cd_settings">Configuració</string>
     <string name="cd_today">Avui</string>
-    <string name="cd_previous_week">Setmana anterior</string>
-    <string name="cd_next_week">Setmana següent</string>
     <string name="cd_delete">Eliminar</string>
     <string name="cd_refresh">Actualitzar</string>
     <string name="cd_more_options">Més opcions</string>
@@ -415,6 +425,7 @@
     <string name="settings_device_calendars">Calendaris del dispositiu</string>
     <string name="settings_quick_event_add">Afegir esdeveniment ràpid</string>
     <string name="settings_week_numbers">Números de setmana</string>
+    <string name="settings_show_declined">Mostra els esdeveniments rebutjats</string>
     <string name="settings_widget_event_limit">Límit d\'esdeveniments del widget</string>
     <string name="settings_sync_lookback">Sincronitzar retrospectivament</string>
     <string name="settings_auto_detect_emojis">Detecció automàtica d\'emojis</string>
@@ -482,7 +493,6 @@
     <string name="device_calendars_grant">Concedir</string>
     <string name="device_calendars_none_found">No s\'han trobat calendaris del dispositiu.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_show_declined">Mostrar esdeveniments rebutjats</string>
     <string name="device_calendars_reminders">Recordatoris</string>
     <string name="device_calendars_reminders_desc">Rep notificacions per als esdeveniments del calendari del dispositiu</string>
     <string name="device_calendars_read_only_no_write">Només lectura (sense permís d\'escriptura)</string>
@@ -664,14 +674,17 @@
 
     <string name="cd_clear">Esborrar</string>
     <string name="cd_offline">Fora de línia</string>
-    <string name="cd_previous">Anterior</string>
-    <string name="cd_next">Següent</string>
     <string name="cd_open_drawer">Obrir calaix</string>
     <string name="cd_close_drawer">Tancar calaix</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Obrir menú</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Tancar menú</string>
     <string name="cd_calendar_view">Vista de calendari</string>
     <string name="cd_active_view">Vista activa</string>
 
     <string name="view_agenda">Agenda</string>
+    <string name="view_day">Dia</string>
     <string name="view_month_full">Mes (complet)</string>
     <string name="view_three_days">3 dies</string>
     <string name="view_year">Any</string>
@@ -728,8 +741,6 @@
     <string name="sync_summary_removed">%1$d eliminats</string>
 
     <!-- Additional Content Descriptions -->
-    <string name="cd_previous_3_days">3 dies anteriors</string>
-    <string name="cd_next_3_days">3 dies següents</string>
     <string name="cd_circular_scrolling">Desplaçament circular activat</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +921,9 @@
     <string name="channel_sync_progress_desc">Mostra el progrés mentre se sincronitzen els calendaris</string>
     <string name="channel_sync_status">Estat de sincronització</string>
     <string name="channel_sync_status_desc">Notificacions sobre la finalització i errors de sincronització</string>
+    <string name="channel_event_invitations">Invitacions a esdeveniments</string>
+    <string name="channel_event_invitations_desc">Notificacions quan reps una nova invitació de calendari</string>
+    <string name="invite_notification_body">De %1$s · Toca per respondre</string>
 
     <!-- Insights -->
     <string name="insights_title">Perspectiva</string>
@@ -960,7 +974,6 @@
     <string name="label_calendar_default">Per defecte del calendari</string>
     <string name="label_custom">Personalitzat</string>
     <string name="cd_event_color">Color de l\'esdeveniment</string>
-
 
     <string name="cd_checkmark">Seleccionat</string>
     <string name="label_device_timezone">Zona horària del dispositiu</string>
@@ -1036,4 +1049,14 @@
     <string name="attendee_status_tentative">Provisional</string>
     <string name="attendee_status_delegated">Delegat</string>
     <string name="attendee_status_pending">Pendent</string>
+    <string name="inbox_empty_caught_up">Tot al dia</string>
+    <string name="inbox_organizer_suffix">(organitzador)</string>
+    <string name="menu_invites">Invitacions</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Data</string>
+    <string name="menu_more">Menú més</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menú més, %d invitació pendent</item>
+        <item quantity="other">Menú més, %d invitacions pendents</item>
+    </plurals>
 </resources>

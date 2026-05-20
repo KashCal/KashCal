@@ -14,12 +14,15 @@ import org.onekash.icaldav.parser.ICalParser
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
+import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.model.CalDavResult
@@ -63,7 +66,10 @@ class PullStrategy @Inject constructor(
     private val attendeesDao: AttendeesDao,
     private val occurrenceGenerator: OccurrenceGenerator,
     @Suppress("DEPRECATION") private val defaultQuirks: CalDavQuirks,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val inviteNotifier: org.onekash.kashcal.sync.notification.InviteNotifier,
+    private val accountRepository: org.onekash.kashcal.data.repository.AccountRepository,
+    private val reminderScheduler: org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 ) {
     // icaldav parser instance
     private val icalParser = ICalParser()
@@ -152,7 +158,7 @@ class PullStrategy @Inject constructor(
                     lastException = e
                     Log.w(TAG, "DB locked (attempt ${attempt + 1}/$MAX_DB_RETRIES), retrying...")
                     if (attempt < MAX_DB_RETRIES - 1) {
-                        // Bounded bit-shift per CLAUDE.md pattern 10
+                        // Bounded bit-shift to cap exponential backoff
                         val backoff = INITIAL_DB_RETRY_DELAY_MS * (1L shl attempt.coerceIn(0, 4))
                         delay(backoff)
                     }
@@ -836,6 +842,32 @@ class PullStrategy @Inject constructor(
     )
 
     /**
+     * Cancel armed alarms when a server pull brings a fresh self-decline
+     * (server-side DECLINED) or removes the user from the attendee list
+     * (uninvite). AlarmManager is process-wide and not transactional, so
+     * this fires post-transaction; failures here must not abort the pull.
+     */
+    private suspend fun cancelRemindersIfSelfDeclined(
+        eventId: Long,
+        priorAttendees: List<Attendee>,
+        newAttendees: List<Attendee>,
+        account: Account?
+    ) {
+        if (account == null) return
+        val newSelf = newAttendees.firstOrNull { account.matchesAttendee(it.address) }
+        val priorHadSelf = priorAttendees.any { account.matchesAttendee(it.address) }
+        val newSelfDeclined = newSelf?.partstat?.uppercase() == "DECLINED"
+        val uninvited = priorHadSelf && newSelf == null
+        if (!newSelfDeclined && !uninvited) return
+        try {
+            reminderScheduler.cancelRemindersForEvent(eventId)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.w(TAG, "Decline cancel failed for event $eventId: ${e.message}")
+        }
+    }
+
+    /**
      * Process fetched events: parse, map, and save to database.
      * Returns counts and individual SyncChange objects for UI notification.
      *
@@ -855,6 +887,11 @@ class PullStrategy @Inject constructor(
         var added = 0
         var updated = 0
         val changes = mutableListOf<SyncChange>()
+
+        // Resolve the calendar's account once for the whole batch — feeds
+        // the per-event invite-notification check without re-querying the
+        // account row for every event in the pull.
+        val accountForInvites = accountRepository.getAccountById(calendar.accountId)
 
         // First pass: collect all parsed events, separate masters from exceptions
         val masterEvents = mutableListOf<ParsedEventWithMeta>()
@@ -995,11 +1032,15 @@ class PullStrategy @Inject constructor(
             // TRANSACTION: Upsert event and generate occurrences atomically
             // Prevents orphaned events (no occurrences) if crash occurs mid-operation
             // Wrapped in withDbRetry for resilience against database lock errors
-            val savedEvent = try {
+            val savedPair: Pair<Event, List<Attendee>> = try {
                 withDbRetry {
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+
+                        // Pre-replace snapshot lets the post-transaction
+                        // decline-cancel hook detect uninvites.
+                        val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 
                         // Persist server-authoritative attendee set inside the
                         // same transaction (replace-not-merge per A2).
@@ -1021,7 +1062,7 @@ class PullStrategy @Inject constructor(
                             occurrenceGenerator.regenerateOccurrences(saved)
                         }
 
-                        saved // Return from transaction
+                        saved to priorAttendees
                     }
                 }
             } catch (_: SQLiteConstraintException) {
@@ -1039,7 +1080,35 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
+            val savedEvent = savedPair.first
+            val priorAttendees = savedPair.second
+
             uidToMasterEvent[meta.parsed.uid] = savedEvent
+
+            // Fire the per-invite system notification after the
+            // transaction commits. The notifier filters for self-on-list +
+            // PARTSTAT=NEEDS-ACTION + notified_at IS NULL, so the call is
+            // cheap no-op for events that don't qualify. Skipped entirely
+            // when the calendar's account couldn't be resolved (orphan
+            // calendar — no user identity to match against attendees).
+            if (accountForInvites != null) {
+                try {
+                    inviteNotifier.notifyNew(savedEvent, accountForInvites)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.w(TAG, "Invite notify failed for event ${savedEvent.id}: ${e.message}")
+                }
+            }
+
+            // Run BEFORE the etag-only short-circuit below so PARTSTAT-only
+            // deltas — which leave hasContentChanged returning false — still
+            // cancel the alarm.
+            cancelRemindersIfSelfDeclined(
+                eventId = savedEvent.id,
+                priorAttendees = priorAttendees,
+                newAttendees = mapped.attendees,
+                account = accountForInvites
+            )
 
             // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
             if (existingEvent != null && !hasContentChanged(existingEvent, savedEvent)) {
@@ -1171,11 +1240,13 @@ class PullStrategy @Inject constructor(
             // Uses Model B (linked occurrence) consistently to prevent duplicates.
             // linkException handles: delete Model A occurrence (if exists), update/create Model B.
             // Wrapped in withDbRetry for resilience against database lock errors
-            val savedExceptionEvent = try {
+            val savedExceptionPair: Pair<Event, List<Attendee>> = try {
                 withDbRetry {
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
                         val saved = event.copy(id = if (eventId != -1L) eventId else event.id)
+
+                        val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 
                         // Persist attendee rows for the exception event in
                         // the same transaction. Exception events have their
@@ -1195,7 +1266,7 @@ class PullStrategy @Inject constructor(
                             occurrenceGenerator.regenerateOccurrences(saved)
                         }
 
-                        saved // Return from transaction
+                        saved to priorAttendees
                     }
                 }
             } catch (_: SQLiteConstraintException) {
@@ -1206,6 +1277,16 @@ class PullStrategy @Inject constructor(
                 sessionBuilder?.addWarning("Already-synced exception skipped at ${filenameOf(meta.caldavUrl)}")
                 continue
             }
+
+            val savedExceptionEvent = savedExceptionPair.first
+            val priorExceptionAttendees = savedExceptionPair.second
+
+            cancelRemindersIfSelfDeclined(
+                eventId = savedExceptionEvent.id,
+                priorAttendees = priorExceptionAttendees,
+                newAttendees = mappedException.attendees,
+                account = accountForInvites
+            )
 
             // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
             if (existingException != null && !hasContentChanged(existingException, savedExceptionEvent)) {

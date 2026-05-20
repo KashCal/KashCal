@@ -28,12 +28,13 @@ import java.time.LocalDate
  * Displays a single day column in the week view time grid.
  *
  * Shows timed events positioned based on their start time and duration.
- * Handles overlapping events by stacking (max 2 visible, then "+N more" badge).
+ * Handles overlapping events by stacking up to [maxVisibleOverlap] side-by-side, then "+N more" badge.
  *
  * @param date The date this column represents
  * @param events List of DisplayEvent for this day
  * @param hourHeight Height of one hour in the grid
  * @param isToday True if this column is today
+ * @param maxVisibleOverlap Max number of overlapping events shown side-by-side before overflow badge
  * @param onEventClick Called when an event is tapped
  * @param onOverflowClick Called when "+N more" badge is tapped (with list of overflow events)
  * @param onEmptyTap Called when user taps on empty space (hour, minute snapped to 15-min intervals)
@@ -48,6 +49,7 @@ fun DayColumn(
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
     startHour: Int = WeekViewUtils.START_HOUR,
+    maxVisibleOverlap: Int = WeekViewUtils.MAX_VISIBLE_OVERLAP,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },  // (date, hour, minute)
@@ -116,7 +118,7 @@ fun DayColumn(
 
         // Render event groups
         groupedEvents.forEach { group ->
-            val (visibleEvents, overflowCount) = WeekViewUtils.groupForDisplay(group)
+            val (visibleEvents, overflowCount) = WeekViewUtils.groupForDisplay(group, maxVisibleOverlap)
 
             visibleEvents.forEachIndexed { index, positioned ->
                 // Calculate position within the column
@@ -156,7 +158,7 @@ fun DayColumn(
                     count = overflowCount,
                     onClick = {
                         val overflowEvents = group
-                            .filter { it.overlapIndex >= WeekViewUtils.MAX_VISIBLE_OVERLAP }
+                            .filter { it.overlapIndex >= maxVisibleOverlap }
                             .map { it.displayEvent }
                         onOverflowClick(overflowEvents)
                     },

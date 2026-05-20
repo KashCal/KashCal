@@ -54,6 +54,7 @@
     <string name="action_save">Mentés</string>
     <string name="action_add">Hozzáadás</string>
     <string name="action_edit">Szerkesztés</string>
+    <string name="action_open">Megnyitás</string>
     <string name="action_delete">Törlés</string>
     <string name="action_confirm">Megerősítés</string>
     <string name="action_discard">Elvetés</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">Exportálás .ics-ként</string>
     <string name="action_confirm_delete">Törlés megerősítése</string>
     <string name="action_delete_event">Esemény törlése</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Elfogadás</string>
+    <string name="rsvp_action_tentative">Bizonytalan</string>
+    <string name="rsvp_action_decline">Elutasítás</string>
+    <string name="rsvp_series_disclosure">A válasz a teljes sorozatra érvényes.</string>
+    <string name="rsvp_modified_snackbar">A válasz a következőre nem sikerült: %1$s — az eseményt módosították. Kérjük, válaszoljon újra.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Csak ezt</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Egész napos</string>
     <string name="label_today">Ma</string>
     <string name="label_go_to_date">Ugrás dátumra</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Hét</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Beállítások</string>
@@ -256,10 +267,7 @@
     <string name="cd_close">Bezárás</string>
     <string name="cd_search">Keresés</string>
     <string name="cd_create_event">Esemény létrehozása</string>
-    <string name="cd_settings">Beállítások</string>
     <string name="cd_today">Ma</string>
-    <string name="cd_previous_week">Előző hét</string>
-    <string name="cd_next_week">Következő hét</string>
     <string name="cd_delete">Törlés</string>
     <string name="cd_refresh">Frissítés</string>
     <string name="cd_more_options">További lehetőségek</string>
@@ -439,6 +447,7 @@
     <string name="settings_device_calendars">Eszköz naptárak</string>
     <string name="settings_quick_event_add">Gyors esemény hozzáadás</string>
     <string name="settings_week_numbers">Hétszámok</string>
+    <string name="settings_show_declined">Visszautasított események megjelenítése</string>
     <string name="settings_widget_event_limit">Widget eseménykorlát</string>
     <string name="settings_sync_lookback">Szinkronizálási visszatekintés</string>
     <string name="settings_auto_detect_emojis">Emojik automatikus felismerése</string>
@@ -506,7 +515,6 @@
     <string name="device_calendars_grant">Megadás</string>
     <string name="device_calendars_none_found">Nem található eszköz naptár.</string>
     <string name="device_calendars_local">Helyi</string>
-    <string name="device_calendars_show_declined">Elutasított események megjelenítése</string>
     <string name="device_calendars_reminders">Emlékeztetők</string>
     <string name="device_calendars_reminders_desc">Értesítések az eszköz naptáreseményeiről</string>
     <string name="device_calendars_read_only_no_write">Csak olvasható (nincs írási engedély)</string>
@@ -688,15 +696,18 @@
 
     <string name="cd_clear">Törlés</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Előző</string>
-    <string name="cd_next">Következő</string>
     <string name="cd_open_drawer">Fiók megnyitása</string>
     <string name="cd_close_drawer">Fiók bezárása</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Menü megnyitása</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Menü bezárása</string>
     <string name="cd_calendar_view">Naptár nézet</string>
     <string name="cd_active_view">Aktív nézet</string>
 
     <string name="view_agenda">Napirend</string>
     <string name="view_month_full">Hónap (teljes)</string>
+    <string name="view_day">Nap</string>
     <string name="view_three_days">3 nap</string>
     <string name="view_year">Év</string>
     <string name="view_insights">Áttekintés</string>
@@ -726,8 +737,6 @@
     <string name="sync_summary_removed">%1$d eltávolítva</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Előző 3 nap</string>
-    <string name="cd_next_3_days">Következő 3 nap</string>
     <string name="cd_circular_scrolling">Körkörös görgetés engedélyezve</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +919,9 @@
     <string name="channel_sync_progress_desc">A naptárak szinkronizálásának előrehaladását mutatja</string>
     <string name="channel_sync_status">Szinkronizálás állapota</string>
     <string name="channel_sync_status_desc">Értesítések a szinkronizálás befejezéséről és hibákról</string>
+    <string name="channel_event_invitations">Eseménymeghívók</string>
+    <string name="channel_event_invitations_desc">Értesítések, amikor új naptármeghívót kap</string>
+    <string name="invite_notification_body">Feladó: %1$s · Koppintson a válaszhoz</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Nem ismétlődik</string>
@@ -1056,4 +1068,14 @@
     <string name="attendee_status_tentative">Bizonytalan</string>
     <string name="attendee_status_delegated">Átruházva</string>
     <string name="attendee_status_pending">Függő</string>
+    <string name="inbox_empty_caught_up">Mindennel megvagy</string>
+    <string name="inbox_organizer_suffix">(szervező)</string>
+    <string name="menu_invites">Meghívók</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dátum</string>
+    <string name="menu_more">Egyéb menü</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Egyéb menü, %d meghívó vár</item>
+        <item quantity="other">Egyéb menü, %d meghívó vár</item>
+    </plurals>
 </resources>

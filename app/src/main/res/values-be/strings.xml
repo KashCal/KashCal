@@ -41,6 +41,7 @@
     <string name="action_hide_password">Схаваць пароль</string>
     <string name="action_sign_out">Выйсці</string>
     <string name="action_learn_more">Падрабязней</string>
+    <string name="action_open">Адкрыць</string>
     <string name="action_open_apple_id">Адкрыць Apple ID</string>
     <string name="action_open_settings">Адкрыць налады</string>
     <string name="action_force_sync">Прымусовая сінхранізацыя</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Экспарт у .ics</string>
     <string name="action_confirm_delete">Пацвердзіць выдаленне</string>
     <string name="action_delete_event">Выдаліць падзею</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Прыняць</string>
+    <string name="rsvp_action_tentative">Магчыма</string>
+    <string name="rsvp_action_decline">Адхіліць</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Адказ распаўсюджваецца на ўсю серыю.</string>
+    <string name="rsvp_modified_snackbar">Не ўдалося адказаць на «%1$s» — падзею зменена. Адкажыце яшчэ раз.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Толькі гэта</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Увесь дзень</string>
     <string name="label_today">Сёння</string>
     <string name="label_go_to_date">Перайсці да даты</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Тыдзень</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Налады</string>
@@ -236,10 +250,7 @@
     <string name="cd_close">Закрыць</string>
     <string name="cd_search">Пошук</string>
     <string name="cd_create_event">Стварыць падзею</string>
-    <string name="cd_settings">Налады</string>
     <string name="cd_today">Сёння</string>
-    <string name="cd_previous_week">Папярэдні тыдзень</string>
-    <string name="cd_next_week">Наступны тыдзень</string>
     <string name="cd_delete">Выдаліць</string>
     <string name="cd_refresh">Абнавіць</string>
     <string name="cd_more_options">Дадатковыя параметры</string>
@@ -398,6 +409,7 @@
     <string name="settings_device_calendars">Календары прылады</string>
     <string name="settings_quick_event_add">Хуткае даданне</string>
     <string name="settings_week_numbers">Нумары тыдняў</string>
+    <string name="settings_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="settings_widget_event_limit">Ліміт падзей у віджэце</string>
     <string name="settings_sync_lookback">Глыбіня сінхранізацыі</string>
     <string name="settings_auto_detect_emojis">Аўтавызначэнне эмодзі</string>
@@ -464,7 +476,6 @@
     <string name="device_calendars_grant">Дазволіць</string>
     <string name="device_calendars_none_found">Календары прылады не знойдзены.</string>
     <string name="device_calendars_local">Лакальны</string>
-    <string name="device_calendars_show_declined">Паказваць адхіленыя падзеі</string>
     <string name="device_calendars_reminders">Напамінанні</string>
     <string name="device_calendars_reminders_desc">Атрымліваць апавяшчэнні пра падзеі з календара прылады</string>
     <string name="device_calendars_read_only_no_write">Толькі чытанне (няма дазволу на запіс)</string>
@@ -701,16 +712,19 @@
 
     <string name="cd_clear">Ачысціць</string>
     <string name="cd_offline">Няма сеткі</string>
-    <string name="cd_previous">Назад</string>
-    <string name="cd_next">Далей</string>
     <string name="cd_open_drawer">Адкрыць меню</string>
     <string name="cd_close_drawer">Закрыць меню</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Адкрыць меню</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Закрыць меню</string>
     <string name="cd_calendar_view">Выгляд календара</string>
     <string name="cd_active_view">Актыўны выгляд</string>
 
     <string name="view_agenda">Парадак дня</string>
     <string name="view_month_full">Месяц (поўны)</string>
     <string name="view_three_days">3 дні</string>
+    <string name="view_day">Дзень</string>
     <string name="view_year">Год</string>
     <string name="view_insights">Аналітыка</string>
 
@@ -735,8 +749,6 @@
     <string name="sync_summary_updated">%1$d абноўлена</string>
     <string name="sync_summary_removed">%1$d выдалена</string>
 
-    <string name="cd_previous_3_days">Папярэднія 3 дні</string>
-    <string name="cd_next_3_days">Наступныя 3 дні</string>
     <string name="cd_circular_scrolling">Цыклічная пракрутка ўключана</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -897,6 +909,9 @@
     <string name="channel_sync_progress_desc">Паказвае прагрэс падчас сінхранізацыі календароў</string>
     <string name="channel_sync_status">Статус сінхранізацыі</string>
     <string name="channel_sync_status_desc">Паведамленні пра завяршэнне сінхранізацыі і памылкі</string>
+    <string name="channel_event_invitations">Запрашэнні на падзеі</string>
+    <string name="channel_event_invitations_desc">Паведамленні пра новыя запрашэнні ў календары</string>
+    <string name="invite_notification_body">Ад %1$s · Націсніце, каб адказаць</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Не паўтараецца</string>
@@ -1043,4 +1058,16 @@
     <string name="attendee_status_tentative">Магчыма</string>
     <string name="attendee_status_delegated">Дэлегавана</string>
     <string name="attendee_status_pending">Чакае</string>
+    <string name="inbox_empty_caught_up">Усё прагледжана</string>
+    <string name="inbox_organizer_suffix">(арганізатар)</string>
+    <string name="menu_invites">Запрашэнні</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Дата</string>
+    <string name="menu_more">Меню «Яшчэ»</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Меню «Яшчэ», %d запрашэнне чакае</item>
+        <item quantity="few">Меню «Яшчэ», %d запрашэнні чакаюць</item>
+        <item quantity="many">Меню «Яшчэ», %d запрашэнняў чакаюць</item>
+        <item quantity="other">Меню «Яшчэ», %d запрашэння чакае</item>
+    </plurals>
 </resources>

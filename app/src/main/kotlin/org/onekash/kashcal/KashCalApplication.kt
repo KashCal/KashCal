@@ -17,6 +17,7 @@ import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.di.ApplicationScope
 import org.onekash.kashcal.network.NetworkMonitor
+import org.onekash.kashcal.reminder.notification.InviteNotificationChannels
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import org.onekash.kashcal.sync.adapter.SystemAccountRegistrar
@@ -60,6 +61,9 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var reminderNotificationChannels: ReminderNotificationChannels
+
+    @Inject
+    lateinit var inviteNotificationChannels: InviteNotificationChannels
 
     @Inject
     lateinit var widgetUpdateManager: WidgetUpdateManager
@@ -106,6 +110,7 @@ class KashCalApplication : Application(), Configuration.Provider {
         // Create notification channels at app startup
         notificationChannels.createChannels()
         reminderNotificationChannels.createChannels()
+        inviteNotificationChannels.createChannels()
 
         // Start network monitoring with sync trigger on restore
         networkMonitor.startMonitoring {

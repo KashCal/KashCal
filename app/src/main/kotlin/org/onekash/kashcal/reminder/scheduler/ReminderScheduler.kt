@@ -7,12 +7,16 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
+import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.AttendeesDao
+import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.domain.reader.selfDeclinedEventIds
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.sync.parser.icaldav.RawIcsParser
@@ -194,7 +198,10 @@ class ReminderScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val scheduledRemindersDao: ScheduledRemindersDao,
     private val eventReader: EventReader,
-    private val channels: ReminderNotificationChannels
+    private val channels: ReminderNotificationChannels,
+    private val attendeesDao: AttendeesDao,
+    private val accountsDao: AccountsDao,
+    private val calendarsDao: CalendarsDao
 ) {
     companion object {
         private const val TAG = "ReminderScheduler"
@@ -290,8 +297,34 @@ class ReminderScheduler @Inject constructor(
         // Get all events with reminders that have occurrences in window
         val eventsWithReminders = eventReader.getEventsWithRemindersInRange(now, windowEnd)
 
+        if (eventsWithReminders.isEmpty()) {
+            Log.i(TAG, "No events with reminders in $windowDays-day window")
+            return 0
+        }
+
+        // Self-decline suppresses alarms regardless of the display-side
+        // "Show declined" toggle.
+        val eventIdToCalendarId = eventsWithReminders
+            .associate { it.event.id to it.event.calendarId }
+        val declinedAttendees = attendeesDao
+            .getDeclinedAttendeesForEvents(eventIdToCalendarId.keys.toList())
+        val activeRows = if (declinedAttendees.isEmpty()) {
+            eventsWithReminders
+        } else {
+            val accountsById = accountsDao.getAllOnce().associateBy { it.id }
+            val calendarsById = calendarsDao.getAllOnce().associateBy { it.id }
+            val declinedIds = selfDeclinedEventIds(
+                declinedAttendees = declinedAttendees,
+                accountsById = accountsById,
+                eventIdToCalendarId = eventIdToCalendarId,
+                calendarsById = calendarsById
+            )
+            if (declinedIds.isEmpty()) eventsWithReminders
+            else eventsWithReminders.filterNot { it.event.id in declinedIds }
+        }
+
         var scheduled = 0
-        for (eventData in eventsWithReminders) {
+        for (eventData in activeRows) {
             // Use targetEventId if available (exception event ID for modified occurrences)
             // Falls back to event.id for backwards compatibility
             val targetEventId = eventData.targetEventId ?: eventData.event.id
@@ -391,7 +424,7 @@ class ReminderScheduler @Inject constructor(
      *
      * Uses occurrence.exceptionEventId if set (for Model B occurrences where the
      * occurrence links to an exception event). This ensures clicking the notification
-     * opens the correct event. Follows CLAUDE.md pattern 12.
+     * opens the correct event.
      *
      * @param event The event (provides display data: title, location, isAllDay)
      * @param occurrence The occurrence (provides timing and exceptionEventId)
@@ -424,7 +457,6 @@ class ReminderScheduler @Inject constructor(
         }
 
         // Use exception event ID if available (for Model B occurrences)
-        // This follows CLAUDE.md pattern 12: exceptionEventId ?: eventId
         val targetEventId = occurrence.exceptionEventId ?: event.id
 
         // Load exception event for display data if targetEventId differs from event.id

@@ -1059,8 +1059,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
             ContentUris.appendId(builder, startMs)
             ContentUris.appendId(builder, endMs)
 
-            // Query instances with alarms
-            val selection = "${Instances.HAS_ALARM} = 1 AND $SELECTION_VISIBLE"
+            // Query instances with alarms. Selection unconditionally excludes
+            // self-declined events: the alarm pipeline treats decline as "no",
+            // independent of the display-side "Show declined" toggle.
+            val selection = buildUpcomingReminderSelection()
 
             val instancesWithAlarms = mutableListOf<InstanceWithAlarm>()
 
@@ -1257,6 +1259,18 @@ class AndroidCalendarProviderRepository @Inject constructor(
         )
     }
 }
+
+/**
+ * Selection clause for the upcoming-device-reminder query.
+ *
+ * Unconditionally hides self-declined events — the alarm pipeline treats a
+ * self-decline as "no", regardless of the display-side "Show declined"
+ * toggle.
+ */
+internal fun buildUpcomingReminderSelection(): String =
+    "${Instances.HAS_ALARM} = 1 AND " +
+        "${Calendars.VISIBLE} = 1 AND " +
+        "${Instances.SELF_ATTENDEE_STATUS} != ${Attendees.ATTENDEE_STATUS_DECLINED}"
 
 /**
  * Build the ContentValues written when the user ticks a device calendar.

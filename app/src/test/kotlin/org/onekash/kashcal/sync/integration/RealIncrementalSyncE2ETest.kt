@@ -146,7 +146,10 @@ class RealIncrementalSyncE2ETest {
             attendeesDao = mockk(relaxed = true),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
     }
 

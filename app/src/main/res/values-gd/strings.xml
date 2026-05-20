@@ -43,6 +43,7 @@
     <string name="action_learn_more">Barrachd Fiosrachaidh</string>
     <string name="action_open_apple_id">Fosgail Apple ID</string>
     <string name="action_open_settings">Fosgail Roghainnean</string>
+    <string name="action_open">Fosgail</string>
     <string name="action_force_sync">Sioncronaich le Èiginn</string>
     <string name="action_sync_now">Sioncronaich an-dràsta</string>
     <string name="action_details">Mion-fhiosrachadh</string>
@@ -65,6 +66,15 @@
     <string name="action_export_ics">Às-phortaich mar .ics</string>
     <string name="action_confirm_delete">Dearbhaich Sguabadh Às</string>
     <string name="action_delete_event">Sguab Tachartas Às</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Gabh ris</string>
+    <string name="rsvp_action_tentative">An teagamh</string>
+    <string name="rsvp_action_decline">Diùlt</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <string name="rsvp_series_disclosure">Tha am freagairt a\' buntainn ris an t-sreath gu lèir.</string>
+    <string name="rsvp_modified_snackbar">Dh\'fhàillig am freagairt airson %1$s: chaidh an tachartas atharrachadh. Freagair a-rithist.</string>
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">Dìreach am fear seo</string>
@@ -94,6 +104,9 @@
     <string name="label_all_day">Fad an latha</string>
     <string name="label_today">An-diugh</string>
     <string name="label_go_to_date">Rach gu ceann-là</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Seachdain</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
     <string name="settings_title">Roghainnean</string>
@@ -246,10 +259,7 @@
     <string name="cd_close">Dùin</string>
     <string name="cd_search">Lorg</string>
     <string name="cd_create_event">Cruthaich tachartas</string>
-    <string name="cd_settings">Roghainnean</string>
     <string name="cd_today">An-diugh</string>
-    <string name="cd_previous_week">An t-seachdain roimhe</string>
-    <string name="cd_next_week">An ath sheachdain</string>
     <string name="cd_delete">Sguab às</string>
     <string name="cd_refresh">Ath-nuadhaich</string>
     <string name="cd_more_options">Barrachd roghainnean</string>
@@ -428,6 +438,7 @@
     <string name="settings_device_calendars">Mìosachain an Uidheim</string>
     <string name="settings_quick_event_add">Cuir Tachartas Luath Ris</string>
     <string name="settings_week_numbers">Àireamhan Seachdaine</string>
+    <string name="settings_show_declined">Seall tachartasan a dhiùltadh</string>
     <string name="settings_widget_event_limit">Crìoch Thachartasan Widget</string>
     <string name="settings_sync_lookback">Coimhead Air Ais Sioncronachaidh</string>
     <string name="settings_auto_detect_emojis">Lorg Emojis gu Fèin-obrachail</string>
@@ -495,7 +506,6 @@
     <string name="device_calendars_grant">Thoir</string>
     <string name="device_calendars_none_found">Cha deach mìosachain uidheim a lorg.</string>
     <string name="device_calendars_local">Ionadail</string>
-    <string name="device_calendars_show_declined">Seall tachartasan a chaidh a dhiùltadh</string>
     <string name="device_calendars_reminders">Cuimhneachanan</string>
     <string name="device_calendars_reminders_desc">Faigh brath mu thachartasan mìosachain an uidheim</string>
     <string name="device_calendars_read_only_no_write">Leughadh a-mhàin (gun chead sgrìobhaidh)</string>
@@ -739,14 +749,17 @@
 
     <string name="cd_clear">Glan</string>
     <string name="cd_offline">Far loidhne</string>
-    <string name="cd_previous">Roimhe</string>
-    <string name="cd_next">Air adhart</string>
     <string name="cd_open_drawer">Fosgail drathair</string>
     <string name="cd_close_drawer">Dùin drathair</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Fosgail clàr-taice</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Dùin clàr-taice</string>
     <string name="cd_calendar_view">Sealladh mìosachain</string>
     <string name="cd_active_view">Sealladh gnìomhach</string>
 
     <string name="view_agenda">Clàr-gnothaich</string>
+    <string name="view_day">Latha</string>
     <string name="view_month_full">Mìos (Slàn)</string>
     <string name="view_three_days">3 Làithean</string>
     <string name="view_year">Bliadhna</string>
@@ -805,8 +818,6 @@
     <string name="sync_summary_removed">%1$d air an toirt air falbh</string>
 
     <!-- Additional Content Descriptions -->
-    <string name="cd_previous_3_days">3 làithean roimhe</string>
-    <string name="cd_next_3_days">An ath 3 làithean</string>
     <string name="cd_circular_scrolling">Sgrolladh cearcallach air a chur an comas</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -1001,6 +1012,9 @@
     <string name="channel_sync_progress_desc">A\' sealltainn adhartas fhad \'s a tha mìosachain gan sioncronachadh</string>
     <string name="channel_sync_status">Inbhe sioncronachaidh</string>
     <string name="channel_sync_status_desc">Brathan mu chrìochnachadh agus mearachdan sioncronachaidh</string>
+    <string name="channel_event_invitations">Cuiridhean tachartais</string>
+    <string name="channel_event_invitations_desc">Brathan nuair a gheibh thu cuireadh mìosachain ùr</string>
+    <string name="invite_notification_body">O %1$s · Thoir gnogag gus freagairt</string>
 
     <!-- Insights -->
     <string name="insights_title">Fiosrachaidhean</string>
@@ -1053,7 +1067,6 @@
     <string name="label_calendar_default">Bun-roghainn a\' mhìosachain</string>
     <string name="label_custom">Gnàthaichte</string>
     <string name="cd_event_color">Dath an tachartais</string>
-
 
     <string name="cd_checkmark">Air a thaghadh</string>
     <string name="label_device_timezone">Roinn-tìde an uidheim</string>
@@ -1133,4 +1146,16 @@
     <string name="attendee_status_tentative">Sealach</string>
     <string name="attendee_status_delegated">Air a thiomnadh</string>
     <string name="attendee_status_pending">Ri làimh</string>
+    <string name="inbox_empty_caught_up">Suas ri là</string>
+    <string name="inbox_organizer_suffix">(eagraiche)</string>
+    <string name="menu_invites">Cuiridhean</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Ceann-là</string>
+    <string name="menu_more">Clàr-taice Barrachd</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Clàr-taice Barrachd, %d chuireadh ri làimh</item>
+        <item quantity="two">Clàr-taice Barrachd, %d chuireadh ri làimh</item>
+        <item quantity="few">Clàr-taice Barrachd, %d cuiridhean ri làimh</item>
+        <item quantity="other">Clàr-taice Barrachd, %d cuireadh ri làimh</item>
+    </plurals>
 </resources>

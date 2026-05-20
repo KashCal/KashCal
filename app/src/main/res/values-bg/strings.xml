@@ -54,6 +54,7 @@
     <string name="action_save">Запази</string>
     <string name="action_add">Добави</string>
     <string name="action_edit">Редактирай</string>
+    <string name="action_open">Отвори</string>
     <string name="action_delete">Изтрий</string>
     <string name="action_confirm">Потвърди</string>
     <string name="action_discard">Отхвърли</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">Експортирай като .ics</string>
     <string name="action_confirm_delete">Потвърди изтриването</string>
     <string name="action_delete_event">Изтрий събитие</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Приеми</string>
+    <string name="rsvp_action_tentative">Под въпрос</string>
+    <string name="rsvp_action_decline">Откажи</string>
+    <string name="rsvp_series_disclosure">Отговорът важи за цялата серия.</string>
+    <string name="rsvp_modified_snackbar">Отговорът за %1$s не успя — събитието беше променено. Моля, отговорете отново.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Само това</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">Цял ден</string>
     <string name="label_today">Днес</string>
     <string name="label_go_to_date">Отиди на дата</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Седмица</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Настройки</string>
@@ -256,10 +267,7 @@
     <string name="cd_close">Затвори</string>
     <string name="cd_search">Търсене</string>
     <string name="cd_create_event">Създай събитие</string>
-    <string name="cd_settings">Настройки</string>
     <string name="cd_today">Днес</string>
-    <string name="cd_previous_week">Предишна седмица</string>
-    <string name="cd_next_week">Следваща седмица</string>
     <string name="cd_delete">Изтрий</string>
     <string name="cd_refresh">Обнови</string>
     <string name="cd_more_options">Повече опции</string>
@@ -439,6 +447,7 @@
     <string name="settings_device_calendars">Календари на устройството</string>
     <string name="settings_quick_event_add">Бързо добавяне на събитие</string>
     <string name="settings_week_numbers">Номера на седмици</string>
+    <string name="settings_show_declined">Показване на отказани събития</string>
     <string name="settings_widget_event_limit">Лимит на събития за уиджет</string>
     <string name="settings_sync_lookback">Период за синхронизиране назад</string>
     <string name="settings_auto_detect_emojis">Автоматично откриване на емоджита</string>
@@ -506,7 +515,6 @@
     <string name="device_calendars_grant">Разреши</string>
     <string name="device_calendars_none_found">Не са намерени календари на устройството.</string>
     <string name="device_calendars_local">Локален</string>
-    <string name="device_calendars_show_declined">Показвай отказаните събития</string>
     <string name="device_calendars_reminders">Напомняния</string>
     <string name="device_calendars_reminders_desc">Получавай известия за събития от календара на устройството</string>
     <string name="device_calendars_read_only_no_write">Само за четене (няма разрешение за запис)</string>
@@ -688,15 +696,18 @@
 
     <string name="cd_clear">Изчисти</string>
     <string name="cd_offline">Офлайн</string>
-    <string name="cd_previous">Предишен</string>
-    <string name="cd_next">Следващ</string>
     <string name="cd_open_drawer">Отвори чекмеджето</string>
     <string name="cd_close_drawer">Затвори чекмеджето</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Отвори менюто</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Затвори менюто</string>
     <string name="cd_calendar_view">Изглед на календара</string>
     <string name="cd_active_view">Активен изглед</string>
 
     <string name="view_agenda">Дневен ред</string>
     <string name="view_month_full">Месец (пълен)</string>
+    <string name="view_day">Ден</string>
     <string name="view_three_days">3 дни</string>
     <string name="view_year">Година</string>
     <string name="view_insights">Статистика</string>
@@ -726,8 +737,6 @@
     <string name="sync_summary_removed">%1$d премахнати</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Предишните 3 дни</string>
-    <string name="cd_next_3_days">Следващите 3 дни</string>
     <string name="cd_circular_scrolling">Кръгово превъртане включено</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -910,6 +919,9 @@
     <string name="channel_sync_progress_desc">Показва напредъка по време на синхронизация на календари</string>
     <string name="channel_sync_status">Статус на синхронизацията</string>
     <string name="channel_sync_status_desc">Известия за завършване на синхронизацията и грешки</string>
+    <string name="channel_event_invitations">Покани за събития</string>
+    <string name="channel_event_invitations_desc">Известия при получаване на нова покана за календар</string>
+    <string name="invite_notification_body">От %1$s · Докоснете, за да отговорите</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Не се повтаря</string>
@@ -1054,4 +1066,14 @@
     <string name="attendee_status_tentative">Условно</string>
     <string name="attendee_status_delegated">Делегирано</string>
     <string name="attendee_status_pending">Изчакване</string>
+    <string name="inbox_empty_caught_up">Всичко е готово</string>
+    <string name="inbox_organizer_suffix">(организатор)</string>
+    <string name="menu_invites">Покани</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Дата</string>
+    <string name="menu_more">Меню „Още“</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Меню „Още“, %d чакаща покана</item>
+        <item quantity="other">Меню „Още“, %d чакащи покани</item>
+    </plurals>
 </resources>

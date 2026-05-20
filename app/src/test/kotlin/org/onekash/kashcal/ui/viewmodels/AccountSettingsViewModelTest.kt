@@ -2778,7 +2778,7 @@ class AccountSettingsViewModelTest {
         assertEquals(2, (status as AccountDetailDiscoverStatus.Done).newCount)
         assertEquals(5, status.totalCount)
 
-        // Pattern 18: Discovery of new calendars must trigger sync
+        // Discovery of new calendars must trigger sync
         coVerify { syncScheduler.syncAccount(10L) }
     }
 
@@ -2803,7 +2803,7 @@ class AccountSettingsViewModelTest {
         assertTrue(status is AccountDetailDiscoverStatus.Done)
         assertEquals(0, (status as AccountDetailDiscoverStatus.Done).newCount)
 
-        // Pattern 18: No new calendars → no sync trigger
+        // No new calendars → no sync trigger
         coVerify(exactly = 0) { syncScheduler.syncAccount(10L) }
     }
 

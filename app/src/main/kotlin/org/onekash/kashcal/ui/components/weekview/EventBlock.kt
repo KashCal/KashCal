@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -29,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.declinedCardAlpha
+import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 
 @Composable
@@ -88,6 +91,7 @@ fun EventBlock(
     Box(
         modifier = modifier
             .height(height)
+            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe))
             .clip(RoundedCornerShape(4.dp))
             .then(
                 if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
@@ -107,6 +111,7 @@ fun EventBlock(
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
                 color = textColor,
+                textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
                 maxLines = titleMaxLines,
                 overflow = TextOverflow.Ellipsis
             )
@@ -168,6 +173,7 @@ fun CompactEventBlock(
 
     Box(
         modifier = modifier
+            .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe))
             .clip(RoundedCornerShape(4.dp))
             .then(
                 if (isFree) Modifier.border(2.dp, calColor, RoundedCornerShape(4.dp))
@@ -181,6 +187,7 @@ fun CompactEventBlock(
             text = "$formattedTitle - ${WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)}",
             style = MaterialTheme.typography.bodySmall,
             color = textColor,
+            textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

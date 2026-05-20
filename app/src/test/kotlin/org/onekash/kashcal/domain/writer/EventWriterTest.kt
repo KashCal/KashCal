@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.entity.Account
+import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
@@ -889,6 +890,68 @@ class EventWriterTest {
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
         assertEquals(oldUrl, ops[0].targetUrl)  // Critical: URL captured before cleared
+    }
+
+    // ========== replyRsvp ==========
+
+    @Test
+    fun `replyRsvp captures caldavUrl as targetUrl on the queued PendingOperation`() = runTest {
+        val syncedUrl = "https://caldav.icloud.com/test/rsvp-event.ics"
+        val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
+        database.eventsDao().markCreatedOnServer(event.id, syncedUrl, "etag-1", System.currentTimeMillis())
+        database.pendingOperationsDao().deleteForEvent(event.id)
+        database.attendeesDao().replaceForEvent(
+            event.id,
+            listOf(
+                Attendee(
+                    eventId = event.id,
+                    address = "mailto:test@icloud.com",
+                    partstat = "NEEDS-ACTION"
+                )
+            )
+        )
+        val account = database.accountsDao().getById(database.calendarsDao().getById(testCalendarId)!!.accountId)!!
+
+        val ok = eventWriter.replyRsvp(event.id, account, "ACCEPTED")
+
+        assertTrue(ok)
+        val ops = database.pendingOperationsDao().getForEvent(event.id)
+        assertEquals(1, ops.size)
+        val op = ops[0]
+        assertEquals(PendingOperation.OPERATION_UPDATE, op.operation)
+        assertTrue(op.partstatOnly)
+        assertEquals("ACCEPTED", op.partstatTarget)
+        // Critical: caldavUrl captured at queue time so a future code path that
+        // clears Event.caldavUrl can't silently turn the queued RSVP into a no-op.
+        assertEquals(syncedUrl, op.targetUrl)
+    }
+
+    @Test
+    fun `replyRsvp on never-synced event queues with null targetUrl`() = runTest {
+        val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
+        database.pendingOperationsDao().deleteForEvent(event.id)
+        // No markCreatedOnServer — event.caldavUrl stays null.
+        database.attendeesDao().replaceForEvent(
+            event.id,
+            listOf(
+                Attendee(
+                    eventId = event.id,
+                    address = "mailto:test@icloud.com",
+                    partstat = "NEEDS-ACTION"
+                )
+            )
+        )
+        val account = database.accountsDao().getById(database.calendarsDao().getById(testCalendarId)!!.accountId)!!
+
+        val ok = eventWriter.replyRsvp(event.id, account, "DECLINED")
+
+        assertTrue("queue insert should be permissive — local PARTSTAT was already updated", ok)
+        val ops = database.pendingOperationsDao().getForEvent(event.id)
+        assertEquals(1, ops.size)
+        val op = ops[0]
+        assertTrue(op.partstatOnly)
+        assertEquals("DECLINED", op.partstatTarget)
+        assertNull("targetUrl is null when event was never synced", op.targetUrl)
     }
 
     // ========== Helper Functions ==========

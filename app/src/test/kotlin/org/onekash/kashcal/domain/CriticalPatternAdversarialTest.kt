@@ -26,17 +26,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for CLAUDE.md Critical Patterns.
+ * Adversarial regression tests for critical invariants in the data and sync layers.
  *
- * These tests verify the patterns documented in CLAUDE.md are followed:
- * 1. Always Use @Transaction for Multi-Step Operations
- * 2. PendingOperation Queue for Sync
- * 3. Exception Linking via FK
- * 4. Time-Based Queries: Use Occurrences Table (NOT Event.endTs)
- * 5. Self-Contained Sync Operations (targetUrl captured at queue time)
- * 6. Exception Events Share Master UID
+ * Areas covered:
+ * - Always use @Transaction for multi-step operations
+ * - PendingOperation queue for sync
+ * - Exception linking via FK
+ * - Time-based queries via the occurrences table (NOT Event.endTs)
+ * - Self-contained sync operations (targetUrl captured at queue time)
+ * - Exception events share master UID
  *
- * Violations of these patterns caused bugs that required multiple fix cycles.
+ * Violations of these invariants have caused bugs that required multiple fix cycles.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -76,7 +76,7 @@ class CriticalPatternAdversarialTest {
         database.close()
     }
 
-    // ==================== Pattern 4: Time-Based Queries via Occurrences ====================
+    // ==================== Time-Based Queries via Occurrences ====================
 
     @Test
     fun `Event endTs is first occurrence end - NOT series end`() = runTest {
@@ -176,7 +176,7 @@ class CriticalPatternAdversarialTest {
         )
     }
 
-    // ==================== Pattern 5: Self-Contained Sync Operations ====================
+    // ==================== Self-Contained Sync Operations ====================
 
     @Test
     fun `PendingOperation DELETE must store targetUrl at queue time`() = runTest {
@@ -266,7 +266,7 @@ class CriticalPatternAdversarialTest {
         assertEquals(sourceUrl, ops.first().targetUrl)
     }
 
-    // ==================== Pattern 6: Exception Events Share Master UID ====================
+    // ==================== Exception Events Share Master UID ====================
 
     @Test
     fun `exception event must have same UID as master`() = runTest {
@@ -354,7 +354,7 @@ class CriticalPatternAdversarialTest {
         )
     }
 
-    // ==================== Pattern 3: Exception Linking via FK ====================
+    // ==================== Exception Linking via FK ====================
 
     @Test
     fun `exception links to master via originalEventId FK`() = runTest {
@@ -396,7 +396,7 @@ class CriticalPatternAdversarialTest {
         assertEquals(exceptionId, exceptions.first().id)
     }
 
-    // ==================== Pattern 2: PendingOperation Queue ====================
+    // ==================== PendingOperation Queue ====================
 
     @Test
     fun `all mutations create PendingOperation entries`() = runTest {

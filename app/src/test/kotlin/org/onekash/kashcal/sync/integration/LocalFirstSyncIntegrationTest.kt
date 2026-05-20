@@ -89,7 +89,10 @@ class LocalFirstSyncIntegrationTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
 
         // Create test account and calendar

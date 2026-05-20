@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -30,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,6 +47,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
 import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
 import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.formatReminderOption
@@ -105,8 +106,8 @@ fun BirthdaysAndAnniversariesScreen(
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.birthdays_anniversaries_row_label)) },
+            CenterAlignedTopAppBar(
+                title = { KashCalTopAppBarTitle() },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -124,6 +125,8 @@ fun BirthdaysAndAnniversariesScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
         ) {
+            NestedSettingsHeading(text = stringResource(R.string.birthdays_anniversaries_row_label))
+
             // ==================== Birthdays Section ====================
             SectionHeader(stringResource(R.string.birthdays_section_title))
             SettingsCard {

@@ -32,9 +32,9 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
  *
  * Safety principle: CREATE before DELETE ensures no data loss if CREATE fails.
  *
- * Critical pattern (CLAUDE.md Pattern #6):
- * - Self-contained sync operations: targetUrl must be read from PendingOperation,
- *   not from Event (which is already cleared by EventWriter.moveEventToCalendar)
+ * Critical invariant (self-contained sync operations):
+ * - targetUrl must be read from PendingOperation, not from Event (which is
+ *   already cleared by EventWriter.moveEventToCalendar)
  */
 class PushStrategyMoveOperationTest {
 
@@ -88,7 +88,8 @@ class PushStrategyMoveOperationTest {
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
-            pendingOperationsDao = pendingOperationsDao
+            pendingOperationsDao = pendingOperationsDao,
+            accountRepository = mockk(relaxed = true)
         )
     }
 

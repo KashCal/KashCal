@@ -42,6 +42,7 @@
     <string name="action_hide_password">Slēpt paroli</string>
     <string name="action_sign_out">Izrakstīties</string>
     <string name="action_learn_more">Uzzināt vairāk</string>
+    <string name="action_open">Atvērt</string>
     <string name="action_open_apple_id">Atvērt Apple ID</string>
     <string name="action_open_settings">Atvērt iestatījumus</string>
     <string name="action_force_sync">Piespiedu sinhronizācija</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">Eksportēt kā .ics</string>
     <string name="action_confirm_delete">Apstiprināt dzēšanu</string>
     <string name="action_delete_event">Dzēst notikumu</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Pieņemt</string>
+    <string name="rsvp_action_tentative">Varbūt</string>
+    <string name="rsvp_action_decline">Noraidīt</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Atbilde attiecas uz visu sēriju.</string>
+    <string name="rsvp_modified_snackbar">Neizdevās atbildēt uz „%1$s“ — notikums tika mainīts. Lūdzu, atbildiet vēlreiz.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Tikai šo</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Visu dienu</string>
     <string name="label_today">Šodien</string>
     <string name="label_go_to_date">Pāriet uz datumu</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Nedēļa</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Iestatījumi</string>
@@ -237,10 +251,7 @@
     <string name="cd_close">Aizvērt</string>
     <string name="cd_search">Meklēt</string>
     <string name="cd_create_event">Izveidot notikumu</string>
-    <string name="cd_settings">Iestatījumi</string>
     <string name="cd_today">Šodien</string>
-    <string name="cd_previous_week">Iepriekšējā nedēļa</string>
-    <string name="cd_next_week">Nākamā nedēļa</string>
     <string name="cd_delete">Dzēst</string>
     <string name="cd_refresh">Atsvaidzināt</string>
     <string name="cd_more_options">Vairāk iespēju</string>
@@ -417,6 +428,7 @@
     <string name="settings_device_calendars">Ierīces kalendāri</string>
     <string name="settings_quick_event_add">Ātrā notikuma pievienošana</string>
     <string name="settings_week_numbers">Nedēļu numuri</string>
+    <string name="settings_show_declined">Rādīt noraidītos notikumus</string>
     <string name="settings_widget_event_limit">Logrīka notikumu limits</string>
     <string name="settings_sync_lookback">Sinhronizācijas atskats</string>
     <string name="settings_auto_detect_emojis">Automātiski noteikt emocijzīmes</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Piešķirt</string>
     <string name="device_calendars_none_found">Ierīces kalendāri nav atrasti.</string>
     <string name="device_calendars_local">Lokāls</string>
-    <string name="device_calendars_show_declined">Rādīt noraidītos notikumus</string>
     <string name="device_calendars_reminders">Atgādinājumi</string>
     <string name="device_calendars_reminders_desc">Saņemt paziņojumus par ierīces kalendāra notikumiem</string>
     <string name="device_calendars_read_only_no_write">Tikai lasāms (nav rakstīšanas atļaujas)</string>
@@ -699,16 +710,19 @@
 
     <string name="cd_clear">Notīrīt</string>
     <string name="cd_offline">Bezsaistē</string>
-    <string name="cd_previous">Iepriekšējais</string>
-    <string name="cd_next">Nākamais</string>
     <string name="cd_open_drawer">Atvērt izvēlni</string>
     <string name="cd_close_drawer">Aizvērt izvēlni</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Atvērt izvēlni</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Aizvērt izvēlni</string>
     <string name="cd_calendar_view">Kalendāra skats</string>
     <string name="cd_active_view">Aktīvais skats</string>
 
     <string name="view_agenda">Dienas kārtība</string>
     <string name="view_month_full">Mēnesis (pilns)</string>
     <string name="view_three_days">3 dienas</string>
+    <string name="view_day">Diena</string>
     <string name="view_year">Gads</string>
     <string name="view_insights">Statistika</string>
 
@@ -737,8 +751,6 @@
     <string name="sync_summary_removed">%1$d noņemti</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Iepriekšējās 3 dienas</string>
-    <string name="cd_next_3_days">Nākamās 3 dienas</string>
     <string name="cd_circular_scrolling">Apļveida ritināšana iespējota</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -892,6 +904,9 @@
     <string name="channel_sync_progress_desc">Rāda progresu, sinhronizējot kalendārus</string>
     <string name="channel_sync_status">Sinhronizācijas statuss</string>
     <string name="channel_sync_status_desc">Paziņojumi par sinhronizācijas pabeigšanu un kļūdām</string>
+    <string name="channel_event_invitations">Notikumu ielūgumi</string>
+    <string name="channel_event_invitations_desc">Paziņojumi par jauniem kalendāra ielūgumiem</string>
+    <string name="invite_notification_body">No %1$s · Pieskarieties, lai atbildētu</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Neatkārtojas</string>
@@ -1037,4 +1052,15 @@
     <string name="attendee_status_tentative">Varbūt</string>
     <string name="attendee_status_delegated">Deleģēts</string>
     <string name="attendee_status_pending">Gaida</string>
+    <string name="inbox_empty_caught_up">Viss apskatīts</string>
+    <string name="inbox_organizer_suffix">(organizators)</string>
+    <string name="menu_invites">Ielūgumi</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Datums</string>
+    <string name="menu_more">Izvēlne “Vairāk”</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="zero">Izvēlne “Vairāk”, %d ielūgumu gaida</item>
+        <item quantity="one">Izvēlne “Vairāk”, %d ielūgums gaida</item>
+        <item quantity="other">Izvēlne “Vairāk”, %d ielūgumi gaida</item>
+    </plurals>
 </resources>

@@ -402,7 +402,7 @@ interface EventsDao {
      * preventing false deletions of events outside the sync window.
      *
      * Recurring events (rrule IS NOT NULL) are always included regardless of time range
-     * because their start_ts/end_ts represent only the first occurrence (CLAUDE.md Pattern 5),
+     * because their start_ts/end_ts represent only the first occurrence,
      * while CalDAV servers expand recurrences in their time-range filter.
      *
      * @param calendarId Calendar to get etags for
@@ -620,6 +620,28 @@ interface EventsDao {
     """
     )
     suspend fun updateReminders(id: Long, remindersJson: String?, now: Long)
+
+    /**
+     * Update both the `reminders` JSON column and the `alarm_count`
+     * denormalized counter atomically. Used by the local-only attendee
+     * reminder write path so the on-device alarm count stays consistent
+     * with the stored list. Does not touch sync_status, so the event
+     * remains SYNCED — no server PUT will be queued.
+     */
+    @Query("""
+        UPDATE events
+        SET reminders = :remindersJson,
+            alarm_count = :alarmCount,
+            updated_at = :now
+        WHERE id = :id
+    """
+    )
+    suspend fun updateRemindersAndAlarmCount(
+        id: Long,
+        remindersJson: String?,
+        alarmCount: Int,
+        now: Long
+    )
 
     /**
      * Clear all etags to force re-parsing on next sync.
@@ -937,6 +959,37 @@ interface EventsDao {
         rangeEnd: Long
     ): List<EventWithNextOccurrence>
 
+    /**
+     * Reactive read of master events that have at least one future,
+     * non-cancelled occurrence — the row set the invite-inbox builder
+     * narrows further in Kotlin.
+     *
+     * SQL filters:
+     * - `original_event_id IS NULL` (master only; per-instance exception
+     *   NEEDS-ACTION rows are deferred to T4)
+     * - `sync_status != 'PENDING_DELETE'`
+     * - at least one `occurrences` row with `end_ts >= now` and not cancelled
+     *
+     * Each result carries the earliest qualifying occurrence's start_ts as
+     * `next_occurrence_ts`, sorted ascending.
+     */
+    @Query("""
+        SELECT DISTINCT events.*,
+               (SELECT MIN(o.start_ts) FROM occurrences o
+                WHERE o.event_id = events.id
+                AND o.end_ts >= :now
+                AND o.is_cancelled = 0) as next_occurrence_ts
+        FROM events
+        JOIN occurrences ON events.id = occurrences.event_id
+        WHERE events.sync_status != 'PENDING_DELETE'
+        AND events.original_event_id IS NULL
+        AND occurrences.end_ts >= :now
+        AND occurrences.is_cancelled = 0
+        GROUP BY events.id
+        ORDER BY next_occurrence_ts ASC
+    """)
+    fun getMasterEventsWithFutureOccurrenceFlow(now: Long): kotlinx.coroutines.flow.Flow<List<EventWithNextOccurrence>>
+
     // ========== Reminder Queries ==========
 
     /**
@@ -950,8 +1003,8 @@ interface EventsDao {
      * - Occurrence is not cancelled
      *
      * IMPORTANT: Uses COALESCE(exception_event_id, event_id) to load the correct event
-     * for modified occurrences. This follows CLAUDE.md pattern 12:
-     * "When loading events from occurrences, always use exceptionEventId ?: eventId"
+     * for modified occurrences — when an exception event exists, load it instead of
+     * the master so the notification reflects the exception's title/location.
      *
      * Also handles reminder inheritance: if an exception event has no reminders,
      * it inherits from the master. The query uses UNION to cover:

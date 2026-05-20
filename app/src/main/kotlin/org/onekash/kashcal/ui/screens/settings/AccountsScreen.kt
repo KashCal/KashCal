@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,6 +55,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
 import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
@@ -123,8 +124,8 @@ fun AccountsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.accounts_title)) },
+            CenterAlignedTopAppBar(
+                title = { KashCalTopAppBarTitle() },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -143,6 +144,10 @@ fun AccountsScreen(
                 bottom = paddingValues.calculateBottomPadding() + 24.dp
             )
         ) {
+            item(key = "page_heading", contentType = "page_heading") {
+                NestedSettingsHeading(text = stringResource(R.string.accounts_title))
+            }
+
             if (hasAccounts) {
                 // Connected section header
                 item(key = "connected_header", contentType = "section_header") {

@@ -116,7 +116,7 @@ fun WeekViewContent(
     onHourHeightChange: (Float) -> Unit = {},
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
-    weekMode: Boolean = false,
+    visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     onDatePickerRequest: () -> Unit,
     onEventClick: (DisplayEvent) -> Unit,
@@ -132,10 +132,13 @@ fun WeekViewContent(
     val startHour = WeekViewUtils.START_HOUR
     val endHour = WeekViewUtils.END_HOUR
     val totalHours = WeekViewUtils.TOTAL_HOURS
-    val visibleDays = if (weekMode) 7 else 3
 
-    // Pager: day-based (THREE_DAYS) or week-based (WEEK)
-    val pagerState = if (weekMode) {
+    // DAY view (visibleDays=1) raises the side-by-side cap to 5 since each event has the full
+    // viewport width available; multi-day views stay at the default 2 to keep columns readable.
+    val maxVisibleOverlap = if (visibleDays == 1) 5 else WeekViewUtils.MAX_VISIBLE_OVERLAP
+
+    // Pager: day-based (DAY/THREE_DAYS) or week-based (WEEK)
+    val pagerState = if (visibleDays == 7) {
         rememberPagerState(
             initialPage = WeekViewUtils.CENTER_WEEK_PAGE,
             pageCount = { WeekViewUtils.TOTAL_WEEK_PAGES }
@@ -223,13 +226,13 @@ fun WeekViewContent(
                 endHour = endHour,
                 totalHours = totalHours,
                 visibleDays = visibleDays,
-                weekMode = weekMode,
                 firstDayOfWeek = firstDayOfWeek,
                 hourHeight = hourHeight.dp,
                 onHourHeightChange = onHourHeightChange,
                 scrollState = scrollState,
                 showEventEmojis = showEventEmojis,
                 timePattern = timePattern,
+                maxVisibleOverlap = maxVisibleOverlap,
                 onEventClick = onEventClick,
                 onOverflowClick = { events -> overflowEvents = events },
                 onEmptyTap = onEmptyTap,
@@ -265,13 +268,13 @@ private fun UnifiedTimeGrid(
     endHour: Int = WeekViewUtils.END_HOUR,
     totalHours: Int = WeekViewUtils.TOTAL_HOURS,
     visibleDays: Int = 3,
-    weekMode: Boolean = false,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     hourHeight: Dp = WeekViewUtils.HOUR_HEIGHT,
     onHourHeightChange: (Float) -> Unit = {},
     scrollState: ScrollState = rememberScrollState(),
     showEventEmojis: Boolean = true,
     timePattern: String = "h:mma",
+    maxVisibleOverlap: Int = WeekViewUtils.MAX_VISIBLE_OVERLAP,
     onEventClick: (DisplayEvent) -> Unit,
     onOverflowClick: (List<DisplayEvent>) -> Unit,
     onEmptyTap: (LocalDate, Int, Int) -> Unit = { _, _, _ -> },
@@ -325,34 +328,35 @@ private fun UnifiedTimeGrid(
     }
 
     // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
-    val visibleDates by remember(weekMode, firstDayOfWeek) {
+    val visibleDates by remember(visibleDays, firstDayOfWeek) {
         derivedStateOf {
-            if (weekMode) {
+            if (visibleDays == 7) {
                 val weekStart = WeekViewUtils.weekPageToStartDate(pagerState.currentPage, firstDayOfWeek)
                 List(7) { offset -> weekStart.plusDays(offset.toLong()) }
             } else {
                 val page = pagerState.currentPage
-                List(3) { offset -> WeekViewUtils.pageToDate(page + offset) }
+                List(visibleDays) { offset -> WeekViewUtils.pageToDate(page + offset) }
             }
         }
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Header row
-        Row(modifier = Modifier.fillMaxWidth()) {
-            // Empty spacer for time column alignment
-            Box(modifier = Modifier.width(timeColumnWidth))
+        // Per-column day headers — skipped in Day view since the screen-level
+        // header already labels the single day.
+        if (visibleDays > 1) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.width(timeColumnWidth))
 
-            // Day headers - render columns directly from derived visibleDates
-            Row(modifier = Modifier.weight(1f)) {
-                visibleDates.forEach { date ->
-                    DayHeaderCell(
-                        date = date,
-                        isToday = date == today,
-                        isWeekend = WeekViewUtils.isWeekend(date),
-                        compact = weekMode,
-                        modifier = Modifier.weight(1f)
-                    )
+                Row(modifier = Modifier.weight(1f)) {
+                    visibleDates.forEach { date ->
+                        DayHeaderCell(
+                            date = date,
+                            isToday = date == today,
+                            isWeekend = WeekViewUtils.isWeekend(date),
+                            compact = visibleDays == 7,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                 }
             }
         }
@@ -460,7 +464,7 @@ private fun UnifiedTimeGrid(
                             dragState = WeekViewUtils.DragState.Idle
                         }
 
-                        if (weekMode) {
+                        if (visibleDays == 7) {
                             // Week mode: 1 page = 1 week (Row of 7 DayColumns)
                             HorizontalPager(
                                 state = pagerState,
@@ -484,6 +488,7 @@ private fun UnifiedTimeGrid(
                                             showEventEmojis = showEventEmojis,
                                             timePattern = timePattern,
                                             startHour = startHour,
+                                            maxVisibleOverlap = maxVisibleOverlap,
                                             onEventClick = onEventClick,
                                             onOverflowClick = onOverflowClick,
                                             onEmptyTap = onEmptyTap,
@@ -556,7 +561,7 @@ private fun UnifiedTimeGrid(
                                 columnWidth = columnWidth
                             )
                         } else {
-                            // 3-day mode: 1 page = 1 day, PageSize.Fixed
+                            // Day-pager mode: 1 page = 1 day, PageSize.Fixed (used by DAY and THREE_DAYS)
                             HorizontalPager(
                                 state = pagerState,
                                 modifier = Modifier.fillMaxSize(),
@@ -576,6 +581,7 @@ private fun UnifiedTimeGrid(
                                     showEventEmojis = showEventEmojis,
                                     timePattern = timePattern,
                                     startHour = startHour,
+                                    maxVisibleOverlap = maxVisibleOverlap,
                                     onEventClick = onEventClick,
                                     onOverflowClick = onOverflowClick,
                                     onEmptyTap = onEmptyTap,
@@ -628,10 +634,10 @@ private fun UnifiedTimeGrid(
                                 )
                             }
 
-                            // Current time indicator (3-day mode)
+                            // Current time indicator (day-pager mode: DAY/THREE_DAYS)
                             CurrentTimeIndicator(
                                 hourHeight = hourHeight,
-                                visibleDays = 3,
+                                visibleDays = visibleDays,
                                 startHour = startHour,
                                 todayOffset = {
                                     WeekViewUtils.dateToPage(today) - pagerState.currentPage

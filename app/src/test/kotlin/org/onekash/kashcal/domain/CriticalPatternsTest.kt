@@ -27,19 +27,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for critical patterns documented in CLAUDE.md.
+ * Regression tests for critical invariants in the data and sync layers.
  *
  * These tests prevent regression of bugs that have caused real issues.
- * Each test maps to a specific critical pattern.
  *
- * Patterns tested:
- * 1. @Transaction for multi-step operations (Pattern #1)
- * 2. PendingOperation Queue for Sync (Pattern #2)
- * 3. Exception Linking via FK (Pattern #3)
- * 4. SyncStatus Enum transitions (Pattern #4)
- * 5. Time-Based Queries: Use Occurrences Table (Pattern #5)
- * 6. Self-Contained Sync Operations (Pattern #6)
- * 7. Exception Events Share Master UID (Pattern #8)
+ * Areas covered:
+ * - @Transaction for multi-step operations
+ * - PendingOperation queue for sync
+ * - Exception linking via FK
+ * - SyncStatus enum transitions
+ * - Time-based queries: use occurrences table
+ * - Self-contained sync operations
+ * - Exception events share master UID
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -132,7 +131,7 @@ class CriticalPatternsTest {
         )
     }
 
-    // ==================== Pattern #8: Exception Events Share Master UID ====================
+    // ==================== Exception Events Share Master UID ====================
 
     @Test
     fun `exception event has same UID as master event`() = runTest {
@@ -281,7 +280,7 @@ class CriticalPatternsTest {
         assertNull(exception.caldavUrl)
     }
 
-    // ==================== Pattern #6: Self-Contained Sync Operations ====================
+    // ==================== Self-Contained Sync Operations ====================
 
     @Test
     fun `MOVE operation stores targetUrl at queue time before clearing caldavUrl`() = runTest {
@@ -311,7 +310,7 @@ class CriticalPatternsTest {
         assertEquals(PendingOperation.OPERATION_MOVE, moveOp.operation)
 
         // CRITICAL: targetUrl must be stored from BEFORE the move
-        // This is Pattern #6 - context captured at queue time
+        // Context must be captured at queue time
         assertEquals(originalCaldavUrl, moveOp.targetUrl)
 
         // Verify the event's caldavUrl is now null (reset for new calendar)
@@ -342,7 +341,7 @@ class CriticalPatternsTest {
         assertNotNull(moveOp.targetCalendarId) // New calendar ID
     }
 
-    // ==================== Pattern #5: Time-Based Queries Use Occurrences Table ====================
+    // ==================== Time-Based Queries Use Occurrences Table ====================
 
     @Test
     fun `recurring event with future occurrences found despite Event endTs in past`() = runTest {
@@ -405,7 +404,7 @@ class CriticalPatternsTest {
         )
     }
 
-    // ==================== Pattern #4: SyncStatus Transitions ====================
+    // ==================== SyncStatus Transitions ====================
 
     @Test
     fun `PENDING_CREATE stays PENDING_CREATE on update`() = runTest {
@@ -465,7 +464,7 @@ class CriticalPatternsTest {
         assertEquals(SyncStatus.SYNCED, updated.syncStatus)
     }
 
-    // ==================== Pattern #2: PendingOperation Queue ====================
+    // ==================== PendingOperation Queue ====================
 
     @Test
     fun `operations queued in FIFO order`() = runTest {
@@ -511,7 +510,7 @@ class CriticalPatternsTest {
         assertEquals(1, pendingOps.size)
     }
 
-    // ==================== Pattern #1: Transaction Atomicity ====================
+    // ==================== Transaction Atomicity ====================
 
     @Test
     fun `editSingleOccurrence creates exception and links in single transaction`() = runTest {

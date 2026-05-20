@@ -44,6 +44,7 @@
     <string name="action_learn_more">Matuto Pa</string>
     <string name="action_open_apple_id">Buksan ang Apple ID</string>
     <string name="action_open_settings">Buksan ang Settings</string>
+    <string name="action_open">Buksan</string>
     <string name="action_force_sync">Force Sync</string>
     <string name="action_sync_now">I-sync Ngayon</string>
     <string name="action_details">Mga Detalye</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">I-export bilang .ics</string>
     <string name="action_confirm_delete">Kumpirmahin ang Pagbura</string>
     <string name="action_delete_event">Burahin ang Event</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Tanggapin</string>
+    <string name="rsvp_action_tentative">Posible</string>
+    <string name="rsvp_action_decline">Tanggihan</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Ang sagot na ito ay para sa buong serye.</string>
+    <string name="rsvp_modified_snackbar">Nabigo ang RSVP para sa %1$s — binago ang event. Pakitugon muli.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Ito lang</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Buong araw</string>
     <string name="label_today">Ngayon</string>
     <string name="label_go_to_date">Pumunta sa petsa</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Linggo</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>
@@ -257,10 +271,7 @@
     <string name="cd_close">Isara</string>
     <string name="cd_search">Maghanap</string>
     <string name="cd_create_event">Gumawa ng event</string>
-    <string name="cd_settings">Settings</string>
     <string name="cd_today">Ngayon</string>
-    <string name="cd_previous_week">Nakaraang linggo</string>
-    <string name="cd_next_week">Susunod na linggo</string>
     <string name="cd_delete">Burahin</string>
     <string name="cd_refresh">I-refresh</string>
     <string name="cd_more_options">Higit pang mga opsyon</string>
@@ -437,6 +448,7 @@
     <string name="settings_device_calendars">Mga Device Calendar</string>
     <string name="settings_quick_event_add">Mabilis na Pagdagdag ng Event</string>
     <string name="settings_week_numbers">Mga Numero ng Linggo</string>
+    <string name="settings_show_declined">Ipakita ang mga tinanggihang kaganapan</string>
     <string name="settings_widget_event_limit">Limitasyon ng Widget Event</string>
     <string name="settings_sync_lookback">Saklaw ng Sync Lookback</string>
     <string name="settings_auto_detect_emojis">Auto-detect ng Emoji</string>
@@ -504,7 +516,6 @@
     <string name="device_calendars_grant">I-grant</string>
     <string name="device_calendars_none_found">Walang natagpuang device calendar.</string>
     <string name="device_calendars_local">Lokal</string>
-    <string name="device_calendars_show_declined">Ipakita ang mga tinanggihang event</string>
     <string name="device_calendars_reminders">Mga Paalala</string>
     <string name="device_calendars_reminders_desc">Makatanggap ng notification para sa mga device calendar event</string>
     <string name="device_calendars_read_only_no_write">Read only (walang write permission)</string>
@@ -687,16 +698,17 @@
 
     <string name="cd_clear">I-clear</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Nakaraan</string>
-    <string name="cd_next">Susunod</string>
     <string name="cd_open_drawer">Buksan ang drawer</string>
     <string name="cd_close_drawer">Isara ang drawer</string>
+    <string name="cd_open_rail">Buksan ang menu</string>
+    <string name="cd_close_rail">Isara ang menu</string>
     <string name="cd_calendar_view">Calendar view</string>
     <string name="cd_active_view">Aktibong view</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Buwan (Buong)</string>
     <string name="view_three_days">3 Araw</string>
+    <string name="view_day">Araw</string>
     <string name="view_year">Taon</string>
     <string name="view_insights">Mga Pananaw</string>
 
@@ -725,8 +737,6 @@
     <string name="sync_summary_removed">%1$d inalis</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Nakaraang 3 araw</string>
-    <string name="cd_next_3_days">Susunod na 3 araw</string>
     <string name="cd_circular_scrolling">Naka-enable ang circular scrolling</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -914,6 +924,9 @@
     <string name="channel_sync_progress_desc">Ipinapakita ang progress habang nag-sync ng kalendaryo</string>
     <string name="channel_sync_status">Status ng Pag-sync</string>
     <string name="channel_sync_status_desc">Mga notipikasyon tungkol sa pagkompleto ng pag-sync at mga error</string>
+    <string name="channel_event_invitations">Mga Imbitasyon sa Event</string>
+    <string name="channel_event_invitations_desc">Mga notipikasyon kapag nakatanggap ka ng bagong imbitasyon sa kalendaryo</string>
+    <string name="invite_notification_body">Mula kay %1$s · I-tap para tumugon</string>
     <string name="rrule_does_not_repeat">Hindi umuulit</string>
     <string name="rrule_freq_daily">Araw-araw</string>
     <string name="rrule_freq_weekly">Lingguhan</string>
@@ -1050,4 +1063,14 @@
     <string name="attendee_status_tentative">Hindi Tiyak</string>
     <string name="attendee_status_delegated">Itinalaga</string>
     <string name="attendee_status_pending">Naghihintay</string>
+    <string name="inbox_empty_caught_up">Wala nang nakabinbin</string>
+    <string name="inbox_organizer_suffix">(tagapag-organisa)</string>
+    <string name="menu_invites">Mga Imbitasyon</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Petsa</string>
+    <string name="menu_more">Higit pang menu</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Higit pang menu, %d imbitasyon ang nakabinbin</item>
+        <item quantity="other">Higit pang menu, %d na imbitasyon ang nakabinbin</item>
+    </plurals>
 </resources>

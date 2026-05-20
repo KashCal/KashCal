@@ -8,8 +8,8 @@ import org.junit.Test
  * canonicalizer for CAL-ADDRESS forms (RFC 5545 §3.3.3).
  *
  * Cases cover all four address shapes observed across seven CalDAV
- * implementations during the P1.9 probe (`docs/tdd/p1-9-discovery-probe.md`):
- * `mailto:`, `urn:uuid:`, absolute HTTP, and principal-relative path.
+ * implementations: `mailto:`, `urn:uuid:`, absolute HTTP, and
+ * principal-relative path.
  */
 class AddressNormalizerTest {
 

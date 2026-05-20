@@ -55,6 +55,7 @@
     <string name="action_save">Simpan</string>
     <string name="action_add">Tambah</string>
     <string name="action_edit">Edit</string>
+    <string name="action_open">Buka</string>
     <string name="action_delete">Padam</string>
     <string name="action_confirm">Sahkan</string>
     <string name="action_discard">Buang</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">Sepanjang hari</string>
     <string name="label_today">Hari ini</string>
     <string name="label_go_to_date">Pergi ke tarikh</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Minggu</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Tetapan</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">Tutup</string>
     <string name="cd_search">Cari</string>
     <string name="cd_create_event">Cipta acara</string>
-    <string name="cd_settings">Tetapan</string>
     <string name="cd_today">Hari ini</string>
-    <string name="cd_previous_week">Minggu lepas</string>
-    <string name="cd_next_week">Minggu depan</string>
     <string name="cd_delete">Padam</string>
     <string name="cd_refresh">Muat semula</string>
     <string name="cd_more_options">Lagi pilihan</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">Kalendar Peranti</string>
     <string name="settings_quick_event_add">Tambah Acara Pantas</string>
     <string name="settings_week_numbers">Nombor Minggu</string>
+    <string name="settings_show_declined">Tunjukkan acara ditolak</string>
     <string name="settings_widget_event_limit">Had Acara Widget</string>
     <string name="settings_sync_lookback">Lihat Balik Segerak</string>
     <string name="settings_auto_detect_emojis">Kesan Emoji Automatik</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">Beri</string>
     <string name="device_calendars_none_found">Tiada kalendar peranti dijumpai.</string>
     <string name="device_calendars_local">Tempatan</string>
-    <string name="device_calendars_show_declined">Tunjuk acara ditolak</string>
     <string name="device_calendars_reminders">Peringatan</string>
     <string name="device_calendars_reminders_desc">Terima pemberitahuan untuk acara kalendar peranti</string>
     <string name="device_calendars_read_only_no_write">Baca sahaja (tiada kebenaran tulis)</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">Kosongkan</string>
     <string name="cd_offline">Luar talian</string>
-    <string name="cd_previous">Sebelumnya</string>
-    <string name="cd_next">Seterusnya</string>
     <string name="cd_open_drawer">Buka laci</string>
     <string name="cd_close_drawer">Tutup laci</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Buka menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Tutup menu</string>
     <string name="cd_calendar_view">Paparan kalendar</string>
     <string name="cd_active_view">Paparan aktif</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Bulan (Penuh)</string>
+    <string name="view_day">Hari</string>
     <string name="view_three_days">3 Hari</string>
     <string name="view_year">Tahun</string>
     <string name="view_insights">Cerapan</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d dibuang</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">3 hari lepas</string>
-    <string name="cd_next_3_days">3 hari akan datang</string>
     <string name="cd_circular_scrolling">Tatal bulat didayakan</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">Menunjukkan kemajuan semasa menyegerakkan kalendar</string>
     <string name="channel_sync_status">Status Segerak</string>
     <string name="channel_sync_status_desc">Pemberitahuan tentang penyempurnaan segerak dan ralat</string>
+    <string name="channel_event_invitations">Jemputan Acara</string>
+    <string name="channel_event_invitations_desc">Pemberitahuan apabila anda menerima jemputan kalendar baharu</string>
+    <string name="invite_notification_body">Daripada %1$s · Ketik untuk membalas</string>
     <string name="rrule_does_not_repeat">Tidak berulang</string>
     <string name="rrule_freq_daily">Harian</string>
     <string name="rrule_freq_weekly">Mingguan</string>
@@ -992,4 +997,19 @@
     <string name="attendee_status_tentative">Tentatif</string>
     <string name="attendee_status_delegated">Diwakilkan</string>
     <string name="attendee_status_pending">Menunggu</string>
+    <string name="rsvp_action_accept">Terima</string>
+    <string name="rsvp_action_tentative">Tentatif</string>
+    <string name="rsvp_action_decline">Tolak</string>
+    <string name="rsvp_series_disclosure">Balasan anda terpakai untuk seluruh siri.</string>
+    <string name="rsvp_modified_snackbar">Balasan untuk %1$s gagal, acara telah diubah suai. Sila balas semula.</string>
+    <string name="inbox_empty_caught_up">Semua telah diuruskan</string>
+    <string name="inbox_organizer_suffix">(penganjur)</string>
+    <string name="menu_invites">Jemputan</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Tarikh</string>
+    <string name="menu_more">Menu lain</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menu lain, %d jemputan menunggu</item>
+        <item quantity="other">Menu lain, %d jemputan menunggu</item>
+    </plurals>
 </resources>

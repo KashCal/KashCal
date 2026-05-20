@@ -60,7 +60,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 17,
+    version = 18,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)

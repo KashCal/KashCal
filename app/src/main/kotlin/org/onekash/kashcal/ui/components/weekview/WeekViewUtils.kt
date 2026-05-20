@@ -56,7 +56,6 @@ object WeekViewUtils {
     // HorizontalPager is lazy - large pageCount costs nothing
     const val TOTAL_DAY_PAGES = Int.MAX_VALUE
     const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
-    const val VISIBLE_DAYS = 3  // 3-day view
 
     // Week pager constants (WEEK mode — 1 page = 1 week)
     const val TOTAL_WEEK_PAGES = 1000  // ~500 weeks each direction
@@ -97,7 +96,7 @@ object WeekViewUtils {
      * @param visibleDays Number of visible days (default: 3)
      * @return Pair of (startDate, endDate) inclusive
      */
-    fun getVisibleDateRange(currentPage: Int, visibleDays: Int = VISIBLE_DAYS): Pair<LocalDate, LocalDate> {
+    fun getVisibleDateRange(currentPage: Int, visibleDays: Int = 3): Pair<LocalDate, LocalDate> {
         val startDate = pageToDate(currentPage)
         val endDate = startDate.plusDays((visibleDays - 1).toLong())
         return startDate to endDate
@@ -114,7 +113,7 @@ object WeekViewUtils {
      */
     fun getLoadingDateRange(
         currentPage: Int,
-        visibleDays: Int = VISIBLE_DAYS,
+        visibleDays: Int = 3,
         bufferDays: Int = 7
     ): Pair<LocalDate, LocalDate> {
         val startDate = pageToDate(currentPage).minusDays(bufferDays.toLong())
@@ -321,37 +320,24 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a date as "Apr 2026 (W16)" with locale-aware week numbering.
-     * Used for week view where all 7 days share the same week number.
-     *
-     * @param date The date to format
-     * @param firstDayOfWeek User's first-day-of-week preference (Calendar.SUNDAY/MONDAY/SATURDAY, or 0 for system default)
-     * @return Formatted month/year + week number string
-     */
-    fun formatMonthYearWithWeek(date: LocalDate, firstDayOfWeek: Int = 0): String {
-        val monthYear = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
-            .format(date)
-        val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
-        val weekNumber = date.get(weekFields.weekOfWeekBasedYear())
-        return "$monthYear (W$weekNumber)"
-    }
-
-    /**
-     * Format a date as "Apr 2026" without week number.
-     * Used for 3-day view where the window can straddle week boundaries.
+     * Format a date as "April 2026" with full month name. Used by the calendar
+     * header for week and 3-day views; matches the month-view header treatment
+     * so the typography is uniform across views.
      */
     fun formatMonthYear(date: LocalDate): String {
-        return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
+        return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault())
             .format(date)
     }
 
     /**
-     * Format the 3-day view header from a pager position.
-     * Uses the center date of the 3-day window, without week number.
+     * Format a week label as "$prefix N" where N is the locale-aware week-of-year
+     * for [date]. The [prefix] is passed in by the caller so the host can supply a
+     * localized stringResource — keeps the formatter Composable-free.
      */
-    fun formatThreeDayHeader(pagerPosition: Int): String {
-        val centerDate = pageToDate(pagerPosition + 1)
-        return formatMonthYear(centerDate)
+    fun formatWeekLabel(date: LocalDate, firstDayOfWeek: Int = 0, prefix: String): String {
+        val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
+        val weekNumber = date.get(weekFields.weekOfWeekBasedYear())
+        return "$prefix $weekNumber"
     }
 
     // ==================== Scroll Defaults ====================
@@ -549,7 +535,7 @@ object WeekViewUtils {
         dayIndex: Int,
         hourHeight: Dp = HOUR_HEIGHT,
         startHour: Int = START_HOUR,
-        endHour: Int = END_HOUR
+        endHour: Int = END_HOUR,
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
@@ -696,8 +682,11 @@ object WeekViewUtils {
      * @param events All positioned events for a time slot
      * @return Pair of (visible events, overflow count)
      */
-    fun groupForDisplay(events: List<PositionedEvent>): Pair<List<PositionedEvent>, Int> {
-        val (visible, overflow) = events.partition { it.overlapIndex < MAX_VISIBLE_OVERLAP }
+    fun groupForDisplay(
+        events: List<PositionedEvent>,
+        maxVisibleOverlap: Int = MAX_VISIBLE_OVERLAP
+    ): Pair<List<PositionedEvent>, Int> {
+        val (visible, overflow) = events.partition { it.overlapIndex < maxVisibleOverlap }
         return visible to overflow.size
     }
 

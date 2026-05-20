@@ -51,6 +51,7 @@ import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.ui.screens.settings.AccountConnectedSheet
 import org.onekash.kashcal.ui.screens.settings.AccountsScreen
 import org.onekash.kashcal.ui.screens.settings.BirthdaysAndAnniversariesScreen
+import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsScreen
 import org.onekash.kashcal.ui.screens.settings.ICloudAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.screens.settings.RestoreConfirmationDialog
@@ -213,6 +214,7 @@ class SettingsActivity : ComponentActivity() {
                 var showAccountsScreen by rememberSaveable { mutableStateOf(false) }
                 var showSubscriptionsScreen by rememberSaveable { mutableStateOf(false) }
                 var showBirthdaysAnniversariesScreen by rememberSaveable { mutableStateOf(false) }
+                var showDeviceCalendarsScreen by rememberSaveable { mutableStateOf(false) }
 
                 // ICS import state
                 var showIcsImportSheet by remember { mutableStateOf(false) }
@@ -401,6 +403,33 @@ class SettingsActivity : ComponentActivity() {
                                 onUpdateSubscription = viewModel::onUpdateSubscription
                             )
                         }
+                        showDeviceCalendarsScreen -> {
+                            DeviceCalendarsScreen(
+                                isEnabled = deviceCalendarsEnabled,
+                                hasReadPermission = hasReadCalendarPermission,
+                                hasWritePermission = hasWriteCalendarPermission,
+                                deviceCalendars = deviceCalendars,
+                                enabledCalendarIds = enabledDeviceCalendarIds,
+                                deviceCalendarRemindersEnabled = deviceCalendarRemindersEnabled,
+                                onNavigateBack = { showDeviceCalendarsScreen = false },
+                                onToggle = { enabled ->
+                                    if (enabled && !hasReadCalendarPermission) {
+                                        calendarPermissionLauncher.launch(arrayOf(
+                                            Manifest.permission.READ_CALENDAR,
+                                            Manifest.permission.WRITE_CALENDAR
+                                        ))
+                                    } else {
+                                        viewModel.onToggleDeviceCalendars(enabled)
+                                    }
+                                },
+                                onToggleCalendar = viewModel::onToggleDeviceCalendar,
+                                onToggleDeviceCalendarReminders = viewModel::onToggleDeviceCalendarReminders,
+                                onRequestWritePermission = {
+                                    writeCalendarPermissionLauncher.launch(Manifest.permission.WRITE_CALENDAR)
+                                },
+                                onRefresh = viewModel::refreshDeviceCalendars
+                            )
+                        }
                         else -> {
                             AccountSettingsScreen(
                             uiState = uiState,
@@ -578,7 +607,9 @@ class SettingsActivity : ComponentActivity() {
                             // Version footer
                             versionName = BuildConfig.VERSION_NAME,
                             // Navigate to Accounts detail screen
-                            onNavigateToAccounts = { showAccountsScreen = true }
+                            onNavigateToAccounts = { showAccountsScreen = true },
+                            // Navigate to Device Calendars detail screen
+                            onNavigateToDeviceCalendars = { showDeviceCalendarsScreen = true }
                         )
                         }
                     }

@@ -140,6 +140,7 @@ object SyncErrorBridge {
         is SinglePushResult.Success -> null
         is SinglePushResult.PhaseAdvanced -> null  // MOVE operation advanced to next phase (not an error)
         is SinglePushResult.Conflict -> CalendarError.Server.Conflict(eventTitle)
+        is SinglePushResult.RsvpModified -> CalendarError.Server.Conflict(result.eventTitle)
         is SinglePushResult.Error -> when (result.code) {
             401 -> CalendarError.Auth.InvalidCredentials
             403 -> CalendarError.Server.Forbidden(result.message)

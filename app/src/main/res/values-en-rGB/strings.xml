@@ -54,6 +54,7 @@
     <string name="action_save">Save</string>
     <string name="action_add">Add</string>
     <string name="action_edit">Edit</string>
+    <string name="action_open">Open</string>
     <string name="action_delete">Delete</string>
     <string name="action_confirm">Confirm</string>
     <string name="action_discard">Discard</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">Export as .ics</string>
     <string name="action_confirm_delete">Confirm Delete</string>
     <string name="action_delete_event">Delete Event</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Accept</string>
+    <string name="rsvp_action_tentative">Tentative</string>
+    <string name="rsvp_action_decline">Decline</string>
+    <string name="rsvp_series_disclosure">Your reply applies to the whole series.</string>
+    <string name="rsvp_modified_snackbar">RSVP for %1$s failed — event was modified. Please re-respond.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Just this one</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">All day</string>
     <string name="label_today">Today</string>
     <string name="label_go_to_date">Go to date</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Week</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Settings</string>
@@ -254,10 +265,7 @@
     <string name="cd_close">Close</string>
     <string name="cd_search">Search</string>
     <string name="cd_create_event">Create event</string>
-    <string name="cd_settings">Settings</string>
     <string name="cd_today">Today</string>
-    <string name="cd_previous_week">Previous week</string>
-    <string name="cd_next_week">Next week</string>
     <string name="cd_delete">Delete</string>
     <string name="cd_refresh">Refresh</string>
     <string name="cd_more_options">More options</string>
@@ -434,6 +442,7 @@
     <string name="settings_device_calendars">Device Calendars</string>
     <string name="settings_quick_event_add">Quick Event Add</string>
     <string name="settings_week_numbers">Week Numbers</string>
+    <string name="settings_show_declined">Show declined events</string>
     <string name="settings_widget_event_limit">Widget Event Limit</string>
     <string name="settings_sync_lookback">Sync Lookback</string>
     <string name="settings_auto_detect_emojis">Auto-detect Emojis</string>
@@ -502,7 +511,6 @@
     <string name="device_calendars_grant">Grant</string>
     <string name="device_calendars_none_found">No device calendars found.</string>
     <string name="device_calendars_local">Local</string>
-    <string name="device_calendars_show_declined">Show declined events</string>
     <string name="device_calendars_reminders">Reminders</string>
     <string name="device_calendars_reminders_desc">Get notified for device calendar events</string>
     <string name="device_calendars_read_only_no_write">Read only (no write permission)</string>
@@ -684,16 +692,19 @@
 
     <string name="cd_clear">Clear</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Previous</string>
-    <string name="cd_next">Next</string>
     <string name="cd_open_drawer">Open drawer</string>
     <string name="cd_close_drawer">Close drawer</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Open menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Close menu</string>
     <string name="cd_calendar_view">Calendar view</string>
     <string name="cd_active_view">Active view</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Month (Full)</string>
     <string name="view_three_days">3 Days</string>
+    <string name="view_day">Day</string>
     <string name="view_year">Year</string>
     <string name="view_insights">Insights</string>
 
@@ -722,8 +733,6 @@
     <string name="sync_summary_removed">%1$d removed</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Previous 3 days</string>
-    <string name="cd_next_3_days">Next 3 days</string>
     <string name="cd_circular_scrolling">Circular scrolling enabled</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -904,6 +913,9 @@
     <string name="channel_sync_progress_desc">Shows progress whilst syncing calendars</string>
     <string name="channel_sync_status">Sync Status</string>
     <string name="channel_sync_status_desc">Notifications about sync completion and errors</string>
+    <string name="channel_event_invitations">Event Invitations</string>
+    <string name="channel_event_invitations_desc">Notifications when you receive a new calendar invitation</string>
+    <string name="invite_notification_body">From %1$s · Tap to respond</string>
 
     <string name="rrule_does_not_repeat">Does not repeat</string>
     <string name="rrule_freq_daily">Daily</string>
@@ -1048,4 +1060,14 @@
     <string name="attendee_status_tentative">Tentative</string>
     <string name="attendee_status_delegated">Delegated</string>
     <string name="attendee_status_pending">Pending</string>
+    <string name="inbox_empty_caught_up">All caught up</string>
+    <string name="inbox_organizer_suffix">(organiser)</string>
+    <string name="menu_invites">Invites</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Date</string>
+    <string name="menu_more">More menu</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">More menu, %d invite pending</item>
+        <item quantity="other">More menu, %d invites pending</item>
+    </plurals>
 </resources>

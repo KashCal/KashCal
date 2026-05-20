@@ -83,4 +83,12 @@ sealed class SinglePushResult {
      * in the next sync cycle for the CREATE phase.
      */
     data object PhaseAdvanced : SinglePushResult()
+
+    /**
+     * RSVP write hit a second 412 after the GET-replay-retry. Caller should
+     * surface a "this event was modified — please re-respond" snackbar
+     * rather than auto-retry indefinitely. Carries the event title for the
+     * user-facing message.
+     */
+    data class RsvpModified(val eventTitle: String) : SinglePushResult()
 }

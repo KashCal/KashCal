@@ -1,3 +1,0 @@
-• Every event now shows attendee chips with name, RSVP status, organizer crown, and tap actions for email, copy, and send
-• Off-list events show a pill that expands to the full attendee list when tapped
-• Fixes: iCloud organizer chip rendering, Google ICS feed import gaps, multi-alias day-card count, widget sizing

@@ -175,12 +175,21 @@ data class HomeUiState(
     val showOnboardingSheet: Boolean = false,
     /** Show app info sheet */
     val showAppInfoSheet: Boolean = false,
+    /** Show invitation inbox bottom sheet */
+    val isInvitationInboxOpen: Boolean = false,
     /** Show sync changes bottom sheet */
     val showSyncChangesSheet: Boolean = false,
     /** Sync changes for bottom sheet display */
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
     /** Current calendar view mode (month grid, agenda list, or 3-day grid) */
     val viewMode: ViewMode = ViewMode.MONTH,
+    /**
+     * Last non-INSIGHTS view the user was on. Used as the back-target when
+     * leaving the Insights screen so back returns to whichever view the user
+     * came from (or their persisted default if Insights is the initial view).
+     * Never holds INSIGHTS — see HomeViewModel.setViewMode guard.
+     */
+    val previousNonInsightsMode: ViewMode = ViewMode.MONTH,
     /** Show year overlay for quick navigation */
     val showYearOverlay: Boolean = false,
 
@@ -390,6 +399,8 @@ enum class ViewMode(val key: String) {
     MONTH("month"),
     /** 30-day upcoming events list */
     AGENDA("agenda"),
+    /** Single-day scrollable time grid */
+    DAY("day"),
     /** 3-day scrollable time grid */
     THREE_DAYS("three_days"),
     /** 7-day scrollable time grid (full 24-hour range) */
@@ -401,8 +412,28 @@ enum class ViewMode(val key: String) {
     /** Premium insights analytics screen (drawer-only, not persisted as default) */
     INSIGHTS("insights");
 
-    /** True for views that render a scrollable time grid (THREE_DAYS, WEEK). */
-    val isTimeGrid: Boolean get() = this == THREE_DAYS || this == WEEK
+    /** True for views that render a scrollable time grid (DAY, THREE_DAYS, WEEK). */
+    val isTimeGrid: Boolean get() = this == DAY || this == THREE_DAYS || this == WEEK
+
+    /** Number of day columns rendered side-by-side. Null for non-time-grid views. */
+    val visibleDays: Int? get() = when (this) {
+        DAY -> 1
+        THREE_DAYS -> 3
+        WEEK -> 7
+        MONTH, AGENDA, MONTH_FULL, YEAR, INSIGHTS -> null
+    }
+
+    /**
+     * Pager-page step for next/prev gestures, in pager units. DAY and THREE_DAYS use a
+     * 1-day-per-page pager (1 or 3 pages = 1 or 3 days), WEEK uses a 1-week-per-page pager
+     * (1 page = 1 week).
+     */
+    val pagerNextStep: Int? get() = when (this) {
+        DAY -> 1
+        THREE_DAYS -> 3
+        WEEK -> 1
+        MONTH, AGENDA, MONTH_FULL, YEAR, INSIGHTS -> null
+    }
 
     companion object {
         fun fromKey(key: String): ViewMode = entries.find { it.key == key } ?: MONTH

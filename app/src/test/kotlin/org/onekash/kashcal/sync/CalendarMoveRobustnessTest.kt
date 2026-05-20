@@ -240,7 +240,7 @@ class CalendarMoveRobustnessTest {
     @Test
     fun `move exception event directly throws error`() = runTest {
         // v21.6.0: EventWriter.moveEventToCalendar now rejects moving exceptions directly.
-        // Per CLAUDE.md pattern #11, exceptions must stay with their master.
+        // Exceptions must stay with their master.
         val master = createAndInsertRecurringEvent("Master for Exception", sourceCalendarId)
         occurrenceGenerator.regenerateOccurrences(master)
 

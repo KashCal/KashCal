@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.strategy
 
+import io.mockk.mockk
 import io.mockk.MockKAnnotations
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -81,7 +82,10 @@ class PullStrategyMetadataRefreshTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
     }
 

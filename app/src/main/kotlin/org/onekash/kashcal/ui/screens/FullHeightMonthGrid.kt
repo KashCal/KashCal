@@ -33,6 +33,8 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.ui.components.declinedCardAlpha
+import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.screens.monthfull.SlotContent
@@ -224,25 +226,27 @@ private fun SpanBar(
         )
     }
     val style = remember(span.displayEvent) { spanStyleFor(span.displayEvent) }
+    val isDeclined = span.displayEvent.isDeclinedByMe
+    val declinedModifier = modifier.alpha(declinedCardAlpha(isPast = false, isDeclined = isDeclined))
     when (style) {
         is SpanStyle.AllDayBusy -> StyledBox(
-            modifier = modifier,
+            modifier = declinedModifier,
             shape = shape,
             fill = Color(style.fillColor),
             borderColor = null,
         ) {
-            BarText(title, color = style.textColor)
+            BarText(title, color = style.textColor, isDeclined = isDeclined)
         }
         is SpanStyle.AllDayFree -> StyledBox(
-            modifier = modifier,
+            modifier = declinedModifier,
             shape = shape,
             fill = style.tintFill,
             borderColor = Color(style.borderColor),
         ) {
-            BarText(title, color = MaterialTheme.colorScheme.onSurface)
+            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
         }
         is SpanStyle.TimedSpan -> Box(
-            modifier = modifier
+            modifier = declinedModifier
                 .height(IntrinsicSize.Min)
                 .clip(shape)
                 .background(style.tintFill),
@@ -256,7 +260,7 @@ private fun SpanBar(
                             .background(Color(style.stripeColor))
                     )
                 }
-                BarText(title, color = MaterialTheme.colorScheme.onSurface)
+                BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
             }
         }
     }
@@ -281,11 +285,12 @@ private fun StyledBox(
 }
 
 @Composable
-private fun BarText(text: String, color: Color) {
+private fun BarText(text: String, color: Color, isDeclined: Boolean = false) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelSmall,
         color = color,
+        textDecoration = declinedTitleDecoration(isDeclined),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.padding(horizontal = 4.dp)
@@ -348,7 +353,9 @@ private fun EventSnippetSlot(
 ) {
     val title = rememberDisplayEventTitle(displayEvent, showEventEmojis)
     val style = remember(displayEvent) { snippetStyleFor(displayEvent) }
-    val rowAlpha = if (isInOutDate) 0.4f else 1f
+    val isDeclined = displayEvent.isDeclinedByMe
+    val baseAlpha = if (isInOutDate) 0.4f else 1f
+    val rowAlpha = if (isDeclined) baseAlpha.coerceAtMost(0.5f) else baseAlpha
     val slotHeight = slotHeight()
     val baseModifier = modifier
         .alpha(rowAlpha)
@@ -370,6 +377,7 @@ private fun EventSnippetSlot(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.Unspecified,
+                textDecoration = declinedTitleDecoration(isDeclined),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(start = 3.dp, end = 1.dp)
@@ -381,7 +389,7 @@ private fun EventSnippetSlot(
             fill = Color(style.fillColor),
             borderColor = null,
         ) {
-            BarText(title, color = style.textColor)
+            BarText(title, color = style.textColor, isDeclined = isDeclined)
         }
         is SnippetStyle.AllDayFree -> StyledBox(
             modifier = baseModifier.height(slotHeight),
@@ -389,7 +397,7 @@ private fun EventSnippetSlot(
             fill = style.tintFill,
             borderColor = Color(style.borderColor),
         ) {
-            BarText(title, color = MaterialTheme.colorScheme.onSurface)
+            BarText(title, color = MaterialTheme.colorScheme.onSurface, isDeclined = isDeclined)
         }
     }
 }

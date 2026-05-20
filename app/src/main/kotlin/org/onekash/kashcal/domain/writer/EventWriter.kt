@@ -1,11 +1,15 @@
 package org.onekash.kashcal.domain.writer
 
 import androidx.room.withTransaction
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.KashCalDatabase
+import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
+import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.sync.strategy.PullStrategy
 import java.util.UUID
 import javax.inject.Inject
@@ -36,6 +40,7 @@ class EventWriter @Inject constructor(
     private val eventsDao by lazy { database.eventsDao() }
     private val pendingOpsDao by lazy { database.pendingOperationsDao() }
     private val occurrencesDao by lazy { database.occurrencesDao() }
+    private val attendeesDao by lazy { database.attendeesDao() }
 
     /**
      * Create a new event.
@@ -148,6 +153,92 @@ class EventWriter @Inject constructor(
 
             eventToUpdate
         }
+    }
+
+    /**
+     * Write the user's RSVP for an event they're attending.
+     *
+     * Updates the local attendee row's PARTSTAT (so the chip row reflects
+     * the choice immediately — optimistic UI), then queues a PARTSTAT-only
+     * pending operation that PushStrategy turns into a surgical CalDAV PUT
+     * via `IcsPatcher.patchAttendeeReply`. Every other ATTENDEE row,
+     * ORGANIZER, SUMMARY, etc. on the event survives verbatim.
+     *
+     * Canonicalizes [partstat] to uppercase per RFC 5545 §3.2.12. Caller
+     * may pass any-case ("accepted", "ACCEPTED", "Accepted").
+     *
+     * @return true when the local attendee row matched and was updated,
+     *   false when no attendee row matches the account (caller surfaces
+     *   "you're not on this event's attendee list" error).
+     */
+    suspend fun replyRsvp(
+        eventId: Long,
+        account: Account,
+        partstat: String
+    ): Boolean {
+        val canonical = partstat.uppercase()
+        return database.withTransaction {
+            val rows = attendeesDao.getForEventOnce(eventId)
+            val matching = rows.firstOrNull { account.matchesAttendee(it.address) }
+                ?: return@withTransaction false
+
+            // Optimistic local write: replace the row set with the same rows,
+            // mutating only matching's PARTSTAT. Reuses existing
+            // replaceForEvent transaction semantics so the chip row's Flow
+            // observes a single emission.
+            val updatedRows = rows.map { row ->
+                if (row.id == matching.id) row.copy(partstat = canonical) else row
+            }
+            attendeesDao.replaceForEvent(eventId, updatedRows)
+
+            // Capture caldavUrl at queue time so the drain stays self-contained
+            // even if a future code path clears Event.caldavUrl before drain.
+            val capturedUrl = eventsDao.getById(eventId)?.caldavUrl
+            val pendingOp = PendingOperation(
+                eventId = eventId,
+                operation = PendingOperation.OPERATION_UPDATE,
+                partstatOnly = true,
+                partstatTarget = canonical,
+                targetUrl = capturedUrl
+            )
+            pendingOpsDao.insert(pendingOp)
+            true
+        }
+    }
+
+    /**
+     * Update only the user's local reminder set on an event they're an
+     * attendee of (RFC 5545 §3.6.6 — VALARM is a per-attendee property,
+     * not part of the organizer's authoritative event state).
+     *
+     * Local-only: writes the `reminders` and `alarm_count` columns
+     * directly, leaves `sync_status` as-is, and does NOT queue a
+     * PendingOperation. The reason is the same one T2's PARTSTAT-only
+     * path solved: a full-event PUT on the attendee side rewrites the
+     * server's ATTENDEE list (servers route by ORGANIZER mailto). A
+     * VALARM-only patcher would close the loop server-side, but it's
+     * not in this iteration's scope. The on-device AlarmManager fires
+     * regardless of server state, which is the user-visible win.
+     *
+     * Caller must pass an ISO-8601 list (e.g., `["-PT15M", "-PT1H"]`).
+     * UI callers can use the existing `buildRemindersList` helper to
+     * convert minute integers to ISO-8601 strings.
+     *
+     * @param eventId The event whose reminders to update.
+     * @param reminders ISO-8601 duration strings, ordered as the user
+     *   chose them. May be empty to clear all reminders.
+     */
+    suspend fun saveAttendeeReminders(eventId: Long, reminders: List<String>) {
+        val now = System.currentTimeMillis()
+        // Mirrors Converters.fromStringList JSON shape so the entity round-
+        // trips through Room's @TypeConverter on subsequent reads.
+        val remindersJson = if (reminders.isEmpty()) null else Json.encodeToString(reminders)
+        eventsDao.updateRemindersAndAlarmCount(
+            id = eventId,
+            remindersJson = remindersJson,
+            alarmCount = reminders.size,
+            now = now
+        )
     }
 
     /**
@@ -482,7 +573,7 @@ class EventWriter @Inject constructor(
                 "Event not found: $eventId"
             }
 
-            // Guard: Exception events cannot be moved directly (CLAUDE.md #11)
+            // Guard: Exception events cannot be moved directly
             require(event.originalEventId == null) {
                 "Cannot move exception event directly. Move the master event instead (originalEventId: ${event.originalEventId})"
             }

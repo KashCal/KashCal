@@ -692,39 +692,39 @@ class WeekViewUtilsTest {
     // ==================== formatMonthYear Tests ====================
 
     @Test
-    fun `formatMonthYearWithWeek produces MMM yyyy (WN) format`() {
-        val date = LocalDate.of(2026, 4, 15) // Wednesday, April 15, 2026
-        val result = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.MONDAY)
-        assertTrue("Should start with month abbreviation and year, got: $result", result.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
-        assertTrue("Should contain (W", result.contains("(W"))
-    }
-
-    @Test
-    fun `formatMonthYearWithWeek week number is locale-aware not ISO-fixed`() {
-        // Jan 1, 2026 is Thursday. With Sunday-start, this is week 1 (US style).
-        // With Monday-start and minimalDays=4 (ISO), it's week 1 too (Jan 1 is Thu, 4 days in week).
-        // But with Sunday-start and minimalDays=1 (US), week containing Jan 1 is definitely week 1.
-        val date = LocalDate.of(2026, 1, 1)
-        val sundayResult = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.SUNDAY)
-        val mondayResult = WeekViewUtils.formatMonthYearWithWeek(date, java.util.Calendar.MONDAY)
-        // Both should produce valid format
-        assertTrue(sundayResult.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
-        assertTrue(mondayResult.matches(Regex("\\w+ 2026 \\(W\\d+\\)")))
-    }
-
-    @Test
-    fun `formatMonthYear produces MMM yyyy without week number`() {
+    fun `formatMonthYear produces full month name and year`() {
         val date = LocalDate.of(2026, 4, 15)
         val result = WeekViewUtils.formatMonthYear(date)
-        assertTrue("Should match MMM yyyy format without week, got: $result", result.matches(Regex("\\w+ \\d{4}")))
+        assertTrue("Should match full-month yyyy format, got: $result", result.matches(Regex("\\w+ \\d{4}")))
         assertFalse("Should not contain week number", result.contains("(W"))
+        assertTrue("Should contain full month name April for en-US, got: $result", result.contains("April"))
+    }
+
+    // ==================== formatWeekLabel Tests ====================
+
+    @Test
+    fun `formatWeekLabel concatenates prefix and week number`() {
+        val date = LocalDate.of(2026, 4, 15) // Wednesday, April 15, 2026
+        val result = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Week")
+        assertTrue("Should match 'Week N' format, got: $result", result.matches(Regex("Week \\d+")))
     }
 
     @Test
-    fun `formatThreeDayHeader uses center date without week number`() {
-        val result = WeekViewUtils.formatThreeDayHeader(WeekViewUtils.CENTER_DAY_PAGE)
-        assertTrue("Should match MMM yyyy format, got: $result", result.matches(Regex("\\w+ \\d{4}")))
-        assertFalse("Should not contain week number", result.contains("(W"))
+    fun `formatWeekLabel respects prefix arg for localization`() {
+        val date = LocalDate.of(2026, 4, 15)
+        val result = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Woche")
+        assertTrue("Should use de-DE prefix, got: $result", result.startsWith("Woche "))
+    }
+
+    @Test
+    fun `formatWeekLabel week number is locale-aware not ISO-fixed`() {
+        // Jan 1, 2026 is Thursday. Sunday-start (US, minimalDays=1) and Monday-start
+        // (ISO, minimalDays=4) can disagree on the year-end / year-start week.
+        val date = LocalDate.of(2026, 1, 1)
+        val sundayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.SUNDAY, prefix = "Week")
+        val mondayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Week")
+        assertTrue("Sunday-start should match 'Week N', got: $sundayResult", sundayResult.matches(Regex("Week \\d+")))
+        assertTrue("Monday-start should match 'Week N', got: $mondayResult", mondayResult.matches(Regex("Week \\d+")))
     }
 
     // ==================== offsetToTime with startHour Tests ====================

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.sync.strategy
 
+import io.mockk.mockk
 import io.mockk.MockKAnnotations
 import io.mockk.Ordering
 import io.mockk.Runs
@@ -110,7 +111,10 @@ class PullStrategyTest {
             attendeesDao = database.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = quirks,
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
     }
 

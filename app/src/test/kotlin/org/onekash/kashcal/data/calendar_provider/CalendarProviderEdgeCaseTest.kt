@@ -66,7 +66,7 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `isEventPast all-day uses day code not timestamp`() {
-        // Scenario from CLAUDE.md Pattern 16:
+        // Scenario:
         // UTC-6 at 6 PM = UTC Jan 16 00:00
         // All-day event ends Jan 15 (endTs = Jan 15 23:59:59.999 UTC)
         // Bug: endTs < nowUtc → true (incorrectly past)

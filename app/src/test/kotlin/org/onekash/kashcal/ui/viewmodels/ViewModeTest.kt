@@ -62,7 +62,70 @@ class ViewModeTest {
     }
 
     @Test
-    fun `ViewMode has 7 entries`() {
-        assertEquals(7, ViewMode.entries.size)
+    fun `ViewMode has 8 entries`() {
+        assertEquals(8, ViewMode.entries.size)
+    }
+
+    @Test
+    fun `fromKey day returns DAY`() {
+        assertEquals(ViewMode.DAY, ViewMode.fromKey("day"))
+    }
+
+    @Test
+    fun `DAY key is day`() {
+        assertEquals("day", ViewMode.DAY.key)
+    }
+
+    @Test
+    fun `DAY visibleDays is 1`() {
+        assertEquals(1, ViewMode.DAY.visibleDays)
+    }
+
+    @Test
+    fun `DAY pagerNextStep is 1`() {
+        assertEquals(1, ViewMode.DAY.pagerNextStep)
+    }
+
+    @Test
+    fun `DAY isTimeGrid is true`() {
+        assertEquals(true, ViewMode.DAY.isTimeGrid)
+    }
+
+    @Test
+    fun `visibleDays is 3 for THREE_DAYS`() {
+        assertEquals(3, ViewMode.THREE_DAYS.visibleDays)
+    }
+
+    @Test
+    fun `visibleDays is 7 for WEEK`() {
+        assertEquals(7, ViewMode.WEEK.visibleDays)
+    }
+
+    @Test
+    fun `visibleDays is null for non-time-grid modes`() {
+        assertEquals(null, ViewMode.MONTH.visibleDays)
+        assertEquals(null, ViewMode.AGENDA.visibleDays)
+        assertEquals(null, ViewMode.MONTH_FULL.visibleDays)
+        assertEquals(null, ViewMode.YEAR.visibleDays)
+        assertEquals(null, ViewMode.INSIGHTS.visibleDays)
+    }
+
+    @Test
+    fun `pagerNextStep is 3 for THREE_DAYS`() {
+        assertEquals(3, ViewMode.THREE_DAYS.pagerNextStep)
+    }
+
+    @Test
+    fun `pagerNextStep is 1 for WEEK`() {
+        assertEquals(1, ViewMode.WEEK.pagerNextStep)
+    }
+
+    @Test
+    fun `pagerNextStep is null for non-time-grid modes`() {
+        assertEquals(null, ViewMode.MONTH.pagerNextStep)
+        assertEquals(null, ViewMode.AGENDA.pagerNextStep)
+        assertEquals(null, ViewMode.MONTH_FULL.pagerNextStep)
+        assertEquals(null, ViewMode.YEAR.pagerNextStep)
+        assertEquals(null, ViewMode.INSIGHTS.pagerNextStep)
     }
 }

@@ -202,4 +202,103 @@ class AttendeesDaoTest {
         )
         assertTrue(rows.zipWithNext().all { (a, b) -> a.sortOrder < b.sortOrder })
     }
+
+    // ========== B6.5 — notified_at merge-preserve (race fix) ==========
+
+    @Test
+    fun `replaceForEvent preserves notified_at when prior row was non-NEEDS-ACTION`() = runTest {
+        // Initial state: self responded ACCEPTED, notification fired earlier.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:self@x.com", 0, partstat = "ACCEPTED")
+                    .copy(notifiedAt = 1_000_000L),
+                makeAttendee(eventId1, "mailto:alice@x.com", 1, partstat = "ACCEPTED")
+            )
+        )
+
+        // Server replays the event (its REPLY queue hasn't fired yet) →
+        // returns NEEDS-ACTION for self. The new row's notifiedAt is null.
+        // Without merge-preserve, this would re-fire the notification.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:self@x.com", 0, partstat = "NEEDS-ACTION"),
+                makeAttendee(eventId1, "mailto:alice@x.com", 1, partstat = "ACCEPTED")
+            )
+        )
+
+        val rows = attendeesDao.getForEvent(eventId1).first()
+        val self = rows.first { it.address == "mailto:self@x.com" }
+        assertEquals(
+            "notified_at must survive when prior PARTSTAT was non-NEEDS-ACTION",
+            1_000_000L,
+            self.notifiedAt
+        )
+        // PARTSTAT itself reflects the new server state.
+        assertEquals("NEEDS-ACTION", self.partstat)
+    }
+
+    @Test
+    fun `replaceForEvent always preserves notified_at by canonical address`() = runTest {
+        // The merge semantic: any prior row with the same canonical address
+        // donates its notified_at, regardless of PARTSTAT. This is broader
+        // than the original race-fix spec but safer — the notification
+        // only re-fires when a prior row didn't exist (truly new attendee
+        // on the event). A re-invite of the same address won't re-notify;
+        // that's an acceptable edge-case tradeoff for T2.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:self@x.com", 0, partstat = "NEEDS-ACTION")
+                    .copy(notifiedAt = 1_000_000L)
+            )
+        )
+
+        // Routine pull, still NEEDS-ACTION → preserve.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:self@x.com", 0, partstat = "NEEDS-ACTION")
+            )
+        )
+
+        val rows = attendeesDao.getForEvent(eventId1).first()
+        val self = rows.first { it.address == "mailto:self@x.com" }
+        assertEquals(1_000_000L, self.notifiedAt)
+    }
+
+    @Test
+    fun `replaceForEvent does not carry notified_at across address change`() = runTest {
+        // notifiedAt belongs to (eventId, canonical address). A different
+        // attendee replacing the row should NOT inherit the prior's notified_at.
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:alice@x.com", 0)
+                    .copy(notifiedAt = 1_000_000L)
+            )
+        )
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(
+                makeAttendee(eventId1, "mailto:bob@x.com", 0)
+            )
+        )
+        val rows = attendeesDao.getForEvent(eventId1).first()
+        val bob = rows.first { it.address == "mailto:bob@x.com" }
+        assertEquals(null, bob.notifiedAt)
+    }
+
+    @Test
+    fun `markNotified sets notified_at on a single row`() = runTest {
+        attendeesDao.replaceForEvent(
+            eventId1,
+            listOf(makeAttendee(eventId1, "mailto:self@x.com", 0, partstat = "NEEDS-ACTION"))
+        )
+        val before = attendeesDao.getForEventOnce(eventId1).first()
+        attendeesDao.markNotified(before.id, 1_234_000L)
+        val after = attendeesDao.getForEventOnce(eventId1).first()
+        assertEquals(1_234_000L, after.notifiedAt)
+    }
 }

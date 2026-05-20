@@ -42,6 +42,7 @@
     <string name="action_hide_password">Piilota salasana</string>
     <string name="action_sign_out">Kirjaudu ulos</string>
     <string name="action_learn_more">Lisätietoja</string>
+    <string name="action_open">Avaa</string>
     <string name="action_open_apple_id">Avaa Apple ID</string>
     <string name="action_open_settings">Avaa asetukset</string>
     <string name="action_force_sync">Pakota synkronointi</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">Vie .ics-tiedostona</string>
     <string name="action_confirm_delete">Vahvista poistaminen</string>
     <string name="action_delete_event">Poista tapahtuma</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Hyväksy</string>
+    <string name="rsvp_action_tentative">Ehkä</string>
+    <string name="rsvp_action_decline">Hylkää</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Vastaus koskee koko sarjaa.</string>
+    <string name="rsvp_modified_snackbar">Vastaus tapahtumaan %1$s epäonnistui — tapahtumaa muokattiin. Vastaa uudelleen.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Vain tämä</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Koko päivä</string>
     <string name="label_today">Tänään</string>
     <string name="label_go_to_date">Siirry päivämäärään</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Viikko</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Asetukset</string>
@@ -237,10 +251,7 @@
     <string name="cd_close">Sulje</string>
     <string name="cd_search">Hae</string>
     <string name="cd_create_event">Luo tapahtuma</string>
-    <string name="cd_settings">Asetukset</string>
     <string name="cd_today">Tänään</string>
-    <string name="cd_previous_week">Edellinen viikko</string>
-    <string name="cd_next_week">Seuraava viikko</string>
     <string name="cd_delete">Poista</string>
     <string name="cd_refresh">Päivitä</string>
     <string name="cd_more_options">Lisää vaihtoehtoja</string>
@@ -417,6 +428,7 @@
     <string name="settings_device_calendars">Laitteen kalenterit</string>
     <string name="settings_quick_event_add">Nopea tapahtuman lisäys</string>
     <string name="settings_week_numbers">Viikkonumerot</string>
+    <string name="settings_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="settings_widget_event_limit">Widgetin tapahtumaraja</string>
     <string name="settings_sync_lookback">Synkronoinnin takaisinkatse</string>
     <string name="settings_auto_detect_emojis">Tunnista emojit automaattisesti</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Myönnä</string>
     <string name="device_calendars_none_found">Laitteen kalentereita ei löytynyt.</string>
     <string name="device_calendars_local">Paikallinen</string>
-    <string name="device_calendars_show_declined">Näytä hylätyt tapahtumat</string>
     <string name="device_calendars_reminders">Muistutukset</string>
     <string name="device_calendars_reminders_desc">Saa ilmoituksia laitteen kalenteritapahtumista</string>
     <string name="device_calendars_read_only_no_write">Vain luku (ei kirjoitusoikeutta)</string>
@@ -668,16 +679,19 @@
 
     <string name="cd_clear">Tyhjennä</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Edellinen</string>
-    <string name="cd_next">Seuraava</string>
     <string name="cd_open_drawer">Avaa valikko</string>
     <string name="cd_close_drawer">Sulje valikko</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Avaa valikko</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Sulje valikko</string>
     <string name="cd_calendar_view">Kalenterinäkymä</string>
     <string name="cd_active_view">Aktiivinen näkymä</string>
 
     <string name="view_agenda">Päiväjärjestys</string>
     <string name="view_month_full">Kuukausi (koko)</string>
     <string name="view_three_days">3 päivää</string>
+    <string name="view_day">Päivä</string>
     <string name="view_year">Vuosi</string>
     <string name="view_insights">Tilastot</string>
 
@@ -706,8 +720,6 @@
     <string name="sync_summary_removed">%1$d poistettu</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Edelliset 3 päivää</string>
-    <string name="cd_next_3_days">Seuraavat 3 päivää</string>
     <string name="cd_circular_scrolling">Pyöreä vieritys käytössä</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +866,9 @@
     <string name="channel_sync_progress_desc">Näyttää edistymisen kalentereita synkronoitaessa</string>
     <string name="channel_sync_status">Synkronoinnin tila</string>
     <string name="channel_sync_status_desc">Ilmoitukset synkronoinnin valmistumisesta ja virheistä</string>
+    <string name="channel_event_invitations">Tapahtumakutsut</string>
+    <string name="channel_event_invitations_desc">Ilmoitukset uusista kalenterikutsuista</string>
+    <string name="invite_notification_body">Lähettäjä %1$s · Vastaa napauttamalla</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Ei toistu</string>
@@ -995,4 +1010,14 @@
     <string name="attendee_status_tentative">Ehkä</string>
     <string name="attendee_status_delegated">Delegoitu</string>
     <string name="attendee_status_pending">Odottaa</string>
+    <string name="inbox_empty_caught_up">Kaikki katsottu</string>
+    <string name="inbox_organizer_suffix">(järjestäjä)</string>
+    <string name="menu_invites">Kutsut</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Päivämäärä</string>
+    <string name="menu_more">Lisää-valikko</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Lisää-valikko, %d kutsu odottaa</item>
+        <item quantity="other">Lisää-valikko, %d kutsua odottaa</item>
+    </plurals>
 </resources>

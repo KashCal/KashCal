@@ -16,7 +16,10 @@ import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.dayCodeToEndOfDayMs
 import org.onekash.kashcal.data.calendar_provider.dayCodeToStartOfDayMs
+import org.onekash.kashcal.data.db.dao.AccountsDao
+import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
+import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
@@ -39,7 +42,9 @@ class DisplayEventRepository @Inject constructor(
     private val eventReader: EventReader,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val calendarProviderManager: CalendarProviderManager,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val attendeesDao: AttendeesDao,
+    private val accountsDao: AccountsDao
 ) {
     companion object {
         private const val TAG = "DisplayEventRepo"
@@ -71,14 +76,11 @@ class DisplayEventRepository @Inject constructor(
 
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(rangeStart, rangeEnd),
-            calendarProviderManager.changeSignal
-        ) { roomOccurrences, _ ->
-            val roomEvents = roomOccurrences.map {
-                DisplayEvent.Room(it.event, it.occurrence, it.calendar)
-            }
-
+            calendarProviderManager.changeSignal,
+            dataStore.showDeclinedEvents
+        ) { roomOccurrences, _, showDeclined ->
+            val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
-
             mergeAndGroupByDay(roomEvents, deviceEvents)
         }
     }
@@ -101,14 +103,11 @@ class DisplayEventRepository @Inject constructor(
 
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
-            calendarProviderManager.changeSignal
-        ) { roomOccurrences, _ ->
-            val roomEvents = roomOccurrences.map {
-                DisplayEvent.Room(it.event, it.occurrence, it.calendar)
-            }
-
+            calendarProviderManager.changeSignal,
+            dataStore.showDeclinedEvents
+        ) { roomOccurrences, _, showDeclined ->
+            val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
-
             (roomEvents + deviceEvents)
                 .sortedBy { it.startTs }
                 .toPersistentList()
@@ -134,14 +133,11 @@ class DisplayEventRepository @Inject constructor(
 
         return combine(
             eventReader.getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs),
-            calendarProviderManager.changeSignal
-        ) { roomOccurrences, _ ->
-            val roomEvents = roomOccurrences.map {
-                DisplayEvent.Room(it.event, it.occurrence, it.calendar)
-            }
-
+            calendarProviderManager.changeSignal,
+            dataStore.showDeclinedEvents
+        ) { roomOccurrences, _, showDeclined ->
+            val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
             val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
-
             mergeAndGroupByDay(roomEvents, deviceEvents)
         }
     }
@@ -209,10 +205,8 @@ class DisplayEventRepository @Inject constructor(
         val roomOccurrences = eventReader
             .getVisibleOccurrencesWithEventsInRangeFlow(startMs, endMs)
             .first()
-        val roomEvents = roomOccurrences.map {
-            DisplayEvent.Room(it.event, it.occurrence, it.calendar)
-        }
-
+        val showDeclined = dataStore.getShowDeclinedEvents()
+        val roomEvents = applyDeclinedPolicy(roomOccurrences, showDeclined)
         val deviceEvents = queryDeviceEvents(startDayCode, endDayCode)
 
         return mergeAndGroupByDay(roomEvents, deviceEvents)
@@ -258,6 +252,63 @@ class DisplayEventRepository @Inject constructor(
         }
 
         return mergeTitleSuggestions(roomResults, deviceResults, minFreq, limit)
+    }
+
+    /**
+     * Apply the "Show declined events" preference to Room occurrences.
+     *
+     * Resolves which event IDs the current user has declined (matched
+     * against the event's owning calendar's account, so the same address
+     * can decline in one account without flagging another), then either
+     * filters them out (toggle off — default) or maps them to
+     * [DisplayEvent.Room] with `isDeclinedByMe = true` (toggle on, so the
+     * UI can dim + strike-through). Device-side declined events are
+     * handled directly by [DisplayEvent.Device.isDeclinedByMe] reading the
+     * instance's `selfAttendeeStatus` — the toggle for the device side is
+     * applied at query time via the `hideDeclined` flag passed into
+     * [CalendarProviderRepository].
+     */
+    private suspend fun applyDeclinedPolicy(
+        roomOccurrences: List<EventReader.OccurrenceWithEvent>,
+        showDeclined: Boolean
+    ): List<DisplayEvent.Room> {
+        if (roomOccurrences.isEmpty()) return emptyList()
+
+        val eventIds = roomOccurrences.map { it.event.id }.distinct()
+        val declinedAttendees = attendeesDao.getDeclinedAttendeesForEvents(eventIds)
+        if (declinedAttendees.isEmpty()) {
+            return roomOccurrences.map {
+                DisplayEvent.Room(it.event, it.occurrence, it.calendar)
+            }
+        }
+
+        val accountsById = accountsDao.getAllOnce().associateBy { it.id }
+        val calendarsById: Map<Long, Calendar> = roomOccurrences
+            .mapNotNull { it.calendar }
+            .associateBy { it.id }
+        val eventIdToCalendarId = roomOccurrences.associate { it.event.id to it.event.calendarId }
+
+        val declinedByMeIds = selfDeclinedEventIds(
+            declinedAttendees = declinedAttendees,
+            accountsById = accountsById,
+            eventIdToCalendarId = eventIdToCalendarId,
+            calendarsById = calendarsById
+        )
+
+        return if (showDeclined) {
+            roomOccurrences.map {
+                DisplayEvent.Room(
+                    event = it.event,
+                    occurrence = it.occurrence,
+                    calendar = it.calendar,
+                    isDeclinedByMe = it.event.id in declinedByMeIds
+                )
+            }
+        } else {
+            roomOccurrences
+                .filter { it.event.id !in declinedByMeIds }
+                .map { DisplayEvent.Room(it.event, it.occurrence, it.calendar) }
+        }
     }
 
     /**

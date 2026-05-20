@@ -21,6 +21,19 @@ enum class AttendeeStatus(@StringRes val labelResId: Int) {
     Delegated(R.string.attendee_status_delegated),
     NeedsAction(R.string.attendee_status_pending);
 
+    /**
+     * Inverse of [fromPartstat]: returns the canonical RFC 5545 §3.2.12
+     * PARTSTAT token, or null when this status isn't a user-RSVPable
+     * target (NeedsAction is the absence of a response; Delegated is
+     * out-of-scope for T2's Respond UI).
+     */
+    fun toPartstat(): String? = when (this) {
+        Accepted -> "ACCEPTED"
+        Declined -> "DECLINED"
+        Tentative -> "TENTATIVE"
+        Delegated, NeedsAction -> null
+    }
+
     companion object {
         fun fromPartstat(partstat: String?): AttendeeStatus = when (partstat?.uppercase()) {
             "ACCEPTED" -> Accepted

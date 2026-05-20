@@ -41,6 +41,7 @@
     <string name="action_hide_password">ପାସୱାର୍ଡ ଲୁଚାନ୍ତୁ</string>
     <string name="action_sign_out">ସାଇନ ଆଉଟ</string>
     <string name="action_learn_more">ଅଧିକ ଜାଣନ୍ତୁ</string>
+    <string name="action_open">ଖୋଲନ୍ତୁ</string>
     <string name="action_open_apple_id">Apple ID ଖୋಲନ୍ତୁ</string>
     <string name="action_open_settings">ସେଟିଂସ ଖୋଲନ୍ତୁ</string>
     <string name="action_force_sync">ଫୋର୍ସ ସିଙ୍କ</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics ରେ ରପ୍ତାନୀ କରନ୍ତୁ</string>
     <string name="action_confirm_delete">ଡିଲିଟ ନିଶ୍ଚିତ କରନ୍ତୁ</string>
     <string name="action_delete_event">ଇଭେଣ୍ଟ ଡିଲିଟ</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">ଗ୍ରହଣ କରନ୍ତୁ</string>
+    <string name="rsvp_action_tentative">ଅସ୍ଥାୟୀ</string>
+    <string name="rsvp_action_decline">ପ୍ରତ୍ୟାଖ୍ୟାନ କରନ୍ତୁ</string>
+    <string name="rsvp_series_disclosure">ଆପଣଙ୍କ ଉତ୍ତର ସମ୍ପୂର୍ଣ୍ଣ ଶୃଙ୍ଖଳା ଉପରେ ପ୍ରଯୁଜ୍ୟ।</string>
+    <string name="rsvp_modified_snackbar">%1$s ପାଇଁ RSVP ବିଫଳ ହୋଇଛି — ଇଭେଣ୍ଟ ସଂଶୋଧିତ ହୋଇଛି। ଦୟାକରି ପୁନଃ ଉତ୍ତର ଦିଅନ୍ତୁ।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">କେବଳ ଏହା</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">ସାରାଦିନ</string>
     <string name="label_today">ଆଜି</string>
     <string name="label_go_to_date">ତାରିଖକୁ ଯାଆନ୍ତୁ</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ସପ୍ତାହ</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ସେଟିଂସ</string>
@@ -257,10 +268,7 @@
     <string name="cd_close">ବନ୍ଦ</string>
     <string name="cd_search">ଖୋଜନ୍ତୁ</string>
     <string name="cd_create_event">ଇଭେଣ୍ଟ ତିଆରି କରନ୍ତୁ</string>
-    <string name="cd_settings">ସେଟିଂସ</string>
     <string name="cd_today">ଆଜି</string>
-    <string name="cd_previous_week">ଗତ ସପ୍ତାହ</string>
-    <string name="cd_next_week">ଆଗାମୀ ସପ୍ତାହ</string>
     <string name="cd_delete">ଡିଲିଟ</string>
     <string name="cd_refresh">ରିଫ୍ରେସ</string>
     <string name="cd_more_options">ଅଧିକ ବିକଳ୍ପ</string>
@@ -437,6 +445,7 @@
     <string name="settings_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="settings_quick_event_add">ତ୍ୱରିତ ଇଭେଣ୍ଟ ଯୋଡ଼ିବା</string>
     <string name="settings_week_numbers">ସପ୍ତାହ ସଂଖ୍ୟା</string>
+    <string name="settings_show_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ କରାଯାଇଥିବା ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="settings_widget_event_limit">ୱିଜେଟ ଇଭେଣ୍ଟ ସୀମା</string>
     <string name="settings_sync_lookback">ସିଙ୍କ ଲୁକବ୍ୟାକ</string>
     <string name="settings_auto_detect_emojis">ଇମୋଜି ସ୍ୱୟଂ-ଚିହ୍ନଟ</string>
@@ -505,7 +514,6 @@
     <string name="device_calendars_grant">ଅନୁମତି</string>
     <string name="device_calendars_none_found">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର ମିଳିଲା ନାହିଁ।</string>
     <string name="device_calendars_local">ସ୍ଥାନୀୟ</string>
-    <string name="device_calendars_show_declined">ପ୍ରତ୍ୟାଖ୍ୟାନ ଇଭେଣ୍ଟ ଦେଖାନ୍ତୁ</string>
     <string name="device_calendars_reminders">ରିମାଇଣ୍ଡର</string>
     <string name="device_calendars_reminders_desc">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର ଇଭେଣ୍ଟ ପାଇଁ ବିଜ୍ଞପ୍ତି ପାଆନ୍ତୁ</string>
     <string name="device_calendars_read_only_no_write">କେବଳ ପଢ଼ିବା (ଲେଖିବା ଅନୁମତି ନାହିଁ)</string>
@@ -687,15 +695,18 @@
 
     <string name="cd_clear">ସଫା</string>
     <string name="cd_offline">ଅଫଲାଇନ</string>
-    <string name="cd_previous">ପୂର୍ବ</string>
-    <string name="cd_next">ପରବର୍ତ୍ତୀ</string>
     <string name="cd_open_drawer">ଡ୍ରୟର ଖୋଲନ୍ତୁ</string>
     <string name="cd_close_drawer">ଡ୍ରୟର ବନ୍ଦ କରନ୍ତୁ</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">ମେନୁ ଖୋଲନ୍ତୁ</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">ମେନୁ ବନ୍ଦ କରନ୍ତୁ</string>
     <string name="cd_calendar_view">କ୍ୟାଲେଣ୍ଡର ଦୃଶ୍ୟ</string>
     <string name="cd_active_view">ସକ୍ରିୟ ଦୃଶ୍ୟ</string>
 
     <string name="view_agenda">ଏଜେଣ୍ଡା</string>
     <string name="view_month_full">ମାସ (ସମ୍ପୂର୍ଣ୍ଣ)</string>
+    <string name="view_day">ଦିନ</string>
     <string name="view_three_days">3 ଦିନ</string>
     <string name="view_year">ବର୍ଷ</string>
     <string name="view_insights">ଇନସାଇଟସ</string>
@@ -725,8 +736,6 @@
     <string name="sync_summary_removed">%1$d ବାହାର ହୋଇଛି</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">ଗତ 3 ଦିନ</string>
-    <string name="cd_next_3_days">ଆଗାମୀ 3 ଦିନ</string>
     <string name="cd_circular_scrolling">ବୃତ୍ତାକାର ସ୍କ୍ରୋಲିଂ ଚାଲୁ ଅଛି</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -920,6 +929,9 @@
     <string name="channel_sync_progress_desc">କ୍ୟାଲେଣ୍ଡର ସିଙ୍କ କରିବା ସମୟରେ ପ୍ରଗତି ଦେଖାଏ</string>
     <string name="channel_sync_status">ସିଙ୍କ ସ୍ଥିତି</string>
     <string name="channel_sync_status_desc">ସିଙ୍କ ସମ୍ପୂର୍ଣ୍ଣତା ଏବଂ ତ୍ରୁଟିଗୁଡ଼ିକ ବିଷୟରେ ବିଜ୍ଞପ୍ତି</string>
+    <string name="channel_event_invitations">ଇଭେଣ୍ଟ ନିମନ୍ତ୍ରଣ</string>
+    <string name="channel_event_invitations_desc">ଆପଣ ଏକ ନୂତନ କ୍ୟାଲେଣ୍ଡର ନିମନ୍ତ୍ରଣ ପାଇବା ସମୟରେ ବିଜ୍ଞପ୍ତି</string>
+    <string name="invite_notification_body">%1$s ରୁ · ଉତ୍ତର ଦେବାକୁ ଟ୍ୟାପ୍ କରନ୍ତୁ</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">ପୁନରାବୃତ୍ତି ହୁଏ ନାହିଁ</string>
@@ -1041,4 +1053,14 @@
     <string name="attendee_status_tentative">ଅନିଶ୍ଚିତ</string>
     <string name="attendee_status_delegated">ପ୍ରତିନିଧି ନିଯୁକ୍ତ</string>
     <string name="attendee_status_pending">ବିଚାରାଧୀନ</string>
+    <string name="inbox_empty_caught_up">ସବୁ ସମାପ୍ତ</string>
+    <string name="inbox_organizer_suffix">(ଆୟୋଜକ)</string>
+    <string name="menu_invites">ନିମନ୍ତ୍ରଣଗୁଡ଼ିକ</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">ତାରିଖ</string>
+    <string name="menu_more">ଅଧିକ ମେନୁ</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
+        <item quantity="other">ଅଧିକ ମେନୁ, %d ନିମନ୍ତ୍ରଣ ବିଚାରାଧୀନ</item>
+    </plurals>
 </resources>

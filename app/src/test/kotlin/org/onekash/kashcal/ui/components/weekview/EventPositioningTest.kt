@@ -658,6 +658,51 @@ class EventPositioningTest {
         }
     }
 
+    // ==================== Per-call maxVisibleOverlap cap ====================
+
+    @Test
+    fun `groupForDisplay with cap=5 shows all 5 fully overlapping events with no overflow`() {
+        val date = LocalDate.now()
+        val positioned = WeekViewUtils.positionEventsForDay(
+            (1..5).map { id ->
+                toDisplayEvent(
+                    createTestEvent(id = id.toLong(), title = "Event $id"),
+                    createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10, date = date)
+                )
+            },
+            date = date,
+            dayIndex = 0,
+        )
+
+        positioned.forEach { pos ->
+            assertEquals(5, pos.overlapTotal)
+            assertEquals(0.2f, pos.widthFraction, 0.01f)
+        }
+
+        val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned, maxVisibleOverlap = 5)
+        assertEquals(0, overflow)
+        assertEquals(5, visible.size)
+    }
+
+    @Test
+    fun `groupForDisplay with cap=2 on 5-cluster shows 2 visible plus 3 overflow`() {
+        val date = LocalDate.now()
+        val positioned = WeekViewUtils.positionEventsForDay(
+            (1..5).map { id ->
+                toDisplayEvent(
+                    createTestEvent(id = id.toLong(), title = "Event $id"),
+                    createTestOccurrence(eventId = id.toLong(), startHour = 9, endHour = 10, date = date)
+                )
+            },
+            date = date,
+            dayIndex = 0,
+        )
+
+        val (visible, overflow) = WeekViewUtils.groupForDisplay(positioned, maxVisibleOverlap = 2)
+        assertEquals(3, overflow)
+        assertEquals(2, visible.size)
+    }
+
     // ==================== Exception Event Tests ====================
 
     @Test

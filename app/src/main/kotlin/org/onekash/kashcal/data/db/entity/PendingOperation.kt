@@ -174,7 +174,29 @@ data class PendingOperation(
      * Added in v23.2.0.
      */
     @ColumnInfo(name = "linked_move_id")
-    val linkedMoveId: String? = null
+    val linkedMoveId: String? = null,
+
+    /**
+     * Marks this UPDATE as a PARTSTAT-only RSVP write. When true, the push
+     * path uses `IcsPatcher.patchAttendeeReply` to preserve every original
+     * ATTENDEE row from rawIcal and update only the current user's PARTSTAT
+     * — instead of the full-event serialize path that would emit the local
+     * attendee table verbatim.
+     *
+     * Internal sync-queue state, NOT an RFC wire-protocol field.
+     */
+    @ColumnInfo(name = "partstat_only", defaultValue = "0")
+    val partstatOnly: Boolean = false,
+
+    /**
+     * Target PARTSTAT value for a PARTSTAT-only RSVP write. NULL when
+     * `partstat_only = false`. The value domain (`ACCEPTED`, `TENTATIVE`,
+     * `DECLINED`, `NEEDS-ACTION`) is RFC 5545 §3.2.12 PARTSTAT, canonical-
+     * ized to uppercase via `AttendeeStatus.fromPartstat` at write time.
+     * The column itself is internal queue state.
+     */
+    @ColumnInfo(name = "partstat_target")
+    val partstatTarget: String? = null
 ) {
     // ========== Computed Properties ==========
 

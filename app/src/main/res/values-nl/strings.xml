@@ -55,6 +55,7 @@
     <string name="action_save">Opslaan</string>
     <string name="action_add">Toevoegen</string>
     <string name="action_edit">Bewerken</string>
+    <string name="action_open">Openen</string>
     <string name="action_delete">Verwijderen</string>
     <string name="action_confirm">Bevestigen</string>
     <string name="action_discard">Verwerpen</string>
@@ -95,6 +96,10 @@
     <string name="label_all_day">Hele dag</string>
     <string name="label_today">Vandaag</string>
     <string name="label_go_to_date">Ga naar datum</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Week</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Instellingen</string>
@@ -258,10 +263,7 @@
     <string name="cd_close">Sluiten</string>
     <string name="cd_search">Zoeken</string>
     <string name="cd_create_event">Afspraak maken</string>
-    <string name="cd_settings">Instellingen</string>
     <string name="cd_today">Vandaag</string>
-    <string name="cd_previous_week">Vorige week</string>
-    <string name="cd_next_week">Volgende week</string>
     <string name="cd_delete">Verwijderen</string>
     <string name="cd_refresh">Vernieuwen</string>
     <string name="cd_more_options">Meer opties</string>
@@ -439,6 +441,7 @@
     <string name="settings_device_calendars">Apparaatagenda\'s</string>
     <string name="settings_quick_event_add">Snel afspraak toevoegen</string>
     <string name="settings_week_numbers">Weeknummers</string>
+    <string name="settings_show_declined">Geweigerde afspraken tonen</string>
     <string name="settings_widget_event_limit">Widget-afspraklimiet</string>
     <string name="settings_sync_lookback">Sync-terugblik</string>
     <string name="settings_auto_detect_emojis">Emoji\'s automatisch herkennen</string>
@@ -507,7 +510,6 @@
     <string name="device_calendars_grant">Verlenen</string>
     <string name="device_calendars_none_found">Geen apparaatagenda\'s gevonden.</string>
     <string name="device_calendars_local">Lokaal</string>
-    <string name="device_calendars_show_declined">Afgewezen afspraken tonen</string>
     <string name="device_calendars_reminders">Herinneringen</string>
     <string name="device_calendars_reminders_desc">Meldingen ontvangen voor apparaatafspraken</string>
     <string name="device_calendars_read_only_no_write">Alleen lezen (geen schrijftoestemming)</string>
@@ -691,15 +693,18 @@
 
     <string name="cd_clear">Wissen</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Vorige</string>
-    <string name="cd_next">Volgende</string>
     <string name="cd_open_drawer">Menu openen</string>
     <string name="cd_close_drawer">Menu sluiten</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Menu openen</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Menu sluiten</string>
     <string name="cd_calendar_view">Agendaweergave</string>
     <string name="cd_active_view">Actieve weergave</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Maand (Volledig)</string>
+    <string name="view_day">Dag</string>
     <string name="view_three_days">3 dagen</string>
     <string name="view_year">Jaar</string>
     <string name="view_insights">Inzichten</string>
@@ -729,8 +734,6 @@
     <string name="sync_summary_removed">%1$d verwijderd</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Vorige 3 dagen</string>
-    <string name="cd_next_3_days">Volgende 3 dagen</string>
     <string name="cd_circular_scrolling">Circulair scrollen ingeschakeld</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -913,6 +916,17 @@
     <string name="channel_sync_progress_desc">Toont voortgang tijdens het synchroniseren van kalenders</string>
     <string name="channel_sync_status">Synchronisatiestatus</string>
     <string name="channel_sync_status_desc">Meldingen over synchronisatievoltooiing en fouten</string>
+    <string name="channel_event_invitations">Afspraakuitnodigingen</string>
+    <string name="channel_event_invitations_desc">Meldingen wanneer je een nieuwe agenda-uitnodiging ontvangt</string>
+    <string name="invite_notification_body">Van %1$s · Tik om te reageren</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Accepteren</string>
+    <string name="rsvp_action_tentative">Misschien</string>
+    <string name="rsvp_action_decline">Afwijzen</string>
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">De reactie geldt voor de hele reeks.</string>
+    <string name="rsvp_modified_snackbar">Reactie op %1$s mislukt – de afspraak is gewijzigd. Reageer opnieuw.</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Herhaalt niet</string>
@@ -1040,4 +1054,15 @@
     <string name="attendee_status_tentative">Voorlopig</string>
     <string name="attendee_status_delegated">Gedelegeerd</string>
     <string name="attendee_status_pending">In afwachting</string>
+    <!-- Invitation Inbox -->
+    <string name="inbox_empty_caught_up">Alles bijgewerkt</string>
+    <string name="inbox_organizer_suffix">(organisator)</string>
+    <string name="menu_invites">Uitnodigingen</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Datum</string>
+    <string name="menu_more">Meer-menu</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Meer-menu, %d uitnodiging in afwachting</item>
+        <item quantity="other">Meer-menu, %d uitnodigingen in afwachting</item>
+    </plurals>
 </resources>

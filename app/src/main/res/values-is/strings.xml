@@ -55,6 +55,7 @@
     <string name="action_save">Vista</string>
     <string name="action_add">Bæta við</string>
     <string name="action_edit">Breyta</string>
+    <string name="action_open">Opna</string>
     <string name="action_delete">Eyða</string>
     <string name="action_confirm">Staðfesta</string>
     <string name="action_discard">Henda</string>
@@ -95,6 +96,10 @@
     <string name="label_all_day">Allan daginn</string>
     <string name="label_today">Í dag</string>
     <string name="label_go_to_date">Fara á dagsetningu</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Vika</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Stillingar</string>
@@ -258,10 +263,7 @@
     <string name="cd_close">Loka</string>
     <string name="cd_search">Leita</string>
     <string name="cd_create_event">Búa til viðburð</string>
-    <string name="cd_settings">Stillingar</string>
     <string name="cd_today">Í dag</string>
-    <string name="cd_previous_week">Fyrri vika</string>
-    <string name="cd_next_week">Næsta vika</string>
     <string name="cd_delete">Eyða</string>
     <string name="cd_refresh">Endurnýja</string>
     <string name="cd_more_options">Fleiri valkostir</string>
@@ -439,6 +441,7 @@
     <string name="settings_device_calendars">Dagatöl tækis</string>
     <string name="settings_quick_event_add">Flýtiskráning viðburðar</string>
     <string name="settings_week_numbers">Vikunúmer</string>
+    <string name="settings_show_declined">Sýna höfnuð atvik</string>
     <string name="settings_widget_event_limit">Viðburðahámark græju</string>
     <string name="settings_sync_lookback">Samstillingarsvið aftur í tíma</string>
     <string name="settings_auto_detect_emojis">Greina emojis sjálfvirkt</string>
@@ -507,7 +510,6 @@
     <string name="device_calendars_grant">Veita aðgang</string>
     <string name="device_calendars_none_found">Engin dagatöl tækis fundust.</string>
     <string name="device_calendars_local">Staðbundið</string>
-    <string name="device_calendars_show_declined">Sýna hafnaða viðburði</string>
     <string name="device_calendars_reminders">Áminningar</string>
     <string name="device_calendars_reminders_desc">Fá tilkynningar fyrir viðburði í dagatölum tækis</string>
     <string name="device_calendars_read_only_no_write">Skrifvarið (engin skrifheimild)</string>
@@ -691,15 +693,18 @@
 
     <string name="cd_clear">Hreinsa</string>
     <string name="cd_offline">Ónettengdur</string>
-    <string name="cd_previous">Fyrra</string>
-    <string name="cd_next">Næsta</string>
     <string name="cd_open_drawer">Opna valmynd</string>
     <string name="cd_close_drawer">Loka valmynd</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Opna valmynd</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Loka valmynd</string>
     <string name="cd_calendar_view">Dagatalssýn</string>
     <string name="cd_active_view">Virk sýn</string>
 
     <string name="view_agenda">Dagskrá</string>
     <string name="view_month_full">Mánuður (Heill)</string>
+    <string name="view_day">Dagur</string>
     <string name="view_three_days">3 dagar</string>
     <string name="view_year">Ár</string>
     <string name="view_insights">Yfirlit</string>
@@ -729,8 +734,6 @@
     <string name="sync_summary_removed">%1$d fjarlægðir</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Fyrri 3 dagar</string>
-    <string name="cd_next_3_days">Næstu 3 dagar</string>
     <string name="cd_circular_scrolling">Hringlaga flettun virk</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -913,6 +916,17 @@
     <string name="channel_sync_progress_desc">Sýnir framvindu við samstillingu dagatala</string>
     <string name="channel_sync_status">Samstillingarstaða</string>
     <string name="channel_sync_status_desc">Tilkynningar um lok samstillingar og villur</string>
+    <string name="channel_event_invitations">Viðburðaboð</string>
+    <string name="channel_event_invitations_desc">Tilkynningar þegar þú færð nýtt dagatalsboð</string>
+    <string name="invite_notification_body">Frá %1$s · Ýttu til að svara</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Samþykkja</string>
+    <string name="rsvp_action_tentative">Kannski</string>
+    <string name="rsvp_action_decline">Hafna</string>
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Svarið gildir fyrir alla röðina.</string>
+    <string name="rsvp_modified_snackbar">Svar fyrir %1$s mistókst – viðburðinum var breytt. Vinsamlegast svaraðu aftur.</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Endurtekur sig ekki</string>
@@ -1042,4 +1056,15 @@
     <string name="attendee_status_tentative">Til bráðabirgða</string>
     <string name="attendee_status_delegated">Framsalið</string>
     <string name="attendee_status_pending">Bíður</string>
+    <!-- Invitation Inbox -->
+    <string name="inbox_empty_caught_up">Allt frágengið</string>
+    <string name="inbox_organizer_suffix">(skipuleggjandi)</string>
+    <string name="menu_invites">Boð</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dagsetning</string>
+    <string name="menu_more">Meira-valmynd</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Meira-valmynd, %d boð bíður</item>
+        <item quantity="other">Meira-valmynd, %d boð bíða</item>
+    </plurals>
 </resources>

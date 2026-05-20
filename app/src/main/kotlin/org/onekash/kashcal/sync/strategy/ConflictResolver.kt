@@ -3,6 +3,7 @@ package org.onekash.kashcal.sync.strategy
 import android.util.Log
 import org.onekash.icaldav.model.ParseResult
 import org.onekash.icaldav.parser.ICalParser
+import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
@@ -33,7 +34,8 @@ class ConflictResolver @Inject constructor(
     private val eventsDao: EventsDao,
     private val attendeesDao: AttendeesDao,
     private val pendingOperationsDao: PendingOperationsDao,
-    private val occurrenceGenerator: OccurrenceGenerator
+    private val occurrenceGenerator: OccurrenceGenerator,
+    private val database: KashCalDatabase
 ) {
     private val icalParser = ICalParser()
 
@@ -174,29 +176,33 @@ class ConflictResolver @Inject constructor(
             localModifiedAt = event.localModifiedAt
         )
 
-        // Server-authoritative: write event + attendees together.
-        // Sequential (no explicit transaction wrap) — matches the existing
-        // bare-upsert risk profile. B3 may revisit transaction boundaries
-        // when outbound writes need atomicity.
-        eventsDao.upsert(updatedEvent)
-        attendeesDao.replaceForEvent(
-            updatedEvent.id,
-            mapped.attendees.map { it.copy(eventId = updatedEvent.id) }
-        )
-
-        // Regenerate occurrences if recurring
-        if (updatedEvent.rrule != null) {
-            val now = System.currentTimeMillis()
-            occurrenceGenerator.generateOccurrences(
-                updatedEvent,
-                now - (365L * 24 * 60 * 60 * 1000),  // 1 year back
-                now + PullStrategy.OCCURRENCE_EXPANSION_MS  // 2 years forward
+        // Server-authoritative: event upsert + attendees replace must run
+        // atomically. Without the transaction wrap, a mid-stream failure
+        // would leave the event row updated but attendees stale.
+        // Occurrence regeneration is included in the same transaction so
+        // a partial failure rolls back the entire post-conflict
+        // reconciliation.
+        database.runInTransaction {
+            eventsDao.upsert(updatedEvent)
+            attendeesDao.replaceForEvent(
+                updatedEvent.id,
+                mapped.attendees.map { it.copy(eventId = updatedEvent.id) }
             )
-        } else {
-            occurrenceGenerator.regenerateOccurrences(updatedEvent)
+
+            if (updatedEvent.rrule != null) {
+                val now = System.currentTimeMillis()
+                occurrenceGenerator.generateOccurrences(
+                    updatedEvent,
+                    now - (365L * 24 * 60 * 60 * 1000),  // 1 year back
+                    now + PullStrategy.OCCURRENCE_EXPANSION_MS  // 2 years forward
+                )
+            } else {
+                occurrenceGenerator.regenerateOccurrences(updatedEvent)
+            }
         }
 
-        // Delete the pending operation
+        // Delete the pending operation only after the reconciliation
+        // transaction committed.
         pendingOperationsDao.deleteById(operation.id)
 
         Log.d(TAG, "Local event updated with server version")

@@ -42,20 +42,22 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ViewSidebar
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -78,18 +80,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -103,11 +108,15 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -125,10 +134,17 @@ import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
+import org.onekash.kashcal.ui.components.InvitationInboxSheet
+import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
+import org.onekash.kashcal.ui.components.formatBadgeCount
+import org.onekash.kashcal.ui.components.RightNavigationRail
+import org.onekash.kashcal.ui.components.overflowContentDescription
 import org.onekash.kashcal.ui.components.SyncBanner
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
 import org.onekash.kashcal.ui.components.cardFillAlpha
+import org.onekash.kashcal.ui.components.declinedCardAlpha
+import org.onekash.kashcal.ui.components.declinedTitleDecoration
 import org.onekash.kashcal.ui.components.formatDisplayEventTitle
 import org.onekash.kashcal.ui.components.formatEventTitle
 import org.onekash.kashcal.ui.components.pickers.InlineDatePickerContent
@@ -147,6 +163,7 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
@@ -193,6 +210,12 @@ fun HomeScreen(
     onSearchDateSelected: (Long) -> Unit = {},
     // Settings callback
     onSettingsClick: () -> Unit = {},
+    // Invitation inbox surface (count + open + dismiss + RSVP)
+    pendingInvitesCount: Int = 0,
+    pendingInvitations: List<org.onekash.kashcal.domain.reader.PendingInvitation> = emptyList(),
+    onOpenInvitationInbox: () -> Unit = {},
+    onDismissInvitationInbox: () -> Unit = {},
+    onRsvpFromInbox: (Long, org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = { _, _ -> },
     // Drawer
     drawerState: DrawerState? = null,
     onDrawerToggleCalendar: (Long) -> Unit = {},
@@ -206,8 +229,6 @@ fun HomeScreen(
     onYearOverlayDismiss: () -> Unit = {},
     onMonthSelected: (Int, Int) -> Unit = { _, _ -> },
     // Week view callbacks (infinite day pager)
-    onPreviousPage: () -> Unit = {},
-    onNextPage: () -> Unit = {},
     onDayPagerPageChanged: (Int) -> Unit = {},
     onWeekDatePickerRequest: () -> Unit = {},
     onWeekDatePickerDismiss: () -> Unit = {},
@@ -237,14 +258,6 @@ fun HomeScreen(
     dayAttendees: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
     onSetVisibleEventIds: (List<Long>) -> Unit = {},
 ) {
-    // Track the last non-INSIGHTS view for BackHandler navigation
-    var previousNonInsightsMode by remember { mutableStateOf(ViewMode.MONTH) }
-    LaunchedEffect(uiState.viewMode) {
-        if (uiState.viewMode != ViewMode.INSIGHTS) {
-            previousNonInsightsMode = uiState.viewMode
-        }
-    }
-
     // HorizontalPager for smooth month swiping (~100 years each direction)
     val initialPage = MonthPagerUtils.INITIAL_PAGE
     val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
@@ -374,7 +387,46 @@ fun HomeScreen(
     )
 
     val drawerScope = rememberCoroutineScope()
+    val rightRailState = rememberDrawerState(DrawerValue.Closed)
+    var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
+    val incomingLayoutDirection = LocalLayoutDirection.current
+    val flippedDirection = remember(incomingLayoutDirection) {
+        if (incomingLayoutDirection == LayoutDirection.Ltr) LayoutDirection.Rtl else LayoutDirection.Ltr
+    }
+    BackHandler(enabled = rightRailState.isOpen) {
+        drawerScope.launch { rightRailState.close() }
+    }
 
+    CompositionLocalProvider(LocalLayoutDirection provides flippedDirection) {
+    ModalNavigationDrawer(
+        drawerState = rightRailState,
+        gesturesEnabled = rightRailState.isOpen,
+        drawerContent = {
+            CompositionLocalProvider(LocalLayoutDirection provides incomingLayoutDirection) {
+                RightNavigationRail(
+                    currentViewMode = uiState.viewMode,
+                    pendingInvitesCount = pendingInvitesCount,
+                    onInvitesClick = {
+                        drawerScope.launch { rightRailState.close() }
+                        onOpenInvitationInbox()
+                    },
+                    onJumpToDateClick = {
+                        drawerScope.launch { rightRailState.close() }
+                        showJumpToDatePicker = true
+                    },
+                    onInsightsClick = {
+                        drawerScope.launch { rightRailState.close() }
+                        onViewSelect(ViewMode.INSIGHTS)
+                    },
+                    onSettingsClick = {
+                        drawerScope.launch { rightRailState.close() }
+                        onSettingsClick()
+                    }
+                )
+            }
+        }
+    ) {
+    CompositionLocalProvider(LocalLayoutDirection provides incomingLayoutDirection) {
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
         drawerContent = {
@@ -416,12 +468,20 @@ fun HomeScreen(
                 onSearchQueryChange = onSearchQueryChange,
                 onMenuClick = {
                     drawerScope.launch {
+                        if (rightRailState.isOpen) rightRailState.close()
                         if (drawerState?.isOpen == true) drawerState.close() else drawerState?.open()
                     }
                 },
                 onGoToToday = onGoToToday,
-                onSettingsClick = onSettingsClick,
-                onInfoClick = onInfoClick
+                onRailToggleClick = {
+                    drawerScope.launch {
+                        if (drawerState?.isOpen == true) drawerState.close()
+                        if (rightRailState.isOpen) rightRailState.close() else rightRailState.open()
+                    }
+                },
+                pendingInvitesCount = pendingInvitesCount,
+                onInfoClick = onInfoClick,
+                onViewSelect = onViewSelect
             )
         },
         floatingActionButton = {
@@ -483,7 +543,7 @@ fun HomeScreen(
                             )
                         }
                         uiState.viewMode == ViewMode.INSIGHTS -> {
-                            BackHandler { onViewSelect(previousNonInsightsMode) }
+                            BackHandler { onViewSelect(uiState.previousNonInsightsMode) }
 
                             val insightsVm: InsightsViewModel = hiltViewModel()
                             LaunchedEffect(Unit) {
@@ -518,15 +578,13 @@ fun HomeScreen(
                                 onBackToMonth = { onViewSelect(ViewMode.MONTH) }
                             )
                         }
-                        uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.THREE_DAYS || uiState.viewMode == ViewMode.WEEK -> {
+                        uiState.viewMode == ViewMode.AGENDA || uiState.viewMode.isTimeGrid -> {
                             Column(modifier = Modifier.fillMaxSize()) {
                                 ViewHeaderRow(
                                     viewMode = uiState.viewMode,
                                     pagerPosition = uiState.weekViewPagerPosition,
                                     firstDayOfWeek = uiState.firstDayOfWeek,
-                                    onMonthClick = onWeekDatePickerRequest,
-                                    onPreviousPage = onPreviousPage,
-                                    onNextPage = onNextPage
+                                    onMonthClick = onWeekDatePickerRequest
                                 )
 
                                 // Agenda list scroll state
@@ -562,7 +620,7 @@ fun HomeScreen(
                                             )
                                         }
                                     }
-                                    ViewMode.THREE_DAYS, ViewMode.WEEK -> {
+                                    ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                                         WeekViewContent(
                                             timedEvents = uiState.weekViewTimedEvents,
                                             allDayEvents = uiState.weekViewAllDayEvents,
@@ -573,7 +631,7 @@ fun HomeScreen(
                                             onHourHeightChange = onWeekHourHeightChange,
                                             showEventEmojis = uiState.showEventEmojis,
                                             timePattern = timePattern,
-                                            weekMode = uiState.viewMode == ViewMode.WEEK,
+                                            visibleDays = uiState.viewMode.visibleDays ?: 3,
                                             firstDayOfWeek = uiState.firstDayOfWeek,
                                             onDatePickerRequest = onWeekDatePickerRequest,
                                             onEventClick = { displayEvent ->
@@ -621,25 +679,17 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    MonthNavHeader(
-                                        year = pageYear,
-                                        month = pageMonth,
-                                        onPrevious = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                            }
-                                        },
-                                        onNext = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                            }
-                                        },
-                                        onMonthClick = onMonthHeaderClick
-                                    )
-
-                                    DayOfWeekHeaders(
+                                    val title = remember(pageYear, pageMonth) {
+                                        org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
+                                            java.time.LocalDate.of(pageYear, pageMonth + 1, 1)
+                                        )
+                                    }
+                                    CalendarHeader(
+                                        title = title,
                                         firstDayOfWeek = uiState.firstDayOfWeek,
-                                        showWeekNumbers = uiState.showWeekNumbers
+                                        showWeekNumbers = uiState.showWeekNumbers,
+                                        showDayOfWeek = true,
+                                        onTitleClick = onMonthHeaderClick
                                     )
 
                                     FullHeightMonthGrid(
@@ -683,26 +733,18 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    MonthNavHeader(
-                                        year = pageYear,
-                                        month = pageMonth,
-                                        onPrevious = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                            }
-                                        },
-                                        onNext = {
-                                            coroutineScope.launch {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                            }
-                                        },
-                                        onMonthClick = onMonthHeaderClick
-                                    )
-                                    DayOfWeekHeaders(
+                                    val title = remember(pageYear, pageMonth) {
+                                        org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
+                                            java.time.LocalDate.of(pageYear, pageMonth + 1, 1)
+                                        )
+                                    }
+                                    CalendarHeader(
+                                        title = title,
                                         firstDayOfWeek = uiState.firstDayOfWeek,
-                                        showWeekNumbers = uiState.showWeekNumbers
+                                        showWeekNumbers = uiState.showWeekNumbers,
+                                        showDayOfWeek = true,
+                                        onTitleClick = onMonthHeaderClick
                                     )
-                                    Spacer(modifier = Modifier.height(4.dp))
                                     CalendarGrid(
                                         year = pageYear,
                                         month = pageMonth,
@@ -848,6 +890,52 @@ fun HomeScreen(
         )
     }
 
+    // Right-rail "Jump to date" picker.
+    // DatePickerState reads/writes UTC midnight, so convert at both
+    // boundaries to avoid the picked date slipping a day west of UTC.
+    if (showJumpToDatePicker) {
+        val zone = ZoneId.systemDefault()
+        val initialLocalDate = (uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis())
+            .let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+        val initialUtcMillis = initialLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialUtcMillis)
+        DatePickerDialog(
+            onDismissRequest = { showJumpToDatePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { utcMillis ->
+                            val pickedDate = Instant.ofEpochMilli(utcMillis).atZone(ZoneOffset.UTC).toLocalDate()
+                            val localMillis = pickedDate.atStartOfDay(zone).toInstant().toEpochMilli()
+                            // Switch to DAY before navigating so onWeekDateSelected
+                            // computes the pager page in day-mode, not week-mode.
+                            onViewSelect(ViewMode.DAY)
+                            onWeekDateSelected(localMillis)
+                        }
+                        showJumpToDatePicker = false
+                    }
+                ) { Text(stringResource(R.string.action_ok)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showJumpToDatePicker = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
+
+    // Invitation inbox bottom sheet
+    if (uiState.isInvitationInboxOpen) {
+        InvitationInboxSheet(
+            invitations = pendingInvitations,
+            timePattern = timePattern,
+            onRsvp = onRsvpFromInbox,
+            onDismiss = onDismissInvitationInbox
+        )
+    }
+
     // Day events bottom sheet (month view)
     if (uiState.showDayDetailSheet) {
         val dayCode = DayPagerUtils.msToDayCode(uiState.dayDetailDate)
@@ -893,6 +981,10 @@ fun HomeScreen(
 
     }
 
+    }
+    }
+    }
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -903,13 +995,15 @@ private fun HomeTopAppBar(
     searchFocusRequester: FocusRequester,
     refreshKey: Int,
     drawerState: DrawerState?,
+    pendingInvitesCount: Int,
     onSearchClick: () -> Unit,
     onSearchClose: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onMenuClick: () -> Unit,
     onGoToToday: () -> Unit,
-    onSettingsClick: () -> Unit,
-    onInfoClick: () -> Unit
+    onRailToggleClick: () -> Unit,
+    onInfoClick: () -> Unit,
+    onViewSelect: (ViewMode) -> Unit
 ) {
     val isDrawerOpen = drawerState?.targetValue == DrawerValue.Open
     val menuRotation by animateFloatAsState(
@@ -974,15 +1068,22 @@ private fun HomeTopAppBar(
                 }
             )
         }
+        uiState.viewMode == ViewMode.INSIGHTS -> {
+            CenterAlignedTopAppBar(
+                title = { KashCalTopAppBarTitle() },
+                navigationIcon = {
+                    IconButton(onClick = { onViewSelect(uiState.previousNonInsightsMode) }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
+                    }
+                }
+            )
+        }
         else -> {
             CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.clickable { onInfoClick() }
-                    )
-                },
+                title = { KashCalTopAppBarTitle(onClick = onInfoClick) },
                 navigationIcon = {
                     Row {
                         IconButton(onClick = onMenuClick) {
@@ -990,12 +1091,16 @@ private fun HomeTopAppBar(
                                 Icons.Default.Menu,
                                 contentDescription = if (isDrawerOpen) stringResource(R.string.cd_close_drawer) else stringResource(R.string.cd_open_drawer),
                                 modifier = Modifier
-                                    .size(28.dp)
+                                    .size(26.dp)
                                     .graphicsLayer { rotationZ = menuRotation }
                             )
                         }
                         IconButton(onClick = onSearchClick) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search), modifier = Modifier.size(28.dp))
+                            Icon(
+                                Icons.Default.Search,
+                                contentDescription = stringResource(R.string.cd_search),
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
                     }
                 },
@@ -1009,10 +1114,53 @@ private fun HomeTopAppBar(
                         )
                     }
                     TodayButton(onClick = onGoToToday, refreshKey = refreshKey)
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Tune, contentDescription = stringResource(R.string.cd_settings), modifier = Modifier.size(28.dp))
-                    }
+                    RailToggleButton(
+                        pendingInvitesCount = pendingInvitesCount,
+                        onClick = onRailToggleClick
+                    )
                 }
+            )
+        }
+    }
+}
+
+/**
+ * AppBar rail toggle. Renders a sidebar glyph with a numeric badge when
+ * [pendingInvitesCount] > 0; tapping invokes [onClick] to toggle the
+ * right navigation rail. Accessibility label resolves through the same
+ * [overflowContentDescription] helper the rail items use, so the
+ * announcement and badge never disagree on the count.
+ */
+@Composable
+private fun RailToggleButton(
+    pendingInvitesCount: Int,
+    onClick: () -> Unit
+) {
+    val baseLabel = stringResource(R.string.menu_more)
+    val withInvitesLabel = pluralStringResource(
+        R.plurals.menu_more_with_invites,
+        pendingInvitesCount,
+        pendingInvitesCount
+    )
+    val triggerDescription = overflowContentDescription(
+        count = pendingInvitesCount,
+        baseLabel = baseLabel,
+        withInvitesLabel = withInvitesLabel
+    )
+
+    IconButton(onClick = onClick) {
+        BadgedBox(
+            badge = {
+                val badgeText = formatBadgeCount(pendingInvitesCount)
+                if (badgeText != null) {
+                    Badge { Text(badgeText) }
+                }
+            }
+        ) {
+            Icon(
+                Icons.AutoMirrored.Outlined.ViewSidebar,
+                contentDescription = triggerDescription,
+                modifier = Modifier.size(26.dp)
             )
         }
     }
@@ -1028,71 +1176,49 @@ private fun TodayButton(onClick: () -> Unit, refreshKey: Int) {
             Icon(
                 Icons.Default.CalendarToday,
                 contentDescription = stringResource(R.string.cd_today),
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
             )
             Text(
                 text = dayOfMonth.toString(),
-                fontSize = 9.sp,
-                lineHeight = 9.sp,
+                fontSize = 8.sp,
+                lineHeight = 8.sp,
                 letterSpacing = 0.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.offset(y = 3.dp)
+                modifier = Modifier.offset(y = 2.dp)
             )
         }
     }
 }
 
 @Composable
-private fun MonthNavHeader(
-    year: Int,
-    month: Int,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
-    onMonthClick: () -> Unit
-) {
-    val calendar = JavaCalendar.getInstance().apply { set(year, month, 1) }
-    val monthFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
-
-    ChevronNavRow(
-        title = monthFormat.format(calendar.time),
-        previousContentDescription = stringResource(R.string.cd_previous),
-        nextContentDescription = stringResource(R.string.cd_next),
-        onPrevious = onPrevious,
-        onNext = onNext,
-        onTitleClick = onMonthClick
-    )
-}
-
-/**
- * Row with prev/next chevrons around a clickable title. Shared by all calendar
- * nav headers so top-bar-to-header spacing is uniform.
- */
-@Composable
-private fun ChevronNavRow(
+private fun CalendarHeader(
     title: String,
-    previousContentDescription: String,
-    nextContentDescription: String,
-    onPrevious: () -> Unit,
-    onNext: () -> Unit,
+    firstDayOfWeek: Int,
+    showWeekNumbers: Boolean = false,
+    showDayOfWeek: Boolean = true,
     onTitleClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 4.dp)
     ) {
-        IconButton(onClick = onPrevious) {
-            Icon(Icons.Default.ChevronLeft, previousContentDescription)
-        }
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable(onClick = onTitleClick)
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onTitleClick)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         )
-        IconButton(onClick = onNext) {
-            Icon(Icons.Default.ChevronRight, nextContentDescription)
+        if (showDayOfWeek) {
+            DayOfWeekHeaders(firstDayOfWeek = firstDayOfWeek, showWeekNumbers = showWeekNumbers)
         }
     }
 }
@@ -1656,40 +1782,62 @@ private fun SearchContent(
     }
 }
 
-/**
- * Header row for non-month views.
- * 3-day / week: month/year with chevron navigation (mirrors MonthNavHeader padding).
- */
 @Composable
 private fun ViewHeaderRow(
     viewMode: ViewMode,
     pagerPosition: Int,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
-    onMonthClick: () -> Unit,
-    onPreviousPage: () -> Unit,
-    onNextPage: () -> Unit
+    onMonthClick: () -> Unit
 ) {
     when (viewMode) {
+        ViewMode.DAY -> {
+            val title = remember(pagerPosition) {
+                val date = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.pageToDate(pagerPosition)
+                DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yEEEMMMd"), Locale.getDefault())
+                    .format(date)
+            }
+            CalendarHeader(
+                title = title,
+                firstDayOfWeek = firstDayOfWeek,
+                showWeekNumbers = false,
+                showDayOfWeek = false,
+                onTitleClick = onMonthClick
+            )
+        }
         ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-            val title = remember(viewMode, pagerPosition, firstDayOfWeek) {
+            val weekPrefix = stringResource(R.string.label_week)
+            val centerDate = remember(viewMode, pagerPosition, firstDayOfWeek) {
                 if (viewMode == ViewMode.WEEK) {
-                    val weekStart = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYearWithWeek(weekStart, firstDayOfWeek)
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
                 } else {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatThreeDayHeader(pagerPosition)
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.pageToDate(pagerPosition + 1)
                 }
             }
-            ChevronNavRow(
+            val monthYearStr = remember(centerDate) {
+                org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(centerDate)
+            }
+            val weekLabelStr = remember(viewMode, centerDate, firstDayOfWeek, weekPrefix) {
+                if (viewMode == ViewMode.WEEK) {
+                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatWeekLabel(
+                        centerDate, firstDayOfWeek, weekPrefix
+                    )
+                } else null
+            }
+            val title = if (weekLabelStr != null) {
+                stringResource(R.string.calendar_header_week_suffix, monthYearStr, weekLabelStr)
+            } else {
+                monthYearStr
+            }
+            CalendarHeader(
                 title = title,
-                previousContentDescription = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_previous_week) else stringResource(R.string.cd_previous_3_days),
-                nextContentDescription = if (viewMode == ViewMode.WEEK) stringResource(R.string.cd_next_week) else stringResource(R.string.cd_next_3_days),
-                onPrevious = onPreviousPage,
-                onNext = onNextPage,
+                firstDayOfWeek = firstDayOfWeek,
+                showWeekNumbers = false,
+                showDayOfWeek = false,
                 onTitleClick = onMonthClick
             )
         }
         ViewMode.AGENDA,
-        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {} // Agenda has no header; Month uses MonthNavHeader; Year/Insights have own header
+        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {}
     }
 }
 
@@ -1842,7 +1990,7 @@ private fun AgendaCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .alpha(if (isPast) 0.5f else 1f)
+            .alpha(declinedCardAlpha(isPast, displayEvent.isDeclinedByMe))
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = fillColor.copy(alpha = fillAlpha)),
         shape = RoundedCornerShape(12.dp)
@@ -1858,7 +2006,8 @@ private fun AgendaCard(
                 Text(
                     displayTitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe)
                 )
                 Text(
                     dateString,

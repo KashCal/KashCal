@@ -43,6 +43,7 @@
     <string name="action_learn_more">थप जान्नुहोस्</string>
     <string name="action_open_apple_id">Apple ID खोल्नुहोस्</string>
     <string name="action_open_settings">सेटिङ खोल्नुहोस्</string>
+    <string name="action_open">खोल्नुहोस्</string>
     <string name="action_force_sync">बलपूर्वक सिंक</string>
     <string name="action_sync_now">अहिले सिंक गर्नुहोस्</string>
     <string name="action_details">विवरण</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">.ics को रूपमा निर्यात</string>
     <string name="action_confirm_delete">मेट्ने पुष्टि</string>
     <string name="action_delete_event">कार्यक्रम मेट्नुहोस्</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">स्वीकार</string>
+    <string name="rsvp_action_tentative">सम्भावित</string>
+    <string name="rsvp_action_decline">अस्वीकार</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">यो जवाफ सम्पूर्ण शृंखलामा लागू हुन्छ।</string>
+    <string name="rsvp_modified_snackbar">%1$s को लागि RSVP असफल भयो — कार्यक्रम परिमार्जन गरिएको थियो। कृपया पुनः जवाफ दिनुहोस्।</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">यो मात्र</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">दिनभर</string>
     <string name="label_today">आज</string>
     <string name="label_go_to_date">मितिमा जानुहोस्</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">हप्ता</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">सेटिङ</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">बन्द</string>
     <string name="cd_search">खोज</string>
     <string name="cd_create_event">कार्यक्रम बनाउनुहोस्</string>
-    <string name="cd_settings">सेटिङ</string>
     <string name="cd_today">आज</string>
-    <string name="cd_previous_week">गत हप्ता</string>
-    <string name="cd_next_week">आउने हप्ता</string>
     <string name="cd_delete">मेट्नुहोस्</string>
     <string name="cd_refresh">रिफ्रेस</string>
     <string name="cd_more_options">थप विकल्पहरू</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">उपकरण क्यालेन्डरहरू</string>
     <string name="settings_quick_event_add">द्रुत कार्यक्रम थप</string>
     <string name="settings_week_numbers">हप्ता नम्बरहरू</string>
+    <string name="settings_show_declined">अस्वीकार गरिएका कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="settings_widget_event_limit">विजेट कार्यक्रम सीमा</string>
     <string name="settings_sync_lookback">सिंक लुकब्याक</string>
     <string name="settings_auto_detect_emojis">इमोजी स्वचालित पत्ता</string>
@@ -483,7 +495,6 @@
     <string name="device_calendars_grant">दिनुहोस्</string>
     <string name="device_calendars_none_found">उपकरण क्यालेन्डर भेटिएन।</string>
     <string name="device_calendars_local">स्थानीय</string>
-    <string name="device_calendars_show_declined">अस्वीकृत कार्यक्रमहरू देखाउनुहोस्</string>
     <string name="device_calendars_reminders">सम्झनाहरू</string>
     <string name="device_calendars_reminders_desc">उपकरण क्यालेन्डर कार्यक्रमका लागि सूचना प्राप्त गर्नुहोस्</string>
     <string name="device_calendars_read_only_no_write">पढ्ने मात्र (लेख्ने अनुमति छैन)</string>
@@ -660,16 +671,17 @@
 
     <string name="cd_clear">खाली गर्नुहोस्</string>
     <string name="cd_offline">अफलाइन</string>
-    <string name="cd_previous">अघिल्लो</string>
-    <string name="cd_next">अर्को</string>
     <string name="cd_open_drawer">ड्रअर खोल्नुहोस्</string>
     <string name="cd_close_drawer">ड्रअर बन्द गर्नुहोस्</string>
+    <string name="cd_open_rail">मेनु खोल्नुहोस्</string>
+    <string name="cd_close_rail">मेनु बन्द गर्नुहोस्</string>
     <string name="cd_calendar_view">क्यालेन्डर दृश्य</string>
     <string name="cd_active_view">सक्रिय दृश्य</string>
 
     <string name="view_agenda">एजेन्डा</string>
     <string name="view_month_full">महिना (पूर्ण)</string>
     <string name="view_three_days">३ दिन</string>
+    <string name="view_day">दिन</string>
     <string name="view_year">वर्ष</string>
     <string name="view_insights">अन्तरदृष्टि</string>
 
@@ -695,8 +707,6 @@
     <string name="sync_summary_updated">%1$d अद्यावधिक</string>
     <string name="sync_summary_removed">%1$d हटाइयो</string>
 
-    <string name="cd_previous_3_days">अघिल्लो ३ दिन</string>
-    <string name="cd_next_3_days">अर्को ३ दिन</string>
     <string name="cd_circular_scrolling">वृत्ताकार स्क्रोलिङ सक्षम</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -886,6 +896,9 @@
     <string name="channel_sync_progress_desc">क्यालेन्डर सिंक गर्दा प्रगति देखाउँछ</string>
     <string name="channel_sync_status">सिंक स्थिति</string>
     <string name="channel_sync_status_desc">सिंक पूरा र त्रुटिहरूबारे सूचनाहरू</string>
+    <string name="channel_event_invitations">कार्यक्रम निमन्त्रणाहरू</string>
+    <string name="channel_event_invitations_desc">तपाईंले नयाँ क्यालेन्डर निमन्त्रणा प्राप्त गर्दा सूचनाहरू</string>
+    <string name="invite_notification_body">%1$s बाट · जवाफ दिन ट्याप गर्नुहोस्</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">दोहोरिँदैन</string>
@@ -1025,4 +1038,14 @@
     <string name="attendee_status_tentative">अनिश्चित</string>
     <string name="attendee_status_delegated">प्रतिनिधित्व गरिएको</string>
     <string name="attendee_status_pending">पर्खाइमा</string>
+    <string name="inbox_empty_caught_up">सबै सम्पन्न</string>
+    <string name="inbox_organizer_suffix">(आयोजक)</string>
+    <string name="menu_invites">निमन्त्रणाहरू</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">मिति</string>
+    <string name="menu_more">थप मेनु</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">थप मेनु, %d निमन्त्रणा बाँकी</item>
+        <item quantity="other">थप मेनु, %d निमन्त्रणाहरू बाँकी</item>
+    </plurals>
 </resources>

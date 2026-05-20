@@ -43,6 +43,7 @@
     <string name="action_learn_more">Saznaj više</string>
     <string name="action_open_apple_id">Otvori Apple ID</string>
     <string name="action_open_settings">Otvori Postavke</string>
+    <string name="action_open">Otvori</string>
     <string name="action_force_sync">Prisilna sinhronizacija</string>
     <string name="action_sync_now">Sinhronizuj</string>
     <string name="action_details">Detalji</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Izvezi kao .ics</string>
     <string name="action_confirm_delete">Potvrdi brisanje</string>
     <string name="action_delete_event">Obriši događaj</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Prihvati</string>
+    <string name="rsvp_action_tentative">Uvjetno</string>
+    <string name="rsvp_action_decline">Odbij</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Odgovor se odnosi na cijelu seriju.</string>
+    <string name="rsvp_modified_snackbar">Odgovor na poziv za %1$s nije uspio — događaj je izmijenjen. Molimo odgovorite ponovo.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Samo ovaj</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Cijeli dan</string>
     <string name="label_today">Danas</string>
     <string name="label_go_to_date">Idi na datum</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Sedmica</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Postavke</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">Zatvori</string>
     <string name="cd_search">Traži</string>
     <string name="cd_create_event">Kreiraj događaj</string>
-    <string name="cd_settings">Postavke</string>
     <string name="cd_today">Danas</string>
-    <string name="cd_previous_week">Prethodna sedmica</string>
-    <string name="cd_next_week">Sljedeća sedmica</string>
     <string name="cd_delete">Obriši</string>
     <string name="cd_refresh">Osvježi</string>
     <string name="cd_more_options">Više opcija</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">Kalendari uređaja</string>
     <string name="settings_quick_event_add">Brzo dodavanje događaja</string>
     <string name="settings_week_numbers">Brojevi sedmica</string>
+    <string name="settings_show_declined">Prikaži odbijene događaje</string>
     <string name="settings_widget_event_limit">Ograničenje događaja widgeta</string>
     <string name="settings_sync_lookback">Raspon sinhronizacije unazad</string>
     <string name="settings_auto_detect_emojis">Automatsko prepoznavanje emojija</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Dodijeli</string>
     <string name="device_calendars_none_found">Nema pronađenih kalendara uređaja.</string>
     <string name="device_calendars_local">Lokalni</string>
-    <string name="device_calendars_show_declined">Prikaži odbijene događaje</string>
     <string name="device_calendars_reminders">Podsjetnici</string>
     <string name="device_calendars_reminders_desc">Primaj obavještenja za događaje kalendara uređaja</string>
     <string name="device_calendars_read_only_no_write">Samo za čitanje (nema dozvole za pisanje)</string>
@@ -694,16 +705,19 @@
 
     <string name="cd_clear">Obriši</string>
     <string name="cd_offline">Van mreže</string>
-    <string name="cd_previous">Prethodni</string>
-    <string name="cd_next">Sljedeći</string>
     <string name="cd_open_drawer">Otvori meni</string>
     <string name="cd_close_drawer">Zatvori meni</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Otvori meni</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Zatvori meni</string>
     <string name="cd_calendar_view">Prikaz kalendara</string>
     <string name="cd_active_view">Aktivni prikaz</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Mjesec (pun)</string>
     <string name="view_three_days">3 dana</string>
+    <string name="view_day">Dan</string>
     <string name="view_year">Godina</string>
     <string name="view_insights">Uvidi</string>
 
@@ -729,8 +743,6 @@
     <string name="sync_summary_updated">%1$d ažuriranih</string>
     <string name="sync_summary_removed">%1$d uklonjenih</string>
 
-    <string name="cd_previous_3_days">Prethodna 3 dana</string>
-    <string name="cd_next_3_days">Sljedeća 3 dana</string>
     <string name="cd_circular_scrolling">Kružno pomicanje omogućeno</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -930,6 +942,9 @@
     <string name="channel_sync_progress_desc">Prikazuje napredak tokom sinhronizacije kalendara</string>
     <string name="channel_sync_status">Status sinhronizacije</string>
     <string name="channel_sync_status_desc">Obavještenja o završetku sinhronizacije i greškama</string>
+    <string name="channel_event_invitations">Pozivi na događaje</string>
+    <string name="channel_event_invitations_desc">Obavještenja kada primite novi poziv u kalendar</string>
+    <string name="invite_notification_body">Od %1$s · Dodirnite za odgovor</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Ne ponavlja se</string>
@@ -1050,4 +1065,15 @@
     <string name="attendee_status_tentative">Možda</string>
     <string name="attendee_status_delegated">Delegirano</string>
     <string name="attendee_status_pending">Na čekanju</string>
+    <string name="inbox_empty_caught_up">Sve je riješeno</string>
+    <string name="inbox_organizer_suffix">(organizator)</string>
+    <string name="menu_invites">Pozivnice</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Datum</string>
+    <string name="menu_more">Meni Više</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Meni Više, %d pozivnica na čekanju</item>
+        <item quantity="few">Meni Više, %d pozivnice na čekanju</item>
+        <item quantity="other">Meni Više, %d pozivnica na čekanju</item>
+    </plurals>
 </resources>

@@ -84,6 +84,30 @@ object Migrations {
     }
 
     /**
+     * Read the SQLite affinity of a column via PRAGMA table_info, uppercased
+     * for canonical comparison (`"INTEGER"`, `"TEXT"`, etc.). Returns null
+     * when the column doesn't exist.
+     *
+     * Used by pre-migration shape checks to detect forked dev DBs where the
+     * column was hand-added with the wrong type. Without this guard, an
+     * `ALTER TABLE ADD COLUMN` skip via `addColumnIfNotExists` would silently
+     * leave the mis-typed column in place and the next launch would 412 on
+     * Room's identityHash check far away from the root cause.
+     */
+    private fun columnTypeOf(db: SupportSQLiteDatabase, table: String, column: String): String? {
+        db.query("PRAGMA table_info($table)").use { cursor ->
+            val nameIndex = cursor.getColumnIndex("name")
+            val typeIndex = cursor.getColumnIndex("type")
+            while (cursor.moveToNext()) {
+                if (cursor.getString(nameIndex) == column) {
+                    return cursor.getString(typeIndex)?.uppercase()
+                }
+            }
+        }
+        return null
+    }
+
+    /**
      * Drop an index if it exists (more robust than DROP INDEX IF EXISTS).
      */
     private fun dropIndexIfExists(db: SupportSQLiteDatabase, indexName: String) {
@@ -960,6 +984,133 @@ object Migrations {
     }
 
     /**
+     * Expected SQLite affinity for each new column added by MIGRATION_17_18.
+     * Drives the pre-migration shape check that rejects forked dev DBs where
+     * a column was hand-added with the wrong type.
+     */
+    private val EXPECTED_V18_COLUMN_TYPES = mapOf(
+        Triple("pending_operations", "partstat_only", "INTEGER") to Unit,
+        Triple("pending_operations", "partstat_target", "TEXT") to Unit,
+        Triple("attendees", "notified_at", "INTEGER") to Unit
+    ).keys
+
+    /**
+     * Migration from version 17 to 18 — RSVP / invite-notification state.
+     *
+     * Schema delta — three additive columns. None of these are RFC wire-
+     * protocol fields; they are app-internal sync-queue state and
+     * notification-dedup state.
+     *
+     * - `pending_operations.partstat_only` (INTEGER NOT NULL DEFAULT 0) —
+     *   internal flag distinguishing an ordinary UPDATE (`0`) from a
+     *   PARTSTAT-only RSVP write (`1`) that uses the
+     *   `IcsPatcher.patchAttendeeReply` path.
+     * - `pending_operations.partstat_target` (TEXT, nullable) — internal
+     *   carrier for the target PARTSTAT value the operation should write.
+     *   The *value* domain (`ACCEPTED`, `TENTATIVE`, `DECLINED`,
+     *   `NEEDS-ACTION`) is RFC 5545 §3.2.12 PARTSTAT, canonicalized to
+     *   uppercase via `AttendeeStatus.fromPartstat` at write time. The
+     *   *column itself* is internal queue state. NULL when
+     *   `partstat_only = 0`.
+     * - `attendees.notified_at` (INTEGER, nullable epoch millis) — internal
+     *   dedup timestamp marking when the per-invite system notification
+     *   fired. NULL = not yet notified.
+     *
+     * Robustness pattern (mirrors the MIGRATION_16_17 scheduling-schema
+     * bundle that preceded it):
+     *  1. Explicit `try { ... } finally { db.endTransaction() }` wrap so a
+     *     thrown validation exception always rolls back.
+     *  2. `addColumnIfNotExists` for every column add (re-run safe).
+     *  3. Pre-migration shape check: if a column already exists with the
+     *     wrong SQLite affinity (forked dev DB scenario), throw
+     *     `IllegalStateException` BEFORE attempting to add — silent skip
+     *     would leave a mis-typed column in place and the next launch would
+     *     fail Room's identityHash check far away from the root cause.
+     *  4. Post-migration validation: collect missing columns; throw with
+     *     the missing list IF NOT EMPTY, BEFORE
+     *     `setTransactionSuccessful()`, so a thrown check rolls back rather
+     *     than commits a broken schema.
+     *  5. Validation order is load-bearing — `setTransactionSuccessful()`
+     *     is the LAST statement in the try block.
+     */
+    val MIGRATION_17_18 = object : Migration(17, 18) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                // 1. Pre-migration shape check — reject forked dev DBs that
+                //    hand-added a column with the wrong type. addColumn-
+                //    IfNotExists would otherwise silently no-op and leave
+                //    the mis-typed column in place.
+                val shapeMismatches = mutableListOf<String>()
+                for ((table, column, expectedType) in EXPECTED_V18_COLUMN_TYPES) {
+                    val actual = columnTypeOf(db, table, column)
+                    if (actual != null && actual != expectedType) {
+                        shapeMismatches.add(
+                            "$table.$column expected $expectedType but found $actual"
+                        )
+                    }
+                }
+                if (shapeMismatches.isNotEmpty()) {
+                    Log.w(
+                        TAG,
+                        "MIGRATION_17_18 pre-migration shape check failed: $shapeMismatches"
+                    )
+                    throw IllegalStateException(
+                        "MIGRATION_17_18 pre-migration shape check failed — " +
+                            "column type mismatch on ${shapeMismatches.joinToString("; ")}. " +
+                            "A previous (likely hand-edited) schema state is incompatible. " +
+                            "Reinstall the app to clear the local DB."
+                    )
+                }
+
+                // 2. Idempotent column adds.
+                addColumnIfNotExists(
+                    db,
+                    "pending_operations",
+                    "partstat_only",
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+                addColumnIfNotExists(
+                    db,
+                    "pending_operations",
+                    "partstat_target",
+                    "TEXT"
+                )
+                addColumnIfNotExists(
+                    db,
+                    "attendees",
+                    "notified_at",
+                    "INTEGER"
+                )
+
+                // 3. Post-migration validation — runs BEFORE
+                //    setTransactionSuccessful() so a thrown exception rolls
+                //    back rather than commits a broken schema.
+                val missing = buildList {
+                    if (!columnExists(db, "pending_operations", "partstat_only")) {
+                        add("pending_operations.partstat_only")
+                    }
+                    if (!columnExists(db, "pending_operations", "partstat_target")) {
+                        add("pending_operations.partstat_target")
+                    }
+                    if (!columnExists(db, "attendees", "notified_at")) {
+                        add("attendees.notified_at")
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_17_18 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
+    /**
      * All migrations in order.
      * Add new migrations to this list as they are created.
      */
@@ -978,6 +1129,7 @@ object Migrations {
         MIGRATION_13_14,
         MIGRATION_14_15,
         MIGRATION_15_16,
-        MIGRATION_16_17
+        MIGRATION_16_17,
+        MIGRATION_17_18
     )
 }

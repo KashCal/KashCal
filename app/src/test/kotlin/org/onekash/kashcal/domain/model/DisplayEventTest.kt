@@ -330,4 +330,42 @@ class DisplayEventTest {
         val display = DisplayEvent.Device(tentativeInstance)
         assertFalse(display.isFree)
     }
+
+    // ========== isDeclinedByMe Property ==========
+
+    @Test
+    fun `Room isDeclinedByMe defaults to false`() {
+        val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar)
+        assertFalse(display.isDeclinedByMe)
+    }
+
+    @Test
+    fun `Room isDeclinedByMe is true when constructed with flag`() {
+        val display = DisplayEvent.Room(testEvent, testOccurrence, testCalendar, isDeclinedByMe = true)
+        assertTrue(display.isDeclinedByMe)
+    }
+
+    @Test
+    fun `Device isDeclinedByMe is true when selfAttendeeStatus is ATTENDEE_STATUS_DECLINED`() {
+        // CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED = 2
+        val declinedInstance = testInstance.copy(selfAttendeeStatus = 2)
+        val display = DisplayEvent.Device(declinedInstance)
+        assertTrue(display.isDeclinedByMe)
+    }
+
+    @Test
+    fun `Device isDeclinedByMe is false when selfAttendeeStatus is ACCEPTED`() {
+        // CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED = 1
+        val acceptedInstance = testInstance.copy(selfAttendeeStatus = 1)
+        val display = DisplayEvent.Device(acceptedInstance)
+        assertFalse(display.isDeclinedByMe)
+    }
+
+    @Test
+    fun `Device isDeclinedByMe is false when selfAttendeeStatus is NONE`() {
+        // CalendarContract.Attendees.ATTENDEE_STATUS_NONE = 0
+        val noneInstance = testInstance.copy(selfAttendeeStatus = 0)
+        val display = DisplayEvent.Device(noneInstance)
+        assertFalse(display.isDeclinedByMe)
+    }
 }

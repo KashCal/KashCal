@@ -55,6 +55,7 @@
     <string name="action_save">保存</string>
     <string name="action_add">追加</string>
     <string name="action_edit">編集</string>
+    <string name="action_open">開く</string>
     <string name="action_delete">削除</string>
     <string name="action_confirm">確認</string>
     <string name="action_discard">破棄</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">終日</string>
     <string name="label_today">今日</string>
     <string name="label_go_to_date">日付に移動</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">週</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩・⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">設定</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">閉じる</string>
     <string name="cd_search">検索</string>
     <string name="cd_create_event">イベントを作成</string>
-    <string name="cd_settings">設定</string>
     <string name="cd_today">今日</string>
-    <string name="cd_previous_week">前の週</string>
-    <string name="cd_next_week">次の週</string>
     <string name="cd_delete">削除</string>
     <string name="cd_refresh">更新</string>
     <string name="cd_more_options">その他のオプション</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">デバイスカレンダー</string>
     <string name="settings_quick_event_add">クイックイベント追加</string>
     <string name="settings_week_numbers">週番号</string>
+    <string name="settings_show_declined">辞退したイベントを表示</string>
     <string name="settings_widget_event_limit">ウィジェットのイベント上限</string>
     <string name="settings_sync_lookback">同期の遡り期間</string>
     <string name="settings_auto_detect_emojis">絵文字を自動検出</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">許可</string>
     <string name="device_calendars_none_found">デバイスカレンダーが見つかりません。</string>
     <string name="device_calendars_local">ローカル</string>
-    <string name="device_calendars_show_declined">辞退したイベントを表示</string>
     <string name="device_calendars_reminders">リマインダー</string>
     <string name="device_calendars_reminders_desc">デバイスカレンダーのイベント通知を受け取る</string>
     <string name="device_calendars_read_only_no_write">読み取り専用（書き込み許可なし）</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">クリア</string>
     <string name="cd_offline">オフライン</string>
-    <string name="cd_previous">前へ</string>
-    <string name="cd_next">次へ</string>
     <string name="cd_open_drawer">ドロワーを開く</string>
     <string name="cd_close_drawer">ドロワーを閉じる</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">メニューを開く</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">メニューを閉じる</string>
     <string name="cd_calendar_view">カレンダー表示</string>
     <string name="cd_active_view">アクティブな表示</string>
 
     <string name="view_agenda">アジェンダ</string>
     <string name="view_month_full">月（フル）</string>
+    <string name="view_day">日</string>
     <string name="view_three_days">3日間</string>
     <string name="view_year">年</string>
     <string name="view_insights">インサイト</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d件の削除</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">前の3日間</string>
-    <string name="cd_next_3_days">次の3日間</string>
     <string name="cd_circular_scrolling">循環スクロールが有効</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">カレンダーの同期中に進行状況を表示</string>
     <string name="channel_sync_status">同期ステータス</string>
     <string name="channel_sync_status_desc">同期の完了とエラーに関する通知</string>
+    <string name="channel_event_invitations">予定への招待</string>
+    <string name="channel_event_invitations_desc">新しいカレンダー招待を受け取ったときの通知</string>
+    <string name="invite_notification_body">送信元: %1$s · タップして返信</string>
     <string name="rrule_does_not_repeat">繰り返さない</string>
     <string name="rrule_freq_daily">毎日</string>
     <string name="rrule_freq_weekly">毎週</string>
@@ -992,4 +997,18 @@
     <string name="attendee_status_tentative">未定</string>
     <string name="attendee_status_delegated">委任</string>
     <string name="attendee_status_pending">保留</string>
+    <string name="rsvp_action_accept">承諾する</string>
+    <string name="rsvp_action_tentative">仮承諾する</string>
+    <string name="rsvp_action_decline">辞退する</string>
+    <string name="rsvp_series_disclosure">回答はシリーズ全体に適用されます。</string>
+    <string name="rsvp_modified_snackbar">%1$s への返信に失敗しました。予定が変更されたため、もう一度返信してください。</string>
+    <string name="inbox_empty_caught_up">すべて確認済みです</string>
+    <string name="inbox_organizer_suffix">(主催者)</string>
+    <string name="menu_invites">招待</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">日付</string>
+    <string name="menu_more">その他のメニュー</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">その他のメニュー、%d 件保留中</item>
+    </plurals>
 </resources>

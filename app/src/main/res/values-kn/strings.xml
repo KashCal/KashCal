@@ -41,6 +41,7 @@
     <string name="action_hide_password">ಪಾಸ್‌ವರ್ಡ್ ಮರೆಮಾಡಿ</string>
     <string name="action_sign_out">ಸೈನ್ ಔಟ್</string>
     <string name="action_learn_more">ಇನ್ನಷ್ಟು ತಿಳಿಯಿರಿ</string>
+    <string name="action_open">ತೆರೆಯಿರಿ</string>
     <string name="action_open_apple_id">Apple ID ತೆರೆಯಿರಿ</string>
     <string name="action_open_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳನ್ನು ತೆರೆಯಿರಿ</string>
     <string name="action_force_sync">ಫೋರ್ಸ್ ಸಿಂಕ್</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics ಆಗಿ ರಫ್ತು ಮಾಡಿ</string>
     <string name="action_confirm_delete">ಅಳಿಸುವಿಕೆ ದೃಢೀಕರಿಸಿ</string>
     <string name="action_delete_event">ಈವೆಂಟ್ ಅಳಿಸಿ</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">ಸ್ವೀಕರಿಸಿ</string>
+    <string name="rsvp_action_tentative">ತಾತ್ಕಾಲಿಕ</string>
+    <string name="rsvp_action_decline">ನಿರಾಕರಿಸಿ</string>
+    <string name="rsvp_series_disclosure">ನಿಮ್ಮ ಪ್ರತಿಕ್ರಿಯೆ ಸಂಪೂರ್ಣ ಸರಣಿಗೆ ಅನ್ವಯಿಸುತ್ತದೆ.</string>
+    <string name="rsvp_modified_snackbar">%1$s ಗಾಗಿ RSVP ವಿಫಲವಾಗಿದೆ — ಈವೆಂಟ್ ಮಾರ್ಪಡಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರತಿಕ್ರಿಯಿಸಿ.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ಇದು ಮಾತ್ರ</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">ದಿನವಿಡೀ</string>
     <string name="label_today">ಇಂದು</string>
     <string name="label_go_to_date">ದಿನಾಂಕಕ್ಕೆ ಹೋಗಿ</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ವಾರ</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
@@ -257,10 +268,7 @@
     <string name="cd_close">ಮುಚ್ಚಿ</string>
     <string name="cd_search">ಹುಡುಕಿ</string>
     <string name="cd_create_event">ಈವೆಂಟ್ ರಚಿಸಿ</string>
-    <string name="cd_settings">ಸೆಟ್ಟಿಂಗ್‌ಗಳು</string>
     <string name="cd_today">ಇಂದು</string>
-    <string name="cd_previous_week">ಹಿಂದಿನ ವಾರ</string>
-    <string name="cd_next_week">ಮುಂದಿನ ವಾರ</string>
     <string name="cd_delete">ಅಳಿಸಿ</string>
     <string name="cd_refresh">ರಿಫ್ರೆಶ್</string>
     <string name="cd_more_options">ಹೆಚ್ಚಿನ ಆಯ್ಕೆಗಳು</string>
@@ -437,6 +445,7 @@
     <string name="settings_device_calendars">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="settings_quick_event_add">ತ್ವರಿತ ಈವೆಂಟ್ ಸೇರ್ಪಡೆ</string>
     <string name="settings_week_numbers">ವಾರ ಸಂಖ್ಯೆಗಳು</string>
+    <string name="settings_show_declined">ತಿರಸ್ಕರಿಸಿದ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
     <string name="settings_widget_event_limit">ವಿಜೆಟ್ ಈವೆಂಟ್ ಮಿತಿ</string>
     <string name="settings_sync_lookback">ಸಿಂಕ್ ಲುಕ್‌ಬ್ಯಾಕ್</string>
     <string name="settings_auto_detect_emojis">ಎಮೋಜಿಗಳನ್ನು ಸ್ವಯಂ-ಪತ್ತೆ</string>
@@ -505,7 +514,6 @@
     <string name="device_calendars_grant">ಅನುಮತಿಸಿ</string>
     <string name="device_calendars_none_found">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.</string>
     <string name="device_calendars_local">ಸ್ಥಳೀಯ</string>
-    <string name="device_calendars_show_declined">ನಿರಾಕರಿಸಿದ ಈವೆಂಟ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
     <string name="device_calendars_reminders">ರಿಮೈಂಡರ್‌ಗಳು</string>
     <string name="device_calendars_reminders_desc">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್ ಈವೆಂಟ್‌ಗಳಿಗಾಗಿ ಅಧಿಸೂಚನೆ ಪಡೆಯಿರಿ</string>
     <string name="device_calendars_read_only_no_write">ಓದಲು ಮಾತ್ರ (ಬರೆಯುವ ಅನುಮತಿ ಇಲ್ಲ)</string>
@@ -687,15 +695,18 @@
 
     <string name="cd_clear">ತೆರವುಮಾಡಿ</string>
     <string name="cd_offline">ಆಫ್‌ಲೈನ್</string>
-    <string name="cd_previous">ಹಿಂದಿನ</string>
-    <string name="cd_next">ಮುಂದಿನ</string>
     <string name="cd_open_drawer">ಡ್ರಾಯರ್ ತೆರೆಯಿರಿ</string>
     <string name="cd_close_drawer">ಡ್ರಾಯರ್ ಮುಚ್ಚಿ</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">ಮೆನು ತೆರೆಯಿರಿ</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">ಮೆನು ಮುಚ್ಚಿ</string>
     <string name="cd_calendar_view">ಕ್ಯಾಲೆಂಡರ್ ವೀಕ್ಷಣೆ</string>
     <string name="cd_active_view">ಸಕ್ರಿಯ ವೀಕ್ಷಣೆ</string>
 
     <string name="view_agenda">ಕಾರ್ಯಸೂಚಿ</string>
     <string name="view_month_full">ತಿಂಗಳು (ಪೂರ್ಣ)</string>
+    <string name="view_day">ದಿನ</string>
     <string name="view_three_days">3 ದಿನಗಳು</string>
     <string name="view_year">ವರ್ಷ</string>
     <string name="view_insights">ಇನ್‌ಸೈಟ್ಸ್</string>
@@ -725,8 +736,6 @@
     <string name="sync_summary_removed">%1$d ತೆಗೆದುಹಾಕಲಾಗಿದೆ</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">ಹಿಂದಿನ 3 ದಿನಗಳು</string>
-    <string name="cd_next_3_days">ಮುಂದಿನ 3 ದಿನಗಳು</string>
     <string name="cd_circular_scrolling">ವೃತ್ತಾಕಾರ ಸ್ಕ್ರೋಲಿಂಗ್ ಆನ್ ಆಗಿದೆ</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -920,6 +929,9 @@
     <string name="channel_sync_progress_desc">ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಸಿಂಕ್ ಮಾಡುವಾಗ ಪ್ರಗತಿಯನ್ನು ತೋರಿಸುತ್ತದೆ</string>
     <string name="channel_sync_status">ಸಿಂಕ್ ಸ್ಥಿತಿ</string>
     <string name="channel_sync_status_desc">ಸಿಂಕ್ ಪೂರ್ಣಗೊಂಡಿರುವುದು ಮತ್ತು ದೋಷಗಳ ಬಗ್ಗೆ ಅಧಿಸೂಚನೆಗಳು</string>
+    <string name="channel_event_invitations">ಈವೆಂಟ್ ಆಹ್ವಾನಗಳು</string>
+    <string name="channel_event_invitations_desc">ನೀವು ಹೊಸ ಕ್ಯಾಲೆಂಡರ್ ಆಹ್ವಾನವನ್ನು ಸ್ವೀಕರಿಸಿದಾಗ ಅಧಿಸೂಚನೆಗಳು</string>
+    <string name="invite_notification_body">%1$s ಇಂದ · ಪ್ರತಿಕ್ರಿಯಿಸಲು ಟ್ಯಾಪ್ ಮಾಡಿ</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">ಪುನರಾವರ್ತನೆಯಾಗುವುದಿಲ್ಲ</string>
@@ -1041,4 +1053,14 @@
     <string name="attendee_status_tentative">ತಾತ್ಕಾಲಿಕ</string>
     <string name="attendee_status_delegated">ನಿಯೋಜಿಸಲಾಗಿದೆ</string>
     <string name="attendee_status_pending">ಬಾಕಿ ಇದೆ</string>
+    <string name="inbox_empty_caught_up">ಎಲ್ಲವೂ ಪೂರ್ಣಗೊಂಡಿದೆ</string>
+    <string name="inbox_organizer_suffix">(ಆಯೋಜಕ)</string>
+    <string name="menu_invites">ಆಮಂತ್ರಣಗಳು</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">ದಿನಾಂಕ</string>
+    <string name="menu_more">ಇನ್ನಷ್ಟು ಮೆನು</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣ ಬಾಕಿ ಇದೆ</item>
+        <item quantity="other">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣಗಳು ಬಾಕಿ ಇವೆ</item>
+    </plurals>
 </resources>

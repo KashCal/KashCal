@@ -679,6 +679,38 @@ class QuickAddViewModelTest {
 
     // ==================== save() — title-only input (no date/time) ====================
 
+    // ==================== reference date drives undated input ====================
+
+    @Test
+    fun `toCalendarIntentData with timed input but no date uses reference date`() = runTest {
+        // Reference is Mon Apr 13, 2026 — but user is viewing a future day.
+        val viewedDay = LocalDate.of(2026, 8, 7)
+        viewModel.setReferenceTime(viewedDay.atTime(10, 0))
+
+        viewModel.onInputChanged("Coffee at 3pm")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+        val expectedStartTs = LocalDateTime.of(2026, 8, 7, 15, 0)
+            .atZone(zone).toInstant().toEpochMilli()
+        assertEquals(expectedStartTs, intentData.startTimeMillis)
+    }
+
+    @Test
+    fun `toCalendarIntentData with title-only input uses reference date for all-day startTs`() = runTest {
+        val viewedDay = LocalDate.of(2026, 8, 7)
+        viewModel.setReferenceTime(viewedDay.atTime(10, 0))
+
+        viewModel.onInputChanged("Coffee with Sarah")
+        advanceUntilIdle()
+
+        val intentData = viewModel.toCalendarIntentData()
+        assertTrue(intentData.isAllDay)
+        val expectedStartTs = viewedDay
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        assertEquals(expectedStartTs, intentData.startTimeMillis)
+    }
+
     @Test
     fun `save with title only creates all-day event on reference date`() = runTest {
         viewModel.onInputChanged("Coffee with Sarah")

@@ -61,6 +61,19 @@ object DateTimeUtils {
         return dIdx < mIdx
     }
 
+    /**
+     * Returns true if the locale renders year before month in its full month-year form
+     * (e.g., ja/zh/ko/hu produce "2026年5月", "2026. május"). Inspects the localized
+     * `yMMMM` skeleton and compares the position of 'y' vs 'M'.
+     */
+    fun isYearFirstLocale(locale: Locale = Locale.getDefault()): Boolean {
+        val pattern = DateFormat.getBestDateTimePattern(locale, "yMMMM")
+        val yIdx = pattern.indexOf('y')
+        val mIdx = pattern.indexOf('M')
+        if (yIdx < 0) return false
+        return mIdx < 0 || yIdx < mIdx
+    }
+
     // ==================== Time Format Preference ====================
 
     /**

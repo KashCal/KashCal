@@ -144,7 +144,8 @@ class EventCoordinatorTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             reminderScheduler = reminderScheduler,
-            widgetUpdateManager = widgetUpdateManager
+            widgetUpdateManager = widgetUpdateManager,
+            inviteNotifier = mockk(relaxed = true)
         )
     }
 
@@ -1157,5 +1158,219 @@ class EventCoordinatorTest {
         // No batch query needed when no recurring events
         coVerify(exactly = 0) { eventReader.getExceptionsForMasters(any()) }
         coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
+    }
+
+    // ==================== B3 — RSVP write path ==========================
+
+    private val rsvpAccount = Account(
+        id = 7L,
+        provider = AccountProvider.CALDAV,
+        email = "self@example.test",
+        calendarUserAddresses = listOf("mailto:self@example.test")
+    )
+    private val rsvpCalendar = Calendar(
+        id = 9L,
+        accountId = rsvpAccount.id,
+        caldavUrl = "https://example.com/cal/",
+        displayName = "Work",
+        color = -1
+    )
+    private val rsvpEvent = Event(
+        id = 200L,
+        uid = "rsvp-uid",
+        calendarId = rsvpCalendar.id,
+        title = "Quarterly review",
+        startTs = 1704067200000L,
+        endTs = 1704070800000L,
+        dtstamp = System.currentTimeMillis(),
+        syncStatus = SyncStatus.SYNCED
+    )
+
+    @Test
+    fun `replyRsvp delegates to writer with canonical account and triggers sync`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "ACCEPTED") } returns true
+
+        val ok = coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
+
+        assertTrue(ok)
+        coVerify { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "ACCEPTED") }
+        // Non-local calendar → expedited sync requested.
+        verify { syncScheduler.requestExpeditedSync(false) }
+    }
+
+    @Test
+    fun `replyRsvp lowercase input is forwarded as-is and writer canonicalizes`() = runTest {
+        // The contract: caller may pass lowercase; the writer is responsible
+        // for canonicalization. We verify the value the coordinator forwards
+        // is exactly what the caller supplied.
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "accepted") } returns true
+
+        val ok = coordinator.replyRsvp(rsvpEvent.id, "accepted")
+
+        assertTrue(ok)
+        coVerify { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "accepted") }
+    }
+
+    @Test
+    fun `replyRsvp returns false when event not found`() = runTest {
+        coEvery { eventReader.getEventById(404L) } returns null
+
+        val ok = coordinator.replyRsvp(404L, "ACCEPTED")
+
+        assertFalse(ok)
+        coVerify(exactly = 0) { eventWriter.replyRsvp(any(), any(), any()) }
+    }
+
+    @Test
+    fun `replyRsvp returns false when account not resolvable`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns null
+
+        val ok = coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
+
+        assertFalse(ok)
+        coVerify(exactly = 0) { eventWriter.replyRsvp(any(), any(), any()) }
+    }
+
+    @Test
+    fun `replyRsvp returns false when writer cannot match self attendee`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "ACCEPTED") } returns false
+
+        val ok = coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
+
+        assertFalse(ok)
+        // Sync NOT triggered when there's no successful local write.
+        verify(exactly = 0) { syncScheduler.requestExpeditedSync(any()) }
+    }
+
+    // ---- C3: reminder hooks on RSVP write ----
+
+    @Test
+    fun `replyRsvp DECLINED cancels alarms`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "DECLINED") } returns true
+
+        coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
+
+        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+        // Reschedule must NOT be called on decline — there's nothing to schedule.
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `replyRsvp DECLINED with whitespace and case variation still cancels`() = runTest {
+        // Coordinator applies status.trim().uppercase() before deciding decline-vs-reschedule.
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, " Declined ") } returns true
+
+        coordinator.replyRsvp(rsvpEvent.id, " Declined ")
+
+        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+    }
+
+    @Test
+    fun `replyRsvp ACCEPTED reschedules alarms via cancel + schedule`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "ACCEPTED") } returns true
+
+        coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
+
+        // rescheduleRemindersForEvent calls cancel + schedule.
+        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+        // schedule may or may not call into reminderScheduler depending on whether
+        // event.reminders is empty — rsvpEvent has none configured, so the inner
+        // schedule short-circuits at "if (event.reminders.isNullOrEmpty()) return".
+        // The cancel call alone is sufficient evidence the reschedule path ran.
+    }
+
+    @Test
+    fun `replyRsvp ACCEPTED with configured reminder arms scheduleRemindersForEvent`() = runTest {
+        // Pins the end-to-end reschedule path: when the event has reminders
+        // configured, un-decline must actually call into the alarm scheduler,
+        // not just the cancel side of rescheduleRemindersForEvent.
+        val eventWithReminder = rsvpEvent.copy(reminders = listOf("-PT15M"))
+        val occurrence = Occurrence(
+            id = 1L,
+            eventId = eventWithReminder.id,
+            calendarId = rsvpCalendar.id,
+            startTs = eventWithReminder.startTs,
+            endTs = eventWithReminder.endTs,
+            startDay = 20240101,
+            endDay = 20240101
+        )
+        coEvery { eventReader.getEventById(eventWithReminder.id) } returns eventWithReminder
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery {
+            eventReader.getOccurrencesForEventInScheduleWindow(eventWithReminder.id)
+        } returns listOf(occurrence)
+        coEvery { eventWriter.replyRsvp(eventWithReminder.id, rsvpAccount, "ACCEPTED") } returns true
+
+        coordinator.replyRsvp(eventWithReminder.id, "ACCEPTED")
+
+        coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminder.id) }
+        coVerify(exactly = 1) {
+            reminderScheduler.scheduleRemindersForEvent(
+                event = eventWithReminder,
+                occurrences = listOf(occurrence),
+                calendarColor = rsvpCalendar.color
+            )
+        }
+    }
+
+    @Test
+    fun `replyRsvp TENTATIVE reschedules alarms`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "TENTATIVE") } returns true
+
+        coordinator.replyRsvp(rsvpEvent.id, "TENTATIVE")
+
+        coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
+    }
+
+    @Test
+    fun `replyRsvp writer false does not touch reminders`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "DECLINED") } returns false
+
+        coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
+
+        coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `replyRsvp succeeds when reminderScheduler throws - push and widget still fire`() = runTest {
+        coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
+        coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
+        coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
+        coEvery { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "DECLINED") } returns true
+        coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
+
+        val ok = coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
+
+        assertTrue(ok)
+        // Non-local calendar → expedited sync still triggered.
+        verify { syncScheduler.requestExpeditedSync(false) }
     }
 }

@@ -114,11 +114,25 @@ fun EventQuickViewSheet(
     onDuplicate: () -> Unit = {},
     onShare: () -> Unit = {},
     onExportIcs: () -> Unit = {},
+    onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     timeFormat: String = "system"
 ) {
-    // Compute expandable content FIRST - determines sheet behavior
-    val hasExpandableContent = remember(event.description, event.url) {
-        !event.description.isNullOrBlank() || !event.url.isNullOrBlank()
+    val you = attendees.firstOrNull { it.isYou }
+    val currentUserPartstat = you?.status
+    val isCurrentUserOrganizer = you?.isOrganizer == true
+    // When the current user is on the attendee list but isn't the
+    // organizer, the form sheet will render in read-only mode — flip the
+    // Edit button label to "Open" so the user knows what to expect.
+    val canEditAsOrganizer = you == null || you.isOrganizer
+    // Compute expandable content FIRST - determines sheet behavior.
+    // Attendee lists count as expandable: an attendee event with no
+    // description/URL would otherwise lock at partial height even when
+    // the chip row + Respond section take meaningful vertical space.
+    val hasAttendees = attendees.isNotEmpty()
+    val hasExpandableContent = remember(event.description, event.url, hasAttendees) {
+        !event.description.isNullOrBlank() ||
+            !event.url.isNullOrBlank() ||
+            hasAttendees
     }
 
     // Skip partial view and open expanded directly if there's content to show
@@ -317,6 +331,35 @@ fun EventQuickViewSheet(
                 )
             }
 
+            // Respond section — visible only when user is on the attendee
+            // list and isn't the organizer (organizers respond by editing).
+            if (org.onekash.kashcal.ui.components.attendees.shouldShowRespondSection(
+                    currentUserPartstat = currentUserPartstat,
+                    isOrganizer = isCurrentUserOrganizer
+                )
+            ) {
+                Spacer(modifier = Modifier.height(12.dp))
+                org.onekash.kashcal.ui.components.attendees.RespondSection(
+                    currentUserPartstat = currentUserPartstat,
+                    onRsvp = onRsvp,
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                )
+                if (org.onekash.kashcal.ui.components.attendees.shouldShowSeriesRsvpDisclosure(
+                        currentUserPartstat = currentUserPartstat,
+                        isOrganizer = isCurrentUserOrganizer,
+                        isRecurring = isRecurring
+                    )
+                ) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = stringResource(R.string.rsvp_series_disclosure),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
+
             // Expanded content section - shown immediately when sheet opens expanded
             if (hasExpandableContent) {
                 ExpandedContentSection(
@@ -366,7 +409,12 @@ fun EventQuickViewSheet(
                                 },
                                 modifier = Modifier.weight(1f)
                             ) {
-                                Text(stringResource(R.string.action_edit))
+                                Text(
+                                    stringResource(
+                                        if (canEditAsOrganizer) R.string.action_edit
+                                        else R.string.action_open
+                                    )
+                                )
                             }
                         } else {
                             // Inline edit confirmation for recurring events
@@ -776,3 +824,4 @@ private fun ExpandedContentSection(
         }
     }
 }
+

@@ -18,8 +18,6 @@ import javax.inject.Singleton
  * Hilt module for repository layer bindings.
  *
  * Provides unified credential manager and repository implementations.
- *
- * Pattern #33 (CLAUDE.md): Use repositories, not DAOs, for Account and Calendar operations.
  */
 @Module
 @InstallIn(SingletonComponent::class)

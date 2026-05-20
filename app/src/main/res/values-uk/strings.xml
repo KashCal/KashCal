@@ -42,6 +42,7 @@
     <string name="action_hide_password">Приховати пароль</string>
     <string name="action_sign_out">Вийти</string>
     <string name="action_learn_more">Докладніше</string>
+    <string name="action_open">Відкрити</string>
     <string name="action_open_apple_id">Відкрити Apple ID</string>
     <string name="action_open_settings">Відкрити налаштування</string>
     <string name="action_force_sync">Примусова синхронізація</string>
@@ -66,6 +67,16 @@
     <string name="action_export_ics">Експорт у .ics</string>
     <string name="action_confirm_delete">Підтвердити видалення</string>
     <string name="action_delete_event">Видалити подію</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Прийняти</string>
+    <string name="rsvp_action_tentative">Можливо</string>
+    <string name="rsvp_action_decline">Відхилити</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Відповідь поширюється на всю серію.</string>
+    <string name="rsvp_modified_snackbar">Не вдалося відповісти на «%1$s» — подію змінено. Відповідайте ще раз.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Лише це</string>
@@ -95,6 +106,9 @@
     <string name="label_all_day">Увесь день</string>
     <string name="label_today">Сьогодні</string>
     <string name="label_go_to_date">Перейти до дати</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Тиждень</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Налаштування</string>
@@ -237,10 +251,7 @@
     <string name="cd_close">Закрити</string>
     <string name="cd_search">Пошук</string>
     <string name="cd_create_event">Створити подію</string>
-    <string name="cd_settings">Налаштування</string>
     <string name="cd_today">Сьогодні</string>
-    <string name="cd_previous_week">Попередній тиждень</string>
-    <string name="cd_next_week">Наступний тиждень</string>
     <string name="cd_delete">Видалити</string>
     <string name="cd_refresh">Оновити</string>
     <string name="cd_more_options">Додаткові параметри</string>
@@ -417,6 +428,7 @@
     <string name="settings_device_calendars">Календарі пристрою</string>
     <string name="settings_quick_event_add">Швидке додавання</string>
     <string name="settings_week_numbers">Номери тижнів</string>
+    <string name="settings_show_declined">Показувати відхилені події</string>
     <string name="settings_widget_event_limit">Ліміт подій у віджеті</string>
     <string name="settings_sync_lookback">Глибина синхронізації</string>
     <string name="settings_auto_detect_emojis">Автовизначення емодзі</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Надати</string>
     <string name="device_calendars_none_found">Календарі пристрою не знайдено.</string>
     <string name="device_calendars_local">Локальний</string>
-    <string name="device_calendars_show_declined">Показувати відхилені події</string>
     <string name="device_calendars_reminders">Нагадування</string>
     <string name="device_calendars_reminders_desc">Отримувати сповіщення про події з календаря пристрою</string>
     <string name="device_calendars_read_only_no_write">Лише читання (немає дозволу на запис)</string>
@@ -729,16 +740,19 @@
 
     <string name="cd_clear">Очистити</string>
     <string name="cd_offline">Немає мережі</string>
-    <string name="cd_previous">Назад</string>
-    <string name="cd_next">Далі</string>
     <string name="cd_open_drawer">Відкрити меню</string>
     <string name="cd_close_drawer">Закрити меню</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Відкрити меню</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Закрити меню</string>
     <string name="cd_calendar_view">Вигляд календаря</string>
     <string name="cd_active_view">Активний вигляд</string>
 
     <string name="view_agenda">Порядок денний</string>
     <string name="view_month_full">Місяць (повний)</string>
     <string name="view_three_days">3 дні</string>
+    <string name="view_day">День</string>
     <string name="view_year">Рік</string>
     <string name="view_insights">Аналітика</string>
 
@@ -767,8 +781,6 @@
     <string name="sync_summary_removed">%1$d видалено</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Попередні 3 дні</string>
-    <string name="cd_next_3_days">Наступні 3 дні</string>
     <string name="cd_circular_scrolling">Циклічне прокручування увімкнено</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -929,6 +941,9 @@
     <string name="channel_sync_progress_desc">Показує прогрес під час синхронізації календарів</string>
     <string name="channel_sync_status">Статус синхронізації</string>
     <string name="channel_sync_status_desc">Сповіщення про завершення синхронізації та помилки</string>
+    <string name="channel_event_invitations">Запрошення на події</string>
+    <string name="channel_event_invitations_desc">Сповіщення про нові запрошення до календаря</string>
+    <string name="invite_notification_body">Від %1$s · Натисніть, щоб відповісти</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Не повторюється</string>
@@ -1075,4 +1090,16 @@
     <string name="attendee_status_tentative">Можливо</string>
     <string name="attendee_status_delegated">Делеговано</string>
     <string name="attendee_status_pending">Очікує</string>
+    <string name="inbox_empty_caught_up">Усе переглянуто</string>
+    <string name="inbox_organizer_suffix">(організатор)</string>
+    <string name="menu_invites">Запрошення</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Дата</string>
+    <string name="menu_more">Меню «Ще»</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Меню «Ще», %d запрошення очікує</item>
+        <item quantity="few">Меню «Ще», %d запрошення очікують</item>
+        <item quantity="many">Меню «Ще», %d запрошень очікують</item>
+        <item quantity="other">Меню «Ще», %d запрошення очікують</item>
+    </plurals>
 </resources>

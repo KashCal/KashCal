@@ -55,6 +55,7 @@
     <string name="action_save">Lưu</string>
     <string name="action_add">Thêm</string>
     <string name="action_edit">Sửa</string>
+    <string name="action_open">Mở</string>
     <string name="action_delete">Xóa</string>
     <string name="action_confirm">Xác nhận</string>
     <string name="action_discard">Bỏ</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">Cả ngày</string>
     <string name="label_today">Hôm nay</string>
     <string name="label_go_to_date">Đi tới ngày</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Tuần</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Cài đặt</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">Đóng</string>
     <string name="cd_search">Tìm kiếm</string>
     <string name="cd_create_event">Tạo sự kiện</string>
-    <string name="cd_settings">Cài đặt</string>
     <string name="cd_today">Hôm nay</string>
-    <string name="cd_previous_week">Tuần trước</string>
-    <string name="cd_next_week">Tuần sau</string>
     <string name="cd_delete">Xóa</string>
     <string name="cd_refresh">Làm mới</string>
     <string name="cd_more_options">Tùy chọn khác</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">Lịch thiết bị</string>
     <string name="settings_quick_event_add">Thêm nhanh sự kiện</string>
     <string name="settings_week_numbers">Số tuần</string>
+    <string name="settings_show_declined">Hiển thị sự kiện đã từ chối</string>
     <string name="settings_widget_event_limit">Giới hạn sự kiện widget</string>
     <string name="settings_sync_lookback">Khoảng đồng bộ ngược</string>
     <string name="settings_auto_detect_emojis">Tự động phát hiện biểu tượng</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">Cấp quyền</string>
     <string name="device_calendars_none_found">Không tìm thấy lịch thiết bị.</string>
     <string name="device_calendars_local">Nội bộ</string>
-    <string name="device_calendars_show_declined">Hiện sự kiện đã từ chối</string>
     <string name="device_calendars_reminders">Nhắc nhở</string>
     <string name="device_calendars_reminders_desc">Nhận thông báo cho sự kiện lịch thiết bị</string>
     <string name="device_calendars_read_only_no_write">Chỉ đọc (không có quyền ghi)</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">Xóa</string>
     <string name="cd_offline">Ngoại tuyến</string>
-    <string name="cd_previous">Trước</string>
-    <string name="cd_next">Sau</string>
     <string name="cd_open_drawer">Mở ngăn kéo</string>
     <string name="cd_close_drawer">Đóng ngăn kéo</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Mở menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Đóng menu</string>
     <string name="cd_calendar_view">Chế độ xem lịch</string>
     <string name="cd_active_view">Chế độ xem đang dùng</string>
 
     <string name="view_agenda">Lịch trình</string>
     <string name="view_month_full">Tháng (đầy đủ)</string>
+    <string name="view_day">Ngày</string>
     <string name="view_three_days">3 ngày</string>
     <string name="view_year">Năm</string>
     <string name="view_insights">Phân tích</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d đã xóa</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">3 ngày trước</string>
-    <string name="cd_next_3_days">3 ngày tiếp</string>
     <string name="cd_circular_scrolling">Đã bật cuộn vòng</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">Hiển thị tiến trình khi đồng bộ lịch</string>
     <string name="channel_sync_status">Trạng thái đồng bộ</string>
     <string name="channel_sync_status_desc">Thông báo về hoàn thành đồng bộ và lỗi</string>
+    <string name="channel_event_invitations">Lời mời sự kiện</string>
+    <string name="channel_event_invitations_desc">Thông báo khi bạn nhận được lời mời lịch mới</string>
+    <string name="invite_notification_body">Từ %1$s · Nhấn để phản hồi</string>
     <string name="rrule_does_not_repeat">Không lặp lại</string>
     <string name="rrule_freq_daily">Hàng ngày</string>
     <string name="rrule_freq_weekly">Hàng tuần</string>
@@ -992,4 +997,18 @@
     <string name="attendee_status_tentative">Có thể</string>
     <string name="attendee_status_delegated">Đã ủy quyền</string>
     <string name="attendee_status_pending">Chưa phản hồi</string>
+    <string name="rsvp_action_accept">Chấp nhận</string>
+    <string name="rsvp_action_tentative">Có thể</string>
+    <string name="rsvp_action_decline">Từ chối</string>
+    <string name="rsvp_series_disclosure">Phản hồi của bạn áp dụng cho toàn bộ chuỗi sự kiện.</string>
+    <string name="rsvp_modified_snackbar">Phản hồi cho %1$s không thành công, sự kiện đã bị thay đổi. Vui lòng phản hồi lại.</string>
+    <string name="inbox_empty_caught_up">Đã xử lý xong tất cả</string>
+    <string name="inbox_organizer_suffix">(người tổ chức)</string>
+    <string name="menu_invites">Lời mời</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Ngày</string>
+    <string name="menu_more">Menu khác</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">Menu khác, %d lời mời đang chờ</item>
+    </plurals>
 </resources>

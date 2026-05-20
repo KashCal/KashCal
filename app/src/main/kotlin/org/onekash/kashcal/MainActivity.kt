@@ -64,6 +64,7 @@ import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.IcsExporter
 import org.onekash.kashcal.util.IcsFileReader
 import org.onekash.kashcal.util.location.LocationSuggestionService
+import java.time.LocalTime
 import javax.inject.Inject
 
 private const val TAG = "MainActivity"
@@ -159,7 +160,10 @@ class MainActivity : ComponentActivity() {
                 var quickViewOccurrenceTs by remember { mutableStateOf<Long?>(null) }
                 val quickViewAttendees by homeViewModel.quickViewAttendees.collectAsStateWithLifecycle()
                 val formAttendees by homeViewModel.formAttendees.collectAsStateWithLifecycle()
+                val formIsReadOnly by homeViewModel.formIsReadOnly.collectAsStateWithLifecycle()
                 val dayAttendeesMap by homeViewModel.dayAttendees.collectAsStateWithLifecycle()
+                val pendingInvitesCount by homeViewModel.pendingInvitationsCount.collectAsStateWithLifecycle()
+                val pendingInvitations by homeViewModel.pendingInvitations.collectAsStateWithLifecycle()
                 // Drive HomeViewModel's attendee StateFlow whenever the active QuickView event changes.
                 androidx.compose.runtime.LaunchedEffect(quickViewEvent?.id) {
                     homeViewModel.setQuickViewEventId(quickViewEvent?.id)
@@ -427,8 +431,6 @@ class MainActivity : ComponentActivity() {
                     onYearOverlayDismiss = { homeViewModel.toggleYearOverlay() },
                     onMonthSelected = { year, month -> homeViewModel.navigateToMonth(year, month) },
                     // Week view callbacks (infinite day pager)
-                    onPreviousPage = { homeViewModel.navigateDaysPagerPrevious() },
-                    onNextPage = { homeViewModel.navigateDaysPagerNext() },
                     onDayPagerPageChanged = { page -> homeViewModel.onDayPagerPageChanged(page) },
                     onWeekDatePickerRequest = { homeViewModel.showWeekViewDatePicker() },
                     onWeekDatePickerDismiss = { homeViewModel.hideWeekViewDatePicker() },
@@ -456,7 +458,12 @@ class MainActivity : ComponentActivity() {
                     shouldRefreshDayPagerCache = { currentDateMs -> homeViewModel.shouldRefreshDayPagerCache(currentDateMs) },
                     onEnsureDotsForYear = { year -> homeViewModel.ensureDotsForYear(year) },
                     dayAttendees = dayAttendeesMap,
-                    onSetVisibleEventIds = { ids -> homeViewModel.setVisibleEventIds(ids) }
+                    onSetVisibleEventIds = { ids -> homeViewModel.setVisibleEventIds(ids) },
+                    pendingInvitesCount = pendingInvitesCount,
+                    pendingInvitations = pendingInvitations,
+                    onOpenInvitationInbox = { homeViewModel.openInvitationInbox() },
+                    onDismissInvitationInbox = { homeViewModel.dismissInvitationInbox() },
+                    onRsvpFromInbox = { eventId, status -> homeViewModel.replyRsvp(eventId, status) }
                 )
 
                 // Event Quick View Sheet
@@ -636,6 +643,7 @@ class MainActivity : ComponentActivity() {
                                 quickViewOccurrenceTs = null
                             }
                         },
+                        onRsvp = { status -> homeViewModel.replyRsvp(event.id, status) },
                         timeFormat = uiState.timeFormat
                     )
                 }
@@ -813,6 +821,12 @@ class MainActivity : ComponentActivity() {
                     val quickAddTextFieldState = remember { TextFieldState() }
                     LaunchedEffect(Unit) {
                         quickAddViewModel.resetState()
+                        // Undated input should default to the day the user is viewing,
+                        // not today, when the form opens.
+                        val anchorMs = uiState.selectedDate.takeIf { it != 0L }
+                            ?: System.currentTimeMillis()
+                        val anchorDate = DateTimeUtils.eventTsToLocalDate(anchorMs, isAllDay = false)
+                        quickAddViewModel.setReferenceTime(anchorDate.atTime(LocalTime.now()))
                         snapshotFlow { quickAddTextFieldState.text.toString() }
                             .collect { quickAddViewModel.onInputChanged(it) }
                     }
@@ -936,7 +950,18 @@ class MainActivity : ComponentActivity() {
                         },
                         deviceCalendarGroups = uiState.deviceCalendarGroups,
                         attendees = formAttendees?.models ?: emptyList(),
-                        isCurrentUserOnList = formAttendees?.isCurrentUserOnList ?: false
+                        isCurrentUserOnList = formAttendees?.isCurrentUserOnList ?: false,
+                        isReadOnly = formIsReadOnly,
+                        onRsvp = { status ->
+                            editingEventId?.let { id -> homeViewModel.replyRsvp(id, status) }
+                        },
+                        onSaveAttendeeReminders = { reminders ->
+                            val id = editingEventId
+                                ?: return@EventFormSheet Result.failure(
+                                    IllegalStateException("No editing event ID")
+                                )
+                            homeViewModel.saveAttendeeReminders(id, reminders)
+                        }
                     )
                 }
 

@@ -1,5 +1,6 @@
 package org.onekash.kashcal.domain.coordinator
 
+import io.mockk.mockk
 import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coJustRun
@@ -123,7 +124,8 @@ class EventCoordinatorImmediatePushTest {
             accountRepository,
             syncScheduler,
             reminderScheduler,
-            widgetUpdateManager
+            widgetUpdateManager,
+            mockk(relaxed = true)
         )
     }
 

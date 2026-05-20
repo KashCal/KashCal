@@ -54,6 +54,7 @@
     <string name="action_save">አስቀምጥ</string>
     <string name="action_add">አክል</string>
     <string name="action_edit">አርትዕ</string>
+    <string name="action_open">ክፈት</string>
     <string name="action_delete">ሰርዝ</string>
     <string name="action_confirm">አረጋግጥ</string>
     <string name="action_discard">አጥፋ</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">እንደ .ics ላክ</string>
     <string name="action_confirm_delete">ሰርዝ አረጋግጥ</string>
     <string name="action_delete_event">ክስተት ሰርዝ</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">ተቀበል</string>
+    <string name="rsvp_action_tentative">በሙከራ</string>
+    <string name="rsvp_action_decline">አይቀበሉ</string>
+    <string name="rsvp_series_disclosure">ምላሽዎ ለመላው ተከታታይ ክስተት ይተገበራል።</string>
+    <string name="rsvp_modified_snackbar">ለ%1$s የተደረገው RSVP አልተሳካም — ክስተቱ ተሻሽሏል። እባክዎ እንደገና ምላሽ ይስጡ።</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ይህን ብቻ</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">ሙሉ ቀን</string>
     <string name="label_today">ዛሬ</string>
     <string name="label_go_to_date">ወደ ቀን ሂድ</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ሳምንት</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ቅንብሮች</string>
@@ -254,10 +265,7 @@
     <string name="cd_close">ዝጋ</string>
     <string name="cd_search">ፈልግ</string>
     <string name="cd_create_event">ክስተት ፍጠር</string>
-    <string name="cd_settings">ቅንብሮች</string>
     <string name="cd_today">ዛሬ</string>
-    <string name="cd_previous_week">ያለፈው ሳምንት</string>
-    <string name="cd_next_week">ቀጣዩ ሳምንት</string>
     <string name="cd_delete">ሰርዝ</string>
     <string name="cd_refresh">አድስ</string>
     <string name="cd_more_options">ተጨማሪ አማራጮች</string>
@@ -434,6 +442,7 @@
     <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="settings_quick_event_add">ፈጣን ክስተት ማከል</string>
     <string name="settings_week_numbers">የሳምንት ቁጥሮች</string>
+    <string name="settings_show_declined">ውድቅ የተደረጉ ክስተቶችን አሳይ</string>
     <string name="settings_widget_event_limit">የዊጀት ክስተት ገደብ</string>
     <string name="settings_sync_lookback">የማመሳሰል ወደ ኋላ መመልከት</string>
     <string name="settings_auto_detect_emojis">ኢሞጂዎችን በራስ-ሰር ፈልግ</string>
@@ -502,7 +511,6 @@
     <string name="device_calendars_grant">ስጥ</string>
     <string name="device_calendars_none_found">ምንም የመሳሪያ ቀን መቁጠሪያዎች አልተገኙም።</string>
     <string name="device_calendars_local">አካባቢያዊ</string>
-    <string name="device_calendars_show_declined">የተቃወሙ ክስተቶችን አሳይ</string>
     <string name="device_calendars_reminders">ማስታወሻዎች</string>
     <string name="device_calendars_reminders_desc">ለመሳሪያ ቀን መቁጠሪያ ክስተቶች ማሳወቂያ ያግኙ</string>
     <string name="device_calendars_read_only_no_write">የንባብ ብቻ (የፅሁፍ ፈቃድ የለም)</string>
@@ -684,16 +692,19 @@
 
     <string name="cd_clear">አጽዳ</string>
     <string name="cd_offline">ከመስመር ውጭ</string>
-    <string name="cd_previous">ያለፈው</string>
-    <string name="cd_next">ቀጣዩ</string>
     <string name="cd_open_drawer">መሳቢያ ክፈት</string>
     <string name="cd_close_drawer">መሳቢያ ዝጋ</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">ምናሌ ክፈት</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">ምናሌ ዝጋ</string>
     <string name="cd_calendar_view">የቀን መቁጠሪያ እይታ</string>
     <string name="cd_active_view">ንቁ እይታ</string>
 
     <string name="view_agenda">አጀንዳ</string>
     <string name="view_month_full">ወር (ሙሉ)</string>
     <string name="view_three_days">3 ቀናት</string>
+    <string name="view_day">ቀን</string>
     <string name="view_year">ዓመት</string>
     <string name="view_insights">ግንዛቤዎች</string>
 
@@ -722,8 +733,6 @@
     <string name="sync_summary_removed">%1$d ተወግዷል</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">ያለፉት 3 ቀናት</string>
-    <string name="cd_next_3_days">ቀጣዮቹ 3 ቀናት</string>
     <string name="cd_circular_scrolling">ክብ ማሸብለል ነቅቷል</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -906,6 +915,9 @@
     <string name="channel_sync_progress_desc">ቀን መቁጠሪያዎችን በማመሳሰል ላይ እያሉ እድገትን ያሳያል</string>
     <string name="channel_sync_status">የማመሳሰል ሁኔታ</string>
     <string name="channel_sync_status_desc">ስለ ማመሳሰል ማጠናቀቅ እና ስህተቶች ማሳወቂያዎች</string>
+    <string name="channel_event_invitations">የክስተት ግብዣዎች</string>
+    <string name="channel_event_invitations_desc">አዲስ የቀን መቁጠሪያ ግብዣ ሲደርስዎ ማሳወቂያዎች</string>
+    <string name="invite_notification_body">ከ%1$s · ለመመለስ ይንኩ</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">አይደገምም</string>
@@ -1052,4 +1064,14 @@
     <string name="attendee_status_tentative">ሊሆን ይችላል</string>
     <string name="attendee_status_delegated">በውክልና ተሰጥቷል</string>
     <string name="attendee_status_pending">በመጠባበቅ ላይ</string>
+    <string name="inbox_empty_caught_up">ሁሉም ተመልክቷል</string>
+    <string name="inbox_organizer_suffix">(አዘጋጅ)</string>
+    <string name="menu_invites">ግብዣዎች</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">ቀን</string>
+    <string name="menu_more">ተጨማሪ ምናሌ</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">ተጨማሪ ምናሌ፣ %d ግብዣ በመጠባበቅ ላይ</item>
+        <item quantity="other">ተጨማሪ ምናሌ፣ %d ግብዣዎች በመጠባበቅ ላይ</item>
+    </plurals>
 </resources>

@@ -15,10 +15,9 @@ import org.robolectric.annotation.Config
  * Tests for [CalDavXmlParser.extractCalendarMetadata], the Depth:0-response
  * parser powering the calendar-metadata refresh on every PullStrategy.pull().
  *
- * Null semantics differ from [CalDavXmlParser.extractCalendars] — see plan
- * docs/tdd/calendar-metadata-sync-plan.md §Edge cases #9. This helper must
- * return isReadOnly=null when the server omits the privilege-set element so
- * the refresh path preserves local state.
+ * Null semantics differ from [CalDavXmlParser.extractCalendars]: this helper
+ * must return isReadOnly=null when the server omits the privilege-set element
+ * so the refresh path preserves local state.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

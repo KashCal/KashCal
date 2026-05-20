@@ -14,6 +14,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.AttendeesDao
 import org.onekash.kashcal.data.db.dao.EventsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
@@ -37,6 +38,7 @@ class ConflictResolverTest {
     private lateinit var pendingOperationsDao: PendingOperationsDao
     private lateinit var occurrenceGenerator: OccurrenceGenerator
     private lateinit var client: CalDavClient
+    private lateinit var database: KashCalDatabase
 
     @Before
     fun setup() {
@@ -46,13 +48,24 @@ class ConflictResolverTest {
         pendingOperationsDao = mockk()
         occurrenceGenerator = mockk()
         client = mockk()
+        database = mockk(relaxed = true)
+        // The non-inline `runInTransaction` wrapper just runs the block,
+        // letting the SERVER_WINS path execute as a single sequence in tests.
+        // MockK's generic-suspend type inference needs the explicit
+        // `Unit` since the production `runInTransaction { … }` block in
+        // ConflictResolver returns no value.
+        coEvery { database.runInTransaction(any<suspend () -> Unit>()) } coAnswers {
+            val block = firstArg<suspend () -> Unit>()
+            block()
+        }
 
         conflictResolver = ConflictResolver(
             calendarRepository = calendarRepository,
             eventsDao = eventsDao,
             attendeesDao = attendeesDao,
             pendingOperationsDao = pendingOperationsDao,
-            occurrenceGenerator = occurrenceGenerator
+            occurrenceGenerator = occurrenceGenerator,
+            database = database
         )
     }
 
@@ -279,5 +292,161 @@ class ConflictResolverTest {
             "All written attendees must carry the resolved eventId",
             written.all { it.eventId == event.id }
         )
+    }
+
+    // ========== B3 — SERVER_WINS upsert + attendees runs inside runInTransaction ==========
+
+    @Test
+    fun `resolveServerWins runs upsert and attendees-replace inside a single transaction`() = runTest {
+        // The deferred-from-A2 fix: ConflictResolver SERVER_WINS must wrap
+        // event upsert + attendees replaceForEvent in database.runInTransaction
+        // so a partial write rolls back rather than leaving the event row
+        // out-of-sync with its attendees table.
+        val event = Event(
+            id = 77L,
+            uid = "tx-uid",
+            calendarId = 1L,
+            title = "Local Version",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600_000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = "https://caldav.example.com/cal/tx.ics",
+            etag = "etag-old",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 40L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        val serverIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:tx-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Server Version
+            ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val calendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.example.com/cal/",
+            displayName = "Test Calendar",
+            color = 0xFF0000
+        )
+
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { client.fetchEvent(event.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent("tx.ics", event.caldavUrl!!, "etag-server", serverIcal)
+        )
+        coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
+        coEvery { eventsDao.upsert(any()) } returns 1L
+        coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
+        coEvery { pendingOperationsDao.deleteById(operation.id) } returns Unit
+
+        val result = conflictResolver.resolve(operation, strategy = ConflictStrategy.SERVER_WINS, client = client)
+
+        assert(result == ConflictResult.ServerVersionKept)
+        // Transaction was opened.
+        coVerify(atLeast = 1) { database.runInTransaction(any<suspend () -> Unit>()) }
+        // And both writes happened inside it.
+        coVerifyOrder {
+            database.runInTransaction(any<suspend () -> Unit>())
+            eventsDao.upsert(any())
+            attendeesDao.replaceForEvent(eventId = event.id, attendees = any())
+        }
+    }
+
+    @Test
+    fun `resolveServerWins rolls back when attendees-replace throws`() = runTest {
+        // If attendees-replace blows up mid-transaction, the upsert must NOT
+        // be committed. This locks in the rollback semantic: prior to this
+        // chunk, the writes were sequential and a failure mid-stream would
+        // leave the event row updated but attendees stale.
+        val event = Event(
+            id = 88L,
+            uid = "rollback-uid",
+            calendarId = 1L,
+            title = "Local Version",
+            startTs = System.currentTimeMillis(),
+            endTs = System.currentTimeMillis() + 3600_000,
+            dtstamp = System.currentTimeMillis(),
+            caldavUrl = "https://caldav.example.com/cal/rollback.ics",
+            etag = "etag-old",
+            syncStatus = SyncStatus.PENDING_UPDATE
+        )
+
+        val operation = PendingOperation(
+            id = 50L,
+            eventId = event.id,
+            operation = PendingOperation.OPERATION_UPDATE,
+            status = PendingOperation.STATUS_PENDING
+        )
+
+        val serverIcal = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//Test//EN
+            BEGIN:VEVENT
+            UID:rollback-uid
+            DTSTAMP:20240101T120000Z
+            DTSTART:20240101T100000Z
+            DTEND:20240101T110000Z
+            SUMMARY:Server Rollback Test
+            ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.com
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val calendar = Calendar(
+            id = 1L,
+            accountId = 1L,
+            caldavUrl = "https://caldav.example.com/cal/",
+            displayName = "Test Calendar",
+            color = 0xFF0000
+        )
+
+        // Override the relaxed attendeesDao mock — make replace throw.
+        coEvery {
+            attendeesDao.replaceForEvent(eventId = event.id, attendees = any())
+        } throws RuntimeException("simulated DB error")
+
+        // Make the runInTransaction stub propagate exceptions like the real
+        // implementation does — the block runs, throws, transaction aborts.
+        coEvery { database.runInTransaction(any<suspend () -> Unit>()) } coAnswers {
+            val block = firstArg<suspend () -> Unit>()
+            block()  // Will throw RuntimeException, propagating out.
+        }
+
+        coEvery { eventsDao.getById(event.id) } returns event
+        coEvery { client.fetchEvent(event.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent("rollback.ics", event.caldavUrl!!, "etag-server", serverIcal)
+        )
+        coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
+        coEvery { eventsDao.upsert(any()) } returns 1L
+        coEvery { occurrenceGenerator.regenerateOccurrences(any()) } returns 1
+        coEvery { pendingOperationsDao.deleteById(operation.id) } returns Unit
+
+        var thrown: Throwable? = null
+        try {
+            conflictResolver.resolve(operation, strategy = ConflictStrategy.SERVER_WINS, client = client)
+        } catch (e: RuntimeException) {
+            thrown = e
+        }
+        assertTrue("transaction body must propagate the simulated DB error: $thrown", thrown != null)
+
+        // pendingOperationsDao.deleteById must NOT have been called — the
+        // post-transaction cleanup runs only when the transaction succeeded.
+        coVerify(exactly = 0) { pendingOperationsDao.deleteById(operation.id) }
     }
 }

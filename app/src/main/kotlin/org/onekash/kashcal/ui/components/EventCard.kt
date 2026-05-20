@@ -50,7 +50,7 @@ internal fun EventCard(
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
 
-    val effectiveAlpha = if (isPast) 0.5f else 1f
+    val effectiveAlpha = declinedCardAlpha(isPast, displayEvent.isDeclinedByMe)
     val stripeColor = Color(displayEvent.calendarColor)
     val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
     val fillAlpha = displayEvent.cardFillAlpha()
@@ -75,7 +75,8 @@ internal fun EventCard(
                 Text(
                     displayTitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textDecoration = declinedTitleDecoration(displayEvent.isDeclinedByMe)
                 )
                 val timeText = formatDisplayEventTimeDisplay(displayEvent, selectedDate, resources, timePattern = timePattern)
                 Text(

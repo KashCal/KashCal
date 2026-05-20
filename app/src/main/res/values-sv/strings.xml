@@ -55,6 +55,7 @@
     <string name="action_save">Spara</string>
     <string name="action_add">Lägg till</string>
     <string name="action_edit">Redigera</string>
+    <string name="action_open">Öppna</string>
     <string name="action_delete">Ta bort</string>
     <string name="action_confirm">Bekräfta</string>
     <string name="action_discard">Förkasta</string>
@@ -95,6 +96,10 @@
     <string name="label_all_day">Heldag</string>
     <string name="label_today">Idag</string>
     <string name="label_go_to_date">Gå till datum</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Vecka</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Inställningar</string>
@@ -258,10 +263,7 @@
     <string name="cd_close">Stäng</string>
     <string name="cd_search">Sök</string>
     <string name="cd_create_event">Skapa händelse</string>
-    <string name="cd_settings">Inställningar</string>
     <string name="cd_today">Idag</string>
-    <string name="cd_previous_week">Föregående vecka</string>
-    <string name="cd_next_week">Nästa vecka</string>
     <string name="cd_delete">Ta bort</string>
     <string name="cd_refresh">Uppdatera</string>
     <string name="cd_more_options">Fler alternativ</string>
@@ -439,6 +441,7 @@
     <string name="settings_device_calendars">Enhetskalendrar</string>
     <string name="settings_quick_event_add">Snabb händelsetillägg</string>
     <string name="settings_week_numbers">Veckonummer</string>
+    <string name="settings_show_declined">Visa avböjda händelser</string>
     <string name="settings_widget_event_limit">Widget-händelsegräns</string>
     <string name="settings_sync_lookback">Synk-tillbakablick</string>
     <string name="settings_auto_detect_emojis">Identifiera emojis automatiskt</string>
@@ -507,7 +510,6 @@
     <string name="device_calendars_grant">Ge åtkomst</string>
     <string name="device_calendars_none_found">Inga enhetskalendrar hittades.</string>
     <string name="device_calendars_local">Lokal</string>
-    <string name="device_calendars_show_declined">Visa avvisade händelser</string>
     <string name="device_calendars_reminders">Påminnelser</string>
     <string name="device_calendars_reminders_desc">Få aviseringar för enhetskalenderhändelser</string>
     <string name="device_calendars_read_only_no_write">Skrivskyddad (ingen skrivbehörighet)</string>
@@ -691,15 +693,18 @@
 
     <string name="cd_clear">Rensa</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Föregående</string>
-    <string name="cd_next">Nästa</string>
     <string name="cd_open_drawer">Öppna meny</string>
     <string name="cd_close_drawer">Stäng meny</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Öppna meny</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Stäng meny</string>
     <string name="cd_calendar_view">Kalendervy</string>
     <string name="cd_active_view">Aktiv vy</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Månad (Hel)</string>
+    <string name="view_day">Dag</string>
     <string name="view_three_days">3 dagar</string>
     <string name="view_year">År</string>
     <string name="view_insights">Insikter</string>
@@ -729,8 +734,6 @@
     <string name="sync_summary_removed">%1$d borttagna</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Föregående 3 dagar</string>
-    <string name="cd_next_3_days">Nästa 3 dagar</string>
     <string name="cd_circular_scrolling">Cirkulär rullning aktiverad</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -913,6 +916,17 @@
     <string name="channel_sync_progress_desc">Visar förlopp när kalendrar synkroniseras</string>
     <string name="channel_sync_status">Synkroniseringsstatus</string>
     <string name="channel_sync_status_desc">Aviseringar om synkronisering slutförd och fel</string>
+    <string name="channel_event_invitations">Händelseinbjudningar</string>
+    <string name="channel_event_invitations_desc">Aviseringar när du får en ny kalenderinbjudan</string>
+    <string name="invite_notification_body">Från %1$s · Tryck för att svara</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Acceptera</string>
+    <string name="rsvp_action_tentative">Kanske</string>
+    <string name="rsvp_action_decline">Avböj</string>
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Svaret gäller hela serien.</string>
+    <string name="rsvp_modified_snackbar">Svar för %1$s misslyckades – händelsen ändrades. Vänligen svara igen.</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">Upprepas inte</string>
@@ -1040,4 +1054,15 @@
     <string name="attendee_status_tentative">Preliminärt</string>
     <string name="attendee_status_delegated">Delegerad</string>
     <string name="attendee_status_pending">Väntar</string>
+    <!-- Invitation Inbox -->
+    <string name="inbox_empty_caught_up">Allt är ikapp</string>
+    <string name="inbox_organizer_suffix">(arrangör)</string>
+    <string name="menu_invites">Inbjudningar</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Datum</string>
+    <string name="menu_more">Mer-meny</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Mer-meny, %d inbjudan väntar</item>
+        <item quantity="other">Mer-meny, %d inbjudningar väntar</item>
+    </plurals>
 </resources>

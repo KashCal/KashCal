@@ -279,4 +279,87 @@ class EventToICalEventMapperTest {
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
         assertEquals("explicit:RECID:7", ical.importId)
     }
+
+    // ========== Exception mapper attendees (B3 — fixes A2 deferral §3.2) ==========
+
+    @Test
+    fun `exception mapper attendees default empty preserves pre-B3 callers`() {
+        // No `attendees =` argument: default-empty keeps IcsExporter and any
+        // existing call sites compiling and behaving as before.
+        val master = baseEvent(uid = "m-default")
+        val exception = baseEvent(originalInstanceTime = 1709740800000L)
+        val ical = EventToICalEventMapper.toICalEvent(master, exception)
+        assertTrue(
+            "Default-empty attendees: exception VEVENT must serialize with no ATTENDEEs",
+            ical.attendees.isEmpty()
+        )
+    }
+
+    @Test
+    fun `exception mapper emits passed-through attendees`() {
+        // B3 fix for the §3.2 attendee-loss bug: when callers pass attendees,
+        // they must reach the emitted ICalEvent so per-exception attendee
+        // lists survive recurring-event push.
+        val master = baseEvent(uid = "m-with-attendees")
+        val exception = baseEvent(originalInstanceTime = 1709740800000L)
+        val attendees = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                id = 1L,
+                eventId = 99L,
+                address = "mailto:alice@example.test",
+                displayName = "Alice",
+                partstat = "ACCEPTED",
+                role = "REQ-PARTICIPANT",
+                sortOrder = 0
+            ),
+            org.onekash.kashcal.data.db.entity.Attendee(
+                id = 2L,
+                eventId = 99L,
+                address = "mailto:bob@example.test",
+                displayName = "Bob",
+                partstat = "NEEDS-ACTION",
+                role = "REQ-PARTICIPANT",
+                sortOrder = 1
+            )
+        )
+
+        val ical = EventToICalEventMapper.toICalEvent(master, exception, attendees)
+
+        assertEquals(2, ical.attendees.size)
+        val emails = ical.attendees.map { it.email }.toSet()
+        assertTrue("alice@example.test" in emails)
+        assertTrue("bob@example.test" in emails)
+        // PARTSTAT round-trips through the icaldav-core enum mapping.
+        val alice = ical.attendees.first { it.email == "alice@example.test" }
+        assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, alice.partStat)
+    }
+
+    @Test
+    fun `exception mapper preserves attendee sort order`() {
+        val master = baseEvent(uid = "m-sort")
+        val exception = baseEvent(originalInstanceTime = 1709740800000L)
+        // Pass in reverse sortOrder; emitter must respect order, not list position.
+        val attendees = listOf(
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:second@example.test",
+                partstat = "ACCEPTED", role = "REQ-PARTICIPANT", sortOrder = 1
+            ),
+            org.onekash.kashcal.data.db.entity.Attendee(
+                eventId = 99L, address = "mailto:first@example.test",
+                partstat = "ACCEPTED", role = "REQ-PARTICIPANT", sortOrder = 0
+            )
+        )
+        val ical = EventToICalEventMapper.toICalEvent(master, exception, attendees)
+        // Emitted in input order — caller controls ordering.
+        assertEquals("second@example.test", ical.attendees[0].email)
+        assertEquals("first@example.test", ical.attendees[1].email)
+    }
+
+    @Test
+    fun `non-exception mapper attendees default empty preserves pre-B3 callers`() {
+        // The single-arg overload also gets a defaulted attendees parameter.
+        val event = baseEvent(uid = "single")
+        val ical = EventToICalEventMapper.toICalEvent(event)
+        assertTrue(ical.attendees.isEmpty())
+    }
 }

@@ -1610,4 +1610,188 @@ class IcsPatcherTest {
             updatedAt = System.currentTimeMillis()
         )
     }
+
+    // ========== B3 — patchAttendeeReply (RSVP write path) ==========
+
+    private val multiAttendeeIcs = """
+        BEGIN:VCALENDAR
+        VERSION:2.0
+        PRODID:-//Test//RSVP//EN
+        BEGIN:VEVENT
+        UID:rsvp-test@kashcal.test
+        DTSTAMP:20260101T100000Z
+        DTSTART:20260615T100000Z
+        DTEND:20260615T110000Z
+        SUMMARY:Quarterly review
+        DESCRIPTION:Bring your slides
+        SEQUENCE:3
+        ORGANIZER;CN=The Boss:mailto:boss@example.test
+        ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT:mailto:alice@example.test
+        ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:self@example.test
+        ATTENDEE;CN=Bob;PARTSTAT=DECLINED;ROLE=REQ-PARTICIPANT:mailto:bob@example.test
+        END:VEVENT
+        END:VCALENDAR
+    """.trimIndent()
+
+    private fun selfAccount(addresses: List<String> = listOf("mailto:self@example.test")) =
+        org.onekash.kashcal.data.db.entity.Account(
+            id = 1L,
+            provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV,
+            email = "self@example.test",
+            calendarUserAddresses = addresses
+        )
+
+    @Test
+    fun `patchAttendeeReply updates only self PARTSTAT`() {
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = multiAttendeeIcs,
+            account = selfAccount(),
+            partstat = "ACCEPTED"
+        )
+        assertNotNull("patch should succeed", patched)
+        val parsed = parser.parseAllEvents(patched!!).getOrNull()!!.first()
+
+        // Three attendees survive.
+        assertEquals(3, parsed.attendees.size)
+
+        // Self's PARTSTAT updated to ACCEPTED.
+        val self = parsed.attendees.first { it.email == "self@example.test" }
+        assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, self.partStat)
+
+        // Others' PARTSTAT untouched.
+        val alice = parsed.attendees.first { it.email == "alice@example.test" }
+        assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, alice.partStat)
+        val bob = parsed.attendees.first { it.email == "bob@example.test" }
+        assertEquals(org.onekash.icaldav.model.PartStat.DECLINED, bob.partStat)
+    }
+
+    @Test
+    fun `patchAttendeeReply preserves SUMMARY DESCRIPTION ORGANIZER`() {
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = multiAttendeeIcs,
+            account = selfAccount(),
+            partstat = "TENTATIVE"
+        )!!
+        val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
+        assertEquals("Quarterly review", parsed.summary)
+        assertEquals("Bring your slides", parsed.description)
+        assertEquals("boss@example.test", parsed.organizer?.email)
+    }
+
+    @Test
+    fun `patchAttendeeReply preserves SEQUENCE verbatim`() {
+        // RFC 5546 §2.1.4 — attendee PARTSTAT-only PUT must NOT bump SEQUENCE.
+        // (iCloud will auto-bump on the wire; we tolerate that, but we don't
+        // bump on the client.)
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = multiAttendeeIcs,
+            account = selfAccount(),
+            partstat = "ACCEPTED"
+        )!!
+        val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
+        assertEquals(3, parsed.sequence)
+    }
+
+    @Test
+    fun `patchAttendeeReply canonicalizes lowercase PARTSTAT to uppercase`() {
+        // The RSVP UI may pass any-case value; the patcher canonicalizes.
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = multiAttendeeIcs,
+            account = selfAccount(),
+            partstat = "accepted"
+        )!!
+        val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
+        val self = parsed.attendees.first { it.email == "self@example.test" }
+        assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, self.partStat)
+        // Wire form should be uppercase too.
+        assertTrue(
+            "wire form must use uppercase ACCEPTED",
+            patched.contains("PARTSTAT=ACCEPTED")
+        )
+    }
+
+    @Test
+    fun `patchAttendeeReply matches self via multi-alias account`() {
+        // Account has both me.com and icloud.com aliases; the wire ATTENDEE
+        // is the .icloud one.
+        val icloudAliasIcs = multiAttendeeIcs.replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:self@example.test",
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;ROLE=REQ-PARTICIPANT;RSVP=TRUE:mailto:self@icloud.example"
+        )
+        val account = selfAccount(
+            addresses = listOf("mailto:self@me.example", "mailto:self@icloud.example")
+        )
+
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = icloudAliasIcs,
+            account = account,
+            partstat = "ACCEPTED"
+        )!!
+        val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
+        val self = parsed.attendees.first { it.email == "self@icloud.example" }
+        assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, self.partStat)
+    }
+
+    @Test
+    fun `patchAttendeeReply returns null when self attendee not present`() {
+        // Server's body doesn't list us — caller falls back to surfacing an error
+        // ("can't RSVP without an attendee row for you") instead of silently
+        // adding a new attendee row.
+        val account = org.onekash.kashcal.data.db.entity.Account(
+            id = 1L,
+            provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV,
+            email = "stranger@example.test",
+            calendarUserAddresses = listOf("mailto:stranger@example.test")
+        )
+
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = multiAttendeeIcs,
+            account = account,
+            partstat = "ACCEPTED"
+        )
+        assertNull(patched)
+    }
+
+    @Test
+    fun `patchAttendeeReply returns null when rawIcal is malformed`() {
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = "this is not ICS",
+            account = selfAccount(),
+            partstat = "ACCEPTED"
+        )
+        assertNull(patched)
+    }
+
+    @Test
+    fun `patchAttendeeReply preserves recurring RRULE`() {
+        // T2 ships series-level RSVP only — RRULE on the master must survive.
+        val recurringIcs = """
+            BEGIN:VCALENDAR
+            VERSION:2.0
+            PRODID:-//Test//RSVP-recur//EN
+            BEGIN:VEVENT
+            UID:weekly@kashcal.test
+            DTSTAMP:20260101T100000Z
+            DTSTART:20260615T100000Z
+            DTEND:20260615T110000Z
+            RRULE:FREQ=WEEKLY;COUNT=4
+            SUMMARY:Weekly sync
+            ORGANIZER;CN=Boss:mailto:boss@example.test
+            ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test
+            END:VEVENT
+            END:VCALENDAR
+        """.trimIndent()
+
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = recurringIcs,
+            account = selfAccount(),
+            partstat = "ACCEPTED"
+        )!!
+        assertTrue("RRULE must survive RSVP patch", patched.contains("RRULE:FREQ=WEEKLY"))
+        val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
+        assertEquals(
+            org.onekash.icaldav.model.PartStat.ACCEPTED,
+            parsed.attendees.first { it.email == "self@example.test" }.partStat
+        )
+    }
 }

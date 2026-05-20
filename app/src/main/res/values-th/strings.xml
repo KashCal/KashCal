@@ -55,6 +55,7 @@
     <string name="action_save">บันทึก</string>
     <string name="action_add">เพิ่ม</string>
     <string name="action_edit">แก้ไข</string>
+    <string name="action_open">เปิด</string>
     <string name="action_delete">ลบ</string>
     <string name="action_confirm">ยืนยัน</string>
     <string name="action_discard">ละทิ้ง</string>
@@ -95,6 +96,9 @@
     <string name="label_all_day">ทั้งวัน</string>
     <string name="label_today">วันนี้</string>
     <string name="label_go_to_date">ไปที่วันที่</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">สัปดาห์</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">การตั้งค่า</string>
@@ -236,10 +240,7 @@
     <string name="cd_close">ปิด</string>
     <string name="cd_search">ค้นหา</string>
     <string name="cd_create_event">สร้างกิจกรรม</string>
-    <string name="cd_settings">การตั้งค่า</string>
     <string name="cd_today">วันนี้</string>
-    <string name="cd_previous_week">สัปดาห์ก่อน</string>
-    <string name="cd_next_week">สัปดาห์ถัดไป</string>
     <string name="cd_delete">ลบ</string>
     <string name="cd_refresh">รีเฟรช</string>
     <string name="cd_more_options">ตัวเลือกเพิ่มเติม</string>
@@ -416,6 +417,7 @@
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="settings_quick_event_add">เพิ่มกิจกรรมด่วน</string>
     <string name="settings_week_numbers">หมายเลขสัปดาห์</string>
+    <string name="settings_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="settings_widget_event_limit">จำนวนกิจกรรมสูงสุดในวิดเจ็ต</string>
     <string name="settings_sync_lookback">ซิงค์ย้อนหลัง</string>
     <string name="settings_auto_detect_emojis">ตรวจจับอิโมจิอัตโนมัติ</string>
@@ -484,7 +486,6 @@
     <string name="device_calendars_grant">อนุญาต</string>
     <string name="device_calendars_none_found">ไม่พบปฏิทินอุปกรณ์</string>
     <string name="device_calendars_local">ในเครื่อง</string>
-    <string name="device_calendars_show_declined">แสดงกิจกรรมที่ปฏิเสธ</string>
     <string name="device_calendars_reminders">การเตือน</string>
     <string name="device_calendars_reminders_desc">รับแจ้งเตือนกิจกรรมปฏิทินอุปกรณ์</string>
     <string name="device_calendars_read_only_no_write">อ่านอย่างเดียว (ไม่มีสิทธิ์เขียน)</string>
@@ -635,15 +636,18 @@
 
     <string name="cd_clear">ล้าง</string>
     <string name="cd_offline">ออฟไลน์</string>
-    <string name="cd_previous">ก่อนหน้า</string>
-    <string name="cd_next">ถัดไป</string>
     <string name="cd_open_drawer">เปิดลิ้นชัก</string>
     <string name="cd_close_drawer">ปิดลิ้นชัก</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">เปิดเมนู</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">ปิดเมนู</string>
     <string name="cd_calendar_view">มุมมองปฏิทิน</string>
     <string name="cd_active_view">มุมมองที่ใช้งาน</string>
 
     <string name="view_agenda">กำหนดการ</string>
     <string name="view_month_full">เดือน (เต็ม)</string>
+    <string name="view_day">วัน</string>
     <string name="view_three_days">3 วัน</string>
     <string name="view_year">ปี</string>
     <string name="view_insights">วิเคราะห์</string>
@@ -673,8 +677,6 @@
     <string name="sync_summary_removed">%1$d ลบ</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">3 วันก่อน</string>
-    <string name="cd_next_3_days">3 วันถัดไป</string>
     <string name="cd_circular_scrolling">เปิดการเลื่อนวนรอบ</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -854,6 +856,9 @@
     <string name="channel_sync_progress_desc">แสดงความคืบหน้าขณะซิงค์ปฏิทิน</string>
     <string name="channel_sync_status">สถานะการซิงค์</string>
     <string name="channel_sync_status_desc">การแจ้งเตือนเกี่ยวกับการซิงค์เสร็จสมบูรณ์และข้อผิดพลาด</string>
+    <string name="channel_event_invitations">คำเชิญกิจกรรม</string>
+    <string name="channel_event_invitations_desc">การแจ้งเตือนเมื่อได้รับคำเชิญปฏิทินใหม่</string>
+    <string name="invite_notification_body">จาก %1$s · แตะเพื่อตอบกลับ</string>
     <string name="rrule_does_not_repeat">ไม่ซ้ำ</string>
     <string name="rrule_freq_daily">ทุกวัน</string>
     <string name="rrule_freq_weekly">ทุกสัปดาห์</string>
@@ -992,4 +997,18 @@
     <string name="attendee_status_tentative">ไม่แน่ใจ</string>
     <string name="attendee_status_delegated">มอบหมาย</string>
     <string name="attendee_status_pending">รอดำเนินการ</string>
+    <string name="rsvp_action_accept">ตอบรับ</string>
+    <string name="rsvp_action_tentative">ไม่แน่ใจ</string>
+    <string name="rsvp_action_decline">ปฏิเสธ</string>
+    <string name="rsvp_series_disclosure">การตอบกลับของคุณจะใช้กับกิจกรรมทั้งหมดในชุดนี้</string>
+    <string name="rsvp_modified_snackbar">การตอบกลับสำหรับ %1$s ล้มเหลว กิจกรรมถูกแก้ไข โปรดตอบกลับอีกครั้ง</string>
+    <string name="inbox_empty_caught_up">จัดการครบทุกรายการแล้ว</string>
+    <string name="inbox_organizer_suffix">(ผู้จัด)</string>
+    <string name="menu_invites">คำเชิญ</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">วันที่</string>
+    <string name="menu_more">เมนูเพิ่มเติม</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="other">เมนูเพิ่มเติม มีคำเชิญรอดำเนินการ %d รายการ</item>
+    </plurals>
 </resources>

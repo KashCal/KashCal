@@ -72,7 +72,7 @@ object CalendarIntentParser {
 
     /**
      * Upper bound for millis values from intent URIs (~year 2200).
-     * Prevents nonsensical dayCode from extreme timestamps (CLAUDE.md pattern #10).
+     * Prevents nonsensical dayCode from extreme timestamps.
      */
     private const val MAX_REASONABLE_MILLIS = 7258118400000L
 
@@ -163,7 +163,7 @@ object CalendarIntentParser {
             pathSegments.size == 2 && pathSegments[0] == "time" -> {
                 val millis = pathSegments[1].toLongOrNull()
                 if (millis != null && millis > 0) {
-                    // Bound millis to reasonable range (CLAUDE.md pattern #10)
+                    // Bound millis to reasonable range
                     val boundedMillis = millis.coerceIn(1, MAX_REASONABLE_MILLIS)
                     val dayCode = DayPagerUtils.msToDayCode(boundedMillis)
                     CalendarContractAction.GoToDate(dayCode)

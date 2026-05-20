@@ -650,7 +650,7 @@ class IcsRecurringExceptionSyncTest {
 
     /**
      * Verify correct occurrence handling: regenerateOccurrences for master,
-     * linkException for exceptions (Model B pattern per CLAUDE.md #13).
+     * linkException for exceptions (Model B occurrence-linking pattern).
      */
     @Test
     fun `occurrences should be generated correctly for masters and exceptions`() = runTest {

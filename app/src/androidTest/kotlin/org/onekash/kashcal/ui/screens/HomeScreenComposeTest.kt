@@ -1,5 +1,7 @@
 package org.onekash.kashcal.ui.screens
 
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -7,6 +9,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
@@ -157,7 +160,8 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
     }
 
     @Test
@@ -292,8 +296,8 @@ class HomeScreenComposeTest {
     @Test
     fun homeScreen_displaysCurrentMonthHeader() {
         val today = JavaCalendar.getInstance()
-        val monthFormat = SimpleDateFormat("MMMM yyyy", Locale.getDefault())
-        val expectedHeader = monthFormat.format(today.time)
+        val monthOnly = SimpleDateFormat("MMMM", Locale.getDefault()).format(today.time)
+        val yearOnly = SimpleDateFormat("y", Locale.getDefault()).format(today.time)
 
         composeTestRule.setContent {
             HomeScreen(
@@ -307,11 +311,12 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithText(expectedHeader).assertIsDisplayed()
+        composeTestRule.onNodeWithText(monthOnly).assertIsDisplayed()
+        composeTestRule.onNodeWithText(yearOnly).assertIsDisplayed()
     }
 
     @Test
-    fun homeScreen_displaysNavigationArrows() {
+    fun homeScreen_doesNotDisplayChevronNavigationArrows() {
         composeTestRule.setContent {
             HomeScreen(
                 uiState = createDefaultUiState(),
@@ -324,8 +329,8 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Previous").assertIsDisplayed()
-        composeTestRule.onNodeWithContentDescription("Next").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Previous").assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Next").assertDoesNotExist()
     }
 
     // ==================== Day of Week Headers Tests ====================
@@ -657,7 +662,8 @@ class HomeScreenComposeTest {
             )
         }
 
-        composeTestRule.onNodeWithContentDescription("Settings").performClick()
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").performClick()
         assert(settingsClicked)
     }
 
@@ -764,5 +770,270 @@ class HomeScreenComposeTest {
         }
 
         composeTestRule.onNodeWithText("Syncing calendars...").assertDoesNotExist()
+    }
+
+    // ==================== Right Navigation Rail Tests ====================
+
+    @Test
+    fun homeScreen_topBarShowsRailToggleNotThreeDot() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("More options").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_railToggleAccessibilityLabelMatchesHelperWhenInvitesPending() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                pendingInvitesCount = 3
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu, 3 invites pending").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_tapRailToggleRevealsThreeRailItems() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_railInvitesClickInvokesCallback() {
+        var invitesClicked = false
+
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                onOpenInvitationInbox = { invitesClicked = true }
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Invites").performClick()
+        assert(invitesClicked)
+    }
+
+    @Test
+    fun homeScreen_railInsightsClickInvokesViewSelect() {
+        var selectedView: ViewMode? = null
+
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                onViewSelect = { mode -> selectedView = mode }
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Insights").performClick()
+        assert(selectedView == ViewMode.INSIGHTS)
+    }
+
+    @Test
+    fun homeScreen_railSettingsClickInvokesCallback() {
+        var settingsClicked = false
+
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                onSettingsClick = { settingsClicked = true }
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").performClick()
+        assert(settingsClicked)
+    }
+
+    @Test
+    fun homeScreen_railTapToggleAgainClosesRail() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_railInvitesItemHidesChipWhenCountZero() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                pendingInvitesCount = 0
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Invites").assertIsDisplayed()
+        composeTestRule.onNodeWithText("0").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_railTogglePresentInAgendaView() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.AGENDA),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_railInsightsRowRendersWhileInInsightsView() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState().copy(viewMode = ViewMode.INSIGHTS),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Insights").assertIsDisplayed()
+    }
+
+    @Test
+    fun homeScreen_backButtonClosesRail() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {}
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        Espresso.pressBack()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_openingRailClosesLeftDrawer() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                drawerState = rememberDrawerState(DrawerValue.Closed)
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("Open drawer").performClick()
+        composeTestRule.onNodeWithText("Calendars").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Calendars").assertDoesNotExist()
+    }
+
+    @Test
+    fun homeScreen_openingLeftDrawerClosesRail() {
+        composeTestRule.setContent {
+            HomeScreen(
+                uiState = createDefaultUiState(),
+                isOnline = true,
+                onDateSelected = {},
+                onGoToToday = {},
+                onSetViewingMonth = { _, _ -> },
+                onClearNavigateToToday = {},
+                onClearNavigateToMonth = {},
+                drawerState = rememberDrawerState(DrawerValue.Closed)
+            )
+        }
+
+        composeTestRule.onNodeWithContentDescription("More menu").performClick()
+        composeTestRule.onNodeWithText("Settings").assertIsDisplayed()
+        composeTestRule.onNodeWithContentDescription("Open drawer").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Settings").assertDoesNotExist()
     }
 }

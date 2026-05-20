@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -170,7 +171,10 @@ class ConstraintDiagnosticTest {
             attendeesDao = db.attendeesDao(),
             occurrenceGenerator = occurrenceGenerator,
             defaultQuirks = ICloudQuirks(),
-            dataStore = dataStore
+            dataStore = dataStore,
+            inviteNotifier = mockk(relaxed = true),
+            accountRepository = mockk(relaxed = true),
+            reminderScheduler = mockk(relaxed = true)
         )
 
         return TestEnv(db, eventsDao, occurrencesDao, pullStrategy)

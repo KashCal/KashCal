@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -35,6 +36,7 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.DefaultCalendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.domain.identity.canEditAsOrganizer
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -88,7 +90,7 @@ private const val TAG = "HomeViewModel"
  * - Network-aware sync
  */
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class HomeViewModel(
     private val eventCoordinator: EventCoordinator,
     private val eventReader: EventReader,
     private val displayEventRepository: DisplayEventRepository,
@@ -98,8 +100,35 @@ class HomeViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val calendarProviderRepository: CalendarProviderRepository,
     private val attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    private val currentDayCodeProvider: () -> Int
 ) : ViewModel() {
+
+    @Inject
+    constructor(
+        eventCoordinator: EventCoordinator,
+        eventReader: EventReader,
+        displayEventRepository: DisplayEventRepository,
+        dataStore: KashCalDataStore,
+        accountRepository: AccountRepository,
+        syncScheduler: SyncScheduler,
+        networkMonitor: NetworkMonitor,
+        calendarProviderRepository: CalendarProviderRepository,
+        attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ) : this(
+        eventCoordinator,
+        eventReader,
+        displayEventRepository,
+        dataStore,
+        accountRepository,
+        syncScheduler,
+        networkMonitor,
+        calendarProviderRepository,
+        attendeeBackfill,
+        ioDispatcher,
+        { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
+    )
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -143,6 +172,29 @@ class HomeViewModel @Inject constructor(
     val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
 
+    /**
+     * Reactive list of pending CalDAV invitations rendered by
+     * `InvitationInboxSheet`. Backs both the count Flow below and the
+     * sheet's row list, so the badge can never disagree with the sheet.
+     */
+    val pendingInvitations: StateFlow<List<org.onekash.kashcal.domain.reader.PendingInvitation>> =
+        eventReader.getPendingInvitations()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /**
+     * Single source of truth for the count of pending CalDAV invitations.
+     *
+     * The AppBar badge and the Invites overflow menu item both subscribe
+     * here so a sync-churn re-emission can never drift the two views
+     * apart. `distinctUntilChanged` collapses repeated same-size lists
+     * (common when sync writes attendees but the NEEDS-ACTION set is
+     * unchanged).
+     */
+    val pendingInvitationsCount: StateFlow<Int> = pendingInvitations
+        .map { it.size }
+        .distinctUntilChanged()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     // Attendee chip surfaces.
 
     private val quickViewEventId = MutableStateFlow<Long?>(null)
@@ -160,6 +212,29 @@ class HomeViewModel @Inject constructor(
         formEventId
             .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    /**
+     * Drives the EventFormSheet's read-only banner + Save-disable gate.
+     * True when the editing event has an ORGANIZER that doesn't match the
+     * resolving account (single home of the rule via
+     * [org.onekash.kashcal.domain.identity.canEditAsOrganizer]).
+     */
+    @Suppress("OPT_IN_USAGE")
+    val formIsReadOnly: StateFlow<Boolean> =
+        formEventId
+            .flatMapLatest { id ->
+                if (id == null) flowOf(false) else flow {
+                    val event = eventReader.getEventById(id)
+                    val calendar = event?.let { e ->
+                        uiState.value.calendars.firstOrNull { it.id == e.calendarId }
+                    }
+                    val account = calendar?.accountId?.let { accountRepository.getAccountById(it) }
+                    emit(
+                        event != null && !account.canEditAsOrganizer(event)
+                    )
+                }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /**
      * UI projection map for the day-view chip badges. One Flow per visible-
@@ -298,6 +373,10 @@ class HomeViewModel @Inject constructor(
     // Only pull-to-refresh shows the spinning icon since it's user-initiated
     private var suppressSyncIndicator = false
 
+    // Null until the first resume, so the first resume is record-only —
+    // we only snap when we have a prior dayCode to compare against.
+    private var lastResumeDayCode: Int? = null
+
     init {
         Log.d(TAG, "ViewModel init")
 
@@ -355,13 +434,19 @@ class HomeViewModel @Inject constructor(
                 }
             }
 
-            // Load persisted view from DataStore before building UI
+            // Load persisted view from DataStore before building UI.
+            // Seed previousNonInsightsMode from the same persisted default so back-from-Insights
+            // (when Insights is the initial view) lands on the user's preferred view, not MONTH.
+            // DataStore's VALID_VIEWS rejects "insights", so this seed is guaranteed non-INSIGHTS.
             val defaultView = ViewMode.fromKey(dataStore.getDefaultCalendarView())
-            _uiState.update { it.copy(viewMode = defaultView) }
+            _uiState.update {
+                it.copy(viewMode = defaultView, previousNonInsightsMode = defaultView)
+            }
 
             // Load data for the default view
             when (defaultView) {
                 ViewMode.AGENDA -> loadAgendaEvents()
+                ViewMode.DAY -> {} // goToToday() below handles week initialization
                 ViewMode.THREE_DAYS -> {} // goToToday() below handles week initialization
                 ViewMode.WEEK -> {} // goToToday() below handles week initialization
                 ViewMode.MONTH -> {} // goToToday() below handles dot loading + day selection
@@ -1160,7 +1245,7 @@ class HomeViewModel @Inject constructor(
      */
     fun goToToday() {
         when (_uiState.value.viewMode) {
-            ViewMode.THREE_DAYS, ViewMode.WEEK -> {
+            ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                 goToTodayWeek()
             }
             ViewMode.AGENDA -> {
@@ -1326,7 +1411,7 @@ class HomeViewModel @Inject constructor(
     fun navigateDaysPagerPrevious() {
         val currentPage = _uiState.value.weekViewPagerPosition
         if (currentPage <= 0) return
-        val step = if (_uiState.value.viewMode == ViewMode.WEEK) 1 else WeekViewUtils.VISIBLE_DAYS
+        val step = _uiState.value.viewMode.pagerNextStep ?: return
         val targetPage = currentPage - step
         _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
         onDayPagerPageChanged(targetPage)
@@ -1335,7 +1420,7 @@ class HomeViewModel @Inject constructor(
     /** Navigate forward in the day/week pager (step depends on view mode). */
     fun navigateDaysPagerNext() {
         val currentPage = _uiState.value.weekViewPagerPosition
-        val step = if (_uiState.value.viewMode == ViewMode.WEEK) 1 else WeekViewUtils.VISIBLE_DAYS
+        val step = _uiState.value.viewMode.pagerNextStep ?: return
         val targetPage = currentPage + step
         _uiState.update { it.copy(pendingWeekViewPagerPosition = targetPage) }
         onDayPagerPageChanged(targetPage)
@@ -2055,6 +2140,14 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(showAppInfoSheet = !it.showAppInfoSheet) }
     }
 
+    fun openInvitationInbox() {
+        _uiState.update { it.copy(isInvitationInboxOpen = true) }
+    }
+
+    fun dismissInvitationInbox() {
+        _uiState.update { it.copy(isInvitationInboxOpen = false) }
+    }
+
     fun toggleOnboardingSheet() {
         _uiState.update { it.copy(showOnboardingSheet = !it.showOnboardingSheet) }
     }
@@ -2090,18 +2183,30 @@ class HomeViewModel @Inject constructor(
         val oldMode = _uiState.value.viewMode
         if (oldMode == mode) return
 
-        _uiState.update { it.copy(viewMode = mode) }
+        _uiState.update {
+            if (mode == ViewMode.INSIGHTS) {
+                it.copy(viewMode = mode)
+            } else {
+                it.copy(viewMode = mode, previousNonInsightsMode = mode)
+            }
+        }
 
         if (mode == ViewMode.INSIGHTS) return
 
-        // Auto-persist: last-used view becomes the default on next launch
+        // Best-effort persistence; a DataStore setter throw must never crash Looper.main.
         viewModelScope.launch {
-            dataStore.setDefaultCalendarView(mode.key)
+            try {
+                dataStore.setDefaultCalendarView(mode.key)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Log.e(TAG, "Failed to persist view mode ${mode.key}", e)
+            }
         }
 
         when (mode) {
             ViewMode.AGENDA -> loadAgendaEvents()
-            ViewMode.THREE_DAYS, ViewMode.WEEK -> {
+            ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
                 // Cancel agenda observation since we're leaving agenda view
                 agendaEventsJob?.cancel()
                 if (currentLoadedRange == null) {
@@ -2204,13 +2309,19 @@ class HomeViewModel @Inject constructor(
     // ==================== Refresh ====================
 
     /**
-     * Handle app resume from background.
-     * Reloads events for THREE_DAYS/WEEK views which use one-shot loadEventsForWeek().
-     * Other views (MONTH, AGENDA) use Room Flow and auto-emit on DB changes.
+     * Handle app resume from background. Snaps to today if the calendar day
+     * has rolled over since the previous resume, then reloads events for
+     * THREE_DAYS/WEEK views (other views use Room Flow and auto-emit).
      */
     fun onAppResume() {
-        if ((_uiState.value.viewMode == ViewMode.THREE_DAYS || _uiState.value.viewMode == ViewMode.WEEK) &&
-            _uiState.value.weekViewStartDate != 0L) {
+        val currentDayCode = currentDayCodeProvider()
+        val previous = lastResumeDayCode
+        if (previous != null && previous != currentDayCode) {
+            goToToday()
+        }
+        lastResumeDayCode = currentDayCode
+
+        if (_uiState.value.viewMode.isTimeGrid && _uiState.value.weekViewStartDate != 0L) {
             loadEventsForWeek(_uiState.value.weekViewStartDate)
         }
     }
@@ -2237,9 +2348,8 @@ class HomeViewModel @Inject constructor(
         if (_uiState.value.viewMode == ViewMode.AGENDA) {
             loadAgendaEvents()
         }
-        // Also reload week view if 3-day or week view is active
-        if ((_uiState.value.viewMode == ViewMode.THREE_DAYS || _uiState.value.viewMode == ViewMode.WEEK) &&
-            _uiState.value.weekViewStartDate != 0L) {
+        // Also reload week view if a time-grid view is active
+        if (_uiState.value.viewMode.isTimeGrid && _uiState.value.weekViewStartDate != 0L) {
             loadEventsForWeek(_uiState.value.weekViewStartDate)
         }
         // Reload year dots if year view is active
@@ -2624,6 +2734,55 @@ class HomeViewModel @Inject constructor(
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e(TAG, "Error deleting event", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    /**
+     * Write the user's RSVP for an event they're attending.
+     *
+     * Optimistic-UI write path: the local attendee row's PARTSTAT is updated
+     * inside the coordinator, so the chip row's Flow re-emits with the new
+     * status before the network round-trip completes. The CalDAV PUT is
+     * queued via PendingOperation and processed by PushStrategy.
+     */
+    fun replyRsvp(
+        eventId: Long,
+        status: org.onekash.kashcal.ui.components.attendees.AttendeeStatus
+    ) {
+        val partstat = status.toPartstat() ?: return
+        viewModelScope.launch {
+            try {
+                val ok = withContext(ioDispatcher) {
+                    eventCoordinator.replyRsvp(eventId, partstat)
+                }
+                if (!ok) {
+                    Log.w(TAG, "RSVP write failed (account/attendee mismatch) for event $eventId")
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error writing RSVP for event $eventId", e)
+                showSnackbar("RSVP failed: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Save the user's reminder set on an event they're an attendee of.
+     * Wraps [EventCoordinator.saveAttendeeReminders] for the read-only
+     * attendee form path. Local-only — no server PUT. Failure surfaces
+     * to the form sheet's `state.error` field via the [Result] return.
+     */
+    suspend fun saveAttendeeReminders(eventId: Long, reminders: List<Int>): Result<Unit> {
+        return withContext(ioDispatcher) {
+            try {
+                eventCoordinator.saveAttendeeReminders(eventId, reminders).map { }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Error saving attendee reminders for event $eventId", e)
                 Result.failure(e)
             }
         }

@@ -44,6 +44,7 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.weekview.WeekViewUtils
+import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 import java.util.Calendar as JavaCalendar
 
@@ -247,7 +248,14 @@ class HomeViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel(): HomeViewModel {
+    private fun createViewModel(
+        dayCodeSequence: MutableList<Int>? = null
+    ): HomeViewModel {
+        val provider: () -> Int = if (dayCodeSequence != null) {
+            { dayCodeSequence.removeAt(0) }
+        } else {
+            { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
+        }
         return HomeViewModel(
             eventCoordinator = eventCoordinator,
             eventReader = eventReader,
@@ -258,7 +266,8 @@ class HomeViewModelTest {
             networkMonitor = networkMonitor,
             calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
-            ioDispatcher = testDispatcher
+            ioDispatcher = testDispatcher,
+            currentDayCodeProvider = provider
         )
     }
 
@@ -617,6 +626,66 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.pendingNavigateToToday)
+    }
+
+    // ==================== Resume Rollover Tests ====================
+
+    @Test
+    fun `onAppResume same day preserves selectedDate after user navigated`() = runTest {
+        // The first resume is record-only by design, so a single same-day read
+        // here also covers "first resume does not snap when user already
+        // navigated to a non-today date".
+        val viewModel = createViewModel(dayCodeSequence = mutableListOf(20260518))
+        advanceUntilIdle()
+
+        val pickedDate = getTimestamp(2026, 6, 15, 0, 0)
+        viewModel.selectDate(pickedDate)
+        advanceUntilIdle()
+        assertEquals(pickedDate, viewModel.uiState.value.selectedDate)
+
+        viewModel.onAppResume()
+        advanceUntilIdle()
+
+        assertEquals(
+            "Same-day resume must not move selectedDate",
+            pickedDate,
+            viewModel.uiState.value.selectedDate
+        )
+    }
+
+    @Test
+    fun `onAppResume after day rollover snaps to today in MONTH view`() = runTest {
+        // goToToday() uses real wall-clock Calendar.getInstance() to compute the
+        // snap target; the injected provider is only used to detect the rollover.
+        val sequence = mutableListOf(20260518, 20260519)
+        val viewModel = createViewModel(dayCodeSequence = sequence)
+        advanceUntilIdle()
+
+        val pastDate = getTimestamp(2024, 11, 17, 0, 0)
+        viewModel.selectDate(pastDate)
+        advanceUntilIdle()
+        assertEquals(pastDate, viewModel.uiState.value.selectedDate)
+
+        // First resume: lastResumeDayCode is null -> record-only, no snap.
+        viewModel.onAppResume()
+        advanceUntilIdle()
+        assertEquals(
+            "First resume must not snap",
+            pastDate,
+            viewModel.uiState.value.selectedDate
+        )
+
+        // Second resume: dayCode differs -> snap to today.
+        viewModel.onAppResume()
+        advanceUntilIdle()
+
+        val expectedTodayDayCode = DayPagerUtils.msToDayCode(System.currentTimeMillis())
+        val actualDayCode = DayPagerUtils.msToDayCode(viewModel.uiState.value.selectedDate)
+        assertEquals(
+            "Cross-midnight resume must snap selectedDate to wall-clock today",
+            expectedTodayDayCode,
+            actualDayCode
+        )
     }
 
     @Test
@@ -2675,6 +2744,25 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `setViewMode DAY sets pending pager position to today`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
+
+        viewModel.setViewMode(ViewMode.DAY)
+        advanceUntilIdle()
+
+        // DAY shares the day-pager with THREE_DAYS, so it routes to CENTER_DAY_PAGE
+        val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
+        assertEquals(
+            "pendingWeekViewPagerPosition should be CENTER_DAY_PAGE for DAY",
+            expectedPage,
+            viewModel.uiState.value.pendingWeekViewPagerPosition
+        )
+    }
+
+    @Test
     fun `goToToday in 3-day view sets pending pager position to CENTER_DAY_PAGE`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2921,8 +3009,10 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `navigateDaysPagerPrevious sets pending position minus VISIBLE_DAYS`() = runTest {
+    fun `navigateDaysPagerPrevious sets pending position minus pagerNextStep`() = runTest {
         val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
         // Set a known pager position first
@@ -2933,14 +3023,16 @@ class HomeViewModelTest {
         viewModel.navigateDaysPagerPrevious()
         advanceUntilIdle()
 
-        val expectedPage = startPage - WeekViewUtils.VISIBLE_DAYS
+        val expectedPage = startPage - ViewMode.THREE_DAYS.pagerNextStep!!
         assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
         assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
     @Test
-    fun `navigateDaysPagerNext sets pending position plus VISIBLE_DAYS`() = runTest {
+    fun `navigateDaysPagerNext sets pending position plus pagerNextStep`() = runTest {
         val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
         // Set a known pager position first
@@ -2951,7 +3043,7 @@ class HomeViewModelTest {
         viewModel.navigateDaysPagerNext()
         advanceUntilIdle()
 
-        val expectedPage = startPage + WeekViewUtils.VISIBLE_DAYS
+        val expectedPage = startPage + ViewMode.THREE_DAYS.pagerNextStep!!
         assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
         assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
@@ -3330,6 +3422,20 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setDefaultCalendarView("agenda") }
+    }
+
+    @Test
+    fun `setViewMode does not crash when DataStore setter throws`() = runTest {
+        coEvery { dataStore.setDefaultCalendarView(any()) } throws
+            IllegalArgumentException("Invalid calendar view: simulated")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.setViewMode(ViewMode.DAY)
+        advanceUntilIdle()
+
+        assertEquals(ViewMode.DAY, viewModel.uiState.value.viewMode)
     }
 
     @Test

@@ -405,9 +405,6 @@ class IcsSubscriptionRepository @Inject constructor(
      * Per RFC 5545, exception events share the same UID as their master
      * but differ by RECURRENCE-ID. We use importId (which includes RECURRENCE-ID)
      * for unique identification.
-     *
-     * CLAUDE.md Pattern #1: @Transaction for multi-step operations.
-     * CLAUDE.md Pattern #13: Model B occurrence linking via linkException().
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,

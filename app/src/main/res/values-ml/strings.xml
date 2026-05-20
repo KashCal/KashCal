@@ -41,6 +41,7 @@
     <string name="action_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
     <string name="action_sign_out">സൈൻ ഔട്ട്</string>
     <string name="action_learn_more">കൂടുതൽ അറിയുക</string>
+    <string name="action_open">തുറക്കുക</string>
     <string name="action_open_apple_id">Apple ID തുറക്കുക</string>
     <string name="action_open_settings">ക്രമീകരണങ്ങൾ തുറക്കുക</string>
     <string name="action_force_sync">ഫോഴ്സ് സിങ്ക്</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics ആയി എക്സ്‌പോർട്ട് ചെയ്യുക</string>
     <string name="action_confirm_delete">ഇല്ലാതാക്കൽ സ്ഥിരീകരിക്കുക</string>
     <string name="action_delete_event">ഇവന്റ് ഇല്ലാതാക്കുക</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">സ്വീകരിക്കുക</string>
+    <string name="rsvp_action_tentative">താൽക്കാലികം</string>
+    <string name="rsvp_action_decline">നിരസിക്കുക</string>
+    <string name="rsvp_series_disclosure">നിങ്ങളുടെ പ്രതികരണം മുഴുവൻ പരമ്പരയ്ക്കും ബാധകമാണ്.</string>
+    <string name="rsvp_modified_snackbar">%1$s നായുള്ള RSVP പരാജയപ്പെട്ടു — ഇവന്റ് പരിഷ്കരിച്ചു. ദയവായി വീണ്ടും പ്രതികരിക്കുക.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">ഇത് മാത്രം</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">മുഴുവൻ ദിവസം</string>
     <string name="label_today">ഇന്ന്</string>
     <string name="label_go_to_date">തീയതിയിലേക്ക് പോകുക</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">ആഴ്ച</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">ക്രമീകരണങ്ങൾ</string>
@@ -257,10 +268,7 @@
     <string name="cd_close">അടയ്ക്കുക</string>
     <string name="cd_search">തിരയുക</string>
     <string name="cd_create_event">ഇവന്റ് സൃഷ്ടിക്കുക</string>
-    <string name="cd_settings">ക്രമീകരണങ്ങൾ</string>
     <string name="cd_today">ഇന്ന്</string>
-    <string name="cd_previous_week">മുൻ ആഴ്ച</string>
-    <string name="cd_next_week">അടുത്ത ആഴ്ച</string>
     <string name="cd_delete">ഇല്ലാതാക്കുക</string>
     <string name="cd_refresh">റിഫ്രഷ്</string>
     <string name="cd_more_options">കൂടുതൽ ഓപ്ഷനുകൾ</string>
@@ -437,6 +445,7 @@
     <string name="settings_device_calendars">ഉപകരണ കലണ്ടറുകൾ</string>
     <string name="settings_quick_event_add">ദ്രുത ഇവന്റ് ചേർക്കൽ</string>
     <string name="settings_week_numbers">ആഴ്ച നമ്പറുകൾ</string>
+    <string name="settings_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="settings_widget_event_limit">വിജറ്റ് ഇവന്റ് പരിധി</string>
     <string name="settings_sync_lookback">സിങ്ക് ലുക്ക്ബാക്ക്</string>
     <string name="settings_auto_detect_emojis">ഇമോജികൾ ഓട്ടോ-കണ്ടെത്തൽ</string>
@@ -505,7 +514,6 @@
     <string name="device_calendars_grant">അനുമതിക്കുക</string>
     <string name="device_calendars_none_found">ഉപകരണ കലണ്ടറുകൾ കണ്ടെത്തിയില്ല.</string>
     <string name="device_calendars_local">ലോക്കൽ</string>
-    <string name="device_calendars_show_declined">നിരസിച്ച ഇവന്റുകൾ കാണിക്കുക</string>
     <string name="device_calendars_reminders">റിമൈൻഡറുകൾ</string>
     <string name="device_calendars_reminders_desc">ഉപകരണ കലണ്ടർ ഇവന്റുകൾക്ക് നോട്ടിഫിക്കേഷൻ ലഭിക്കുക</string>
     <string name="device_calendars_read_only_no_write">വായന മാത്രം (എഴുത്ത് അനുമതി ഇല്ല)</string>
@@ -687,15 +695,18 @@
 
     <string name="cd_clear">ക്ലിയർ</string>
     <string name="cd_offline">ഓഫ്‌ലൈൻ</string>
-    <string name="cd_previous">മുൻ</string>
-    <string name="cd_next">അടുത്ത</string>
     <string name="cd_open_drawer">ഡ്രോയർ തുറക്കുക</string>
     <string name="cd_close_drawer">ഡ്രോയർ അടയ്ക്കുക</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">മെനു തുറക്കുക</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">മെനു അടയ്ക്കുക</string>
     <string name="cd_calendar_view">കലണ്ടർ കാഴ്ച</string>
     <string name="cd_active_view">സജീവ കാഴ്ച</string>
 
     <string name="view_agenda">അജണ്ട</string>
     <string name="view_month_full">മാസം (പൂർണ്ണം)</string>
+    <string name="view_day">ദിവസം</string>
     <string name="view_three_days">3 ദിവസം</string>
     <string name="view_year">വർഷം</string>
     <string name="view_insights">ഇൻസൈറ്റുകൾ</string>
@@ -725,8 +736,6 @@
     <string name="sync_summary_removed">%1$d നീക്കം ചെയ്തത്</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">മുൻ 3 ദിവസം</string>
-    <string name="cd_next_3_days">അടുത്ത 3 ദിവസം</string>
     <string name="cd_circular_scrolling">സർക്കുലർ സ്ക്രോളിങ് ഓൺ ആക്കി</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -920,6 +929,9 @@
     <string name="channel_sync_progress_desc">കലണ്ടറുകൾ സിങ്ക് ചെയ്യുമ്പോൾ പുരോഗതി കാണിക്കുന്നു</string>
     <string name="channel_sync_status">സിങ്ക് നില</string>
     <string name="channel_sync_status_desc">സിങ്ക് പൂർത്തീകരണത്തെയും പിശകുകളെയും കുറിച്ചുള്ള അറിയിപ്പുകൾ</string>
+    <string name="channel_event_invitations">ഇവന്റ് ക്ഷണങ്ങൾ</string>
+    <string name="channel_event_invitations_desc">നിങ്ങൾക്ക് ഒരു പുതിയ കലണ്ടർ ക്ഷണം ലഭിക്കുമ്പോഴുള്ള അറിയിപ്പുകൾ</string>
+    <string name="invite_notification_body">%1$s നിന്ന് · പ്രതികരിക്കാൻ ടാപ്പ് ചെയ്യുക</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">ആവർത്തിക്കുന്നില്ല</string>
@@ -1041,4 +1053,14 @@
     <string name="attendee_status_tentative">താൽക്കാലികം</string>
     <string name="attendee_status_delegated">കൈമാറി</string>
     <string name="attendee_status_pending">തീർപ്പാക്കാത്തത്</string>
+    <string name="inbox_empty_caught_up">എല്ലാം പൂർത്തിയായി</string>
+    <string name="inbox_organizer_suffix">(സംഘാടകൻ)</string>
+    <string name="menu_invites">ക്ഷണങ്ങൾ</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">തീയതി</string>
+    <string name="menu_more">കൂടുതൽ മെനു</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">കൂടുതൽ മെനു, %d ക്ഷണം തീർപ്പാക്കാത്തത്</item>
+        <item quantity="other">കൂടുതൽ മെനു, %d ക്ഷണങ്ങൾ തീർപ്പാക്കാത്തവ</item>
+    </plurals>
 </resources>

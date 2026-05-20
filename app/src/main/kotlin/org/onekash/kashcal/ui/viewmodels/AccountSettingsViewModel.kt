@@ -881,7 +881,7 @@ class AccountSettingsViewModel @Inject constructor(
                 }
 
                 result is DiscoveryResult.AuthError -> {
-                    // TODO(gap-3): result.message is English-only from the sync layer.
+                    // TODO: result.message is English-only from the sync layer.
                     // A future refactor should make DiscoveryResult carry an error-kind
                     // enum that the UI maps to a localized string; Literal is a bridge.
                     Log.e(TAG, "Authentication failed: ${result.message}")
@@ -1125,8 +1125,8 @@ class AccountSettingsViewModel @Inject constructor(
 
             // Rebuilds CalDav NotConnected with the given error; collapses ~10 copy-paste sites.
             // Server-provided strings (createResult.message, discoveryResult.message) wrap as
-            // UiMessage.Literal. Per TODO(gap-3) on iCloud's AuthError branch: those are
-            // English-only; future refactor should make DiscoveryResult carry an error-kind enum.
+            // UiMessage.Literal — those are English-only; future refactor should make
+            // DiscoveryResult carry an error-kind enum the UI maps to a localized string.
             val calDavNotConnectedWith = { error: UiMessage?, errorField: CalDavConnectionState.ErrorField? ->
                 CalDavConnectionState.NotConnected(
                     serverUrl = snappedServerUrl,

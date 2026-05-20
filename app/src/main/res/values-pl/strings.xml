@@ -43,6 +43,7 @@
     <string name="action_learn_more">Dowiedz się więcej</string>
     <string name="action_open_apple_id">Otwórz Apple ID</string>
     <string name="action_open_settings">Otwórz Ustawienia</string>
+    <string name="action_open">Otwórz</string>
     <string name="action_force_sync">Wymuś synchronizację</string>
     <string name="action_sync_now">Synchronizuj teraz</string>
     <string name="action_details">Szczegóły</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Eksportuj jako .ics</string>
     <string name="action_confirm_delete">Potwierdź usunięcie</string>
     <string name="action_delete_event">Usuń wydarzenie</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Akceptuj</string>
+    <string name="rsvp_action_tentative">Niepewne</string>
+    <string name="rsvp_action_decline">Odrzuć</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Odpowiedź dotyczy całej serii.</string>
+    <string name="rsvp_modified_snackbar">Odpowiedź na zaproszenie do %1$s nie powiodła się — wydarzenie zostało zmienione. Odpowiedz ponownie.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Tylko to jedno</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Cały dzień</string>
     <string name="label_today">Dziś</string>
     <string name="label_go_to_date">Przejdź do daty</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Tydzień</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Ustawienia</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">Zamknij</string>
     <string name="cd_search">Szukaj</string>
     <string name="cd_create_event">Utwórz wydarzenie</string>
-    <string name="cd_settings">Ustawienia</string>
     <string name="cd_today">Dziś</string>
-    <string name="cd_previous_week">Poprzedni tydzień</string>
-    <string name="cd_next_week">Następny tydzień</string>
     <string name="cd_delete">Usuń</string>
     <string name="cd_refresh">Odśwież</string>
     <string name="cd_more_options">Więcej opcji</string>
@@ -437,6 +448,7 @@
     <string name="settings_device_calendars">Kalendarze urządzenia</string>
     <string name="settings_quick_event_add">Szybkie dodawanie wydarzeń</string>
     <string name="settings_week_numbers">Numery tygodni</string>
+    <string name="settings_show_declined">Pokaż odrzucone wydarzenia</string>
     <string name="settings_widget_event_limit">Limit wydarzeń widgetu</string>
     <string name="settings_sync_lookback">Zakres synchronizacji wstecz</string>
     <string name="settings_auto_detect_emojis">Automatyczne wykrywanie emoji</string>
@@ -507,7 +519,6 @@
     <string name="device_calendars_grant">Nadaj</string>
     <string name="device_calendars_none_found">Nie znaleziono kalendarzy urządzenia.</string>
     <string name="device_calendars_local">Lokalne</string>
-    <string name="device_calendars_show_declined">Pokaż odrzucone wydarzenia</string>
     <string name="device_calendars_reminders">Przypomnienia</string>
     <string name="device_calendars_reminders_desc">Otrzymuj powiadomienia o wydarzeniach kalendarza urządzenia</string>
     <string name="device_calendars_read_only_no_write">Tylko do odczytu (brak uprawnień do zapisu)</string>
@@ -753,16 +764,19 @@
 
     <string name="cd_clear">Wyczyść</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Poprzedni</string>
-    <string name="cd_next">Następny</string>
     <string name="cd_open_drawer">Otwórz szufladę</string>
     <string name="cd_close_drawer">Zamknij szufladę</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Otwórz menu</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Zamknij menu</string>
     <string name="cd_calendar_view">Widok kalendarza</string>
     <string name="cd_active_view">Aktywny widok</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Miesiąc (pełny)</string>
     <string name="view_three_days">3 dni</string>
+    <string name="view_day">Dzień</string>
     <string name="view_year">Rok</string>
     <string name="view_insights">Statystyki</string>
 
@@ -791,8 +805,6 @@
     <string name="sync_summary_removed">%1$d usuniętych</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">Poprzednie 3 dni</string>
-    <string name="cd_next_3_days">Następne 3 dni</string>
     <string name="cd_circular_scrolling">Przewijanie cykliczne włączone</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -999,6 +1011,9 @@
     <string name="channel_sync_progress_desc">Pokazuje postęp podczas synchronizacji kalendarzy</string>
     <string name="channel_sync_status">Status synchronizacji</string>
     <string name="channel_sync_status_desc">Powiadomienia o zakończeniu synchronizacji i błędach</string>
+    <string name="channel_event_invitations">Zaproszenia na wydarzenia</string>
+    <string name="channel_event_invitations_desc">Powiadomienia o otrzymaniu nowego zaproszenia kalendarzowego</string>
+    <string name="invite_notification_body">Od %1$s · Dotknij, aby odpowiedzieć</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Nie powtarza się</string>
@@ -1123,4 +1138,16 @@
     <string name="attendee_status_tentative">Niepewny</string>
     <string name="attendee_status_delegated">Delegowane</string>
     <string name="attendee_status_pending">Oczekuje</string>
+    <string name="inbox_empty_caught_up">Wszystko na bieżąco</string>
+    <string name="inbox_organizer_suffix">(organizator)</string>
+    <string name="menu_invites">Zaproszenia</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Data</string>
+    <string name="menu_more">Menu więcej</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menu więcej, %d oczekujące zaproszenie</item>
+        <item quantity="few">Menu więcej, %d oczekujące zaproszenia</item>
+        <item quantity="many">Menu więcej, %d oczekujących zaproszeń</item>
+        <item quantity="other">Menu więcej, %d oczekujących zaproszeń</item>
+    </plurals>
 </resources>

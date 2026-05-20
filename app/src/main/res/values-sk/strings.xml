@@ -43,6 +43,7 @@
     <string name="action_learn_more">Zistiť viac</string>
     <string name="action_open_apple_id">Otvoriť Apple ID</string>
     <string name="action_open_settings">Otvoriť Nastavenia</string>
+    <string name="action_open">Otvoriť</string>
     <string name="action_force_sync">Vynútiť synchronizáciu</string>
     <string name="action_sync_now">Synchronizovať</string>
     <string name="action_details">Podrobnosti</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Exportovať ako .ics</string>
     <string name="action_confirm_delete">Potvrdiť zmazanie</string>
     <string name="action_delete_event">Zmazať udalosť</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Prijať</string>
+    <string name="rsvp_action_tentative">Nezáväzne</string>
+    <string name="rsvp_action_decline">Odmietnuť</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Odpoveď platí pre celú sériu.</string>
+    <string name="rsvp_modified_snackbar">Odpoveď na pozvánku k udalosti %1$s zlyhala — udalosť bola zmenená. Odpovedzte prosím znova.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Len túto</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Celý deň</string>
     <string name="label_today">Dnes</string>
     <string name="label_go_to_date">Prejsť na dátum</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Týždeň</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Nastavenia</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">Zavrieť</string>
     <string name="cd_search">Hľadať</string>
     <string name="cd_create_event">Vytvoriť udalosť</string>
-    <string name="cd_settings">Nastavenia</string>
     <string name="cd_today">Dnes</string>
-    <string name="cd_previous_week">Predchádzajúci týždeň</string>
-    <string name="cd_next_week">Ďalší týždeň</string>
     <string name="cd_delete">Zmazať</string>
     <string name="cd_refresh">Obnoviť</string>
     <string name="cd_more_options">Ďalšie možnosti</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">Kalendáre zariadenia</string>
     <string name="settings_quick_event_add">Rýchle pridanie udalosti</string>
     <string name="settings_week_numbers">Čísla týždňov</string>
+    <string name="settings_show_declined">Zobraziť odmietnuté udalosti</string>
     <string name="settings_widget_event_limit">Limit udalostí widgetu</string>
     <string name="settings_sync_lookback">Rozsah synchronizácie späť</string>
     <string name="settings_auto_detect_emojis">Automatická detekcia emoji</string>
@@ -485,7 +497,6 @@
     <string name="device_calendars_grant">Udeliť</string>
     <string name="device_calendars_none_found">Žiadne kalendáre zariadenia nenájdené.</string>
     <string name="device_calendars_local">Miestne</string>
-    <string name="device_calendars_show_declined">Zobraziť odmietnuté udalosti</string>
     <string name="device_calendars_reminders">Pripomienky</string>
     <string name="device_calendars_reminders_desc">Dostávať oznámenia o udalostiach kalendára zariadenia</string>
     <string name="device_calendars_read_only_no_write">Len na čítanie (bez oprávnenia na zápis)</string>
@@ -725,16 +736,19 @@
 
     <string name="cd_clear">Vymazať</string>
     <string name="cd_offline">Offline</string>
-    <string name="cd_previous">Predchádzajúci</string>
-    <string name="cd_next">Ďalší</string>
     <string name="cd_open_drawer">Otvoriť ponuku</string>
     <string name="cd_close_drawer">Zavrieť ponuku</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Otvoriť ponuku</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Zavrieť ponuku</string>
     <string name="cd_calendar_view">Zobrazenie kalendára</string>
     <string name="cd_active_view">Aktívny pohľad</string>
 
     <string name="view_agenda">Agenda</string>
     <string name="view_month_full">Mesiac (celý)</string>
     <string name="view_three_days">3 dni</string>
+    <string name="view_day">Deň</string>
     <string name="view_year">Rok</string>
     <string name="view_insights">Prehľady</string>
 
@@ -760,8 +774,6 @@
     <string name="sync_summary_updated">%1$d aktualizovaných</string>
     <string name="sync_summary_removed">%1$d odstránených</string>
 
-    <string name="cd_previous_3_days">Predchádzajúce 3 dni</string>
-    <string name="cd_next_3_days">Ďalšie 3 dni</string>
     <string name="cd_circular_scrolling">Cyklické posúvanie povolené</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -968,6 +980,9 @@
     <string name="channel_sync_progress_desc">Zobrazuje priebeh počas synchronizácie kalendárov</string>
     <string name="channel_sync_status">Stav synchronizácie</string>
     <string name="channel_sync_status_desc">Upozornenia na dokončenie synchronizácie a chyby</string>
+    <string name="channel_event_invitations">Pozvánky na udalosti</string>
+    <string name="channel_event_invitations_desc">Upozornenia pri prijatí novej pozvánky do kalendára</string>
+    <string name="invite_notification_body">Od %1$s · Ťuknite pre odpoveď</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Neopakuje sa</string>
@@ -1092,4 +1107,16 @@
     <string name="attendee_status_tentative">Možno</string>
     <string name="attendee_status_delegated">Delegované</string>
     <string name="attendee_status_pending">Čaká</string>
+    <string name="inbox_empty_caught_up">Všetko vybavené</string>
+    <string name="inbox_organizer_suffix">(organizátor)</string>
+    <string name="menu_invites">Pozvánky</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dátum</string>
+    <string name="menu_more">Ponuka Viac</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Ponuka Viac, %d čakajúca pozvánka</item>
+        <item quantity="few">Ponuka Viac, %d čakajúce pozvánky</item>
+        <item quantity="many">Ponuka Viac, %d čakajúcich pozvánok</item>
+        <item quantity="other">Ponuka Viac, %d čakajúcich pozvánok</item>
+    </plurals>
 </resources>

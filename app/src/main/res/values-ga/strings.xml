@@ -43,6 +43,7 @@
     <string name="action_learn_more">Foghlaim Níos Mó</string>
     <string name="action_open_apple_id">Oscail Apple ID</string>
     <string name="action_open_settings">Oscail Socruithe</string>
+    <string name="action_open">Oscail</string>
     <string name="action_force_sync">Sioncronú Éigeantach</string>
     <string name="action_sync_now">Sioncronaigh Anois</string>
     <string name="action_details">Sonraí</string>
@@ -65,6 +66,15 @@
     <string name="action_export_ics">Eas-phortáil mar .ics</string>
     <string name="action_confirm_delete">Deimhnigh Scriosadh</string>
     <string name="action_delete_event">Scrios Imeacht</string>
+
+    <!-- RSVP Actions -->
+    <string name="rsvp_action_accept">Glac leis</string>
+    <string name="rsvp_action_tentative">Sealadach</string>
+    <string name="rsvp_action_decline">Diúltaigh</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <string name="rsvp_series_disclosure">Baineann an freagra leis an tsraith ar fad.</string>
+    <string name="rsvp_modified_snackbar">Theip ar fhreagra do %1$s: athraíodh an t-imeacht. Freagair arís.</string>
 
     <!-- Recurring Event Actions -->
     <string name="recurring_just_this">An ceann seo amháin</string>
@@ -94,6 +104,9 @@
     <string name="label_all_day">An lá ar fad</string>
     <string name="label_today">Inniu</string>
     <string name="label_go_to_date">Téigh go dáta</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Seachtain</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
     <string name="settings_title">Socruithe</string>
@@ -246,10 +259,7 @@
     <string name="cd_close">Dún</string>
     <string name="cd_search">Cuardaigh</string>
     <string name="cd_create_event">Cruthaigh imeacht</string>
-    <string name="cd_settings">Socruithe</string>
     <string name="cd_today">Inniu</string>
-    <string name="cd_previous_week">An tseachtain roimhe</string>
-    <string name="cd_next_week">An tseachtain seo chugainn</string>
     <string name="cd_delete">Scrios</string>
     <string name="cd_refresh">Athnuaigh</string>
     <string name="cd_more_options">Tuilleadh roghanna</string>
@@ -428,6 +438,7 @@
     <string name="settings_device_calendars">Féilirí na Gléine</string>
     <string name="settings_quick_event_add">Cuir Imeacht Tapa Leis</string>
     <string name="settings_week_numbers">Uimhreacha Seachtaine</string>
+    <string name="settings_show_declined">Taispeáin imeachtaí diúltaithe</string>
     <string name="settings_widget_event_limit">Teorainn Imeachtaí Giuirléide</string>
     <string name="settings_sync_lookback">Féachaint Siar Sioncronúithe</string>
     <string name="settings_auto_detect_emojis">Braith Emojis go Huathoibríoch</string>
@@ -495,7 +506,6 @@
     <string name="device_calendars_grant">Tabhair</string>
     <string name="device_calendars_none_found">Ní bhfuarthas aon fhéilire gléine.</string>
     <string name="device_calendars_local">Áitiúil</string>
-    <string name="device_calendars_show_declined">Taispeáin imeachtaí diúltaithe</string>
     <string name="device_calendars_reminders">Meabhrúcháin</string>
     <string name="device_calendars_reminders_desc">Faigh fógra faoi imeachtaí féilire na gléine</string>
     <string name="device_calendars_read_only_no_write">Léitheoireacht amháin (gan cead scríofa)</string>
@@ -770,14 +780,17 @@
 
     <string name="cd_clear">Glan</string>
     <string name="cd_offline">As líne</string>
-    <string name="cd_previous">Roimhe</string>
-    <string name="cd_next">Ar aghaidh</string>
     <string name="cd_open_drawer">Oscail tarraiceán</string>
     <string name="cd_close_drawer">Dún tarraiceán</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">Oscail roghchlár</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">Dún roghchlár</string>
     <string name="cd_calendar_view">Amharc féilire</string>
     <string name="cd_active_view">Amharc gníomhach</string>
 
     <string name="view_agenda">Clár Oibre</string>
+    <string name="view_day">Lá</string>
     <string name="view_month_full">Mí (Iomláin)</string>
     <string name="view_three_days">3 Lá</string>
     <string name="view_year">Bliain</string>
@@ -837,8 +850,6 @@
     <string name="sync_summary_removed">%1$d bainte</string>
 
     <!-- Additional Content Descriptions -->
-    <string name="cd_previous_3_days">3 lá roimhe</string>
-    <string name="cd_next_3_days">3 lá amach anseo</string>
     <string name="cd_circular_scrolling">Scrolú ciorclach cumasaithe</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -1040,6 +1051,9 @@
     <string name="channel_sync_progress_desc">Taispeánann sé dul chun cinn agus féilirí á sioncronú</string>
     <string name="channel_sync_status">Stádas sioncronaithe</string>
     <string name="channel_sync_status_desc">Fógraí faoi chríochnú agus earráidí sioncronaithe</string>
+    <string name="channel_event_invitations">Cuirí imeachtaí</string>
+    <string name="channel_event_invitations_desc">Fógraí nuair a fhaigheann tú cuireadh féilire nua</string>
+    <string name="invite_notification_body">Ó %1$s · Tapáil chun freagra a thabhairt</string>
 
     <!-- Insights -->
     <string name="insights_title">Léargais</string>
@@ -1093,7 +1107,6 @@
     <string name="label_calendar_default">Réamhshocrú an fhéilire</string>
     <string name="label_custom">Saincheaptha</string>
     <string name="cd_event_color">Dath an imeachta</string>
-
 
     <string name="cd_checkmark">Roghnaithe</string>
     <string name="label_device_timezone">Crios ama an ghléis</string>
@@ -1175,4 +1188,17 @@
     <string name="attendee_status_tentative">Sealadach</string>
     <string name="attendee_status_delegated">Tarmligthe</string>
     <string name="attendee_status_pending">Ar feitheamh</string>
+    <string name="inbox_empty_caught_up">Gach rud déanta</string>
+    <string name="inbox_organizer_suffix">(eagraí)</string>
+    <string name="menu_invites">Cuirí</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Dáta</string>
+    <string name="menu_more">Roghchlár Tuilleadh</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Roghchlár Tuilleadh, %d chuireadh ar feitheamh</item>
+        <item quantity="two">Roghchlár Tuilleadh, %d chuireadh ar feitheamh</item>
+        <item quantity="few">Roghchlár Tuilleadh, %d chuireadh ar feitheamh</item>
+        <item quantity="many">Roghchlár Tuilleadh, %d gcuireadh ar feitheamh</item>
+        <item quantity="other">Roghchlár Tuilleadh, %d cuireadh ar feitheamh</item>
+    </plurals>
 </resources>

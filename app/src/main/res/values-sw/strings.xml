@@ -43,6 +43,7 @@
     <string name="action_learn_more">Jifunze Zaidi</string>
     <string name="action_open_apple_id">Fungua Apple ID</string>
     <string name="action_open_settings">Fungua Mipangilio</string>
+    <string name="action_open">Fungua</string>
     <string name="action_force_sync">Sawazisha kwa Nguvu</string>
     <string name="action_sync_now">Sawazisha Sasa</string>
     <string name="action_details">Maelezo</string>
@@ -65,6 +66,16 @@
     <string name="action_export_ics">Hamisha kama .ics</string>
     <string name="action_confirm_delete">Thibitisha Kufuta</string>
     <string name="action_delete_event">Futa Tukio</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">Kubali</string>
+    <string name="rsvp_action_tentative">Huenda</string>
+    <string name="rsvp_action_decline">Kataa</string>
+    <!-- Tooltip shown next to the title field when viewing an event organized by someone else.
+         Explains why most fields are dimmed and which fields the attendee can still change. -->
+    <!-- Accessibility label (TalkBack reads this on focus) for the read-only info icon next to the event title -->
+    <string name="rsvp_series_disclosure">Jibu hili linatumika kwa mfululizo wote.</string>
+    <string name="rsvp_modified_snackbar">RSVP ya %1$s imeshindwa — tukio limebadilishwa. Tafadhali jibu tena.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">Hili tu</string>
@@ -94,6 +105,9 @@
     <string name="label_all_day">Siku nzima</string>
     <string name="label_today">Leo</string>
     <string name="label_go_to_date">Nenda tarehe</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">Wiki</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">Mipangilio</string>
@@ -256,10 +270,7 @@
     <string name="cd_close">Funga</string>
     <string name="cd_search">Tafuta</string>
     <string name="cd_create_event">Unda tukio</string>
-    <string name="cd_settings">Mipangilio</string>
     <string name="cd_today">Leo</string>
-    <string name="cd_previous_week">Wiki iliyopita</string>
-    <string name="cd_next_week">Wiki ijayo</string>
     <string name="cd_delete">Futa</string>
     <string name="cd_refresh">Onyesha upya</string>
     <string name="cd_more_options">Chaguo zaidi</string>
@@ -418,6 +429,7 @@
     <string name="settings_device_calendars">Kalenda za Kifaa</string>
     <string name="settings_quick_event_add">Ongeza Tukio Haraka</string>
     <string name="settings_week_numbers">Nambari za Wiki</string>
+    <string name="settings_show_declined">Onyesha matukio yaliyokataliwa</string>
     <string name="settings_widget_event_limit">Kikomo cha Matukio ya Wijeti</string>
     <string name="settings_sync_lookback">Muda wa Kusawazisha Nyuma</string>
     <string name="settings_auto_detect_emojis">Tambua Emoji Kiotomatiki</string>
@@ -483,7 +495,6 @@
     <string name="device_calendars_grant">Ruhusu</string>
     <string name="device_calendars_none_found">Hakuna kalenda za kifaa zilizopatikana.</string>
     <string name="device_calendars_local">Ndani</string>
-    <string name="device_calendars_show_declined">Onyesha matukio yaliyokataliwa</string>
     <string name="device_calendars_reminders">Vikumbusho</string>
     <string name="device_calendars_reminders_desc">Pata arifa za matukio ya kalenda ya kifaa</string>
     <string name="device_calendars_read_only_no_write">Kusoma tu (hakuna ruhusa ya kuandika)</string>
@@ -660,16 +671,17 @@
 
     <string name="cd_clear">Futa</string>
     <string name="cd_offline">Nje ya mtandao</string>
-    <string name="cd_previous">Iliyotangulia</string>
-    <string name="cd_next">Inayofuata</string>
     <string name="cd_open_drawer">Fungua droo</string>
     <string name="cd_close_drawer">Funga droo</string>
+    <string name="cd_open_rail">Fungua menyu</string>
+    <string name="cd_close_rail">Funga menyu</string>
     <string name="cd_calendar_view">Mtazamo wa kalenda</string>
     <string name="cd_active_view">Mtazamo unaotumika</string>
 
     <string name="view_agenda">Ratiba</string>
     <string name="view_month_full">Mwezi (Kamili)</string>
     <string name="view_three_days">Siku 3</string>
+    <string name="view_day">Siku</string>
     <string name="view_year">Mwaka</string>
     <string name="view_insights">Maarifa</string>
 
@@ -695,8 +707,6 @@
     <string name="sync_summary_updated">%1$d iliyosasishwa</string>
     <string name="sync_summary_removed">%1$d iliyoondolewa</string>
 
-    <string name="cd_previous_3_days">Siku 3 zilizopita</string>
-    <string name="cd_next_3_days">Siku 3 zijazo</string>
     <string name="cd_circular_scrolling">Kusogeza kwa mzunguko kumewashwa</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -884,6 +894,9 @@
     <string name="channel_sync_progress_desc">Inaonyesha maendeleo wakati wa kusawazisha kalenda</string>
     <string name="channel_sync_status">Hali ya Usawazishaji</string>
     <string name="channel_sync_status_desc">Arifa kuhusu ukamilishaji na makosa ya usawazishaji</string>
+    <string name="channel_event_invitations">Mialiko ya Tukio</string>
+    <string name="channel_event_invitations_desc">Arifa unapopokea mwaliko mpya wa kalenda</string>
+    <string name="invite_notification_body">Kutoka kwa %1$s · Gusa ili kujibu</string>
 
     <!-- Recurrence strings -->
     <string name="rrule_does_not_repeat">Hairudii</string>
@@ -1022,4 +1035,14 @@
     <string name="attendee_status_tentative">Bado Haijaamuliwa</string>
     <string name="attendee_status_delegated">Imekabidhiwa</string>
     <string name="attendee_status_pending">Inasubiri</string>
+    <string name="inbox_empty_caught_up">Yote yameshughulikiwa</string>
+    <string name="inbox_organizer_suffix">(mratibu)</string>
+    <string name="menu_invites">Mialiko</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">Tarehe</string>
+    <string name="menu_more">Menyu zaidi</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">Menyu zaidi, mwaliko %d unasubiri</item>
+        <item quantity="other">Menyu zaidi, mialiko %d inasubiri</item>
+    </plurals>
 </resources>

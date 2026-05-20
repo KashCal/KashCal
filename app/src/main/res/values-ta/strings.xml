@@ -41,6 +41,7 @@
     <string name="action_hide_password">கடவுச்சொல்லை மறை</string>
     <string name="action_sign_out">வெளியேறு</string>
     <string name="action_learn_more">மேலும் அறிய</string>
+    <string name="action_open">திற</string>
     <string name="action_open_apple_id">Apple ID திற</string>
     <string name="action_open_settings">அமைப்புகளைத் திற</string>
     <string name="action_force_sync">கட்டாய ஒத்திசைவு</string>
@@ -65,6 +66,13 @@
     <string name="action_export_ics">.ics ஆக ஏற்றுமதி</string>
     <string name="action_confirm_delete">நீக்குவதை உறுதிசெய்</string>
     <string name="action_delete_event">நிகழ்வை நீக்கு</string>
+
+    <!-- ==================== RSVP Actions (T2) ==================== -->
+    <string name="rsvp_action_accept">ஏற்றுக்கொள்</string>
+    <string name="rsvp_action_tentative">தற்காலிகம்</string>
+    <string name="rsvp_action_decline">மறு</string>
+    <string name="rsvp_series_disclosure">உங்கள் பதில் முழுத் தொடருக்கும் பொருந்தும்.</string>
+    <string name="rsvp_modified_snackbar">%1$s க்கான RSVP தோல்வியடைந்தது — நிகழ்வு மாற்றப்பட்டது. மீண்டும் பதிலளிக்கவும்.</string>
 
     <!-- ==================== Recurring Event Actions ==================== -->
     <string name="recurring_just_this">இது மட்டும்</string>
@@ -94,6 +102,9 @@
     <string name="label_all_day">நாள் முழுவதும்</string>
     <string name="label_today">இன்று</string>
     <string name="label_go_to_date">தேதிக்குச் செல்</string>
+    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
+    <string name="label_week">வாரம்</string>
+    <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
     <string name="settings_title">அமைப்புகள்</string>
@@ -257,10 +268,7 @@
     <string name="cd_close">மூடு</string>
     <string name="cd_search">தேடு</string>
     <string name="cd_create_event">நிகழ்வு உருவாக்கு</string>
-    <string name="cd_settings">அமைப்புகள்</string>
     <string name="cd_today">இன்று</string>
-    <string name="cd_previous_week">முந்தைய வாரம்</string>
-    <string name="cd_next_week">அடுத்த வாரம்</string>
     <string name="cd_delete">நீக்கு</string>
     <string name="cd_refresh">புதுப்பி</string>
     <string name="cd_more_options">மேலும் விருப்பங்கள்</string>
@@ -437,6 +445,7 @@
     <string name="settings_device_calendars">சாதன நாட்காட்டிகள்</string>
     <string name="settings_quick_event_add">விரைவு நிகழ்வு சேர்</string>
     <string name="settings_week_numbers">வார எண்கள்</string>
+    <string name="settings_show_declined">மறுக்கப்பட்ட நிகழ்வுகளைக் காட்டு</string>
     <string name="settings_widget_event_limit">விட்ஜெட் நிகழ்வு வரம்பு</string>
     <string name="settings_sync_lookback">ஒத்திசைவு திரும்பப்பார்வை</string>
     <string name="settings_auto_detect_emojis">எமோஜி தானியக்க கண்டறிதல்</string>
@@ -505,7 +514,6 @@
     <string name="device_calendars_grant">வழங்கு</string>
     <string name="device_calendars_none_found">சாதன நாட்காட்டிகள் கிடைக்கவில்லை.</string>
     <string name="device_calendars_local">உள்ளூர்</string>
-    <string name="device_calendars_show_declined">நிராகரிக்கப்பட்ட நிகழ்வுகளைக் காட்டு</string>
     <string name="device_calendars_reminders">நினைவூட்டல்கள்</string>
     <string name="device_calendars_reminders_desc">சாதன நாட்காட்டி நிகழ்வுகளுக்கு அறிவிப்பு பெறு</string>
     <string name="device_calendars_read_only_no_write">படிக்க மட்டும் (எழுத அனுமதி இல்லை)</string>
@@ -687,15 +695,18 @@
 
     <string name="cd_clear">அழி</string>
     <string name="cd_offline">ஆஃப்லைன்</string>
-    <string name="cd_previous">முந்தைய</string>
-    <string name="cd_next">அடுத்த</string>
     <string name="cd_open_drawer">டிராயர் திற</string>
     <string name="cd_close_drawer">டிராயர் மூடு</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <string name="cd_open_rail">மெனுவைத் திற</string>
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_close_rail">மெனுவை மூடு</string>
     <string name="cd_calendar_view">நாட்காட்டிக் காட்சி</string>
     <string name="cd_active_view">செயலில் காட்சி</string>
 
     <string name="view_agenda">நிகழ்ச்சி நிரல்</string>
     <string name="view_month_full">மாதம் (முழு)</string>
+    <string name="view_day">நாள்</string>
     <string name="view_three_days">3 நாட்கள்</string>
     <string name="view_year">ஆண்டு</string>
     <string name="view_insights">நுண்ணறிவுகள்</string>
@@ -725,8 +736,6 @@
     <string name="sync_summary_removed">%1$d நீக்கப்பட்டது</string>
 
     <!-- ==================== Additional Content Descriptions ==================== -->
-    <string name="cd_previous_3_days">முந்தைய 3 நாட்கள்</string>
-    <string name="cd_next_3_days">அடுத்த 3 நாட்கள்</string>
     <string name="cd_circular_scrolling">வட்ட உருளல் இயக்கப்பட்டது</string>
 
     <!-- ==================== i18n: Reminder / Time Labels ==================== -->
@@ -920,6 +929,9 @@
     <string name="channel_sync_progress_desc">நாட்காட்டிகளை ஒத்திசைக்கும்போது முன்னேற்றத்தைக் காட்டுகிறது</string>
     <string name="channel_sync_status">ஒத்திசைவு நிலை</string>
     <string name="channel_sync_status_desc">ஒத்திசைவு நிறைவு மற்றும் பிழைகள் பற்றிய அறிவிப்புகள்</string>
+    <string name="channel_event_invitations">நிகழ்வு அழைப்புகள்</string>
+    <string name="channel_event_invitations_desc">புதிய நாட்காட்டி அழைப்பைப் பெறும்போது அறிவிப்புகள்</string>
+    <string name="invite_notification_body">%1$s இலிருந்து · பதிலளிக்க தட்டவும்</string>
 
     <!-- Recurrence rules -->
     <string name="rrule_does_not_repeat">மீண்டும் நிகழாது</string>
@@ -1041,4 +1053,14 @@
     <string name="attendee_status_tentative">தற்காலிகம்</string>
     <string name="attendee_status_delegated">பிரதிநிதித்துவம் வழங்கப்பட்டது</string>
     <string name="attendee_status_pending">நிலுவையில்</string>
+    <string name="inbox_empty_caught_up">அனைத்தும் முடிந்தது</string>
+    <string name="inbox_organizer_suffix">(ஏற்பாட்டாளர்)</string>
+    <string name="menu_invites">அழைப்புகள்</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">தேதி</string>
+    <string name="menu_more">மேலும் மெனு</string>
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">மேலும் மெனு, %d அழைப்பு நிலுவையில்</item>
+        <item quantity="other">மேலும் மெனு, %d அழைப்புகள் நிலுவையில்</item>
+    </plurals>
 </resources>
