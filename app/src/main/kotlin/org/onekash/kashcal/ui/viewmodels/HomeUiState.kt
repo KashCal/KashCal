@@ -262,7 +262,7 @@ data class HomeUiState(
             set(java.util.Calendar.MONTH, viewingMonth)
             set(java.util.Calendar.DAY_OF_MONTH, 1)
         }
-        val pattern = org.onekash.kashcal.util.DateTimeUtils.localizedPattern("yMMMM")
+        val pattern = org.onekash.kashcal.util.DateTimeUtils.localizedPattern("yMMM")
         return java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(cal.time)
     }
 

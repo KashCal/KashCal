@@ -107,7 +107,7 @@
     <string name="label_today">Hari Ini</string>
     <string name="label_go_to_date">Ke tanggal</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Minggu</string>
+    <string name="label_week">M</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1026,6 +1026,7 @@
     <string name="menu_invites">Undangan</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Tanggal</string>
+    <string name="menu_about">Tentang</string>
     <string name="menu_more">Menu lainnya</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">Menu lainnya, %d undangan menunggu</item>

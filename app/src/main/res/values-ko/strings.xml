@@ -1007,6 +1007,7 @@
     <string name="menu_invites">초대</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">날짜</string>
+    <string name="menu_about">정보</string>
     <string name="menu_more">더보기 메뉴</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">더보기 메뉴, 대기 중인 초대 %d건</item>

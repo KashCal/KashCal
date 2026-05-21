@@ -173,8 +173,8 @@
     <!-- Navigation label: today's date -->
     <string name="label_today">Today</string>
     <string name="label_go_to_date">Go to date</string>
-    <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Week</string>
+    <!-- Top-bar prefix for week view week-of-year label, e.g. "W21". Single letter so the label fits next to the month/year title (e.g. "May 2026 · W21"). -->
+    <string name="label_week">W</string>
     <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -1357,6 +1357,8 @@
     <string name="menu_invites">Invites</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Date</string>
+    <!-- Right rail item label that opens the app information dialog (version, links, credits) -->
+    <string name="menu_about">About</string>
     <!-- Content description for the AppBar rail toggle when there are no pending invites -->
     <string name="menu_more">More menu</string>
     <!-- Content description for the AppBar rail toggle when invites are pending -->

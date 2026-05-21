@@ -103,7 +103,7 @@
     <string name="label_today">ഇന്ന്</string>
     <string name="label_go_to_date">തീയതിയിലേക്ക് പോകുക</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">ആഴ്ച</string>
+    <string name="label_week">ആ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1058,6 +1058,7 @@
     <string name="menu_invites">ക്ഷണങ്ങൾ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">തീയതി</string>
+    <string name="menu_about">കുറിച്ച്</string>
     <string name="menu_more">കൂടുതൽ മെനു</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">കൂടുതൽ മെനു, %d ക്ഷണം തീർപ്പാക്കാത്തത്</item>

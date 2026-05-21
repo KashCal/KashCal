@@ -106,7 +106,7 @@
     <string name="label_today">Danas</string>
     <string name="label_go_to_date">Idi na datum</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Tjedan</string>
+    <string name="label_week">T</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1070,6 +1070,7 @@
     <string name="menu_invites">Pozivnice</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Datum</string>
+    <string name="menu_about">O aplikaciji</string>
     <string name="menu_more">Izbornik Više</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Izbornik Više, %d pozivnica na čekanju</item>

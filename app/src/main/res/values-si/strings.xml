@@ -106,7 +106,7 @@
     <string name="label_today">අද</string>
     <string name="label_go_to_date">දිනය වෙත යන්න</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">සතිය</string>
+    <string name="label_week">ස</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1043,6 +1043,7 @@
     <string name="menu_invites">ආරාධනා</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">දිනය</string>
+    <string name="menu_about">පිළිබඳ</string>
     <string name="menu_more">තවත් මෙනුව</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">තවත් මෙනුව, ආරාධනා %d ක් පොරොත්තුවේ</item>

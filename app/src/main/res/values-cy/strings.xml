@@ -105,7 +105,7 @@
     <string name="label_today">Heddiw</string>
     <string name="label_go_to_date">Mynd i ddyddiad</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Wythnos</string>
+    <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
@@ -1235,6 +1235,7 @@
     <string name="menu_invites">Gwahoddiadau</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Dyddiad</string>
+    <string name="menu_about">Ynghylch</string>
     <string name="menu_more">Dewislen Rhagor</string>
     <plurals name="menu_more_with_invites">
         <item quantity="zero">Dewislen Rhagor, %d gwahoddiad yn aros</item>

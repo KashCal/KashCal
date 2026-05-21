@@ -103,7 +103,7 @@
     <string name="label_today">Bugün</string>
     <string name="label_go_to_date">Tarihe git</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Hafta</string>
+    <string name="label_week">H</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1073,6 +1073,7 @@
     <string name="menu_invites">Davetler</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Tarih</string>
+    <string name="menu_about">Hakkında</string>
     <string name="menu_more">Diğer menüsü</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Diğer menüsü, %d davet bekliyor</item>

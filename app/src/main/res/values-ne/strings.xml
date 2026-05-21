@@ -106,7 +106,7 @@
     <string name="label_today">आज</string>
     <string name="label_go_to_date">मितिमा जानुहोस्</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">हप्ता</string>
+    <string name="label_week">ह</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1043,6 +1043,7 @@
     <string name="menu_invites">निमन्त्रणाहरू</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">मिति</string>
+    <string name="menu_about">बारेमा</string>
     <string name="menu_more">थप मेनु</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">थप मेनु, %d निमन्त्रणा बाँकी</item>

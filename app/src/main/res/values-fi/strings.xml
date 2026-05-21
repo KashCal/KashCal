@@ -107,7 +107,7 @@
     <string name="label_today">Tänään</string>
     <string name="label_go_to_date">Siirry päivämäärään</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Viikko</string>
+    <string name="label_week">VK</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1015,6 +1015,7 @@
     <string name="menu_invites">Kutsut</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Päivämäärä</string>
+    <string name="menu_about">Tietoja</string>
     <string name="menu_more">Lisää-valikko</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Lisää-valikko, %d kutsu odottaa</item>

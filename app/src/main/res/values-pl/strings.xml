@@ -106,7 +106,7 @@
     <string name="label_today">Dziś</string>
     <string name="label_go_to_date">Przejdź do daty</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Tydzień</string>
+    <string name="label_week">T</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1143,6 +1143,7 @@
     <string name="menu_invites">Zaproszenia</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Data</string>
+    <string name="menu_about">O aplikacji</string>
     <string name="menu_more">Menu więcej</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Menu więcej, %d oczekujące zaproszenie</item>

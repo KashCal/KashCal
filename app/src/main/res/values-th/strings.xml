@@ -97,7 +97,7 @@
     <string name="label_today">วันนี้</string>
     <string name="label_go_to_date">ไปที่วันที่</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">สัปดาห์</string>
+    <string name="label_week">ส</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1007,6 +1007,7 @@
     <string name="menu_invites">คำเชิญ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">วันที่</string>
+    <string name="menu_about">เกี่ยวกับ</string>
     <string name="menu_more">เมนูเพิ่มเติม</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">เมนูเพิ่มเติม มีคำเชิญรอดำเนินการ %d รายการ</item>

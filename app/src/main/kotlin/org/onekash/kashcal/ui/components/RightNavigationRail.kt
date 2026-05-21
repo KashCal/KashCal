@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MailOutline
 import androidx.compose.material.icons.filled.Settings
@@ -41,11 +44,14 @@ internal fun RightNavigationRail(
     onJumpToDateClick: () -> Unit,
     onInsightsClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     ModalDrawerSheet(modifier = modifier.width(80.dp)) {
         Column(
-            modifier = Modifier.padding(top = 72.dp, bottom = 8.dp),
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(top = 72.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             NavigationRailItem(
@@ -82,6 +88,12 @@ internal fun RightNavigationRail(
                 onClick = onSettingsClick,
                 icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                 label = { Text(stringResource(R.string.settings_title)) }
+            )
+            NavigationRailItem(
+                selected = false,
+                onClick = onAboutClick,
+                icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                label = { Text(stringResource(R.string.menu_about)) }
             )
         }
     }

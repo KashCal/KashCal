@@ -103,7 +103,7 @@
     <string name="label_today">ಇಂದು</string>
     <string name="label_go_to_date">ದಿನಾಂಕಕ್ಕೆ ಹೋಗಿ</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">ವಾರ</string>
+    <string name="label_week">ವ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1058,6 +1058,7 @@
     <string name="menu_invites">ಆಮಂತ್ರಣಗಳು</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">ದಿನಾಂಕ</string>
+    <string name="menu_about">ಕುರಿತು</string>
     <string name="menu_more">ಇನ್ನಷ್ಟು ಮೆನು</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">ಇನ್ನಷ್ಟು ಮೆನು, %d ಆಮಂತ್ರಣ ಬಾಕಿ ಇದೆ</item>

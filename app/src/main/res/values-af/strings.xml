@@ -103,7 +103,7 @@
     <string name="label_today">Vandag</string>
     <string name="label_go_to_date">Gaan na datum</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Week</string>
+    <string name="label_week">W</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1067,6 +1067,7 @@
     <string name="menu_invites">Uitnodigings</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Datum</string>
+    <string name="menu_about">Aangaande</string>
     <string name="menu_more">Meer-kieslys</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meer-kieslys, %d uitnodiging hangende</item>

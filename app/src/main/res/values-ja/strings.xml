@@ -1007,6 +1007,7 @@
     <string name="menu_invites">招待</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">日付</string>
+    <string name="menu_about">このアプリについて</string>
     <string name="menu_more">その他のメニュー</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">その他のメニュー、%d 件保留中</item>

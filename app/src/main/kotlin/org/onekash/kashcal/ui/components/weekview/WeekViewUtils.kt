@@ -320,24 +320,27 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a date as "April 2026" with full month name. Used by the calendar
-     * header for week and 3-day views; matches the month-view header treatment
-     * so the typography is uniform across views.
+     * Format a date as "Apr 2026" with abbreviated month name. Used by the
+     * top-bar title in month/agenda/week/3-day views; abbreviation keeps the
+     * label short enough to fit alongside the logo and W## suffix.
      */
     fun formatMonthYear(date: LocalDate): String {
-        return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault())
+        return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
             .format(date)
     }
 
     /**
-     * Format a week label as "$prefix N" where N is the locale-aware week-of-year
+     * Format a week label as "${prefix}N" where N is the locale-aware week-of-year
      * for [date]. The [prefix] is passed in by the caller so the host can supply a
-     * localized stringResource — keeps the formatter Composable-free.
+     * localized stringResource — keeps the formatter Composable-free. No space
+     * between prefix and number so the en-US output reads "W21" rather than "W 21";
+     * locales whose translated prefix needs trailing whitespace must include it in
+     * the resource value.
      */
     fun formatWeekLabel(date: LocalDate, firstDayOfWeek: Int = 0, prefix: String): String {
         val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
         val weekNumber = date.get(weekFields.weekOfWeekBasedYear())
-        return "$prefix $weekNumber"
+        return "$prefix$weekNumber"
     }
 
     // ==================== Scroll Defaults ====================

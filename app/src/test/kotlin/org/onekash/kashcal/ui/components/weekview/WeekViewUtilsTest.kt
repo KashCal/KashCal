@@ -692,28 +692,30 @@ class WeekViewUtilsTest {
     // ==================== formatMonthYear Tests ====================
 
     @Test
-    fun `formatMonthYear produces full month name and year`() {
+    fun `formatMonthYear produces abbreviated month name and year`() {
         val date = LocalDate.of(2026, 4, 15)
         val result = WeekViewUtils.formatMonthYear(date)
-        assertTrue("Should match full-month yyyy format, got: $result", result.matches(Regex("\\w+ \\d{4}")))
+        assertTrue("Should match abbrev-month yyyy format, got: $result", result.matches(Regex("\\w+ \\d{4}")))
         assertFalse("Should not contain week number", result.contains("(W"))
-        assertTrue("Should contain full month name April for en-US, got: $result", result.contains("April"))
+        assertTrue("Should contain abbreviated month Apr for en-US, got: $result", result.contains("Apr"))
+        assertFalse("Should not contain full month name April, got: $result", result.contains("April"))
     }
 
     // ==================== formatWeekLabel Tests ====================
 
     @Test
-    fun `formatWeekLabel concatenates prefix and week number`() {
+    fun `formatWeekLabel concatenates prefix and week number with no separator`() {
         val date = LocalDate.of(2026, 4, 15) // Wednesday, April 15, 2026
-        val result = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Week")
-        assertTrue("Should match 'Week N' format, got: $result", result.matches(Regex("Week \\d+")))
+        val result = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "W")
+        assertTrue("Should match 'W##' format with no space, got: $result", result.matches(Regex("W\\d+")))
     }
 
     @Test
     fun `formatWeekLabel respects prefix arg for localization`() {
         val date = LocalDate.of(2026, 4, 15)
         val result = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Woche")
-        assertTrue("Should use de-DE prefix, got: $result", result.startsWith("Woche "))
+        assertTrue("Should use de-DE prefix without separator, got: $result", result.startsWith("Woche"))
+        assertFalse("Should not insert space after prefix, got: $result", result.startsWith("Woche "))
     }
 
     @Test
@@ -721,10 +723,10 @@ class WeekViewUtilsTest {
         // Jan 1, 2026 is Thursday. Sunday-start (US, minimalDays=1) and Monday-start
         // (ISO, minimalDays=4) can disagree on the year-end / year-start week.
         val date = LocalDate.of(2026, 1, 1)
-        val sundayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.SUNDAY, prefix = "Week")
-        val mondayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "Week")
-        assertTrue("Sunday-start should match 'Week N', got: $sundayResult", sundayResult.matches(Regex("Week \\d+")))
-        assertTrue("Monday-start should match 'Week N', got: $mondayResult", mondayResult.matches(Regex("Week \\d+")))
+        val sundayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.SUNDAY, prefix = "W")
+        val mondayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "W")
+        assertTrue("Sunday-start should match 'W##', got: $sundayResult", sundayResult.matches(Regex("W\\d+")))
+        assertTrue("Monday-start should match 'W##', got: $mondayResult", mondayResult.matches(Regex("W\\d+")))
     }
 
     // ==================== offsetToTime with startHour Tests ====================

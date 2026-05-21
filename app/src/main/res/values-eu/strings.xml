@@ -105,7 +105,7 @@
     <string name="label_today">Gaur</string>
     <string name="label_go_to_date">Datara joan</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Astea</string>
+    <string name="label_week">A</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- Settings -->
@@ -1054,6 +1054,7 @@
     <string name="menu_invites">Gonbidapenak</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Data</string>
+    <string name="menu_about">Honi buruz</string>
     <string name="menu_more">Gehiago menua</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Gehiago menua, gonbidapen %d zain</item>

@@ -97,7 +97,7 @@
     <string name="label_today">Hôm nay</string>
     <string name="label_go_to_date">Đi tới ngày</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Tuần</string>
+    <string name="label_week">Tu</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1007,6 +1007,7 @@
     <string name="menu_invites">Lời mời</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Ngày</string>
+    <string name="menu_about">Giới thiệu</string>
     <string name="menu_more">Menu khác</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">Menu khác, %d lời mời đang chờ</item>

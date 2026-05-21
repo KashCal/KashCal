@@ -107,7 +107,7 @@
     <string name="label_today">ယနေ့</string>
     <string name="label_go_to_date">ရက်စွဲသို့ သွားရန်</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">ရက်သတ္တပတ်</string>
+    <string name="label_week">ပ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1026,6 +1026,7 @@
     <string name="menu_invites">ဖိတ်ကြားချက်များ</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">ရက်စွဲ</string>
+    <string name="menu_about">အကြောင်း</string>
     <string name="menu_more">အခြားမီနူး</string>
     <plurals name="menu_more_with_invites">
         <item quantity="other">အခြားမီနူး၊ ဖိတ်ကြားချက် %d ခု စောင့်ဆိုင်းနေသည်</item>

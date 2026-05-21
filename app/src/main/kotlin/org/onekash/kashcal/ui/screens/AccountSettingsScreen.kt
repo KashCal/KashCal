@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cake
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.DateRange
@@ -27,13 +26,9 @@ import androidx.compose.material.icons.filled.SentimentSatisfied
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.ViewWeek
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -54,7 +49,7 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.components.AppInfoSheet
 import org.onekash.kashcal.ui.components.CalDavSignInSheet
 import org.onekash.kashcal.ui.components.ICloudSignInSheet
-import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
+import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
@@ -249,13 +244,9 @@ fun AccountSettingsScreen(
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { KashCalTopAppBarTitle() },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-                    }
-                }
+            SettingsTopAppBar(
+                title = stringResource(R.string.settings_title),
+                onNavigateBack = onNavigateBack,
             )
         }
     ) { paddingValues ->

@@ -103,7 +103,7 @@
     <string name="label_today">నేడు</string>
     <string name="label_go_to_date">తేదీకి వెళ్ళు</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">వారం</string>
+    <string name="label_week">వా</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1058,6 +1058,7 @@
     <string name="menu_invites">ఆహ్వానాలు</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">తేదీ</string>
+    <string name="menu_about">గురించి</string>
     <string name="menu_more">మరిన్ని మెను</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">మరిన్ని మెను, %d ఆహ్వానం పెండింగ్‌లో ఉంది</item>

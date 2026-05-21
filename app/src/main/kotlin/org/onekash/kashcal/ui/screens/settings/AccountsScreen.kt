@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Cloud
@@ -27,11 +26,9 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -55,7 +52,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.AccountProvider
-import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
+import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
@@ -124,16 +121,10 @@ fun AccountsScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { KashCalTopAppBarTitle() },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.accounts_cd_back)
-                        )
-                    }
-                }
+            SettingsTopAppBar(
+                title = stringResource(R.string.settings_title),
+                onNavigateBack = onNavigateBack,
+                backContentDescription = stringResource(R.string.accounts_cd_back),
             )
         }
     ) { paddingValues ->

@@ -97,7 +97,7 @@
     <string name="label_today">I dag</string>
     <string name="label_go_to_date">Gå til dato</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">Veke</string>
+    <string name="label_week">U</string>
     <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
@@ -1060,6 +1060,7 @@
     <string name="menu_invites">Invitasjonar</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">Dato</string>
+    <string name="menu_about">Om</string>
     <string name="menu_more">Meir-meny</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">Meir-meny, %d invitasjon ventar</item>

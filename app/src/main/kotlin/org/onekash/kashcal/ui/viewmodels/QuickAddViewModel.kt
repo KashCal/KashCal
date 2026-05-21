@@ -156,6 +156,19 @@ class QuickAddViewModel @Inject constructor(
         val result = _parseResult.value
         val zone = ZoneId.systemDefault()
 
+        // Empty / nothing-parsed: open the full form anchored to the selected
+        // date at next-hour, not all-day at today. QuickAddResult.isAllDay
+        // defaults to (startTime == null), which would otherwise force an
+        // all-day fallback whenever the user taps Expand without typing.
+        val nothingParsed = result.title.isBlank() && result.startTime == null &&
+            result.location == null && result.endDate == null && result.rrule == null
+        if (nothingParsed) {
+            val nextHour = (LocalTime.now().hour + 1) % 24
+            val startMs = result.startDate.atTime(LocalTime.of(nextHour, 0))
+                .atZone(zone).toInstant().toEpochMilli()
+            return CalendarIntentData(startTimeMillis = startMs)
+        }
+
         val startTimeMillis = when {
             result.startTime != null ->
                 result.startDate.atTime(result.startTime).atZone(zone).toInstant().toEpochMilli()

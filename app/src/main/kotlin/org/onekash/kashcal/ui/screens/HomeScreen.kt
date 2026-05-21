@@ -56,8 +56,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,7 +78,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.VerticalDivider
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -135,11 +132,12 @@ import org.onekash.kashcal.ui.components.CalendarDrawer
 import org.onekash.kashcal.ui.components.DayEventsSheet
 import org.onekash.kashcal.ui.components.EventCard
 import org.onekash.kashcal.ui.components.InvitationInboxSheet
-import org.onekash.kashcal.ui.components.KashCalTopAppBarTitle
 import org.onekash.kashcal.ui.components.formatBadgeCount
 import org.onekash.kashcal.ui.components.RightNavigationRail
 import org.onekash.kashcal.ui.components.overflowContentDescription
 import org.onekash.kashcal.ui.components.SyncBanner
+import org.onekash.kashcal.ui.components.TopBarLogoButton
+import org.onekash.kashcal.ui.components.TopBarTitleFormatter
 import org.onekash.kashcal.ui.components.YearOverlay
 import org.onekash.kashcal.ui.components.calculateCurrentDayForEvent
 import org.onekash.kashcal.ui.components.cardFillAlpha
@@ -163,7 +161,6 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
@@ -421,6 +418,10 @@ fun HomeScreen(
                     onSettingsClick = {
                         drawerScope.launch { rightRailState.close() }
                         onSettingsClick()
+                    },
+                    onAboutClick = {
+                        drawerScope.launch { rightRailState.close() }
+                        onInfoClick()
                     }
                 )
             }
@@ -461,7 +462,7 @@ fun HomeScreen(
                 uiState = uiState,
                 isOnline = isOnline,
                 searchFocusRequester = searchFocusRequester,
-                refreshKey = refreshKey,
+                today = remember(refreshKey) { LocalDate.now() },
                 drawerState = drawerState,
                 onSearchClick = onSearchClick,
                 onSearchClose = onSearchClose,
@@ -480,7 +481,10 @@ fun HomeScreen(
                     }
                 },
                 pendingInvitesCount = pendingInvitesCount,
-                onInfoClick = onInfoClick,
+                onTitleClick = {
+                    if (uiState.viewMode.isTimeGrid) onWeekDatePickerRequest()
+                    else onMonthHeaderClick()
+                },
                 onViewSelect = onViewSelect
             )
         },
@@ -580,13 +584,6 @@ fun HomeScreen(
                         }
                         uiState.viewMode == ViewMode.AGENDA || uiState.viewMode.isTimeGrid -> {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                ViewHeaderRow(
-                                    viewMode = uiState.viewMode,
-                                    pagerPosition = uiState.weekViewPagerPosition,
-                                    firstDayOfWeek = uiState.firstDayOfWeek,
-                                    onMonthClick = onWeekDatePickerRequest
-                                )
-
                                 // Agenda list scroll state
                                 val agendaListState = rememberLazyListState()
 
@@ -679,17 +676,9 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxSize(),
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    val title = remember(pageYear, pageMonth) {
-                                        org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
-                                            java.time.LocalDate.of(pageYear, pageMonth + 1, 1)
-                                        )
-                                    }
-                                    CalendarHeader(
-                                        title = title,
+                                    DayOfWeekHeaders(
                                         firstDayOfWeek = uiState.firstDayOfWeek,
                                         showWeekNumbers = uiState.showWeekNumbers,
-                                        showDayOfWeek = true,
-                                        onTitleClick = onMonthHeaderClick
                                     )
 
                                     FullHeightMonthGrid(
@@ -733,17 +722,9 @@ fun HomeScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalArrangement = Arrangement.Top
                                 ) {
-                                    val title = remember(pageYear, pageMonth) {
-                                        org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(
-                                            java.time.LocalDate.of(pageYear, pageMonth + 1, 1)
-                                        )
-                                    }
-                                    CalendarHeader(
-                                        title = title,
+                                    DayOfWeekHeaders(
                                         firstDayOfWeek = uiState.firstDayOfWeek,
                                         showWeekNumbers = uiState.showWeekNumbers,
-                                        showDayOfWeek = true,
-                                        onTitleClick = onMonthHeaderClick
                                     )
                                     CalendarGrid(
                                         year = pageYear,
@@ -890,40 +871,20 @@ fun HomeScreen(
         )
     }
 
-    // Right-rail "Jump to date" picker.
-    // DatePickerState reads/writes UTC midnight, so convert at both
-    // boundaries to avoid the picked date slipping a day west of UTC.
+    // Right-rail "Jump to date" — uses the same month-grid sheet as the
+    // week view so a tap navigates immediately. Switches to DAY before
+    // navigating so the pager page is computed in day-mode, not week-mode.
     if (showJumpToDatePicker) {
-        val zone = ZoneId.systemDefault()
-        val initialLocalDate = (uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis())
-            .let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
-        val initialUtcMillis = initialLocalDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = initialUtcMillis)
-        DatePickerDialog(
-            onDismissRequest = { showJumpToDatePicker = false },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        datePickerState.selectedDateMillis?.let { utcMillis ->
-                            val pickedDate = Instant.ofEpochMilli(utcMillis).atZone(ZoneOffset.UTC).toLocalDate()
-                            val localMillis = pickedDate.atStartOfDay(zone).toInstant().toEpochMilli()
-                            // Switch to DAY before navigating so onWeekDateSelected
-                            // computes the pager page in day-mode, not week-mode.
-                            onViewSelect(ViewMode.DAY)
-                            onWeekDateSelected(localMillis)
-                        }
-                        showJumpToDatePicker = false
-                    }
-                ) { Text(stringResource(R.string.action_ok)) }
+        WeekViewDatePickerSheet(
+            currentWeekStartMs = uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis(),
+            onDateSelected = { dateMs ->
+                onViewSelect(ViewMode.DAY)
+                onWeekDateSelected(dateMs)
+                showJumpToDatePicker = false
             },
-            dismissButton = {
-                TextButton(onClick = { showJumpToDatePicker = false }) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            }
-        ) {
-            DatePicker(state = datePickerState)
-        }
+            onDismiss = { showJumpToDatePicker = false },
+            firstDayOfWeek = uiState.firstDayOfWeek
+        )
     }
 
     // Invitation inbox bottom sheet
@@ -993,7 +954,7 @@ private fun HomeTopAppBar(
     uiState: HomeUiState,
     isOnline: Boolean,
     searchFocusRequester: FocusRequester,
-    refreshKey: Int,
+    today: LocalDate,
     drawerState: DrawerState?,
     pendingInvitesCount: Int,
     onSearchClick: () -> Unit,
@@ -1002,7 +963,7 @@ private fun HomeTopAppBar(
     onMenuClick: () -> Unit,
     onGoToToday: () -> Unit,
     onRailToggleClick: () -> Unit,
-    onInfoClick: () -> Unit,
+    onTitleClick: () -> Unit,
     onViewSelect: (ViewMode) -> Unit
 ) {
     val isDrawerOpen = drawerState?.targetValue == DrawerValue.Open
@@ -1070,22 +1031,64 @@ private fun HomeTopAppBar(
         }
         uiState.viewMode == ViewMode.INSIGHTS -> {
             CenterAlignedTopAppBar(
-                title = { KashCalTopAppBarTitle() },
+                title = {
+                    Text(
+                        text = stringResource(R.string.insights_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp),
+                    )
+                },
                 navigationIcon = {
-                    IconButton(onClick = { onViewSelect(uiState.previousNonInsightsMode) }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.cd_back)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { onViewSelect(uiState.previousNonInsightsMode) }) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_back)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TopBarLogoButton(
+                            onClick = onGoToToday,
+                            today = today,
                         )
                     }
+                },
+                actions = {
+                    RailToggleButton(
+                        pendingInvitesCount = pendingInvitesCount,
+                        onClick = onRailToggleClick
+                    )
                 }
             )
         }
         else -> {
+            val weekPrefix = stringResource(R.string.label_week)
+            val weekSuffixTemplate = stringResource(R.string.calendar_header_week_suffix, "%1\$s", "%2\$s")
+            val agendaLabel = stringResource(R.string.view_agenda)
+            val yearLabel = stringResource(R.string.view_year)
+            val titleText = TopBarTitleFormatter.format(
+                viewMode = uiState.viewMode,
+                viewingYear = uiState.viewingYear,
+                viewingMonth = uiState.viewingMonth,
+                weekViewPagerPosition = uiState.weekViewPagerPosition,
+                firstDayOfWeek = uiState.firstDayOfWeek,
+                weekPrefix = weekPrefix,
+                weekSuffixTemplate = weekSuffixTemplate,
+                agendaLabel = agendaLabel,
+                yearLabel = yearLabel,
+                today = today,
+            )
+            val isTitleTappable = uiState.viewMode != ViewMode.AGENDA && uiState.viewMode != ViewMode.YEAR
+            val titleFontSize = if (uiState.viewMode == ViewMode.WEEK) 18.sp else 20.sp
             CenterAlignedTopAppBar(
-                title = { KashCalTopAppBarTitle(onClick = onInfoClick) },
+                title = {
+                    Text(
+                        text = titleText,
+                        style = MaterialTheme.typography.titleLarge.copy(fontSize = titleFontSize),
+                        modifier = if (isTitleTappable) Modifier.clickable(onClick = onTitleClick) else Modifier,
+                    )
+                },
                 navigationIcon = {
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         IconButton(onClick = onMenuClick) {
                             Icon(
                                 Icons.Default.Menu,
@@ -1095,13 +1098,11 @@ private fun HomeTopAppBar(
                                     .graphicsLayer { rotationZ = menuRotation }
                             )
                         }
-                        IconButton(onClick = onSearchClick) {
-                            Icon(
-                                Icons.Default.Search,
-                                contentDescription = stringResource(R.string.cd_search),
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        TopBarLogoButton(
+                            onClick = onGoToToday,
+                            today = today,
+                        )
                     }
                 },
                 actions = {
@@ -1113,7 +1114,13 @@ private fun HomeTopAppBar(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    TodayButton(onClick = onGoToToday, refreshKey = refreshKey)
+                    IconButton(onClick = onSearchClick) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.cd_search),
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
                     RailToggleButton(
                         pendingInvitesCount = pendingInvitesCount,
                         onClick = onRailToggleClick
@@ -1162,63 +1169,6 @@ private fun RailToggleButton(
                 contentDescription = triggerDescription,
                 modifier = Modifier.size(26.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun TodayButton(onClick: () -> Unit, refreshKey: Int) {
-    val today = remember(refreshKey) { JavaCalendar.getInstance() }
-    val dayOfMonth = today.get(JavaCalendar.DAY_OF_MONTH)
-
-    IconButton(onClick = onClick) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                Icons.Default.CalendarToday,
-                contentDescription = stringResource(R.string.cd_today),
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = dayOfMonth.toString(),
-                fontSize = 8.sp,
-                lineHeight = 8.sp,
-                letterSpacing = 0.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.offset(y = 2.dp)
-            )
-        }
-    }
-}
-
-@Composable
-private fun CalendarHeader(
-    title: String,
-    firstDayOfWeek: Int,
-    showWeekNumbers: Boolean = false,
-    showDayOfWeek: Boolean = true,
-    onTitleClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 4.dp)
-    ) {
-        Text(
-            text = title,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onTitleClick)
-                .padding(horizontal = 16.dp, vertical = 4.dp)
-        )
-        if (showDayOfWeek) {
-            DayOfWeekHeaders(firstDayOfWeek = firstDayOfWeek, showWeekNumbers = showWeekNumbers)
         }
     }
 }
@@ -1779,65 +1729,6 @@ private fun SearchContent(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ViewHeaderRow(
-    viewMode: ViewMode,
-    pagerPosition: Int,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
-    onMonthClick: () -> Unit
-) {
-    when (viewMode) {
-        ViewMode.DAY -> {
-            val title = remember(pagerPosition) {
-                val date = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.pageToDate(pagerPosition)
-                DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yEEEMMMd"), Locale.getDefault())
-                    .format(date)
-            }
-            CalendarHeader(
-                title = title,
-                firstDayOfWeek = firstDayOfWeek,
-                showWeekNumbers = false,
-                showDayOfWeek = false,
-                onTitleClick = onMonthClick
-            )
-        }
-        ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-            val weekPrefix = stringResource(R.string.label_week)
-            val centerDate = remember(viewMode, pagerPosition, firstDayOfWeek) {
-                if (viewMode == ViewMode.WEEK) {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.weekPageToStartDate(pagerPosition, firstDayOfWeek)
-                } else {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.pageToDate(pagerPosition + 1)
-                }
-            }
-            val monthYearStr = remember(centerDate) {
-                org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatMonthYear(centerDate)
-            }
-            val weekLabelStr = remember(viewMode, centerDate, firstDayOfWeek, weekPrefix) {
-                if (viewMode == ViewMode.WEEK) {
-                    org.onekash.kashcal.ui.components.weekview.WeekViewUtils.formatWeekLabel(
-                        centerDate, firstDayOfWeek, weekPrefix
-                    )
-                } else null
-            }
-            val title = if (weekLabelStr != null) {
-                stringResource(R.string.calendar_header_week_suffix, monthYearStr, weekLabelStr)
-            } else {
-                monthYearStr
-            }
-            CalendarHeader(
-                title = title,
-                firstDayOfWeek = firstDayOfWeek,
-                showWeekNumbers = false,
-                showDayOfWeek = false,
-                onTitleClick = onMonthClick
-            )
-        }
-        ViewMode.AGENDA,
-        ViewMode.MONTH, ViewMode.MONTH_FULL, ViewMode.YEAR, ViewMode.INSIGHTS -> {}
     }
 }
 

@@ -103,7 +103,7 @@
     <string name="label_today">ዛሬ</string>
     <string name="label_go_to_date">ወደ ቀን ሂድ</string>
     <!-- Calendar header right-side label for week view, e.g. "Week 21" -->
-    <string name="label_week">ሳምንት</string>
+    <string name="label_week">ሳ</string>
     <string name="calendar_header_week_suffix">⁨%1$s⁩ · ⁨%2$s⁩</string>
 
     <!-- ==================== Settings ==================== -->
@@ -1069,6 +1069,7 @@
     <string name="menu_invites">ግብዣዎች</string>
     <!-- Right rail item label that opens a date picker to navigate to a specific day -->
     <string name="jump_to_date">ቀን</string>
+    <string name="menu_about">ስለ</string>
     <string name="menu_more">ተጨማሪ ምናሌ</string>
     <plurals name="menu_more_with_invites">
         <item quantity="one">ተጨማሪ ምናሌ፣ %d ግብዣ በመጠባበቅ ላይ</item>
