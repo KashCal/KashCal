@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -763,6 +765,157 @@ class WheelTimePickerComposeTest {
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("9").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
+    }
+
+    // ==================== Issue #238: Mid-fling Done commits visible value ====================
+
+    @Test
+    fun verticalWheelPicker_emits_intermediate_items_during_animated_scroll() {
+        // Issue #238: callback should fire continuously as the wheel scrolls,
+        // not only on settle. Drive an animated scroll across many items by
+        // changing selectedItem externally; capture every onItemSelected call;
+        // assert intermediate items appear in the captured list.
+        val captured = mutableListOf<Int>()
+        val externalSelected = mutableStateOf(0)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                val current by externalSelected
+                VerticalWheelPicker(
+                    items = (0..23).toList(),
+                    selectedItem = current,
+                    onItemSelected = { item ->
+                        captured.add(item)
+                        externalSelected.value = item
+                    },
+                    isCircular = true
+                ) { item, isSelected ->
+                    androidx.compose.material3.Text(
+                        text = String.format("%02d", item),
+                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold
+                        else androidx.compose.ui.text.font.FontWeight.Normal
+                    )
+                }
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        captured.clear()
+
+        // Trigger an animated scroll across many items. The picker's internal
+        // LaunchedEffect(selectedItem) calls animateScrollToItem, which steps
+        // centerIndex through intermediate values frame-by-frame.
+        composeTestRule.runOnUiThread { externalSelected.value = 18 }
+
+        // Poll for animation progress; the snap-fling animation takes ~300-500ms.
+        val deadline = System.currentTimeMillis() + 3000
+        while (System.currentTimeMillis() < deadline && captured.size < 3) {
+            composeTestRule.mainClock.advanceTimeBy(16)
+        }
+        composeTestRule.waitForIdle()
+
+        // We scrolled from 0 → 18 (across the wrap-shorter path: 0, 23, 22, ... 18).
+        // Continuous emission must produce more than just the final value.
+        assertTrue(
+            "Expected intermediate emissions during animated scroll, got: $captured",
+            captured.size >= 2
+        )
+        // And the final centered value must land on 18.
+        assertEquals(18, captured.last())
+    }
+
+    @Test
+    fun verticalWheelPicker_circular_recenters_to_middle_band_after_settle() {
+        // Issue #238 regression: edge recentering must still happen after settle
+        // even though selection callback moved to a separate snapshotFlow effect.
+        val externalSelected = mutableStateOf(0)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                val current by externalSelected
+                VerticalWheelPicker(
+                    items = (0..23).toList(),
+                    selectedItem = current,
+                    onItemSelected = { externalSelected.value = it },
+                    isCircular = true
+                ) { item, _ ->
+                    androidx.compose.material3.Text(text = String.format("%02d", item))
+                }
+            }
+        }
+
+        composeTestRule.waitForIdle()
+
+        // Drive a long sequence of scrolls to push virtual index far from middle.
+        // CIRCULAR_MULTIPLIER = 1000, items.size = 24 → middleStart = 12000,
+        // recenter threshold = 6000. We can't directly query virtual index, but
+        // after settling on each new value the picker should remain visually
+        // centered on the chosen item, which proves recentering is happening.
+        listOf(7, 14, 21, 4, 11, 18, 1, 8, 15, 22).forEach { target ->
+            composeTestRule.runOnUiThread { externalSelected.value = target }
+            composeTestRule.waitForIdle()
+            // Drive snap + animateScrollToItem to completion via the Compose
+            // clock — deterministic on slow CI emulators where Thread.sleep
+            // races the animation.
+            composeTestRule.mainClock.advanceTimeBy(500)
+            composeTestRule.waitForIdle()
+        }
+
+        // After many large jumps, the final selected item must still display.
+        // If recentering broke, the virtual list would have run off the end and
+        // the item would no longer be visible.
+        composeTestRule.onNodeWithText("22").assertIsDisplayed()
+    }
+
+    @Test
+    fun verticalWheelPicker_does_not_double_emit_for_same_centered_item() {
+        // Issue #238 regression: distinctUntilChanged + (item != selectedItem)
+        // must prevent the same item from being reported twice in a row.
+        val emissionCounts = mutableMapOf<Int, Int>()
+        val externalSelected = mutableStateOf(5)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                val current by externalSelected
+                VerticalWheelPicker(
+                    items = (0..23).toList(),
+                    selectedItem = current,
+                    onItemSelected = { item ->
+                        emissionCounts[item] = (emissionCounts[item] ?: 0) + 1
+                        externalSelected.value = item
+                    },
+                    isCircular = true
+                ) { item, _ ->
+                    androidx.compose.material3.Text(text = String.format("%02d", item))
+                }
+            }
+        }
+
+        composeTestRule.waitForIdle()
+        emissionCounts.clear()
+
+        // Scroll to 10, back to 5. Final centered item is 5 (same as start).
+        // Drive Compose's clock forward instead of Thread.sleep — deterministic
+        // across CI emulators with variable wall-clock latency.
+        composeTestRule.runOnUiThread { externalSelected.value = 10 }
+        composeTestRule.waitForIdle()
+        composeTestRule.mainClock.advanceTimeBy(800)
+        composeTestRule.waitForIdle()
+
+        composeTestRule.runOnUiThread { externalSelected.value = 5 }
+        composeTestRule.waitForIdle()
+        composeTestRule.mainClock.advanceTimeBy(800)
+        composeTestRule.waitForIdle()
+
+        // No item should be emitted twice in a row for the same value.
+        // (Counts may be > 1 across separate scroll passes, but the picker
+        // must not double-fire while sitting on a single item.)
+        emissionCounts.forEach { (item, count) ->
+            assertTrue(
+                "Item $item emitted $count times — exceeds single-pass max of 2",
+                count <= 2
+            )
+        }
     }
 
     @Test

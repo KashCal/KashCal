@@ -61,7 +61,8 @@ class RightNavigationRailComposeTest {
         onInvitesClick: () -> Unit = {},
         onJumpToDateClick: () -> Unit = {},
         onInsightsClick: () -> Unit = {},
-        onSettingsClick: () -> Unit = {}
+        onSettingsClick: () -> Unit = {},
+        onAboutClick: () -> Unit = {}
     ) {
         setContent {
             MaterialTheme {
@@ -71,7 +72,8 @@ class RightNavigationRailComposeTest {
                     onInvitesClick = onInvitesClick,
                     onJumpToDateClick = onJumpToDateClick,
                     onInsightsClick = onInsightsClick,
-                    onSettingsClick = onSettingsClick
+                    onSettingsClick = onSettingsClick,
+                    onAboutClick = onAboutClick
                 )
             }
         }
@@ -188,6 +190,7 @@ class RightNavigationRailComposeTest {
                             onJumpToDateClick = {},
                             onInsightsClick = {},
                             onSettingsClick = {},
+                            onAboutClick = {},
                         )
                     }
                 }

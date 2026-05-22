@@ -9,14 +9,21 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.R
 import java.util.Calendar as JavaCalendar
 
 /**
@@ -97,4 +104,69 @@ class DateTimePickerComposeTest {
     private fun dayAt(hour: Int): Long = JavaCalendar.getInstance().apply {
         set(2026, JavaCalendar.JANUARY, 15, hour, 0, 0)
     }.timeInMillis
+
+    /**
+     * Issue #238: tapping Done before the wheel fling settles must commit the
+     * value visually centered at tap time, not the previously-stationary one.
+     *
+     * Drives the user-observable surface (DateTimeSheet) rather than the
+     * VerticalWheelPicker building block, because the bug lives in the
+     * settle-only callback contract between the picker and the sheet's
+     * buffered localHour/localMinute.
+     *
+     * Uses manual clock control so the snap-fling animation is still in
+     * progress when Done is tapped — the autoAdvance default would settle
+     * the fling during waitForIdle and mask the pre-fix bug.
+     */
+    @Test
+    fun datetimeSheet_done_mid_fling_commits_centered_hour() {
+        var confirmedHour = -1
+        val initialHour = 10
+        val startMillis = dayAt(hour = initialHour)
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                DateTimeSheet(
+                    selectedDateMillis = startMillis,
+                    selectedHour = initialHour,
+                    selectedMinute = 0,
+                    isAllDay = false,
+                    use24Hour = true,
+                    onConfirm = { _, hour, _ -> confirmedHour = hour },
+                    onDismiss = {}
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
+
+        composeTestRule.mainClock.autoAdvance = false
+
+        // Hour wheel renders 24 options with the picker's content description.
+        composeTestRule.onNodeWithContentDescription("Wheel picker with 24 options")
+            .performTouchInput {
+                swipeUp(startY = centerY, endY = centerY - 200f, durationMillis = 80)
+            }
+
+        // Advance enough frames for centerIndex to move off initialHour but
+        // not enough for the snap-fling to settle. ~80ms is well inside the
+        // typical 250-400ms snap animation.
+        composeTestRule.mainClock.advanceTimeBy(80)
+
+        // Tap Done while the fling is still mid-flight.
+        val doneLabel = InstrumentationRegistry.getInstrumentation().targetContext
+            .getString(R.string.action_done)
+        composeTestRule.onAllNodesWithText(doneLabel)[0].performClick()
+
+        composeTestRule.mainClock.autoAdvance = true
+        composeTestRule.waitForIdle()
+
+        // The committed hour must reflect what was visually centered when Done
+        // was tapped, not the pre-swipe initialHour. Pre-fix, this was always
+        // initialHour (10); post-fix, it must have advanced.
+        assertNotEquals(
+            "DateTimeSheet committed pre-swipe hour — mid-fling Done dropped the new value",
+            initialHour,
+            confirmedHour
+        )
+    }
 }

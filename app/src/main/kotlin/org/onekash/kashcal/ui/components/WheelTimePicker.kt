@@ -26,7 +26,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -43,6 +45,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 import kotlin.math.abs
@@ -121,12 +125,6 @@ fun <T> VerticalWheelPicker(
     // Track previous actual index for wrap detection
     var previousActualIndex by remember { mutableIntStateOf(selectedIndex) }
 
-    // For non-circular lists, skip the first settle event. Before the first layout,
-    // visibleItemsInfo is empty and the fallback centerIndex is wrong for edge items
-    // (contentPadding shifts items but firstVisibleItemIndex + centeringOffset doesn't
-    // account for it). Circular lists don't have this problem.
-    var hasSettled by remember { mutableStateOf(effectiveCircular) }
-
     // Calculate center index based on actual pixel position in viewport.
     // This finds the item whose center is closest to the viewport's center pixel,
     // which is accurate regardless of contentPadding or scroll position.
@@ -143,46 +141,62 @@ fun <T> VerticalWheelPicker(
         }
     }
 
-    // Detect when scrolling settles and notify selection + handle recentering
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (!listState.isScrollInProgress) {
-            // Skip the first settle for non-circular lists — centerIndex fallback
-            // is unreliable before first layout (see hasSettled comment above)
-            if (!hasSettled) {
-                hasSettled = true
-                return@LaunchedEffect
-            }
-
-            // Use pixel-based centerIndex for accurate selection
-            val centerVirtualIndex = centerIndex
-            val actualIndex = virtualToActualIndex(centerVirtualIndex, items.size, effectiveCircular)
-
-            // 1. Selection callback with wrap-aware haptic
-            items.getOrNull(actualIndex)?.let { item ->
-                if (item != selectedItem) {
-                    val wrapped = effectiveCircular && abs(actualIndex - previousActualIndex) > items.size / 2
-                    if (wrapped) {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                    } else {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+    // Continuous selection emission as the centered item changes — including
+    // mid-fling. This lets the parent commit the visually-centered value when
+    // the user taps Done before the snap settles. The collector outlives any
+    // single composition, so live params are read via rememberUpdatedState.
+    val currentItems by rememberUpdatedState(items)
+    val currentSelected by rememberUpdatedState(selectedItem)
+    val currentEffectiveCircular by rememberUpdatedState(effectiveCircular)
+    val currentOnItemSelected by rememberUpdatedState(onItemSelected)
+    LaunchedEffect(listState) {
+        snapshotFlow { centerIndex }
+            .distinctUntilChanged()
+            .collect { virtualIdx ->
+                val itemList = currentItems
+                val isCirc = currentEffectiveCircular
+                if (itemList.isEmpty()) return@collect
+                val actualIndex = virtualToActualIndex(virtualIdx, itemList.size, isCirc)
+                itemList.getOrNull(actualIndex)?.let { item ->
+                    if (item != currentSelected) {
+                        val wrapped = isCirc &&
+                            abs(actualIndex - previousActualIndex) > itemList.size / 2
+                        if (wrapped) {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        } else {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        }
+                        previousActualIndex = actualIndex
+                        currentOnItemSelected(item)
                     }
-                    previousActualIndex = actualIndex
-                    onItemSelected(item)
                 }
             }
+    }
 
-            // 2. Edge recentering (if needed) - AFTER callback
-            if (effectiveCircular) {
-                val middleStart = (CIRCULAR_MULTIPLIER / 2) * items.size
-                if (abs(centerVirtualIndex - middleStart) > (CIRCULAR_MULTIPLIER / 4) * items.size) {
-                    listState.scrollToItem(middleStart + actualIndex - centeringOffset)
-                }
+    // Settle-only: virtual-list edge recentering for circular wheels.
+    // Triggering scrollToItem mid-fling would fight the snap fling behavior.
+    LaunchedEffect(listState.isScrollInProgress) {
+        if (!listState.isScrollInProgress && effectiveCircular) {
+            val centerVirtualIndex = centerIndex
+            val actualIndex = virtualToActualIndex(centerVirtualIndex, items.size, true)
+            val middleStart = (CIRCULAR_MULTIPLIER / 2) * items.size
+            if (abs(centerVirtualIndex - middleStart) > (CIRCULAR_MULTIPLIER / 4) * items.size) {
+                listState.scrollToItem(middleStart + actualIndex - centeringOffset)
             }
         }
     }
 
     // Scroll to selected item when it changes externally
     LaunchedEffect(selectedItem) {
+        // If a user fling is in progress, wait for it to settle before deciding
+        // whether to scroll. The continuous emission above keeps selectedItem
+        // in sync with what's centered during the fling, so by the time the
+        // fling settles `targetActualIndex` typically already equals
+        // `currentCenterActual` and no scroll fires. If an external update
+        // races against the fling, the post-settle re-check still honors it.
+        if (listState.isScrollInProgress) {
+            snapshotFlow { listState.isScrollInProgress }.first { !it }
+        }
         val targetActualIndex = items.indexOf(selectedItem)
         if (targetActualIndex >= 0) {
             // Compare against pixel-based centerIndex to avoid unnecessary scroll

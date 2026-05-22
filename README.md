@@ -146,6 +146,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **[Website](https://kashcal.onekash.org)** · **[FAQ](https://github.com/KashCal/KashCal/wiki/FAQ)** · **[Issues](https://github.com/KashCal/KashCal/issues)** · **[Releases](https://github.com/KashCal/KashCal/releases)**
 
-Apache License 2.0 (see [LICENSE](LICENSE))
+Apache License 2.0 (see [LICENSE](LICENSE)) · Licensing KashCal: [LICENSING.md](LICENSING.md)
 
 </div>

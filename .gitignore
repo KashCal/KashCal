@@ -88,3 +88,6 @@ site/
 
 # Docker test server configs (internal testing)
 docker/
+
+# Local scripts workspace (internal tooling)
+scripts/

@@ -1,0 +1,1 @@
+• Time and date pickers now save the value visually centered when you tap Done mid-fling, instead of the value before the spin
